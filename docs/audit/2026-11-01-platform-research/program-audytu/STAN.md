@@ -1,13 +1,13 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 1 listopada 2026. Program v1.0, partia 08: wejścia, pliki/FFmpeg, SSRF i zależności. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 1 listopada 2026. Program v1.0, partia 09: płatności, dostęp, refundy i spory. Tryb: analiza, bez zmian aplikacji i produkcji.
 
 ## Cel i decyzje właściciela
 
 - Docelowo duża platforma konkurująca z PeerTube funkcjami i skalą.
 - Badanie ma być pogłębione i wieloobszarowe. Właściciel nie programuje; wnioski mają objaśniać wpływ na produkt i biznes.
 - Dotychczasowe porównanie jest bazą i próbą metody, a nie zamkniętym pełnym audytem.
-- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D05, D06, D07, D08, D09 i D11; nie wykonano pełnej oceny 345 wymagań.
+- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D05, D06, D07, D08, D09, D10 i D11; nie wykonano pełnej oceny 345 wymagań.
 - Następnie właściciel polecił zachować poprzednie badanie i rozwijać całość na jednej gałęzi GitHub: `docs/polutek-platform-audit`. Katalog w repo: `docs/audit/2026-11-01-platform-research/`. Po każdej partii commit i push; bez automatycznego scalenia ani wdrożenia.
 
 ## Wersje
@@ -15,7 +15,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 08: wejścia, pliki/FFmpeg,
 - Polutek: `/workspace/polutek-pl`, `c397b9e548ca2c628e21457ac69d66e54b12ddbd`.
 - PeerTube: `/workspace/PeerTube`, `fa7d2b5d8a44bbec99159b11e91763f7d2308faa`.
 - Program: [PROGRAM.md](PROGRAM.md).
-- Rodzic commitu partii 08: `4958b65e8863bab01a7acee9b115662dded993be`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json), [partia 07](evidence/source-scope-batch07.json), [partia 08](evidence/source-scope-batch08.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
+- Rodzic commitu partii 09: `c8c8db1a0f28b189dd1c0a48c015ccdcebbe2556`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json), [partia 07](evidence/source-scope-batch07.json), [partia 08](evidence/source-scope-batch08.json), [partia 09](evidence/source-scope-batch09.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
 
 ## Gotowe
 
@@ -71,6 +71,14 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 08: wejścia, pliki/FFmpeg,
 49. R01: lokalne Next 16.3.8/sharp 0.35.4 odpowiadają dwóm powiązanym publicznym advisory pobranym online; potwierdzono wersje, nie exploit RCE. Automatyczna kontrola odrzuciła nowe npm audit ze względu na ujawnienie grafu zależności, proces nie ruszył i nie był ponawiany. Zapisano lokalne metadane i publiczne GET/advisory/CC BY 4.0; brak świeżej pełnej liczby alertów. R01/R15 doprecyzowane, ID R01–R30 bez nowych problemów.
 50. PeerTube: format whitelist dotyczy wejść HTTP(S), lokalne mają []; opcjonalny SSRF-safe got sprawdza DNS/IP i redirect; wspólny JSON parser ma 500kb. Nie uruchamiano PeerTube. Otwarte pytania Polutka: redirect/DNS miniatur, budżet kodowania i pełne dekodery, bez dopisywania nieudowodnionych usterek. Bieżąco 54 wejścia W_TRAKCIE i 226 NIEZBADANE; ASVS 44 W_TRAKCIE i 301 NIEZBADANE, zero zaliczonych; dziewięć obszarów rozpoczętych i dziewięć niezbadanych. Pełny stos wszystkich nowych scenariuszy pozostaje niewykonany.
 
+51. Partia 09: [D10](obszary/D10-PLATNOSCI-I-ROZLICZENIA.md), [20 scenariuszy](SCENARIUSZE-PLATNOSCI.csv) i [częściowy zakres 54 plików](evidence/batch09-review.json), nakładający się na poprzednie partie. Rozdzielono napiwki, dostęp patrona i przyszły marketplace; nie badano konfiguracji produkcji. Wykonano 24 moduły TS (23 aplikacji i istniejącą atrapę testową), schema tylko jako nazwy enumów.
+52. Sześć istniejących plików Vitest zablokowanych przed rejestracją: cztery brak PaymentStatus.PENDING, dwa niewygenerowane Prisma. Zero zarejestrowanych/wykonanych testów; globalny exit 1. Nie zaliczono samego split.test przez jego import index. Nie zmieniano importów ani klienta i nie powtarzano pełnego zestawu/generowania.
+53. 18 obserwacji rzeczywistych komponentów z jawną atrapą DB/provider/audytu i symulowanymi datami. Pierwszy przebieg exit 0; prawdziwy Stripe SDK 20.4.1 weryfikuje syntetyczny HMAC, zmienione body odrzucone, replay duplicate. Kontrole kwoty/waluty/intentu/użytkownika, idempotencji oraz refundu przed sukcesem działają w modelu. Autoryzacja sales to jawne allow; brak HTTP/Stripe API/Prisma i prawdziwych blokad.
+54. R31: wygasły pakiet A → nowy opłacony B → pełny zwrot A odbiera także aktywny okres B (SUCCEEDED i 1499 gr pozostają). Drugi wariant: zwrot ostatniego z dwóch opłaconych lifetime usuwa lifetime mimo wcześniejszej wpłaty; warunek dwóch prób live do pełnego sprawdzenia. Kontrole kolejnych aktywnych okresów i refundu starszego lifetime działają. P1 przed szerszymi płatnościami/refundami; niezależny przegląd PENDING.
+55. R32: lost przed spóźnionym sync refundu 400 gr na A=1000 gr pozostawia sumę 100 gr zamiast 500 gr z B. Odwrotna kolejność daje 500 gr. Osobne dwa protokoły prawdziwego PostgreSQL 17.11 potwierdziły arytmetykę na Payment/UserPaymentTotal; fixture ROLLBACK, exit 0. To agregat lokalny, bez dowodu podwójnego obciążenia/refundu lub straty wypłaty. Rzeczywisty lifecycle operatora do wykonania; P2, niezależny przegląd PENDING.
+56. R17 rozszerzono: dwa równoległe refundOrder po 300 gr → niededuplikujący operator-atrapa 600 gr, lokalny CAS/księga 300 gr i jeden konflikt. Sales w rzeczywistości domyślnie off, adapter niekompletny; aktualny adminRefund Stripe ma pełniejszy protokół i nie został tą próbą uznany za podatny na podwójny refund. Ręczne polityki częściowych/odwróconych refundów i sporów są znane z wcześniejszego patron-zone-audit, nie nowe ID. R05 nie odtwarzano.
+57. Pobrano oficjalny README i MIT stripe-node v20.4.1, HTTP 200, podpis/raw body/retry/timeout. PeerTube support to przejrzane pole i modal Markdown; brak podstaw do porównania z niezbadaną księgą pluginów. Rejestr R01–R32. Bieżąco 63 wejścia W_TRAKCIE i 217 NIEZBADANE; ASVS 47 W_TRAKCIE i 298 NIEZBADANE, zero zaliczonych. Dziesięć obszarów rozpoczętych, osiem niezbadanych, żaden zamknięty. Pełny stos nowych 20 scenariuszy niewykonany. Kolejny zakres D12: prywatność/cykl danych.
+
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
 ## Blokady i niewiadome
@@ -90,12 +98,13 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 08: wejścia, pliki/FFmpeg,
 - Partia 06: lokalny Docker 28.4.0 i PostgreSQL nadal działały. `tools/pipeline-boundaries-experiment.cjs` wykonuje komponenty z atrapami; `tools/playback-cascade-experiment.py` używa helpera SQL z partii 05, dwóch połączeń i usuwa własne fixture. Skrypty nie wymagają zmiany instrukcji ani kodu aplikacji.
 - Partia 07 nie wymagała Dockera ani sieci produkcji. Node 22 wykonał cztery pliki Vitest i `tools/playback-access-experiment.cjs` z symulowanym zegarem/atrapami; oficjalną dokumentację cache pobrano przez dozwolone raw.githubusercontent.com.
 - Partia 08 użyła hostowego FFmpeg/ffprobe 7.1.5 i własnego serwera loopback; nie uruchamiała Docker FFmpeg 8.0.1 ani bazy. Czytniki i procesy w skryptach tools/input-boundaries-experiment.cjs oraz tools/ffmpeg-input-experiment.mjs; nie wymagają pełnej aplikacji.
+- Partia 09: lokalny Docker 28.4.0/PostgreSQL 17.11 działały; dwa protokoły SQL użyły istniejącej bazy badawczej i ROLLBACK. tools/payment-boundaries-experiment.cjs działa na atrapach i rzeczywistym podpisie SDK bez sieci; tools/payment-total-sql-experiment.py wymaga lokalnego Dockera i helpera z partii 05.
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
 ## Następne działanie
 
-Przejść do D10: pieniądze, zdarzenia płatnicze, uprawnienia płatne, refundy i ponowienia integracji; uwzględnić R05/R17 oraz rozdzielenie płatności od przyznania dostępu. Najpierw ustalić aktywne i przyszłe ścieżki na podstawie kodu/bezpiecznych źródeł, bez sekretów i usług produkcji. D05 pozostaje otwarte: pełne HTTP/proxy i wszystkie klasy wejść, dokładny build FFmpeg 8.0.1, formaty/dekodery/zasoby, redirect/DNS oraz zależności. Nie powtarzać npm audit ani wysyłać grafu inną drogą po automatycznej odmowie. D09 wymaga rzeczywistych mutacji/logout/refund i Cloudflare/Range/purge/browser; D08 takeover/restartów/magazynu. Nie powtarzać identycznych zaliczonych testów bez nowych warunków. Po odblokowaniu Prisma wykonać pełne próby, bez podstawiania klienta. Dalsze obszary obejmują też prywatność, skale/koszty i restore. Niezależne przeglądy otwarte. Nie zmieniać aplikacji ani produkcji; parametry skali/SLO/budżetu nadal do ustalenia.
+Przejść do D12: dane osobowe, eksport, usunięcie konta/kanału, retencja i telemetria; uwzględnić R16 oraz finansową retencję po anonimizacji. Bez sekretów i danych prawdziwych użytkowników. D10 pozostaje otwarte: pełny sandbox Stripe/HTTP/Prisma, prawdziwe blokady/równoległość, granice awarii, metody/waluty, zgody/potwierdzenia/obsługa, rozliczenia i payout; R31/R32 wymagają niezależnego przeglądu i pełnego retestu. Nie traktować znanej ręcznej polityki jako nowego odkrycia ani atrapy operatora sales jako podwójnego aktualnego Stripe refundu. D05 nadal wymaga wszystkich wejść, docelowego FFmpeg i pełnego badania zależności; nie ponawiać odrzuconego npm audit ani wysyłać grafu inną drogą. D08/D09 wymagają pełnych prób i właściwych usług. Nie powtarzać identycznych zaliczonych testów bez nowych warunków, nie podstawiać Prisma. Niezależne przeglądy otwarte. Nie zmieniać aplikacji ani produkcji; skala/SLO/budżet nadal do ustalenia.
 
 Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
 

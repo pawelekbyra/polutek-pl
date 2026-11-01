@@ -97,3 +97,13 @@
 - R01 rozszerzono o lokalne wersje i dwa publiczne powiązane advisory pobrane GET. Automatyczna kontrola odrzuciła nowe npm audit ze względu na ujawnienie grafu zależności. Nie uruchomiono ani nie obchodzono skanu; brak świeżej liczby wszystkich alertów i exploitu RCE. Zachowano P0 jako historyczny priorytet naprawy zależności.
 - PeerTube porównano źródłowo: format whitelist tylko dla remote HTTP(S), DNS/IP/redirect w opcjonalnym SSRF-safe got oraz limit parsera JSON. Otwarte pytania miniatur/zasobów nie dostały nowych ID bez dowodu. R01–R30 zachowane, niezależny przegląd PENDING.
 - 280 wejść: 54 rozpoczęte, 226 niezbadanych. ASVS: 44 rozpoczęte, 301 niezbadanych, zero zaliczonych. Dziewięć z 18 obszarów rozpoczętych, żaden zamknięty. Kolejny zakres D10. Aplikacja i produkcja bez zmian.
+
+## 1 listopada 2026 — partia 09: płatności, dostęp, refundy i spory
+
+- Rozpoczęto D10: napiwki, patron pass i przyszłe sales rozliczono oddzielnie; częściowy zakres 54 plików, z nakładaniem na poprzednie partie.
+- 18 obserwacji rzeczywistych komponentów i SDK HMAC z jawnymi atrapami, osobno dwa protokoły prawdziwego PostgreSQL. Oba skrypty exit 0 od pierwszego przebiegu, SQL fixture ROLLBACK. Pełnego HTTP/Prisma/Stripe API i ruchu pieniędzy nie wykonano.
+- Sześć istniejących plików Vitest zablokowanych przed rejestracją: zero wykonanych testów, globalny exit 1. Brak zmiany importów/Prisma oraz powtórki pełnego zestawu.
+- R31: refund wygasłego A odbiera nowy opłacony B; także refund ostatniego z dwóch opłaconych lifetime usuwa wspólny marker. R32: kolejność lost/refund zaniża UserPaymentTotal (100 zamiast 500 gr), zgodnie w komponentach i SQL; bez dowodu dodatkowego ruchu pieniędzy.
+- R17 wzmocniono modelem dwóch wywołań przyszłego refundOrder przed CAS. Nie uznano bieżącego adminRefund Stripe za dowiedziony podwójny refund. Znane ręczne polityki dostępu po częściowym/cofniętym refundzie i sporze zachowano jako znane. Niezależny przegląd R17/R31/R32 PENDING.
+- Pobrano oficjalny README/MIT Stripe SDK v20.4.1; PeerTube support przejrzano jako treść Markdown, bez fikcyjnego benchmarku księgi marketplace i bez uruchamiania PeerTube.
+- 63 wejścia rozpoczęte, 217 niezbadanych. ASVS 47 rozpoczętych, 298 niezbadanych, zero zaliczonych. Dziesięć z 18 obszarów rozpoczętych; żaden zamknięty. Dodano 20 scenariuszy z pełnym stosem niewykonanym. Kolejny zakres D12; kod aplikacji i produkcja bez zmian.

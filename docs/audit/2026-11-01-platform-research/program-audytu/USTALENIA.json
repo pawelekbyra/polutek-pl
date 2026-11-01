@@ -458,23 +458,40 @@
       "id": "R17",
       "title": "Rdzeń marketplace nie jest gotowym systemem rozliczeń",
       "baseline_priority_and_evidence": "P1 przed uruchomieniem sprzedaży wielu twórców, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono ryzyko kontraktu przyszłego sales: dwa wywołania operatora przed CAS i jeden zapis lokalny. Operator jest jawnie niededuplikującą atrapą, nie aktualnym Stripe refund.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D10"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Przyszły adapter bez trwałej tożsamości operacji może wykonać dwa zwroty, choć baza zapisze jeden i drugi handler zgłosi konflikt.",
+      "conditions": "Sales otwarte w modelu, uprawnienie przez atrapę allow, dwa żądania po tym samym odczycie i operator bez własnej deduplikacji. Nie potwierdzono takiej konfiguracji ani adaptera produkcji.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+        "SCENARIUSZE-PLATNOSCI.csv",
+        "evidence/batch09-review.json",
+        "tools/payment-boundaries-experiment.cjs",
+        "evidence/payment-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Sales jest domyślnie wyłączone i nie ma kompletnego adaptera.",
+        "Aktualny adminRefund Stripe ma osobny, pełniejszy protokół idempotencji/audytu/sync; nie wykonano go w tej próbie.",
+        "Operator-atrapa celowo nie deduplikuje, autoryzacja jest stubem, nie dowód podwójnego rzeczywistego refundu.",
+        "Zamknięta bramka nie woła operatora, odmowa operatora nie zmienia księgi."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.3"
+      ],
+      "proposed_fix": "Przed integracją marketplace wymagać trwałej tożsamości operacji, klucza idempotencji i uzgadniania wyniku operatora; oddzielić stany żądania i zaksięgowania.",
+      "acceptance_test": "Dwa równoległe żądania i awaria po sukcesie operatora: jeden rozpoznawalny refund biznesowy, jedna spójna księga, retry z tym samym kluczem i naprawa nieznanego wyniku.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "kind": "RYZYKO_PRZYSZLEGO_MODULU",
+      "priority": "P1_PRZED_URUCHOMIENIEM_SPRZEDAZY_WIELU_TWORCOW",
+      "evidence_level": "A_ACTUAL_REFUND_ORDER_WITH_NON_DEDUPLICATING_FAKE_PROVIDER_AND_DB_CAS_MODEL_AND_B_SOURCE"
     },
     {
       "id": "R18",
@@ -929,6 +946,90 @@
       "retest": null,
       "created_at": "2026-11-01",
       "deployment_scope": "MEDIA_SOURCE_PLAN_PREMIERE_BEFORE_NOT_FOUND_REDACTION;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "baseline_priority_and_evidence": "NEW: P1_PRZED_SZERSZA_OBSLUGA_PLATNYCH_PAKIETOW_I_REFUNDOW; scoped component/source evidence, no production incident",
+      "status": "POTWIERDZONE",
+      "note": "Partia 09; jawny zakres komponentów i ograniczenia w D10, niezależny przegląd pozostaje otwarty.",
+      "source_report": "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+        "SCENARIUSZE-PLATNOSCI.csv",
+        "evidence/batch09-review.json",
+        "tools/payment-boundaries-experiment.cjs",
+        "evidence/payment-boundaries-experiment.json"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R31",
+      "title": "Zwrot jednej wpłaty patrona może odebrać dostęp kupiony inną wpłatą",
+      "priority": "P1_PRZED_SZERSZA_OBSLUGA_PLATNYCH_PAKIETOW_I_REFUNDOW",
+      "domains": [
+        "D10",
+        "D09",
+        "D06"
+      ],
+      "impact_plain_language": "Po wygaśnięciu starego pakietu i zakupie nowego zwrot starej wpłaty zeruje aktualny opłacony okres. Drugi wariant dotyczy dwóch opłaconych lifetime i zwrotu ostatniego.",
+      "conditions": "Wygasły A 30 dni, nowy B 30 dni, następnie pełny refund A; albo dwa opłacone lifetime przed refundem ostatniego. Live dwóch lifetime wymaga nakładających się prób rozpoczętych wcześniej; checkoutu nie wykonano.",
+      "counterarguments": [
+        "Dowód rzeczywistych komponentów z atrapą DB/refunds API i symulowanymi datami; bez pełnego HTTP/Prisma/Stripe.",
+        "Zwrot jednego z dwóch kolejnych aktywnych okresów poprawnie zachowuje drugi, replay jest idempotentny.",
+        "Testowe powtórzenia lifetime są dozwolone; live ma kontrolę przed stworzeniem nowej próby po posiadanym lifetime.",
+        "Polityka refundu zużytej usługi wymaga doprecyzowania, ale obecny automat odbiera także udział nadal opłaconego B."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.1",
+        "v5.0.0-2.3.2"
+      ],
+      "proposed_fix": "Ewidencja wkładu poszczególnych wpłat do okresów/lifetime i deterministyczne wyliczenie uprawnienia po refundzie; określić politykę zużytych okresów.",
+      "acceptance_test": "Realna DB/HTTP: wygasły A → nowy B → refund A zachowuje uprawnienie B według ustalonej polityki; także dwa lifetime, refund starszego/nowszego, replay i cofnięty refund.",
+      "deployment_scope": "PATRON_ZONE_GRANT_REVOKE_ALGORITHM;PRODUCTION_OCCURRENCE_UNVERIFIED",
+      "evidence_level": "A_ACTUAL_FULFILL_REFUND_PASS_CHAIN_WITH_EXPLICIT_FAKE_DB_PROVIDER_AND_SIMULATED_DATES"
+    },
+    {
+      "kind": "USTERKA",
+      "baseline_priority_and_evidence": "NEW: P2; scoped component/source evidence, no production incident",
+      "status": "POTWIERDZONE",
+      "note": "Partia 09; jawny zakres komponentów i ograniczenia w D10, niezależny przegląd pozostaje otwarty.",
+      "source_report": "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+        "SCENARIUSZE-PLATNOSCI.csv",
+        "evidence/batch09-review.json",
+        "tools/payment-boundaries-experiment.cjs",
+        "evidence/payment-boundaries-experiment.json",
+        "tools/payment-total-sql-experiment.py",
+        "evidence/payment-total-sql-experiment.json"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R32",
+      "title": "Spóźnione uzgodnienie zwrotu po przegranym sporze zaniża sumę wpłat użytkownika",
+      "priority": "P2",
+      "domains": [
+        "D10",
+        "D06"
+      ],
+      "impact_plain_language": "Dla A=1000 gr i B=500 gr suma po stracie A powinna wynosić 500 gr. Lost przed lokalnym uzgodnieniem refundu 400 gr pozostawia 100 gr; ta sama historia w odwrotnej kolejności daje 500 gr.",
+      "conditions": "Wcześniejszy częściowy zwrot u operatora jeszcze nieodzwierciedlony lokalnie, przetworzenie lost przy refunded=0, następnie sync dodatniego refund delta. Rzeczywista historia operatora nie została wykonana.",
+      "counterarguments": [
+        "Nie wykazano drugiego obciążenia karty, podwójnego refundu ani straty wypłaty twórcy; dotyczy lokalnego UserPaymentTotal.",
+        "Payment zachowuje statusy i kwoty umożliwiające wykrycie różnicy; panel ma getReconciliation, którego nie wykonano.",
+        "Osobny SQL potwierdza protokół na PostgreSQL; nie jest wykonaniem Prisma/HTTP/Stripe.",
+        "Potrzebna walidacja pełnego refund/dispute lifecycle w sandboxie operatora i niezależny przegląd."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.2"
+      ],
+      "proposed_fix": "Aktualizować agregat ze zmiany kanonicznego wkładu płatności do sumy, uwzględniając łącznie refund i chargeback; zapewnić odtwarzanie agregatu.",
+      "acceptance_test": "Permutacje refund/open/lost/won/replay i częściowych kwot, druga wpłata oraz waluty: UserPaymentTotal zgodne z kanonicznym agregatem po każdym kroku.",
+      "deployment_scope": "USER_PAYMENT_TOTAL_AGGREGATE;NO_DEMONSTRATED_EXTERNAL_MONEY_MOVEMENT;PRODUCTION_OCCURRENCE_UNVERIFIED",
+      "evidence_level": "A_ACTUAL_COMPONENTS_FAKE_DB_AND_B_REAL_LOCAL_POSTGRESQL_INSPECTED_PROTOCOL"
     }
   ]
 }

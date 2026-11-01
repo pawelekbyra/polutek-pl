@@ -1,0 +1,415 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "c8c8db1a0f28b189dd1c0a48c015ccdcebbe2556",
+  "source_review_scope": [
+    {
+      "file": "app/api/cron/stripe-reconciliation/route.ts",
+      "sha256": "ac8edf816f54ed2d61f5a3ffd15a9ce06dee47001763c65618a42297b1bff87b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "app/api/payments/[paymentId]/route.ts",
+      "sha256": "bf7efe8f27b48c2ba1bf26e42a8219a34e5f30a09fe6879298180baa59af9e0f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "app/api/user/premium-pass/checkout/route.ts",
+      "sha256": "85481f97e8d7dcd0b51d313abd43916bce82c033602e708d781c6f426c9b32e4",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "app/api/user/premium-pass/consent/route.ts",
+      "sha256": "42bf3214294e8644d1680a4fcbbb22536fd7a8da0c3be0d9cd50357d91f62638",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "app/api/user/premium-pass/intent/route.ts",
+      "sha256": "f879101840df48298a744eb0bc70533e17240dabb7150d8c8bc21c66172c7d8f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "app/api/webhooks/stripe/route.ts",
+      "sha256": "a97889ee5ff3130fd864264efc64f9ed614f4ad218a6defd75b3eea1b048de71",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "apps/admin/app/(panel)/przychody/actions.ts",
+      "sha256": "3d84dac84bf0d4bdfa8104dd3f9f4d951d75bc3fb3659a733025225ed0c8d4c2",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "apps/admin/lib/actions/gate.ts",
+      "sha256": "9d014c7165ef4b0d754916bdaf17ed123a39ea9d2adb75cf87509a703d9fc038",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "deploy/serwerek/systemd/polutek-cron-stripe-reconciliation.timer",
+      "sha256": "538ce9d244fe311cee6066abe64988031e8238ea0f67d204f71eaa3e236a9ae6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "docs/architecture/patron-zone-audit.md",
+      "sha256": "d94c69ce3b5db0d9e0b1fab68ab7a363fb4dd9eacd0ef437942eeddd0b9d5572",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "docs/architecture/patron-zone.md",
+      "sha256": "bf6748572943f5adfc3a6b0082f5feaf876b100292fb361102076add02767165",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "docs/operations/STATUS.md",
+      "sha256": "e849b75b76942d85ea43737ec1151bb01c524ee9e11c92038f79808e8d33b9b5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/constants.ts",
+      "sha256": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/admin-revenue/queries.ts",
+      "sha256": "2fee1da7fc89f6e7fdfcfea9421b30feb436f80ae42021bdf08b4c20f84c19f5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/patron-zone/application/checkout-demo.use-case.ts",
+      "sha256": "ae71368b7208e52fc3f9981f634c80db545d03b37b7254f3153d1c0a6862e3f4",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/patron-zone/application/pass-access.ts",
+      "sha256": "9a4bb715b1f1fd599b9e57801d0ec9e6b838c2325836fde4b8159ab98b3c8373",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/patron-zone/application/patron-checkout.use-case.ts",
+      "sha256": "bbf1ca03ea1a6f537562604f7d2c4eb1218c88a2fb4b2a688f3b51c25da10ecc",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/patron-zone/application/patron-grant.ts",
+      "sha256": "e293c882d13e3f6dfb79c29becfdcd2817ecd26cdfa90b711d1f26fb9c635e93",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/patron-zone/domain/config.ts",
+      "sha256": "ddee4ca710b7e7977d49d5de2ea1a19ba901ff609dc9f8ad21da05b7849c0bf5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/patron-zone/domain/pass-state.ts",
+      "sha256": "1f93611a31e97279f89de58e1c576cbfe052236c1b33ae0a634824537da8c704",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/patron-zone/domain/payments-mode.ts",
+      "sha256": "fd84518ab90b8949b56176d58f9e268c891ac3c6c29eecbb46de1b3e4ba2111a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/patron-zone/infrastructure/pass-store.ts",
+      "sha256": "ce8ca08fa547f7e6e9e94e504d9aaa452195148fff410f8c8d669348846305ba",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/admin-refund.use-case.ts",
+      "sha256": "5b05590e16594274cfc692afc927ff12248590aad006a17738fe03dcf140e3c7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/create-checkout-intent.use-case.ts",
+      "sha256": "fd06a414abd8e4b2a9b05251d1d847db49077fcd6ccdaa68349d243b1dfff7d5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/fulfill-payment.use-case.ts",
+      "sha256": "386060febe7f6f5e6a8cdc4f7f494811981685e2cb10c387a7c42ba4db00a7f3",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/get-payment-status.use-case.ts",
+      "sha256": "75b11bcef747f2e283807f8bd8ba69c19a56f2b2aa94b11a7562701801ae2ab8",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/handle-dispute.use-case.ts",
+      "sha256": "13ef159c6ac12388c921e3897c21999c7218782b1102aaa1e0694c815b1a4e61",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/handle-refund.use-case.ts",
+      "sha256": "955c8ae305b32678aa94c8da05b393620e81f6d58d700366faf77ee46f475d2b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/handle-stripe-webhook.use-case.ts",
+      "sha256": "6af56fbe1618c749bb09ae9ae92377ee96fb88a101df83af73cb47e004da425a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/reconcile-payment.use-case.ts",
+      "sha256": "8dd992540ed408f21bc1023bc6087a79322b7635f31859bb57a5f17e00d06b8c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/reconcile-refunds.use-case.ts",
+      "sha256": "fa6cd94049cadc8a6af3a85b4cc0ac0e20ae24c5ae49138e2c07de0cef3b04c5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/supporter-grant.ts",
+      "sha256": "5ec1b466e1631a7eb29da9a1df8a7cb370a007b83657bf1a9a693aa4c973f513",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/sync-refunds.use-case.ts",
+      "sha256": "7bac584eaab33af5f4e257c617282e12d22f4822a5ef2befa549f81f56ec7bfa",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/domain/payment.errors.ts",
+      "sha256": "cb26e3adc4b58dcac07e97a5f33852a87fbed990dee9ff9a69adc2722cb8dbf6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/domain/payment.purpose.ts",
+      "sha256": "94edd5ed046c4904481d19e8bebbb74905eb79469d7827d9b7d1fa4ba338c47f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/infrastructure/payment.repository.ts",
+      "sha256": "e5dafc4ca181f2a2abcf2ba66d43ef54583664065e3e0b1bc012e3afd58cee0f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/infrastructure/stripe-client.ts",
+      "sha256": "b18c4e33887ade1d7069ba58b1dc1adc8d24e107236e73ed02aac3cf75b940ed",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/infrastructure/stripe-event-lock.service.ts",
+      "sha256": "8d9b6593588a96d87491951568e2ef4946f2698f341305814898b776ff356c4f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/infrastructure/stripe-refunds.ts",
+      "sha256": "2d1fb44401d4e353ec7215421a152f0dc3cb4a8467c55b8024956ab4cef1ad41",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/sales/application/sales.use-cases.ts",
+      "sha256": "7639d79e5d34d42d126604dfa3e5541c10fe25c2631d432f7e9cb4f38b5ebf2e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/sales/domain/split.ts",
+      "sha256": "140051582dd61de0a195186f35121c4d1e21c53ada1c22d064c77f9c78e6aa2c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/shared/result.ts",
+      "sha256": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/video/domain/premiere.ts",
+      "sha256": "1db131a2af72eee5738665bbc796baed8d7cb2647605de4b02a8e4c6b90fdfe9",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/payments/stripe-key-sets.ts",
+      "sha256": "c3a2672581a1d9ca1c7b3903a15591b3df805a78743b96a156c5dd1ab3570ab0",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/platform-gates.ts",
+      "sha256": "0cf8b62d59990cf34b1f5bd4abdeb5d19f63c37e6d2352e0787c83674babc266",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/patron-zone/premium-pass-fulfilment.test.ts",
+      "sha256": "14063a001b48090ee7ea31d5fc61a42d7f8478f07a1834af6e69874cea03658d",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/payments/admin-refund.use-case.test.ts",
+      "sha256": "7b694578f16050c054b48470474fe350237362750240b67ee3b4ced11aa10af5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/payments/fake-payments-db.ts",
+      "sha256": "723ae32e0e8bdc8cb6b09ca85bf34f35109508504e6bdb60f9f770f4bc2128a1",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/payments/refund-sync.test.ts",
+      "sha256": "879e03b6e9f7bba01fc722189ef76ca56e1072380fa615896cc5df81a91b2882",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/payments/stripe-webhook-signed.test.ts",
+      "sha256": "47df644f57ce013e48e2b232a73d0f52ffee76d1ff58f44db7fb7a518a769b70",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/sales/sales-use-cases.test.ts",
+      "sha256": "5322770add1dcbff74f70ca491cedfdc62eb0b7cadd3546b3cf1eacaa5f2b66f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/sales/split.test.ts",
+      "sha256": "9ad9f0941a62e701e4c9834efb23653fe7e26d95ae758bafdaae346363a6bdd5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: payment/refund/dispute/pass/sales functions, selected routes/guards/cron/documentation/tests. Not whole-file sign-off."
+    }
+  ],
+  "current_repository_instructions": {
+    "file": "CLAUDE.md",
+    "sha256": "8ae783d2f3bb70cd8abd4cbcb4570694f793d1ae41a19b4b0ea0ff007b95c310",
+    "scope": "Selected invariants and owner exception read; current instruction file includes previously authorized audit-history exception added after application baseline, so it is not counted as baseline-identical application source."
+  },
+  "actual_typescript_modules_executed": 24,
+  "actual_application_typescript_modules_executed": 23,
+  "existing_test_fake_module_executed": 1,
+  "schema_read_for_enum_names": true,
+  "generated_prisma_client_executed": false,
+  "full_application_http_executed": 0,
+  "component_experiment": {
+    "exit_code": 0,
+    "observations": 18,
+    "R31_witnesses": 2,
+    "R32_witnesses": 1,
+    "R17_witnesses": 1,
+    "actual_stripe_sdk": "20.4.1",
+    "stripe_signature_verification_executed": true,
+    "stripe_api_executed": false,
+    "model_db_transactions_and_sql_explicit": true
+  },
+  "sql_experiment": {
+    "exit_code": 0,
+    "observations": 2,
+    "database_metadata": {
+      "database": "polutek_research_1793539467",
+      "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+      "transaction_isolation": "read committed"
+    },
+    "fixtures_rolled_back": true,
+    "real_sql_tables": [
+      "Payment",
+      "UserPaymentTotal"
+    ],
+    "typescript_or_prisma_executed_in_sql_script": false,
+    "concurrent_isolation_test": false
+  },
+  "targeted_vitest": {
+    "exit_code": 1,
+    "success": false,
+    "file_count": 6,
+    "blocked_files": 6,
+    "registered_tests": 0,
+    "passed": 0,
+    "failed_assertions": 0,
+    "files": [
+      {
+        "file": "tests/unit/modules/payments/admin-refund.use-case.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "Cannot read properties of undefined (reading 'PENDING')"
+      },
+      {
+        "file": "tests/unit/modules/payments/refund-sync.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "Cannot read properties of undefined (reading 'PENDING')"
+      },
+      {
+        "file": "tests/unit/modules/payments/stripe-webhook-signed.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "Cannot read properties of undefined (reading 'PENDING')"
+      },
+      {
+        "file": "tests/unit/modules/sales/sales-use-cases.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again."
+      },
+      {
+        "file": "tests/unit/modules/sales/split.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again."
+      },
+      {
+        "file": "tests/unit/modules/patron-zone/premium-pass-fulfilment.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "Cannot read properties of undefined (reading 'PENDING')"
+      }
+    ],
+    "command": "PATH=<Node22>/bin:$PATH nice -n 10 node_modules/.bin/vitest run tests/unit/modules/payments/stripe-webhook-signed.test.ts tests/unit/modules/payments/refund-sync.test.ts tests/unit/modules/payments/admin-refund.use-case.test.ts tests/unit/modules/patron-zone/premium-pass-fulfilment.test.ts tests/unit/modules/sales/sales-use-cases.test.ts tests/unit/modules/sales/split.test.ts --maxWorkers=1 --reporter=json --outputFile=<evidence>/payment-targeted-vitest.json",
+    "full_suite_repeated": false,
+    "note": "Four files blocked on missing PaymentStatus enum; two on ungenerated Prisma client. No assertion registered; not production defects or passed tests."
+  },
+  "new_distinct_findings": [
+    "R31",
+    "R32"
+  ],
+  "existing_finding_extended": "R17",
+  "boundaries": [
+    "No production, real money, Stripe API or HTTP route dispatch.",
+    "Prisma enums parsed from baseline schema; generated Prisma runtime not loaded.",
+    "In-memory queries return snapshots; transaction queue and rollback are explicit models, not real DB isolation/advisory/row locks.",
+    "Actual repository SQL decrement is an explicit GREATEST arithmetic model, not PostgreSQL execution.",
+    "Authorization for sales is an allow stub; gate-off is actual code; no authority/security sign-off.",
+    "Synthetic Stripe webhook signing secret exists only in this process and is never emitted.",
+    "Fixed ctx.now dates simulate purchase histories; no passage of real months, browser or CDN token expiry test.",
+    "R17 fake provider intentionally does not deduplicate; no claim of a duplicate live Stripe refund.",
+    "Known manual policies for partial/refund reversal/dispute are distinguished from new R31/R32.",
+    "Actual migrated tables and GREATEST/CAS SQL; no TypeScript/Prisma/HTTP execution in this script.",
+    "No real Stripe refund/dispute lifecycle, actual webhook delivery or financial operation.",
+    "Sequential delivery histories, not a database concurrency/isolation test.",
+    "UserPaymentTotal is a per-user aggregate; this is not a demonstrated duplicate charge/refund or creator payout loss."
+  ],
+  "harness_history": "Both component and SQL scripts exited 0 on first execution. No application fixes or fake installed Prisma client. Existing fake DB wrapped to return snapshots and explicitly model rollback/SQL decrement; no claim of real locks.",
+  "known_manual_policy_not_new_findings": [
+    "Partial refund does not alter pass",
+    "Failed/reversed refund does not automatically restore pass",
+    "Disputes handled manually for pass access"
+  ],
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "executed": false,
+    "files": [
+      {
+        "file": "packages/models/src/videos/video-create-update-common.model.ts",
+        "sha256": "cb6c0b10e21f24563ea21da1612a379a6e89735699fbc760ed3169e4f7b3f326"
+      },
+      {
+        "file": "client/src/app/shared/shared-support-modal/support-modal.component.ts",
+        "sha256": "9f4508358387f9fbb5161c9c7555611080ba4c9af1944e7958615894c9ba3305"
+      },
+      {
+        "file": "client/src/app/shared/shared-support-modal/support-modal.component.html",
+        "sha256": "e687cf34b7318d664ecb2870a135f8030df7a3ccaa3f75993e1d85502ba82080"
+      }
+    ],
+    "search_scope": "Case-insensitive stripe/refund/chargeback/paymentintent/payment_intent in server/core and packages/models TypeScript yielded no matches. Support field/modal inspected; not all plugins or deployments.",
+    "scope": "Support Markdown field and modal are not a demonstrated native checkout/refund/marketplace equivalent. No unsupported claim that PeerTube is financially superior or has no possible payment plugin."
+  },
+  "independent_review": "PENDING",
+  "production_access": false,
+  "real_money_movement": false,
+  "artifact_builder_history": "Initial baseline-hash guard stopped on CLAUDE.md, whose prior authorized audit-history exception differs from the application baseline. Verified the exact historical instruction-only diff, recorded current instruction hash separately and excluded it from the baseline-identical source count. Builder then completed. Not a runtime experiment or application defect."
+}

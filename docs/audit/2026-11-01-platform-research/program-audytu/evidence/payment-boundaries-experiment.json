@@ -1,0 +1,210 @@
+{
+  "date": "2026-11-01",
+  "actual_source_sha256": {
+    "prisma/schema.prisma": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+    "tests/unit/modules/payments/fake-payments-db.ts": "723ae32e0e8bdc8cb6b09ca85bf34f35109508504e6bdb60f9f770f4bc2128a1",
+    "lib/modules/payments/application/fulfill-payment.use-case.ts": "386060febe7f6f5e6a8cdc4f7f494811981685e2cb10c387a7c42ba4db00a7f3",
+    "lib/modules/shared/result.ts": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+    "lib/modules/payments/infrastructure/payment.repository.ts": "e5dafc4ca181f2a2abcf2ba66d43ef54583664065e3e0b1bc012e3afd58cee0f",
+    "lib/modules/payments/domain/payment.errors.ts": "cb26e3adc4b58dcac07e97a5f33852a87fbed990dee9ff9a69adc2722cb8dbf6",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "lib/modules/payments/application/supporter-grant.ts": "5ec1b466e1631a7eb29da9a1df8a7cb370a007b83657bf1a9a693aa4c973f513",
+    "lib/modules/payments/domain/payment.purpose.ts": "94edd5ed046c4904481d19e8bebbb74905eb79469d7827d9b7d1fa4ba338c47f",
+    "lib/modules/payments/application/handle-refund.use-case.ts": "955c8ae305b32678aa94c8da05b393620e81f6d58d700366faf77ee46f475d2b",
+    "lib/modules/payments/application/sync-refunds.use-case.ts": "7bac584eaab33af5f4e257c617282e12d22f4822a5ef2befa549f81f56ec7bfa",
+    "lib/payments/stripe-key-sets.ts": "c3a2672581a1d9ca1c7b3903a15591b3df805a78743b96a156c5dd1ab3570ab0",
+    "lib/modules/payments/infrastructure/stripe-refunds.ts": "2d1fb44401d4e353ec7215421a152f0dc3cb4a8467c55b8024956ab4cef1ad41",
+    "lib/modules/payments/application/handle-dispute.use-case.ts": "13ef159c6ac12388c921e3897c21999c7218782b1102aaa1e0694c815b1a4e61",
+    "lib/modules/payments/application/handle-stripe-webhook.use-case.ts": "6af56fbe1618c749bb09ae9ae92377ee96fb88a101df83af73cb47e004da425a",
+    "lib/modules/payments/infrastructure/stripe-event-lock.service.ts": "8d9b6593588a96d87491951568e2ef4946f2698f341305814898b776ff356c4f",
+    "lib/modules/patron-zone/domain/pass-state.ts": "1f93611a31e97279f89de58e1c576cbfe052236c1b33ae0a634824537da8c704",
+    "lib/modules/patron-zone/domain/config.ts": "ddee4ca710b7e7977d49d5de2ea1a19ba901ff609dc9f8ad21da05b7849c0bf5",
+    "lib/modules/video/domain/premiere.ts": "1db131a2af72eee5738665bbc796baed8d7cb2647605de4b02a8e4c6b90fdfe9",
+    "lib/constants.ts": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+    "lib/modules/sales/application/sales.use-cases.ts": "7639d79e5d34d42d126604dfa3e5541c10fe25c2631d432f7e9cb4f38b5ebf2e",
+    "lib/platform-gates.ts": "0cf8b62d59990cf34b1f5bd4abdeb5d19f63c37e6d2352e0787c83674babc266",
+    "lib/modules/sales/domain/split.ts": "140051582dd61de0a195186f35121c4d1e21c53ada1c22d064c77f9c78e6aa2c",
+    "lib/modules/patron-zone/application/patron-grant.ts": "e293c882d13e3f6dfb79c29becfdcd2817ecd26cdfa90b711d1f26fb9c635e93",
+    "lib/modules/patron-zone/infrastructure/pass-store.ts": "ce8ca08fa547f7e6e9e94e504d9aaa452195148fff410f8c8d669348846305ba"
+  },
+  "actual_stripe_sdk_version": "20.4.1",
+  "explicit_boundaries": [
+    "lib/modules/patron-zone/application/patron-grant.ts => @/lib/observability",
+    "lib/modules/patron-zone/domain/config.ts => @/lib/premiere",
+    "lib/modules/payments/application/fulfill-payment.use-case.ts => @/lib/logger",
+    "lib/modules/payments/application/fulfill-payment.use-case.ts => @/lib/modules/audit",
+    "lib/modules/payments/application/fulfill-payment.use-case.ts => @/lib/modules/email",
+    "lib/modules/payments/application/fulfill-payment.use-case.ts => @/lib/modules/patron",
+    "lib/modules/payments/application/fulfill-payment.use-case.ts => @/lib/modules/patron-zone",
+    "lib/modules/payments/application/fulfill-payment.use-case.ts => @/lib/observability",
+    "lib/modules/payments/application/fulfill-payment.use-case.ts => @prisma/client",
+    "lib/modules/payments/application/handle-dispute.use-case.ts => @/lib/logger",
+    "lib/modules/payments/application/handle-dispute.use-case.ts => @/lib/observability",
+    "lib/modules/payments/application/handle-dispute.use-case.ts => @prisma/client",
+    "lib/modules/payments/application/handle-refund.use-case.ts => @/lib/logger",
+    "lib/modules/payments/application/handle-refund.use-case.ts => @/lib/modules/patron-zone",
+    "lib/modules/payments/application/handle-refund.use-case.ts => @/lib/observability",
+    "lib/modules/payments/application/handle-refund.use-case.ts => @prisma/client",
+    "lib/modules/payments/application/handle-stripe-webhook.use-case.ts => ../infrastructure/stripe-client",
+    "lib/modules/payments/application/handle-stripe-webhook.use-case.ts => @/lib/logger",
+    "lib/modules/payments/application/handle-stripe-webhook.use-case.ts => @/lib/observability",
+    "lib/modules/payments/application/supporter-grant.ts => @/lib/modules/audit",
+    "lib/modules/payments/application/supporter-grant.ts => @/lib/modules/patron",
+    "lib/modules/payments/application/supporter-grant.ts => @prisma/client",
+    "lib/modules/payments/application/sync-refunds.use-case.ts => ../infrastructure/stripe-client",
+    "lib/modules/payments/application/sync-refunds.use-case.ts => @/lib/logger",
+    "lib/modules/payments/application/sync-refunds.use-case.ts => @/lib/observability",
+    "lib/modules/payments/infrastructure/payment.repository.ts => @prisma/client",
+    "lib/modules/payments/infrastructure/stripe-event-lock.service.ts => @/lib/logger",
+    "lib/modules/payments/infrastructure/stripe-event-lock.service.ts => @/lib/observability",
+    "lib/modules/payments/infrastructure/stripe-event-lock.service.ts => @/lib/prisma",
+    "lib/modules/payments/infrastructure/stripe-event-lock.service.ts => @prisma/client",
+    "lib/modules/sales/application/sales.use-cases.ts => @/lib/modules/audit",
+    "lib/modules/sales/application/sales.use-cases.ts => @/lib/modules/authz",
+    "tests/unit/modules/payments/fake-payments-db.ts => @prisma/client"
+  ],
+  "observations": [
+    {
+      "name": "fulfillment_replay_once",
+      "status": "SUCCEEDED",
+      "total_minor": 1499,
+      "payment_ids": 1,
+      "access": "active"
+    },
+    {
+      "name": "mismatch_amount_denied",
+      "accepted": false,
+      "payment_status": "PENDING",
+      "grant_present": false
+    },
+    {
+      "name": "mismatch_currency_denied",
+      "accepted": false,
+      "payment_status": "PENDING",
+      "grant_present": false
+    },
+    {
+      "name": "mismatch_intent_denied",
+      "accepted": false,
+      "payment_status": "PENDING",
+      "grant_present": false
+    },
+    {
+      "name": "mismatch_user_denied",
+      "accepted": false,
+      "payment_status": "PENDING",
+      "grant_present": false
+    },
+    {
+      "name": "refund_before_fulfillment_retried",
+      "accepted": false,
+      "total_minor": 0
+    },
+    {
+      "name": "refund_one_of_two_contiguous_periods",
+      "before_expiry": "2026-04-30T00:00:00.000Z",
+      "after_expiry": "2026-03-31T00:00:00.000Z",
+      "access": "active",
+      "total_minor": 1499,
+      "replay_unchanged": true
+    },
+    {
+      "name": "refund_expired_period_removes_new_purchase",
+      "finding": "R31",
+      "before_expiry": "2026-03-31T00:00:00.000Z",
+      "after_expiry": "2026-03-01T00:00:00.000Z",
+      "remaining_payment_status": "SUCCEEDED",
+      "remaining_payment_ids": [
+        "new_b"
+      ],
+      "access": "expired",
+      "total_minor": 1499
+    },
+    {
+      "name": "refund_latest_of_two_lifetime_payments",
+      "finding": "R31",
+      "lifetime": false,
+      "access": "expired",
+      "remaining_payment_status": "SUCCEEDED",
+      "remaining_payment_ids": [
+        "life_a"
+      ],
+      "precondition": "Two independently paid lifetime intents; checkout dispatch not executed. Repeated test purchases are explicitly allowed; live requires overlapping in-flight attempts."
+    },
+    {
+      "name": "refund_older_lifetime_keeps_latest",
+      "lifetime": true,
+      "access": "active"
+    },
+    {
+      "name": "partial_refund_leaves_access_known_policy",
+      "payment_status": "PARTIALLY_REFUNDED",
+      "access": "active",
+      "known_manual_policy": true
+    },
+    {
+      "name": "failed_refund_needs_manual_access_restore",
+      "payment_status": "SUCCEEDED",
+      "access": "expired",
+      "known_manual_policy": true
+    },
+    {
+      "name": "refund_sync_before_lost_dispute_control",
+      "finding": null,
+      "expected_other_tip_total_minor": 500,
+      "actual_total_minor": 500,
+      "refunded_minor": 400,
+      "status": "CHARGEBACK_LOST",
+      "limit": "Sequential local delivery histories and explicit GREATEST SQL model; no real Stripe refund/dispute lifecycle or PostgreSQL."
+    },
+    {
+      "name": "late_refund_sync_after_lost_dispute",
+      "finding": "R32",
+      "expected_other_tip_total_minor": 500,
+      "actual_total_minor": 100,
+      "refunded_minor": 400,
+      "status": "CHARGEBACK_LOST",
+      "limit": "Sequential local delivery histories and explicit GREATEST SQL model; no real Stripe refund/dispute lifecycle or PostgreSQL."
+    },
+    {
+      "name": "real_sdk_signature_tamper_and_duplicate",
+      "modified_body_accepted": false,
+      "valid_outcome": "processed",
+      "replay_outcome": "duplicate",
+      "total_minor": 1499
+    },
+    {
+      "name": "sales_closed_control",
+      "accepted": false,
+      "provider_calls": 0,
+      "local_refunded_minor": 0
+    },
+    {
+      "name": "sales_failure_control",
+      "accepted": false,
+      "provider_calls": 1,
+      "local_refunded_minor": 0
+    },
+    {
+      "name": "sales_parallel_refunds_external_before_cas",
+      "finding": "R17",
+      "fake_provider_operations": 2,
+      "fake_provider_refunded_minor": 600,
+      "local_refunded_minor": 300,
+      "local_ledger_entries": 1,
+      "rejected_calls": 1,
+      "operation_key_provided": false
+    }
+  ],
+  "limits": [
+    "No production, real money, Stripe API or HTTP route dispatch.",
+    "Prisma enums parsed from baseline schema; generated Prisma runtime not loaded.",
+    "In-memory queries return snapshots; transaction queue and rollback are explicit models, not real DB isolation/advisory/row locks.",
+    "Actual repository SQL decrement is an explicit GREATEST arithmetic model, not PostgreSQL execution.",
+    "Authorization for sales is an allow stub; gate-off is actual code; no authority/security sign-off.",
+    "Synthetic Stripe webhook signing secret exists only in this process and is never emitted.",
+    "Fixed ctx.now dates simulate purchase histories; no passage of real months, browser or CDN token expiry test.",
+    "R17 fake provider intentionally does not deduplicate; no claim of a duplicate live Stripe refund.",
+    "Known manual policies for partial/refund reversal/dispute are distinguished from new R31/R32."
+  ]
+}

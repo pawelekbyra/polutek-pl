@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-01",
+  "kind": "REAL_LOCAL_POSTGRESQL_INSPECTED_REFUND_DISPUTE_PROTOCOL",
+  "database_metadata": {
+    "database": "polutek_research_1793539467",
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "transaction_isolation": "read committed"
+  },
+  "application_source_sha256": {
+    "prisma/schema.prisma": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+    "lib/modules/payments/application/handle-dispute.use-case.ts": "13ef159c6ac12388c921e3897c21999c7218782b1102aaa1e0694c815b1a4e61",
+    "lib/modules/payments/application/handle-refund.use-case.ts": "955c8ae305b32678aa94c8da05b393620e81f6d58d700366faf77ee46f475d2b",
+    "lib/modules/payments/infrastructure/payment.repository.ts": "e5dafc4ca181f2a2abcf2ba66d43ef54583664065e3e0b1bc012e3afd58cee0f"
+  },
+  "observations": [
+    {
+      "name": "refund_before_lost_dispute_control",
+      "finding": null,
+      "expected_total_minor": 500,
+      "payment_status": "CHARGEBACK_LOST",
+      "refunded_minor": 400,
+      "other_payment_minor": 500,
+      "actual_total_minor": 500
+    },
+    {
+      "name": "late_refund_after_lost_dispute",
+      "finding": "R32",
+      "expected_total_minor": 500,
+      "payment_status": "CHARGEBACK_LOST",
+      "refunded_minor": 400,
+      "other_payment_minor": 500,
+      "actual_total_minor": 100
+    }
+  ],
+  "fixtures_rolled_back": true,
+  "limits": [
+    "Actual migrated tables and GREATEST/CAS SQL; no TypeScript/Prisma/HTTP execution in this script.",
+    "No real Stripe refund/dispute lifecycle, actual webhook delivery or financial operation.",
+    "Sequential delivery histories, not a database concurrency/isolation test.",
+    "UserPaymentTotal is a per-user aggregate; this is not a demonstrated duplicate charge/refund or creator payout loss."
+  ]
+}

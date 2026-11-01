@@ -21,11 +21,13 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [Scenariusze wejść](program-audytu/SCENARIUSZE-WEJSCIA.csv) | 25 obserwacji czytników i procesów; pełne HTTP/proxy oraz docelowy build FFmpeg do sprawdzenia |
 | [Scenariusze pipeline](program-audytu/SCENARIUSZE-PIPELINE.csv) | 11 obserwacji komponentów, osobne dowody SQL i otwarta walidacja pełnego stosu |
 | [Scenariusze odtwarzania](program-audytu/SCENARIUSZE-ODTWARZANIE.csv) | 38 obserwacji decyzji/planu, sesji i Workera z jawnymi granicami I/O i symulowanym czasem |
+| [Scenariusze płatności](program-audytu/SCENARIUSZE-PLATNOSCI.csv) | 18 obserwacji komponentów i dwa protokoły PostgreSQL; pełny Stripe/HTTP do wykonania |
 | [Niezmienniki danych](program-audytu/NIEZMIENNIKI-DANYCH.csv) | Wyniki bezpośrednich prób SQL oddzielone od pełnej oceny aplikacji |
+| [D10: płatności i rozliczenia](program-audytu/obszary/D10-PLATNOSCI-I-ROZLICZENIA.md) | R31: refund odbiera inny opłacony pakiet; R32: zaniżona suma wpłat; R17 przyszłego marketplace, osobne dowody komponentów i SQL |
 | [D11: moderacja i nadużycia](program-audytu/obszary/D11-MODERACJA-I-NADUZYCIA.md) | Granice komentarzy, banów i odwołań; R25: stare odwołanie cofa nowsze ograniczenie po cyklu statusu |
 | [Scenariusze pełnego HTTP](program-audytu/SCENARIUSZE-D03-D04.csv) | 46 planowanych prób; osobne kolumny dla dowodów izolowanych i SQL, powiązania z D06/D07/D08/D11/D14 |
 | [Powierzchnia wejść](program-audytu/POWIERZCHNIA-WEJSC.csv) | Trasy, Server Actions, strony, zdarzenia workerów i wejścia operacyjne do kontroli |
-| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R30, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
+| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R32, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
 | [Plan eksperymentów i pomiarów](PLAN-WERYFIKACJI.md) | Dalsze testy runtime, awarie, benchmark i model kosztów |
@@ -68,6 +70,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/progra
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/playback-access-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/input-boundaries-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/ffmpeg-input-experiment.mjs
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/payment-boundaries-experiment.cjs
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/payment-total-sql-experiment.py
 ```
 
 Pierwsze dwa eksperymenty wywołują rzeczywisty procesor/klasę magazynu z atrapami portów. Nie łączą się z R2 ani produkcyjną bazą. Nie zastępują pełnych testów lokalnego stosu.
@@ -87,3 +91,5 @@ Dziesiąty wykonuje rzeczywistą decyzję dostępu, pełny PlaybackService, podp
 Pełna walidacja runtime była zablokowana pobieraniem silnika/checksum Prisma. Ten stan pozostaje jawną niewiadomą, nie domyślnym zaliczeniem testów.
 
 Jedenasty skrypt wykonuje rzeczywiste czytniki na native Request/FormData, z jawnymi niewywołanymi atrapami importów tożsamości/kontekstu. Dwunasty wymaga lokalnego ffmpeg/ffprobe i możliwości otwarcia własnego portu loopback; tworzy i usuwa fixture, nie używa produkcji. Host 7.1.5 nie zastępuje docelowego Docker 8.0.1. Szczegóły i nie w pełni zaliczony przebieg pięciu plików Vitest (38 passed, jeden plik zablokowany przez Prisma) opisuje D05. Nowe npm audit nie zostało wykonane po automatycznej odmowie ujawnienia grafu zależności.
+
+Trzynasty skrypt wykonuje komponenty płatności i prawdziwy HMAC SDK Stripe na syntetycznym sekrecie: 18 obserwacji, jawne atrapy DB/Stripe API/audytu, bez sieci i pieniędzy. Czternasty korzysta z lokalnej badawczej bazy i helpera siódmego skryptu: dwa sekwencyjne protokoły SQL, własne fixture ROLLBACK. Nie uruchamiają pełnej aplikacji/Prisma. D10 osobno zapisuje sześć plików Vitest zablokowanych przed rejestracją, zero wykonanych testów.
