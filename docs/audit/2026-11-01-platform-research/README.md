@@ -13,9 +13,10 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [D01: produkt i zakres](program-audytu/obszary/D01-PRODUKT-I-ZAKRES.md) | 22 obietnice produktu i rozdzielenie implementacji od aktywnej konfiguracji |
 | [D03: tożsamość i sesje](program-audytu/obszary/D03-TOZSAMOSC-I-SESJE.md) | Konta WWW/panelu, zakres R13/R14 i R24: realny pomiar cofania sesji w izolowanym HTTP biblioteki |
 | [D04: role i izolacja](program-audytu/obszary/D04-ROLE-I-IZOLACJA.md) | Role, R23 oraz 19 obserwacji zakresu playlist i kolejki na rzeczywistych funkcjach z atrapą DB |
-| [Scenariusze D03/D04](program-audytu/SCENARIUSZE-D03-D04.csv) | 43 planowane próby pełnego HTTP Polutka; osobne kolumny dla dowodów izolowanych |
+| [D11: moderacja i nadużycia](program-audytu/obszary/D11-MODERACJA-I-NADUZYCIA.md) | Granice komentarzy, banów i odwołań; R25: stare odwołanie cofa nowsze ograniczenie po cyklu statusu |
+| [Scenariusze D03/D04](program-audytu/SCENARIUSZE-D03-D04.csv) | 44 planowane próby pełnego HTTP Polutka; osobne kolumny dla dowodów izolowanych i powiązania z D07/D11 |
 | [Powierzchnia wejść](program-audytu/POWIERZCHNIA-WEJSC.csv) | Trasy, Server Actions, strony, zdarzenia workerów i wejścia operacyjne do kontroli |
-| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R24, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
+| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R25, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
 | [Plan eksperymentów i pomiarów](PLAN-WERYFIKACJI.md) | Dalsze testy runtime, awarie, benchmark i model kosztów |
@@ -51,6 +52,7 @@ node --import tsx docs/audit/2026-11-01-platform-research/storage-experiment.ts
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/identity-context-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/session-revocation-experiment.mjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/resource-scope-experiment.cjs
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/moderation-boundaries-experiment.cjs
 ```
 
 Pierwsze dwa eksperymenty wywołują rzeczywisty procesor/klasę magazynu z atrapami portów. Nie łączą się z R2 ani produkcyjną bazą. Nie zastępują pełnych testów lokalnego stosu.
@@ -58,5 +60,7 @@ Pierwsze dwa eksperymenty wywołują rzeczywisty procesor/klasę magazynu z atra
 Trzeci skrypt wykonuje niezmienione moduły TypeScript przez transpiler z jawnymi atrapami I/O. Odtwarza decyzje tożsamości/uprawnień oraz utratę kanału w finalizerze. Nie używa wygenerowanego klienta Prisma, nie wykonuje faktycznej publikacji i nie zmienia wyniku zablokowanych testów aplikacji na zaliczony.
 
 Czwarty uruchamia prawdziwy serwer HTTP Better Auth pod 127.0.0.1 z oficjalnym adapterem pamięci i stałymi sesji Polutka. Zajmuje około 62 sekund rzeczywistego czasu; wartości cookie i sekretów nie są drukowane. Nie uruchamia Next ani produkcyjnej integracji auth. Piąty sprawdza 19 przypadków playlist i kolejki na rzeczywistych funkcjach, z atrapą bazy. Szczegóły i granice dowodu opisują D03/D04.
+
+Szósty wykonuje 26 obserwacji moderacji i języków panelu z atrapami I/O. Dwa warianty odtwarzają ten sam R25 dla kanału i filmu; pozostałe są kontrolami i przykładami poprawnych granic. Brak prawdziwej DB, HTTP i dispatchu Server Actions; szczegóły w D11/D04.
 
 Pełna walidacja runtime była zablokowana pobieraniem silnika/checksum Prisma. Ten stan pozostaje jawną niewiadomą, nie domyślnym zaliczeniem testów.

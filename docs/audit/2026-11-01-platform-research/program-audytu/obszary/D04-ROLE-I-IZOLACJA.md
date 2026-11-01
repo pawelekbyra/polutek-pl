@@ -1,6 +1,6 @@
 # D04 — role i izolacja twórców
 
-1 listopada 2026, partie 02–03. **W_TRAKCIE.** SHA Polutka: `c397b9e548ca2c628e21457ac69d66e54b12ddbd`. Zakres: rdzeń uprawnień, kontekst Studia, wybrane ścieżki filmów/uploadu, przekazanie kanału do automatycznej publikacji, a następnie playlisty i stan/anulowanie kodowania. Nie zakończono przeglądu wszystkich 279 wejść systemu.
+1 listopada 2026, partie 02–04. **W_TRAKCIE.** SHA Polutka: `c397b9e548ca2c628e21457ac69d66e54b12ddbd`. Zakres: rdzeń uprawnień, Studio, wybrane filmy/upload, autopublikacja, playlisty i stan/anulowanie kodowania, a następnie granice moderacji i języki panelu. Nie zakończono przeglądu wszystkich 279 wejść systemu.
 
 ## Wniosek dla właściciela
 
@@ -99,6 +99,20 @@ To mocniejszy dowód niż samo znalezienie wywołania guarda: podmieniane są id
 **Otwarte kwestie, bez nowego potwierdzonego znaleziska:** playlistowy lock bierze ID przed `findInChannel`, więc trzeba ocenić zakres blokowania obcego wiersza; limit liczby playlist jest sprawdzany przez COUNT bez widocznego wspólnego locka kanału; uprawnienia są sprawdzane przed wejściem w transakcję. Nie wywołano jeszcze rzeczywistego przeciążenia, przekroczenia quota ani cofnięcia członkostwa w środku transakcji. Te pytania należą także do D06/D07/D14. Nie należy zmieniać ich w dowiedzione obejście uprawnień bez sprawdzenia osiągalności i uzgodnionej granicy operacji.
 
 R24 z [D03](D03-TOZSAMOSC-I-SESJE.md) dotyczy rozpoznania tożsamości na wejściu. Poprawne ograniczenie zasobu nie zastępuje cofnięcia sesji: urządzenie rozpoznane z cache nadal może działać z aktualnie zachowaną rolą. Odebranie członkostwa i cofnięcie sesji są osobnymi zdarzeniami do zbadania.
+
+## Partia 04 — moderator, odwołania i tłumacz panelu
+
+W [D11](D11-MODERACJA-I-NADUZYCIA.md) zapisano szczegóły moderacji, banów i R25: cofnięcia nowszego ograniczenia przez stare odwołanie po cyklu statusu. Użycie cudzego ID decyzji i listy mieszającej komentarze własnego/obcego kanału zostało odrzucone w izolowanym eksperymencie. Zawieszony właściciel nadal może utworzyć odwołanie, a wynik dla twórcy pomija reasonInternal. Nie jest to pełne zaliczenie wszystkich ścieżek moderacji.
+
+**Uprawnienia tłumacza panelu mają łańcuch serwerowy:** [requireAdmin](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/apps/admin/lib/auth/guard.ts) → [openGate](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/apps/admin/lib/actions/gate.ts) → [panelContext](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/apps/admin/lib/actions/panel.ts#L19) → [saveFilmTranslation](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/modules/translations/application/translations.ts#L76). Tłumacz dostaje allowedLanguages z wierszy AdminLanguageGrant; użytkownik nie przekazuje tej listy w FormData. Przełącznik roli w interfejsie nie jest tu jedynym zabezpieczeniem.
+
+W [akcjach tłumaczeń](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/apps/admin/app/%28panel%29/tresci/translation-actions.ts) zapis jawnie dopuszcza OWNER/TRANSLATOR, a zatwierdzanie i generowanie AI pozostają przy domyślnym OWNER. Funkcja zapisu sprawdza język; zatwierdzanie odmawia przy obecnym allowedLanguages, również przy pustej tablicy. Pusta tablica nie oznacza pełnych uprawnień.
+
+Sześć prób w [eksperymencie](../evidence/moderation-boundaries-experiment.json): translator z DE może zapisać DE; zapis FR i zapis DE przy pustych grantach są odrzucone bez zapisu. Translator z DE lub z pustymi grantami nie zatwierdza szkiców; właściciel bez ograniczenia językowego może zatwierdzić. To wywołania rzeczywistych funkcji ze zbudowanym kontekstem i atrapą DB. Nie sprawdzają kryptografii Access, pobrania grantów, aktualizacji roli w trakcie żądania ani prawdziwego dispatchu Server Actions.
+
+Strona tłumacza filtruje wyświetlane języki, a moduł odczytuje film w kanale kontekstu. Helper `setTranslationSubtitle` nie ma własnej kontroli języka. Nie uznano tego automatycznie za obejście: przejrzany [upload napisów](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/apps/admin/app/api/videos/%5Bid%5D/subtitles/%5Blang%5D/route.ts) używa panelRouteContext → adminFromRequest z domyślnym OWNER. Potrzebny jest jeszcze pełny test bezpośrednich żądań i pozostałych wywołujących, a przy przyszłym udostępnieniu napisów tłumaczom konieczna będzie ocena tej granicy.
+
+**Istotna zależność architektoniczna:** allowedLanguages nieobecne oznacza w module brak ograniczeń, a aktor panelu OWNER i TRANSLATOR ma ten sam typ admin. Część kontroli jest więc w gate i poprawnym tworzeniu kontekstu, nie w samym typie aktora. Nie wykazano osiągalnego obejścia istniejącego wejścia HTTP, ale nowe wejście nie może pomijać tego łańcucha. Osobno trzeba sprawdzić wszystkie akcje, odczyty, napisy i generowanie AI po cofnięciu grantów.
 
 ## Co warto przejąć z PeerTube
 

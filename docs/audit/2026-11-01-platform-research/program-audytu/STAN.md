@@ -1,13 +1,13 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 1 listopada 2026. Program v1.0, partia 03: cofnięcie sesji oraz playlisty i cancel/state. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 1 listopada 2026. Program v1.0, partia 04: moderacja, odwołania i języki panelu. Tryb: analiza, bez zmian aplikacji i produkcji.
 
 ## Cel i decyzje właściciela
 
 - Docelowo duża platforma konkurująca z PeerTube funkcjami i skalą.
 - Badanie ma być pogłębione i wieloobszarowe. Właściciel nie programuje; wnioski mają objaśniać wpływ na produkt i biznes.
 - Dotychczasowe porównanie jest bazą i próbą metody, a nie zamkniętym pełnym audytem.
-- Program i źródła są przygotowane. Rozpoczęto D01, D03 i D04; nie wykonano pełnej oceny 345 wymagań.
+- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D07 i D11; nie wykonano pełnej oceny 345 wymagań.
 - Następnie właściciel polecił zachować poprzednie badanie i rozwijać całość na jednej gałęzi GitHub: `docs/polutek-platform-audit`. Katalog w repo: `docs/audit/2026-11-01-platform-research/`. Po każdej partii commit i push; bez automatycznego scalenia ani wdrożenia.
 
 ## Wersje
@@ -15,7 +15,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 03: cofnięcie sesji oraz p
 - Polutek: `/workspace/polutek-pl`, `c397b9e548ca2c628e21457ac69d66e54b12ddbd`.
 - PeerTube: `/workspace/PeerTube`, `fa7d2b5d8a44bbec99159b11e91763f7d2308faa`.
 - Program: [PROGRAM.md](PROGRAM.md).
-- Rodzic commitu partii 03: `310316505808c759c157c74eba59cdb66a7168fc`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
+- Rodzic commitu partii 04: `bf5bc2c113176cb7d485e253cfb7da4bf795b932`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
 
 ## Gotowe
 
@@ -40,6 +40,11 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 03: cofnięcie sesji oraz p
 19. [19 obserwacji zasobów](evidence/resource-scope-experiment.json): 12 playlist i 7 cancel/state, rzeczywiste use case'y/authz/repozytoria z atrapą DB. Odmowy dla cudzych zasobów bez zmian stanu, legalne kontrole dodatnie działają. Rollback dotyczy atrapy, nie poziomu izolacji PostgreSQL. Nie powtarzano Vitest; jego wyniki z partii 02 pozostają takie same.
 20. Aktualnie 43 scenariusze pełnego HTTP Polutka (dodano IA-043); wszystkie pełne próby nadal NIEWYKONANE. Osobne kolumny rozróżniają wykonane izolowane HTTP biblioteki i funkcje. Rozpoczęto 25 rekordów wejść, 254 NIEZBADANE. ASVS nadal 28 W_TRAKCIE i 317 NIEZBADANE, zero zaliczonych. Uzupełniono R24 przy wymaganiach cofnięcia sesji i zmian uprawnień.
 21. Oficjalny opis Better Auth v1.7.7 pobrany online potwierdza kompromis cache i środki ograniczające jego wpływ. PeerTube jawnie czyści serwerowy cache i rozsyła unieważnienia; nie testowano tego przy awarii Redis. Otwarte pytania playlist: COUNT pod współbieżnym tworzeniem, lock po ID przed sprawdzeniem kanału, cofnięcie członkostwa między authorize a zapisem. Nie są jeszcze potwierdzonymi usterkami.
+22. Partia 04: [D11](obszary/D11-MODERACJA-I-NADUZYCIA.md), aktualizacja [D04](obszary/D04-ROLE-I-IZOLACJA.md), [44 wskazane pliki w częściowym zakresie](evidence/batch04-review.json), z nakładaniem na wcześniejsze partie. Prześledzono moderację komentarzy/banów, odwołania i granty językowe panelu. Nie jest to ukończony przegląd 44 całych plików ani pełny test wejść.
+23. [26 obserwacji](evidence/moderation-boundaries-experiment.json): 6 rozstrzygnięć/historii stanu, 4 granic odwołań/DTO, 2 komentarzy, 8 banów/guardów i 6 języków. Kod rzeczywisty, jawne atrapy DB/audytu/powiadomień/synchronizacji EN; brak HTTP, Access i prawdziwej DB. Nie ponawiano Vitest.
+24. R25 potwierdzone w modelu: po SUSPENDED → ACTIVE → nowym SUSPENDED stare odwołanie przywraca ACTIVE; po REMOVED → VISIBLE → nowym REMOVED przywraca VISIBLE. Oryginalna decyzja bez nowszej cofa się prawidłowo, późniejszy inny status pozostaje. Problem porównania wartości zamiast tożsamości decyzji występuje nawet przy sekwencyjnych działaniach. P1 przed szerszą moderacją, niezależny przegląd PENDING, brak dowodu wystąpienia na produkcji.
+25. Kontrole dodatnie: cudze odwołanie i komentarze odrzucone; zawieszony OWNER może się odwołać; creator DTO nie ujawnia reasonInternal; moderator nie banuje cudzego kanału; EDITOR nie banuje; brak banowania siebie/członków/ADMIN. Translator nie zapisuje nieprzydzielonego języka i nie zatwierdza szkiców nawet z pustymi grantami. Źródłowo sprawdzono gate/context i domyślne OWNER przy uploadzie napisów; nie zaliczono prawdziwego dispatchu Server Actions.
+26. Aktualnie 44 scenariusze pełnego HTTP (nowy IA-044 dla R25); wszystkie pełne próby nadal NIEWYKONANE. 45 rekordów wejść W_TRAKCIE, 234 NIEZBADANE. ASVS: 31 W_TRAKCIE, 314 NIEZBADANE, zero zaliczonych. D07/D11 rozpoczęto częściowo; R25 ma własny wpis, a historyczne raporty/wyniki pozostają zachowane.
 
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
@@ -60,7 +65,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 03: cofnięcie sesji oraz p
 
 ## Następne działanie
 
-Kontynuować D03/D04: moderacja/bany/odwołania, role i dozwolone języki panelu oraz Server Actions. Dla R24 przejść od biblioteki do pełnego Polutka dopiero po udanym przygotowaniu Prisma; nie powtarzać samego pomiaru 62 s bez zmiany warunków. W playlistach i cancel/state kontynuować brakujące odczyty/pola, współbieżność i uprawnienia zmienione w trakcie operacji; podstawowe wiązanie identyfikatorów ma już odtwarzalny dowód, nie zaczynać go od nowa. Sprawdzić granice tworzenia aktora system i zawieszenie kanału podczas zadania. R23 wymaga drugiego przeglądu i rzeczywistego workera. Wszystkie pełne scenariusze HTTP nadal otwarte. D01/D03/D04 pozostają W_TRAKCIE. Nie implementować poprawek w ramach audytu; docelowa skala, SLO i budżet nadal otwarte.
+Przejść do D06/D07: integralność schematu i wersjonowanie stanów, powiązania video/original/job/asset oraz transakcje/ponowienia. Zacząć od niezmienników, które powinny bronić przed podmianą zasobu i utratą aktualnej decyzji; R25 ma już odtwarzalną reprodukcję i wymaga drugiego przeglądu, nie kolejnego identycznego eksperymentu. Można wykorzystać istniejącą lokalną bazę SQL i psql po sprawdzeniu jej stanu, bez udawania poprawnie wygenerowanego Prisma. W D11 pozostają pełne mutacje komentarzy/bulk/undo, zgłoszenia, koszt ataku i awarie powiadomień. W D04 pozostaje pełne wywołanie panelowych Server Actions i odwołanie grantów w trakcie operacji. R23/R24/R25 wymagają pełnego stosu po odblokowaniu Prisma; samego pomiaru 62 s nie powtarzać. Nie implementować poprawek ani wdrożeń w audycie; skala, SLO i budżet nadal otwarte.
 
 Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
 

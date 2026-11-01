@@ -613,6 +613,45 @@
       "retest": null,
       "created_at": "2026-11-01",
       "deployment_scope": "WWW_SESSION_CONFIGURATION;PRODUCTION_REPLAY_NOT_TESTED"
+    },
+    {
+      "id": "R25",
+      "title": "Stare odwołanie może cofnąć nowszą decyzję po powrocie do tego samego statusu",
+      "kind": "USTERKA",
+      "priority": "P1_PRZED_SZERSZA_MODERACJA",
+      "baseline_priority_and_evidence": "NEW: P1, actual-source reproduction with fake persistence + source review",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ISOLATED_ACTUAL_SOURCE_WITH_FAKE_IO_AND_B_SOURCE",
+      "note": "Dwa warianty jednego błędu dla kanału i filmu. Nie wymaga równoległości; nie potwierdzono zdarzenia na produkcji.",
+      "source_report": "obszary/D11-MODERACJA-I-NADUZYCIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D07",
+        "D11"
+      ],
+      "impact_plain_language": "Uwzględnienie odwołania od decyzji A może znieść aktualne ograniczenie pochodzące z innej, nowszej decyzji B.",
+      "conditions": "A nadaje SUSPENDED/REMOVED; następuje przywrócenie i nowa decyzja ponownie nadająca tę samą wartość; personel uwzględnia stare odwołanie; cofanie sprawdza status bez wersji/tożsamości aktualnej decyzji.",
+      "evidence_paths": [
+        "evidence/moderation-boundaries-experiment.json",
+        "tools/moderation-boundaries-experiment.cjs",
+        "evidence/batch04-review.json",
+        "obszary/D11-MODERACJA-I-NADUZYCIA.md"
+      ],
+      "counterarguments": [
+        "Jeżeli nowszy status ma inną wartość, kod nie cofa go; odtworzono tę kontrolę.",
+        "Legalne cofnięcie jedynej pierwotnej decyzji nadal działa; odtworzono kontrolę dodatnią.",
+        "Wymaga uwzględnienia starego odwołania przez uprawniony personel; twórca nie może samodzielnie wywołać funkcji staff.",
+        "Główny kanał nie może być zawieszony, lecz sekwencja nadal dotyczy filmu i innych kanałów.",
+        "Nie wykonano prawdziwej DB ani HTTP; dowód dotyczy rzeczywistej funkcji, dozwolonych przejść źródłowych i zgodnie filtrującej atrapy.",
+        "Istniejący test W03 podstawia count=0, nie odwzorowuje cyklu statusu."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Wiązać skutek z ID aktualnej decyzji lub wersją stanu; w tej samej spójnej operacji rozstrzygać, czy wolno cofnąć A bez cofnięcia B. Samo porównanie wartości statusu nie wystarcza.",
+      "acceptance_test": "DB i oba typy celu: pierwotny stan, nowszy inny stan, cykl z nową taką samą wartością i zapis równoległy. A nie cofa B; legalny rollback A działa; retry nie dubluje efektu; audyt/outcome są spójne.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "MODERATION_APPEAL_CODE;PRODUCTION_OCCURRENCE_NOT_VERIFIED"
     }
   ]
 }

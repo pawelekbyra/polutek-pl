@@ -47,3 +47,12 @@
 - Rozszerzono częściowy przegląd o osiem metod playlist, dwie pipeline i trzy powiązane wejścia użytkownika. Aktualnie 25 rekordów W_TRAKCIE i 254 NIEZBADANE. Rejestr scenariuszy ma 43 pozycje i oddzielny wynik izolowany.
 - Zachowano 28 rozpoczętych i zero zaliczonych wymagań ASVS. Otwarte pytania quota/lock/czasu cofnięcia członkostwa są pytaniami, nie dodatkowymi dowiedzionymi lukami.
 - Porównano unieważnianie cache PeerTube i zapisano dokumentację/licencję Better Auth z oficjalnego tagu. Nie kopiowano implementacji PeerTube. Aplikacja i produkcja pozostają bez zmian.
+
+## 1 listopada 2026 — partia 04: moderacja, języki panelu i R25
+
+- Częściowo prześledzono granice kanałów przy komentarzach/banach, tworzenie i rozstrzyganie odwołań oraz gate → panelContext → granty języków. Wykaz 44 plików opisuje częściowy zakres, nakładający się na wcześniejsze partie.
+- Nowy odtwarzalny eksperyment ma 26 obserwacji rzeczywistych funkcji z atrapami. Poprawne odmowy i legalne kontrole zapisano obok dwóch reprodukcji jednego R25.
+- R25: stare odwołanie cofa nowsze zawieszenie/usunięcie, gdy status po cyklu wraca do tej samej wartości. Działa też sekwencyjnie; CAS na samym statusie nie identyfikuje decyzji. Istniejący test W03 wymusza count=0 i nie odwzorowuje tej historii. Brak pełnej DB/HTTP i niezależnego przeglądu.
+- Pozytywne wyniki: własny zawieszony twórca zachowuje odwołanie, prywatne powody nie trafiają do badanego DTO/komunikatu, cudze zasoby i języki są odrzucane. Nie uznano pustych grantów za pełne uprawnienia ani helpera napisów bez własnego guarda za automatyczne osiągalne obejście.
+- Rozpoczęto 20 dalszych rekordów wejść: aktualnie 45 W_TRAKCIE i 234 NIEZBADANE. Scenariusze pełnego HTTP: 44, żaden niezaliczony. ASVS: 31 rozpoczętych, 314 niezbadanych, zero zaliczonych.
+- D07 i D11 oznaczono W_TRAKCIE. Kolejny krok: D06/D07, integralność relacji i wersji stanu; nie powtarzać bez powodu istniejących reprodukcji. Kod aplikacji i produkcja bez zmian.

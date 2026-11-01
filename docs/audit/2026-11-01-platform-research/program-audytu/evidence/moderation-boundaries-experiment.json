@@ -1,0 +1,376 @@
+{
+  "kind": "ISOLATED_ACTUAL_SOURCE_WITH_FAKE_IO",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "actual_source_sha256": {
+    "lib/modules/channel/application/moderation-appeals.use-cases.ts": "4466d4d3d88d3763db06040eb037c9d77027170d81db7a239135002e4aab4930",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "lib/modules/shared/result.ts": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+    "lib/modules/authz/application/authorize.ts": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
+    "lib/modules/authz/domain/policy.ts": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+    "lib/modules/authz/domain/actions.ts": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+    "lib/modules/authz/domain/matrix.ts": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+    "lib/modules/authz/domain/principal.ts": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+    "lib/modules/channel/domain/moderation-appeal.policy.ts": "d246cfdf04dc045146f993472d436e56fbcd35bc3d7648ac4c98efecc89f5ff6",
+    "lib/modules/comments/application/authorize-comments.ts": "9de6a7ca34bb353de9d7ab72605acbb0f151b9982e4e88dc0d7836c95dc6b824",
+    "lib/modules/translations/application/translations.ts": "770c12b6dfe2aea5297586c5dd29bf780ffb6660f51de5fdccf53b9267aafee4",
+    "lib/modules/channel/application/main-channel.service.ts": "9b3d9977e8a1cbe5162260e7f28a1d60638e43f5e61b5a72b5a5ec0393bfabd3",
+    "lib/modules/channel/infrastructure/channel.repository.ts": "d315a0ea7a2dc7d4a2b733664a6064253e0c94168ada97bd5bc7222467f1c541",
+    "lib/modules/channel/domain/main-channel-setting.ts": "0c4dff7d35dd255f172351b98e221a9e519501a2d2088fc2529167f2b7218618",
+    "lib/modules/channel/domain/channel.errors.ts": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+    "lib/modules/channel/domain/channel.policy.ts": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+    "lib/modules/translations/domain/languages.ts": "2461ff7ef98c0bf8d23f0279cb3676f214a7710fda8c683a3b0a5557eb04bda8",
+    "lib/modules/translations/domain/slug.ts": "9989c07ccb71ec3094960a4da05dc5100129e7b720f72d5c6b58b62e663823b5",
+    "lib/modules/comments/application/channel-ban.use-cases.ts": "1885ea37b355c8d2711a2c9963df0c96d4ec4725e79b808c5e92baf14e17b59d",
+    "lib/modules/comments/domain/comment.errors.ts": "d78c74c0f8949e85b53173a1a5dccc3a085bd295291b58ef7661bd164d919564",
+    "lib/modules/comments/application/comment-write-guard.ts": "1457bf9f4bab70ed6858159d5bff45a3aa3addd3b68a39c97493e595c576ec4c"
+  },
+  "stub_import_boundaries": [
+    "../infrastructure/moderation-notice",
+    "@/lib/logger",
+    "@/lib/modules/audit",
+    "@/lib/modules/authz",
+    "@/lib/modules/channel",
+    "@/lib/modules/video",
+    "@prisma/client"
+  ],
+  "limits": "No real PostgreSQL, HTTP, Next Server Action dispatch, Access JWT, or role-to-context construction. Gate and grant loading reviewed separately. No claim of real audit/notification execution.",
+  "observations": [
+    {
+      "kind": "appeal_outcome",
+      "type": "CHANNEL",
+      "history": "original_still_in_force",
+      "appealedDecision": "decision-old",
+      "laterIndependentDecisionPresent": false,
+      "before": "SUSPENDED",
+      "after": "ACTIVE",
+      "reportedReverted": true,
+      "writeCount": 1,
+      "queries": [
+        {
+          "delegate": "CHANNEL",
+          "args": {
+            "where": {
+              "id": "target"
+            },
+            "select": {
+              "id": true,
+              "status": true
+            }
+          }
+        },
+        {
+          "delegate": "CHANNEL",
+          "args": {
+            "where": {
+              "id": "target",
+              "status": "SUSPENDED"
+            },
+            "data": {
+              "status": "ACTIVE",
+              "statusReason": "Odwołanie uwzględnione",
+              "statusChangedAt": "2026-11-01T12:00:00.000Z",
+              "statusChangedById": "staff"
+            }
+          }
+        }
+      ],
+      "reproducesNewerRestrictionBeingUndone": false
+    },
+    {
+      "kind": "appeal_outcome",
+      "type": "CHANNEL",
+      "history": "later_different_status",
+      "appealedDecision": "decision-old",
+      "laterIndependentDecisionPresent": true,
+      "before": "BANNED",
+      "after": "BANNED",
+      "reportedReverted": false,
+      "writeCount": 0,
+      "queries": [
+        {
+          "delegate": "CHANNEL",
+          "args": {
+            "where": {
+              "id": "target"
+            },
+            "select": {
+              "id": true,
+              "status": true
+            }
+          }
+        }
+      ],
+      "reproducesNewerRestrictionBeingUndone": false
+    },
+    {
+      "kind": "appeal_outcome",
+      "type": "CHANNEL",
+      "history": "status_cycle_with_new_decision",
+      "appealedDecision": "decision-old",
+      "laterIndependentDecisionPresent": true,
+      "before": "SUSPENDED",
+      "after": "ACTIVE",
+      "reportedReverted": true,
+      "writeCount": 1,
+      "queries": [
+        {
+          "delegate": "CHANNEL",
+          "args": {
+            "where": {
+              "id": "target"
+            },
+            "select": {
+              "id": true,
+              "status": true
+            }
+          }
+        },
+        {
+          "delegate": "CHANNEL",
+          "args": {
+            "where": {
+              "id": "target",
+              "status": "SUSPENDED"
+            },
+            "data": {
+              "status": "ACTIVE",
+              "statusReason": "Odwołanie uwzględnione",
+              "statusChangedAt": "2026-11-01T12:00:00.000Z",
+              "statusChangedById": "staff"
+            }
+          }
+        }
+      ],
+      "reproducesNewerRestrictionBeingUndone": true
+    },
+    {
+      "kind": "appeal_outcome",
+      "type": "VIDEO",
+      "history": "original_still_in_force",
+      "appealedDecision": "decision-old",
+      "laterIndependentDecisionPresent": false,
+      "before": "REMOVED",
+      "after": "VISIBLE",
+      "reportedReverted": true,
+      "writeCount": 1,
+      "queries": [
+        {
+          "delegate": "VIDEO",
+          "args": {
+            "where": {
+              "id": "target"
+            },
+            "select": {
+              "id": true,
+              "moderationStatus": true
+            }
+          }
+        },
+        {
+          "delegate": "VIDEO",
+          "args": {
+            "where": {
+              "id": "target",
+              "moderationStatus": "REMOVED"
+            },
+            "data": {
+              "moderationStatus": "VISIBLE"
+            }
+          }
+        }
+      ],
+      "reproducesNewerRestrictionBeingUndone": false
+    },
+    {
+      "kind": "appeal_outcome",
+      "type": "VIDEO",
+      "history": "later_different_status",
+      "appealedDecision": "decision-old",
+      "laterIndependentDecisionPresent": true,
+      "before": "LIMITED",
+      "after": "LIMITED",
+      "reportedReverted": false,
+      "writeCount": 0,
+      "queries": [
+        {
+          "delegate": "VIDEO",
+          "args": {
+            "where": {
+              "id": "target"
+            },
+            "select": {
+              "id": true,
+              "moderationStatus": true
+            }
+          }
+        }
+      ],
+      "reproducesNewerRestrictionBeingUndone": false
+    },
+    {
+      "kind": "appeal_outcome",
+      "type": "VIDEO",
+      "history": "status_cycle_with_new_decision",
+      "appealedDecision": "decision-old",
+      "laterIndependentDecisionPresent": true,
+      "before": "REMOVED",
+      "after": "VISIBLE",
+      "reportedReverted": true,
+      "writeCount": 1,
+      "queries": [
+        {
+          "delegate": "VIDEO",
+          "args": {
+            "where": {
+              "id": "target"
+            },
+            "select": {
+              "id": true,
+              "moderationStatus": true
+            }
+          }
+        },
+        {
+          "delegate": "VIDEO",
+          "args": {
+            "where": {
+              "id": "target",
+              "moderationStatus": "REMOVED"
+            },
+            "data": {
+              "moderationStatus": "VISIBLE"
+            }
+          }
+        }
+      ],
+      "reproducesNewerRestrictionBeingUndone": true
+    },
+    {
+      "kind": "creator_boundary",
+      "scenario": "suspended owner can appeal",
+      "accepted": true,
+      "status": null,
+      "createdDelta": 1
+    },
+    {
+      "kind": "creator_boundary",
+      "scenario": "foreign owner cannot appeal",
+      "accepted": false,
+      "status": 404,
+      "createdDelta": 0
+    },
+    {
+      "kind": "creator_boundary",
+      "scenario": "moderator cannot appeal",
+      "accepted": false,
+      "status": 404,
+      "createdDelta": 0
+    },
+    {
+      "kind": "creator_boundary",
+      "scenario": "explicit creator DTO omits internal reason even if fake DB returns it",
+      "internalReasonAbsent": true
+    },
+    {
+      "kind": "comment_boundary",
+      "ids": [
+        "comment-a"
+      ],
+      "denied": false,
+      "limit": "Authorization helper only; bulk write not executed"
+    },
+    {
+      "kind": "comment_boundary",
+      "ids": [
+        "comment-a",
+        "comment-b"
+      ],
+      "denied": true,
+      "limit": "Authorization helper only; bulk write not executed"
+    },
+    {
+      "kind": "ban_boundary",
+      "scenario": "moderator bans a viewer in own channel",
+      "accepted": true,
+      "writeDelta": 1
+    },
+    {
+      "kind": "ban_boundary",
+      "scenario": "moderator cannot ban in foreign channel",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "ban_boundary",
+      "scenario": "editor cannot ban",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "ban_boundary",
+      "scenario": "owner cannot ban a member",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "ban_boundary",
+      "scenario": "owner cannot ban themselves",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "ban_boundary",
+      "scenario": "owner cannot ban platform admin",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "ban_boundary",
+      "scenario": "permanent ban blocks writing",
+      "denied": true,
+      "privateReasonAbsent": true
+    },
+    {
+      "kind": "ban_boundary",
+      "scenario": "expired ban permits writing",
+      "denied": false,
+      "privateReasonAbsent": true
+    },
+    {
+      "kind": "language_boundary",
+      "scenario": "granted DE can be saved",
+      "accepted": true,
+      "writeDelta": 1
+    },
+    {
+      "kind": "language_boundary",
+      "scenario": "ungranted FR is denied",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "language_boundary",
+      "scenario": "empty grants deny DE",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "language_boundary",
+      "scenario": "translator cannot approve",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "language_boundary",
+      "scenario": "empty grants cannot approve",
+      "accepted": false,
+      "writeDelta": 0
+    },
+    {
+      "kind": "language_boundary",
+      "scenario": "owner can approve",
+      "accepted": true,
+      "writeDelta": 1
+    }
+  ]
+}
