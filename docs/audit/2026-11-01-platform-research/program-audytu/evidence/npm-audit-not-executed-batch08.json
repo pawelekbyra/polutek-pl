@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-01",
+  "action": "npm audit --omit=dev --package-lock-only --json",
+  "executed": false,
+  "status": "AUTO_REVIEW_REJECTED",
+  "reason": "Automatic approval review rejected sending the private project dependency graph/package-lock metadata to npm registry without specific disclosure authorization.",
+  "retry_or_workaround_attempted": false,
+  "alternative": "Local lockfile version inspection and read-only downloads of two already-known public advisories; no graph upload."
+}

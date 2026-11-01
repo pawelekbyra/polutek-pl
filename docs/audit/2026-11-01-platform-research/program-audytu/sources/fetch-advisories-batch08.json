@@ -1,0 +1,42 @@
+[
+  {
+    "date": "2026-11-01",
+    "file": "GHSA-2464-fhr4-w9xw.json",
+    "url": "https://raw.githubusercontent.com/github/advisory-database/main/advisories/github-reviewed/2026/10/GHSA-2464-fhr4-w9xw/GHSA-2464-fhr4-w9xw.json",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "eb66d72408a98bb9aba19818615a76bdfc44775bb2602fc276329a3df67ffc5a"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "GHSA-wq5f-xc86-pv6w.json",
+    "url": "https://raw.githubusercontent.com/github/advisory-database/main/advisories/github-reviewed/2026/09/GHSA-wq5f-xc86-pv6w/GHSA-wq5f-xc86-pv6w.json",
+    "http_status": 404,
+    "curl_exit": 22,
+    "sha256": null
+  },
+  {
+    "date": "2026-11-01",
+    "file": "github-advisory-database-LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/github/advisory-database/main/LICENSE",
+    "http_status": 404,
+    "curl_exit": 22,
+    "sha256": null
+  },
+  {
+    "date": "2026-11-01",
+    "file": "GHSA-wq5f-xc86-pv6w.json",
+    "url": "https://raw.githubusercontent.com/github/advisory-database/main/advisories/github-reviewed/2026/10/GHSA-wq5f-xc86-pv6w/GHSA-wq5f-xc86-pv6w.json",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "5eba20a00abb327057e90b17c7272a511b30ea32112d6c9cdf91b5dca0d75afd"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "github-advisory-database-LICENSE.md",
+    "url": "https://raw.githubusercontent.com/github/advisory-database/main/LICENSE.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "9e5f1b3c610b9c2da5c313bf81d577a7d1acec686bdb0384edefa6df0f90cd94"
+  }
+]

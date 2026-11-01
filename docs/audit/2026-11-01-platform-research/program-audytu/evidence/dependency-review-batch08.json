@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "finding": "R01",
+  "method": "Local lockfile/installed metadata matched to two already-known public advisory JSON GET responses; no project graph sent.",
+  "local_metadata": {
+    "date": "2026-11-01",
+    "node": "v22.23.4",
+    "platform": "linux",
+    "arch": "x64",
+    "next": "16.3.8",
+    "sharp": "0.35.4",
+    "librsvg": "2.62.91",
+    "libvips": "8.18.6",
+    "glibc": "2.41",
+    "lock": [
+      {
+        "path": "node_modules/next",
+        "version": "16.3.8"
+      },
+      {
+        "path": "node_modules/sharp",
+        "version": "0.35.4"
+      }
+    ],
+    "production_runtime_inspected": false,
+    "fresh_full_dependency_audit_executed": false
+  },
+  "lock_sha256": "1dc83d8f02d849150701bfc4812c3651a25bcdea93c538f1f4d66f63cb6176d4",
+  "installed_optimizer": {
+    "file": "node_modules/next/dist/server/image-optimizer.js",
+    "sha256": "38b92fde5bc72aa23c999d283052da11a6dfb36be75c2d92683d539551065a3c",
+    "version": "16.3.8",
+    "scope": "getSharp SVG loader allowlist; detectContentType selected prefix checks; imageOptimizer SVG rejection; remote host checks. Read only, not exploit execution."
+  },
+  "advisories": [
+    {
+      "id": "GHSA-2464-fhr4-w9xw",
+      "severity": "CRITICAL",
+      "installed_version_in_affected_range": true,
+      "matched_range": "next >=16.0.0 <16.4.1",
+      "fixed_current_major": "16.4.1",
+      "workaround_sharp_minimum": "0.35.5"
+    },
+    {
+      "id": "GHSA-wq5f-xc86-pv6w",
+      "severity": "HIGH",
+      "installed_version_in_affected_range": true,
+      "matched_range": "sharp <0.35.5",
+      "fixed_sharp": "0.35.5",
+      "fixed_librsvg": "2.63.2"
+    }
+  ],
+  "counterarguments_and_limits": [
+    "Related upstream/consumer advisories, not two demonstrated independent exploits.",
+    "Linux/glibc conditions observed locally, not an inspection of production binaries or PIE hardening.",
+    "Recognized SVG rejected by Next unless dangerouslyAllowSVG; application does not enable this flag. Not proof every parser bypass is absent.",
+    "Exact image host allowlists and JPG/PNG/WebP upload checks constrain attacker inputs; end-to-end vulnerable decoder reachability unverified.",
+    "No RCE exploit or production incident demonstrated; P0 is historical remediation priority, not severity of a reproduced application exploit."
+  ],
+  "fresh_npm_audit": {
+    "executed": false,
+    "status": "AUTO_REVIEW_REJECTED",
+    "reason": "Private dependency graph disclosure to npm registry",
+    "retry_or_workaround_attempted": false
+  },
+  "fresh_total_advisory_count": null,
+  "historical_audit_unchanged": true,
+  "advisory_sources": "sources/fetch-advisories-batch08.json",
+  "license": "CC BY 4.0",
+  "attribution": "GitHub and contributors, GitHub Advisory Database; copied JSON and license unchanged; local analysis separate."
+}

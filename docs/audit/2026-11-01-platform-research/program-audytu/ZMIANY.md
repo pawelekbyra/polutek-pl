@@ -87,3 +87,13 @@
 - Pozytywne wyniki: kontrola podpisu przed cache, związanie z filmem/wersją/rodzajem, chronione nagłówki private, ochrona napisów i sesji, porzucenie odpowiedzi starego widza i odnawianie tokenu. Brak odtwarzania filmu w przeglądarce i rzeczywistej platformy Cloudflare.
 - Oficjalną dokumentację Cloudflare i licencję CC BY 4.0 pobrano online. PeerTube porównano przez Redis/LRU, kontrolę praw i TTL 8 h; nie założono, że każdy logout natychmiast usuwa wszystkie tokeny wideo. Nie kopiowano implementacji.
 - 280 wejść: 52 rozpoczęte, 228 niezbadanych. ASVS: 36 rozpoczętych, 309 niezbadanych, zero zaliczonych. Osobne 38 scenariuszy odtwarzania z pełnym stosem niewykonanym; wcześniejsze scenariusze i surowe wyniki zachowane. Kolejny zakres D05. Aplikacja i produkcja bez zmian.
+
+## 1 listopada 2026 — partia 08: wejścia, pliki/FFmpeg, SSRF i zależności
+
+- Rozpoczęto D05; częściowy zakres 30 plików, nakładający się na poprzednie partie. Zapisano 25 scenariuszy komponentów: 14 czytników i 11 FFmpeg/procesów, bez zaliczenia pełnego stosu.
+- R15 potwierdzono na rzeczywistych czytnikach: parse-before-schema oraz duże nieużywane pole multipart poza limitem pojedynczego pliku. Kontrole dodatnie/helper strumieniowy działają; nie wykonano pomiaru DoS ani realnego proxy/HTTP.
+- Hostowy FFmpeg 7.1.5 odrzucił cztery XML/MP4 bez żądania do własnego serwera, mimo działającej kontroli ffprobe HTTP. Nie potwierdzono SSRF. Literalne argumenty, timeout, stdout cap i abort sprawdzono w ograniczonych próbach; deklarowany Docker 8.0.1 i pełny encode pozostają do walidacji.
+- Pięć istniejących plików Vitest: cztery passed, jeden zablokowany przez Prisma przed rejestracją; 38/38 zarejestrowanych assertions passed, globalny exit 1/success=false. Nie powtarzano pełnego zestawu ani nie podstawiano Prisma.
+- R01 rozszerzono o lokalne wersje i dwa publiczne powiązane advisory pobrane GET. Automatyczna kontrola odrzuciła nowe npm audit ze względu na ujawnienie grafu zależności. Nie uruchomiono ani nie obchodzono skanu; brak świeżej liczby wszystkich alertów i exploitu RCE. Zachowano P0 jako historyczny priorytet naprawy zależności.
+- PeerTube porównano źródłowo: format whitelist tylko dla remote HTTP(S), DNS/IP/redirect w opcjonalnym SSRF-safe got oraz limit parsera JSON. Otwarte pytania miniatur/zasobów nie dostały nowych ID bez dowodu. R01–R30 zachowane, niezależny przegląd PENDING.
+- 280 wejść: 54 rozpoczęte, 226 niezbadanych. ASVS: 44 rozpoczęte, 301 niezbadanych, zero zaliczonych. Dziewięć z 18 obszarów rozpoczętych, żaden zamknięty. Kolejny zakres D10. Aplikacja i produkcja bez zmian.

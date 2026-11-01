@@ -1,13 +1,13 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 1 listopada 2026. Program v1.0, partia 07: odtwarzanie, tokeny, cache i prywatność premiery. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 1 listopada 2026. Program v1.0, partia 08: wejścia, pliki/FFmpeg, SSRF i zależności. Tryb: analiza, bez zmian aplikacji i produkcji.
 
 ## Cel i decyzje właściciela
 
 - Docelowo duża platforma konkurująca z PeerTube funkcjami i skalą.
 - Badanie ma być pogłębione i wieloobszarowe. Właściciel nie programuje; wnioski mają objaśniać wpływ na produkt i biznes.
 - Dotychczasowe porównanie jest bazą i próbą metody, a nie zamkniętym pełnym audytem.
-- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D06, D07, D08, D09 i D11; nie wykonano pełnej oceny 345 wymagań.
+- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D05, D06, D07, D08, D09 i D11; nie wykonano pełnej oceny 345 wymagań.
 - Następnie właściciel polecił zachować poprzednie badanie i rozwijać całość na jednej gałęzi GitHub: `docs/polutek-platform-audit`. Katalog w repo: `docs/audit/2026-11-01-platform-research/`. Po każdej partii commit i push; bez automatycznego scalenia ani wdrożenia.
 
 ## Wersje
@@ -15,7 +15,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 07: odtwarzanie, tokeny, ca
 - Polutek: `/workspace/polutek-pl`, `c397b9e548ca2c628e21457ac69d66e54b12ddbd`.
 - PeerTube: `/workspace/PeerTube`, `fa7d2b5d8a44bbec99159b11e91763f7d2308faa`.
 - Program: [PROGRAM.md](PROGRAM.md).
-- Rodzic commitu partii 07: `7f56467fe764594c78874ce442fca4d545a626ef`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json), [partia 07](evidence/source-scope-batch07.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
+- Rodzic commitu partii 08: `4958b65e8863bab01a7acee9b115662dded993be`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json), [partia 07](evidence/source-scope-batch07.json), [partia 08](evidence/source-scope-batch08.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
 
 ## Gotowe
 
@@ -64,11 +64,19 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 07: odtwarzanie, tokeny, ca
 43. Pozytywne wyniki obejmują tampering, sprawdzenie podpisu przed wspólnym cache, private dla chronionego tokenu nawet po publicznej kopii, ochronę napisów i odmowę przypisania cudzej sesji. Testy React odrzucają spóźnioną odpowiedź starego widza i odnawiają token przez dwie symulowane godziny. Nie jest to pomiar rzeczywistego odtwarzania.
 44. Pobrano online oficjalne Cloudflare Cache API i CC BY 4.0, z hashami/atrybucją; lokalny cache.delete nie dowodzi globalnego purge. W PeerTube token pliku ma 8 h, Redis/LRU i odrębne kontrole; nie udowodniono natychmiastowego cofnięcia każdego linku po logout. Bieżące wejścia: 280, w tym 52 W_TRAKCIE i 228 NIEZBADANE. ASVS: 36 W_TRAKCIE, 309 NIEZBADANE, zero zaliczonych. Istniejące 46 scenariuszy HTTP i 11 pipeline bez zmian; 38 odtwarzania ma osobną otwartą walidację pełnego stosu.
 
+45. Partia 08: [D05](obszary/D05-WEJSCIA-PLIKI-I-ZALEZNOSCI.md), [25 scenariuszy komponentów](SCENARIUSZE-WEJSCIA.csv) i [częściowy zakres 30 plików](evidence/batch08-review.json), z nakładaniem na wcześniejsze partie. Nie zaliczono całych plików ani wszystkich klas podatności. Wykonano pięć rzeczywistych modułów TS i funkcje modułu encoder ESM.
+46. Celowany istniejący Vitest: cztery pliki passed, jeden zablokowany przed rejestracją przez Prisma; 38 zarejestrowanych testów, wszystkie passed, zero failed/pending assertions. Globalny exit 1/success=false, nie zielony zestaw. Testy public/subtitles dotyczą istniejących napisów, a test domenowego walidatora przez index pozostaje niewykonany. Pełnego zestawu nie powtarzano.
+47. 14 obserwacji rzeczywistych czytników z native Request/FormData/Zod, bez HTTP/auth. R15: JSON 65 548 B wczytany przed odmową schematu; plik 128 B i nieużywane pole 96 KiB zaakceptowane przez helper z limitem pliku 1 KiB przy braku długości. Istniejący helper strumieniowy zatrzymał nadmiar; poprawnie zadeklarowany duży multipart odmówiony przed odczytem. Bez pomiaru DoS ani dowodu akceptacji błędnego framingu HTTP.
+48. 11 obserwacji hostowego FFmpeg 7.1.5 i rzeczywistego run/probeSource. Normalny film zaakceptowany, audio-only odrzucone, nazwa z metaznakami nie wykonała shella; timeout/output cap/abort zadziałały na kontrolowanych procesach. Cztery XML/MP4 przeszły pure sniff, ale ffprobe odrzucił je bez żądania do fixture; dodatnia próba ffprobe HTTP działa. Brak potwierdzenia SSRF, brak dowodu odporności wszystkich formatów i docelowego Docker FFmpeg 8.0.1. Zachowano initial JSON przed dodaniem kontroli dodatniej.
+49. R01: lokalne Next 16.3.8/sharp 0.35.4 odpowiadają dwóm powiązanym publicznym advisory pobranym online; potwierdzono wersje, nie exploit RCE. Automatyczna kontrola odrzuciła nowe npm audit ze względu na ujawnienie grafu zależności, proces nie ruszył i nie był ponawiany. Zapisano lokalne metadane i publiczne GET/advisory/CC BY 4.0; brak świeżej pełnej liczby alertów. R01/R15 doprecyzowane, ID R01–R30 bez nowych problemów.
+50. PeerTube: format whitelist dotyczy wejść HTTP(S), lokalne mają []; opcjonalny SSRF-safe got sprawdza DNS/IP i redirect; wspólny JSON parser ma 500kb. Nie uruchamiano PeerTube. Otwarte pytania Polutka: redirect/DNS miniatur, budżet kodowania i pełne dekodery, bez dopisywania nieudowodnionych usterek. Bieżąco 54 wejścia W_TRAKCIE i 226 NIEZBADANE; ASVS 44 W_TRAKCIE i 301 NIEZBADANE, zero zaliczonych; dziewięć obszarów rozpoczętych i dziewięć niezbadanych. Pełny stos wszystkich nowych scenariuszy pozostaje niewykonany.
+
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
 ## Blokady i niewiadome
 
 - Obserwowany runtime nie dopuszcza `binaries.prisma.sh`; instalacja/generowanie klienta zatrzymuje się na proxy HTTP 403. [Ponowne pojedyncze sprawdzenie w partii 03](evidence/prisma-network-batch03.json): curl exit 56, odmowa CONNECT 403, brak odpowiedzi docelowego HTTP. Reguła była zapisana w draft wcześniej, lecz nie zaobserwowano jej zastosowania. Nie wyłączać weryfikacji TLS/checksum ani ponawiać całego zestawu testów przy niezmienionych warunkach.
+- Nowe npm audit w partii 08 zostało odrzucone przed wykonaniem przez automatyczną kontrolę: ujawnienie grafu zależności prywatnego projektu. [Zapis](evidence/npm-audit-not-executed-batch08.json). Bez obejścia; dwa znane publiczne advisory pobrano GET, brak świeżego pełnego skanu.
 - Dlatego pełny typecheck/runtime/testy Prisma nie są potwierdzone. Wyników bazowego pełnego Vitest nie interpretować jako w pełni zielonego zestawu ani listy potwierdzonych usterek aplikacji.
 - PeerTube nie był instalowany/uruchamiany. Nie ma porównawczego benchmarku.
 - Nie ustalono konkretnych docelowych progów ruchu, SLO, RPO/RTO i budżetu; trzeba je doprecyzować przy mapie produktu. Samo „duża platforma” nie jest deklaracją pojemności.
@@ -81,12 +89,13 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 07: odtwarzanie, tokeny, ca
 - W partii 05 potwierdzono jej działanie przez lokalny socket Dockera. Skrypt `tools/database-integrity-experiment.py` korzysta z nazwy tej bazy, kontroluje hashe źródeł i usuwa własne fixture; nie uruchamia Prisma ani pełnej aplikacji.
 - Partia 06: lokalny Docker 28.4.0 i PostgreSQL nadal działały. `tools/pipeline-boundaries-experiment.cjs` wykonuje komponenty z atrapami; `tools/playback-cascade-experiment.py` używa helpera SQL z partii 05, dwóch połączeń i usuwa własne fixture. Skrypty nie wymagają zmiany instrukcji ani kodu aplikacji.
 - Partia 07 nie wymagała Dockera ani sieci produkcji. Node 22 wykonał cztery pliki Vitest i `tools/playback-access-experiment.cjs` z symulowanym zegarem/atrapami; oficjalną dokumentację cache pobrano przez dozwolone raw.githubusercontent.com.
+- Partia 08 użyła hostowego FFmpeg/ffprobe 7.1.5 i własnego serwera loopback; nie uruchamiała Docker FFmpeg 8.0.1 ani bazy. Czytniki i procesy w skryptach tools/input-boundaries-experiment.cjs oraz tools/ffmpeg-input-experiment.mjs; nie wymagają pełnej aplikacji.
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
 ## Następne działanie
 
-Przejść do D05: bezpieczeństwo wejść, walidacja plików/FFmpeg, SSRF i granice żądań; uwzględnić bazowe R01/R15 oraz aktualne zależności. D09 ma dowody komponentów i osobne testy, lecz wymaga pełnego HTTP, rzeczywistych mutacji/logout/refund, Cloudflare/Range/purge, cache przeglądarek i Safari. D08 nadal wymaga formatów/jakości, multipart, starych oryginałów, prawdziwego takeover/restartów i magazynu. Nie powtarzać identycznych zaliczonych testów i reprodukcji bez zmiany. Po odblokowaniu Prisma wykonać pełne próby odtwarzania/R28–R30 i dwóch workerów; nie podstawiać fałszywego klienta. Pozostałe modele/migracje/role, pieniądze, prywatność, skala/koszty i restore rozliczać w dalszych obszarach. Niezależne przeglądy pozostają otwarte. Nie zmieniać aplikacji ani produkcji; parametry skali/SLO/budżetu nadal wymagają określenia.
+Przejść do D10: pieniądze, zdarzenia płatnicze, uprawnienia płatne, refundy i ponowienia integracji; uwzględnić R05/R17 oraz rozdzielenie płatności od przyznania dostępu. Najpierw ustalić aktywne i przyszłe ścieżki na podstawie kodu/bezpiecznych źródeł, bez sekretów i usług produkcji. D05 pozostaje otwarte: pełne HTTP/proxy i wszystkie klasy wejść, dokładny build FFmpeg 8.0.1, formaty/dekodery/zasoby, redirect/DNS oraz zależności. Nie powtarzać npm audit ani wysyłać grafu inną drogą po automatycznej odmowie. D09 wymaga rzeczywistych mutacji/logout/refund i Cloudflare/Range/purge/browser; D08 takeover/restartów/magazynu. Nie powtarzać identycznych zaliczonych testów bez nowych warunków. Po odblokowaniu Prisma wykonać pełne próby, bez podstawiania klienta. Dalsze obszary obejmują też prywatność, skale/koszty i restore. Niezależne przeglądy otwarte. Nie zmieniać aplikacji ani produkcji; parametry skali/SLO/budżetu nadal do ustalenia.
 
 Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
 

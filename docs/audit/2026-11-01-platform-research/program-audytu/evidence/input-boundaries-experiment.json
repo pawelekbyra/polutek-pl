@@ -1,0 +1,142 @@
+{
+  "date": "2026-11-01",
+  "actual_source_sha256": {
+    "lib/utils/request-body.ts": "b0e3419d942b29d2e8bd210676dde5ed72f1a32d15ebc5946d8e10c141558c2f",
+    "lib/api/studio-route.ts": "dbae00e12e2b5efff0858c3134e9f239b2152710a14189d3b0a3979d977541d5",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "apps/admin/lib/api/panel-route.ts": "1cf7860c211949821a10309b7570bd1699f8c8d80b0905b2e5688503725a4965"
+  },
+  "explicit_unused_import_stubs": [
+    "./studio-session",
+    "@/lib/modules/shared/app-context",
+    "@admin/lib/actions/panel",
+    "@admin/lib/auth/api-guard",
+    "@admin/lib/config"
+  ],
+  "observations": [
+    {
+      "name": "bounded_valid_json",
+      "kind": "ACTUAL_LIMITED_BODY_READER",
+      "outcome": "OK",
+      "total_bytes": 14,
+      "supplied_bytes": 14
+    },
+    {
+      "name": "declared_oversize_rejected_before_read",
+      "kind": "ACTUAL_LIMITED_BODY_READER",
+      "outcome": "RequestBodyTooLargeError",
+      "total_bytes": 2048,
+      "supplied_bytes": 0
+    },
+    {
+      "name": "missing_length_stopped_at_chunk_over_limit",
+      "kind": "ACTUAL_LIMITED_BODY_READER",
+      "outcome": "RequestBodyTooLargeError",
+      "total_bytes": 65548,
+      "supplied_bytes": 1280
+    },
+    {
+      "name": "understated_length_still_stopped",
+      "kind": "ACTUAL_LIMITED_BODY_READER",
+      "outcome": "RequestBodyTooLargeError",
+      "total_bytes": 65548,
+      "supplied_bytes": 1280
+    },
+    {
+      "name": "malformed_small_json_rejected",
+      "kind": "ACTUAL_LIMITED_BODY_READER",
+      "outcome": "MalformedJsonBodyError",
+      "total_bytes": 1,
+      "supplied_bytes": 1
+    },
+    {
+      "name": "studio_valid",
+      "kind": "ACTUAL_JSON_THEN_ZOD",
+      "accepted": true,
+      "status": null,
+      "total_bytes": 14,
+      "supplied_bytes": 14,
+      "finding": null
+    },
+    {
+      "name": "studio_oversize_field",
+      "kind": "ACTUAL_JSON_THEN_ZOD",
+      "accepted": false,
+      "status": 400,
+      "total_bytes": 65548,
+      "supplied_bytes": 65548,
+      "finding": "R15"
+    },
+    {
+      "name": "panel_valid",
+      "kind": "ACTUAL_JSON_THEN_ZOD",
+      "accepted": true,
+      "status": null,
+      "total_bytes": 14,
+      "supplied_bytes": 14,
+      "finding": null
+    },
+    {
+      "name": "panel_oversize_field",
+      "kind": "ACTUAL_JSON_THEN_ZOD",
+      "accepted": false,
+      "status": 400,
+      "total_bytes": 65548,
+      "supplied_bytes": 65548,
+      "finding": "R15"
+    },
+    {
+      "name": "small_file_accepted",
+      "kind": "ACTUAL_MULTIPART_READER",
+      "accepted": true,
+      "status": null,
+      "returned_file_bytes": 128,
+      "total_bytes": 315,
+      "supplied_bytes": 315
+    },
+    {
+      "name": "small_file_large_unused_field_no_length",
+      "kind": "ACTUAL_MULTIPART_READER",
+      "accepted": true,
+      "status": null,
+      "returned_file_bytes": 128,
+      "total_bytes": 98706,
+      "supplied_bytes": 98706,
+      "finding": "R15"
+    },
+    {
+      "name": "declared_large_body_rejected_before_parse",
+      "kind": "ACTUAL_MULTIPART_READER",
+      "accepted": false,
+      "status": 413,
+      "returned_file_bytes": 0,
+      "total_bytes": 98706,
+      "supplied_bytes": 0
+    },
+    {
+      "name": "oversize_selected_file_rejected_after_parse",
+      "kind": "ACTUAL_MULTIPART_READER",
+      "accepted": false,
+      "status": 413,
+      "returned_file_bytes": 0,
+      "total_bytes": 2235,
+      "supplied_bytes": 2235
+    },
+    {
+      "name": "missing_file_rejected",
+      "kind": "ACTUAL_MULTIPART_READER",
+      "accepted": false,
+      "status": 400,
+      "returned_file_bytes": 0,
+      "total_bytes": 157,
+      "supplied_bytes": 157
+    }
+  ],
+  "limits": [
+    "Native in-process Request, not actual HTTP through a proxy or Next.",
+    "Authentication, CSRF, authorization and rate limiting not executed.",
+    "Synthetic fixtures <= 100 KiB; no memory or availability benchmark.",
+    "Understated Content-Length is a Web Request model, not proof that an HTTP server accepts inconsistent framing.",
+    "R15 concerns parse order and missing application-level total-body limit; deployment exploitability remains unverified."
+  ]
+}

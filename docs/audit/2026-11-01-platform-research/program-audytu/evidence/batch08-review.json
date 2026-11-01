@@ -1,0 +1,268 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "4958b65e8863bab01a7acee9b115662dded993be",
+  "source_review_scope": [
+    {
+      "file": "app/api/studio/videos/[id]/cover/route.ts",
+      "sha256": "5448087905666293d2c0bc0543fb7a118a4dd1d56996d36d575dea23325a116f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/videos/[id]/upload/complete/route.ts",
+      "sha256": "51423873a52b1d50ac18512329dda26ddc62c3521be1dfa96029d3814b23ad98",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/app/api/videos/[id]/cover/route.ts",
+      "sha256": "d7ba3ffee401cc4f88c7a8725580d946b9086974fd258d69dc6bbd60e2df0112",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/app/api/videos/[id]/subtitles/[lang]/route.ts",
+      "sha256": "fde98df0b9563980d575d0c1304f079d89e8795550ed256241328a70b1c866e9",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/lib/api/panel-route.ts",
+      "sha256": "1cf7860c211949821a10309b7570bd1699f8c8d80b0905b2e5688503725a4965",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "deploy/serwerek/Dockerfile",
+      "sha256": "038431c0f5b5f730d3a080c10f50d6c1337fbc8763cd8b379d5ac467356ab92f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "deploy/serwerek/docker-compose.yml",
+      "sha256": "84cc968a52822d615fc65f3d8ef35aef5db162a15445930234679d11300bafa7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/admin-schemas.ts",
+      "sha256": "2bd357921fae2ae911ca8f711464908331d648f440da604e92646a7569f2a6c6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/studio-route.ts",
+      "sha256": "dbae00e12e2b5efff0858c3134e9f239b2152710a14189d3b0a3979d977541d5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-content/application/media-uploads.ts",
+      "sha256": "818e8b89f1463bca91161b27316feb9f5ee3091df6338d5e02997cb91264269d",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-content/domain/files.ts",
+      "sha256": "af736f52b82f8b826a14d205eecdcc219d5ffa6f2bd93eb2d89c0a8b1d03d6fb",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/media-safety.ts",
+      "sha256": "11a9be10c3fc773b8c943a2adbd37a31ab4bcb49461ea99b7f76e2ab3854f470",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/media.policy.ts",
+      "sha256": "4d31f153475b72747a349a22fc3f0f6dda52daf0349606504d8d60feed6a1bc0",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/infrastructure/thumbnail-response.service.ts",
+      "sha256": "7279cfc65fae69143adaf16fd9305837e1c0bddd368cdd97085bd54e60656531",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/original-upload.use-cases.ts",
+      "sha256": "41b659dee9b051f7191dd2bc94e4ca5ce92483698f79b34703ff03160cfd0033",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/domain/upload-policy.ts",
+      "sha256": "057b7d9dd3642bdf9a9e6732abf760e9096be0913d216328198c44e628e96906",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/infrastructure/encoder.adapter.ts",
+      "sha256": "a523b287890ceedb39269a4c4cc0f03fac96f804dd156be33130ecf4857ff7a4",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/update-admin-video.use-case.ts",
+      "sha256": "a60664d4e384a0ba6285a5260a22e2b21a6b075d9eca6905c31c41cd1f009c18",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/utils/request-body.ts",
+      "sha256": "b0e3419d942b29d2e8bd210676dde5ed72f1a32d15ebc5946d8e10c141558c2f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "next.config.mjs",
+      "sha256": "ee9b8a7089ef7decf43d164ca90503eae5a7bd2d6504a106814bc5626285dd08",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "1dc83d8f02d849150701bfc4812c3651a25bcdea93c538f1f4d66f63cb6176d4",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "package.json",
+      "sha256": "402fa1299a550cb4ee8905c2bb5ff31f086b38396125e5dd9e7b33b54ea165b7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "scripts/hls/encode-hls.mjs",
+      "sha256": "0b185c3e40e6468112ac82f06ced28b23c53e5670a0d5847212beaa7dab94bb6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/admin-content/files.test.ts",
+      "sha256": "ab476ecf4b9ec3925cb7d9a7de4989af23b9d5ae79aad2ab49bbe92c9c07c4c4",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/hls/encode-hls.ffmpeg.test.ts",
+      "sha256": "e4ab354e359581b2165fee22310352de2b171eefba3240ae40af915287712f69",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/hls/encode-hls.test.ts",
+      "sha256": "d1a570af5c77ac1d406f0128b866c8762724380bbbce79d2a1dc68f84364b315",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/services/thumbnail-response.service.test.ts",
+      "sha256": "953654290ab91a32ddeb67d6a99ea4938cb80ca4acd2859d492cce4099c4f344",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/subtitles-files.test.ts",
+      "sha256": "a4b3fbee9ba78d8ea9615da3509bd4390bcbede7aa147a6afc5001c7fd55bda6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/video-pipeline/upload-policy.test.ts",
+      "sha256": "a837af0a8b210ec08856e17ea34d7fb765167f20d316a40c016a4e76f825f74d",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: readers/file policy/probe/process invocation, selected wiring/config/dependency versions/test assertions; not whole-file sign-off"
+    }
+  ],
+  "actual_typescript_modules_executed": 5,
+  "actual_encoder_esm_module_executed": true,
+  "full_application_http_executed": 0,
+  "generated_prisma_client_executed": false,
+  "production_access": false,
+  "experiments": {
+    "input_readers": {
+      "exit_code": 0,
+      "observations": 14,
+      "R15_witnesses": 3
+    },
+    "ffmpeg_input": {
+      "exit_code": 0,
+      "observations": 11,
+      "xml_mp4_candidates": 4,
+      "candidate_loopback_requests": 0
+    }
+  },
+  "targeted_vitest": {
+    "exit_code": 1,
+    "success": false,
+    "file_count": 5,
+    "passed_files": 4,
+    "blocked_files": 1,
+    "registered_tests": 38,
+    "passed": 38,
+    "failed_assertions": 0,
+    "pending": 0,
+    "files": [
+      {
+        "file": "tests/unit/subtitles-files.test.ts",
+        "status": "passed",
+        "registered_tests": 6,
+        "message": ""
+      },
+      {
+        "file": "tests/unit/admin-content/files.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again."
+      },
+      {
+        "file": "tests/unit/hls/encode-hls.test.ts",
+        "status": "passed",
+        "registered_tests": 17,
+        "message": ""
+      },
+      {
+        "file": "tests/unit/services/thumbnail-response.service.test.ts",
+        "status": "passed",
+        "registered_tests": 6,
+        "message": ""
+      },
+      {
+        "file": "tests/unit/video-pipeline/upload-policy.test.ts",
+        "status": "passed",
+        "registered_tests": 9,
+        "message": ""
+      }
+    ],
+    "blocked_reason": "admin-content/files.test.ts imports index leading to ungenerated Prisma client before test registration; not a demonstrated production defect.",
+    "command": "PATH=<Node22>/bin:$PATH nice -n 10 node_modules/.bin/vitest run tests/unit/video-pipeline/upload-policy.test.ts tests/unit/admin-content/files.test.ts tests/unit/subtitles-files.test.ts tests/unit/hls/encode-hls.test.ts tests/unit/services/thumbnail-response.service.test.ts --maxWorkers=1 --reporter=json --outputFile=<evidence>/input-targeted-vitest.json",
+    "full_suite_repeated": false
+  },
+  "new_distinct_findings": [],
+  "existing_findings_extended": [
+    "R01",
+    "R15"
+  ],
+  "boundaries": [
+    "Native in-process Request, not actual HTTP through a proxy or Next.",
+    "Authentication, CSRF, authorization and rate limiting not executed.",
+    "Synthetic fixtures <= 100 KiB; no memory or availability benchmark.",
+    "Understated Content-Length is a Web Request model, not proof that an HTTP server accepts inconsistent framing.",
+    "R15 concerns parse order and missing application-level total-body limit; deployment exploitability remains unverified.",
+    "Actual host FFmpeg 7.1.5 differs from declared Docker FFmpeg 8.0.1; production not inspected.",
+    "Four synthetic XML/MP4 candidates only; no exhaustive malformed-media corpus or SSRF absence proof.",
+    "Metadata/sniff are pure functions; HTTP/R2/complete-upload path not executed.",
+    "Only own ephemeral loopback fixture was targeted; no external or production network.",
+    "Process limits tested with bounded benign Node children, not a demonstrated FFmpeg hang.",
+    "No full encode, image RCE exploit, quality or capacity benchmark."
+  ],
+  "harness_history": "Readers first run exit 0. FFmpeg first run exit 0, preserved initial JSON; added actual ffprobe URL positive control to own loopback server, final run exit 0. Prototype in /tmp is not a separate independent proof. Final tool session disappeared before exit retrieval; repeated for unresolved exit verification, exit 0 and byte-identical JSON, empty log.",
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "executed": false,
+    "files": [
+      {
+        "file": "packages/ffmpeg/src/ffmpeg-utils.ts",
+        "sha256": "046a6243b1a1c186f071657a5c4bef62382266e4a416fc797c39476a70c5eb59"
+      },
+      {
+        "file": "packages/ffmpeg/src/ffprobe.ts",
+        "sha256": "5fe4d553fdca18a35d481252caee54c12ba8909f74050d30cfe0db9d06fc2caa"
+      },
+      {
+        "file": "packages/ffmpeg/src/ffmpeg-command-wrapper.ts",
+        "sha256": "89c7b57f7143a1b251e8945ffb68bac9b025f1bb826f144b47ef5870687f47a5"
+      },
+      {
+        "file": "server/core/helpers/requests.ts",
+        "sha256": "6d777db79041f7a1e40c7f07cbde882ac68324c9f67aa52b57ff9c306f56397d"
+      },
+      {
+        "file": "server/server.ts",
+        "sha256": "ebac3f86014c5bbd1c2cc8c82e2394edd158b372ea94f72868da06452e4f312b"
+      }
+    ],
+    "scope": "Remote HTTP(S) input format whitelist only (local inputs get []); ffprobe/wrapper usage; optional SSRF-safe got DNS/IP/redirect hooks; JSON parser 500kb. No blanket safety claim or runtime test."
+  },
+  "independent_review": "PENDING"
+}

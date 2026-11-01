@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-01",
+  "actual_source_sha256": {
+    "scripts/hls/encode-hls.mjs": "0b185c3e40e6468112ac82f06ced28b23c53e5670a0d5847212beaa7dab94bb6",
+    "lib/modules/video-pipeline/domain/upload-policy.ts": "057b7d9dd3642bdf9a9e6732abf760e9096be0913d216328198c44e628e96906"
+  },
+  "host_ffmpeg": "ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers",
+  "host_ffprobe": "ffprobe version 7.1.5-0+deb13u1 Copyright (c) 2007-2026 the FFmpeg developers",
+  "declared_worker_image": "mwader/static-ffmpeg:8.0.1",
+  "observations": [
+    {
+      "name": "valid_video_control",
+      "accepted": true,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "name": "audio_only_rejected",
+      "accepted": false,
+      "reason": "Source has no video stream"
+    },
+    {
+      "name": "shell_metacharacters_treated_as_literal_filename",
+      "accepted": true,
+      "marker_created": false
+    },
+    {
+      "name": "loopback_fixture_server_control",
+      "requests": 1,
+      "status": 200
+    },
+    {
+      "name": "xml_mp4_atom_ftyp",
+      "pure_metadata_accepted": true,
+      "sniff": "mp4",
+      "probe_rejected": true,
+      "moov_missing": true,
+      "loopback_requests": 0
+    },
+    {
+      "name": "xml_mp4_atom_free",
+      "pure_metadata_accepted": true,
+      "sniff": "mp4",
+      "probe_rejected": true,
+      "moov_missing": true,
+      "loopback_requests": 0
+    },
+    {
+      "name": "xml_mp4_atom_skip",
+      "pure_metadata_accepted": true,
+      "sniff": "mp4",
+      "probe_rejected": true,
+      "moov_missing": true,
+      "loopback_requests": 0
+    },
+    {
+      "name": "xml_mp4_atom_pnot",
+      "pure_metadata_accepted": true,
+      "sniff": "mp4",
+      "probe_rejected": true,
+      "moov_missing": true,
+      "loopback_requests": 0
+    },
+    {
+      "name": "process_timeout",
+      "error_name": "TimeoutError"
+    },
+    {
+      "name": "stdout_limit",
+      "error_name": "OutputLimitError"
+    },
+    {
+      "name": "running_process_abort",
+      "error_name": "AbortError"
+    }
+  ],
+  "limits": [
+    "Actual host FFmpeg 7.1.5 differs from declared Docker FFmpeg 8.0.1; production not inspected.",
+    "Four synthetic XML/MP4 candidates only; no exhaustive malformed-media corpus or SSRF absence proof.",
+    "Metadata/sniff are pure functions; HTTP/R2/complete-upload path not executed.",
+    "Only own ephemeral loopback fixture was targeted; no external or production network.",
+    "Process limits tested with bounded benign Node children, not a demonstrated FFmpeg hang.",
+    "No full encode, image RCE exploit, quality or capacity benchmark."
+  ]
+}

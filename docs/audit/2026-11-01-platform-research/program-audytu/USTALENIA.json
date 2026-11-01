@@ -6,24 +6,44 @@
       "id": "R01",
       "title": "Aktualne zależności wymagają pilnego przeglądu bezpieczeństwa",
       "baseline_priority_and_evidence": "P0, A/C",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono dopasowanie Next 16.3.8 i sharp 0.35.4 do dwóch powiązanych advisory. Nie wykonano nowego npm audit ani exploitu; automatyczna kontrola odrzuciła wysłanie grafu zależności.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D05",
         "D17"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Projekt zawiera wersje bibliotek objęte ostrzeżeniami o możliwym RCE w określonych warunkach. Wymaga pilnego usunięcia ryzyka zależności, ale nie dowodzi przejęcia aplikacji.",
+      "conditions": "Możliwa ścieżka dekodera obrazu i warunki runtime opisane w advisory; Linux/glibc obserwowane lokalnie, produkcyjne wejście do podatnego parsera i PIE niezweryfikowane.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D05-WEJSCIA-PLIKI-I-ZALEZNOSCI.md",
+        "evidence/batch08-review.json",
+        "evidence/dependency-review-batch08.json",
+        "evidence/dependency-local-metadata-batch08.json",
+        "sources/GHSA-2464-fhr4-w9xw.json",
+        "sources/GHSA-wq5f-xc86-pv6w.json",
+        "evidence/npm-audit-not-executed-batch08.json"
+      ],
+      "counterarguments": [
+        "Brak exploitu i inspekcji produkcji.",
+        "Next odrzuca rozpoznany SVG przy domyślnych ustawieniach; hosty i uploady ograniczają wejścia.",
+        "Dwa powiązane komunikaty nie oznaczają dwóch niezależnych exploitów.",
+        "Historyczna liczba alertów nie jest świeżym wynikiem; nowy pełny skan nie został wykonany."
+      ],
+      "standard_refs": [
+        "v5.0.0-15.2.1",
+        "v5.0.0-15.2.5"
+      ],
+      "proposed_fix": "W osobnym etapie napraw zaktualizować Next/sharp/lockfile do wspieranych poprawionych wersji, sprawdzić faktycznie ładowane biblioteki i regresje obrazów/builda. Nie zmieniano aplikacji w tej partii.",
+      "acceptance_test": "Potwierdzić brak wskazanych podatnych kopii w lockfile i obrazie runtime, rzeczywiste wersje sharp/librsvg oraz poprawne obrazy/odmowy SVG i pełne wymagane sprawdzenia.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "kind": "RYZYKO_ZALEZNOSCI",
+      "priority": "P0_PILNY_PRZEGLAD_I_AKTUALIZACJA_NIE_DOWOD_RCE",
+      "evidence_level": "B_PINNED_LOCAL_VERSIONS_AND_C_PUBLIC_REVIEWED_ADVISORIES_NO_EXPLOIT"
     },
     {
       "id": "R02",
@@ -377,23 +397,40 @@
       "id": "R15",
       "title": "Limity body nie są jednolicie egzekwowane przed parsowaniem",
       "baseline_priority_and_evidence": "P1/P2, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono kolejność parse-before-schema oraz zaakceptowanie małego pliku z dużym nieużywanym polem multipart. Nie wykonano HTTP/Next ani pomiaru DoS.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D05"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Odrzucenie zbyt długiego pola następuje po wczytaniu całego JSON. Limit rozmiaru pojedynczego pliku nie ogranicza wszystkich pól formularza; duże żądania mogą zużywać zasoby przed odmową.",
+      "conditions": "Wywołanie badanych helperów po wymaganym uwierzytelnieniu; brak rzeczywistego limitu całego body przed parserem lub mniejszy limit pliku niż całej formy. Aktywna ochrona proxy niezweryfikowana.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D05-WEJSCIA-PLIKI-I-ZALEZNOSCI.md",
+        "evidence/batch08-review.json",
+        "SCENARIUSZE-WEJSCIA.csv",
+        "tools/input-boundaries-experiment.cjs",
+        "evidence/input-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Istniejący helper readRequestJsonWithLimit prawidłowo ogranicza rzeczywiste bajty.",
+        "Duży deklarowany Content-Length odrzucony przed odczytem, wybrany zbyt duży plik także odrzucony.",
+        "Synthetic fixtures <=100 KiB, bez pomiaru pamięci i odmowy usługi.",
+        "Brak realnego HTTP, sesji, Access/CSRF i konfiguracji proxy; zaniżony nagłówek to model Web Request, nie dowód akceptacji błędnego framingu."
+      ],
+      "standard_refs": [
+        "v5.0.0-5.2.1"
+      ],
+      "proposed_fix": "Ujednolicić limit sumy rzeczywistych bajtów przed parserem JSON/multipart i limity liczby pól/części, zachowując limity plików i legalnego complete upload. Uzgodnić limit warstwy proxy.",
+      "acceptance_test": "Pełne HTTP przez docelowy proxy/Next: brak długości, wiele pól/części, legalne granice, za duży plik i sumaryczne body, wczesne 413 i pomiar zasobów pod współbieżnością.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "kind": "USTERKA_OCHRONY_ZASOBOW",
+      "priority": "P1_P2_ZALEZNIE_OD_EKSPOZYCJI_I_LIMITOW_PROXY",
+      "evidence_level": "A_ACTUAL_READERS_NATIVE_WEB_REQUEST_AND_ZOD_WITH_UNUSED_AUTH_CONTEXT_STUBS_AND_B_SOURCE"
     },
     {
       "id": "R16",

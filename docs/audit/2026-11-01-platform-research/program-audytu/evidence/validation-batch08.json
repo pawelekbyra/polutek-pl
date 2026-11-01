@@ -1,0 +1,61 @@
+{
+  "date": "2026-11-01",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_APPLICATION_TESTS",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 9,
+    "NIEZBADANE": 9
+  },
+  "asvs_status_counts": {
+    "NIEZBADANE": 301,
+    "W_TRAKCIE": 44
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 54,
+    "NIEZBADANE": 226
+  },
+  "stable_finding_count": 30,
+  "distinct_new_findings": 0,
+  "existing_findings_extended": [
+    "R01",
+    "R15"
+  ],
+  "other_findings_and_all_historical_priority_fields_preserved": true,
+  "earlier_raw_evidence_and_source_files_preserved": 75,
+  "source_files_partially_reviewed_this_batch": 30,
+  "baseline_source_hashes_match": true,
+  "actual_typescript_modules_executed": 5,
+  "actual_encoder_esm_module_executed": true,
+  "input_reader_observations": 14,
+  "ffmpeg_observations": 11,
+  "ffmpeg_final_repeat": "exit 0, byte-identical archived JSON and empty log; repeated because tool session disappeared before final exit retrieval",
+  "targeted_vitest_files": 5,
+  "targeted_vitest_passed_files": 4,
+  "targeted_vitest_blocked_files": 1,
+  "targeted_vitest_registered_tests": 38,
+  "targeted_vitest_passed": 38,
+  "targeted_vitest_failed_assertions": 0,
+  "targeted_vitest_global_exit": 1,
+  "full_suite_repeated": false,
+  "generated_prisma_client_executed": false,
+  "new_full_stack_scenarios_executed": 0,
+  "existing_full_http_scenarios_executed": 0,
+  "fresh_npm_audit_executed": false,
+  "public_advisory_downloads": 2,
+  "advisory_version_ranges_match_locally": true,
+  "local_links_checked": 181,
+  "broken_local_links": [],
+  "syntax_check": "Node --check passed both research scripts",
+  "whitespace_check": "git diff --check passed",
+  "credential_pattern_scan": "No matches in changed/new audit files; bounded pattern scan, not exhaustive secret detection",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "production_access": false,
+  "scope": "Research artifact/source hash/result consistency. Neither full application validation nor production security certification."
+}
