@@ -409,23 +409,39 @@
       "id": "R19",
       "title": "Dokumentacja ma konkurujące definicje produktu",
       "baseline_priority_and_evidence": "P2, B",
-      "status": "DO_WERYFIKACJI",
+      "status": "POTWIERDZONE",
       "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D01"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
+      "impact_plain_language": "Sprzeczne opisy kanałów, dostępu i płatności utrudniają właścicielowi oraz nowemu wykonawcy rozpoznanie faktycznego produktu i poprawny wybór scenariuszy odbioru.",
+      "conditions": "Porównanie README i dokumentu etapów z implementacją kanałów, wyszukiwania, strefy patrona oraz macierzą ról.",
+      "evidence_paths": [
+        "obszary/D01-PRODUKT-I-ZAKRES.md",
+        "MAPA-SYSTEMU.md",
+        "README.md (repository root)",
+        "docs/architecture/multi-creator-platform.md",
+        "lib/modules/patron-zone/domain/config.ts",
+        "lib/modules/video/application/public-search.service.ts",
+        "lib/modules/authz/domain/resources.ts",
+        "lib/modules/authz/domain/matrix.ts",
+        "lib/api/studio-session.ts"
+      ],
+      "counterarguments": "Część opisów jest historyczna lub opisuje kierunek. Nie dowodzi to błędu wykonania funkcji; ustalenie dotyczy niespójności aktualnie prezentowanej specyfikacji.",
       "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "proposed_fix": "Uzgodnić bieżące obietnice produktu i statusy wdrożenia, a następnie zsynchronizować dokumenty; na razie bez zmiany aplikacji.",
+      "acceptance_test": "Czytelnik potrafi odróżnić implementację, aktywną konfigurację i plan; źródła nie przeczą sobie w sprawie modeli dostępu, ról i sprzedaży.",
+      "independent_review": {
+        "status": "PENDING",
+        "note": "Ponowny przegląd źródeł wykonany w tym przebiegu; nie jest niezależnym audytem drugiego wykonawcy."
+      },
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "evidence_level": "B_SOURCE_REVIEW",
+      "updated_at": "2026-11-01",
+      "source_revision": "c397b9e548ca2c628e21457ac69d66e54b12ddbd"
     },
     {
       "id": "R20",

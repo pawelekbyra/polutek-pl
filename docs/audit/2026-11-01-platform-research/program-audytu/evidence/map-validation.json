@@ -1,0 +1,16 @@
+{
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "eb0da3fe8f7bc2d573abacddf474da2c552e8c42",
+  "routes_match_tracked_files": true,
+  "route_files_without_methods": 0,
+  "parser_diagnostics": 0,
+  "catch_all_auth_exports_found": true,
+  "root_page_normalization_checked": true,
+  "surface_records": 279,
+  "asvs_rows": 345,
+  "asvs_started": 9,
+  "asvs_passed": 0,
+  "local_links_checked": 41,
+  "broken_local_links": 0,
+  "scope": "Static inventory integrity, not application runtime or authorization correctness."
+}

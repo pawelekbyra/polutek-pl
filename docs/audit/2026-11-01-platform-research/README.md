@@ -9,6 +9,9 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [Raport bazowy](RAPORT.md) | Pogłębione porównanie, 22 obszary oceny, wyniki kontroli i eksperymentów |
 | [Program pełnego badania](program-audytu/PROGRAM.md) | Zakres 18 obszarów, etapy, wymagania dowodu i warunki ukończenia |
 | [Stan i następny krok](program-audytu/STAN.md) | Punkt wznowienia każdej kolejnej sesji |
+| [Mapa systemu](program-audytu/MAPA-SYSTEMU.md) | Komponenty, role, 14 przepływów krytycznych i granice zaufania |
+| [D01: produkt i zakres](program-audytu/obszary/D01-PRODUKT-I-ZAKRES.md) | 22 obietnice produktu i rozdzielenie implementacji od aktywnej konfiguracji |
+| [Powierzchnia wejść](program-audytu/POWIERZCHNIA-WEJSC.csv) | Trasy, Server Actions, strony, zdarzenia workerów i wejścia operacyjne do kontroli |
 | [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R22, statusy i przypisanie do obszarów |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |

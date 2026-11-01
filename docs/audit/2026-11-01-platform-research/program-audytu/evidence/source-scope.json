@@ -1,0 +1,7 @@
+{
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "eb0da3fe8f7bc2d573abacddf474da2c552e8c42",
+  "application_diff_paths": [],
+  "method": "git diff baseline over application source, schema, workers, services, deployment, scripts and listed root manifests/configs; audit documentation excluded",
+  "runtime_claim": "No runtime or production configuration verification in this batch."
+}
