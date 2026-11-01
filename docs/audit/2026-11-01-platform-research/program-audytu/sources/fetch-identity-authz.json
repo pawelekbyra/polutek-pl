@@ -1,0 +1,26 @@
+[
+  {
+    "file": "wstg-v42-idor.md",
+    "url": "https://raw.githubusercontent.com/OWASP/wstg/v4.2/document/4-Web_Application_Security_Testing/05-Authorization_Testing/04-Testing_for_Insecure_Direct_Object_References.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "date": "2026-11-01",
+    "sha256": "c57ae867049144eebdbd1381f561158c2c131f5e0c2aa3877b5c41591e082f49"
+  },
+  {
+    "file": "wstg-v42-logout.md",
+    "url": "https://raw.githubusercontent.com/OWASP/wstg/v4.2/document/4-Web_Application_Security_Testing/06-Session_Management_Testing/06-Testing_for_Logout_Functionality.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "date": "2026-11-01",
+    "sha256": "0a4d6204d1661d40a146af02c4c6b6620653840d560f0409de8a083dfa971c4c"
+  },
+  {
+    "file": "wstg-v42-lockout.md",
+    "url": "https://raw.githubusercontent.com/OWASP/wstg/v4.2/document/4-Web_Application_Security_Testing/04-Authentication_Testing/03-Testing_for_Weak_Lock_Out_Mechanism.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "date": "2026-11-01",
+    "sha256": "3a278132afd6c6efbde5d661f86d6e97e7f7976388fb1d00e452f03929a9a87b"
+  }
+]

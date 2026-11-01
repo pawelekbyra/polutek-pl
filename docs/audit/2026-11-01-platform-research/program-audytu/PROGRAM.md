@@ -154,4 +154,4 @@ Na wyraźne polecenie właściciela program i dowody przechowujemy w repozytoriu
 
 ## Następny krok
 
-**Etap 0/1: mapa obietnic produktu, wejść systemu i granic zaufania.** Równolegle klasyfikacja 345 pozycji ASVS według rzeczywistego zakresu. Następnie pogłębione przepływy konta, uprawnień, uploadu, kodowania, publikacji i odtwarzania, z przypisaniem R01–R22 do mapy. Blokada Prisma nie zatrzymuje mapowania i przeglądu źródeł, lecz zatrzymuje uznanie runtime za zweryfikowany.
+Kolejność programu: mapa obietnic produktu, wejść systemu i granic zaufania; następnie pogłębione przepływy konta, uprawnień, uploadu, kodowania, publikacji i odtwarzania. Równolegle klasyfikacja 345 pozycji ASVS według rzeczywistego zakresu. Bieżący punkt kontynuacji i ukończone partie opisuje [STAN.md](STAN.md), a stabilny rejestr zachowuje R01–R23 i kolejne ustalenia. Blokada Prisma nie zatrzymuje mapowania i przeglądu źródeł, lecz zatrzymuje uznanie pełnego runtime za zweryfikowany.

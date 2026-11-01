@@ -1,0 +1,113 @@
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /workspace/polutek-pl
+
+ ❯ tests/unit/admin-app/access-guard.test.ts (0 test)
+ ❯ tests/unit/modules/authz/schema-contract.test.ts (7 tests | 2 failed) 8ms
+     × channel roles 3ms
+     × channel statuses 1ms
+     ✓ has no BOM 0ms
+     ✓ does not drop, rename, retype or tighten anything that exists 1ms
+     ✓ adds every new column on an existing table as nullable or with a default 1ms
+     ✓ guards handle uniqueness case-insensitively and keeps decisions append-only 0ms
+     ✓ backfills owners idempotently 0ms
+ ❯ tests/unit/video-pipeline/finalize-self-hls.test.ts (0 test)
+ ❯ tests/unit/auth/onboarding-enforcement.test.ts (0 test)
+ ❯ tests/unit/modules/authz/authorize.test.ts (0 test)
+ ❯ tests/unit/modules/authz/channel-membership-roles.test.ts (0 test)
+ ❯ tests/unit/modules/comments/creator-reply-authz.test.ts (0 test)
+ ❯ tests/unit/modules/comments/moderation-channel-authz.test.ts (0 test)
+ ✓ tests/unit/admin-app/cf-access.test.ts (13 tests) 93ms
+ ✓ tests/unit/api/studio-routes.test.ts (26 tests) 79ms
+ ✓ tests/unit/auth/account-deletion-reauth.test.ts (9 tests) 19ms
+ ✓ tests/unit/modules/authz/policy.test.ts (24 tests) 17ms
+ ✓ tests/unit/auth/admin-guard.test.ts (9 tests) 15ms
+ ✓ tests/unit/auth/auth-config.test.ts (12 tests) 11ms
+ ✓ tests/unit/auth/change-email-guard.test.ts (7 tests) 17ms
+ ✓ tests/unit/video-pipeline/self-hls-publication.test.ts (3 tests) 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/admin-app/access-guard.test.ts [ tests/unit/admin-app/access-guard.test.ts ]
+Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
+ ❯ apps/admin/lib/auth/api-guard.ts:2:1
+      1| import { getAdminAuthMode, isDevAuthBypassEnabled } from "@admin/lib/c…
+      2| import { resolveAccessSession } from "./access-session";
+       | ^
+      3| import { adminAuth } from "./auth";
+      4| import { loadRole, normalizeRole, type AdminRole } from "./roles";
+
+Caused by: Error: @prisma/client did not initialize yet. Please run "prisma generate" and try to import it again.
+ ❯ new PrismaClient node_modules/.prisma/client/default.js:43:11
+ ❯ prismaClientSingleton lib/prisma.ts:4:10
+ ❯ lib/prisma.ts:13:44
+ ❯ apps/admin/lib/auth/access-session.ts:3:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/unit/auth/onboarding-enforcement.test.ts [ tests/unit/auth/onboarding-enforcement.test.ts ]
+TypeError: Cannot read properties of undefined (reading 'VISIBLE')
+ ❯ lib/modules/comments/domain/comment.policy.ts:13:24
+     11|  */
+     12| const MODERATION_TRANSITIONS: Record<ModerationAction, readonly Commen…
+     13|   hide: [CommentStatus.VISIBLE, CommentStatus.HELD_FOR_REVIEW],
+       |                        ^
+     14|   hold: [CommentStatus.VISIBLE],
+     15|   approve: [CommentStatus.HELD_FOR_REVIEW],
+ ❯ tests/unit/auth/onboarding-enforcement.test.ts:14:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/unit/video-pipeline/finalize-self-hls.test.ts [ tests/unit/video-pipeline/finalize-self-hls.test.ts ]
+ FAIL  tests/unit/modules/authz/authorize.test.ts [ tests/unit/modules/authz/authorize.test.ts ]
+ FAIL  tests/unit/modules/authz/channel-membership-roles.test.ts [ tests/unit/modules/authz/channel-membership-roles.test.ts ]
+ FAIL  tests/unit/modules/comments/creator-reply-authz.test.ts [ tests/unit/modules/comments/creator-reply-authz.test.ts ]
+ FAIL  tests/unit/modules/comments/moderation-channel-authz.test.ts [ tests/unit/modules/comments/moderation-channel-authz.test.ts ]
+Error: @prisma/client did not initialize yet. Please run "prisma generate" and try to import it again.
+ ❯ new PrismaClient node_modules/.prisma/client/default.js:43:11
+ ❯ prismaClientSingleton lib/prisma.ts:4:10
+      2|
+      3| const prismaClientSingleton = () => {
+      4|   return new PrismaClient({
+       |          ^
+      5|     log: process.env.NODE_ENV === 'development' ? ['query', 'error', '…
+      6|   });
+ ❯ lib/prisma.ts:13:44
+ ❯ lib/modules/shared/app-context.ts:1:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/modules/authz/schema-contract.test.ts > authz domain constants match the Prisma enums > channel roles
+TypeError: Cannot convert undefined or null to object
+ ❯ tests/unit/modules/authz/schema-contract.test.ts:12:54
+     10| describe("authz domain constants match the Prisma enums", () => {
+     11|   it("channel roles", () => {
+     12|     expect([...CHANNEL_ROLES].sort()).toEqual(Object.values(ChannelRol…
+       |                                                      ^
+     13|   });
+     14|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/unit/modules/authz/schema-contract.test.ts > authz domain constants match the Prisma enums > channel statuses
+TypeError: Cannot convert undefined or null to object
+ ❯ tests/unit/modules/authz/schema-contract.test.ts:16:57
+     14|
+     15|   it("channel statuses", () => {
+     16|     expect([...CHANNEL_STATUSES].sort()).toEqual(Object.values(Channel…
+       |                                                         ^
+     17|   });
+     18| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+
+ Test Files  8 failed | 8 passed (16)
+      Tests  2 failed | 108 passed (110)
+   Start at  14:25:37
+   Duration  1.96s (transform 715ms, setup 0ms, import 1.05s, tests 262ms, environment 2ms)
+
+JSON report written to /workspace/polutek-pl/docs/audit/2026-11-01-platform-research/program-audytu/evidence/identity-authz-vitest.json

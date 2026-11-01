@@ -277,45 +277,69 @@
       "id": "R13",
       "title": "Ważność logowania administratora jest za słabą definicją świeżego potwierdzenia pieniędzy",
       "baseline_priority_and_evidence": "P1 przed delegowaniem obsługi, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
-      "source_report": "../RAPORT.md",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono różnicę polityki w kodzie. Nie dowiedziono obejścia logowania ani aktywnej konfiguracji produkcyjnej.",
+      "source_report": "obszary/D03-TOZSAMOSC-I-SESJE.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D03"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Po przejęciu otwartej sesji Access wrażliwe działanie może nie wymagać ponownego potwierdzenia przez dłuższy czas niż w starszym trybie panelu.",
+      "conditions": "ADMIN_AUTH_MODE=access; poprawny token; iat w ostatnich 12 h; wrażliwa operacja chroniona hasFreshStepUp.",
+      "evidence_paths": [
+        "obszary/D03-TOZSAMOSC-I-SESJE.md",
+        "evidence/identity-authz-review.json"
+      ],
+      "counterarguments": [
+        "Token nadal musi mieć prawidłowy podpis i tożsamość; nie jest to ominięcie Access.",
+        "Dłuższe okno jest jawną decyzją projektu; wymaga oceny ryzyka dużej platformy."
+      ],
+      "standard_refs": [
+        "v5.0.0-7.5.1"
+      ],
+      "proposed_fix": "Ustalić wymagania ponownego potwierdzenia dla wrażliwych operacji; dopiero potem dobrać niezależny mechanizm i okno.",
+      "acceptance_test": "HTTP dla tokenów starszych od uzgodnionego progu; refund/usunięcie/eksport/zmiana roli wymagają potwierdzenia; brak regresji po legalnym potwierdzeniu.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "reviewed_at": "2026-11-01",
+      "kind": "RYZYKO",
+      "evidence_level": "B_SOURCE_REVIEW"
     },
     {
       "id": "R14",
       "title": "Awaria Redis świadomie osłabia limity auth",
       "baseline_priority_and_evidence": "P2, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
-      "source_report": "../RAPORT.md",
+      "status": "POTWIERDZONE",
+      "note": "Trzy istniejące testy faktycznie przeszły; potwierdzają działanie fail-open i timeout helpera, nie skuteczne zgadywanie haseł.",
+      "source_report": "obszary/D03-TOZSAMOSC-I-SESJE.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D03"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Awaria Redis wyłącza limity auth i liczniki błędnych prób; logowanie pozostaje dostępne przy słabszej ochronie przed automatyzacją.",
+      "conditions": "Niedostępny lub opóźniony magazyn liczników Redis; pozostałe zabezpieczenia mają własną konfigurację i zależności.",
+      "evidence_paths": [
+        "evidence/auth-failure-passkey-vitest.json",
+        "evidence/auth-failure-passkey-vitest.log",
+        "obszary/D03-TOZSAMOSC-I-SESJE.md"
+      ],
+      "counterarguments": [
+        "Działanie celowe: utrzymuje dostępność kont; CAPTCHA i hasło nie są wyłączane przez ten kod.",
+        "Nie potwierdzono braku wszystkich niezależnych limitów infrastruktury produkcyjnej."
+      ],
+      "standard_refs": [
+        "v5.0.0-6.3.1",
+        "WSTG-v42-ATHN-03"
+      ],
+      "proposed_fix": "Zaprojektować kontrolowaną degradację, niezależne limity na brzegu i alarm awarii; zweryfikować każdy endpoint auth.",
+      "acceptance_test": "W izolowanym stosie odciąć Redis i wykonać próby z wielu IP/kont; zmierzyć limity zastępcze, alarm, czas odpowiedzi i odzyskanie normalnej ochrony.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "reviewed_at": "2026-11-01",
+      "kind": "RYZYKO",
+      "evidence_level": "A_ISOLATED_UNIT_TESTS_AND_B_SOURCE"
     },
     {
       "id": "R15",
@@ -508,6 +532,43 @@
       "independent_review": null,
       "retest": null,
       "created_at": "2026-11-01"
+    },
+    {
+      "id": "R23",
+      "title": "Automatyczna publikacja po kodowaniu pomija film spoza głównego kanału",
+      "kind": "USTERKA",
+      "priority": "P1_PRZED_OTWARCIEM_WIELU_TWORCOW",
+      "baseline_priority_and_evidence": "NEW: P1, A/B (isolated source execution)",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ISOLATED_ACTUAL_SOURCE_WITH_FAKE_IO_AND_B_SOURCE",
+      "note": "Potwierdzona utrata kontekstu kanału w badanej ścieżce; bez pełnego HTTP, realnego workera i DB. Nie dowiedziono wycieku danych ani awarii obecnej produkcji.",
+      "source_report": "obszary/D04-ROLE-I-IZOLACJA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D01",
+        "D04",
+        "D08"
+      ],
+      "impact_plain_language": "Twórca innego kanału wybiera publikację po kodowaniu; finalizer kończy się sukcesem, lecz nie uruchamia publikacji i nie zapisuje błędu.",
+      "conditions": "Film nie należy do skonfigurowanego main_channel_id; oczekuje na auto-publish; createSelfHlsFinalizer tworzy kontekst bez channelId.",
+      "evidence_paths": [
+        "evidence/identity-context-experiment.json",
+        "tools/identity-context-experiment.cjs",
+        "obszary/D04-ROLE-I-IZOLACJA.md"
+      ],
+      "counterarguments": [
+        "Dla kanału głównego ścieżka dociera do publikatora.",
+        "Identyczne dane innego filmu docierają do publikatora po dodaniu poprawnego kontekstu; wykluczono brak gotowości jako przyczynę eksperymentu.",
+        "Publikator i aktywacja route są atrapami; dowód dotyczy błędnego filtra i pominięcia wywołania, nie rzeczywistej publikacji.",
+        "Szersze zakładanie kanałów jest bramkowane; funkcja może nie być osiągalna dla wszystkich dziś."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Tworzyć kontekst per zadanie na podstawie zweryfikowanego powiązania filmu i kanału; jawnie raportować wynik, zachować fencing i kontrole cyklu kanału.",
+      "acceptance_test": "Rzeczywisty worker i DB: gotowe filmy dwóch kanałów, PUBLIC i UNLISTED; poprawna publikacja obu; odmowa po zawieszeniu/usunięciu, dla podmienionych identyfikatorów i starego workera; bez błędów retry.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "MULTI_CREATOR_IMPLEMENTATION;CURRENT_PRODUCTION_UNKNOWN"
     }
   ]
 }
