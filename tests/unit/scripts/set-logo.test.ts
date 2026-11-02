@@ -28,6 +28,7 @@ function sandbox(): string {
     "app/components/brand/PolutekWordmarkBlueSymbol.tsx",
     "app/components/brand/polutek-symbol-paths.ts",
     "public/brand/polutek-wordmark-blue-symbol.svg",
+    "public/brand/polutek-wordmark-blue-symbol-orbit.svg",
   ]) {
     mkdirSync(path.dirname(path.join(root, f)), { recursive: true });
     cpSync(path.join(repo, f), path.join(root, f));
@@ -74,7 +75,7 @@ describe("scripts/brand/set-logo.mjs (npm run logo -- <variant>)", () => {
   it("knows the three switchable logos of the owner's passphrases", () => {
     const root = sandbox();
     made.push(root);
-    for (const v of ["glasses", "wordmark-blue", "wordmark-blue-symbol"]) {
+    for (const v of ["glasses", "wordmark-blue", "wordmark-blue-symbol-orbit", "wordmark-blue-symbol"]) {
       const r = run(v, "--root", root);
       expect(r.status).toBe(0);
       expect(currentVariant(root)).toBe(v);
