@@ -195,3 +195,12 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Nie zmieniono USTALENIA.json ani kanonicznych wyników: 18 obszarów W_TRAKCIE/0 zamkniętych, ASVS 55/290/0 PASS, wejścia 79/207 z 286. Priorytety źródłowe zachowano; priorytety realizacji są osobną oceną.
 - Przerwaną, niezwalidowaną partię 17 zachowano w provenance/paused-batch17-before-roadmap-v1.tar.gz i JSON z hashami. Aktywne materiały przywrócono do commitu partii 16, bez adopcji roboczych kwalifikacji i bez dalszej oceny archiwum.
 - Dodano maszynowy indeks planu i walidację spójności; odświeżono indeks, PROGRAM i STAN. Następny krok: oczekiwanie na zatwierdzenie roadmapy/harmonogramu przez właściciela. Bez napraw, nowych prób aplikacji, wdrożenia i scalenia.
+
+## 2 listopada 2026 — wznowienie po decyzji właściciela
+
+- Właściciel polecił wznowić audyt; pauza z roadmapy v1 zdjęta. Nie rozpoczęto napraw, nie zmieniono aplikacji, nie wdrożono.
+- Próba K01: `npm ci` i `prisma generate` (Prisma 6.19.3, prawdziwy klient) udane na lokalnym komputerze; wcześniej blokowało to środowisko chmurowe. Node 24 zamiast wymaganego 22.x.
+- Nowy baseline Vitest: 535 plików, 4596 testów, 4573 pass, 1 fail, 22 pending ([dowód](evidence/baseline-real-prisma-2026-11-02.json)). Poprzednie 219 porażek przed rejestracją wynikało z braku klienta (potwierdza środowiskowy charakter R08).
+- Jedyna porażka (migracja video_chapters_search, znak `\r`) to artefakt CRLF z `core.autocrlf=true`; do potwierdzenia na checkoucie LF.
+- Brak Postgresa/Dockera: testy DB i integracyjne nadal NIEWYKONANE. Baseline nie jest dowodem zgodności produktu.
+- Zamrożona partia 17 (ASVS V1–V2, kodowanie) rozpakowana tylko do porównania; NIE przyjęta do aktywnych dokumentów, wymaga walidacji.

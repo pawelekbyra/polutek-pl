@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-02",
+  "purpose": "K01/K03 probe after owner resumed audit: real Prisma client, full vitest baseline",
+  "audited_sha": "4e959185b2314a39c1e91e9297ed7c5ce79fc26a",
+  "environment": {"os": "Windows 10", "node": "v24.18.0 (repo requires 22.x; EBADENGINE warning)", "npm": "11.16.0", "install": "npm ci --ignore-scripts exit 0", "prisma_generate": "6.19.3 real client, exit 0", "postgres": "not available", "docker": "not available"},
+  "vitest": {"files": 535, "tests_total": 4596, "tests_passed": 4573, "tests_failed": 1, "tests_pending": 22, "failed_files": 1, "exit": 1},
+  "previous_baseline": "535 files: 304 pass, 12 failed, 219 failed before registration (no real Prisma client)",
+  "failing_test": {"file": "tests/unit/modules/video/video-chapters-search-migration.test.ts:35", "assertion": "migration SQL not to contain \r", "classification": "environment artifact (git core.autocrlf=true checked out CRLF); not a product defect; unconfirmed on LF checkout"},
+  "interpretation": "The 219 pre-registration failures were environment (missing Prisma client), consistent with R08. Not evidence of product correctness: no DB-backed tests ran, Node differs from required 22.x.",
+  "limits": ["no Postgres: integration and vitest.postgres.config.ts suites not run", "Node 24 not 22", "no typecheck/build run in this step"]
+}
