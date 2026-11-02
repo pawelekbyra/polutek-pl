@@ -264,3 +264,11 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - 81 diagnostyk typów→0. Pełny lint0; bez wyłączenia reguł i bez zmiany tsconfig. Nowa regresja Suspense RED 8/9 → GREEN 9/9, 65/65 celowanych follow-up; wcześniejsze 158/158 i 269/269 zachowane.
 - Finalny czysty SHA de69f521: unit 4687 PASS/0 FAIL/3 pominięte w 541 plikach, PG 75/75 w 12 plikach, oba typecheck/architektura/env/lint PASS, public i admin build PASS. Hotspots 4 i strict-escapes 5 nadal FAIL; zbiorczy exit 1. Obraz/protokół artefaktu/full HLS i decyzje K05 otwarte.
 - Dowody w evidence/h1-quality-2026-11-02, aktualizacja PR #2065 i przekazania. Zero zamkniętych całych pakietów/ustaleń, brak nowych kwalifikacji ASVS, merge, deploy, produkcji i kosztów. Na polecenie właściciela raportujemy szacunek: H1 około 65%, całość 5–10%, pozostało 35% i 90–95%. Bieżące działające środowisko bez kolejnej publikacji.
+
+## 2 listopada 2026 — H1: brakujące bramki jakości i strażnik testów krytycznych
+
+- Pięć małych commitów na `fix/polutek-h1-acceptance`, finalny `03115f0fefe47baf91622b3272b966344981beaf`, szkic PR #2065. Budżety, baseline, lockfile, schemat/migracje i tsconfig bez zmian.
+- Wydzielono widoki/kontrakty czterech hotspotów, usunięto zbędne obejścia typów; widoczność używa istniejącej transakcji z kontekstu. Dodano dwie regresje transakcyjne.
+- Strażnik obu krytycznych plików i 13 regresji na prawdziwym Vitest; właściwe krytyczne 36/36.
+- Dokładny czysty SHA: unit 4702/0/3 pominięte, PG75/75, typy/lint/hotspots/escapes/architektura/env i oba pełne buildy PASS. Zbiorczy exit0; `release_ready=false`, pełne HLS/obraz/wiązanie artefaktu/K05 nadal otwarte.
+- Dowody `evidence/h1-gates-2026-11-02`; starsze czerwone wyniki i Windows/batch17 zachowane. H1 około75%, całość5–10%; 0 zamkniętych pakietów/ustaleń, bez nowych ASVS PASS, merge/deploy/produkcji/kosztów.

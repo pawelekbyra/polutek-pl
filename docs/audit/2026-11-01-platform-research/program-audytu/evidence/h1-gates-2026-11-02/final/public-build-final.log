@@ -1,0 +1,169 @@
+▲ Next.js 16.4.1 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 17ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+(node:54711) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/polutek-pl/tailwind.config.ts?id=1793639153718 is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /workspace/polutek-pl/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Compiled successfully in 12.0s
+  Running TypeScript ...
+  Finished TypeScript in 25.3s ...
+  Collecting page data using 4 workers ...
+  Generating static pages using 4 workers (0/9) ...
+  Generating static pages using 4 workers (2/9) 
+[WARN] [resolveInitialLanguage] auth/db lookup failed, falling back {
+  name: 'Error',
+  message: "Dynamic server usage: Route /polityka-prywatnosci couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error"
+}
+  Generating static pages using 4 workers (4/9) 
+[WARN] [resolveInitialLanguage] auth/db lookup failed, falling back {
+  name: 'Error',
+  message: "Dynamic server usage: Route /regulamin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error"
+}
+  Generating static pages using 4 workers (6/9) 
+✓ Generating static pages using 4 workers (9/9) in 193ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /[locale]
+├ ƒ /[locale]/channel/[slug]
+├ ƒ /[locale]/notifications
+├ ƒ /[locale]/playlist/[channel]/[slug]
+├ ƒ /[locale]/playlista/[channel]/[slug]
+├ ○ /[locale]/polityka-prywatnosci
+├ ƒ /[locale]/powiadomienia
+├ ƒ /[locale]/premium
+├ ƒ /[locale]/premium-terms
+├ ○ /[locale]/privacy-policy
+├ ○ /[locale]/regulamin
+├ ƒ /[locale]/regulamin-premium
+├ ƒ /[locale]/search
+├ ƒ /[locale]/studio
+├ ƒ /[locale]/subscriptions
+├ ƒ /[locale]/subskrypcje
+├ ○ /[locale]/terms
+├ ƒ /[locale]/watch/[slug]
+├ ƒ /api/access
+├ ƒ /api/auth/[...all]
+├ ƒ /api/avatars/[userId]
+├ ƒ /api/channel-banners/[channelId]
+├ ƒ /api/channel/sidebar
+├ ƒ /api/channel/videos
+├ ƒ /api/checkout/create-intent
+├ ƒ /api/comments
+├ ƒ /api/comments/[commentId]
+├ ƒ /api/comments/[commentId]/context
+├ ƒ /api/comments/[commentId]/pin
+├ ƒ /api/comments/[commentId]/reaction
+├ ƒ /api/comments/[commentId]/replies
+├ ƒ /api/comments/[commentId]/report
+├ ƒ /api/cron/abandon-stale-originals
+├ ƒ /api/cron/own-mail-events
+├ ƒ /api/cron/premiere-notifications
+├ ƒ /api/cron/prune-expired-auth
+├ ƒ /api/cron/prune-playback-sessions
+├ ƒ /api/cron/prune-unverified-accounts
+├ ƒ /api/cron/purge-deleted-comments
+├ ƒ /api/cron/retention
+├ ƒ /api/cron/send-broadcasts
+├ ƒ /api/cron/stripe-reconciliation
+├ ƒ /api/cron/subscriber-snapshots
+├ ƒ /api/cron/sync-public-thumbnails
+├ ƒ /api/health
+├ ƒ /api/media-source/[videoId]
+├ ƒ /api/oembed
+├ ƒ /api/payment-settings
+├ ƒ /api/payments/[paymentId]
+├ ƒ /api/search
+├ ƒ /api/search/categories
+├ ƒ /api/studio/analytics/export
+├ ƒ /api/studio/analytics/overview
+├ ƒ /api/studio/analytics/videos
+├ ƒ /api/studio/analytics/videos/[id]
+├ ƒ /api/studio/bans
+├ ƒ /api/studio/channel
+├ ƒ /api/studio/channel/about
+├ ƒ /api/studio/channel/banner
+├ ƒ /api/studio/channel/handle
+├ ƒ /api/studio/channel/restore
+├ ƒ /api/studio/comments
+├ ƒ /api/studio/comments/[id]
+├ ƒ /api/studio/me
+├ ƒ /api/studio/moderation
+├ ƒ /api/studio/moderation/[decisionId]/appeal
+├ ƒ /api/studio/playlists
+├ ƒ /api/studio/playlists/[id]
+├ ƒ /api/studio/playlists/[id]/items
+├ ƒ /api/studio/playlists/[id]/order
+├ ƒ /api/studio/videos
+├ ƒ /api/studio/videos/[id]
+├ ƒ /api/studio/videos/[id]/cover
+├ ƒ /api/studio/videos/[id]/pipeline
+├ ƒ /api/studio/videos/[id]/publish
+├ ƒ /api/studio/videos/[id]/upload
+├ ƒ /api/studio/videos/[id]/upload/complete
+├ ƒ /api/studio/videos/[id]/upload/parts
+├ ƒ /api/subscriptions
+├ ƒ /api/subscriptions/unsubscribe
+├ ƒ /api/t
+├ ƒ /api/user/account
+├ ƒ /api/user/avatar
+├ ƒ /api/user/export
+├ ƒ /api/user/favorites
+├ ƒ /api/user/first-sign-in
+├ ƒ /api/user/language
+├ ƒ /api/user/nickname
+├ ƒ /api/user/notification-preferences
+├ ƒ /api/user/notifications
+├ ƒ /api/user/notifications/read
+├ ƒ /api/user/notifications/unread-count
+├ ƒ /api/user/premium-pass
+├ ƒ /api/user/premium-pass/checkout
+├ ƒ /api/user/premium-pass/consent
+├ ƒ /api/user/premium-pass/demo
+├ ƒ /api/user/premium-pass/intent
+├ ƒ /api/user/premium-pass/methods
+├ ƒ /api/user/profile
+├ ƒ /api/user/reports
+├ ƒ /api/user/subscribed-channels
+├ ƒ /api/users/nickname-available
+├ ƒ /api/videos/[id]/comments
+├ ƒ /api/videos/[id]/description
+├ ƒ /api/videos/[id]/favorite
+├ ƒ /api/videos/[id]/playback-event
+├ ƒ /api/videos/[id]/progress
+├ ƒ /api/videos/[id]/reaction
+├ ƒ /api/videos/[id]/thumbnail
+├ ƒ /api/videos/[id]/viewer-state
+├ ƒ /api/webhooks/postmark
+├ ƒ /api/webhooks/resend
+├ ƒ /api/webhooks/stripe
+├ ƒ /channel/[slug]
+├ ƒ /channel/[slug]/feed.xml
+├ ƒ /embed/[slug]
+├ ƒ /polityka-prywatnosci
+├ ƒ /regulamin
+├ ƒ /reset-password
+├ ○ /robots.txt
+├ ƒ /search
+├ ƒ /sitemap.xml
+├ ƒ /sso-callback
+├ ƒ /unsubscribe
+└ ƒ /watch/[slug]
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

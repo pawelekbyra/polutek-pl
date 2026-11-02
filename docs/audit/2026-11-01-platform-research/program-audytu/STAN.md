@@ -1,16 +1,16 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 2 listopada 2026. **H1 trwa: 81 błędów typów usunięte, pełny lint i oba buildy PASS. Zbiorczy odbiór nadal FAIL przez hotspots/strict-escapes.** Właściciel polecił kontynuować i po każdej turze podawać procent.
+Aktualizacja: 2 listopada 2026. **H1 trwa; wszystkie wykonane lokalne bramki tej partii PASS na dokładnym SHA. Hotspots/strict-escapes naprawione bez osłabiania reguł; krytyczne zestawy mają strażnika wykonania. Pełna integracja, artefakt wydania i decyzje K05 pozostają otwarte.**
 
-**Szacunkowo: H1 65% (35% pozostało); cała roadmapa 5–10% (90–95% pozostało).** To orientacyjny nakład pracy, nie liczba testów ani ocena bezpieczeństwa; 0 całych pakietów/ustaleń formalnie zamkniętych.
+**Szacunkowo H1 75% / 25% pozostało; cała roadmapa 5–10% / 90–95% pozostało.** To orientacyjny nakład pracy, nie wskaźnik bezpieczeństwa. Zero całych pakietów i ustaleń formalnie zamkniętych.
 
-Roadmapa v1 jest zatwierdzona. Dalszy pogłębiony audyt pozostaje czasowo odłożony na rzecz H1; wrócimy do niego według osobno uzgodnionego harmonogramu.
+Roadmapa v1 jest zatwierdzona. Dalszy pogłębiony audyt jest czasowo odłożony na rzecz H1, nie anulowany. Nie zaczynać ogólnego V3+ ani nowych kwalifikacji ASVS zamiast H1.
 
-Najpierw czytaj [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md) i [h1-status.json](evidence/h1-status.json). Kod `fix/polutek-h1-acceptance`, `de69f521f873be54f4d2ec30ae543331700c8397`; [szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065), baza main c80ef652. Bieżący checkout po zapisie: gałąź audytu. Brak merge/deploy/produkcji/kosztów.
+Czytaj [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md) i [h1-status.json](evidence/h1-status.json). Kod `fix/polutek-h1-acceptance`, `03115f0fefe47baf91622b3272b966344981beaf`; [szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065), baza main c80ef652. Po zapisie checkout gałęzi audytu. Bez merge/deploy/produkcji/kosztów.
 
-**Nowy baseline na dokładnym SHA:** unit 4687 PASS/0 FAIL/3 pominięte, PG 75/75; oba typecheck, lint, architektura/env i oba buildy: exit 0. Nadal cztery hotspots i pięć strict-escapes. Poprawka powiadomień ma RED 8/9 → GREEN 9/9 w rzeczywistym Suspense. Szczegóły, próby pośrednie i sześć małych commitów w `evidence/h1-quality-2026-11-02`.
+**Wynik:** unit 4702 PASS/0 FAIL/3 pominięte, PG 75/75, krytyczne 36/36, regresje strażnika 13/13; typy aplikacji/całego repo, lint (0 błędów/100 ostrzeżeń), hotspots, strict-escapes, architektura/env i oba pełne buildy exit 0. Zbiorczy proces exit 0, ale `release_ready=false`. Trzy pominięcia pozostają jawne. Dowody: [h1-gates-2026-11-02](evidence/h1-gates-2026-11-02/source-map.json); wcześniejsze wyniki zachowane.
 
-Prawdziwe Prisma/81 migracji/restore 11/HTTP 4 z wcześniejszej partii zachowane; właściwe źródła niezmienione, PG ponownie 75/75. Pełne HLS/Redis/storage, artefakt K02/K06 i dziewięć decyzji K05 nadal otwarte. Środowisko jest dostępne; właściciel nie wymaga kolejnej publikacji instrukcji podczas tej sesji. Nie ponawiać npm audit ani nie zaczynać ogólnego V3+ zamiast H1.
+Prawdziwe Prisma/81 migracji/restore 11/HTTP 4 z wcześniejszych partii zachowane; odpowiednie źródła bez zmian, PG ponownie 75/75. Pełne HLS/Redis/storage, Docker/artefakt K02/K06 i dziewięć decyzji K05 nadal otwarte. Środowisko działa; właściciel kontynuuje w tej sesji. Nie ponawiać npm audit/audit-high po wcześniejszej odmowie automatycznej kontroli.
 
 ## Odrębny przebieg na Windows — zachowane wyniki z 2 listopada 2026
 
@@ -199,15 +199,13 @@ Poniższe opisy odnoszą się do datowanych wcześniejszych prób; nie cofają o
 
 ## Następne działanie — pozostałe warunki H1
 
-1. Przeczytać POSTEP/h1-status, wybrać czystą gałąź kodu z PR #2065 i Node 22. Nie uruchamiać aplikacji z historycznej gałęzi audytu; nie przełączać checkoutu podczas testów/buildów.
-2. Naprawić cztery hotspots i pięć strict-escape matches bez podnoszenia limitów lub wyłączania bramek; jedno dopasowanie jest komentarzem. Zachować działający wygląd i niezmienniki. Dodać guard każdego wymaganego targetu krytycznego.
-3. Dokończyć K02/K06: rzeczywisty Docker z bibliotekami poprawionymi w artefakcie, wiązanie dokładnych źródeł/wejść/wyników/digest oraz wszystkie wspierane ścieżki wydania. Oba configi zachowują ignoreBuildErrors=false. Testować zmieniony zakres, a potem wymagany finalny kandydat.
-4. Uzupełnić K01 pełne własne API/worker/HLS/Redis/storage i brakujące pominięte przypadki; K05 aktywny profil/DP01–DP09 pozostaje otwarty. Rejestr R01–R37 i ASVS bez nowych zamknięć/PASS. Bez merge/deploy/produkcji/kosztów i bez npm audit.
+1. Czytać POSTEP/h1-status, sprawdzić zdalny SHA i wybrać czystą gałąź kodu PR #2065 oraz Node 22. Nie uruchamiać aplikacji z historycznej gałęzi audytu i nie przełączać checkoutu w trakcie testów/buildów.
+2. Dokończyć K02/K06: własny lokalny obraz Docker z poprawionymi bibliotekami natywnymi; wymuszony związek dokładnych źródeł/wejść/wyników/digest we wszystkich wspieranych ścieżkach wydania. Oba configi zachowują ignoreBuildErrors=false. Nie osłabiać zielonych bramek ani strażnika krytycznych testów.
+3. Uzupełnić K01/K03: pełny własny API/worker/HLS/Redis/storage, trzy pominięte przypadki i brakujące integracje. Ustalić konkretne wymagania lokalnej próby przed przygotowaniem fixture; nie używać produkcji ani płatnych usług.
+4. K05: aktywny profil i DP01–DP09 nadal wymagają decyzji właściciela. Rejestr R01–R37 i ASVS bez zamknięć/PASS. Nie scalać/nie wdrażać i nie ponawiać npm audit.
 
-Po każdej turze zachować dowody i podać postęp H1 oraz całości. Dane startowe: H1 około 65%, całość 5–10%; zmieniać szacunek według rzeczywistego zakresu i nowych blokad. Środowisko obecnie działa i nie wymaga nowej publikacji do kontynuacji.
+Po każdej turze podać szacunkowy postęp H1 i całości: bieżąco około 75% oraz 5–10%. Środowisko działa i nie wymaga nowej publikacji do kontynuacji. Dalszy pogłębiony audyt pozostaje w planie; nie został zakończony ani zastąpiony liczbą zielonych testów.
 
-## Zapis po każdej partii — po zatwierdzonym wznowieniu
+## Zapis po każdej partii H1
 
-Poniższa procedura jest historycznym trybem przyszłych partii, nie poleceniem ich rozpoczęcia podczas pauzy.
-
-Uaktualnić STAN.md, POKRYCIE.csv, odpowiednie wymagania ASVS i USTALENIA.json. Zapisać dowody i krótki raport obszaru. Dopisać wpis do ZMIANY.md i odświeżyć GITHUB-MANIFEST.json. Wykonać commit i push na `docs/polutek-platform-audit`, a następnie sprawdzić zgodność zdalnego HEAD. Archiwum pozostaje dodatkową kopią.
+Uaktualnić STAN.md, POSTEP-NAPRAW.md, h1-status.json i odpowiednie statusy KOLEJNOSC-NAPRAW.csv. Zachować poprzednie dowody, przypisać nowe wyniki do dokładnego SHA i opisać granice atrap/pominięć. Dopisać ZMIANY.md i odświeżyć GITHUB-MANIFEST.json. Nie nadpisywać kanonicznych pokryć ani USTALENIA.json bez nowych dowodów i właściwego przeglądu. Commit/push na gałęzi kodu i osobno `docs/polutek-platform-audit`, potem sprawdzić zdalne SHA. Nie scalać ani wdrażać.
