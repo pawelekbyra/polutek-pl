@@ -394,5 +394,17 @@
             <field name="source_note">STAWKA NIEPOTWIERDZONA WIĄŻĄCĄ INTERPRETACJĄ: zależy od klasyfikacji PKWiU usługi (nie od PKD). Przyjęte 8,5% (decyzja właściciela), ale RYZYKO 15% (PKWiU 59.11.25.0 przesyłanie strumieni wideo: u nas własny streaming HLS). Interpretacje KIS z 2026 dla płatnego dostępu do własnych filmów (PKWiU 59.11.x): 0112-KDSL1-2.4011.245.2026.2.AP z 13.05.2026 oraz 0115-KDST2-1.4011.625.2025.2.JPO z 16.02.2026 (SYGNATURY DO POTWIERDZENIA W ORYGINALE). Zabezpieczenie: własna interpretacja indywidualna KIS albo opinia klasyfikacyjna GUS. 15%: PKWiU 59.11.25.0 / 59.20.36.0 wg źródła wtórnego.</field>
             <field name="description">Dostępna do przełączenia w profilu firmy.</field>
         </record>
+
+        <record id="rule_vat_shadow_rate_v1" model="jdg.tax.rule">
+            <field name="key">vat.shadow_rate_pct</field>
+            <field name="label">Stawka VAT liczona „w cieniu” (gdyby firma była czynnym podatnikiem)</field>
+            <field name="group">vat</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">23</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_note">Stawka podstawowa 23% (usługi elektroniczne w Polsce). Służy tylko do wyliczenia VAT „w cieniu” (brutto x 23 / 123) na wypadek przekroczenia limitu zwolnienia z VAT. Stawkę właściwą dla usługi potwierdź z księgowym.</field>
+        </record>
     </data>
 </odoo>

@@ -156,6 +156,95 @@ class CalcContext:
         return {"by_year": totals, "value": totals[year], "year": year, "missing_country": int(missing_country),
                 "no_rate": no_rate}
 
+    def vat_limit_info(self, today=None):
+        """Zużycie limitu zwolnienia z VAT (art. 113) i moment przekroczenia (SPEC 4.7).
+
+        Limit z reguły `vat.exempt_limit`; w roku startu proporcjonalnie do liczby dni działalności (ust. 9-10) [PR].
+        Sprzedaż liczymy narastająco od 1 stycznia po kwotach bez VAT (przy zwolnieniu: zapłacona cena). Przekroczenie =
+        pierwszy wpis, po którym suma jest WIĘKSZA niż limit; od tej sprzedaży zwolnienie przestaje obowiązywać (ust. 5) [PR],
+        więc to ona (i późniejsze) powinna być opodatkowana VAT. Równo na limicie: jeszcze zwolnienie.
+        """
+        upto = today or self.as_of
+        full = self.rules.num("vat.exempt_limit", upto)
+        ref_year = max(upto, self.profile.start_date).year
+        start = max(self.profile.start_date, dt.date(ref_year, 1, 1))
+        days = (dt.date(ref_year, 12, 31) - start).days + 1
+        limit = full * min(Decimal(1), Decimal(days) / Decimal(365))
+        self.env.flush_all()
+        cr = self.env.cr
+        cr.execute(
+            """SELECT id, income_date, pln_amount, vat_shadow, doc_ref, entry_year, seq_no FROM jdg_income_entry
+                WHERE company_id = %s AND state = 'posted' AND (%s OR NOT is_test) AND kind = ANY(%s)
+                  AND income_date >= %s AND income_date <= %s ORDER BY income_date, id""",
+            (self.company.id, self.include_test, self.taxable_kinds(), dt.date(ref_year, 1, 1), upto))
+        rows = cr.fetchall()
+        cum, first, vat_since = ZERO, None, ZERO
+        for entry_id, day, amount, vat, doc_ref, year, seq in rows:
+            cum += dec(amount)
+            if first is None and cum > limit:
+                first = {"id": entry_id, "date": day, "doc_ref": doc_ref or "",
+                         "name": ("WP/%s/%04d" % (year, seq)) if seq else "", "amount": dec(amount), "cum_at": cum}
+            if first is not None:
+                vat_since += dec(vat)
+        used = max(ZERO, cum)
+        pct, level = engine.threshold_level(used, limit)
+        info = {
+            "limit": limit, "limit_full": full, "days": days, "prorated": days < 365, "year": ref_year, "used": used,
+            "remaining": max(ZERO, limit - used), "pct": round(pct, 1), "level": level, "exceeded": first is not None,
+            "entry": first, "over_by": (first["cum_at"] - limit) if first else ZERO, "vat_since": vat_since,
+            "reached": limit > 0 and used >= limit,
+        }
+        info["text"] = self._vat_limit_text(info)
+        return info
+
+    def _vat_limit_text(self, info):
+        base = "Sprzedaż od 1 stycznia: %s zł z limitu %s zł (%s%%)%s." % (
+            _money(info["used"]), _money(info["limit"]), str(info["pct"]).replace(".", ","),
+            ", limit proporcjonalny do %d dni działalności w roku" % info["days"] if info["prorated"] else "")
+        if info["exceeded"]:
+            ent = info["entry"]
+            label = ent["name"] or ent["doc_ref"] or "wpis z %s" % date_long(ent["date"])
+            return (base + " LIMIT PRZEKROCZONY sprzedażą %s z dnia %s (o %s zł ponad limit). Zwolnienie przestaje obowiązywać "
+                    "od tej sprzedaży (art. 113 ust. 5 ustawy o VAT) [PR]: od niej, i od kolejnych, trzeba naliczać VAT "
+                    "(stawka %s%%). VAT w cieniu od tej sprzedaży do dziś: %s zł. Skontaktuj się z księgowym "
+                    "(rejestracja VAT-R, faktury z VAT)." % (
+                        label, date_long(ent["date"]), _money(info["over_by"]),
+                        _money(self.rules.num("vat.shadow_rate_pct", ent["date"]), 0), _money(info["vat_since"])))
+        if info["reached"]:
+            return base + " Limit osiągnięty dokładnie: zwolnienie trwa do pierwszej sprzedaży ponad limit."
+        if info["pct"] >= 80:
+            return base + " Zostało %s zł. Sprzedaż, która przekroczy limit, jest już opodatkowana VAT." % _money(info["remaining"])
+        return base
+
+    def vat_card(self, today):
+        """Karta „VAT, gdyby czynny” na pulpicie: VAT w cieniu (dziś, miesiąc, rok narastająco) i zużycie limitu."""
+        self.env.flush_all()
+        cr = self.env.cr
+        flt = (self.company.id, self.include_test, self.taxable_kinds())
+        cr.execute(
+            """SELECT COALESCE(SUM(vat_shadow) FILTER (WHERE income_date = %s), 0),
+                      COALESCE(SUM(vat_shadow) FILTER (WHERE income_date >= %s), 0),
+                      COALESCE(SUM(vat_shadow), 0), COALESCE(SUM(vat_net), 0)
+                 FROM jdg_income_entry
+                WHERE company_id = %s AND state = 'posted' AND (%s OR NOT is_test) AND kind = ANY(%s)
+                  AND income_date >= %s AND income_date <= %s""",
+            (today, engine.month_start(today)) + flt + (dt.date(today.year, 1, 1), today))
+        day, month, year, net = cr.fetchone()
+        info = self.vat_limit_info(today)
+        status = self.profile.vat_status
+        banner = ""
+        if status == "exempt_113" and (info["exceeded"] or info["reached"] or info["pct"] >= 80):
+            banner = info["text"]
+        return {
+            "status": status, "exempt": status == "exempt_113", "active": status == "active",
+            "rate": num(self.rules.num("vat.shadow_rate_pct", today)),
+            "today": num(dec(day)), "month": num(dec(month)), "year": num(dec(year)), "year_net": num(dec(net)),
+            "limit": num(info["limit"]), "used": num(info["used"]), "remaining": num(info["remaining"]), "pct": info["pct"],
+            "level": info["level"], "exceeded": info["exceeded"], "text": info["text"], "banner": banner,
+            "since": info["entry"] and {"name": info["entry"]["name"], "date": info["entry"]["date"].isoformat(),
+                                        "date_long": date_long(info["entry"]["date"]), "vat": num(info["vat_since"])},
+        }
+
     def alert_metrics(self):
         """Wskaźniki progów do alertów 70/90/100% (SPEC 4.7): [{kind, title, value, limit, unit, text}]."""
         upto = self.as_of
@@ -173,8 +262,9 @@ class CalcContext:
         ]
         for th in self.thresholds():
             if th["key"] == "vat":
-                items.append({"kind": "vat_limit", "title": th["title"], "value": dec(th["value"]), "limit": dec(th["limit"]),
-                              "unit": "PLN", "text": th["text"]})
+                info = self.vat_limit_info(upto)
+                items.append({"kind": "vat_limit", "title": th["title"], "value": info["used"], "limit": info["limit"],
+                              "unit": "PLN", "text": info["text"], "levels": (80, 90, 100)})
             elif th["key"] == "oss":
                 items.append({"kind": "oss10k", "title": th["title"], "value": dec(th["value"]), "limit": dec(th["limit"]),
                               "unit": "EUR", "text": th["text"]})
@@ -469,12 +559,12 @@ class CalcContext:
                     return self.health_for_month(month).amount, self.social_for_month(month)
                 got = safe(amounts)
                 amount = None
-                label = "Składka zdrowotna za %s" % MONTHS_GEN[month.month - 1]
+                label = "Składka zdrowotna za %s" % MONTHS[month.month - 1]
                 if got:
                     health, social = got
                     amount = num(health + social.total)
                     if social.total > 0:
-                        label = "ZUS i składka zdrowotna za %s" % MONTHS_GEN[month.month - 1]
+                        label = "ZUS i składka zdrowotna za %s" % MONTHS[month.month - 1]
                 events.append({"kind": "zus", "date": due, "label": label, "amount": amount})
             month = engine.add_months(month, 1)
 
@@ -497,7 +587,7 @@ class CalcContext:
                     amount = num(got) if got is not None else None
                 events.append({"kind": "advance", "date": due, "amount": amount,
                                "label": "Zaliczka na ryczałt za %s" % (
-                                   MONTHS_GEN[ps.month - 1] if profile.advance_rhythm == "monthly"
+                                   MONTHS[ps.month - 1] if profile.advance_rhythm == "monthly"
                                    else "%s kwartał %d" % (ROMAN[(ps.month - 1) // 3], ps.year))})
 
         # PIT-28 za każdy rok działalności

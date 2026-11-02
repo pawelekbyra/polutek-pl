@@ -51,6 +51,9 @@
                     <div t-if="d.rate.unverified" class="o_jdg_note o_jdg_note_warn" role="status">
                         <i class="fa fa-exclamation-triangle me-1"/> <strong>Stawka <t t-out="fmt.pct(d.rate.pct, 1)"/>:</strong> <t t-out="d.rate_warning"/>
                     </div>
+                    <div t-if="d.vat.banner" t-att-class="'o_jdg_note ' + (d.vat.exceeded ? 'o_jdg_note_warn o_jdg_vat_over' : 'o_jdg_note_warn')" role="alert">
+                        <i class="fa fa-exclamation-triangle me-1"/> <strong>Limit VAT:</strong> <t t-out="d.vat.banner"/>
+                    </div>
                     <div t-if="d.meta.rules_unverified" class="o_jdg_note o_jdg_note_warn" role="status">
                         <i class="fa fa-exclamation-triangle me-1"/>
                         Parametry niezweryfikowane (<t t-out="d.meta.rules_unverified"/>): liczymy z nich, ale musi je potwierdzić księgowy.
@@ -200,6 +203,21 @@
                                 <p class="o_jdg_muted o_jdg_small mb-0">Alerty progów (70/90/100%) trafiają do kanału „Moja firma: terminy i alerty” w Discuss. Mały ZUS Plus dojdzie w kolejnej iteracji.</p>
                             </article>
 
+
+                            <article class="o_jdg_card o_jdg_vat_shadow">
+                                <h2 class="o_jdg_card_label">VAT, gdyby czynny (w cieniu)</h2>
+                                <div class="o_jdg_big o_jdg_big_dark o_jdg_big_sm"><t t-out="fmt.money(d.vat.year)"/></div>
+                                <div class="o_jdg_sub o_jdg_muted">VAT <t t-out="fmt.pct(d.vat.rate, 0)"/> w ciągu roku · w tym miesiącu <t t-out="fmt.money(d.vat.month)"/> · dziś <t t-out="fmt.money(d.vat.today)"/></div>
+                                <div class="o_jdg_sub o_jdg_muted" t-if="d.vat.exempt">Firma jest zwolniona z VAT: to tylko informacja, ile VAT trzeba by odprowadzić po przekroczeniu limitu. Nie obniża wolnych środków.</div>
+                                <div class="o_jdg_note o_jdg_note_warn" t-if="d.vat.active">Status VAT „czynny”: VAT jest należny, a przychód ryczałtowy liczymy od kwoty netto.</div>
+                                <div class="o_jdg_threshold" t-if="d.vat.exempt">
+                                    <div class="o_jdg_threshold_text">Limit zwolnienia: <t t-out="fmt.money(d.vat.used, 0)"/> z <t t-out="fmt.money(d.vat.limit, 0)"/> (<t t-out="fmt.pct(d.vat.pct)"/>), zostało <t t-out="fmt.money(d.vat.remaining, 0)"/>.</div>
+                                    <div class="o_jdg_meter" role="progressbar" t-att-aria-valuenow="d.vat.pct" aria-valuemin="0" aria-valuemax="100" aria-label="Zużycie limitu zwolnienia z VAT">
+                                        <div t-att-class="'o_jdg_meter_fill o_jdg_level_' + d.vat.level" t-att-style="'width:' + Math.min(100, d.vat.pct) + '%'"/>
+                                    </div>
+                                    <div t-if="d.vat.since" class="o_jdg_why" role="status">Limit przekroczony sprzedażą <t t-out="d.vat.since.name"/> z <t t-out="d.vat.since.date_long"/>: od niej należy naliczać VAT (VAT w cieniu od tej sprzedaży: <t t-out="fmt.money(d.vat.since.vat)"/>).</div>
+                                </div>
+                            </article>
 
                             <article class="o_jdg_card o_jdg_donations">
                                 <h2 class="o_jdg_card_label">Darowizny (napiwki)</h2>

@@ -137,8 +137,6 @@
             <graph string="Przychód i zobowiązania w okresach" type="bar">
                 <field name="date_from" interval="month"/>
                 <field name="revenue" type="measure"/>
-                <field name="health_due" type="measure"/>
-                <field name="social_due" type="measure"/>
             </graph>
         </field>
     </record>
@@ -234,8 +232,8 @@
         <field name="arch" type="xml">
             <graph string="Zaliczki na ryczałt" type="bar">
                 <field name="date_from" interval="quarter"/>
+                <field name="state"/>
                 <field name="advance_due" type="measure"/>
-                <field name="paid_amount" type="measure"/>
             </graph>
         </field>
     </record>

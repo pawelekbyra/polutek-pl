@@ -3,6 +3,14 @@
 Wersjonowanie: `19.0.MAJOR.MINOR.PATCH`. Zmiana wzorów = MINOR + wpis tutaj. Reguły roczne to NOWE pliki `data/jdg_tax_rules_<rok>.xml`
 z nowymi `xml_id` (nigdy nadpisanie zweryfikowanej reguły).
 
+## 19.0.2.1.0 (2026-11-02)
+* VAT „w cieniu” (decyzja właściciela): firma zwolniona z VAT, ale każdy wpis ma kwotę netto i VAT wg stawki z reguły `vat.shadow_rate_pct`
+  (23%, brutto x 23 / 123) oraz flagę „VAT faktycznie należny”. Status VAT „czynny” w profilu: VAT należny, przychód ryczałtowy = netto.
+* Limit zwolnienia z VAT (art. 113, proporcjonalnie w roku startu): zużycie limitu, wskazanie sprzedaży, która go przekroczyła, i daty,
+  od której należy naliczać VAT (ust. 5) [PR]; alerty 80/90/100% w Discuss, baner i karta „VAT, gdyby czynny” na pulpicie, kolumna w ewidencji.
+* Poprawki: otwarcie formularza wpisu (błąd w nazwie wyświetlanej), widoki pivot/graph (waluta pola kwot zapisana w bazie),
+  polskie nazwy miesięcy w terminach („za styczeń”), czytelniejszy opis wpisu czekającego na kurs.
+
 ## 19.0.2.0.0 (2026-11-02): iteracje 2 i 3
 * Kursy NBP (tabela A) pobierane automatycznie z api.nbp.pl (cron co godzinę z bramką czasu, zakresy do 93 dni, numer tabeli),
   dziennik pobrań `jdg.fx.fetch` (pokrycie kalendarza). Reguła „ostatni dzień roboczy przed dniem przychodu”: kurs jest uznany tylko

@@ -22,7 +22,7 @@ class JdgTaxAdvance(models.Model):
     company_id = fields.Many2one("res.company", related="period_id.company_id", store=True, index=True)
     date_from = fields.Date(related="period_id.date_from", store=True)
     date_to = fields.Date(related="period_id.date_to", store=True)
-    pln_currency_id = fields.Many2one("res.currency", compute="_compute_pln_currency")
+    pln_currency_id = fields.Many2one("res.currency", compute="_compute_pln_currency", store=True)
     name = fields.Char("Zaliczka", compute="_compute_name")
     cum_revenue = fields.Monetary("Przychód narastająco", currency_field="pln_currency_id", readonly=True)
     cum_social_paid = fields.Monetary("Zapłacone społeczne (odliczenie 100%)", currency_field="pln_currency_id", readonly=True)

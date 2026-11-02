@@ -13,7 +13,7 @@ Moduł dla jednoosobowej działalności gospodarczej na ryczałcie (Polska), Odo
 
 Wszystkie kwoty to SZACUNEK, NIE PORADA PODATKOWA. Parametry musi potwierdzić księgowy.
 """,
-    "version": "19.0.2.0.0",
+    "version": "19.0.2.1.0",
     "category": "Accounting/Localizations",
     "author": "Paweł Perfect",
     "website": "https://www.pawelperfect.com",
