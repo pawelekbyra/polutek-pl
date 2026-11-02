@@ -6,10 +6,9 @@ import { Popover } from "@base-ui/react/popover";
 import { CloseButton } from "@/components/ui/close-button";
 import { useAuth } from "@/lib/auth/react";
 import { useNotificationFeed, type NotificationFilter } from "./useNotificationFeed";
-import { NotificationRow } from "./NotificationRow";
+import { NotificationActions, NotificationSections, NotificationTabs } from "./NotificationParts";
 import { navigateNotification } from "./notification-navigation";
-import { BellIcon, SettingsIcon, SubscribeCheckIcon } from "../icons/MarkerBellIcons";
-import { RefreshIcon } from "../icons/MarkerUiIcons";
+import { BellIcon } from "../icons/MarkerBellIcons";
 import { getLocalizedHref, localizedPathFromLegacyPath } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
 import { NOTIFICATION_SETTINGS_EVENT } from "./notification-events";
@@ -97,17 +96,9 @@ function NotificationBellForAccount({ accountId }: { accountId: string | null })
             <Popover.Close aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
             <div className={styles.head}>
               <Popover.Title ref={titleRef} tabIndex={-1} className={styles.title}>{tx("Powiadomienia", "Notifications")}</Popover.Title>
-              <p className={styles.subtitle}>{feed.unread > 0 ? tx("Nieprzeczytane: {0}", "Unread: {0}", feed.unread) : tx("Twoje aktualności w jednym miejscu", "Your updates in one place")}</p>
+              <NotificationActions tx={tx} refreshing={feed.refreshing} disabled={feed.refreshing || feed.writing || feed.status === "loading"} onRefresh={() => void feed.refresh()} onSettings={openSettings} />
             </div>
-            <div className={styles.toolbar}>
-              <div className={styles.filters} role="group" aria-label={tx("Filtr powiadomień", "Notification filter")}>
-                <button type="button" className={styles.filter} aria-pressed={filter === "all"} onClick={() => setFilter("all")}>{tx("Wszystkie", "All")}</button>
-                <button type="button" className={styles.filter} aria-pressed={filter === "unread"} onClick={() => setFilter("unread")}>{tx("Nieprzeczytane", "Unread")}</button>
-              </div>
-              {feed.unread > 0 && <button type="button" className={styles.markAll} aria-label={tx("Oznacz wszystkie jako przeczytane", "Mark all as read")} title={tx("Oznacz wszystkie jako przeczytane", "Mark all as read")} disabled={feed.writing || feed.status !== "idle"} onClick={() => { void feed.markRead().then(() => requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }))); }}>
-                <SubscribeCheckIcon size={18} />
-              </button>}
-            </div>
+            <NotificationTabs tx={tx} filter={filter} onFilter={setFilter} showMarkAll={feed.unread > 0} markAllDisabled={feed.writing || feed.status !== "idle"} onMarkAll={() => { void feed.markRead().then(() => requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }))); }} />
             {feed.hasNew && <button type="button" className={styles.newItems} disabled={feed.refreshing || feed.writing} onClick={() => { void feed.showNew().then((shown) => { if (shown) requestAnimationFrame(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; titleRef.current?.focus({ preventScroll: true }); }); }); }}>
               {feed.refreshing ? tx("Ładowanie…", "Loading…") : tx("Pokaż nowe powiadomienia", "Show new notifications")}
             </button>}
@@ -117,23 +108,17 @@ function NotificationBellForAccount({ accountId }: { accountId: string | null })
               </div>}
               {feed.status === "error" && <div className={styles.message}><p role="alert">{tx("Nie udało się wczytać powiadomień.", "Could not load notifications.")}</p>{retry(() => void feed.refresh())}</div>}
               {feed.status === "idle" && !feed.items.length && <div className={styles.empty}>
-                <span aria-hidden="true" className={styles.emptyIcon}><BellIcon size={28} /></span>
+                <span aria-hidden="true" className={styles.emptyIcon}><BellIcon size={26} /></span>
                 <p className={styles.emptyTitle}>{filter === "unread" ? tx("Wszystko przeczytane", "All caught up") : tx("Brak powiadomień.", "No notifications.")}</p>
                 <p className={styles.emptyHint}>{filter === "unread" ? tx("Nowe wiadomości pojawią się tutaj.", "New messages will appear here.") : tx("Gdy ktoś odpowie na Twój komentarz albo pojawi się nowy film, zobaczysz to tutaj.", "When someone replies to your comment or a new video appears, you will see it here.")}</p>
               </div>}
-              <ul className={styles.list} aria-label={tx("Lista powiadomień", "Notification list")}>
-                {feed.items.map((item) => <NotificationRow key={item.id} item={item} link={resolveHref(item.href, language)} language={language} tx={tx} now={now} pending={feed.writing} onRead={(read) => changeRead(item.id, read)} onFollow={followNotification} />)}
-              </ul>
+              <NotificationSections tx={tx} language={language} now={now} pending={feed.writing} filter={filter} items={feed.items} resolve={(href) => resolveHref(href, language)} onRead={changeRead} onFollow={followNotification} />
               {feed.refreshError && <div className={styles.message}><p role="alert">{tx("Nie udało się odświeżyć powiadomień. Zachowaliśmy poprzednie wiadomości.", "Could not refresh notifications. Your previous messages are still here.")}</p>{retry(() => void feed.refresh())}</div>}
               {feed.writeError && <div className={styles.message}><p role="alert">{tx("Nie udało się zapisać odczytu powiadomień. Spróbuj ponownie.", "Could not save read notifications. Please try again.")}</p>{retry(() => void feed.retryWrite())}</div>}
               {feed.moreError && <div className={styles.message}><p role="alert">{tx("Nie udało się wczytać starszych powiadomień.", "Could not load older notifications.")}</p>{retry(() => void feed.loadMore())}</div>}
             </div>
             <div className={styles.footer}>
-              <a href={getLocalizedHref(language, "notifications")} className={styles.viewAll} onClick={(event) => followNotification(event, getLocalizedHref(language, "notifications"), false)}>{tx("Zobacz wszystkie", "Notifications")}</a>
-              <div className={styles.footerLinks}>
-                <button type="button" className={styles.settings} aria-label={tx("Ustawienia powiadomień", "Notification settings")} title={tx("Ustawienia powiadomień", "Notification settings")} onClick={openSettings}><SettingsIcon size={18} /></button>
-                <button type="button" className={`${styles.refresh} ${feed.refreshing ? styles.refreshing : ""}`} aria-label={feed.refreshing ? tx("Odświeżanie…", "Refreshing…") : tx("Odśwież", "Refresh")} title={feed.refreshing ? tx("Odświeżanie…", "Refreshing…") : tx("Odśwież", "Refresh")} aria-busy={feed.refreshing} disabled={feed.refreshing || feed.writing || feed.status === "loading"} onClick={() => void feed.refresh()}><RefreshIcon size={18} strokeWidth={1.6} /></button>
-              </div>
+              <a href={getLocalizedHref(language, "notifications")} className={styles.viewAll} onClick={(event) => followNotification(event, getLocalizedHref(language, "notifications"), false)}>{tx("Zobacz wszystkie", "See all")}</a>
             </div>
           </Popover.Popup>
         </Popover.Positioner>

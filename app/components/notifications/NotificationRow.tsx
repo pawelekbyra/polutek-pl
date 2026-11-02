@@ -5,7 +5,6 @@ import type { Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import type { UserNotificationDTO } from "@/lib/modules/notifications";
 import { NotificationIcon } from "./NotificationIcon";
-import { SubscribeCheckIcon } from "../icons/MarkerBellIcons";
 import { formatNotificationAge } from "./notification-events";
 import styles from "./notification-panel.module.css";
 
@@ -20,14 +19,15 @@ type Props = {
   onFollow: (event: MouseEvent, href: string, external: boolean) => void;
 };
 
-/** A real list item: the destination, message expansion and read toggle are separate controls. */
+/** A real list item: the destination, message expansion and the read dot are separate controls. */
 export function NotificationRow({ item, link, language, tx, now, pending, onRead, onFollow }: Props) {
   const [expanded, setExpanded] = useState(false);
   const titleId = useId();
   const contentId = useId();
   const readLabel = item.read ? tx("Oznacz jako nieprzeczytane", "Mark as unread") : tx("Oznacz jako przeczytane", "Mark as read");
-  const hasFullMessage = Boolean(item.body) || item.title.length > 70;
-  const controlledContent = item.body ? contentId : item.title.length > 70 ? titleId : undefined;
+  const longTitle = item.title.length > 45;
+  const hasFullMessage = item.body.length > 80 || longTitle;
+  const controlledContent = item.body.length > 80 ? contentId : longTitle ? titleId : undefined;
   const content = <>
     <span id={titleId} className={`${styles.itemTitle} ${expanded ? "" : styles.clamp} ${item.read ? styles.readTitle : ""}`}>
       {item.title}
@@ -50,7 +50,7 @@ export function NotificationRow({ item, link, language, tx, now, pending, onRead
           </button>
         )}
         <div className={styles.itemMeta}>
-          <time dateTime={item.createdAt} title={new Date(item.createdAt).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })}>
+          <time className={item.read ? "" : styles.freshTime} dateTime={item.createdAt} title={new Date(item.createdAt).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })}>
             {formatNotificationAge(item.createdAt, language, now)}
           </time>
           {hasFullMessage && (
@@ -61,7 +61,7 @@ export function NotificationRow({ item, link, language, tx, now, pending, onRead
         </div>
       </div>
       <button type="button" className={styles.readButton} disabled={pending} aria-label={`${readLabel}: ${item.title}`} title={readLabel} onClick={() => onRead(!item.read)}>
-        {item.read ? <span aria-hidden="true" className={styles.unreadAction} /> : <SubscribeCheckIcon size={18} />}
+        <span aria-hidden="true" className={item.read ? styles.dotRead : styles.dotUnread} />
       </button>
     </li>
   );

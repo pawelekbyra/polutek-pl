@@ -4,16 +4,16 @@ import { GiftIcon, HeartIcon, MegaphoneIcon, PlayBoxIcon, ReplyIcon, ClockIcon, 
 
 const icons = { welcome: SparkIcon, support: GiftIcon, comment_reply: ReplyIcon, creator_like: HeartIcon, comment_like: ThumbIcon, new_video: PlayBoxIcon, premiere: ClockIcon, moderation: ShieldIcon, announcement: MegaphoneIcon, notification: BellIcon };
 
-/** Decorative type icon (Marker pen 1.2px): a soft 36px disc with a quiet blue unread state. */
+/** Decorative type icon (Marker pen 1.2px): a soft 40px disc with a quiet blue unread state. */
 export function NotificationIcon({ type, unread = false }: { type?: UserNotificationType; unread?: boolean }) {
   const Icon = type && type in icons ? icons[type] : BellIcon;
   return (
     <span
       aria-hidden="true"
       data-notification-type={type ?? "notification"}
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${unread ? "bg-[var(--chan-blue-soft)] text-[var(--chan-blue)]" : "bg-[var(--chan-surface)] text-[var(--chan-muted)]"}`}
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${unread ? "bg-[var(--chan-blue-soft)] text-[var(--chan-blue)]" : "bg-[var(--chan-surface)] text-[var(--chan-muted-2)]"}`}
     >
-      <Icon size={18} />
+      <Icon size={20} />
     </span>
   );
 }

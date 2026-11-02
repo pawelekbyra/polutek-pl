@@ -1108,8 +1108,6 @@
  "Could not load the comment.": "无法加载评论。",
  "When someone replies to your comment or a new video appears, you will see it here.": "当有人回复你的评论或有新视频发布时，你会在这里看到。",
   "You can withdraw consent at any time. Details: {0} and {1}.": "你可以随时撤回同意。详情：{0}和{1}。",
-  "Unread: {0}": "未读：{0}",
-  "Your updates in one place": "在此查看所有动态",
   "Notification filter": "通知筛选",
   "Unread": "未读",
   "Show new notifications": "显示新通知",
@@ -1131,5 +1129,8 @@
   "Account section": "账户分区",
   "Interface language": "界面语言",
   "Language used across the site.": "网站界面使用的语言。",
-  "Choose a section": "选择一个版块"
+  "Choose a section": "选择一个版块",
+  "New": "新通知",
+  "Earlier": "更早",
+  "See all": "查看全部"
 }

@@ -1108,8 +1108,6 @@
  "Could not load the comment.": "No se pudo cargar el comentario.",
  "When someone replies to your comment or a new video appears, you will see it here.": "Cuando alguien responda a tu comentario o aparezca un vídeo nuevo, lo verás aquí.",
   "You can withdraw consent at any time. Details: {0} and {1}.": "Puedes retirar tu consentimiento en cualquier momento. Detalles: {0} y {1}.",
-  "Unread: {0}": "Sin leer: {0}",
-  "Your updates in one place": "Tus novedades en un solo lugar",
   "Notification filter": "Filtro de notificaciones",
   "Unread": "Sin leer",
   "Show new notifications": "Mostrar nuevas notificaciones",
@@ -1131,5 +1129,8 @@
   "Account section": "Sección de la cuenta",
   "Interface language": "Idioma de la interfaz",
   "Language used across the site.": "Idioma de la interfaz del sitio.",
-  "Choose a section": "Elige una sección"
+  "Choose a section": "Elige una sección",
+  "New": "Nuevas",
+  "Earlier": "Anteriores",
+  "See all": "Ver todas"
 }
