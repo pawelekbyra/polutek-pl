@@ -1,6 +1,10 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 2 listopada 2026. Program v1.0, partia 16: testy, wiarygodność dowodów i plan domknięcia. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 2 listopada 2026. **Przygotowano ROADMAPĘ NAPRAW v1: 40 pakietów / 8 etapów / R01–R37. Status: DO ZATWIERDZENIA.**
+
+**Dalszy pogłębiony audyt i kwalifikacja ASVS są TYMCZASOWO WSTRZYMANE na polecenie właściciela, wyłącznie na potrzeby przygotowania i zatwierdzenia roadmapy. Cel pełnego badania pozostaje aktualny. Nie rozpoczęto napraw, nie zmieniono aplikacji, nie wdrożono i nie scalono gałęzi.**
+
+Dokumenty do decyzji: [ROADMAPA-NAPRAW.md](../ROADMAPA-NAPRAW.md), [KOLEJNOSC-NAPRAW.csv](../KOLEJNOSC-NAPRAW.csv), [PLAN-WDROZENIA-NAPRAW.md](../PLAN-WDROZENIA-NAPRAW.md). Źródło planu: rejestr R01–R37 i dokumentacja do commitu `90de980e45bb827da72ddfea1aca18611bacb2e8` (partia 16); rejestr niezmieniony. Wszystkie testy odbioru w roadmapie są przyszłymi wymaganiami, nie nowymi wynikami.
 
 ## Cel i decyzje właściciela
 
@@ -168,12 +172,18 @@ Aktualizacja: 2 listopada 2026. Program v1.0, partia 16: testy, wiarygodność d
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
-## Następne działanie
+## Następne działanie — OCZEKIWANIE NA DECYZJĘ WŁAŚCICIELA
 
-Rozpocząć etap domykania zakresu: przeczytać WNIOSEK-DLA-WLASCICIELA.md, DOMKNIECIE-DOWODOW.csv i macierz ASVS. Pierwsza konkretna partia: systematyczna kwalifikacja nieocenionych wymagań V1 (Encoding/Sanitization) i V2 (Validation/Business Logic) według źródłowego ASVS 5.0.0, z mapowaniem do rzeczywistych wejść/use case'ów. Oznaczać DOTYCZY/NIE_DOTYCZY tylko z uzasadnieniem; rozróżnić źródło, test, blocker i nie nadawać PASS za samo czytanie. Wykorzystać D05/D04/D07 oraz istniejące eksperymenty, nie powtarzać ich bez hipotezy. Równoległy warunek pełnych prób: supported environment setup z prawdziwym Prisma i uzgodnionymi fikcyjnymi usługami; nie obchodzić proxy/odmowy npm audit, nie podstawiać klienta. Wszystkie D01–D18 pozostają otwarte, niezależny przegląd PENDING; nie zmieniać aplikacji/produkcji, nie scalać ani nie wysyłać realnych wiadomości/płatności.
+**Nie wykonywać poprzedniego polecenia rozpoczęcia V1/V2. Nie badać kolejnych plików, nie kwalifikować ASVS i nie naprawiać aplikacji samodzielnie.** Najpierw właściciel zatwierdza roadmapę v1 oraz proponowany harmonogram H1–H6/W01–W07. Propozycja pierwszego późniejszego zakresu: K01/K02/K05, następnie K03/K06. To propozycja, nie zgoda na wykonanie.
 
-Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
+Pauza nie oznacza zakończenia ani rezygnacji z audytu. Wszystkie D01–D18 pozostają W_TRAKCIE, zero zamkniętych; ASVS 55 W_TRAKCIE / 290 NIEZBADANE / 0 PASS, wejścia 79 W_TRAKCIE / 207 NIEZBADANE z 286. Braki integracji, bezpieczeństwa, niezależnego przeglądu i pełnego środowiska mają jawny plan w sekcji 6 roadmapy i ścieżkach W01–W07.
 
-## Zapis po każdej partii
+Niedokończoną partię 17 zachowano bez dalszego przeglądu jako [zamrożone archiwum](../provenance/paused-batch17-before-roadmap-v1.tar.gz) i [metadane/hash](../provenance/paused-batch17-before-roadmap-v1.json), `PAUSED_UNVALIDATED_NOT_ACTIVE_AUDIT_RESULTS`. Nie adoptowano roboczych kwalifikacji; aktywne dokumenty i macierze przywrócono do kanonicznego punktu partii 16 przed opracowaniem planu. Po odrębnej decyzji o wznowieniu najpierw porównać archiwum z aktualnym stanem, nie nadpisywać późniejszych zmian.
+
+Zapis roadmapy obejmuje walidację dokumentów, commit i push na `docs/polutek-platform-audit`. Nie jest zgodą na dalszy audyt, naprawy, produkcyjne zmiany danych, koszty zewnętrzne, wdrożenie ani scalenie. Przed przyszłym wznowieniem przeczytać ten stan, roadmapę, plan wdrożenia i aktualne instrukcje repo; zakres musi wynikać z nowej decyzji właściciela.
+
+## Zapis po każdej partii — po zatwierdzonym wznowieniu
+
+Poniższa procedura jest historycznym trybem przyszłych partii, nie poleceniem ich rozpoczęcia podczas pauzy.
 
 Uaktualnić STAN.md, POKRYCIE.csv, odpowiednie wymagania ASVS i USTALENIA.json. Zapisać dowody i krótki raport obszaru. Dopisać wpis do ZMIANY.md i odświeżyć GITHUB-MANIFEST.json. Wykonać commit i push na `docs/polutek-platform-audit`, a następnie sprawdzić zgodność zdalnego HEAD. Archiwum pozostaje dodatkową kopią.

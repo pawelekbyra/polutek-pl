@@ -1,0 +1,150 @@
+{
+  "date": "2026-11-02",
+  "state": "PAUSED_UNVALIDATED_NOT_ACTIVE_AUDIT_RESULTS",
+  "reason": "Owner temporarily reprioritized roadmap v1; no further qualification or application inspection",
+  "canonical_audit_commit": "90de980e45bb827da72ddfea1aca18611bacb2e8",
+  "resume_only_after_separate_owner_decision": true,
+  "files": [
+    {
+      "path": "docs/audit/2026-11-01-platform-research/README.md",
+      "tracked_modified": true,
+      "bytes": 21065,
+      "sha256": "48d92b867d45a286619c80a4c1718bb5d8edab80ac57ae9cb6bf2bb861465d53"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/ASVS-POKRYCIE.csv",
+      "tracked_modified": true,
+      "bytes": 129144,
+      "sha256": "e1895be36b69ba272a0728b05e26a0fd09c5dcb41072b4764c4e8891a4017e15"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/DOMKNIECIE-DOWODOW.csv",
+      "tracked_modified": true,
+      "bytes": 7266,
+      "sha256": "3cddce3ce5ceaa61272db0e9d192e8c66cc4ab0b4a886ed06c92bfc6aa510572"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/POKRYCIE.csv",
+      "tracked_modified": true,
+      "bytes": 12430,
+      "sha256": "28b3894d331a9c6e84f3ae2f1d36b7a1b63f63d8c0d98bc40aba892271066f6a"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/POWIERZCHNIA-WEJSC.csv",
+      "tracked_modified": true,
+      "bytes": 80802,
+      "sha256": "5a6667a43c0f384127240b3edab17778ed4d7d89f2a333d3b6e2d20bfaff368d"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/PROGRAM.md",
+      "tracked_modified": true,
+      "bytes": 17627,
+      "sha256": "919983edac565bdecff176f5060e1d61d08d271079e4e33ca6bfa4bdd28f7ac8"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/SOURCES.md",
+      "tracked_modified": true,
+      "bytes": 19419,
+      "sha256": "eec2a422f868981256d46d4f361f30a3295f6f9155a744694888dcaf47e479e8"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/STAN.md",
+      "tracked_modified": true,
+      "bytes": 54136,
+      "sha256": "6f617053bfacea07566fd1651e975895216677f2de6be08dc38eef36d59f20c5"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/WNIOSEK-DLA-WLASCICIELA.md",
+      "tracked_modified": true,
+      "bytes": 6620,
+      "sha256": "992371afd9e873102e0b5ecd6b103593119bc24e55bbd13ff7deacc9cbe9d470"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/ZMIANY.md",
+      "tracked_modified": true,
+      "bytes": 30327,
+      "sha256": "5a89fce4b739536ffba0d863098316abf284623a7b0366a00e5373202d7a2e85"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/obszary/D05-WEJSCIA-PLIKI-I-ZALEZNOSCI.md",
+      "tracked_modified": true,
+      "bytes": 18200,
+      "sha256": "d1557d4ea299986a4e14c116df5adb114a6ce5ad436599b220cfa15b06207298"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/ASVS-V1-V2.csv",
+      "tracked_modified": false,
+      "bytes": 27066,
+      "sha256": "924927bae5186bce13aed74d51b1acc4b6ecea68d75b9ee0d9ca6e9b6d2cd930"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/PYTANIA-ASVS-V1-V2.csv",
+      "tracked_modified": false,
+      "bytes": 2778,
+      "sha256": "a7f2a5ecdba91977e2ec932f6b9ef255e9f918b8fbc4af758ecd1d2c88005692"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/SCENARIUSZE-KODOWANIE.csv",
+      "tracked_modified": false,
+      "bytes": 2536,
+      "sha256": "0cfb5b3c51497a9eb4f0be9f5af948b3bdd5431b5c939ee2d87dd155c16174ec"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/evidence/batch17-review.json",
+      "tracked_modified": false,
+      "bytes": 14313,
+      "sha256": "8249d1d3ff281ff6c87039965ac22593623b5fdbcb016601bfdcccf37fc6ad8b"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/evidence/encoding-targeted-vitest.json",
+      "tracked_modified": false,
+      "bytes": 14843,
+      "sha256": "aa232941d0b0ed8e4f86861d67bf750a45e36336c6bb3838cf957d8958ee35be"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/evidence/encoding-targeted-vitest.log",
+      "tracked_modified": false,
+      "bytes": 304,
+      "sha256": "6af65c3f82a7e418d2bf000a18c274f55a8a2521563ee17d729c0db7b68a5640"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/evidence/encoding-validation-experiment.json",
+      "tracked_modified": false,
+      "bytes": 9184,
+      "sha256": "945d2e23b01f157f5c976d9741e6c4b7685669642dd3ee7246411945b27a186d"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/evidence/encoding-validation-initial-diagnostic.json",
+      "tracked_modified": false,
+      "bytes": 986,
+      "sha256": "d83d5c2add49dc701a1159e4c753d8eecae654335766fefada3a8bb1ed148696"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/evidence/input-sink-inventory.json",
+      "tracked_modified": false,
+      "bytes": 164905,
+      "sha256": "52a9456b35f4bfba385354a121c51a98c4a6c7b8aa77cf7ef6a4c4a17a967caf"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/obszary/ASVS-V1-V2-KWALIFIKACJA.md",
+      "tracked_modified": false,
+      "bytes": 12338,
+      "sha256": "0180a2a251122d9c9f4c30671c8868651aa301626191a3ced099baf46ce74923"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/tools/encoding-validation-experiment.cjs",
+      "tracked_modified": false,
+      "bytes": 11069,
+      "sha256": "6c2fc7dda25055922583816dfbef9d5cf432280ad5cac0edba050f681a4691bf"
+    },
+    {
+      "path": "docs/audit/2026-11-01-platform-research/program-audytu/tools/input-sink-inventory.py",
+      "tracked_modified": false,
+      "bytes": 3134,
+      "sha256": "ab35209fad68e74d57dc7f3947752e6a29013a38fc880e01eccfb284c864617b"
+    }
+  ],
+  "patch_sha256": "31fd78850afe388fcecda4c5cd778202e03473eb5549a306ad0e4c45a9026a61",
+  "restoration": "Review archive metadata; contains current copies under files/<repo path> and working-tree.patch. Do not apply wholesale over later approved edits.",
+  "archive_sha256": "ccdeca70e63a26d517d71b105799b5fa4afd5f0fb978167817aac370640fe256"
+}

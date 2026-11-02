@@ -186,3 +186,12 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Zinterpretowano stary pełny JSON bez rerun: 535 rekordów plików, 219 failed bez assertions, 2602 registered/2556 pass/35 failed/11 pending. To nie liczba błędów produkcji. Full suite/generate/npm audit/build/browser/SQL nie powtarzane.
 - Dziesięć źródeł PeerTube częściowo; pełniejsze API/process/browser wzorce, z ograniczeniami object-storage i currentTime, bez runtime/benchmarku. Playwright best practices v1.61.1 i Apache 2.0 HTTP 200/hash. Zachowano initial AST EPERM oraz korektę metadanych wersji runnera; aplikacja i testy bez zmian.
 - R01–R37 pozostają stabilne; ASVS 55/290, wejścia 79/207 z 286, bez zaliczeń. Następnie systematyczna kwalifikacja ASVS V1/V2 i wejść według planu domknięcia, pełny runtime nadal zależy od wspieranej konfiguracji środowiska.
+
+## 2 listopada 2026 — ROADMAPA NAPRAW v1; tymczasowa pauza audytu
+
+- Na wyraźne polecenie właściciela wstrzymano dalsze pogłębianie audytu, kwalifikację ASVS i nowe przeglądy aplikacji na czas przygotowania i zatwierdzenia planu. Doprecyzowanie właściciela zachowuje cel dalszego pogłębionego badania; pauza nie oznacza zamknięcia programu.
+- Zapisano ROADMAPA-NAPRAW.md, KOLEJNOSC-NAPRAW.csv i PLAN-WDROZENIA-NAPRAW.md: 40 pakietów/8 etapów, wszystkie R01–R37, klasyfikacja błędów/ryzyk/decyzji/długu, konkretne moduły, zależności, trudność, ryzyko i wymagania testów odbioru.
+- Zaplanowano Prisma i inne blokady, dalsze ASVS/mapę wejść, pełne integracje, odzyskanie/koszt/skalę i zadania UX; osobno bramki obecnych płatności, otwartej platformy, 10000 widzów i przyszłego marketplace. Nie wymagano zamknięcia 18 obszarów/345 kontroli do opracowania roadmapy.
+- Nie zmieniono USTALENIA.json ani kanonicznych wyników: 18 obszarów W_TRAKCIE/0 zamkniętych, ASVS 55/290/0 PASS, wejścia 79/207 z 286. Priorytety źródłowe zachowano; priorytety realizacji są osobną oceną.
+- Przerwaną, niezwalidowaną partię 17 zachowano w provenance/paused-batch17-before-roadmap-v1.tar.gz i JSON z hashami. Aktywne materiały przywrócono do commitu partii 16, bez adopcji roboczych kwalifikacji i bez dalszej oceny archiwum.
+- Dodano maszynowy indeks planu i walidację spójności; odświeżono indeks, PROGRAM i STAN. Następny krok: oczekiwanie na zatwierdzenie roadmapy/harmonogramu przez właściciela. Bez napraw, nowych prób aplikacji, wdrożenia i scalenia.

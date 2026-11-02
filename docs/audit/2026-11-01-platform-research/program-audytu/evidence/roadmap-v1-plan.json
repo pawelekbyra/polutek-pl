@@ -1,0 +1,1371 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-02",
+  "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO",
+  "documentation_parent_sha": "90de980e45bb827da72ddfea1aca18611bacb2e8",
+  "application_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "registry_sha256": "1a0e8e97d6fca4fae1cb31bd29be7e741b2d97c43f6e7011e13adeb8ad04225f",
+  "audit_temporarily_paused": true,
+  "repairs_authorized": false,
+  "stages": {
+    "E0": [
+      "Fundament dowodów, pilna zależność i profil produktu",
+      "K01–K05"
+    ],
+    "E1": [
+      "Bezpieczne wejścia i kontrolowane wydawanie",
+      "K06–K10"
+    ],
+    "E2": [
+      "Poprawność pieniędzy i płatnych uprawnień",
+      "K11–K12"
+    ],
+    "E3": [
+      "Integralność oryginałów, HLS i publikacji",
+      "K13–K23"
+    ],
+    "E4": [
+      "Izolacja, moderacja, prywatność i cofanie dostępu",
+      "K24–K29"
+    ],
+    "E5": [
+      "Odzyskiwanie, operacje i odbiór pełnego produktu",
+      "K30–K35"
+    ],
+    "E6": [
+      "Dostępność, duże dane i udowodniona pojemność",
+      "K36–K39"
+    ],
+    "E7": [
+      "Przyszły marketplace — warunkowo",
+      "K40"
+    ]
+  },
+  "execution_order": [
+    "K02",
+    "K01",
+    "K05",
+    "K03",
+    "K06",
+    "K07",
+    "K08",
+    "K10",
+    "K11",
+    "K12",
+    "K13",
+    "K14",
+    "K15",
+    "K16",
+    "K17",
+    "K18",
+    "K19",
+    "K20",
+    "K24",
+    "K25",
+    "K26",
+    "K04",
+    "K21",
+    "K22",
+    "K23",
+    "K28",
+    "K29",
+    "K27",
+    "K34",
+    "K30",
+    "K31",
+    "K33",
+    "K09",
+    "K35",
+    "K32",
+    "K36",
+    "K37",
+    "K38",
+    "K39",
+    "K40"
+  ],
+  "classifications": {
+    "R01": {
+      "kind": "RYZYKO ZALEŻNOŚCI",
+      "proof": "Wersje lokalne pasują do publicznych advisory; brak exploitu.",
+      "unknown": "Produkcja, wejście do parsera, PIE i rzeczywiste biblioteki obrazu niepotwierdzone.",
+      "plan_priority": "U0",
+      "gate": "B;P;O"
+    },
+    "R02": {
+      "kind": "POTWIERDZONY BŁĄD W ZAKRESIE KOMPONENTÓW",
+      "proof": "Stary owner aktywuje wynik mimo odrzucenia końcowego statusu.",
+      "unknown": "Takeover był symulowany; potrzebne dwa procesy i prawdziwa DB/storage.",
+      "plan_priority": "U1",
+      "gate": "B;P;O"
+    },
+    "R03": {
+      "kind": "POTWIERDZONY BŁĄD W ZAKRESIE KOMPONENTÓW",
+      "proof": "Baseline: trzy PUT kończą się po cleanup i zostawiają obiekty.",
+      "unknown": "Pełne API/SDK/storage i niezależny drugi przegląd niewykonane; nie dowiedziono częściowej publikacji.",
+      "plan_priority": "U1",
+      "gate": "B;P;O"
+    },
+    "R04": {
+      "kind": "POTWIERDZONY BŁĄD W ZAKRESIE KOMPONENTÓW",
+      "proof": "HlsWriter ignoruje Errors/AccessDenied w HTTP 200 DeleteObjects.",
+      "unknown": "Rzeczywisty magazyn i drugi przegląd wymagane; nie stwierdzono produkcyjnego naruszenia usunięcia.",
+      "plan_priority": "U1",
+      "gate": "B;P;O"
+    },
+    "R05": {
+      "kind": "POTWIERDZONA ŹRÓDŁOWO LUKA NIEZAWODNOŚCI",
+      "proof": "Publikacja COMMIT poprzedza best-effort enqueue; retry może wrócić wcześniej.",
+      "unknown": "Nie wykonano pełnego crash/restart z DB; zakres zwykłego filmu, nie dowód utraty wszystkich powiadomień.",
+      "plan_priority": "U1",
+      "gate": "O — obietnica powiadomień"
+    },
+    "R06": {
+      "kind": "RYZYKO KOSZTÓW",
+      "proof": "Quota sumuje część originals, nie fizyczny storage i oglądanie.",
+      "unknown": "Model warunkowy; brak rzeczywistej faktury i jednostek kosztu z produkcji.",
+      "plan_priority": "U1",
+      "gate": "O minimum;S pełny pomiar"
+    },
+    "R07": {
+      "kind": "ŚWIADOMY KOMPROMIS TOKEN/CACHE",
+      "proof": "Stary ważny token działa po odmowie nowego planu; TTL 30 min/6 h w badanych ustawieniach.",
+      "unknown": "Polityka właściciela oraz realne zdarzenia i cache/purge niezweryfikowane.",
+      "plan_priority": "U2",
+      "gate": "P;O — decyzja i test, zmiana warunkowa"
+    },
+    "R08": {
+      "kind": "POTWIERDZONA LUKA TESTÓW I DOWODÓW",
+      "proof": "Brak tests/e2e; cel critical-path nie istnieje; część integracji używa Map.",
+      "unknown": "Pełny runtime zablokowany; 547 plików i 4214 deklaracji nie oznaczają wykonanych testów.",
+      "plan_priority": "U1",
+      "gate": "B;P;O;S"
+    },
+    "R09": {
+      "kind": "POTWIERDZONA LUKA PROCESU WYDANIA",
+      "proof": "ignoreBuildErrors i oddzielna publikacja obrazu nie wiążą jakości z artefaktem.",
+      "unknown": "Aktywne required checks/procedura operatora/attestation nieznane; nie dowiedziono złego wdrożenia.",
+      "plan_priority": "U1",
+      "gate": "B;P;O"
+    },
+    "R10": {
+      "kind": "RYZYKO POJEMNOŚCI — NIE AWARIA",
+      "proof": "Źródła: wspólny host, mała pula DB i globalnie jeden świeży RUNNING encode.",
+      "unknown": "Brak benchmarku obecnego profilu; topologia sama nie dowodzi niezdolności do 10000.",
+      "plan_priority": "U3",
+      "gate": "S"
+    },
+    "R11": {
+      "kind": "POTWIERDZONY BŁĄD NARZĘDZIA I BRAK DOWODU SKALI",
+      "proof": "Summarizer akceptuje syntetyczne unexpected statuses; stary cleanup SHA nie odpowiada HMAC.",
+      "unknown": "Brak aktualnego k6/workload/pojemności; syntetyczny wynik nie dowodzi starej awarii.",
+      "plan_priority": "U3",
+      "gate": "S"
+    },
+    "R12": {
+      "kind": "RYZYKO ODTWARZANIA I BRAK PEŁNEGO DOWODU",
+      "proof": "Ograniczony zakres runbook/kopii; lokalny syntetyczny SQL dump/restore działał.",
+      "unknown": "Brak offsite-only całego produktu, mediów/kluczy/ról i zmierzonego RPO/RTO; aktywne polityki nieznane.",
+      "plan_priority": "U1",
+      "gate": "P;O;S"
+    },
+    "R13": {
+      "kind": "DECYZJA POLITYKI I RYZYKO",
+      "proof": "Źródłowo potwierdzone 12 h Access i odmienna świeżość legacy.",
+      "unknown": "Nie wykazano przejęcia ani aktywnego trybu panelu; konieczna polityka potwierdzania.",
+      "plan_priority": "U1",
+      "gate": "P;O — delegowanie obsługi"
+    },
+    "R14": {
+      "kind": "ŚWIADOMA DECYZJA FAIL-OPEN I RYZYKO",
+      "proof": "Testy potwierdzają słabsze limity przy awarii Redis; logowanie pozostaje dostępne.",
+      "unknown": "Nie potwierdzono braku wszystkich limitów brzegu ani skutecznego zgadywania haseł.",
+      "plan_priority": "U2",
+      "gate": "O — kontrolowana degradacja"
+    },
+    "R15": {
+      "kind": "POTWIERDZONY BŁĄD KONTROLI ZASOBÓW",
+      "proof": "Rzeczywisty reader parsuje przed limitem; multipart dopuszcza duże dodatkowe pole.",
+      "unknown": "Ekspozycja zależy od proxy; brak pełnego HTTP/pomiaru DoS.",
+      "plan_priority": "U1",
+      "gate": "P;O"
+    },
+    "R16": {
+      "kind": "POTWIERDZONA LUKA FUNKCJONALNA I DŁUG SKALI",
+      "proof": "Eksport pomija kategorie i materializuje historię w pamięci.",
+      "unknown": "Brak pełnego HTTP/Prisma i benchmarku pamięci; nie stwierdzono wycieku.",
+      "plan_priority": "U2",
+      "gate": "O kompletność;S/rozmiar optymalizacja"
+    },
+    "R17": {
+      "kind": "WARUNKOWE RYZYKO PRZYSZŁEGO MARKETPLACE",
+      "proof": "Przy sztucznie otwartej bramce i fake providerze równoległe refundy mogą dać 2 operacje/1 zapis.",
+      "unknown": "Provider był bez deduplikacji; nie dowiedziono podwójnego refundu aktywnego produktu.",
+      "plan_priority": "UF",
+      "gate": "F wyłącznie"
+    },
+    "R18": {
+      "kind": "POTWIERDZONA LUKA POKRYCIA MONITORINGU",
+      "proof": "Public health/root status nie sprawdza pełnego filmu; głębsze kontrole częściowo działają.",
+      "unknown": "Brak end-to-end sygnał/odbiór i rzeczywistych czasów wykrycia.",
+      "plan_priority": "U1",
+      "gate": "P;O"
+    },
+    "R19": {
+      "kind": "POTWIERDZONA NIESPÓJNOŚĆ DOKUMENTACJI",
+      "proof": "Konkurujące definicje produktu/kanałów/patrona/sprzedaży.",
+      "unknown": "Aktywne ustawienia i uzgodniona specyfikacja nadal otwarte; to nie błąd runtime.",
+      "plan_priority": "U1",
+      "gate": "B — decyzje;P;O"
+    },
+    "R20": {
+      "kind": "DECYZJA WŁAŚCICIELA I NIEZWERYFIKOWANA JAKOŚĆ",
+      "proof": "Zakaz zoom jest jawny i zamrożony; całościowej oceny produktu nie wykonano.",
+      "unknown": "Brak pełnego SR/mobile/zoom/reflow/language review; nie zmieniać wyglądu bez osobnej decyzji.",
+      "plan_priority": "U2",
+      "gate": "O krytyczne zadania;UX szeroki zakres"
+    },
+    "R21": {
+      "kind": "POTWIERDZONY DŁUG KONTRAKTÓW",
+      "proof": "Rozproszone DTO/as T; klient przyjmuje syntetyczne 200 o złej strukturze.",
+      "unknown": "Nie wykazano rzeczywistej niezgodności serwera; potrzebny kontrakt HTTP.",
+      "plan_priority": "U2",
+      "gate": "O upload/resume;UX rozwój klientów"
+    },
+    "R22": {
+      "kind": "POTWIERDZONA LUKA FUNKCJONALNA",
+      "proof": "Studio zaczyna od nowa i kasuje sesję po retry; panel ma silnik wznowienia.",
+      "unknown": "Pełny browser/API/multipart i drugi przegląd niewykonane.",
+      "plan_priority": "U1",
+      "gate": "O — odporne wysyłanie dla twórców"
+    },
+    "R23": {
+      "kind": "POTWIERDZONY BŁĄD W ZAKRESIE KOMPONENTÓW",
+      "proof": "Brak kanału w kontekście finalizera cicho blokuje auto-publish poza main.",
+      "unknown": "Publikator/route były granicą atrapy; potrzebna rzeczywista publikacja.",
+      "plan_priority": "U1",
+      "gate": "O — wielu twórców"
+    },
+    "R24": {
+      "kind": "ŚWIADOMY KOMPROMIS BIBLIOTEKI I POLITYKA",
+      "proof": "HTTP Better Auth na pamięci: cofnięty cache cookie działa do 60 s; fresh i po TTL odmawiają.",
+      "unknown": "Brak aplikacji Prisma/hooków i uzgodnionego czasu cofnięcia per operacja.",
+      "plan_priority": "U2",
+      "gate": "P;O — decyzja i test"
+    },
+    "R25": {
+      "kind": "POTWIERDZONY BŁĄD W ZAKRESIE KOMPONENTÓW",
+      "proof": "Stare odwołanie A cofa nowe B po powrocie do tego samego stanu.",
+      "unknown": "Pełne HTTP/DB/race i drugi przegląd nadal potrzebne.",
+      "plan_priority": "U1",
+      "gate": "O — moderacja"
+    },
+    "R26": {
+      "kind": "POTWIERDZONY BŁĄD PROTOKOŁU SQL",
+      "proof": "Dwa połączenia przy 99 playlistach tworzą 101; kontrola sekwencyjna respektuje 100.",
+      "unknown": "Jeszcze nie prawdziwe handlery TypeScript/Prisma/HTTP.",
+      "plan_priority": "U2",
+      "gate": "O — limity twórców"
+    },
+    "R27": {
+      "kind": "POTWIERDZONY BŁĄD PROTOKOŁU SQL",
+      "proof": "Spóźnione complete v1 odwraca activeOriginalId z v2 na SUPERSEDED v1.",
+      "unknown": "Pełna funkcja/API i retry DB→enqueue wymagają integracji.",
+      "plan_priority": "U1",
+      "gate": "B;P;O"
+    },
+    "R28": {
+      "kind": "POTWIERDZONY BŁĄD GRANICY COMMIT",
+      "proof": "Błąd audytu po aktywacji powoduje cleanup aktywnego HLS; retry może zwrócić fałszywy sukces.",
+      "unknown": "Komponenty i osobny SQL FK to nie jeden pełny przebieg R2/Prisma.",
+      "plan_priority": "U1",
+      "gate": "B;P;O"
+    },
+    "R29": {
+      "kind": "POTWIERDZONY BŁĄD WSPÓŁBIEŻNOŚCI",
+      "proof": "Aktywacja między sprawdzeniem użycia i delete nie chroni plików.",
+      "unknown": "Pełny protokół DB/storage i obie kolejności wymagają potwierdzenia.",
+      "plan_priority": "U1",
+      "gate": "B;P;O"
+    },
+    "R30": {
+      "kind": "POTWIERDZONY BŁĄD REDAKCJI METADANYCH",
+      "proof": "Przyszła premiera zwraca tytuł/poster/datę mimo NOT_FOUND; bez tokenu mediów.",
+      "unknown": "Komponenty, nie pełne HTTP/cache; brak dowodu dostępu do HLS.",
+      "plan_priority": "U2",
+      "gate": "O — prywatność treści"
+    },
+    "R31": {
+      "kind": "POTWIERDZONY BŁĄD PŁATNYCH UPRAWNIEŃ",
+      "proof": "Refund A usuwa prawa B; refund jednej wpłaty lifetime może usunąć drugą.",
+      "unknown": "Fake DB/provider i zegar; potrzebne Prisma/test-mode oraz polityka zużytych okresów.",
+      "plan_priority": "U1",
+      "gate": "P — pakiety/refundy"
+    },
+    "R32": {
+      "kind": "POTWIERDZONY BŁĄD AGREGATU FINANSOWEGO",
+      "proof": "Komponent i SQL: lost→refund daje 100 gr, odwrotnie 500 gr przy identycznej historii.",
+      "unknown": "Nie wykazano dodatkowego charge/refundu; rzeczywista historia operatora nieprzetestowana.",
+      "plan_priority": "U1",
+      "gate": "P — mimo historycznego P2"
+    },
+    "R33": {
+      "kind": "POTWIERDZONY BŁĄD CYKLU DANYCH",
+      "proof": "Po cleanup User publiczny ACTIVE kanał ujawnia stary kontakt/bio.",
+      "unknown": "Brak HTTP/cache/Prisma; retencja i transfer wymagają decyzji właściciela.",
+      "plan_priority": "U1",
+      "gate": "O — konta twórców"
+    },
+    "R34": {
+      "kind": "POTWIERDZONY DŁUG STRUKTURALNY",
+      "proof": "Cykl 77 plików i przedwczesna domyślna inicjalizacja DB mimo injection.",
+      "unknown": "Nie dowiedziono kosztu bundle/wydajności; graf nie jest produkcyjnym bundlerem.",
+      "plan_priority": "U2",
+      "gate": "Warunkowo K21; nie blokuje P0"
+    },
+    "R35": {
+      "kind": "POTWIERDZONY BŁĄD KOMPONENTU W PRZEGLĄDARCE",
+      "proof": "Chromium: busy wyłącza kontrolki, Tab wychodzi w tło i Enter uruchamia syntetyczną akcję.",
+      "unknown": "Brak backendu i pozostałych docelowych przeglądarek; nie obejście authz.",
+      "plan_priority": "U2",
+      "gate": "O — krytyczne zadania klawiaturą"
+    },
+    "R36": {
+      "kind": "POTWIERDZONY BŁĄD PONOWIEŃ KOMPONENTU",
+      "proof": "Recovery non-2xx/limit bywa utracone; recovery network throw i początkowy DOWN są ponawiane.",
+      "unknown": "Fake D1/provider/zegar; brak Cloudflare i dowodu dostarczenia do skrzynki.",
+      "plan_priority": "U2",
+      "gate": "O — monitoring incydentów"
+    },
+    "R37": {
+      "kind": "POTWIERDZONY BŁĄD NARZĘDZIA",
+      "proof": "Rzeczywisty exit 0/SUCCESS mimo count/migration failure; dotychczasowe 4 testy nie rozpoznają braku weryfikacji.",
+      "unknown": "Syntetyczna DB; opcjonalny manual helper, aktywne użycie niepotwierdzone; nie weekly restore-test.sh.",
+      "plan_priority": "U2",
+      "gate": "B — wiarygodny odbiór;P;O restore"
+    }
+  },
+  "packages": [
+    {
+      "id": "K01",
+      "stage": "E0",
+      "title": "Prawdziwe środowisko testowe i klient Prisma",
+      "refs": [
+        "R08"
+      ],
+      "kind": "PRZYGOTOWANIE",
+      "dependencies": [],
+      "effort": "M",
+      "risk": "Średnie: zależności narzędziowe i migracje; wyłącznie nowe bazy badawcze.",
+      "gate": "Wszystkie profile — fundament dowodów",
+      "modules": "Konfiguracja środowiska cloud, package.json/lockfile, prisma/schema.prisma i migracje; konfiguracje Vitest/Playwright; lokalne PostgreSQL/Redis/storage/encoder.",
+      "change": "Zapisać odtwarzalną instalację na wspieranym Node, wygenerować autentyczny klient z właściwego schematu i odtworzyć usługi na danych syntetycznych. Wymagany dostęp do binaries.prisma.sh uzyskać wspieraną konfiguracją środowiska z przeglądem zmian. Nie podstawiać klienta, nie wyłączać TLS/checksum, nie obchodzić odmowy npm audit. Nowa baza musi przejść silnik migracji Prisma; wcześniejsze 81 plików raw SQL nie ustanawia historii Prisma.",
+      "verification": "Najpierw potwierdzić zastosowaną politykę sieci i faktyczny błąd; nie powtarzać instalacji przy niezmienionej blokadzie. Oddzielić błędy środowiska, testu i produktu.",
+      "acceptance": [
+        "Na świeżym checkout i nowej bazie instalacja, generate oraz migracje kończą się exit 0; zapisać wersje i logi bez sekretów. Druga instalacja według instrukcji daje ten sam schemat i działający klient.",
+        "Prawdziwy klient wykonuje zapis/odczyt i rollback transakcji; kontrola z niepoprawnym FK/unique jest odrzucona. Usunięcie klienta lub niedostępna DB blokuje wymagany test, zamiast dawać pusty PASS.",
+        "Uruchamia się lokalne API i worker na własnym krótkim filmie; izolacja kont/bucketów i sprzątanie fixture potwierdzone. Zablokowane usługi oznaczone BLOCKED, bez deklaracji pełnej integracji."
+      ],
+      "recommended_order": 2,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K02",
+      "stage": "E0",
+      "title": "Pilna aktualizacja zależności objętych advisory",
+      "refs": [
+        "R01"
+      ],
+      "kind": "NAPRAWA RYZYKA",
+      "dependencies": [],
+      "effort": "M",
+      "risk": "Średnie: zachowanie Next i natywnych bibliotek obrazów.",
+      "gate": "Przed publicznym ruchem i płatnościami",
+      "modules": "package.json, package-lock.json; konfiguracje Next public/admin, obrazy aplikacji i rzeczywiście ładowane sharp/libvips/librsvg.",
+      "change": "Przygotować minimalną aktualizację do wspieranych wersji poza dotkniętymi zakresami advisory. Historycznie wskazano Next 16.4.1 i sharp >=0.35.5/librsvg 2.63.2; przy realizacji zweryfikować aktualny poprawiony zakres i zawartość obrazu, zamiast bezwarunkowo przypinać te numery. Dwa komunikaty nie dowodzą dwóch exploitów. Kandydata przygotowywać równolegle z K01; brak pełnego ASVS lub refaktoru nie opóźnia pilnej poprawki.",
+      "verification": "Potwierdzone dopasowanie wersji, nie wykazany RCE. Sprawdzić ścieżkę przetwarzania obrazów i natywne biblioteki w docelowym artefakcie; bez nowego wysłania grafu zależności.",
+      "acceptance": [
+        "Lockfile i zbudowany obraz zawierają poprawione wersje, faktycznie ładowane zależności nie należą do potwierdzonych dotkniętych zakresów; zachować metadane wersji i digest.",
+        "Legalne miniatury i obrazy działają; niedozwolony format/źródło pozostają odrzucone. Typy, wymagane testy i build obu aplikacji przechodzą na tym samym SHA. Do czasu usunięcia blokad K01 wynik pozostaje kandydatem, bez zgody na publikację."
+      ],
+      "recommended_order": 1,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K03",
+      "stage": "E0",
+      "title": "Wiarygodny baseline testów i wynik weryfikatora restore",
+      "refs": [
+        "R08",
+        "R37"
+      ],
+      "kind": "NAPRAWA NARZĘDZIA I WERYFIKACJA",
+      "dependencies": [
+        "K01"
+      ],
+      "effort": "M",
+      "risk": "Średnie: ostrzejsza weryfikacja może ujawnić wcześniej pomijane problemy.",
+      "gate": "Przed uznaniem wydania lub odzyskania za sprawdzone",
+      "modules": "scripts/verify-restored-database.ts i jego testy; komendy critical-path/quality, konfiguracje oraz raporty Vitest.",
+      "change": "Naprawić fałszywy sukces opcjonalnego manualnego helpera: kompletność obowiązkowych odczytów/counts, brakujące wartości manifestu i jawny stan migracji. Nie utożsamiać go z weekly restore-test.sh. Poprawić brakujący cel critical-path i wykonać nowy baseline po K01; rozliczyć każdą porażkę/pominięcie, zachować tanie skuteczne testy.",
+      "verification": "Dotychczas 535 plików: 304 pass, 12 failed z assertions i 219 failed przed rejestracją; to nie 35 dowiedzionych usterek produktu. Sprawdzić rzeczywisty kod wyjścia osobnego procesu, nie sam log ani mock process.exit.",
+      "acceptance": [
+        "Cztery świadki: błąd count, brak oczekiwanego count w manifeście, błąd query migracji i nieukończona migracja bez logs dają niezerowy exit lub jawny INCOMPLETE bez SUCCESS. Poprawny restore daje exit 0.",
+        "Kontrole: preflight, różny manifest i osierocony rekord odmawiają; dozwolona historia rolled-back oceniana według jawnej polityki migracji. Wyłączenie obowiązkowej weryfikacji musi zepsuć test, który sprawdza jej efekt.",
+        "Każda komenda baseline raportuje liczbę wykonanych, błędnych i pominiętych testów oraz SHA. Brak wymaganych plików/testów daje błąd; niezerowe wyniki mają osobny przydział, nie są automatycznie przypisane Prisma."
+      ],
+      "recommended_order": 4,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K04",
+      "stage": "E0",
+      "title": "Wąskie importy i jawne składanie infrastruktury",
+      "refs": [
+        "R34"
+      ],
+      "kind": "DŁUG — WARUNKOWY MAŁY REFAKTOR",
+      "dependencies": [
+        "K03"
+      ],
+      "effort": "M",
+      "risk": "Średnie: inicjalizacja kontekstu i zgodność eksportów.",
+      "gate": "Warunkowo przed zmianą kontraktów; nie blokuje K02",
+      "modules": "lib/modules/video i channel — publiczne index; AppContext, lib/prisma i composition root aplikacji. lib/modules/shared/app-context.ts.",
+      "change": "Wydzielić potrzebne czyste reguły/DTO i usunąć niepotrzebną inicjalizację domyślnej DB przy imporcie. Zacząć od rzeczywistego importu blokującego izolację. Nie przepisywać całego cyklu 77 plików. Jeśli K21 można bezpiecznie wykonać bez refaktoru, zamknąć tę zależność udokumentowanym odroczeniem K04, a nie udawanym usunięciem długu.",
+      "verification": "Graf i constructor probe dowodzą sprzężenia; nie dowodzą spowolnienia produkcji lub wielkości bundle. Zweryfikować w docelowym bundlerze po K01.",
+      "acceptance": [
+        "Import nowego czystego wejścia nie konstruuje DB, Redis ani providerów; test z zabronionym konstruktorem infrastruktury przechodzi. Produkcyjne złożenie nadal uruchamia prawdziwy klient.",
+        "Wstrzyknięta DB jest użyta przez rzeczywisty use case; integracyjne legalne i odmowne scenariusze pozostają zgodne. Graf wybranego cyklu ma udokumentowaną zmianę lub świadome odroczenie, bez deklaracji naprawy wszystkich cykli."
+      ],
+      "recommended_order": 22,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K05",
+      "stage": "E0",
+      "title": "Jednoznaczny profil produktu i decyzje właściciela",
+      "refs": [
+        "R19"
+      ],
+      "kind": "SPECYFIKACJA I DECYZJE",
+      "dependencies": [],
+      "effort": "S",
+      "risk": "Niskie technicznie; błędne założenie zmieniłoby politykę produktu.",
+      "gate": "Przed zmianami polityk i aktywacją funkcji",
+      "modules": "Dokumentacja produktu/operacji, P01–P22/F01–F14 w D01; katalog flag, kanałów, patrona i planów sprzedaży.",
+      "change": "Rozdzielić obecne darowizny/pakiety od przyszłych zakupów marketplace, implementację od aktywnej flagi oraz kanał main od kanałów twórców. Utworzyć rejestr decyzji: refund/zużyte okresy, retencja/transfer kanału, świeżość admina i sesji, cofanie HLS, awaria auth, SLO/RPO/RTO/budżet. Brak odpowiedzi to otwarta decyzja z warunkiem, nie domyślna zgoda.",
+      "verification": "Aktualna konfiguracja produkcji nie jest dowiedziona przez kod. Później odczytać wyłącznie uprawnioną bezsekretową konfigurację i uzgodnić profil z właścicielem.",
+      "acceptance": [
+        "Każda aktywowana obietnica ma oczekiwany wynik dla widza/twórcy/admina i wskazanie flagi; sprzeczne aktualne opisy zastąpione jedną wersją.",
+        "Lista decyzji wskazuje właściciela, termin względem bramki i status. Niedecydowane funkcje pozostają wyłączone lub bramka BLOCKED; dokument nie przedstawia ich jako przetestowanych."
+      ],
+      "recommended_order": 3,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K06",
+      "stage": "E1",
+      "title": "Wydanie związane z dokładnie sprawdzonym artefaktem",
+      "refs": [
+        "R09"
+      ],
+      "kind": "NAPRAWA PROCESU",
+      "dependencies": [
+        "K01",
+        "K02",
+        "K03"
+      ],
+      "effort": "M",
+      "risk": "Średnie: możliwość zablokowania dotychczasowej ścieżki wydania.",
+      "gate": "Każde wydanie napraw",
+      "modules": "Konfiguracje Next z ignoreBuildErrors, Dockerfiles, lokalne quality/CI/deploy i workflow publikacji obrazów.",
+      "change": "Związać obowiązkowe typy/testy/build i zgodę na wydanie z SHA, wejściami budowy i digest obrazu. Zweryfikować wszystkie wspierane ścieżki, także ręczne/tagowane publikacje. Można zachować lokalny proces wymagany przez repo; nie narzucać GitHub Actions. Nieznane branch protection i attestation zweryfikować, nie zakładać ich braku.",
+      "verification": "Istniejące kontrole CI są wartościowe, ale sama deklaracja lub build nie dowodzi wykonania dla publikowanego obrazu.",
+      "acceptance": [
+        "Celowy błąd typu i celowa porażka wymaganego testu zatrzymują publikację/aktywację we wszystkich wspieranych ścieżkach. Wymagane testy nie mogą zostać zastąpione zerowym wyborem.",
+        "Artefakt z innym SHA/digest lub zmienionymi wejściami nie przechodzi zatwierdzenia. Poprawny artefakt przechodzi cały proces w sandboxie; brak wymuszenia SLSA poziomu bez oddzielnego dowodu."
+      ],
+      "recommended_order": 5,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K07",
+      "stage": "E1",
+      "title": "Limit rzeczywistych bajtów przed parserem",
+      "refs": [
+        "R15"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K03",
+        "K06"
+      ],
+      "effort": "M",
+      "risk": "Średnie: legalne multipart i duże listy części mogą zostać niechcący odrzucone.",
+      "gate": "Przed otwarciem publicznych wejść",
+      "modules": "lib/api — czytniki JSON/formData; trasy Studio i panelu, proxy/reverse proxy oraz konfiguracja limitów.",
+      "change": "Ograniczyć sumę odczytanych bajtów przed JSON/multipart, liczbę części/pól i rozmiary pól; ujednolicić kontrakt proxy i aplikacji. Zachować legalną listę 10000 części complete oraz osobne limity plików. Same Content-Length lub Zod po parse nie wystarczą.",
+      "verification": "Źródła i natywne Request potwierdzają parse-before-limit; pełnego proxy/Next/DoS nie wykonano. Najpierw zmierzyć rzeczywiste granice.",
+      "acceptance": [
+        "Brak/fałszywy Content-Length, chunked JSON, mały plik z wielkim polem i nadmiar części kończą się 413 przy granicy, przed pełnym buforowaniem; parser nie jest wywoływany po przekroczeniu.",
+        "Dokładnie dozwolony rozmiar i legalny complete 10000 części przechodzą; +1 bajt/część ponad jawny limit odmawia. Równoległe odrzucone żądania mieszczą się w ustalonym budżecie pamięci/czasu w rzeczywistym stosie."
+      ],
+      "recommended_order": 6,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K08",
+      "stage": "E1",
+      "title": "Świeże potwierdzanie wrażliwych operacji panelu",
+      "refs": [
+        "R13"
+      ],
+      "kind": "DECYZJA, NASTĘPNIE ZMIANA JEŚLI POTRZEBNA",
+      "dependencies": [
+        "K05",
+        "K06"
+      ],
+      "effort": "M",
+      "risk": "Średnie: utrata dostępu operatora lub osłabienie kontroli.",
+      "gate": "Przed obsługą pieniędzy/delegowaniem panelu",
+      "modules": "Auth panelu Access/legacy, hasFreshStepUp i handlery refund/usunięcie/eksport/zmiana roli. apps/admin/lib/security/cf-access.ts; apps/admin/lib/auth/access-session.ts i guard.ts.",
+      "change": "Uzgodnić okno i sposób potwierdzenia niezależnego od samej ważności logowania. Jeżeli obecne 12 h nie spełnia polityki, wprowadzić ograniczony mechanizm dla wrażliwych akcji z bezpiecznym odzyskaniem operatora. Nie dodawać obowiązkowego drugiego administratora bez decyzji.",
+      "verification": "Potwierdzona różnica polityk, nie obejście podpisu Access. Pełny tryb panelu i aktywna konfiguracja wymagają próby.",
+      "acceptance": [
+        "Stary poprawnie podpisany token nie pozwala na wrażliwą akcję po uzgodnionym progu; nowy legalny step-up pozwala. Odmowa nie zmienia DB ani nie wywołuje operatora płatności.",
+        "Nieprawidłowy podpis, wygasły token, zła rola i tryb legacy mają jednoznaczne wyniki; błąd dostawcy potwierdzenia nie zamienia się w zgodę. Zachować ślad audytu bez tokenów."
+      ],
+      "recommended_order": 7,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K09",
+      "stage": "E1",
+      "title": "Kontrolowana degradacja ochrony auth przy awarii Redis",
+      "refs": [
+        "R14"
+      ],
+      "kind": "DECYZJA I OCHRONA ZASTĘPCZA",
+      "dependencies": [
+        "K05",
+        "K06"
+      ],
+      "effort": "M",
+      "risk": "Średnie: kompromis dostępność logowania/ochrona przed automatyzacją.",
+      "gate": "Przed szerokim publicznym ruchem auth",
+      "modules": "Limity auth/liczniki błędów, adapter Redis, konfiguracja brzegu i alarm awarii. lib/auth/rate-limit-storage.ts i lib/auth/config.ts.",
+      "change": "Uzgodnić i wdrożyć policzalne limity zastępcze oraz alarm. Zachować świadomy cel dostępności; nie zamieniać każdej awarii Redis w bezwarunkową blokadę wszystkich kont. Sprawdzić wszystkie rodziny wejść auth, a nie jeden helper.",
+      "verification": "Fail-open jest zamierzony i potwierdzony testami; niezależne limity infrastruktury nie są zweryfikowane.",
+      "acceptance": [
+        "Odcięcie i opóźnienie Redis w izolowanym stosie nie omijają uzgodnionego limitu dla wielu IP/kont; działająca poprawna próba ma wynik zgodny z przyjętą polityką.",
+        "Awaria generuje sygnał do własnego odbiornika; powrót przywraca zwykłe liczniki bez podwójnych kar i nieograniczonego retry. Zmierzone czasy i ograniczenia zapisane."
+      ],
+      "recommended_order": 33,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K10",
+      "stage": "E1",
+      "title": "Odmowa dostępu przed metadanymi premiery",
+      "refs": [
+        "R30"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K03",
+        "K06"
+      ],
+      "effort": "S",
+      "risk": "Niskie/średnie: zachowanie legalnego podglądu przyszłej premiery.",
+      "gate": "Przed otwarciem treści/premier",
+      "modules": "Łańcuch planu odtwarzania: centralne authorize/NOT_FOUND i budowanie DTO przyszłej premiery.",
+      "change": "Obsłużyć centralną odmowę przed zwróceniem tytułu/postera/daty. Zachować legalny podgląd i odmowę tokenu mediów. Dowód dotyczy metadanych, nie dostępu do HLS.",
+      "verification": "Potwierdzony komponentowy łańcuch; potrzebne prawdziwe HTTP z rolami.",
+      "acceptance": [
+        "Gość i obcy użytkownik znający ID ukrytego/REMOVED filmu nie otrzymują tytułu, postera, daty ani tokenu; status/shape zgodny z kontraktem NOT_FOUND.",
+        "Własny uprawniony podgląd i publiczna legalna premiera nadal działają, a odtwarzanie przed czasem pozostaje zabronione."
+      ],
+      "recommended_order": 8,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K11",
+      "stage": "E2",
+      "title": "Uprawnienie liczone z wkładów poszczególnych wpłat",
+      "refs": [
+        "R31"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K01",
+        "K03",
+        "K05",
+        "K06"
+      ],
+      "effort": "L",
+      "risk": "Wysokie: płatne prawa i zgodność danych historycznych.",
+      "gate": "Bezwzględnie przed aktywacją pakietów/refundów",
+      "modules": "Moduły payments/patron/pass: fulfillment, refund, grant/entitlement; modele Payment i uprawnień, webhooki, migracje. lib/modules/patron-zone/application/patron-grant.ts; domain/pass-state.ts; lib/modules/payments/application/handle-refund.use-case.ts.",
+      "change": "Wprowadzić deterministyczny wkład każdej wpłaty do czasu/lifetime i przeliczenie po refundzie; uzgodnić zużyte okresy. Rozdzielić kontrakt, migrację addytywną i backfill w sekwencyjnych podkrokach. Historycznych praw nie zgadywać i nie cofać automatycznie. Przed zmianą danych: read-only raport, niejednoznaczne rekordy i osobna zgoda na wykonanie.",
+      "verification": "Komponenty: refund starego A usuwa prawa z nowego B; dwie wpłaty lifetime także tracą niezależność. Wymagany rzeczywisty Prisma/DB i operator wyłącznie test-mode.",
+      "acceptance": [
+        "Po zakupie A 30 dni, wygaśnięciu A i zakupie B refund A nie usuwa dostępu z B; refund jednej z dwóch aktywnych wpłat lifetime pozostawia wkład drugiej. Refund ostatniego skutecznego wkładu daje wynik według polityki.",
+        "Częściowy refund, replay, zmiana kolejności i współbieżny zakup/refund nie dublują ani nie gubią wkładów. Webhook z błędnym podpisem odmawia bez skutku.",
+        "Backfill dry-run uzgadnia stare i nowe uprawnienia oraz ujawnia niejednoznaczności. Mieszane wersje aplikacji/migracja mają sprawdzony plan; żadne rzeczywiste obciążenie lub odebranie praw nie jest częścią testu."
+      ],
+      "recommended_order": 9,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K12",
+      "stage": "E2",
+      "title": "Agregat wpłat niezależny od kolejności refund/dispute",
+      "refs": [
+        "R32"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K11"
+      ],
+      "effort": "M",
+      "risk": "Wysokie: sumy finansowe i możliwa korekta historii.",
+      "gate": "Przed aktywacją bieżących płatności",
+      "modules": "Payment refund/dispute/reconciliation, UserPaymentTotal, obsługa walut i narzędzie uzgadniania agregatu. lib/modules/payments/application/handle-dispute.use-case.ts, handle-refund.use-case.ts; infrastructure/payment.repository.ts.",
+      "change": "Aktualizować sumę różnicą kanonicznego wkładu płatności uwzględniającego refund i chargeback, pod spójną transakcją. Zapewnić odtwarzanie agregatu i read-only porównanie historii. Priorytet audytu P2 zachować; poprawność sum jest warunkiem wydania płatności. Naprawa danych produkcji to oddzielna zatwierdzana operacja.",
+      "verification": "Komponent i protokół SQL potwierdziły różne wyniki; brak dowodu drugiego obciążenia karty.",
+      "acceptance": [
+        "A=1000 gr, B=500 gr, refund A=400 gr i przegrany spór A: obie kolejności kończą sumą 500 gr, nie 100 gr. Powtórzenie i współbieżne doręczenie nie zmieniają wyniku.",
+        "Open/lost/won, refund częściowy/pełny oraz różne waluty mają uzgodnione wyniki; przeliczenie z Payment zgadza się z agregatem. Nie wykonuje się nowego charge/refund jako skutku naprawy sumy."
+      ],
+      "recommended_order": 10,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K13",
+      "stage": "E3",
+      "title": "Błędy usuwania S3 per obiekt",
+      "refs": [
+        "R04"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K03",
+        "K06"
+      ],
+      "effort": "S",
+      "risk": "Średnie: retry i rozliczanie faktycznie usuniętych danych.",
+      "gate": "Przed poleganiem na cleanup/purge",
+      "modules": "lib/modules/video-pipeline/infrastructure/r2-storage.ts — HlsWriter.deletePrefix; application/output-cleanup.use-cases.ts — purgeVideoStorageStrict.",
+      "change": "Obsłużyć Errors w HTTP 200 DeleteObjects, liczyć potwierdzone usunięcia, ponawiać przejściowe błędy i pokazywać trwałe operatorowi. Zachować wydajne batch DELETE; brak potrzeby kopiowania pojedynczych usunięć z PeerTube.",
+      "verification": "Import DO_WERYFIKACJI oznacza potrzebny drugi przegląd; baseline wykonał rzeczywistą klasę z syntetyczną odpowiedzią AccessDenied.",
+      "acceptance": [
+        "HTTP 200 z jednym AccessDenied nie kończy strict purge jako SUCCESS i nie nalicza tego klucza jako usuniętego; trwały błąd jest widoczny z ID zadania.",
+        "Mieszany sukces/błąd przejściowy ponawia tylko właściwe klucze, brakujący już obiekt jest idempotentny. Własny bucket/S3 sandbox potwierdza zgodność listowania i kolejnych stron."
+      ],
+      "recommended_order": 11,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K14",
+      "stage": "E3",
+      "title": "Zatrzymanie i zakończenie transferów przed cleanup",
+      "refs": [
+        "R03"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K13"
+      ],
+      "effort": "M",
+      "risk": "Średnie: anulowanie i wycieki zasobów pod równoległym PUT.",
+      "gate": "Przed poleganiem na cleanup/retry kodowania",
+      "modules": "video-pipeline/application/process-encode-job.ts — runPool; infrastructure/r2-storage.ts — putFile i sygnał anulowania.",
+      "change": "Po pierwszym błędzie przerwać przydzielanie nowych PUT, przekazać AbortSignal i doczekać zakończenia wszystkich rozpoczętych operacji przed cleanup katalogu i prefiksu. Współgra z izolacją prób w K16, lecz nie wymaga przepisywania pipeline.",
+      "verification": "Baseline: trzy obiekty pojawiły się po przedwczesnym cleanup. Nie dowodzi publikacji częściowego filmu. Najpierw odtworzyć z kontrolą opóźnionych transferów.",
+      "acceptance": [
+        "Jedna awaria + opóźniony sukces i opóźniony błąd: po zakończeniu procesora oraz wszystkich PUT nie ma nieodnotowanych obiektów; cleanup zaczyna się dopiero po ustaniu zapisów.",
+        "Normalny upload wszystkich części działa, anulowanie nie wiesza procesu, nowa praca nie jest przydzielana po awarii. Późniejsza integracja z K16 nie usuwa obiektów innej próby."
+      ],
+      "recommended_order": 12,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K15",
+      "stage": "E3",
+      "title": "Monotoniczne ukończenie wersji oryginału",
+      "refs": [
+        "R27"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K03",
+        "K06"
+      ],
+      "effort": "M",
+      "risk": "Wysokie: aktywny wskaźnik oryginału i odzyskiwanie kolejki.",
+      "gate": "Przed szerszym uploadem/wymianą filmu",
+      "modules": "Use case complete multipart/original, repozytoria oryginałów, activeOriginalId i enqueue kodowania. lib/modules/video-pipeline/application/original-upload.use-cases.ts.",
+      "change": "Wspólny lock/CAS wersji i statusu dla ukończenia i retry; stare READY nie może reaktywować SUPERSEDED. Zachować naprawianie przerwy DB→enqueue zamiast bezwarunkowego early return.",
+      "verification": "Potwierdzony protokół na dwóch połączeniach PostgreSQL; dołożyć rzeczywiste funkcje Prisma i HTTP z barierami.",
+      "acceptance": [
+        "Zatrzymać retry v1 po odczycie READY, ukończyć v2, wznowić v1: activeOriginalId pozostaje v2, v1 pozostaje SUPERSEDED i nie zleca nowej aktywacji.",
+        "Zwykłe complete i jego replay działają; przerwa po DB przed enqueue zostaje naprawiona. Cancel/SUPERSEDED nie odzyskują aktywności przez spóźnione complete."
+      ],
+      "recommended_order": 13,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K16",
+      "stage": "E3",
+      "title": "Tożsamość próby i odrębne prefiksy kodowania",
+      "refs": [
+        "R02"
+      ],
+      "kind": "KONTRAKT I MIGRACJA ADDYTYWNA",
+      "dependencies": [
+        "K14",
+        "K15"
+      ],
+      "effort": "M",
+      "risk": "Wysokie: zgodność nowych i starych workerów.",
+      "gate": "Część wymagana przed pełnym zamknięciem R02",
+      "modules": "EncodeJob i repozytorium claim/requeue/heartbeat, procesor, HLS storage layout, finalizer, migracje i diagnostyka. lib/modules/video-pipeline/application/encode-queue.use-cases.ts; scripts/video-worker.ts.",
+      "change": "Nadać każdej próbie niepowtarzalną tożsamość/epokę i prywatny prefiks; przenieść ją przez wszystkie granice procesu. Opisać kontrakt właściciela cleanup. Wdrożenie wymaga kontrolowanego wygaszenia starych workerów; sama kolumna lub prefiks nie zamyka R02.",
+      "verification": "Sprawdzić odzyskiwanie po crash i mapowanie legacy prób; brak prawa starego kodu do wspólnego nowego prefiksu.",
+      "acceptance": [
+        "Dwie próby tego samego zadania mają rozłączne prefiksy i spójne ID w repo/finalizer/logach; cleanup A nie może adresować prefiksu B.",
+        "Migracja na reprezentatywnym legacy snapshot i restart po claim nie gubią aktywnego filmu. Test mieszanego wykonania wykazuje blokadę niezgodnego starego workera; R02 pozostaje otwarte do K17."
+      ],
+      "recommended_order": 14,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K17",
+      "stage": "E3",
+      "title": "Atomowe odcięcie skutków starego workera",
+      "refs": [
+        "R02"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K16"
+      ],
+      "effort": "L",
+      "risk": "Wysokie: transakcje aktywacji i przeniesienie własności zadania.",
+      "gate": "Przed bezpiecznym retry/takeover i zwiększaniem encoderów",
+      "modules": "process-encode-job.ts, self-hls-finalizer, repo EncodeJob, transakcja PlaybackRoute/VideoAsset i cleanup prób. lib/modules/video-pipeline/application/finalize-self-hls.ts; lib/modules/video/application/video-playback-route.service.ts.",
+      "change": "Sprawdzać aktualną tożsamość próby w tej samej operacji atomowej co skutki aktywacji/statusów. Fencing dotyczy również usunięć i kolejnych efektów, a nie tylko końcowego zapisu SUCCESS. Dodatkowy SELECT przed transakcją jest niewystarczający.",
+      "verification": "Dotychczas rzeczywiste komponenty z fake takeover: aktywacja przechodzi, status starego ownera odmawia. Odtworzyć na dwóch prawdziwych procesach/DB.",
+      "acceptance": [
+        "Worker A zatrzymany przed finalizacją; B przejmuje zadanie i publikuje; A wraca: nie aktywuje starej trasy, nie zmienia statusu B ani nie usuwa obiektów B.",
+        "Kontrola bez takeover aktywuje i kończy zadanie; crash/lease expiry/requeue mają jednoznaczny wynik i retry. Test obserwuje DB i fizyczne pliki, nie sam odrzucony końcowy status."
+      ],
+      "recommended_order": 15,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K18",
+      "stage": "E3",
+      "title": "Granica COMMIT i ochrona już aktywowanego HLS",
+      "refs": [
+        "R28"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K17"
+      ],
+      "effort": "M",
+      "risk": "Wysokie: nieodwracalne usunięcie aktywnych plików.",
+      "gate": "Przed bezpieczną publikacją/retry",
+      "modules": "Self-HLS finalizer, zapis AuditLog, aktywacja PlaybackRoute/VideoAsset, cleanup oraz rozpoznanie zakończonej próby. lib/modules/video-pipeline/application/finalize-self-hls.ts; lib/modules/video/application/video-playback-route.service.ts.",
+      "change": "Rozróżnić błąd przed i po COMMIT. Obowiązkowy audyt powiązać transakcyjnie albo zapisać trwały zamiar; błąd po aktywacji nie uruchamia usuwania jej plików. Retry musi uzgodnić rzeczywisty rezultat przed zgłoszeniem sukcesu.",
+      "verification": "Komponenty potwierdziły zniknięcie plików po błędzie audytu; osobny SQL pokazał skutki FK, ale pełnego R2/Prisma nie było.",
+      "acceptance": [
+        "Wstrzyknięty błąd audytu tuż po COMMIT dla nowego i istniejącego assetu: aktywowany film nadal ma manifest/segmenty i się odtwarza; restart/retry nie zgłasza fałszywego sukcesu przy brakujących plikach.",
+        "Awaria przed COMMIT nie pozostawia aktywnej trasy; cleanup usuwa tylko własny nieaktywny wynik. K17 nadal odcina starą próbę."
+      ],
+      "recommended_order": 16,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K19",
+      "stage": "E3",
+      "title": "Wspólny protokół aktywacji i wycofywania HLS",
+      "refs": [
+        "R29"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K13",
+        "K17",
+        "K18"
+      ],
+      "effort": "L",
+      "risk": "Wysokie: locki, stany zasobów, migracja i długie I/O.",
+      "gate": "Przed usuwaniem wersji i publiczną publikacją",
+      "modules": "output-cleanup.use-cases.ts, aktywacja tras/assetów, repo VideoAsset/PlaybackRoute, DurableJob i migracje stanów. lib/modules/video/application/video-playback-route.service.ts.",
+      "change": "Rezerwować wycofanie pod wspólną blokadą/wersją z aktywacją; wycofywany asset nie może zostać aktywowany. Zewnętrzne kasowanie jako trwałe zadanie poza długą transakcją DB. Określić ścieżkę crash/retry i zgodność starych procesów; kolejny SELECT nie usuwa TOCTOU.",
+      "verification": "Potwierdzono model activation-between-check-and-delete. Odtworzyć rzeczywistą bazę, oba porządki i opóźniony magazyn.",
+      "acceptance": [
+        "Cleanup rezerwuje zasób, potem aktywacja: aktywacja odmawia; aktywacja pierwsza, potem cleanup: aktywny zasób pozostaje. Po obu próbach DB i pliki są spójne.",
+        "PUBLISHED/UNLISTED chronione zgodnie z polityką; dla DRAFT jawne oczekiwanie. Crash po rezerwacji i w połowie DeleteObjects daje idempotentne dokończenie lub odwrót, bez aktywnej trasy do skasowanych plików."
+      ],
+      "recommended_order": 17,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K20",
+      "stage": "E3",
+      "title": "Kontekst właściwego kanału podczas auto-publish",
+      "refs": [
+        "R23"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K17",
+        "K18",
+        "K19"
+      ],
+      "effort": "M",
+      "risk": "Średnie: izolacja kanałów i publikacja w imieniu zadania.",
+      "gate": "Przed otwarciem wielu twórców",
+      "modules": "Self-HLS finalizer, AppContext/authorize, powiązanie job→video→channel i publish-admin-video.use-case.ts. lib/modules/video-pipeline/application/finalize-self-hls.ts; lib/modules/video/application/publish-after-asset-ready.use-case.ts.",
+      "change": "Tworzyć kontekst ze zweryfikowanego powiązania zadania, filmu i kanału, nigdy z niezaufanego body. Raportować jawnie wynik auto-publish. Zachować kontrole stanu kanału i fencing, zamiast omijać autoryzację.",
+      "verification": "Komponentowy dowód dochodził do granicy publikatora po poprawieniu kontekstu; pełna aktywacja nie była wtedy realna.",
+      "acceptance": [
+        "Dwa niegłówne kanały, prawdziwe DB/worker: legalne PUBLIC i UNLISTED publikują właściwy film na właściwym kanale, a route i pliki odpowiadają temu filmowi.",
+        "Cudze ID, usunięty/zawieszony kanał i stara próba nie publikują; odmowa nie jest raportowana jako skuteczna publikacja. Kanał main nadal działa."
+      ],
+      "recommended_order": 18,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K21",
+      "stage": "E3",
+      "title": "Wąski wspólny kontrakt upload/job/playback",
+      "refs": [
+        "R21"
+      ],
+      "kind": "DŁUG I WALIDACJA GRANICY",
+      "dependencies": [
+        "K03",
+        "K04",
+        "K05"
+      ],
+      "effort": "M",
+      "risk": "Średnie: zgodność UI z API i starszym klientem.",
+      "gate": "Przed wspólnym resume; zakres ograniczony",
+      "modules": "DTO upload/job/playback, klient JSON Studia, lib/video-upload i adaptery tras Studio/panelu.",
+      "change": "Wydzielić czyste współdzielone typy/schematy odpowiedzi i jawne adaptery różnych tras. Walidować niezaufany JSON na granicy, zwracać kontrolowany błąd zamiast as T. Nie przebudowywać wszystkich API ani wymuszać identycznych URL.",
+      "verification": "Synthetic fetch 200 ze złą strukturą potwierdził brak walidacji; nie dowodzi faktycznego błędu odpowiedzi serwera.",
+      "acceptance": [
+        "Prawdziwy serwer zwraca zgodny kontrakt dla upload/job/playback; legalny starszy obsługiwany klient działa według opisanej zgodności.",
+        "200 z null/złą strukturą, niedozwolony enum, błędny status i uszkodzony JSON dają kontrolowany błąd bez kolejnego niepoprawnego żądania/zmiany stanu. Kontrakt nie importuje infrastruktury."
+      ],
+      "recommended_order": 23,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K22",
+      "stage": "E3",
+      "title": "Wznowienie uploadu w Studio z istniejącego silnika",
+      "refs": [
+        "R22"
+      ],
+      "kind": "UZUPEŁNIENIE FUNKCJONALNE",
+      "dependencies": [
+        "K14",
+        "K15",
+        "K20",
+        "K21"
+      ],
+      "effort": "M",
+      "risk": "Średnie: identyfikacja pliku, wielokrotne karty i cancel.",
+      "gate": "Przed obiecaniem odpornego uploadu twórcom",
+      "modules": "app/components/studio/upload-original.ts, lib/video-upload/multipart-uploader.ts; GET parts/refresh signed URLs oraz adaptery Studio.",
+      "change": "Użyć istniejącego silnika panelu z adapterami, zachować originalId i stan wznowienia. Błąd sieci/pauza nie oznaczają DELETE sesji; osobny świadomy cancel sprząta. Zweryfikować zgodność pliku i właściciela, nie tylko apiBase.",
+      "verification": "Baseline pokazuje świadomie słabszy flow Studia; przed zmianą pełny browser→API→multipart. Zachować potrzebne kontrole przerwania.",
+      "acceptance": [
+        "Odświeżenie karty, ponowny wybór tego samego pliku i wygaśnięcie URL wznawiają ten sam upload; zapisane części nie są ponownie wysłane, wynik filmu jest poprawny.",
+        "Inny plik, cudze originalId, dwie karty i stare complete nie nadpisują filmu. Pauza/wyczerpanie retry zachowują możliwość wznowienia, świadomy cancel usuwa własną rezerwację i dane według kontraktu."
+      ],
+      "recommended_order": 24,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K23",
+      "stage": "E3",
+      "title": "Trwały zamiar powiadomienia razem z publikacją",
+      "refs": [
+        "R05"
+      ],
+      "kind": "NAPRAWA LUKI NIEZAWODNOŚCI",
+      "dependencies": [
+        "K20"
+      ],
+      "effort": "M",
+      "risk": "Średnie: duplikaty zdarzeń i zgodność z premierami.",
+      "gate": "Przed uznaniem powiadomień o publikacji za niezawodne",
+      "modules": "video/application/publish-admin-video.use-case.ts; notifications/application/new-video-fan-out.use-case.ts, premiere-notifications.use-case.ts; DurableJob/outbox.",
+      "change": "Zapisać unikalny trwały zamiar ogłoszenia w transakcji publikacji; fan-out wykonywać po niej z retry i idempotencją. Rozszerzyć własny sprawdzający się wzorzec z usuwania filmu. Nie obiecywać exactly-once u dostawcy e-mail.",
+      "verification": "Luka wynika z kolejności commit→best effort enqueue; źródłowy dowód wymaga testu crash na pełnej DB.",
+      "acceptance": [
+        "Zabić proces po COMMIT publikacji zwykłego filmu bez premiereAt, przed fan-out: restart dostarcza zamiar i ogłoszenie do własnego odbiornika.",
+        "Retry publikacji, retry dispatchu i premiera nie tworzą drugiego biznesowego zamiaru; rollback publikacji nie wysyła ogłoszenia. Awaria dostawcy pozostawia jawny stan ponowienia."
+      ],
+      "recommended_order": 25,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K24",
+      "stage": "E4",
+      "title": "Odwołanie powiązane z tożsamością decyzji",
+      "refs": [
+        "R25"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K03",
+        "K05",
+        "K06"
+      ],
+      "effort": "M",
+      "risk": "Średnie: moderacja i historia zdarzeń.",
+      "gate": "Przed szerszą moderacją/kanałami",
+      "modules": "Moderacja kanału/komentarza, appeal resolution, repo bieżącej decyzji/stanu, audyt i migracje wersji. lib/modules/channel/application/moderation-appeals.use-cases.ts i channel-moderation.use-cases.ts.",
+      "change": "Sprawdzać ID/wersję bieżącej decyzji w tej samej operacji co cofnięcie, zamiast samej wartości SUSPENDED/REMOVED. Stare A nie może odwrócić nowego B po cyklu stanów. Zachować legalne odwołanie od aktualnej decyzji.",
+      "verification": "Dowód komponentowy pokazuje także sekwencyjny błąd ABA; do potwierdzenia w pełnym HTTP/Prisma i przy współbieżności.",
+      "acceptance": [
+        "Dla kanału SUSPENDED→ACTIVE→SUSPENDED i komentarza REMOVED→VISIBLE→REMOVED uznanie odwołania A nie cofa decyzji B.",
+        "Odwołanie od aktualnej A bez B działa; dwie kolejności i równoczesne decyzje/replay mają spójną historię, cudza rola/odwołanie odmawia bez skutku."
+      ],
+      "recommended_order": 19,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K25",
+      "stage": "E4",
+      "title": "Limit playlist odporny na współbieżność",
+      "refs": [
+        "R26"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K03",
+        "K06"
+      ],
+      "effort": "S",
+      "risk": "Średnie: blokady kanału i retry transakcji.",
+      "gate": "Przed otwarciem limitowanych kanałów",
+      "modules": "Tworzenie/usuwanie playlist, repo kanału/playlist; limit 100 i protokół blokady/licznika. lib/modules/playlists/application/playlist-manage.use-cases.ts; domain/playlist-rules.ts.",
+      "change": "Egzekwować COUNT/INSERT pod wspólną blokadą per kanał albo równoważnym licznikiem/izolacją z retry. Oprzeć się na istniejącym wzorcu advisory lock uploadu, bez globalnej serializacji całej platformy.",
+      "verification": "Dwa realne połączenia SQL dały 101 playlist; realne API i wszystkie role wymagają potwierdzenia.",
+      "acceptance": [
+        "Z 99 playlist dwa równoległe żądania przez odrębne procesy kończą z najwyżej 100; jedno ma legalny sukces, drugie kontrolowaną odmowę limitu.",
+        "Usunięcie zwalnia miejsce; retry nie tworzy duplikatu ani nie psuje audytu. Inny kanał nie jest niepotrzebnie blokowany, cudzy zasób jest odrzucony."
+      ],
+      "recommended_order": 20,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K26",
+      "stage": "E4",
+      "title": "Usunięcie konta a własność i publiczny profil kanału",
+      "refs": [
+        "R33"
+      ],
+      "kind": "NAPRAWA CYKLU DANYCH",
+      "dependencies": [
+        "K05",
+        "K19",
+        "K24"
+      ],
+      "effort": "L",
+      "risk": "Wysokie: własność, retencja i nieodwracalne usuwanie.",
+      "gate": "Przed otwarciem kont twórców/usuwaniem ich kont",
+      "modules": "Account cleanup, Creator/Channel/ChannelMember, publiczny header/DTO, kolejka usuwania mediów i retencja audytu. lib/modules/users/application/account-deletion-cleanup.use-case.ts; lib/modules/channel/infrastructure/creator-content.service.ts.",
+      "change": "Najpierw decyzja transfer/ukrycie/anonimizacja/usunięcie. Następnie spójnie zmienić publiczny stan i utrwalić pozostały cleanup; uwzględnić wiele kanałów, innych członków i ochronę main. Nie uznawać automatycznie wszystkich filmów za dane do skasowania. Wykonanie historycznej korekty dopiero po read-only wykazie i zgodzie.",
+      "verification": "Komponentowy cleanup konta zostawia ACTIVE kanał i stare publicContactEmail/bio. Nie jest to dowód prawnego obowiązku usunięcia każdej treści.",
+      "acceptance": [
+        "Po pełnym usunięciu syntetycznego właściciela publiczny profil i kontakt odpowiadają zatwierdzonej polityce, również przez cache; stary e-mail nie pozostaje przypadkiem publiczny.",
+        "Transfer, kilku członków/kanałów, main, retry i crash nie odbierają cudzej własności ani nie usuwają aktywnych mediów innych kanałów. Audyt i retencja mają zgodne jawne wyniki."
+      ],
+      "recommended_order": 21,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K27",
+      "stage": "E4",
+      "title": "Kompletność eksportu danych i wersja kontraktu",
+      "refs": [
+        "R16"
+      ],
+      "kind": "UZUPEŁNIENIE FUNKCJONALNE",
+      "dependencies": [
+        "K05",
+        "K11",
+        "K26"
+      ],
+      "effort": "M",
+      "risk": "Średnie: pominięcie kategorii lub eksport cudzych danych.",
+      "gate": "Przed otwarciem odpowiednich modeli kont/kanałów",
+      "modules": "Privacy export, kategorie CYKL-DANYCH.csv, kanały/członkostwa/patronAppSetting, nowe wkłady uprawnień z K11. app/api/user/export/route.ts; lib/modules/users/application/export-own-data.use-case.ts.",
+      "change": "Wersjonować zakres i objąć wszystkie aktywne kategorie danych osoby. Nie mieszać kompletności z optymalizacją ogromnych eksportów K37. Gdy płatności są wyłączone, K11 może być warunkowo poza tym profilem; ich późniejsze włączenie wymaga ponownego testu eksportu.",
+      "verification": "Potwierdzono brak kategorii w komponencie; nie stwierdzono wycieku cudzych danych. Wymagany pełny profil HTTP/DB.",
+      "acceptance": [
+        "Osoba z kontem, rolami w kilku kanałach i aktywnymi danymi patrona otrzymuje każdą zadeklarowaną kategorię z wersją kontraktu; brak danych jest jawny, nie pominięty przypadkiem.",
+        "Cudze dane, sekrety i prywatne pola wewnętrzne nie trafiają do eksportu. Cofnięta sesja i cudze ID odmawiają, legalny ponowny eksport działa; K37 nadal otwarte dla dużych zbiorów."
+      ],
+      "recommended_order": 28,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K28",
+      "stage": "E4",
+      "title": "Polityka cofania sesji WWW i krytyczne operacje",
+      "refs": [
+        "R24"
+      ],
+      "kind": "DECYZJA, POTEM ZMIANA JEŚLI POTRZEBNA",
+      "dependencies": [
+        "K05",
+        "K08"
+      ],
+      "effort": "M",
+      "risk": "Średnie: obciążenie DB, dostępność sesji i zgodność biblioteki.",
+      "gate": "Przed profilem o wymaganym szybkim cofnięciu dostępu",
+      "modules": "Better Auth cookie cache, fresh lookup, kontekst sesji i autoryzacja wrażliwych tras/actions. lib/auth/server.ts, lib/auth/config.ts; lib/api/auth.ts i lib/api/studio-session.ts.",
+      "change": "Uzgodnić czas cofnięcia per operacja. Jeśli 60 s cache jest niedopuszczalne, stosować selective fresh/epokę/wyłączenie cache według pomiaru. Jeśli akceptowalne, zapisać ryzyko, test granicy i komunikat polityki. Ponowne delete w DB nie unieważnia podpisanego cache.",
+      "verification": "Rzeczywiste HTTP biblioteki na pamięci potwierdziło cache i odmowę fresh/po TTL; aplikacja z Prisma i hookami pozostaje niezweryfikowana.",
+      "acceptance": [
+        "Dwa rzeczywiste klienty: logout/revoke-other/zmiana hasła i roli, replay starego cookie na prywatnym odczycie i zapisie. Przed/po ustalonym progu wynik dokładnie odpowiada polityce.",
+        "Legalna aktywna sesja działa; odwołana nie wykonuje skutków na wymagającym świeżości wejściu. Awaria DB/cache ma jawny wynik i nie rozszerza ustalonego okna po cichu."
+      ],
+      "recommended_order": 26,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K29",
+      "stage": "E4",
+      "title": "Polityka cofania HLS obejmująca token i cache",
+      "refs": [
+        "R07"
+      ],
+      "kind": "DECYZJA I WARUNKOWE OGRANICZENIE RYZYKA",
+      "dependencies": [
+        "K05",
+        "K10",
+        "K11",
+        "K19",
+        "K28"
+      ],
+      "effort": "M",
+      "risk": "Wysokie: cache, koszty brzegu i ciągłość odtwarzania.",
+      "gate": "Przed płatnym/chronionym profilem zgodnie z wybraną polityką",
+      "modules": "Playback plan/signer, HLS Worker, TTL i cache klienta/brzegu, purge/epoka oraz zdarzenia refund/unpublish/block/delete. lib/modules/playback/application/playback.service.ts i public-playback-plan.ts; lib/modules/access/application/check-video-access.use-case.ts.",
+      "change": "Określić osobno nowe tokeny, już wydane tokeny i już pobrane bajty. Dla obecnych 30 min protected/6 h public zdecydować akceptację albo krótszy TTL/epokę/unieważnianie. Mierzyć koszt i dostępność. Nie obiecywać DRM ani cofnięcia kopii pobranej przez użytkownika. Przy płatnościach OFF zależność K11 dotyczy dopiero profilu płatnego.",
+      "verification": "Symulowany zegar i komponenty potwierdziły ważny stary token mimo odmowy nowego planu; realnego logout/refundu i edge purge nie wykonano.",
+      "acceptance": [
+        "Logout, unpublish, refund, blokada kanału i delete: dla zimnego/ciepłego cache sprawdzić stary i nowy token oraz manifest/segmenty; odcięcie następuje w zatwierdzonym czasie, bez wycieku metadanych.",
+        "Wygaśnięty/zmieniony token i obca wersja odmawiają; legalne wznowienie działa. Brak połączenia z origin/revocation ma wynik zgodny z polityką, koszty i nieodwracalność już pobranych danych są jawne."
+      ],
+      "recommended_order": 27,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K30",
+      "stage": "E5",
+      "title": "Funkcjonalny monitoring własnego filmu",
+      "refs": [
+        "R18"
+      ],
+      "kind": "UZUPEŁNIENIE NIEZAWODNOŚCI",
+      "dependencies": [
+        "K06",
+        "K17",
+        "K19",
+        "K20"
+      ],
+      "effort": "M",
+      "risk": "Średnie: fałszywe alarmy, ruch i ujawnienie tokenów.",
+      "gate": "Przed publiczną i płatną obsługą",
+      "modules": "Public health, diagnostyczny token DB/Redis, watchdog, HLS probe, encoder heartbeat/queue, QoE i logowanie. app/api/health/route.ts; lib/modules/health/application/check-health.use-case.ts; lib/modules/admin-overview/infrastructure/probes.ts.",
+      "change": "Rozdzielić liveness/readiness i tani canary: własny manifest, segment i faktyczny postęp odtwarzania. Ustalić świeżość QoE/kolejek, progi i routing. Nie usuwać działających DB/Redis/heartbeat checks; chronić tokeny i ograniczyć koszt próbkowania.",
+      "verification": "Komponenty potwierdzają status-only publicznych probe i pozytywne kontrole głębszych; brak pełnej ścieżki wykrycia/odbioru.",
+      "acceptance": [
+        "Osobne awarie DB, brak segmentu, zatrzymany encoder i nieświeże QoE dają właściwy stan/sygnał w zadanym czasie; sam HTTP 200 nie wystarcza do zaliczenia filmu.",
+        "Zdrowa kontrola dekoduje własny film i nie alarmuje; sygnał trafia do własnego odbiornika, logi nie zawierają tokenów, ruch nie przekracza budżetu canary."
+      ],
+      "recommended_order": 30,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K31",
+      "stage": "E5",
+      "title": "Trwałe ponowienie powiadomienia recovery watchdog",
+      "refs": [
+        "R36"
+      ],
+      "kind": "NAPRAWA",
+      "dependencies": [
+        "K03",
+        "K30"
+      ],
+      "effort": "M",
+      "risk": "Średnie: zgodność stanu incydentu i dostarczenia.",
+      "gate": "Przed poleganiem na zamknięciu incydentu przez watchdog",
+      "modules": "Watchdog Worker.fetch, D1 incident/delivery state, sendMail, limity dzienne i timeouty. workers/pp-watchdog/worker.mjs.",
+      "change": "Oddzielić zmierzony healthy/down od trwałego stanu doręczenia zdarzenia z ID incydentu. Zachować pending recovery po non-2xx/limicie; bounded retry, timeout i idempotencja. Nie nazywać acceptance dostawcy dowodem odbioru w skrzynce.",
+      "verification": "Recovery network throw już jest ponawiane; błąd dotyczy false z HTTP non-2xx/limitu po wcześniejszym DOWN. Zachować działające kontrole DOWN.",
+      "acceptance": [
+        "Po zaakceptowanym DOWN zdrowa kontrola + recovery HTTP 503 lub osiągnięty limit pozostawiają pending; po powrocie dostawcy/limitu recovery zostaje wysłane i odnotowane.",
+        "Network throw recovery, początkowy DOWN 503, restart i równoległe uruchomienia nie gubią zdarzenia ani nie zalewają wiadomościami. Próba w D1 sandbox/własnym mail sink, bez rzeczywistych adresatów."
+      ],
+      "recommended_order": 31,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K32",
+      "stage": "E5",
+      "title": "Odtworzenie całego produktu wyłącznie z kopii poza hostem",
+      "refs": [
+        "R12"
+      ],
+      "kind": "WERYFIKACJA I UZUPEŁNIENIE OCHRONY DANYCH",
+      "dependencies": [
+        "K03",
+        "K11",
+        "K12",
+        "K19",
+        "K26",
+        "K27"
+      ],
+      "effort": "L",
+      "risk": "Wysokie: kompletność odzysku, tajemnice, retencja i koszty.",
+      "gate": "Przed płatną/publiczną obsługą danych nieodtwarzalnych",
+      "modules": "backup.sh, restore-test.sh, verify-restored-database.ts, runbook, role/migracje DB, klucze/konfiguracja, własne R2 originals/HLS/thumbs i uzgodnienie płatności.",
+      "change": "Najpierw inwentarz i zatwierdzone RPO/RTO per zasób. Zaplanować spójną kopię nieodtwarzalnych oryginałów i konfiguracji; HLS może być odtwarzany, jeśli mieści się w RTO. Zweryfikować rozdział klucza i kopii bez publikowania sekretów. Kolejne podkroki: specyfikacja, kopia syntetyczna, izolowany offsite-only drill, próba awarii. Zewnętrzne zasoby/budżet i operacje produkcyjne wymagają późniejszej odrębnej zgody.",
+      "verification": "Lokalny raw SQL restore wybranych danych działał; polityki chmury/role/media/Prisma/offsite i rzeczywiste RPO/RTO nie są dowiedzione. Dla profilu bez płatności K11/K12 nie są warunkiem próby, ale po ich włączeniu wymagany ponowny drill uzgodnienia.",
+      "acceptance": [
+        "Przy założonej utracie pierwotnego hosta odzyskać na czystych własnych zasobach konto, kanał, uprawnienia i odtwarzalny film z samej kopii offsite oraz niezależnie dostępnego klucza. Zweryfikować role, schemat/historię Prisma i spójność DB/storage.",
+        "Zmierzony czas i utrata danych mieszczą się w zatwierdzonych RTO/RPO. Brak klucza, uszkodzona kopia lub brak oryginału dają jawną odmowę/niekompletność, nie SUCCESS.",
+        "Po cofnięciu snapshotu test-mode płatności uzgadniają późniejsze zdarzenia bez ponownego obciążania i fałszywej utraty praw; kolejki i sesje po restore mają opisaną bezpieczną politykę."
+      ],
+      "recommended_order": 35,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K33",
+      "stage": "E5",
+      "title": "Minimum kontroli rzeczywistych kosztów i retencji",
+      "refs": [
+        "R06"
+      ],
+      "kind": "OGRANICZENIE RYZYKA I POMIAR",
+      "dependencies": [
+        "K05",
+        "K13",
+        "K19",
+        "K30"
+      ],
+      "effort": "M",
+      "risk": "Średnie: niezamierzone odcięcie oglądania lub kosztowny inventory.",
+      "gate": "Minimum przed otwarciem; pełny model przed 10 tys. widzów",
+      "modules": "Quota aktywnych originals, storage inventory/cleanup, metryki encodera, Worker/R2/cache/egress i budżety usług.",
+      "change": "Oddzielić limit produktu od kosztu: fizyczne bytes originals/HLS/starych wersji, pending purge, żądania, CPU kodowania i oglądanie. Przed ruchem ustalić budżet, alarm i sposób ograniczenia wydatków; potem uzgodnić model z pomiarem/cennikiem/fakturą. Nie kasować aktywnych danych jako automatycznej reakcji budżetowej.",
+      "verification": "Obecny model jest warunkowy, nie dowodzi rachunku. 15 twórców to przybliżenie kilkunastu, 10000 to widzowie jednocześni, nie request/s.",
+      "acceptance": [
+        "Fixture aktywny/stary oryginał, HLS i nieudany cleanup są rozliczone w oddzielnych metrykach; nieudane usunięcie nie obniża fikcyjnie fizycznego storage.",
+        "Kontrolowany próg uruchamia własny alarm i zatwierdzoną reakcję bez utraty aktywnych plików; model pokazuje osobno koszt widza/godziny i twórcy/uploadu oraz margines przy 10000 widzów. Nie ma deklaracji zgodności z fakturą bez rzeczywistego uzgodnienia."
+      ],
+      "recommended_order": 32,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K34",
+      "stage": "E5",
+      "title": "Fokus dialogu również podczas busy",
+      "refs": [
+        "R35"
+      ],
+      "kind": "NAPRAWA UX",
+      "dependencies": [
+        "K03"
+      ],
+      "effort": "S",
+      "risk": "Niskie/średnie: Escape, fokus po zamknięciu i izolacja tła.",
+      "gate": "Przed publicznymi krytycznymi zadaniami klawiaturą",
+      "modules": "ConfirmDialog, wspólny prymityw modalny, busy/inert/focus restore i użycia usuwania playlist. app/components/studio/ConfirmDialog.tsx; components/ui/dialog.tsx.",
+      "change": "Dodać bezpieczny cel fokusu przy zerze aktywnych przycisków i izolację tła. Ustalić Escape/cancel w trakcie operacji oraz ogłaszanie busy. Zachować zamrożony wygląd/intro/logo/zoom; nie zastępować całości UI bez potrzeby.",
+      "verification": "Rzeczywisty Chromium i komponent dowiodły wejścia Tab/Enter w tło; backend był syntetyczny, to nie obejście autoryzacji.",
+      "acceptance": [
+        "Przed busy i podczas dowolnie długiego busy Tab/Shift+Tab pozostają w dialogu, Enter nie uruchamia tła. Screen reader otrzymuje nazwę i stan oczekiwania.",
+        "Sukces, błąd/retry, Escape według polityki i usunięty opener przywracają poprawny fokus; inne dialogi i legalna klawiatura nadal działają w docelowych przeglądarkach."
+      ],
+      "recommended_order": 29,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K35",
+      "stage": "E5",
+      "title": "Mały zestaw pełnych podróży i granic odmowy",
+      "refs": [
+        "R08"
+      ],
+      "kind": "WERYFIKACJA INTEGRACYJNA I E2E",
+      "dependencies": [
+        "K06",
+        "K07",
+        "K10",
+        "K20",
+        "K30",
+        "K34"
+      ],
+      "effort": "L",
+      "risk": "Średnie: flaky testy lub pozorny sukces przez nadmiar atrap.",
+      "gate": "Obowiązkowy odbiór każdego aktywowanego profilu",
+      "modules": "tests/e2e, Playwright, integracje HTTP/Prisma/storage/FFmpeg/workera, fixture i komendy quality.",
+      "change": "Rozwijać od jednego krótkiego własnego filmu do macierzy: login→upload/resume→encode→publish→play→replace/delete; odmowy cudzej roli/kanału i awarie. Osobne profile płatności OFF/ON oraz twórców OFF/ON. To pakiet kolejnych małych scenariuszy, nie jednorazowy wielki PR. Testy każdej naprawy powstają już od K03; nie czekają na koniec K35.",
+      "verification": "Komponenty/Map i liczba testów nie dowodzą pełnych granic. Profile ON wymagają odpowiednich pakietów: płatności K11/K12/K28/K29, prywatność K26/K27, resume K22, moderacja K24; pominięcie nie oznacza PASS.",
+      "acceptance": [
+        "Rzeczywisty browser/API/DB/encoder/storage odtwarza manifest i segmenty, wykazuje postęp klatek/czasu własnego filmu, a późniejsza wymiana/usunięcie ma zgodne skutki. Brak segmentu lub zła odpowiedź musi zepsuć wynik.",
+        "Dwie osoby/kanały: cudze odczyty i mutacje odmawiają bez skutku, legalna kontrola własnego zasobu działa. Crash/retry w krytycznej granicy nie gubi/nie dubluje efektu.",
+        "Profil płatny używa tylko provider test-mode, podpisanego webhooka, replay/refundu/sporu i sprawdza sumę oraz realny dostęp do filmu. Raport exact SHA/digest rozlicza executed/failed/skipped/blocked, fixture sprzątnięte."
+      ],
+      "recommended_order": 34,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K36",
+      "stage": "E6",
+      "title": "Pełne zadania dostępności i świadoma decyzja o zoom",
+      "refs": [
+        "R20"
+      ],
+      "kind": "WERYFIKACJA I DECYZJA PRODUKTOWA",
+      "dependencies": [
+        "K05",
+        "K34",
+        "K35"
+      ],
+      "effort": "M",
+      "risk": "Średnie produktowo: konflikt z zamrożoną decyzją wizualną.",
+      "gate": "Krytyczne zadania przed otwarciem; szeroki UX później",
+      "modules": "ZADANIA-UZYTKOWNIKA/WCAG-POKRYCIE, rzeczywisty routing/player/formularze, viewport/ZoomLock, katalogi językowe.",
+      "change": "Sprawdzić klawiaturę, screen reader, mobile/touch, zoom/reflow, reduced motion i błędy podczas rzeczywistych zadań. Zoom/intro/logo są świadomą zamrożoną decyzją właściciela: pokazać dowód wpływu i warianty, nie zmieniać samodzielnie. Krytyczne bariery muszą mieć naprawę lub jawną decyzję właściciela przed otwarciem danego profilu. Szersze badanie języków z użytkownikami/native speakers zaplanować osobno.",
+      "verification": "Brak pełnego produktu/SR/WCAG; statyczne klucze i pozytywne testy komponentów nie są certyfikacją. R35 jest osobnym potwierdzonym błędem.",
+      "acceptance": [
+        "Widz i twórca kończą login, odtwarzanie, upload i obsługę błędu w zadeklarowanych przeglądarkach z klawiaturą/SR; kryteria zoom/reflow mają konkretne obserwacje i decyzję, nie ogólne PASS.",
+        "Docelowe języki nie gubią informacji o pieniądzach/błędach/akcji. Brak zweryfikowanej wersji językowej jest jawny; zmiana zamrożonego wyglądu/zoom wymaga oddzielnej decyzji właściciela."
+      ],
+      "recommended_order": 36,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K37",
+      "stage": "E6",
+      "title": "Eksport dużej historii w ograniczonym budżecie zasobów",
+      "refs": [
+        "R16"
+      ],
+      "kind": "OPTYMALIZACJA WARUNKOWA",
+      "dependencies": [
+        "K27",
+        "K33"
+      ],
+      "effort": "M",
+      "risk": "Średnie: paginacja, retry i ochrona pliku eksportu.",
+      "gate": "Przed przekroczeniem zmierzonego bezpiecznego rozmiaru",
+      "modules": "Privacy export queries, zadanie DurableJob, paginacja/streaming, własne storage i wygasające pobranie. lib/modules/users/application/export-own-data.use-case.ts.",
+      "change": "Zachowując kompletność K27, ograniczyć pamięć przez paginację/streaming albo małe zadanie async; zaprojektować spójność snapshotu, TTL, retry, odwołanie pobrania i purge. Mała beta może mieć udowodniony limit bezpiecznego zbioru; wtedy R16 nie jest zamknięte w zakresie skali.",
+      "verification": "Materializowanie historii jest potwierdzone, wyczerpanie pamięci produkcji nie. Najpierw uzgodnić i zmierzyć próg.",
+      "acceptance": [
+        "Duża własna historia o uzgodnionym rozmiarze eksportuje wszystkie kategorie/rekordy bez pominięć i duplikatów, przy zmierzonym limicie RAM/czasu. Zmiany w trakcie eksportu mają wynik zgodny z polityką snapshotu.",
+        "Cudzy/wygasły/cofnięty link odmawia, retry nie produkuje nieograniczonych kopii, po TTL plik jest sprzątnięty także po chwilowej awarii magazynu."
+      ],
+      "recommended_order": 37,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K38",
+      "stage": "E6",
+      "title": "Poprawny generator i odbiór pomiaru obciążenia",
+      "refs": [
+        "R11"
+      ],
+      "kind": "NAPRAWA NARZĘDZIA POMIARU",
+      "dependencies": [
+        "K03",
+        "K33",
+        "K35"
+      ],
+      "effort": "M",
+      "risk": "Średnie: błędne wnioski o skali i pozostałości testowych sesji.",
+      "gate": "Przed każdym nowym twierdzeniem o pojemności",
+      "modules": "scripts/loadtest — summarizer/k6/workloads/cleanup; aktualny HMAC sesji i katalog testowych mediów.",
+      "change": "Wymagać poprawnych statusów i treści, nie tylko rate/p95/5xx. Sprzątać własne sesje po aktualnej tożsamości, ograniczyć blast radius fixture. Wersjonować mix open/play/refresh/heartbeat, cold/warm cache, ramp i soak oraz SHA/digest. Osobno mierzyć zapotrzebowanie na encoder.",
+      "verification": "Rzeczywisty summarizer przyjął syntetyczne unexpected statuses; stary test gości nie dowodzi aktualnych 10000 widzów.",
+      "acceptance": [
+        "Szybkie 500 nieoczekiwanych statusów przy dobrym p95/rate oraz 200 z niewłaściwą treścią muszą odrzucić raport; legalne odpowiedzi przechodzą. Powolne/5xx nadal odmawiają.",
+        "Przerwane i poprawne wykonanie usuwa tylko oznaczone fixture/sesje HMAC; kontrolna cudza sesja pozostaje. Raport jasno przelicza widzów na żądania/profil czasu i nie myli request/s z jednoczesnymi osobami."
+      ],
+      "recommended_order": 38,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K39",
+      "stage": "E6",
+      "title": "Pomiar celu 10 tys. widzów i plan wąskich usprawnień",
+      "refs": [
+        "R10"
+      ],
+      "kind": "WERYFIKACJA POJEMNOŚCI — ZMIANY WARUNKOWE",
+      "dependencies": [
+        "K17",
+        "K19",
+        "K30",
+        "K33",
+        "K38"
+      ],
+      "effort": "L",
+      "risk": "Wysokie dla kosztu i dostępności testu; architektura zmieniana dopiero po dowodzie.",
+      "gate": "Przed deklaracją/otwarciem na 10000 peak viewers",
+      "modules": "Topologia app/admin/DB/Redis/encoder/Worker/R2, max_connections/pule, claimNext, kolejki i metryki SLO.",
+      "change": "Najpierw zatwierdzone workload/SLO i koszt na własnych reprezentatywnych zasobach. Zmierzyć ograniczenia; jeżeli cel nie jest spełniony, zaproponować osobne małe pakiety tylko dla wskazanych wąskich gardeł (np. pula/indeks/cache/separacja procesu). Nie wdrażać spekulacyjnych replik i nie zwiększać encoderów przed K17. Ten pakiet nie upoważnia do nieograniczonego skalowania ani refaktoru.",
+      "verification": "Jedno RUNNING i wspólny host są świadomą ochroną małej maszyny. Nie dowiedziono ani niezdolności, ani zdolności do 10000. PeerTube nie ma lokalnego benchmarku porównawczego.",
+      "acceptance": [
+        "Aktualny artefakt: reprezentatywny katalog i mix kilkunastu twórców/10000 jednoczesnych widzów w ramp/soak, cold/warm cache; p95/p99/błędy/start/rebuffer/połączenia DB/kolejka i koszt spełniają uprzednio wpisane liczby SLO.",
+        "Utrata procesu/encoder load i powrót nie łamią integralności ani zatwierdzonej degradacji. Jeśli cel nieosiągnięty: wynik FAIL z pomiarem granicy, bez deklaracji skalowalności; osobny plan usprawnień do zatwierdzenia."
+      ],
+      "recommended_order": 39,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    },
+    {
+      "id": "K40",
+      "stage": "E7",
+      "title": "Przyszły marketplace: tożsamość refundu i uzgodnienie operatora",
+      "refs": [
+        "R17"
+      ],
+      "kind": "WARUNKOWE — PRZYSZŁA FUNKCJA",
+      "dependencies": [
+        "K11",
+        "K12",
+        "K35"
+      ],
+      "effort": "L",
+      "risk": "Wysokie finansowo; aktywacja poza bieżącym zakresem.",
+      "gate": "Tylko przed przyszłą sprzedażą marketplace",
+      "modules": "Marketplace refund-order, adapter operatora, klucz idempotencji, trwały stan operacji, ledger/reconciliation. lib/modules/sales/application/sales.use-cases.ts; lib/platform-gates.ts.",
+      "change": "Przed integracją sprzedaży wielu twórców: trwałe ID operacji, provider idempotency key i obsługa nieznanego wyniku po timeout, rozdzielenie żądania i zaksięgowania. Zaprojektować kontrakt i test adaptera; pełne zamówienia/payout/podatki/spory marketplace wymagają osobnego zakresu. Nie włączać marketplace w ramach napraw obecnych pakietów.",
+      "verification": "Dowód na fake providerze bez deduplikacji i sztucznie otwartej bramce sprzedaży, nie rzeczywisty podwójny refund dzisiejszej platformy.",
+      "acceptance": [
+        "Dwa równoległe refundy tego samego zamówienia oraz timeout po przyjęciu przez test-mode operatora skutkują jednym rozliczonym refudem; retry/uzgodnienie rozstrzyga unknown bez drugiej operacji.",
+        "Odmowa operatora, częściowy refund, replay webhooka i crash po akceptacji mają trwałe uzgodnione stany. Marketplace pozostaje wyłączony do odrębnego odbioru całej funkcji; obecne tips/passes nie zależą od K40."
+      ],
+      "recommended_order": 40,
+      "status": "PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO"
+    }
+  ],
+  "note": "Planning index only; acceptance tests describe future requirements, not executed application results. No application changes, deployment or merge."
+}

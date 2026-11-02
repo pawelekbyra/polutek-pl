@@ -2,10 +2,15 @@
 
 Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-audit`** w repozytorium `pawelekbyra/polutek-pl`. Właściciel 1 listopada 2026 polecił zachowywać tutaj także poprzednie badanie i dopisywać kolejne wnioski na tej samej gałęzi.
 
+**Aktualny priorytet właściciela: ROADMAPA NAPRAW v1 do zatwierdzenia.** Audyt jest tymczasowo wstrzymany; dalsze badanie pozostaje w planie. Nie rozpoczęto napraw ani wdrożeń.
+
 ## Zacznij tutaj
 
 | Materiał | Znaczenie |
 |---|---|
+| [ROADMAPA NAPRAW v1](ROADMAPA-NAPRAW.md) | Wszystkie R01–R37, 40 pakietów w 8 etapach, testy, zależności i braki dowodowe |
+| [Kolejność napraw — CSV](KOLEJNOSC-NAPRAW.csv) | 37/37 ustaleń, klasyfikacja, priorytety, zależności i status planu |
+| [Plan wdrożenia i dalszej weryfikacji](PLAN-WDROZENIA-NAPRAW.md) | Proponowany harmonogram do zatwierdzenia; obecnie bez rozpoczęcia prac |
 | [Co już wiemy — dla właściciela](program-audytu/WNIOSEK-DLA-WLASCICIELA.md) | Mocne fundamenty, odtworzone błędy i granice gotowości bez oceny w punktach |
 | [Plan domknięcia wszystkich obszarów](program-audytu/DOMKNIECIE-DOWODOW.csv) | Brakujące dowody i warunki odbioru dla D01–D18; żaden obszar nie jest zamknięty |
 | [Bramki gotowości](program-audytu/BRAMKI-GOTOWOSCI.csv) | Osobne wymagania dla lokalnego runtime, bety, sprzedaży, otwartej platformy i 10000 widzów |
