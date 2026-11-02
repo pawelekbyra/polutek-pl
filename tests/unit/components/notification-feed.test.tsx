@@ -1,7 +1,9 @@
 /** @vitest-environment jsdom */
 import { act, renderHook, waitFor, cleanup } from '@testing-library/react';
+import { createElement, startTransition, Suspense } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useNotificationFeed } from '@/app/components/notifications/useNotificationFeed';
+import { NOTIFICATIONS_CHANGED_EVENT } from '@/app/components/notifications/notification-events';
 
 const item = { id: 'n1', type: 'comment_like', title: 'Like', body: '', kind: 'COMMENT', href: '/watch/first#comment-c1', read: false, createdAt: '2026-10-28T10:00:00.000Z' };
 const page = (extra = {}) => ({ items: [item], nextCursor: null, unreadCount: 1, snapshotAt: '2026-10-28T11:00:00.000Z', ...extra });
@@ -10,6 +12,26 @@ const deferred = () => { let resolve!: (value: Response) => void; const promise 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('notification feed consistency', () => {
+  it('keeps background refresh in the committed language while a different render is suspended', async () => {
+    const blocked = new Promise<void>(() => {});
+    const fetch = vi.fn((url: string) => Promise.resolve(url.includes('unread-count') ? json({ unreadCount: 1 }) : json(page())));
+    vi.stubGlobal('fetch', fetch);
+    const { result, rerender } = renderHook(({ language }) => {
+      const feed = useNotificationFeed(true, language);
+      if (language === 'en') throw blocked;
+      return feed;
+    }, {
+      initialProps: { language: 'pl' },
+      wrapper: ({ children }) => createElement(Suspense, { fallback: null }, children),
+    });
+    await waitFor(() => expect(result.current.status).toBe('idle'));
+    fetch.mockClear();
+    act(() => startTransition(() => rerender({ language: 'en' })));
+    await act(async () => { window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED_EVENT)); });
+    await waitFor(() => expect(fetch.mock.calls.some(([url]) => url.includes('language='))).toBe(true));
+    expect(fetch.mock.calls.filter(([url]) => url.includes('language=')).every(([url]) => url.includes('language=pl'))).toBe(true);
+  });
+
   it('ignores an older count that arrives after the full page', async () => {
     const count = deferred();
     vi.stubGlobal('fetch', vi.fn((url: string) => url.includes('unread-count') ? count.promise : Promise.resolve(json(page()))));
