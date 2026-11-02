@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jdg_income_entry_list" model="ir.ui.view">
+        <field name="name">jdg.income.entry.list</field>
+        <field name="model">jdg.income.entry</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="is_test" decoration-info="state == 'draft'" default_order="income_date desc, id desc">
+                <field name="name"/>
+                <field name="income_date"/>
+                <field name="kind" widget="badge" decoration-success="kind == 'sale'"
+                       decoration-danger="kind in ('refund', 'dispute_lost')" decoration-warning="kind == 'adjustment'" decoration-info="kind == 'donation'"/>
+                <field name="doc_ref" optional="show"/>
+                <field name="description"/>
+                <field name="currency_id" optional="show"/>
+                <field name="amount" string="Kwota (waluta)"/>
+                <field name="fx_info" optional="show"/>
+                <field name="pln_amount" sum="Razem PLN"/>
+                <field name="rate_pct" optional="show"/>
+                <field name="country_code" optional="hide"/>
+                <field name="is_test" widget="boolean" string="Test" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'"/>
+                <field name="pln_currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_income_entry_form" model="ir.ui.view">
+        <field name="name">jdg.income.entry.form</field>
+        <field name="model">jdg.income.entry</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_post" type="object" string="Zaksięguj" class="btn-primary" invisible="state != 'draft'"
+                            help="Nadaje numer kolejny i zapisuje wpis na stałe."/>
+                    <button name="action_open_correction" type="object" string="Korekta lub zwrot"
+                            invisible="state != 'posted'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="alert" invisible="state != 'posted'">
+                        Zapisane na stałe. Błąd? Dodaj wpis korygujący (przycisk „Korekta lub zwrot”).
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not is_test">
+                        Wpis testowy: nie wchodzi do żadnych obliczeń podatkowych ani eksportów.
+                    </div>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <field name="is_foreign" invisible="1"/>
+                    <field name="pln_currency_id" invisible="1"/>
+                    <group>
+                        <group string="Przychód">
+                            <field name="income_date" readonly="state == 'posted'"/>
+                            <field name="kind" readonly="state == 'posted'"/>
+                            <field name="description" readonly="state == 'posted'" placeholder="Np. Dostęp 30 dni, Napiwek"/>
+                            <field name="doc_ref" readonly="state == 'posted'"/>
+                            <field name="income_category" readonly="state == 'posted'"/>
+                            <field name="is_test" readonly="state == 'posted'"/>
+                        </group>
+                        <group string="Kwota i kurs">
+                            <field name="currency_id" readonly="state == 'posted'"/>
+                            <field name="amount" readonly="state == 'posted'"/>
+                            <field name="fx_rate" readonly="state == 'posted'" invisible="not is_foreign"/>
+                            <field name="fx_info" invisible="not is_foreign"/>
+                            <field name="pln_amount"/>
+                            <field name="rate_pct" readonly="state == 'posted'"/>
+                            <field name="fee_amount" readonly="state == 'posted'"/>
+                            <field name="fee_pln" invisible="not fee_amount"/>
+                        </group>
+                    </group>
+                    <group string="Dodatkowe">
+                        <group>
+                            <field name="buyer_type"/>
+                            <field name="country_code"/>
+                            <field name="donor_key" invisible="kind != 'donation'"/>
+                            <field name="source" readonly="state == 'posted'"/>
+                            <field name="external_ref" readonly="state == 'posted'" groups="l10n_pl_jdg_ryczalt.group_jdg_manager"/>
+                        </group>
+                        <group>
+                            <field name="reverses_id" invisible="not reverses_id"/>
+                            <field name="posted_on" invisible="state != 'posted'"/>
+                            <field name="posted_by" invisible="state != 'posted'"/>
+                            <field name="seq_no" invisible="state != 'posted'"/>
+                        </group>
+                    </group>
+                    <group><field name="note" placeholder="Uwagi (można edytować także po zaksięgowaniu)"/></group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_jdg_income_entry_search" model="ir.ui.view">
+        <field name="name">jdg.income.entry.search</field>
+        <field name="model">jdg.income.entry</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="doc_ref"/>
+                <filter name="today" string="Dziś" domain="[('income_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="this_month" string="Ten miesiąc"
+                        domain="[('income_date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <separator/>
+                <filter name="live" string="Prawdziwe (bez testowych)" domain="[('is_test', '=', False)]"/>
+                <filter name="test" string="Testowe" domain="[('is_test', '=', True)]"/>
+                <separator/>
+                <filter name="posted" string="Zaksięgowane" domain="[('state', '=', 'posted')]"/>
+                <filter name="draft" string="Robocze" domain="[('state', '=', 'draft')]"/>
+                <filter name="refunds" string="Zwroty i korekty" domain="[('kind', 'in', ['refund', 'dispute_lost', 'adjustment'])]"/>
+                <filter name="donations" string="Darowizny" domain="[('kind', '=', 'donation')]"/>
+                <filter name="foreign" string="Waluty obce" domain="[('currency_id.name', '!=', 'PLN')]"/>
+                <group>
+                    <filter name="group_month" string="Miesiąc" context="{'group_by': 'income_date:month'}"/>
+                    <filter name="group_kind" string="Rodzaj" context="{'group_by': 'kind'}"/>
+                    <filter name="group_currency" string="Waluta" context="{'group_by': 'currency_id'}"/>
+                    <filter name="group_category" string="Kategoria" context="{'group_by': 'income_category'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_jdg_income_entry_pivot" model="ir.ui.view">
+        <field name="name">jdg.income.entry.pivot</field>
+        <field name="model">jdg.income.entry</field>
+        <field name="arch" type="xml">
+            <pivot string="Przychody">
+                <field name="income_date" type="row" interval="month"/>
+                <field name="currency_id" type="col"/>
+                <field name="pln_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_jdg_income_entry_graph" model="ir.ui.view">
+        <field name="name">jdg.income.entry.graph</field>
+        <field name="model">jdg.income.entry</field>
+        <field name="arch" type="xml">
+            <graph string="Przychody w PLN" type="bar">
+                <field name="income_date" interval="month"/>
+                <field name="pln_amount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_jdg_income_entry" model="ir.actions.act_window">
+        <field name="name">Ewidencja przychodów</field>
+        <field name="res_model">jdg.income.entry</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="context">{'search_default_group_month': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Jeszcze nic nie wpisałeś</p>
+            <p>Dodaj przychód ręcznie (data, opis, kwota, waluta) i kliknij „Zaksięguj”. Zaksięgowany wpis jest zapisany
+                na stałe; błąd poprawiasz wpisem korygującym.</p>
+        </field>
+    </record>
+</odoo>

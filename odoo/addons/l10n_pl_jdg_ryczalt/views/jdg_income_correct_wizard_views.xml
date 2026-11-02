@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jdg_income_correct_wizard_form" model="ir.ui.view">
+        <field name="name">jdg.income.correct.wizard.form</field>
+        <field name="model">jdg.income.correct.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <div class="alert alert-info" role="alert">
+                    Zaksięgowanego wpisu nie edytujemy. Ta akcja dopisze NOWY, ujemny wpis, który pomniejszy przychód
+                    w miesiącu zwrotu.
+                </div>
+                <group>
+                    <field name="entry_id"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="kind"/>
+                    <field name="amount"/>
+                    <field name="income_date"/>
+                    <field name="reason" placeholder="Np. zwrot na prośbę klienta, pomyłka w kwocie"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Dopisz korektę" class="btn-primary"/>
+                    <button special="cancel" string="Anuluj"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

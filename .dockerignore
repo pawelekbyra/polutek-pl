@@ -11,3 +11,4 @@ coverage
 *.zip
 tsconfig*.tsbuildinfo
 apps/admin/.next
+odoo

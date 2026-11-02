@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jdg_fx_rate_list" model="ir.ui.view">
+        <field name="name">jdg.fx.rate.list</field>
+        <field name="model">jdg.fx.rate</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="rate_date"/>
+                <field name="currency_id"/>
+                <field name="mid"/>
+                <field name="table_no"/>
+                <field name="source"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_fx_rate_form" model="ir.ui.view">
+        <field name="name">jdg.fx.rate.form</field>
+        <field name="model">jdg.fx.rate</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Kurs średni NBP, tabela A. Do przeliczenia przychodu używamy tabeli z ostatniego dnia roboczego
+                        PRZED dniem przychodu. Kursów nie edytujemy (to dowód): popraw błąd nowym wpisem.
+                        Automatyczne pobieranie z api.nbp.pl dojdzie w iteracji 2.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="currency_id"/>
+                            <field name="rate_date"/>
+                            <field name="mid"/>
+                        </group>
+                        <group>
+                            <field name="table_no" placeholder="np. 001/A/NBP/2027"/>
+                            <field name="source"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_jdg_fx_rate" model="ir.actions.act_window">
+        <field name="name">Kursy NBP</field>
+        <field name="res_model">jdg.fx.rate</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Brak kursów</p>
+            <p>Dodaj kurs średni NBP (tabela A) dla waluty obcej. Wpis w EUR lub USD użyje kursu z ostatniej tabeli sprzed dnia przychodu.</p>
+        </field>
+    </record>
+</odoo>

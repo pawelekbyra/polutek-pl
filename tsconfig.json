@@ -41,6 +41,7 @@
   ],
   "exclude": [
     "node_modules",
-    "apps/admin/.next"
+    "apps/admin/.next",
+    "odoo"
   ]
 }
