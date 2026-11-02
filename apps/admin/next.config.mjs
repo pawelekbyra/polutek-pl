@@ -25,8 +25,8 @@ const nextConfig = {
   reactStrictMode: true,
   // The panel never renders remote images (thumbnails come in phase 4), so the optimizer stays off.
   images: { unoptimized: true },
-  // Types are checked in CI (tsconfig.typecheck.json covers apps/admin), not during the image build.
-  typescript: { ignoreBuildErrors: true },
+  // Keep type validation in image builds as well as the separate local CI checks.
+  typescript: { ignoreBuildErrors: false },
   // Static security headers; the CSP with a per-request nonce is set in proxy.ts.
   async headers() {
     return [
