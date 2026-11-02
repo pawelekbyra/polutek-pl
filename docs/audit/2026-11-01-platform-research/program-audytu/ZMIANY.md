@@ -272,3 +272,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Strażnik obu krytycznych plików i 13 regresji na prawdziwym Vitest; właściwe krytyczne 36/36.
 - Dokładny czysty SHA: unit 4702/0/3 pominięte, PG75/75, typy/lint/hotspots/escapes/architektura/env i oba pełne buildy PASS. Zbiorczy exit0; `release_ready=false`, pełne HLS/obraz/wiązanie artefaktu/K05 nadal otwarte.
 - Dowody `evidence/h1-gates-2026-11-02`; starsze czerwone wyniki i Windows/batch17 zachowane. H1 około75%, całość5–10%; 0 zamkniętych pakietów/ustaleń, bez nowych ASVS PASS, merge/deploy/produkcji/kosztów.
+
+## 2 listopada 2026 — H1: rzeczywiste obrazy i wykonane HDR
+
+- Trzy małe commity, finalny `9824bb0abba7ed3672935845dedc328ae94ad8ff` na PR #2065. Obrazy public/admin/worker rzeczywiście ładują poprawione Next/sharp/vips/rsvg; formaty15 prób, HTTP 9/9 i worker 3/3 z HDR.
+- Początkowy HDR2/3 z jednym skip zachowany jako brak dowodu/strict exit 1; poprawiono fixture VUI i niezależne sprawdzenie tagów, kod enkodera bez zmian.
+- Końcowo unit 4703/0/2skip,PG 75/75,krytyczne 36/36,typy/lint/pozostałe wykonane bramki i oba buildy PASS. Źródła i lokalne imageID zapisane, lecz protokół publikacji nie jest jeszcze wymuszony; migrator/collector i pełny stos/K05 otwarte.
+- H1 ~80%,całość 5–10%;0 zamkniętych ustaleń/pakietów. Kanoniczne pokrycia, Windows i stare dowody zachowane. Bez ASVS PASS,merge/deploy/produkcji/kosztów.

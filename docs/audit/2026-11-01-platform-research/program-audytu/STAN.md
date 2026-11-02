@@ -1,16 +1,16 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 2 listopada 2026. **H1 trwa; wszystkie wykonane lokalne bramki tej partii PASS na dokładnym SHA. Hotspots/strict-escapes naprawione bez osłabiania reguł; krytyczne zestawy mają strażnika wykonania. Pełna integracja, artefakt wydania i decyzje K05 pozostają otwarte.**
+Aktualizacja: 2 listopada 2026. **H1 trwa: trzy rzeczywiste lokalne obrazy mają poprawione biblioteki; optimizer HTTP 9/9 i worker encode 3/3 z HDR bez pominięć. Wszystkie wykonane końcowe lokalne kontrole PASS. Protokół wydania i pełny stos nadal otwarte.**
 
-**Szacunkowo H1 75% / 25% pozostało; cała roadmapa 5–10% / 90–95% pozostało.** To orientacyjny nakład pracy, nie wskaźnik bezpieczeństwa. Zero całych pakietów i ustaleń formalnie zamkniętych.
+**Szacunkowo H1 80% / 20% pozostało; cała roadmapa 5–10% / 90–95% pozostało.** 95% dotyczy pozostałej pracy całej misji. To szacunek nakładu, nie ocena bezpieczeństwa. Zero całych pakietów/ustaleń formalnie zamkniętych.
 
-Roadmapa v1 jest zatwierdzona. Dalszy pogłębiony audyt jest czasowo odłożony na rzecz H1, nie anulowany. Nie zaczynać ogólnego V3+ ani nowych kwalifikacji ASVS zamiast H1.
+Roadmapa v1 zatwierdzona; pogłębiony audyt czasowo odłożony na rzecz H1, nie anulowany. Nie rozpoczynać ogólnego V3+ ani nowych kwalifikacji ASVS zamiast H1.
 
-Czytaj [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md) i [h1-status.json](evidence/h1-status.json). Kod `fix/polutek-h1-acceptance`, `03115f0fefe47baf91622b3272b966344981beaf`; [szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065), baza main c80ef652. Po zapisie checkout gałęzi audytu. Bez merge/deploy/produkcji/kosztów.
+Czytaj [POSTEP](../POSTEP-NAPRAW.md) i [h1-status](evidence/h1-status.json). Kod `fix/polutek-h1-acceptance`, `9824bb0abba7ed3672935845dedc328ae94ad8ff`; [szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065), baza c80ef652. Po zapisie checkout audytu. Brak merge/deploy/produkcji/kosztów.
 
-**Wynik:** unit 4702 PASS/0 FAIL/3 pominięte, PG 75/75, krytyczne 36/36, regresje strażnika 13/13; typy aplikacji/całego repo, lint (0 błędów/100 ostrzeżeń), hotspots, strict-escapes, architektura/env i oba pełne buildy exit 0. Zbiorczy proces exit 0, ale `release_ready=false`. Trzy pominięcia pozostają jawne. Dowody: [h1-gates-2026-11-02](evidence/h1-gates-2026-11-02/source-map.json); wcześniejsze wyniki zachowane.
+Dokładny SHA: unit 4703/0/2 pominięte (EmailEventLockService), PG 75/75, krytyczne 36/36, typy/lint/hotspots/escapes/architektura/env i oba lokalne buildy PASS. Docker public/admin/worker zbudowane i sprawdzone: Next 16.4.1, sharp 0.35.5, vips 8.18.7, rsvg 2.63.2 — 15 prób formatów i 9 HTTP, worker 3/3. `release_ready=false`. [Atrybucja i granice](evidence/h1-images-2026-11-02/source-map.json). Początkowy 835348d7: HDR pominięty/strict wrapper exit 1; finalny fixture potwierdza HDR niezależnym ffprobe. Starych wyników nie nadpisano.
 
-Prawdziwe Prisma/81 migracji/restore 11/HTTP 4 z wcześniejszych partii zachowane; odpowiednie źródła bez zmian, PG ponownie 75/75. Pełne HLS/Redis/storage, Docker/artefakt K02/K06 i dziewięć decyzji K05 nadal otwarte. Środowisko działa; właściciel kontynuuje w tej sesji. Nie ponawiać npm audit/audit-high po wcześniejszej odmowie automatycznej kontroli.
+Lokalne ID obrazów i rekordy wejść nie są wymuszonym protokołem publikacji. Bazowy tag pozostaje zmienny; migrator/collector nie zbudowane. Pełne API/kolejka/HLS/Redis/storage i K05/DP01–DP09 otwarte. Środowisko działa; bez nowej publikacji konfiguracji i bez ponawiania npm audit po wcześniejszej odmowie. Poprzednie Prisma 81 / restore 11 / HTTP 4 i Windows/batch17 zachowane.
 
 ## Odrębny przebieg na Windows — zachowane wyniki z 2 listopada 2026
 
@@ -199,12 +199,10 @@ Poniższe opisy odnoszą się do datowanych wcześniejszych prób; nie cofają o
 
 ## Następne działanie — pozostałe warunki H1
 
-1. Czytać POSTEP/h1-status, sprawdzić zdalny SHA i wybrać czystą gałąź kodu PR #2065 oraz Node 22. Nie uruchamiać aplikacji z historycznej gałęzi audytu i nie przełączać checkoutu w trakcie testów/buildów.
-2. Dokończyć K02/K06: własny lokalny obraz Docker z poprawionymi bibliotekami natywnymi; wymuszony związek dokładnych źródeł/wejść/wyników/digest we wszystkich wspieranych ścieżkach wydania. Oba configi zachowują ignoreBuildErrors=false. Nie osłabiać zielonych bramek ani strażnika krytycznych testów.
-3. Uzupełnić K01/K03: pełny własny API/worker/HLS/Redis/storage, trzy pominięte przypadki i brakujące integracje. Ustalić konkretne wymagania lokalnej próby przed przygotowaniem fixture; nie używać produkcji ani płatnych usług.
-4. K05: aktywny profil i DP01–DP09 nadal wymagają decyzji właściciela. Rejestr R01–R37 i ASVS bez zamknięć/PASS. Nie scalać/nie wdrażać i nie ponawiać npm audit.
-
-Po każdej turze podać szacunkowy postęp H1 i całości: bieżąco około 75% oraz 5–10%. Środowisko działa i nie wymaga nowej publikacji do kontynuacji. Dalszy pogłębiony audyt pozostaje w planie; nie został zakończony ani zastąpiony liczbą zielonych testów.
+1. Czytać POSTEP/h1-status, potwierdzić remote SHA, wybrać czystą gałąź kodu PR #2065 i Node 22. Nie uruchamiać aplikacji z gałęzi audytu i nie przełączać checkoutu w trakcie testów/buildów.
+2. K06: wdrożyć i negatywnie przetestować obowiązkowy protokół źródła/wejścia/wyniki/tożsamość obrazu we wszystkich wspieranych ścieżkach publikacji/aktywacji (lokalne istniejące tagi, GHCR/manual workflow, panel, pozostałe obrazy). Lokalne labels/raport nie są zamknięciem. Uzupełnić migrator/collector i zakres wejść/baz. Nie omijać niewykonanych bramek, w tym dawnej odmowy npm audit.
+3. K01/K03: pełny własny API/kolejka/worker/HLS/Redis/storage i dwa przypadki e-mail DB. HDR syntetyczny w workerze 3/3 jest potwierdzony, nie powtarzać diagnozy utraty tagów bez nowej zmiany; nadal brak oceny wizualnej rzeczywistego HDR.
+4. K05: aktywny profil i DP01–DP09 wymagają osobnych rozstrzygnięć właściciela. Bez merge/deploy/produkcji/kosztów/ogólnej kwalifikacji ASVS. Orientacyjnie H1 ~80%, całość 5–10%; po turze aktualizować i wyjaśniać zakres szacunku.
 
 ## Zapis po każdej partii H1
 

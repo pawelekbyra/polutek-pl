@@ -1,0 +1,481 @@
+{
+  "numTotalTestSuites": 4,
+  "numPassedTestSuites": 4,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 36,
+  "numPassedTests": 36,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1793653500743,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal"
+          ],
+          "fullName": "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal Scenario A: qualifying one-time support creates one payment-linked active grant and resolves own-HLS playback only after access/readiness",
+          "status": "passed",
+          "title": "Scenario A: qualifying one-time support creates one payment-linked active grant and resolves own-HLS playback only after access/readiness",
+          "duration": 26.33303499999988,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal"
+          ],
+          "fullName": "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal Scenario B/C/D: payments and patron signals never change access — guests are asked to sign in with zero playback side effects, signed-in users play regardless of grants",
+          "status": "passed",
+          "title": "Scenario B/C/D: payments and patron signals never change access — guests are asked to sign in with zero playback side effects, signed-in users play regardless of grants",
+          "duration": 3.8791519999999764,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal"
+          ],
+          "fullName": "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal Scenario E: non-ready and missing primary assets block playback without URLs, sessions, views, legacy fallback, or storage key leakage",
+          "status": "passed",
+          "title": "Scenario E: non-ready and missing primary assets block playback without URLs, sessions, views, legacy fallback, or storage key leakage",
+          "duration": 2.4810070000000906,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal"
+          ],
+          "fullName": "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal Scenario F/G/H/I/J/K: refund/dispute ordering is idempotent, same-dispute restore is narrow, terminal/manual states do not revive, and grants are isolated",
+          "status": "passed",
+          "title": "Scenario F/G/H/I/J/K: refund/dispute ordering is idempotent, same-dispute restore is narrow, terminal/manual states do not revive, and grants are isolated",
+          "duration": 3.5328279999998813,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal"
+          ],
+          "fullName": "LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal Playback-state UI contract evidence stays source-based because no existing non-production Playwright route exercises these private states",
+          "status": "passed",
+          "title": "Playback-state UI contract evidence stays source-based because no existing non-production Playwright route exercises these private states",
+          "duration": 1.8570960000001833,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793653502727,
+      "endTime": 1793653502764.8572,
+      "status": "passed",
+      "message": "",
+      "name": "/workspace/polutek-pl/tests/integration/launch-candidate-critical-path.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result refuses missing target before constructing a client",
+          "status": "passed",
+          "title": "refuses missing target before constructing a client",
+          "duration": 470.410203,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result refuses missing permission before constructing a client",
+          "status": "passed",
+          "title": "refuses missing permission before constructing a client",
+          "duration": 425.930482,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result refuses target equals source before constructing a client",
+          "status": "passed",
+          "title": "refuses target equals source before constructing a client",
+          "duration": 432.78465500000016,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result completes checks, closes the client and exits successfully without leaking credentials",
+          "status": "passed",
+          "title": "completes checks, closes the client and exits successfully without leaking credentials",
+          "duration": 440.9777060000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails and closes the client for connection-failure",
+          "status": "passed",
+          "title": "fails and closes the client for connection-failure",
+          "duration": 440.5422209999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails and closes the client for migration-read-failure",
+          "status": "passed",
+          "title": "fails and closes the client for migration-read-failure",
+          "duration": 559.384485,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails and closes the client for migration-unfinished",
+          "status": "passed",
+          "title": "fails and closes the client for migration-unfinished",
+          "duration": 474.68919400000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails and closes the client for migration-failed",
+          "status": "passed",
+          "title": "fails and closes the client for migration-failed",
+          "duration": 401.8104059999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result allows a rolled-back attempt alongside completed migration history",
+          "status": "passed",
+          "title": "allows a rolled-back attempt alongside completed migration history",
+          "duration": 401.08937200000037,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory User count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory User count cannot be checked without a manifest",
+          "duration": 403.18683300000066,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory Creator count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory Creator count cannot be checked without a manifest",
+          "duration": 397.36168200000066,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory Video count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory Video count cannot be checked without a manifest",
+          "duration": 401.79337699999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory VideoAsset count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory VideoAsset count cannot be checked without a manifest",
+          "duration": 415.5101710000008,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory Payment count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory Payment count cannot be checked without a manifest",
+          "duration": 423.4745409999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory UserPaymentTotal count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory UserPaymentTotal count cannot be checked without a manifest",
+          "duration": 402.28321099999994,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory PatronGrant count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory PatronGrant count cannot be checked without a manifest",
+          "duration": 406.82960600000024,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory StripeEvent count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory StripeEvent count cannot be checked without a manifest",
+          "duration": 403.84366600000067,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory Comment count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory Comment count cannot be checked without a manifest",
+          "duration": 405.6440510000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory CommentReport count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory CommentReport count cannot be checked without a manifest",
+          "duration": 390.25706100000025,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory Subscription count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory Subscription count cannot be checked without a manifest",
+          "duration": 400.3027000000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when mandatory AuditLog count cannot be checked without a manifest",
+          "status": "passed",
+          "title": "fails when mandatory AuditLog count cannot be checked without a manifest",
+          "duration": 401.02963499999896,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails when a manifest count has no observed value",
+          "status": "passed",
+          "title": "fails when a manifest count has no observed value",
+          "duration": 399.560931,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails for manifest unknown aggregate",
+          "status": "passed",
+          "title": "fails for manifest unknown aggregate",
+          "duration": 389.86437300000034,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails for manifest different count",
+          "status": "passed",
+          "title": "fails for manifest different count",
+          "duration": 400.16414500000064,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails for manifest missing counts object",
+          "status": "passed",
+          "title": "fails for manifest missing counts object",
+          "duration": 422.2862760000007,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails for manifest array instead of counts object",
+          "status": "passed",
+          "title": "fails for manifest array instead of counts object",
+          "duration": 418.8628399999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result fails for manifest invalid JSON",
+          "status": "passed",
+          "title": "fails for manifest invalid JSON",
+          "duration": 414.6521699999994,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result accepts a matching manifest",
+          "status": "passed",
+          "title": "accepts a matching manifest",
+          "duration": 398.6462620000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result rejects orphan-user instead of reporting success",
+          "status": "passed",
+          "title": "rejects orphan-user instead of reporting success",
+          "duration": 406.7951499999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result rejects orphan-payment instead of reporting success",
+          "status": "passed",
+          "title": "rejects orphan-payment instead of reporting success",
+          "duration": 407.2613169999986,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "restore verification CLI result"
+          ],
+          "fullName": "restore verification CLI result rejects orphan-video instead of reporting success",
+          "status": "passed",
+          "title": "rejects orphan-video instead of reporting success",
+          "duration": 405.22266599999966,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793653501006,
+      "endTime": 1793653513969.2227,
+      "status": "passed",
+      "message": "",
+      "name": "/workspace/polutek-pl/tests/unit/operations/verify-restored-database-process.test.ts"
+    }
+  ]
+}

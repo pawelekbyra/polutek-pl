@@ -1,50 +1,52 @@
 # Postęp realizacji roadmapy — H1
 
-Stan: 2 listopada 2026. **Wszystkie wykonane lokalne kontrole tej partii przeszły na dokładnym commicie. Usunięto cztery przekroczenia rozmiaru komponentów i pięć dopasowań strict-escapes; każdy wymagany zestaw testów krytycznych musi teraz faktycznie się wykonać. H1 pozostaje otwarte.**
+Stan: 2 listopada 2026. **Zbudowano i sprawdzono prawdziwe obrazy strony, panelu i workera. Biblioteki poprawione; optymalizator HTTP 9/9 i worker HLS 3/3 bez pominięć. Wszystkie wykonane końcowe kontrole lokalne PASS. H1 i protokół wydania nadal otwarte.**
 
-**Szacunkowo H1: 75% gotowe / 25% pozostało. Cała roadmapa: 5–10% / 90–95% pozostało.** To orientacyjny nakład pracy, nie wynik liczby testów ani gwarancja bezpieczeństwa. Żadnego z 40 całych pakietów i żadnego R01–R37 formalnie nie zamknięto.
+**Szacunkowo H1 80% / 20% pozostało; cała roadmapa 5–10% / 90–95% pozostało.** Wartość 90–95% oznacza pozostałą pracę całej misji. To orientacyjny nakład pracy, nie gwarancja bezpieczeństwa ani gotowość wdrożenia. Zero całych pakietów i ustaleń formalnie zamkniętych.
 
-**Kod:** [`fix/polutek-h1-acceptance`](https://github.com/pawelekbyra/polutek-pl/tree/fix/polutek-h1-acceptance), `03115f0fefe47baf91622b3272b966344981beaf`. [Szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065), baza `c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3`. **Punkt przejęcia:** [STAN.md](program-audytu/STAN.md), [h1-status.json](program-audytu/evidence/h1-status.json), gałąź dokumentacyjna `docs/polutek-platform-audit`. Bez merge/deploy.
+Kod [`fix/polutek-h1-acceptance`](https://github.com/pawelekbyra/polutek-pl/tree/fix/polutek-h1-acceptance), `9824bb0abba7ed3672935845dedc328ae94ad8ff`; [szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065), baza c80ef652. Handoff: [STAN](program-audytu/STAN.md), [h1-status](program-audytu/evidence/h1-status.json). Dokumentacja i dowody na `docs/polutek-platform-audit`. Bez merge/deploy.
 
-## Wyniki na dokładnym SHA
+## Końcowa weryfikacja na dokładnym SHA
 
 | Kontrola | Wynik | Granica dowodu |
 |---|---|---|
-| Unit/komponenty | **4702 PASS / 0 FAIL / 3 pominięte**, 542 pliki | Syntetyczne wartości CI i własna lokalna DB; nie pełne integracje providerów. |
-| PostgreSQL | **75/75 PASS**, 12 plików | Prawdziwa lokalna DB, blokady/transakcje; Stripe i e-mail są atrapami. |
-| Polecenie krytyczne | **36/36 PASS**, oba wymagane pliki | Strażnik kontroluje istnienie, wynik procesu i wykonanie testów w każdym pliku. Nie zastępuje pełnego E2E. |
-| Regresje strażnika | **13/13 PASS** w pełnym unit | Rzeczywisty Vitest na małych kontrolnych projektach; wykrywa brak, katalog, wykluczenie, pustkę, skip/todo, fail i niedozwolone filtry. |
-| Typy aplikacji / całego repo | **PASS / PASS** | Brak nowych diagnostyk, tsconfig i kontrola typów zachowane. |
-| Pełny lint | **0 błędów / 100 ostrzeżeń**, exit 0 | Istniejące ostrzeżenia pozostają. |
-| Hotspots / strict-escapes | **PASS / PASS** | Budżety, historyczne wyjątki i baseline bez zmian; stare dopuszczone obejścia typów nadal istnieją. |
-| Architektura / env produkcyjne | **PASS / PASS** | Env syntetyczny, nie sprawdzenie konfiguracji aktywnej produkcji. |
-| Build strony / panelu | **PASS / PASS** | Pełne lokalne standalone, kontrola typów włączona. Obraz Docker/digest wydania pozostaje do sprawdzenia. |
+| Unit / komponenty | **4703 PASS, 0 FAIL, 2 pominięte**, 542 pliki | Pozostały dwa EmailEventLockService. Wartości CI są syntetyczne; pełnych integracji nie dowiedziono. |
+| PostgreSQL | **75/75 PASS**, 12 plików | Własna prawdziwa DB; Stripe/e-mail to atrapy. |
+| Testy krytyczne | **36/36 PASS** | Oba wymagane zestawy faktycznie wykonane; regresje strażnika nadal w pełnym unit. |
+| Typy, lint, architektura, hotspots, strict-escapes, env | **PASS** | Lint 0 błędów / 100 ostrzeżeń. Env syntetyczny; budżety/baseline niezmienione. |
+| Lokalne buildy strony i panelu | **PASS / PASS** | Kontrola typów włączona. |
+| Docker: public / admin / worker | **3 zbudowane i uruchomione** | Archiwum konkretnego commita, bez lokalnych env; własne lokalne obrazy, bez publikacji do registry. |
+| Faktycznie ładowane biblioteki | **Next 16.4.1, sharp 0.35.5, libvips 8.18.7, librsvg 2.63.2** we wszystkich trzech | 15 prób formatów/dekodowania, proces UID1000, brak sekretu CA w runtime, sieć wyłączona. |
+| HTTP obrazów | **9/9 PASS** | Strona: prawdziwy optimizer logo i odmowy niedozwolonych hostów/SVG/parametru; panel: health procesu i 503 bez CF Access. Bez DB i portów publicznych. |
+| Kodowanie we własnym obrazie workera | **3/3 PASS, zero pominięć** | FFmpeg 8.0.1, krajobraz/audio, pion 60 fps i syntetyczny HLG→SDR BT.709. Bez API/kolejki/storage; nie ocena wizualna prawdziwego HDR. |
 
-Zbiorczy proces tej partii zakończył się exit 0; `release_ready=false`. Pominięcia zwykłego zestawu: dwa przypadki EmailEventLockService i jeden HLG/HDR zależny od lokalnego FFmpeg. Żaden test krytyczny nie jest pominięty. Nie wykonano `npm audit`/audit-high: wcześniejsza automatyczna kontrola odrzuciła wysłanie grafu zależności i nie obchodzono tej odmowy.
+Cały wykonany proces lokalny exit 0; `release_ready=false`. **Nie wymuszono jeszcze protokołu zatwierdzania obrazów we wszystkich ścieżkach publikacji/aktywacji.**
 
-## Zmiany — pięć osobnych commitów
+## Zmiany tej partii
 
-| Commit | Zakres |
-|---|---|
-| `a3874d49` | Publikacja/widoczność korzysta z istniejącego typowanego `ctx.db.writeTransaction`. Dwie regresje sprawdzają pracę wewnątrz już otwartej transakcji. Dwa zbędne `as any` usunięte z odczytów widoczności. Piąte dopasowanie było komentarzem odtwarzacza — doprecyzowano jego tekst. |
-| `3417985b` | Kontrakt props strony kanału w `channel/home-props.ts`; bez zmiany renderowania lub historii nawigacji. |
-| `89e8e31d` | Typy i pomocnicze funkcje przeglądarki kasy w `pass-checkout-state.ts`; dotychczasowe eksporty zachowane. Żądania, płatności, efekty i kolejność ich wykonania pozostają w komponencie. |
-| `466d75f1` | Studio: osobne widoki statusu przesyłania, informacji o pliku i podglądu filmu. JSX, klasy i napisy zachowane; żądania, polling, anulowanie i ponawianie pozostają u dotychczasowego właściciela stanu. |
-| `03115f0f` | Polecenie krytyczne wymaga obu plików i niepustych, wyłącznie zaliczonych testów. Regresje uruchamiają rzeczywisty Vitest. Konwencja zapisana w CLAUDE i LOCAL-CI. |
+- `835348d7`: opcjonalny certyfikat proxy przez sekret BuildKit w obu Dockerfile, TLS nadal weryfikowany, CA niekopiowany do warstw. Zadeklarowano już używany publiczny argument `NEXT_PUBLIC_BLOB_PUBLIC_HOST`.
+- `a2708f00`: klip HLG jawnie zapisuje VUI; niezależny ffprobe potwierdza tagi przed wywołaniem kodu enkodera. Wadliwy fixture przestaje ukrywać test przez `skip`.
+- `9824bb0a`: instrukcja bezpiecznej obsługi CA w lokalnych buildach.
 
-Rozmiary według tego samego strażnika: ChannelHome 428, PassCheckoutSheet 450, StudioUploadWizard 434, StudioVideoEditor 416 linii. Nie zwiększono limitów, nie dodano wyjątków, nie zmieniono reguł/baseline. Lockfile, schema/migracje, verifier restore, oba Next configi i oba tsconfigi identyczne jak w poprzedniej partii. Nie wykonywano nowej kontroli wizualnej w docelowej przeglądarce; zachowanie kasy/nawigacji pokrywają istniejące testy komponentowe i pełny przebieg.
+Początkowy worker na `835348d7` miał wynik 2 PASS/1 pominięty; wrapper prawidłowo zwrócił exit 1. Kontrolne klipy wykazały utratę transfer/primaries przy samych opcjach kodeka, przy zachowaniu ich przez jawne VUI/setparams. Zachowano pierwsze wyniki i zapisane powtórzenie eksperymentu. Po zmianie fixture docelowy worker wykonał 3/3, a zwykły zestaw także wykonał HDR. Kod enkodera nie został zmieniony.
 
-## Co nadal blokuje odbiór H1 i wydanie
+## Identyfikatory i granice artefaktu
 
-1. **K02/K06:** rzeczywisty obraz Docker i biblioteki natywne w nim; wymuszony związek dokładnych źródeł, wejść, testów i digest we wszystkich wspieranych ścieżkach wydania. Same lokalne buildy tego nie dowodzą.
-2. **K01/K03:** pełny własny stos API/worker/HLS/Redis/storage, brakujące testy integracyjne oraz trzy jawne pominięcia; możliwości docelowego FFmpeg/HDR do sprawdzenia. Zewnętrznych providerów nie badano w tej partii.
-3. **K05:** aktywna konfiguracja i dziewięć decyzji [DP01–DP09](https://github.com/pawelekbyra/polutek-pl/blob/03115f0fefe47baf91622b3272b966344981beaf/docs/architecture/product-profile.md) nadal otwarte: m.in. refundy, retencja, świeżość sesji, cofanie dostępu, SLO/RPO/RTO i budżet.
-4. **Cała platforma:** dalsze etapy pieniędzy/uprawnień, pipeline/storage/usuwania i pozostałych R02–R36 nie zostały tą partią naprawione. Brak podstaw do ogłoszenia gotowości platformy do płatności/otwarcia.
+Dokładne lokalne identyfikatory obrazów, tagi, hash archiwum, jawne argumenty budowy, obserwowane bazy i zgodność warstw są w [images-run.json](program-audytu/evidence/h1-images-2026-11-02/final/images-run.json). Każdy runtime był uruchamiany po niezmiennym ID. Te ID są digestami konfiguracji lokalnego Dockera; nie są manifestami opublikowanymi w registry. Lokalne etykiety SHA/hash wejść nadaje helper badawczy, nie stanowią attestation.
+
+Hash wejść obejmuje wymienione pliki, archiwum i jawne argumenty. Bazowy tag Node pozostaje zmienny; jego faktyczne ID/digests i zgodność początkowych warstw zapisano osobno. Nie jest to kompletna deklaracja wszystkich wejść budowy. Migrator i collector nie zostały w tej partii zbudowane. Nie uznawać tego materiału za zamknięte K06.
+
+## Pozostałe warunki
+
+1. **K06:** obowiązkowy związek źródeł/wejść/wymaganych testów i tożsamości obrazu we wszystkich wspieranych ścieżkach: lokalna budowa/istniejące tagi, GHCR/manual/tag workflow, panel, migrator, worker i collector. Próby ujemne mają zatrzymywać publikację/aktywację przy błędnym typie/teście/SHA/digest/zmienionych wejściach. Same etykiety i raport nie wystarczą.
+2. **K01/K03:** pełne własne API/kolejka/worker/HLS/Redis/storage i dwa pozostałe przypadki e-mail DB. Trzy syntetyczne encody nie zastępują tego cyklu.
+3. **K05:** aktywna konfiguracja i DP01–DP09 nadal otwarte. Późniejsze naprawy finansów, uprawnień, pipeline/usuwania i dalszy pogłębiony audyt pozostają w roadmapie.
+4. `npm audit`/audit-high nie ponawiano po wcześniejszej automatycznej odmowie wysłania grafu zależności. Nie ogłaszać tej niewykonanej kontroli jako PASS.
 
 ## Dowody i przejęcie
 
-[Bieżąca atrybucja i commity](program-audytu/evidence/h1-gates-2026-11-02/source-map.json), [dokładny przebieg](program-audytu/evidence/h1-gates-2026-11-02/final/acceptance-run.json). [Poprzednia partia](program-audytu/evidence/h1-quality-2026-11-02/source-map.json) i wszystkie czerwone wyniki zachowane. [Starsza partia cloud](program-audytu/evidence/h1-cloud-2026-11-02/source-map.json): autentyczne Prisma 6.19.3, 81 migracji na PG 17.11, 11 prób restore i 4 próby lokalnego HTTP; nie powtarzano niezmienionych kontroli. To dowody historyczne o opisanym zakresie, nie odzysk całego produktu ani pełne wideo E2E.
+[Bieżąca atrybucja](program-audytu/evidence/h1-images-2026-11-02/source-map.json), [pełny odbiór](program-audytu/evidence/h1-images-2026-11-02/final/acceptance/acceptance-run.json), [worker HDR](program-audytu/evidence/h1-images-2026-11-02/final/worker-ffmpeg-run.json). Starsze dowody i czerwone wyniki zachowane: [poprzednia partia](program-audytu/evidence/h1-gates-2026-11-02/source-map.json), [Prisma/restore/HTTP](program-audytu/evidence/h1-cloud-2026-11-02/source-map.json). Schema, migracje, Next configi, lockfile, oba tsconfigi, guards i kod enkodera bez zmian.
 
-Wznawiać z czystej gałęzi kodu i Node 22.23.4. Helper `program-audytu/tools/run-h1-gates-acceptance.mjs` skopiować poza checkout; przed powtórzeniem wybrać nowy katalog wynikowy i utworzyć go, aby zachować wcześniejsze dowody. Uruchamiać z prywatnym `/workspace/.cloud-setup/h1.env` (0600), zachować własną bazę `polutek_h1_6b21d176e3`; jedno ciężkie polecenie naraz, Vitest maxWorkers 2, PG 1. Nie przełączać gałęzi podczas testów/buildów. Środowisko działa; bez dalszych zmian/publikacji konfiguracji w tej turze.
+W `program-audytu/tools/` zapisano użyte helpery. Skopiować je poza checkout, wybrać czystą gałąź kodu i Node 22.23.4. Przed powtórzeniem zmienić katalogi wyjściowe, by nie nadpisać dowodów; skopiować `h1-image-runtime-probe.cjs` jako `runtime-probe.cjs` do katalogu oczekiwanego przez builder. Builder wymaga dostępnego BuildKit i dostarczonego CA, sam archiwizuje HEAD i odmawia użycia istniejącego katalogu kontekstu. Pełna akceptacja używa prywatnego h1.env (0600) i własnej bazy. Nie przełączać checkoutu w trakcie testów/buildów; jedno ciężkie polecenie naraz. Kontenery prób są usuwane; lokalne obrazy/cache zachowano do następnej partii.
 
-Kanoniczny audyt bez zmian: ASVS 86 częściowych / 254 NIEZBADANE / 5 warunkowych NA / 0 PASS; wejścia 84/202 z 286; wszystkie 18 obszarów otwarte. Zachować wyniki Windows/batch17. Pogłębiony audyt jest czasowo odłożony na rzecz H1, nie anulowany. Po partii aktualizować punkt przejęcia, dowody, CSV i manifest, commit/push i sprawdzić zdalne SHA. Nie scalać, nie wdrażać, nie korzystać z produkcji ani płatnych zasobów bez osobnej zgody właściciela.
+ASVS 86 częściowych/254 NIEZBADANE/5 warunkowych NA/0 PASS; wejścia 84/202 z 286; wszystkie 18 obszarów otwarte. R01–R37 i Windows/batch17 zachowane. Nie zmieniano ani nie publikowano konfiguracji środowiska. Dalszy pogłębiony audyt czasowo odłożony na rzecz H1, nie anulowany. Po partii commit/push obu gałęzi i weryfikacja zdalnych SHA; bez scalenia, wdrożenia, produkcji i kosztów.

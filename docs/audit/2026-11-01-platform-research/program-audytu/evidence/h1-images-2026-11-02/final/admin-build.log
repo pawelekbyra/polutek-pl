@@ -1,0 +1,67 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.admin
+#1 transferring dockerfile: 2.78kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.3s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 165B done
+#5 DONE 0.0s
+
+#6 [deps 1/6] FROM docker.io/library/node:22-bookworm-slim
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 121.51kB 0.1s done
+#7 DONE 0.1s
+
+#8 [admin 7/8] COPY --from=build --chown=node:node /app/apps/admin/scripts/admin-enroll.mjs ./apps/admin/scripts/admin-enroll.mjs
+#8 CACHED
+
+#9 [admin 6/8] COPY --from=build --chown=node:node /app/apps/admin/public ./apps/admin/public
+#9 CACHED
+
+#10 [deps 6/6] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npm ci --no-audit --no-fund --strict-ssl=true
+#10 CACHED
+
+#11 [admin 4/8] COPY --from=build --chown=node:node /app/apps/admin/.next/standalone ./
+#11 CACHED
+
+#12 [build 2/2] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npx prisma generate && npx next build apps/admin
+#12 CACHED
+
+#13 [deps 2/6] RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+#13 CACHED
+
+#14 [deps 5/6] COPY prisma ./prisma
+#14 CACHED
+
+#15 [deps 3/6] WORKDIR /app
+#15 CACHED
+
+#16 [deps 4/6] COPY package.json package-lock.json ./
+#16 CACHED
+
+#17 [build 1/2] COPY . .
+#17 CACHED
+
+#18 [admin 5/8] COPY --from=build --chown=node:node /app/apps/admin/.next/static ./apps/admin/.next/static
+#18 CACHED
+
+#19 [admin 8/8] RUN mkdir -p /app/apps/admin/.next/cache && chown -R node:node /app/apps/admin/.next
+#19 CACHED
+
+#20 exporting to image
+#20 exporting layers done
+#20 writing image sha256:9ab90db431fcbf1de90fa4aa53633cd372cddce27147020dc9d3126a937402bc done
+#20 naming to docker.io/library/polutek-h1-admin:9824bb0abba7 done
+#20 DONE 0.0s

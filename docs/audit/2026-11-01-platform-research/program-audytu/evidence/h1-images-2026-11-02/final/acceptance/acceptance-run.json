@@ -1,0 +1,160 @@
+{
+  "started_at": "2026-11-02T21:05:00.349Z",
+  "node": "v22.23.4",
+  "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+  "branch": "fix/polutek-h1-acceptance",
+  "base_main": "c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3",
+  "clean_start": true,
+  "inputs": {
+    "package.json": "8a1839e40eb93ffdaa98503532bc125b246745cde1b6ffd3b0e5f1ee9c14786a",
+    "package-lock.json": "14bdf3558c2d260ad2d8fd2b02ef9f2228bcd7f9da06cd881ca7a4224e30b343",
+    "prisma/schema.prisma": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+    "next.config.mjs": "3a998d5667677def361186707e1d6799a82f0c49304aeb055b551191ca0c8af7",
+    "apps/admin/next.config.mjs": "f219291301a8c7ff2ff9c9f1412717f0433eadb79809d85d94272b7df0571ea0",
+    "tsconfig.json": "33848d661323b8c9e79a8f56925df5fe28a0615aefb41f9bed4f58036aa7c5f7",
+    "tsconfig.typecheck.json": "49745c693a149227aed27fd19622af4c76caca0d5f6ff2eae735bdcfbf6e4c0c",
+    "vitest.config.ts": "5785542dfed342b5aecd85cf8183bba946ff320d7449f520ef3d9b238a9bd48c",
+    "vitest.postgres.config.ts": "6fd7352ea94c039ad850828481b8c30f9843abd1db0a249fcdd1924765a2eeae",
+    "scripts/test-critical-path.mjs": "c83bdd6d424272d78c5e8276dca8882bbca5b8b7786a89ca94c34cf88a854d8c",
+    "scripts/check-hotspots.ts": "3ff22a4cb41c904b0eccb625de5636850c66fe2fd5c3eb00cabb2c9caeea0455",
+    "scripts/check-strict-escapes.ts": "86c27aebb345adaf7d51e7838827d68277273a547ca9576ac0d6bbe5c9606e7b",
+    "scripts/strict-escapes-baseline.jsonc": "cd2c6e2ac3e6e27f78c8ede59cbb577fbd1256cb3817e100f39903518a3359e3",
+    "deploy/serwerek/Dockerfile": "caff01505baddc200012906007693562e37cf68107bb4648f9902d29b7aab6b3",
+    "deploy/serwerek/Dockerfile.admin": "8192f2806665dc7331c37f4af9c67ea0dcf5786b6155d23f697420e9d24ac501",
+    ".dockerignore": "4990dbeeac4582fa6eee75642e51ec9a6b91a21fdc10c96fdab4d3d14d04ef52"
+  },
+  "environment": "CI workflow synthetic values; owned local H1 DB; development fixtures/auth bypasses disabled; no production provider credentials",
+  "worker_budget": {
+    "vitest": 2,
+    "postgres": 1,
+    "next_workers": 4
+  },
+  "checks": [
+    {
+      "id": "critical-path",
+      "exit": 0,
+      "signal": null,
+      "seconds": 14,
+      "log": "critical-path-final.log",
+      "vitest": {
+        "success": true,
+        "files": 2,
+        "total": 36,
+        "passed": 36,
+        "failed": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "id": "unit",
+      "exit": 0,
+      "signal": null,
+      "seconds": 167,
+      "log": "unit-final.log",
+      "vitest": {
+        "success": true,
+        "files": 542,
+        "total": 4705,
+        "passed": 4703,
+        "failed": 0,
+        "pending": 2,
+        "todo": 0
+      }
+    },
+    {
+      "id": "postgres",
+      "exit": 0,
+      "signal": null,
+      "seconds": 14,
+      "log": "postgres-final.log",
+      "vitest": {
+        "success": true,
+        "files": 12,
+        "total": 75,
+        "passed": 75,
+        "failed": 0,
+        "pending": 0,
+        "todo": 0
+      }
+    },
+    {
+      "id": "architecture",
+      "exit": 0,
+      "signal": null,
+      "seconds": 0,
+      "log": "architecture-final.log"
+    },
+    {
+      "id": "typecheck",
+      "exit": 0,
+      "signal": null,
+      "seconds": 6,
+      "log": "typecheck-final.log"
+    },
+    {
+      "id": "typecheck-all",
+      "exit": 0,
+      "signal": null,
+      "seconds": 7,
+      "log": "typecheck-all-final.log"
+    },
+    {
+      "id": "lint",
+      "exit": 0,
+      "signal": null,
+      "seconds": 32,
+      "log": "lint-final.log"
+    },
+    {
+      "id": "hotspots",
+      "exit": 0,
+      "signal": null,
+      "seconds": 0,
+      "log": "hotspots-final.log"
+    },
+    {
+      "id": "strict-escapes",
+      "exit": 0,
+      "signal": null,
+      "seconds": 0,
+      "log": "strict-escapes-final.log"
+    },
+    {
+      "id": "env-production",
+      "exit": 0,
+      "signal": null,
+      "seconds": 0,
+      "log": "env-production-final.log"
+    },
+    {
+      "id": "public-build",
+      "exit": 0,
+      "signal": null,
+      "seconds": 18,
+      "log": "public-build-final.log"
+    },
+    {
+      "id": "admin-build",
+      "exit": 0,
+      "signal": null,
+      "seconds": 8,
+      "log": "admin-build-final.log"
+    }
+  ],
+  "deliberately_unrun": [
+    {
+      "check": "npm audit / audit-high / local-ci audit gate",
+      "reason": "Prior automatic approval rejected private dependency graph upload; not retried or bypassed."
+    },
+    {
+      "check": "production deployment, merge, paid resources, real Stripe/R2/OAuth",
+      "reason": "Outside authorized H1 local verification scope."
+    }
+  ],
+  "finished_at": "2026-11-02T21:09:28.028Z",
+  "clean_end": true,
+  "changed_paths": "",
+  "all_executed_checks_passed": true,
+  "release_ready": false
+}
