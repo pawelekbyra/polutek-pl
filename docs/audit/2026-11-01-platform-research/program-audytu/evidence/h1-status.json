@@ -1,20 +1,20 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "date": "2026-11-02",
   "scope": "OWNER_APPROVED_H1",
-  "audit_parent_sha": "151eb037bd49e39b35c71e3643221e5ca4a1a4be",
+  "audit_parent_sha": "f17c8161ab59f0169cae370e60b67262a2d265bf",
   "audit_branch": "docs/polutek-platform-audit",
-  "code_candidate_branch": "fix/polutek-h1-foundations",
-  "code_candidate_sha": "f5e061546ef4e309cc69994810ba20a5ffd68a0b",
+  "code_candidate_branch": "fix/polutek-h1-acceptance",
+  "code_candidate_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
   "application_audit_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
-  "repair_base_main_sha": "5f848a9304d19a6d03860444808abbe120b57623",
-  "overall": "PARTIAL_EXTERNAL_ENVIRONMENT_BLOCKER_NOT_RELEASE_READY",
+  "repair_base_main_sha": "c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3",
+  "overall": "H1_LOCAL_PRISMA_POSTGRES_UNIT_READY_REQUIRED_RELEASE_GATES_FAIL",
   "packages": {
-    "K01": "OWNED_EMPTY_POSTGRES_READY_PRISMA_NETWORK_RULE_NOT_APPLIED",
-    "K02": "CANDIDATE_TARGETED_CHECKS_PASS_NORMAL_INSTALL_FULL_QUALITY_IMAGE_PENDING",
-    "K03": "VERIFIER_31_PROCESS_CASES_PASS_CRITICAL_TARGET_FIXED_REAL_DB_FULL_BASELINE_PENDING",
+    "K01": "REAL_CLIENT_81_MIGRATIONS_UNIT_POSTGRES_HTTP_VERIFIED_FULL_HLS_REDIS_PROVIDERS_OPEN",
+    "K02": "PATCHED_INSTALLED_NATIVE_LIBRARIES_UNIT_POSTGRES_ADMIN_BUILD_PASS_PUBLIC_BUILD_IMAGE_PENDING",
+    "K03": "VERIFIER_PROCESS_AND_REAL_RESTORE_PASS_BASELINE_CLASSIFIED_TEST_TYPE_AND_GUARD_DEBT_OPEN",
     "K05": "CODE_PROFILE_DOCUMENTED_9_DECISIONS_AND_ACTIVE_CONFIG_OPEN",
-    "K06": "BUILD_TYPE_GUARD_FIXTURE_PASS_EXACT_RELEASE_ARTIFACT_BINDING_PENDING"
+    "K06": "TYPE_GUARD_REJECTS_REAL_PUBLIC_BUILD_ADMIN_BUILD_PASS_RELEASE_ARTIFACT_BINDING_PENDING"
   },
   "acceptance": {
     "K02_existing_tests": {
@@ -32,17 +32,237 @@
       "fixed_valid_type_accepted": 2
     },
     "critical_command": {
+      "exit": 0,
+      "files": 2,
+      "passed": 36,
+      "failed": 0,
+      "pending": 0,
+      "code_sha": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b"
+    },
+    "real_prisma_cloud": "GENERATED_BY_NORMAL_POSTINSTALL_6.19.3",
+    "fresh_db_migrations": {
+      "applied": 81,
+      "exit": 0,
+      "postgres": "17.11",
+      "schema_smoke": "PASS",
+      "status": "UP_TO_DATE"
+    },
+    "full_quality": "ARCHITECTURE_APP_TYPES_UNIT_RECIPE_COMPONENTS_PASS_LOCALLY_BROADER_REQUIRED_GATES_FAIL",
+    "full_app_builds": {
+      "public_exit": 1,
+      "public_reason": "81 test type diagnostics",
+      "admin_exit": 0,
+      "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe"
+    },
+    "deployed_images": "NOT_BUILT_OR_VERIFIED",
+    "previous_critical_command": {
       "exit": 1,
       "process_tests_passed": 31,
       "integration_file_blocked_before_registration": true
     },
-    "real_prisma_cloud": "NOT_GENERATED",
-    "fresh_db_migrations": "NOT_EXECUTED",
-    "full_quality": "NOT_PASSED",
-    "full_app_builds": "NOT_EXECUTED",
-    "deployed_images": "NOT_VERIFIED"
+    "unit_local": {
+      "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+      "environment": "Node22, owned h1.env; ADMIN_DEV_* off; Redis URL/token variables empty so unit-only memory limiter; CI=true",
+      "exit": 0,
+      "files": 541,
+      "passed": 4686,
+      "failed": 0,
+      "pending": 3,
+      "total": 4689,
+      "supersedes_environment_failures": [
+        "unit-full.json: sample-data mode returned409",
+        "unit-final.json: fake CI Redis URL caused unmocked limiter failure"
+      ],
+      "pending_cases": [
+        {
+          "file": "/workspace/polutek-pl/tests/integration/email-event-idempotency.test.ts",
+          "name": "EmailEventLockService - Real DB Idempotency enforces atomic idempotency via unique constraint",
+          "status": "skipped"
+        },
+        {
+          "file": "/workspace/polutek-pl/tests/integration/email-event-idempotency.test.ts",
+          "name": "EmailEventLockService - Real DB Idempotency allows re-acquiring failed events",
+          "status": "skipped"
+        },
+        {
+          "file": "/workspace/polutek-pl/tests/unit/hls/encode-hls.ffmpeg.test.ts",
+          "name": "encode-hls with real ffmpeg tone-maps an HLG (HDR) source to BT.709 SDR instead of rejecting it",
+          "status": "skipped"
+        }
+      ]
+    },
+    "postgres": {
+      "exit": 0,
+      "files": 12,
+      "passed": 75,
+      "failed": 0,
+      "pending": 0,
+      "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe"
+    },
+    "real_restore": {
+      "exit": 0,
+      "passed": 11,
+      "failed": 0,
+      "code_sha": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b",
+      "verifier_unchanged_in_final_sha": true,
+      "method": "Actual synthetic pg_dump/pg_restore plus read-only-role fault injection; not offsite full-product recovery"
+    },
+    "local_http": {
+      "passed": 4,
+      "failed": 0,
+      "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+      "fixture_cleaned_up": true
+    },
+    "app_typecheck": {
+      "exit": 0,
+      "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe"
+    },
+    "whole_repo_typecheck": {
+      "exit": 2,
+      "diagnostics": 81,
+      "files": 41,
+      "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe"
+    },
+    "other_required_gates": {
+      "lint_exit": 2,
+      "hotspots_exit": 1,
+      "strict_escapes_exit": 1,
+      "env_production_exit": 0
+    }
   },
   "scope_by_commit": [
+    {
+      "commit": "989682ffd1b375214b22f8125e4cc0c28890c900",
+      "parent": "c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3",
+      "subject": "fix(deps): update Next and sharp to patched image runtimes",
+      "changed_files": [
+        "package-lock.json",
+        "package.json"
+      ]
+    },
+    {
+      "commit": "7b2b341bd207a3ee1c3f669ca7b0138c32705719",
+      "parent": "989682ffd1b375214b22f8125e4cc0c28890c900",
+      "subject": "fix(ops): reject incomplete restored-database verification (K03)",
+      "changed_files": [
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/operations/RESTORE-VERIFICATION.md",
+        "scripts/verify-restored-database.ts",
+        "tests/fixtures/restore-verifier-process.mjs",
+        "tests/unit/operations/verify-restored-database-process.test.ts",
+        "tests/unit/operations/verify-restored-database.test.ts"
+      ]
+    },
+    {
+      "commit": "d3483af674ee0a2c2f295964de91d118e8c6fea8",
+      "parent": "7b2b341bd207a3ee1c3f669ca7b0138c32705719",
+      "subject": "docs(product): distinguish Premium, tips and future marketplace (K05)",
+      "changed_files": [
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/architecture/payments-and-tips.md",
+        "docs/architecture/product-profile.md",
+        "docs/operations/STATUS.md"
+      ]
+    },
+    {
+      "commit": "f7ff10b5f1b87b2b58ebeec978065ada9b09c305",
+      "parent": "d3483af674ee0a2c2f295964de91d118e8c6fea8",
+      "subject": "fix(build): keep TypeScript validation enabled in both apps (K06)",
+      "changed_files": [
+        "CLAUDE.md",
+        "apps/admin/next.config.mjs",
+        "docs/operations/LOCAL-CI.md",
+        "next.config.mjs"
+      ]
+    },
+    {
+      "commit": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b",
+      "parent": "f7ff10b5f1b87b2b58ebeec978065ada9b09c305",
+      "subject": "fix(test): select existing critical-path suites (K03)",
+      "changed_files": [
+        "docs/operations/LOCAL-CI.md",
+        "package.json"
+      ]
+    },
+    {
+      "commit": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+      "parent": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b",
+      "subject": "fix(test): preserve historical migration order and live retention window (K03)",
+      "changed_files": [
+        "docs/operations/LOCAL-CI.md",
+        "tests/postgres/analytics-rollups.pg.test.ts",
+        "tests/postgres/db-cleanup-migration.pg.test.ts",
+        "tests/postgres/fixtures/pre-cleanup-seed.sql"
+      ]
+    }
+  ],
+  "canonical_audit_counts": {
+    "ASVS-POKRYCIE.csv": {
+      "rows": 345,
+      "statuses": {
+        "W_TRAKCIE": 86,
+        "NIE_DOTYCZY_Z_UZASADNIENIEM": 5,
+        "NIEZBADANE": 254
+      }
+    },
+    "POWIERZCHNIA-WEJSC.csv": {
+      "rows": 286,
+      "statuses": {
+        "W_TRAKCIE": 84,
+        "NIEZBADANE": 202
+      }
+    },
+    "POKRYCIE.csv": {
+      "rows": 18,
+      "statuses": {
+        "W_TRAKCIE": 18
+      }
+    }
+  },
+  "environment_config": {
+    "date": "2026-11-02",
+    "draft_revision": 8,
+    "status": "saved",
+    "requires_publish": true,
+    "custom_domains": [
+      "api.github.com",
+      "binaries.prisma.sh"
+    ],
+    "start_instructions_saved": true,
+    "start_instructions_reference_h1_branch": true,
+    "install_script_preserved": true,
+    "secret_values_saved": false,
+    "runtime": {
+      "observations_current": true,
+      "spec_revision": "2",
+      "network_state": "enforced",
+      "mode": "unrestricted",
+      "prisma_host_effective": true,
+      "github_api_host_effective": true
+    },
+    "note": "Owner-applied unrestricted network works. Updated startup instructions saved/read back as draft8; publication applies only to saved instructions, not a missing network prerequisite. No install/network/secret edits.",
+    "network_blocker_resolved": true,
+    "start_instructions_candidate_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe"
+  },
+  "no_new_asvs_qualification": true,
+  "registry_findings_closed": 0,
+  "deployed": false,
+  "merged": false,
+  "paid_external_resources_created": false,
+  "resume": "Continue H1 on clean fix/polutek-h1-acceptance at the recorded SHA: resolve test type debt and lint config with real baselines; review 4 hotspots and 5 strict-escape matches; preserve skipped distinctions. Then complete K06 artifact binding and K02 image proof, plus K01 full HLS integration and K05 decisions. Do not merge, deploy or resume generic ASVS V3+ instead.",
+  "note": "Cloud normal install and real Prisma/Postgres are now verified. Earlier failed runs and separate Windows/batch17 evidence remain historical. Audit counts unchanged; none of R01-R37 or all H1 packages closed.",
+  "previous_candidate_branch": "fix/polutek-h1-foundations",
+  "previous_candidate_sha": "f5e061546ef4e309cc69994810ba20a5ffd68a0b",
+  "previous_repair_base_main_sha": "5f848a9304d19a6d03860444808abbe120b57623",
+  "pull_request": {
+    "url": "https://github.com/pawelekbyra/polutek-pl/pull/2065",
+    "draft": true,
+    "merged": false,
+    "verified_head_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe"
+  },
+  "previous_scope_by_commit": [
     {
       "branch": "fix/polutek-k02-security-dependencies",
       "commit": "e582ead4e1a20ec1e4080c1d1f6a899650304a09",
@@ -99,56 +319,6 @@
       ]
     }
   ],
-  "canonical_audit_counts": {
-    "ASVS-POKRYCIE.csv": {
-      "rows": 345,
-      "statuses": {
-        "W_TRAKCIE": 86,
-        "NIE_DOTYCZY_Z_UZASADNIENIEM": 5,
-        "NIEZBADANE": 254
-      }
-    },
-    "POWIERZCHNIA-WEJSC.csv": {
-      "rows": 286,
-      "statuses": {
-        "W_TRAKCIE": 84,
-        "NIEZBADANE": 202
-      }
-    },
-    "POKRYCIE.csv": {
-      "rows": 18,
-      "statuses": {
-        "W_TRAKCIE": 18
-      }
-    }
-  },
-  "environment_config": {
-    "date": "2026-11-02",
-    "draft_revision": 6,
-    "status": "saved",
-    "requires_publish": true,
-    "custom_domains": [
-      "api.github.com",
-      "binaries.prisma.sh"
-    ],
-    "start_instructions_saved": true,
-    "start_instructions_reference_h1_branch": true,
-    "install_script_preserved": true,
-    "secret_values_saved": false,
-    "runtime": {
-      "observations_current": true,
-      "spec_revision": "1",
-      "network_state": "enforced",
-      "prisma_host_effective": false,
-      "github_api_host_effective": false
-    },
-    "note": "Draft save does not apply network rules or establish environment readiness; no new blocked operation was retried unchanged."
-  },
-  "no_new_asvs_qualification": true,
-  "registry_findings_closed": 0,
-  "deployed": false,
-  "merged": false,
-  "paid_external_resources_created": false,
-  "resume": "Review/save/publish environment draft, verify active host rules, choose clean H1 code branch, normal frozen install and real Prisma migration in the owned fresh DB, then required full checks on exact SHA. Do not retry unchanged blocked operations or upload npm audit graph.",
-  "note": "Historical roadmap-v1-plan.json remains the original proposal snapshot; this file and STAN/POSTEP describe active H1. Windows and batch17 evidence is preserved separately."
+  "packages_closed": 0,
+  "evidence_directory": "program-audytu/evidence/h1-cloud-2026-11-02"
 }

@@ -1,14 +1,14 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 2 listopada 2026. **Roadmapa v1 zatwierdzona przez właściciela („ok droga wolna dzialaj”). Sieć i maszyna odzyskane; rozpoczęto rzeczywisty odbiór H1.**
+Aktualizacja: 2 listopada 2026. **Roadmapa v1 zatwierdzona; H1 trwa. Sieć i Prisma odblokowane, nowy baseline wykonany. Dalszy ogólny audyt jest tymczasowo odłożony na rzecz H1, nie porzucony.**
 
-**Najpierw czytaj [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md) i [h1-status.json](evidence/h1-status.json).** Tam są małe commity, gałęzie, pełne wyniki, ograniczenia i dokładne polecenia wznowienia. Kod zbiorczy: `fix/polutek-h1-foundations`, commit `f5e061546ef4e309cc69994810ba20a5ffd68a0b`; baza napraw `main` `5f848a9304d19a6d03860444808abbe120b57623`, nowsza od historycznego baseline raportu `c397b9e`. Aktualnie checkout pozostaje na gałęzi audytu. Żadna poprawka nie została scalona ani wdrożona.
+Najpierw czytaj [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md) i [h1-status.json](evidence/h1-status.json). Kod: `fix/polutek-h1-acceptance`, `8dce5f94016325c12a3ae82fd1c84d144a055efe`, baza main `c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3`; [szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065). Aktualny checkout po zapisie dowodów: gałąź audytu. Stare gałęzie kandydatów zachowane, brak merge/deploy.
 
-Przygotowano K02 (zależności), narzędziową część K03/R37 i selekcję testów, dokumentację K05 oraz kontrolę typów w buildach K06. 46 istniejących testów K02 i 31 procesowych R37 PASS; sześć małych buildów fixture potwierdza usunięcie pomijania typów. To nie pełne quality, integracja DB ani buildy produktu. Cała komenda krytyczna nadal exit 1 (drugi plik nie rejestruje testów przez Prisma).
+**Fakty:** normalne npm ci + prawdziwy Prisma 6.19.3; 81 migracji i smoke na własnym PG 17.11; unit 4686 PASS/0 FAIL/3 pominięte; PG 75/75; critical-path 36/36; realny restore 11/11; lokalne HTTP 4/4. Typy aplikacji/architektura PASS, build panelu PASS. **Blokady:** 81 błędów typów w 41 plikach testów i build strony FAIL; lint FAIL na konfiguracji, hotspots 4 przekroczenia, strict-escapes 5 dopasowań. Pełnego odbioru H1/artefaktu nie ma.
 
-K01: działa PostgreSQL 17.11; przygotowano świeżą pustą bazę i prywatny `/workspace/.cloud-setup/h1.env` (0600), bez zmian starszych baz. Nie wykonano Prisma/migracji. Szkic środowiska rev. 6 ma obie domeny i instrukcje startowe, ale runtime spec. 1 nadal ich nie ma. Potrzebne przejrzenie/zapisanie i publikacja środowiska przez właściciela; nie obchodzić ograniczenia i nie ponawiać niezmienionych prób.
+Runtime connected/enforced/unrestricted/spec. 2, Prisma HTTP 200, API GitHub działa. Prywatny `/workspace/.cloud-setup/h1.env` (0600), własny `polutek-cloud-db`; po odświeżeniu uruchomiono zatrzymany istniejący kontener i sprawdzono gotowość. Baza ma prawdziwą historię migracji, nie jest już pusta. Nie zmieniać starszych baz raw SQL, nie obchodzić TLS/checksum ani odmowy npm audit.
 
-Bez zgody na deploy, main, produkcyjne migracje/korekty danych i koszty. Nowe kwalifikacje ASVS poza H1 nie zostały rozpoczęte. Historyczne statusy propozycji v1 lub dawne instrukcje pauzy nie cofają aktualnej zgody na H1.
+Nie zamknięto całych pakietów ani R01–R37. Aktywna konfiguracja i 9 decyzji K05, obraz K02, wymuszony protokół K06 oraz pełne HLS/E2E pozostają otwarte. Bez zgody na main, deploy, produkcyjne dane i koszty. Nowych kwalifikacji ASVS poza H1 nie wykonywano.
 
 ## Odrębny przebieg na Windows — zachowane wyniki z 2 listopada 2026
 
@@ -155,7 +155,17 @@ Bez zgody na deploy, main, produkcyjne migracje/korekty danych i koszty. Nowe kw
 
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
-## Blokady i niewiadome
+108. H1 po publikacji/odświeżeniu: runtime spec. 2, unrestricted/enforced/connected; autentyczny normalny postinstall Prisma, 81 migracji, smoke i historia up-to-date. Własny PG po odświeżeniu wystartował ponownie, starszych baz nie zmieniono.
+109. Przeniesiono pięć małych kandydatów na nowszy main c80ef652 przez cherry-pick, zachowując 11 plików zmian właściciela. Dodano osobny commit testów PG 8dce5f94: prawdziwy historyczny prefix i data wewnątrz retencji; bez edycji migracji. Opublikowane stare gałęzie zachowane.
+110. Unit końcowy 541 plików, 4686 PASS/0 FAIL/3 pominięte, PG 75/75 w 12 plikach, critical-path 36/36. Wcześniejsze błędy konfiguracji prób zachowane z wyjaśnieniem; nie uznano czerwonego zbiorczego CI za zielone.
+111. R37: 11/11 prób prawdziwego pg_dump/pg_restore syntetycznej bazy, rola tylko do odczytu; błędy migracji/modelu/manifestu odmawiają bez SUCCESS. Odrębnie 31 procesowych regresji. Nie jest to odzysk offsite całego produktu.
+112. Typy aplikacji/architektura/env PASS, rzeczywisty build panelu PASS. Całe repo: 81 diagnostyk w 41 plikach testów; build strony FAIL. Lint błąd konfiguracji, hotspots 4 przekroczenia, strict-escapes 5 dopasowań. Otwarte zadania H1; nie osłabiono bramek.
+113. Rzeczywiste lokalne HTTP 4/4: PUBLISHED widoczny, DRAFT ukryty, private/no-store, built admin odmawia bez CF Access; fixtures/procesy posprzątane. Własne automatycznie wygenerowane zmiany AGENTS/next-env po dev cofnięte i zachowane jako patch.
+114. Szkic PR #2065 wskazuje dokładny kod 8dce5f94; brak merge/deploy, zamkniętych ustaleń i nowych PASS ASVS. Surowe wyniki i atrybucja w evidence/h1-cloud-2026-11-02; bieżące statusy CSV/POSTEP zaktualizowane.
+
+Poniższe opisy odnoszą się do datowanych wcześniejszych prób; nie cofają odblokowania sieci/Prisma i nowych wyników H1. Aktualne blokady są w POSTEP i poniższym następnym działaniu.
+
+## Historyczne ograniczenia wcześniejszych partii
 
 - Końcową walidację partii 13 początkowo zatrzymał limit usługi automatycznej kontroli zgód, przed wykonaniem polecenia. Po czasie wskazanego odnowienia i poleceniu kontynuacji ta sama ścieżka zatwierdzenia zadziałała; walidacja zakończona exit 0. [Zapis przerwy](evidence/approval-review-interruption-batch13.json). Bez obchodzenia kontroli i powtarzania pomiarów aplikacji.
 
@@ -185,21 +195,14 @@ Bez zgody na deploy, main, produkcyjne migracje/korekty danych i koszty. Nowe kw
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
-## Następne działanie — odbiór H1 po odzyskaniu sieci
+## Następne działanie — dalszy odbiór H1
 
-**Nowszy stan:** runtime connected/enforced/unrestricted/spec. 2; oficjalna suma Prisma HTTP 200, API prywatnego repo GitHub dostępne. [Dowód](evidence/h1-network-recovered.json). Wznowić H1 na czystej gałęzi `fix/polutek-h1-foundations`: normalne npm ci z postinstall, prawdziwe generate/migracje/DB i pełne bramki. Starsze wpisy o niedostępności są historią. Bez merge/deploy.
+1. Przeczytać POSTEP, h1-status i source-map nowej partii; sprawdzić czysty checkout i aktualne SHA obu gałęzi. Wybrać istniejący `fix/polutek-h1-acceptance` z PR #2065; Node 22, prawdziwe zależności z jego lockfile. Nie uruchamiać testów aplikacji z historycznej gałęzi audytu.
+2. Małe poprawki K03: sklasyfikować/naprawić 81 diagnostyk testów (legacy PATRON, niepełne fixtures i typy mocków) bez zmiany oczekiwanych polityk. Zdiagnozować konfigurację lint względem zakresów Next/pluginu; nie obniżać reguł. Rozliczyć cztery hotspots i pięć strict-escape matches, w tym możliwy false positive komentarza.
+3. Uruchamiać tylko dotknięte kontrole, a na końcowym kandydacie wymagany pełny odbiór, oba buildy i prawdziwy obraz. Zachować każdy exit/skip i atrybucję SHA. Dokończyć guard wymaganych targetów i K06 wiążące źródła/wejścia/wyniki/digest we wszystkich wspieranych ścieżkach; samo ignoreBuildErrors=false nie zamyka K06.
+4. Osobno uzupełnić K01 API/worker/HLS/Redis/storage i świeży start według instrukcji; K05 pozostaje otwarty dla 9 decyzji oraz aktywnego profilu. Nie podmieniać rzeczywistych providerów pozornymi dowodami. Przegląd PR nie jest zgodą na main/deploy.
 
-
-**Najnowsza próba:** po zgłoszeniu Full Access nadal proxy 403 dla Prisma i Forbidden dla API GitHuba; [dowód](evidence/h1-full-access-recheck.json). Runtime enforced/restricted/spec. 1. Następne doprecyzowanie: zrzut widoku, w którym właściciel zmienił Full Access; nie zgadywać przycisków i nie powtarzać zablokowanych operacji bez nowego warunku.
-
-
-1. Właściciel przegląda i zapisuje szkic środowiska rev. 6 oraz publikuje go (narzędzie zwróciło `requires_publish=true`). To nie prośba o ponowną zgodę na H1; runtime nie stosuje szkicu automatycznie.
-2. Agent potwierdza aktywne `binaries.prisma.sh` i `api.github.com`, wybiera czystą gałąź `fix/polutek-h1-foundations` i uruchamia prawdziwe `npm ci --no-audit --no-fund`/generate, potem migracje na nowej bazie i pełne wymagane bramki. Instrukcje w POSTEP i zapisanym start_skill. Nie używać starych baz raw SQL ani klienta-atrapy.
-3. Dokończyć realny odbiór K03/R37, pełne K02 i K06 (w tym konkretne powiązanie źródeł/testów z artefaktem); K05 wymaga aktywnego profilu i dziewięciu jawnych decyzji. Nie ogłaszać gotowości z testów fixture. Po dostępie API przygotować małe szkice PR, nie scalać i nie wdrażać.
-
-Do tego czasu zachować gotowe kandydaty i dowody, bez powtarzania identycznie blokowanych operacji. Wszystkie D01–D18 nadal otwarte; kanoniczne ASVS 86/254/5 warunkowych NA/0 PASS, wejścia 84/202. Wyniki Windows i mechaniczna adopcja partii 17 pozostają zachowane. Nie rozpoczynać zamiast H1 kolejnego ogólnego V3+ ani przywracać archiwum nad nowszymi plikami.
-
-Po nowym kroku: aktualizować POSTEP, statusy CSV, historię i manifest; commit/push i porównanie remote SHA. Raporty mają wskazywać właściwą wersję aplikacji i środowisko.
+Nie potrzeba ponownej zmiany dostępu ani nowego tokenu: runtime/API/Prisma działają. Nie wykonywać npm audit/audit-high ani ogólnego V3+ zamiast H1. ASVS nadal 86/254/5 warunkowych NA/0 PASS, wejścia 84/202, wszystkie D01–D18 otwarte. Wnioski zapisywać na gałęzi audytu, kod w małych commitach osobno, bez force push. Po każdej domkniętej partii commit/push, manifest i sprawdzenie remote SHA.
 
 ## Zapis po każdej partii — po zatwierdzonym wznowieniu
 

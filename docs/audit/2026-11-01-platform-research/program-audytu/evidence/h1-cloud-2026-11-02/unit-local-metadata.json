@@ -1,0 +1,31 @@
+{
+  "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+  "environment": "Node22, owned h1.env; ADMIN_DEV_* off; Redis URL/token variables empty so unit-only memory limiter; CI=true",
+  "exit": 0,
+  "files": 541,
+  "passed": 4686,
+  "failed": 0,
+  "pending": 3,
+  "total": 4689,
+  "supersedes_environment_failures": [
+    "unit-full.json: sample-data mode returned409",
+    "unit-final.json: fake CI Redis URL caused unmocked limiter failure"
+  ],
+  "pending_cases": [
+    {
+      "file": "/workspace/polutek-pl/tests/integration/email-event-idempotency.test.ts",
+      "name": "EmailEventLockService - Real DB Idempotency enforces atomic idempotency via unique constraint",
+      "status": "skipped"
+    },
+    {
+      "file": "/workspace/polutek-pl/tests/integration/email-event-idempotency.test.ts",
+      "name": "EmailEventLockService - Real DB Idempotency allows re-acquiring failed events",
+      "status": "skipped"
+    },
+    {
+      "file": "/workspace/polutek-pl/tests/unit/hls/encode-hls.ffmpeg.test.ts",
+      "name": "encode-hls with real ffmpeg tone-maps an HLG (HDR) source to BT.709 SDR instead of rejecting it",
+      "status": "skipped"
+    }
+  ]
+}

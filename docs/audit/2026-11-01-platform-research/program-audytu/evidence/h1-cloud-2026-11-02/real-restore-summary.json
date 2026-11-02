@@ -1,0 +1,123 @@
+{
+  "date_utc": "2026-11-02T15:29:56.085594+00:00",
+  "code_sha": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b",
+  "source": "owned H1 PostgreSQL 17 database with synthetic rows; actual pg_dump/pg_restore; genuine Prisma client",
+  "database": "polutek_h1_restore_db630f5c63",
+  "source_database": "polutek_h1_6b21d176e3",
+  "read_only_role": "h1_ro_db630f5c63",
+  "dump_sha256": "ec092d0bab8701774714950b0023fd7971781086439ea0d1a0b73738ba2cd7eb",
+  "counts": {
+    "User": 1,
+    "Creator": 1,
+    "Video": 1,
+    "VideoAsset": 1,
+    "Payment": 1,
+    "UserPaymentTotal": 1,
+    "PatronGrant": 1,
+    "StripeEvent": 0,
+    "Comment": 0,
+    "CommentReport": 0,
+    "Subscription": 0,
+    "AuditLog": 43
+  },
+  "restored_counts_equal_source": true,
+  "counts_unchanged_after_verification": true,
+  "verifier_role_default_transaction_read_only": true,
+  "cases": [
+    {
+      "id": "valid-restored-db",
+      "expected": "SUCCESS",
+      "exit": 0,
+      "success_message": true,
+      "passed": true,
+      "log": "restore-valid-restored-db.log"
+    },
+    {
+      "id": "matching-manifest",
+      "expected": "SUCCESS",
+      "exit": 0,
+      "success_message": true,
+      "passed": true,
+      "log": "restore-matching-manifest.log"
+    },
+    {
+      "id": "unknown-manifest-aggregate",
+      "expected": "NONZERO_WITHOUT_SUCCESS",
+      "exit": 1,
+      "success_message": false,
+      "passed": true,
+      "log": "restore-unknown-manifest-aggregate.log"
+    },
+    {
+      "id": "mismatched-manifest-count",
+      "expected": "NONZERO_WITHOUT_SUCCESS",
+      "exit": 1,
+      "success_message": false,
+      "passed": true,
+      "log": "restore-mismatched-manifest-count.log"
+    },
+    {
+      "id": "invalid-manifest-shape",
+      "expected": "NONZERO_WITHOUT_SUCCESS",
+      "exit": 1,
+      "success_message": false,
+      "passed": true,
+      "log": "restore-invalid-manifest-shape.log"
+    },
+    {
+      "id": "migration-read-denied",
+      "expected": "NONZERO_WITHOUT_SUCCESS",
+      "exit": 1,
+      "success_message": false,
+      "passed": true,
+      "log": "restore-migration-read-denied.log"
+    },
+    {
+      "id": "required-model-read-denied",
+      "expected": "NONZERO_WITHOUT_SUCCESS",
+      "exit": 1,
+      "success_message": false,
+      "passed": true,
+      "log": "restore-required-model-read-denied.log"
+    },
+    {
+      "id": "unfinished-migration",
+      "expected": "NONZERO_WITHOUT_SUCCESS",
+      "exit": 1,
+      "success_message": false,
+      "passed": true,
+      "log": "restore-unfinished-migration.log"
+    },
+    {
+      "id": "resolved-rollback-history",
+      "expected": "SUCCESS",
+      "exit": 0,
+      "success_message": true,
+      "passed": true,
+      "log": "restore-resolved-rollback-history.log"
+    },
+    {
+      "id": "same-database-url-guard",
+      "expected": "NONZERO_WITHOUT_SUCCESS",
+      "exit": 1,
+      "success_message": false,
+      "passed": true,
+      "log": "restore-same-database-url-guard.log"
+    },
+    {
+      "id": "missing-explicit-enable",
+      "expected": "NONZERO_WITHOUT_SUCCESS",
+      "exit": 1,
+      "success_message": false,
+      "passed": true,
+      "log": "restore-missing-explicit-enable.log"
+    }
+  ],
+  "passed": 11,
+  "failed": 0,
+  "limitations": [
+    "No production backup, R2 objects, off-host recovery, Stripe API or whole-product disaster recovery.",
+    "Migration fault row exists only in the disposable restored clone and is explicitly removed.",
+    "Does not prove every schema constraint or guarantee identity guards against equivalent URL spellings."
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+  "date_utc": "2026-11-02T15:44:41.615Z",
+  "cases": [
+    {
+      "id": "public-search-returns-owned-published-fixture",
+      "passed": true,
+      "observed": {
+        "status": 200,
+        "items": 1
+      }
+    },
+    {
+      "id": "public-search-hides-owned-draft",
+      "passed": true,
+      "observed": {
+        "draft_visible": false
+      }
+    },
+    {
+      "id": "search-private-no-store",
+      "passed": true,
+      "observed": {
+        "cache_control": "private, no-store"
+      }
+    },
+    {
+      "id": "built-admin-refuses-without-cloudflare-config",
+      "passed": true,
+      "observed": {
+        "status": 503
+      }
+    }
+  ],
+  "scope": "Actual local public Next dev + built admin standalone; genuine Prisma/PostgreSQL, synthetic fixture only; memory limiter, no providers.",
+  "limitations": [
+    "Public dev smoke is not a production build or HLS/encoder E2E.",
+    "Admin checks deny access when Cloudflare configuration is missing; no successful admin login is claimed."
+  ],
+  "fixture_cleaned_up": true,
+  "success": true
+}

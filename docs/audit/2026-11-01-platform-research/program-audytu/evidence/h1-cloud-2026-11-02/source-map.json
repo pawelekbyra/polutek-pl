@@ -1,0 +1,91 @@
+{
+  "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+  "base_main_sha": "c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3",
+  "pull_request": "https://github.com/pawelekbyra/polutek-pl/pull/2065",
+  "scopes": [
+    {
+      "commit": "989682ffd1b375214b22f8125e4cc0c28890c900",
+      "parent": "c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3",
+      "subject": "fix(deps): update Next and sharp to patched image runtimes",
+      "changed_files": [
+        "package-lock.json",
+        "package.json"
+      ]
+    },
+    {
+      "commit": "7b2b341bd207a3ee1c3f669ca7b0138c32705719",
+      "parent": "989682ffd1b375214b22f8125e4cc0c28890c900",
+      "subject": "fix(ops): reject incomplete restored-database verification (K03)",
+      "changed_files": [
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/operations/RESTORE-VERIFICATION.md",
+        "scripts/verify-restored-database.ts",
+        "tests/fixtures/restore-verifier-process.mjs",
+        "tests/unit/operations/verify-restored-database-process.test.ts",
+        "tests/unit/operations/verify-restored-database.test.ts"
+      ]
+    },
+    {
+      "commit": "d3483af674ee0a2c2f295964de91d118e8c6fea8",
+      "parent": "7b2b341bd207a3ee1c3f669ca7b0138c32705719",
+      "subject": "docs(product): distinguish Premium, tips and future marketplace (K05)",
+      "changed_files": [
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/architecture/payments-and-tips.md",
+        "docs/architecture/product-profile.md",
+        "docs/operations/STATUS.md"
+      ]
+    },
+    {
+      "commit": "f7ff10b5f1b87b2b58ebeec978065ada9b09c305",
+      "parent": "d3483af674ee0a2c2f295964de91d118e8c6fea8",
+      "subject": "fix(build): keep TypeScript validation enabled in both apps (K06)",
+      "changed_files": [
+        "CLAUDE.md",
+        "apps/admin/next.config.mjs",
+        "docs/operations/LOCAL-CI.md",
+        "next.config.mjs"
+      ]
+    },
+    {
+      "commit": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b",
+      "parent": "f7ff10b5f1b87b2b58ebeec978065ada9b09c305",
+      "subject": "fix(test): select existing critical-path suites (K03)",
+      "changed_files": [
+        "docs/operations/LOCAL-CI.md",
+        "package.json"
+      ]
+    },
+    {
+      "commit": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+      "parent": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b",
+      "subject": "fix(test): preserve historical migration order and live retention window (K03)",
+      "changed_files": [
+        "docs/operations/LOCAL-CI.md",
+        "tests/postgres/analytics-rollups.pg.test.ts",
+        "tests/postgres/db-cleanup-migration.pg.test.ts",
+        "tests/postgres/fixtures/pre-cleanup-seed.sql"
+      ]
+    }
+  ],
+  "source_attribution": {
+    "acceptance-run.json": "8dce5f94: CI synthetic environment; unit has one fake-Redis failure; not a green release run",
+    "unit-local-final.json": "8dce5f94: corrected local unit environment, bypasses off and memory limiter explicit",
+    "unit-full.json": "e79ec89c: initial sample-data environment, 4 failures; preserved",
+    "postgres.json": "e79ec89c: initial 11 failures in 2 test files; preserved",
+    "postgres-corrected-targeted.json": "dirty K03 test fixture iteration before 8dce5f94; 15/16 passed",
+    "postgres-corrected-targeted-final.json": "final K03 test changes before commit 8dce5f94; 16/16 passed",
+    "critical-path.json": "e79ec89c; 36/36, unchanged source in final candidate",
+    "real-restore-summary.json": "e79ec89c; verifier, schema and migrations unchanged in 8dce5f94",
+    "npm-ci.log": "f5e06154 before cherry-pick; package declarations, lock and schema identical in final candidate",
+    "http-smoke.json": "8dce5f94; dev generated AGENTS.md and next-env.d.ts only; changes recorded and restored after stopping owned processes",
+    "migrate-status.log": "started on code branch, completed during audit switch; migration directory and schema blobs verified identical"
+  },
+  "release_ready": false,
+  "whole_product_recovery_proven": false,
+  "full_hls_e2e_proven": false,
+  "prior_runs_preserved": true,
+  "new_asvs_qualification": false
+}

@@ -248,3 +248,12 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 ## 2 listopada 2026 — środowisko i sieć odzyskane
 
 - Runtime spec. 2 connected/enforced/unrestricted. Suma Prisma HTTP 200 i odczyt API prywatnego repo udane. Przejście do normalnej instalacji oraz realnego odbioru H1; nie oznacza jeszcze PASS testów/buildu.
+
+## 2 listopada 2026 — rzeczywisty baseline H1 i szkic PR
+
+- Prawdziwy postinstall Prisma 6.19.3 na Node 22.23.4, 81 migracji na własnym PG 17.11, smoke i status up-to-date. Po odświeżeniu uruchomiono istniejący zatrzymany kontener, bez resetu.
+- Nowy kandydat `fix/polutek-h1-acceptance` na nowszym main c80ef652: pięć wcześniejszych małych zmian przez cherry-pick i osobny commit naprawy fixtures PG `8dce5f94`. Stare opublikowane gałęzie zachowane, bez merge/force push.
+- Unit lokalny: 4686 PASS/0 FAIL/3 pominięte w 541 plikach; PG 75/75 w 12 plikach; critical-path 36/36. R37: 31 procesowych regresji i 11/11 rzeczywistych prób syntetycznego pg_dump/pg_restore z rolą tylko do odczytu. Lokalne HTTP 4/4, własne dane/procesy posprzątane.
+- Typy aplikacji/architektura/env i build panelu PASS. Typy całego repo: 81 diagnostyk w 41 plikach testów; build strony FAIL. Lint zatrzymany konfiguracją, hotspots 4 przekroczenia, strict-escapes 5 dopasowań. Pełny odbiór H1 i protokół artefaktu nadal otwarte; nie obniżono bramek.
+- Nieudane przebiegi i dokładna atrybucja zachowane w `evidence/h1-cloud-2026-11-02`. Utworzono szkic PR #2065 na dokładnym SHA. Zaktualizowano POSTEP/STAN/CSV/status; 37/37 ustaleń pozostaje w rejestrze, zero zamkniętych i zero nowych PASS ASVS.
+- Instrukcje startowe zapisane i odczytane ze szkicu środowiska rev. 8; instalacja i aktywna sieć bez zmian. Publikacja instrukcji jest osobnym krokiem ustawień, nie blokadą bieżącej pracy.
