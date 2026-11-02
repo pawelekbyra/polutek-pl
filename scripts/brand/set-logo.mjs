@@ -2,7 +2,7 @@
 // One command to switch the header logo (owner request 2026-11-02: "przywrócenie okularków jedną komendą").
 //   npm run logo -- glasses                 -> BRAND_LOGO_VARIANT = "glasses" in lib/ui-flags.ts
 //   npm run logo -- wordmark-blue           -> the blue POLUTEK lettering
-//   npm run logo -- wordmark-blue-symbol    -> the lettering with the play symbol in front (once that variant exists)
+//   npm run logo -- wordmark-blue-symbol    -> the lettering with the play symbol in front (live since 2026-11-02)
 //   npm run logo -- glasses --dry-run       -> only prints what it would change
 //   (--root <dir> runs against another checkout; used by the test)
 // It changes exactly two lines: the constant in lib/ui-flags.ts and LIVE_LOGO in tests/unit/components/brand-name.test.tsx
@@ -24,6 +24,7 @@ export const VARIANT_ASSETS = {
   "wordmark-blue-symbol": [
     "app/components/brand/PolutekWordmarkBlueSymbol.tsx",
     "app/components/brand/polutek-symbol-paths.ts",
+    "app/components/brand/polutek-wordmark-blue-paths.ts",
     "public/brand/polutek-wordmark-blue-symbol.svg",
   ],
 };

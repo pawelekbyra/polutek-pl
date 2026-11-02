@@ -14,8 +14,9 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
   afterEach(() => cleanup());
 
   // The live logo. `npm run logo -- <variant>` (scripts/brand/set-logo.mjs) rewrites this line together with BRAND_LOGO_VARIANT.
-  const LIVE_LOGO = "wordmark-blue";
+  const LIVE_LOGO = "wordmark-blue-symbol";
   const LIVE_SELECTOR: Record<string, string> = {
+    "wordmark-blue-symbol": 'svg[data-brand-logo="wordmark-blue-symbol"]',
     "wordmark-blue": 'svg[data-brand-logo="wordmark-blue"]',
     wordmark: 'svg[data-brand-logo="wordmark"]',
     glasses: 'img[src="/logo-glasses.svg"]',
@@ -26,6 +27,51 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
     const { container } = render(<BrandName />);
     expect(container.querySelector(LIVE_SELECTOR[LIVE_LOGO])).not.toBeNull();
     if (LIVE_LOGO !== "glasses") expect(container.querySelector("img")).toBeNull();
+  });
+
+  describe("wordmark-blue-symbol variant (orange play symbol in front of the blue wordmark, owner's variant A)", () => {
+    it("is one inline svg named POLUTEK: navy rim + swooshes, orange play with gradient, the wordmark path; no <text>, no raster, no request", () => {
+      const { container } = render(<BrandName variant="wordmark-blue-symbol" />);
+      const svg = screen.getByRole("img", { name: "POLUTEK" });
+
+      expect(svg.getAttribute("data-brand-logo")).toBe("wordmark-blue-symbol");
+      expect(container.querySelector("text, image, img, use")).toBeNull();
+      const paths = [...container.querySelectorAll("svg > path")];
+      expect(paths[0].getAttribute("style")).toContain("var(--brand-ink, #01286a)");
+      expect(paths.at(-1)!.getAttribute("d")).toBe(WORDMARK_BLUE_PATH);
+      expect(paths.at(-1)!.getAttribute("style")).toContain("var(--brand-ink, #01286a)");
+      const play = container.querySelector("[data-symbol-play]")!;
+      const gradId = play.getAttribute("fill")!.match(/^url\(#(.+)\)$/)![1];
+      const stops = [...container.querySelectorAll(`#${gradId} stop`)].map((s) => s.getAttribute("stop-color"));
+      expect(stops).toEqual(["#ffb340", "#ff9419", "#ff7a00"]);
+    });
+
+    it("decorative inside the home link (aria-hidden), and two instances never share gradient ids", () => {
+      const { container } = render(<><BrandName variant="wordmark-blue-symbol" decorative /><BrandName variant="wordmark-blue-symbol" decorative /></>);
+      const svgs = [...container.querySelectorAll("svg")];
+
+      expect(svgs).toHaveLength(2);
+      expect(svgs[0].getAttribute("aria-hidden")).toBe("true");
+      expect(svgs[0].getAttribute("role")).toBeNull();
+      const ids = [...container.querySelectorAll("[id]")].map((e) => e.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it("the standalone files match the generator (variant A, ink #01286a)", async () => {
+      const gen = await import("../../../scripts/brand/generate-symbol.mjs");
+      const { SYMBOL_LOCKUP_VIEWBOX, SYMBOL_VARIANT } = await import("@/app/components/brand/polutek-symbol-paths");
+      const lockup = readFileSync(path.join(process.cwd(), "public/brand/polutek-wordmark-blue-symbol.svg"), "utf8");
+
+      expect(gen.CHOSEN).toBe("A");
+      expect(SYMBOL_VARIANT).toBe("A");
+      expect(lockup).toContain(`viewBox="${SYMBOL_LOCKUP_VIEWBOX}"`);
+      expect(lockup).toContain('aria-label="POLUTEK"');
+      expect(lockup).toContain("#01286a");
+      expect(gen.lockupSvg(gen.buildSymbol(gen.VARIANTS.A), { id: "pws" })).toBe(lockup);
+      for (const f of ["polutek-symbol.svg", "polutek-symbol-small.svg"]) {
+        expect(readFileSync(path.join(process.cwd(), "public/brand", f), "utf8")).toContain("<svg");
+      }
+    });
   });
 
   describe("wordmark-blue variant (the owner's POLUTEK image redrawn as SVG)", () => {
@@ -170,6 +216,7 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
     });
 
     it.each([
+      ["wordmark-blue-symbol", 'svg[data-brand-logo="wordmark-blue-symbol"]'],
       ["wordmark-blue", 'svg[data-brand-logo="wordmark-blue"]'],
       ["glasses", 'img[src="/logo-glasses.svg"]'],
       ["wordmark", 'svg[data-brand-logo="wordmark"]'],
