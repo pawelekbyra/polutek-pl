@@ -1,6 +1,6 @@
 /**
  * Migration 20261005210000_cleanup_dead_schema on a real Postgres, WITH DATA. The test builds its own scratch database
- * (CREATE DATABASE; skipped with a message when the role may not create databases), applies every migration except
+ * (CREATE DATABASE; skipped with a message when the role may not create databases), applies only migrations before
  * the cleanup one, seeds rows into every table/column the cleanup drops plus live rows around them
  * (fixtures/pre-cleanup-seed.sql), applies the migration and checks: it is atomic (a failing script changes nothing),
  * it succeeds, live data is intact, dropped objects are gone, values were folded/mapped as documented, the Prisma
@@ -9,7 +9,7 @@
  *   DATABASE_URL=postgresql://... npx vitest run --config vitest.postgres.config.ts tests/postgres/db-cleanup-migration.pg.test.ts
  */
 import { execFileSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import postgres from 'postgres';
@@ -64,13 +64,19 @@ beforeAll(async () => {
     console.warn(`[db-cleanup-migration] cannot create a scratch database (${String(error)}): test skipped`);
     return;
   }
-  // The migrations folder without the cleanup migration = the production state before this change.
+  // Later migrations may depend on the cleanup or add triggers that prevent replaying it out of order.
+  // Build the actual historical prefix, then expose only the migration under test after seeding.
   tmpDir = mkdtempSync(path.join(tmpdir(), 'dbclean-'));
   cpSync(path.join(root, 'prisma'), path.join(tmpDir, 'prisma'), { recursive: true });
-  rmSync(path.join(tmpDir, 'prisma/migrations', MIGRATION), { recursive: true, force: true });
+  for (const entry of readdirSync(path.join(tmpDir, 'prisma/migrations'), { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name >= MIGRATION) {
+      rmSync(path.join(tmpDir, 'prisma/migrations', entry.name), { recursive: true });
+    }
+  }
   cli('migrate', 'deploy', '--schema', path.join(tmpDir, 'prisma/schema.prisma'));
   sql = postgres(scratchUrl.toString(), { max: 1, onnotice: () => {} });
   await sql.unsafe(seedSql);
+  cpSync(path.join(root, 'prisma/migrations', MIGRATION), path.join(tmpDir, 'prisma/migrations', MIGRATION), { recursive: true });
   prisma = new PrismaClient({ datasources: { db: { url: scratchUrl.toString() } } });
   ready = true;
 }, 240_000);
@@ -104,7 +110,7 @@ describe('cleanup migration with data', () => {
 
   it('applies through `prisma migrate deploy`', async ({ skip }) => {
     if (!ready) skip();
-    const out = cli('migrate', 'deploy');
+    const out = cli('migrate', 'deploy', '--schema', path.join(tmpDir, 'prisma/schema.prisma'));
     expect(out).toContain(MIGRATION);
     expect(out).toContain('successfully applied');
   });
@@ -175,12 +181,13 @@ describe('cleanup migration with data', () => {
 
   it('the Prisma client reads and writes the migrated tables', async ({ skip }) => {
     if (!ready) skip();
-    const video = await prisma.video.findUniqueOrThrow({ where: { slug: 'old-patron' }, include: { assets: true, playbackRoutes: true } });
+    // Read only columns that existed at this historical point; current-model reads are checked below.
+    const video = await prisma.video.findUniqueOrThrow({ where: { slug: 'old-patron' }, select: { id: true, tier: true } });
     expect(video.tier).toBe('LOGGED_IN');
-    expect(await prisma.comment.findMany({ where: { authorId: 'u2' } })).toHaveLength(1);
+    expect(await prisma.comment.findMany({ where: { authorId: 'u2' }, select: { id: true } })).toHaveLength(1);
     expect(await prisma.videoPlaybackSession.count({ where: { countedAsView: false } })).toBe(3);
     expect(await prisma.payment.count({ where: { status: 'PENDING' } })).toBe(1);
-    const created = await prisma.videoPlaybackSession.create({ data: { videoId: 'v1', accessTier: 'LOGGED_IN' } });
+    const created = await prisma.videoPlaybackSession.create({ data: { videoId: 'v1', accessTier: 'LOGGED_IN' }, select: { id: true } });
     await prisma.videoPlaybackSession.delete({ where: { id: created.id } });
   });
 
@@ -199,9 +206,14 @@ describe('cleanup migration with data', () => {
     expect(labels).toEqual(['PUBLIC', 'LOGGED_IN']);
   });
 
-  it('leaves nothing for `prisma migrate deploy` and no drift against schema.prisma', async ({ skip }) => {
+  it('applies subsequent migrations in order and matches the current Prisma schema', async ({ skip }) => {
     if (!ready) skip();
-    expect(cli('migrate', 'deploy')).toContain('No pending migrations');
+    cpSync(path.join(root, 'prisma/migrations'), path.join(tmpDir, 'prisma/migrations'), { recursive: true });
+    cli('migrate', 'deploy', '--schema', path.join(tmpDir, 'prisma/schema.prisma'));
+    expect(cli('migrate', 'deploy', '--schema', path.join(tmpDir, 'prisma/schema.prisma'))).toContain('No pending migrations');
+    const currentVideo = await prisma.video.findUniqueOrThrow({ where: { slug: 'old-patron' }, include: { assets: true, playbackRoutes: true } });
+    expect(currentVideo.tier).toBe('LOGGED_IN');
+    expect(currentVideo.assets).toHaveLength(0);
     const diff = cli('migrate', 'diff', '--from-url', scratchUrl.toString(), '--to-schema-datamodel', path.join(root, 'prisma/schema.prisma'), '--script');
     expect(diff).toContain('-- This is an empty migration.');
   });

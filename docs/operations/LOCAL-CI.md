@@ -20,6 +20,10 @@ Wynik: tabela `bramka / wynik / czas / przyczyna`, kod wyjścia 0 tylko wtedy, g
 
 `npm run test:critical-path` uruchamia procesowe testy `verify-restored-database-process.test.ts` oraz istniejący komponentowy `launch-candidate-critical-path.test.ts`. Oba wskazane pliki istnieją; procesowe przypadki zastępują dawny nieistniejący cel architektoniczny. Ten zestaw obejmuje jawne atrapy DB i nie zastępuje testów PostgreSQL ani pełnego E2E. Jego niezerowego wyniku nie wolno traktować jako zielonej bramki.
 
+Przy ręcznej weryfikacji nie dziedzicz `ADMIN_DEV_FIXTURES=1`, `ADMIN_DEV_BYPASS_AUTH=1` ani `ADMIN_DEV_BYPASS_ACCESS=1` z konfiguracji podglądu panelu. Dane demonstracyjne celowo blokują zapisy (409), a obejścia logowania zmieniają badany wariant. Użyj jawnego środowiska testowego i własnej bazy, bez poświadczeń usług produkcyjnych.
+
+Test `db-cleanup-migration.pg.test.ts` buduje historyczny stan wyłącznie z migracji poprzedzających cleanup, sprawdza cleanup na danych, a następnie stosuje późniejsze migracje w kolejności i porównuje wynik z bieżącym schematem. Nie odtwarzać pojedynczej starej migracji na schemacie zawierającym już jej następców. Test granicy dnia analityki używa niedawnej daty, żeby retencja godzinowa nie usunęła badanej próbki.
+
 ## Budowanie i warunki wydania
 
 Obie konfiguracje Next (`next.config.mjs`, `apps/admin/next.config.mjs`) mają `typescript.ignoreBuildErrors=false`. Błąd typu blokuje budowę strony lub panelu również w Dockerze. Nie naprawiać takiej porażki przez ponowne wyłączenie kontroli; rozstrzygnąć przyczynę, także brak prawdziwego wygenerowanego klienta Prisma.
