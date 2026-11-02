@@ -1,7 +1,11 @@
+import logging
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 from . import engine
+
+_logger = logging.getLogger(__name__)
 
 KINDS = [
     ("sale", "Sprzedaż"),
@@ -143,6 +147,10 @@ class JdgIncomeEntry(models.Model):
              "Służy do sumowania darowizn od jednej osoby w oknie kilku lat wobec limitu z tabeli reguł.")
     country_code = fields.Char("Kraj klienta (ISO)", size=2)
     reverses_id = fields.Many2one("jdg.income.entry", "Koryguje wpis", copy=False, readonly=True, ondelete="restrict")
+    post_when_rate_ready = fields.Boolean(
+        "Zaksięguj po otrzymaniu kursu", default=False, copy=False,
+        help="Dla wpisów z integracji (np. płatność w EUR przed publikacją tabeli NBP): gdy kurs się pojawi, wpis "
+             "zaksięguje się sam (jeśli okres nie jest zamknięty).")
     note = fields.Text("Uwagi")
 
     # ----- pola pomocnicze UI -----
@@ -270,6 +278,9 @@ class JdgIncomeEntry(models.Model):
             vals.setdefault("currency_id", currency.id)
             if vals.get("rate_pct") in (None, False):
                 vals["rate_pct"] = self._default_rate_pct()
+            if not vals.get("is_test"):
+                company = self.env["res.company"].browse(vals["company_id"]) if vals.get("company_id") else self.env.company
+                self.env["jdg.period"]._assert_open(company, income_date, "Wpis przychodu")
         return super().create(vals_list)
 
     _MONEY_TRIGGERS = {"currency_id", "income_date", "amount", "fee_amount", "fx_rate", "fx_table_no"}
@@ -282,6 +293,15 @@ class JdgIncomeEntry(models.Model):
                 raise UserError(
                     "Zaksięgowany wpis jest niezmienny (zapisany na stałe). Błąd? Dodaj wpis korygujący. "
                     "Pola, których dotyczy próba zmiany: %s." % ", ".join(sorted(blocked)))
+        if posted and {"country_code", "buyer_type"} & set(vals):
+            for entry in posted.filtered(lambda e: not e.is_test):
+                self.env["jdg.period"]._assert_open(entry.company_id, entry.income_date, "Zaksięgowany wpis")
+        if {"income_date", "is_test"} & set(vals):
+            for entry in self.filtered(lambda e: e.state == "draft"):
+                day = fields.Date.to_date(vals.get("income_date")) or entry.income_date
+                is_test = vals["is_test"] if "is_test" in vals else entry.is_test
+                if not is_test:
+                    self.env["jdg.period"]._assert_open(entry.company_id, day, "Wpis przychodu")
         res = super().write(vals)
         if self._MONEY_TRIGGERS & set(vals) and not self.env.context.get("jdg_posting"):
             for entry in self.filtered(lambda e: e.state == "draft"):
@@ -326,6 +346,8 @@ class JdgIncomeEntry(models.Model):
                 raise UserError(
                     "Brak kursu NBP dla %s na dzień %s. Dodaj tabelę kursów (Firma > Kursy NBP) albo wpisz kurs "
                     "ręcznie, a potem zaksięguj ponownie." % (entry.currency_id.name, entry.income_date))
+            if not entry.is_test:
+                self.env["jdg.period"]._assert_open(entry.company_id, entry.income_date, "Wpis przychodu")
             if not entry.is_test and entry.income_date < profile.start_date:
                 raise UserError(
                     "Data przychodu (%s) jest wcześniejsza niż start działalności (%s). Zmień datę startu w "
@@ -342,7 +364,28 @@ class JdgIncomeEntry(models.Model):
                 "state": "posted", "seq_no": seq_no, "entry_year": year,
                 "posted_on": fields.Datetime.now(), "posted_by": self.env.user.id,
             })
+            if not entry.is_test:
+                self.env["jdg.alert"]._check_after_post(entry.company_id, entry.income_date)
         return True
+
+    @api.model
+    def _recompute_pending_fx(self):
+        """Wpisy robocze czekające na kurs (fx_source = 'missing'): po pojawieniu się tabeli NBP (pobranej lub wpisanej
+        ręcznie) przelicza kwoty. Wpisy z flagą 'Zaksięguj po otrzymaniu kursu' księguje. Zaksięgowanych nie rusza."""
+        resolved = self.browse()
+        for entry in self.search([("state", "=", "draft"), ("fx_source", "=", "missing")]):
+            new = self._money_values(entry.currency_id, entry.income_date, entry.amount, entry.fee_amount, None,
+                                     entry.fx_table_no)
+            if new.get("fx_source") != "missing":
+                super(JdgIncomeEntry, entry).write(new)  # z pominięciem write(), które liczyłoby kwoty drugi raz
+                resolved |= entry
+        for entry in resolved.filtered("post_when_rate_ready"):
+            try:
+                with self.env.cr.savepoint():
+                    entry.action_post()
+            except UserError as err:
+                _logger.warning("jdg: wpis %s czeka na ręczne księgowanie (%s)", entry.id, err)
+        return resolved
 
     def action_open_correction(self):
         self.ensure_one()

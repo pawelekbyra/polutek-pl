@@ -1,7 +1,7 @@
 import { Component, onMounted, onWillStart, onWillUnmount, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
-import { daysText, formatMoney, formatMoneyAuto, formatPct } from "./format";
+import { daysText, formatMoney, formatMoneyAuto, formatNumber, formatPct } from "./format";
 
 /**
  * Pulpit "Dzisiaj zarobiłem".
@@ -24,7 +24,7 @@ export class JdgDashboard extends Component {
             openWhy: {},
             showTable: false,
         });
-        this.fmt = { money: formatMoney, auto: formatMoneyAuto, pct: formatPct, days: daysText };
+        this.fmt = { num: formatNumber, money: formatMoney, auto: formatMoneyAuto, pct: formatPct, days: daysText };
         onWillStart(() => this.load());
         onMounted(() => {
             this.timer = setInterval(() => this.load(true), 60000);

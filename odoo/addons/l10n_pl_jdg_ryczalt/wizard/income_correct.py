@@ -34,11 +34,17 @@ class JdgIncomeCorrectWizard(models.TransientModel):
             raise UserError("Korygować można tylko zaksięgowany wpis. Wpis roboczy po prostu popraw lub usuń.")
         if self.amount <= 0:
             raise UserError("Kwota korekty musi być dodatnia (zapiszemy ją jako ujemną).")
+        # zamknięty okres nie przyjmuje nowych wpisów: korekta trafia do pierwszego otwartego okresu
+        income_date, note = self.income_date, self.reason
+        if not entry.is_test:
+            income_date = self.env["jdg.period"]._first_open_date(entry.company_id, self.income_date)
+            if income_date != self.income_date:
+                note = "%s (Okres z datą %s jest zamknięty: korekta zapisana %s.)" % (self.reason, self.income_date, income_date)
         new = self.env["jdg.income.entry"].create({
-            "kind": self.kind, "income_date": self.income_date, "currency_id": entry.currency_id.id,
+            "kind": self.kind, "income_date": income_date, "currency_id": entry.currency_id.id,
             "amount": -self.amount, "description": "Korekta: %s" % (entry.description or entry.name),
             "doc_ref": entry.doc_ref, "income_category": entry.income_category, "rate_pct": entry.rate_pct,
-            "is_test": entry.is_test, "reverses_id": entry.id, "note": self.reason,
+            "is_test": entry.is_test, "reverses_id": entry.id, "note": note,
             "buyer_type": entry.buyer_type, "country_code": entry.country_code,
         })
         new.action_post()

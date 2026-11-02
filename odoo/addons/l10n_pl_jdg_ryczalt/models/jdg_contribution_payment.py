@@ -93,4 +93,35 @@ class JdgContributionPayment(models.Model):
             if vals.get("for_month"):
                 month = fields.Date.to_date(vals["for_month"])
                 vals["for_month"] = month.replace(day=1)
-        return super().create(vals_list)
+            paid_on = fields.Date.to_date(vals.get("paid_on")) or fields.Date.context_today(self)
+            company = self.env["res.company"].browse(vals["company_id"]) if vals.get("company_id") else self.env.company
+            self.env["jdg.period"]._assert_open(company, paid_on, "Płatność")
+        records = super().create(vals_list)
+        records._after_change()
+        return records
+
+    def write(self, vals):
+        if {"paid_on", "amount", "kind", "for_month"} & set(vals):
+            for payment in self:
+                self.env["jdg.period"]._assert_open(payment.company_id, payment.paid_on, "Płatność")
+                if vals.get("paid_on"):
+                    self.env["jdg.period"]._assert_open(payment.company_id, fields.Date.to_date(vals["paid_on"]), "Płatność")
+        res = super().write(vals)
+        self._after_change()
+        return res
+
+    def unlink(self):
+        for payment in self:
+            self.env["jdg.period"]._assert_open(payment.company_id, payment.paid_on, "Płatność")
+        companies = self.company_id
+        res = super().unlink()
+        for company in companies:
+            self.env["jdg.tax.advance"]._sync_all(company)
+        return res
+
+    def _after_change(self):
+        """Po zapisie płatności: odśwież stan zapisanych zaliczek i domknij odpowiadający termin."""
+        for company in self.company_id:
+            self.env["jdg.tax.advance"]._sync_all(company)
+        for payment in self:
+            self.env["jdg.deadline"]._mark_done_for_payment(payment)

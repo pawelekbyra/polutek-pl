@@ -6,12 +6,14 @@ Moduł dla jednoosobowej działalności gospodarczej na ryczałcie (Polska), Odo
 
 * Pulpit „Dzisiaj zarobiłem”: przychód dziś / miesiąc / okres / rok, szacunek zaliczki na ryczałt, składka zdrowotna,
   ZUS (ulga na start), kwota „odłóż na podatki i składki”, „wolne środki”, paski progów, najbliższe terminy.
-* Ewidencja przychodów tylko dopisywana (append-only), waluty obce z kursem NBP.
+* Ewidencja przychodów tylko dopisywana (append-only), waluty obce z automatycznym kursem NBP (tabela A, dzień roboczy przed przychodem).
+* Zamykanie miesięcy i kwartałów z migawką liczb i zapisem zaliczek, blokada edycji zamkniętych okresów.
+* Alerty progów (zdrowotna 60/300 tys., limit VAT, OSS 10 000 EUR, darowizny) i kalendarz terminów z powiadomieniami w Discuss (7/3/1 dzień).
 * Wszystkie stawki, progi i podstawy ZUS w wersjonowanej tabeli reguł z poziomem pewności i źródłem.
 
 Wszystkie kwoty to SZACUNEK, NIE PORADA PODATKOWA. Parametry musi potwierdzić księgowy.
 """,
-    "version": "19.0.1.0.1",
+    "version": "19.0.2.0.0",
     "category": "Accounting/Localizations",
     "author": "Paweł Perfect",
     "website": "https://www.pawelperfect.com",
@@ -24,12 +26,15 @@ Wszystkie kwoty to SZACUNEK, NIE PORADA PODATKOWA. Parametry musi potwierdzić k
         "data/jdg_tax_rules_2026.xml",
         "data/jdg_tax_rules_2027.xml",
         "data/jdg_profile_data.xml",
+        "data/jdg_cron.xml",
         "views/jdg_tax_rule_views.xml",
         "views/jdg_profile_views.xml",
         "views/jdg_income_entry_views.xml",
         "views/jdg_income_correct_wizard_views.xml",
         "views/jdg_contribution_payment_views.xml",
         "views/jdg_fx_rate_views.xml",
+        "views/jdg_period_views.xml",
+        "views/jdg_deadline_views.xml",
         "views/jdg_client_actions.xml",
         "views/menus.xml",
     ],

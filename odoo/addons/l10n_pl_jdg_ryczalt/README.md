@@ -39,6 +39,9 @@ models/calc.py        CalcContext: wczytuje wpisy i zapłaty (1 zapytanie na rok
 models/jdg_dashboard.py  Dane ekranów OWL (jedna metoda = jeden JSON) wraz z tekstami „skąd ta liczba”.
 models/jdg_tax_rule.py   Tabela reguł + RuleReader (jedyny sposób odczytu parametrów; brak reguły = błąd).
 models/jdg_income_entry.py  Ewidencja, kurs i PLN, księgowanie, blokada edycji + trigger SQL.
+models/nbp_client.py  Klient api.nbp.pl (tabela A, zakresy do 93 dni); jdg_fx_rate.py: kursy, dziennik pobrań, cron, pending.
+models/jdg_period.py, jdg_tax_advance.py  Zamykanie okresów z migawką, zaliczki zapisane przy zamknięciu.
+models/jdg_alert.py, jdg_deadline.py, jdg_notify.py  Alerty progów, kalendarz terminów, powiadomienia w Discuss.
 static/src/js/        OWL: dashboard.*, taxes.*, format.js (formatowanie 1 234,56 zł). scss: jdg.scss.
 data/                 Reguły (noupdate=1: Twoje edycje przetrwają aktualizację), profil startowy, waluty.
 tests/                test_engine.py (bez bazy), test_models.py (na bazie).
@@ -69,9 +72,9 @@ odoo/deploy/deploy-odoo-addon.sh    # kopia bazy + modułu, -i/-u, restart Odoo,
 ```
 
 ## Czego jeszcze nie ma (kolejne iteracje)
-2: automatyczne kursy NBP. 3: zamykanie okresów, alerty progów, zapis zaliczek. 4: faktury PDF (na żądanie, B2B z NIP).
-5: integracja Stripe (płatności, zwroty, wypłaty PLN jako dane przepływów). 6: eksport dla księgowego, symulator, alerty.
-7 (opcja): KSeF, JPK_EWP, OSS.
+4: faktury PDF (na żądanie, B2B z NIP). 5: integracja Stripe (płatności, zwroty, wypłaty PLN jako dane przepływów).
+6: eksport dla księgowego, symulator „co jeśli”, porównanie form opodatkowania. 7 (opcja): KSeF, JPK_EWP, deklaracje OSS.
+Gotowe: 2 (kursy NBP), 3 (zamykanie okresów, alerty, terminy).
 
 ## Ograniczenia i pytania do księgowego
 Stawka ryczałtu (8,5/12/15%) [N], moment zmiany progu zdrowotnej [N], definicja dochodu dla Małego ZUS Plus [N], kurs NBP (dzień

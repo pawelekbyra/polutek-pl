@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jdg_deadline_list" model="ir.ui.view">
+        <field name="name">jdg.deadline.list</field>
+        <field name="model">jdg.deadline</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="state == 'todo' and days_left &lt; 0"
+                  decoration-warning="state == 'todo' and days_left &gt;= 0 and days_left &lt;= 7"
+                  decoration-muted="state != 'todo'" default_order="date_due">
+                <field name="date_due"/>
+                <field name="name"/>
+                <field name="kind" optional="show"/>
+                <field name="amount_estimate" optional="show"/>
+                <field name="days_left" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-warning="state == 'todo'"/>
+                <field name="pln_currency_id" column_invisible="True"/>
+                <button name="action_done" type="object" string="Zrobione" icon="fa-check" invisible="state != 'todo'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_deadline_form" model="ir.ui.view">
+        <field name="name">jdg.deadline.form</field>
+        <field name="model">jdg.deadline</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_done" type="object" string="Zrobione" class="btn-primary" invisible="state != 'todo'"/>
+                    <button name="action_skip" type="object" string="Pomiń" invisible="state != 'todo'"/>
+                    <button name="action_reset" type="object" string="Przywróć" invisible="state == 'todo'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="todo,done"/>
+                </header>
+                <sheet>
+                    <field name="pln_currency_id" invisible="1"/>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="kind"/>
+                            <field name="date_due"/>
+                            <field name="date_original" invisible="not date_original"/>
+                            <field name="days_left" invisible="state != 'todo'"/>
+                        </group>
+                        <group>
+                            <field name="amount_estimate"/>
+                            <field name="done_on" invisible="state != 'done'"/>
+                            <field name="notified_stage" groups="base.group_no_one"/>
+                        </group>
+                    </group>
+                    <group><field name="note" placeholder="Notatka"/></group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_jdg_deadline_calendar" model="ir.ui.view">
+        <field name="name">jdg.deadline.calendar</field>
+        <field name="model">jdg.deadline</field>
+        <field name="arch" type="xml">
+            <calendar string="Terminy" date_start="date_due" mode="month" color="kind" quick_create="0">
+                <field name="name"/>
+                <field name="kind"/>
+                <field name="amount_estimate"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_jdg_deadline_search" model="ir.ui.view">
+        <field name="name">jdg.deadline.search</field>
+        <field name="model">jdg.deadline</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="todo" string="Do zrobienia" domain="[('state', '=', 'todo')]"/>
+                <filter name="done" string="Zrobione" domain="[('state', '=', 'done')]"/>
+                <filter name="overdue" string="Po terminie"
+                        domain="[('state', '=', 'todo'), ('date_due', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="payments" string="Płatności (ZUS, zdrowotna, zaliczka)" domain="[('kind', 'in', ['zus', 'health', 'advance'])]"/>
+                <group>
+                    <filter name="group_kind" string="Rodzaj" context="{'group_by': 'kind'}"/>
+                    <filter name="group_month" string="Miesiąc" context="{'group_by': 'date_due:month'}"/>
+                    <filter name="group_state" string="Stan" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_jdg_deadline" model="ir.actions.act_window">
+        <field name="name">Terminy</field>
+        <field name="res_model">jdg.deadline</field>
+        <field name="view_mode">calendar,list,form</field>
+        <field name="context">{'search_default_todo': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Brak terminów</p>
+            <p>Terminy (ZUS, składka zdrowotna, zaliczka, PIT-28) tworzą się same codziennie rano. Za 7, 3 i 1 dzień przed terminem
+                dostaniesz powiadomienie w Discuss.</p>
+        </field>
+    </record>
+
+    <!-- ===== Alerty progów ===== -->
+    <record id="view_jdg_alert_list" model="ir.ui.view">
+        <field name="name">jdg.alert.list</field>
+        <field name="model">jdg.alert</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="level == '100' and not acknowledged" decoration-warning="level == '90' and not acknowledged"
+                  decoration-muted="acknowledged" default_order="triggered_on desc, level desc">
+                <field name="triggered_on"/>
+                <field name="title"/>
+                <field name="level" widget="badge" decoration-danger="level == '100'" decoration-warning="level == '90'"
+                       decoration-info="level == '70'"/>
+                <field name="value_at_trigger"/>
+                <field name="limit_value"/>
+                <field name="unit"/>
+                <field name="acknowledged" widget="boolean"/>
+                <button name="action_acknowledge" type="object" string="Przyjąłem do wiadomości" icon="fa-check"
+                        invisible="acknowledged"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_alert_form" model="ir.ui.view">
+        <field name="name">jdg.alert.form</field>
+        <field name="model">jdg.alert</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <header>
+                    <button name="action_acknowledge" type="object" string="Przyjąłem do wiadomości" class="btn-primary"
+                            invisible="acknowledged"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="title"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="kind"/>
+                            <field name="level"/>
+                            <field name="year"/>
+                            <field name="triggered_on"/>
+                        </group>
+                        <group>
+                            <field name="value_at_trigger"/>
+                            <field name="limit_value"/>
+                            <field name="unit"/>
+                            <field name="acknowledged"/>
+                        </group>
+                    </group>
+                    <group><field name="message" nolabel="1"/></group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_jdg_alert_search" model="ir.ui.view">
+        <field name="name">jdg.alert.search</field>
+        <field name="model">jdg.alert</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="title"/>
+                <filter name="new" string="Nowe" domain="[('acknowledged', '=', False)]"/>
+                <group>
+                    <filter name="group_kind" string="Próg" context="{'group_by': 'kind'}"/>
+                    <filter name="group_year" string="Rok" context="{'group_by': 'year'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_jdg_alert_graph" model="ir.ui.view">
+        <field name="name">jdg.alert.graph</field>
+        <field name="model">jdg.alert</field>
+        <field name="arch" type="xml">
+            <graph string="Alerty progów" type="bar">
+                <field name="kind"/>
+                <field name="level"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_jdg_alert" model="ir.actions.act_window">
+        <field name="name">Alerty progów</field>
+        <field name="res_model">jdg.alert</field>
+        <field name="view_mode">list,form,graph</field>
+        <field name="context">{'search_default_new': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Żaden próg nie jest zagrożony</p>
+            <p>Alert pojawia się, gdy zbliżasz się do progu: zdrowotna 60 000 / 300 000 zł, limit VAT, OSS 10 000 EUR albo limit
+                darowizn od jednej osoby (poziomy 70, 90 i 100%).</p>
+        </field>
+    </record>
+</odoo>

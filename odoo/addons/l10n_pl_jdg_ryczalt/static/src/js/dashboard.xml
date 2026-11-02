@@ -190,13 +190,14 @@
                                         <div t-att-class="'o_jdg_meter_fill o_jdg_level_' + th.level" t-att-style="'width:' + Math.min(100, th.pct) + '%'"/>
                                     </div>
                                     <div class="o_jdg_threshold_value">
-                                        <t t-out="fmt.money(th.value, 0)"/> / <t t-out="fmt.money(th.limit, 0)"/> (<t t-out="fmt.pct(th.pct)"/>)
+                                        <t t-if="th.unit === 'EUR'"><t t-out="fmt.num(th.value, 0)"/> / <t t-out="fmt.num(th.limit, 0)"/> EUR (<t t-out="fmt.pct(th.pct)"/>)</t>
+                                        <t t-else=""><t t-out="fmt.money(th.value, 0)"/> / <t t-out="fmt.money(th.limit, 0)"/> (<t t-out="fmt.pct(th.pct)"/>)</t>
                                         <t t-if="th.level === 'high'"> · blisko progu</t>
                                         <t t-if="th.level === 'over'"> · próg przekroczony</t>
                                     </div>
                                     <p t-if="state.openWhy['th_' + th.key]" class="o_jdg_why"><t t-out="th.why"/></p>
                                 </div>
-                                <p class="o_jdg_muted o_jdg_small mb-0">Alert OSS (10 000 EUR) i Mały ZUS Plus dojdą w kolejnych iteracjach.</p>
+                                <p class="o_jdg_muted o_jdg_small mb-0">Alerty progów (70/90/100%) trafiają do kanału „Moja firma: terminy i alerty” w Discuss. Mały ZUS Plus dojdzie w kolejnej iteracji.</p>
                             </article>
 
 
