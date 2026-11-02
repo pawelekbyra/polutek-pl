@@ -103,7 +103,7 @@ class JdgIncomeEntry(models.Model):
         ("other", "Inne"),
     ], "Kategoria", default="vod", required=True)
 
-    pln_currency_id = fields.Many2one("res.currency", compute="_compute_pln_currency")
+    pln_currency_id = fields.Many2one("res.currency", compute="_compute_pln_currency", store=True)
     currency_id = fields.Many2one("res.currency", "Waluta", required=True,
                                   default=lambda self: self.env.ref("base.PLN"),
                                   domain="[('name', 'in', ['PLN', 'EUR', 'USD', 'GBP', 'CHF', 'CZK', 'SEK', 'NOK', 'DKK'])]",
@@ -129,6 +129,16 @@ class JdgIncomeEntry(models.Model):
     rate_pct = fields.Float("Stawka ryczałtu (%)", digits=(5, 2), required=True,
                             default=lambda self: self._default_rate_pct(),
                             help="Stawka zamrożona w chwili wpisu (z ustawień firmy i tabeli reguł).")
+    vat_rate_pct = fields.Float("Stawka VAT w cieniu (%)", digits=(5, 2), readonly=True,
+                                help="Stawka z tabeli reguł (vat.shadow_rate_pct) zamrożona w chwili wpisu.")
+    vat_net = fields.Monetary("Netto (bez VAT, w cieniu)", currency_field="pln_currency_id", readonly=True,
+                              help="Kwota brutto bez VAT, gdyby cena zawierała VAT: brutto x 100 / (100 + stawka).")
+    vat_shadow = fields.Monetary("VAT w cieniu", currency_field="pln_currency_id", readonly=True,
+                                 help="VAT wyciągnięty z ceny brutto: brutto x stawka / (100 + stawka). Przy zwolnieniu z VAT to tylko "
+                                      "informacja (ile VAT trzeba by odprowadzić po przekroczeniu limitu).")
+    vat_due = fields.Boolean("VAT faktycznie należny", readonly=True,
+                             help="Tak tylko wtedy, gdy w chwili wpisu firma była czynnym podatnikiem VAT (wtedy przychód ryczałtowy "
+                                  "to kwota NETTO). Przy zwolnieniu: nie.")
     fee_amount = fields.Monetary("Opłata Stripe (informacyjnie)", currency_field="currency_id",
                                  help="Tylko informacyjnie: na ryczałcie opłat nie odliczamy od przychodu. "
                                       "Służy do wyliczenia, ile realnie wpłynęło.")
@@ -176,7 +186,7 @@ class JdgIncomeEntry(models.Model):
     @api.depends("name", "description", "amount", "currency_id")
     def _compute_display_name(self):
         for entry in self:
-            entry.display_name = "%s %s" % (entry.name or "", entry.description or "").strip()
+            entry.display_name = ("%s %s" % (entry.name or "", entry.description or "")).strip()
 
     def _compute_pln_currency(self):
         pln = self.env.ref("base.PLN")
@@ -194,7 +204,7 @@ class JdgIncomeEntry(models.Model):
             if entry.fx_source == "pln" or not entry.currency_id or entry.currency_id.name == "PLN":
                 entry.fx_info = "PLN"
             elif entry.fx_source == "missing":
-                entry.fx_info = "brak kursu: wpisz go albo dodaj tabelę NBP"
+                entry.fx_info = "czeka na kurs NBP (pobierze się sam; możesz wpisać ręcznie)"
             else:
                 table = entry.fx_rate_id and "%s z %s" % (entry.fx_rate_id.table_no or "tabela A", entry.fx_rate_id.rate_date) \
                     or entry.fx_table_no or "kurs ręczny"
@@ -230,6 +240,23 @@ class JdgIncomeEntry(models.Model):
             tax_base_pln=float(pln_amount),
             fee_pln=float(engine.jdg_round(engine.dec(fee_amount) * rate)),
         )
+        return vals
+
+    @api.model
+    def _vat_values(self, kind, pln_amount, income_date, company=None):
+        """VAT „w cieniu” dla wpisu: brutto x stawka / (100 + stawka). Gdy firma jest czynnym podatnikiem VAT, VAT jest
+        faktycznie należny, a przychód ryczałtowy (`tax_base_pln`) to kwota netto. Darowizny: bez VAT."""
+        company = company or self.env.company
+        if kind not in TAXABLE_KINDS:
+            return {"vat_rate_pct": 0.0, "vat_net": 0.0, "vat_shadow": 0.0, "vat_due": False}
+        rate = engine.dec(self.env["jdg.tax.rule"]._lookup("vat.shadow_rate_pct", income_date, company).value_num)
+        gross = engine.dec(pln_amount)
+        vat = engine.jdg_round(gross * rate / (100 + rate))
+        net = gross - vat
+        due = self.env["jdg.profile"]._get(company).vat_status == "active"
+        vals = {"vat_rate_pct": float(rate), "vat_net": float(net), "vat_shadow": float(vat), "vat_due": due}
+        if due:
+            vals["tax_base_pln"] = float(net)
         return vals
 
     @api.onchange("currency_id", "income_date")
@@ -275,20 +302,21 @@ class JdgIncomeEntry(models.Model):
             manual = vals.get("fx_rate") if (vals.get("fx_rate") and currency != pln and not vals.get("fx_rate_id")) else None
             vals.update(self._money_values(
                 currency, income_date, vals.get("amount", 0.0), vals.get("fee_amount", 0.0), manual, vals.get("fx_table_no")))
+            company = self.env["res.company"].browse(vals["company_id"]) if vals.get("company_id") else self.env.company
+            vals.update(self._vat_values(vals.get("kind", "sale"), vals["pln_amount"], income_date, company))
             vals.setdefault("currency_id", currency.id)
             if vals.get("rate_pct") in (None, False):
                 vals["rate_pct"] = self._default_rate_pct()
             if not vals.get("is_test"):
-                company = self.env["res.company"].browse(vals["company_id"]) if vals.get("company_id") else self.env.company
                 self.env["jdg.period"]._assert_open(company, income_date, "Wpis przychodu")
         return super().create(vals_list)
 
-    _MONEY_TRIGGERS = {"currency_id", "income_date", "amount", "fee_amount", "fx_rate", "fx_table_no"}
+    _MONEY_TRIGGERS = {"currency_id", "income_date", "amount", "fee_amount", "fx_rate", "fx_table_no", "kind"}
 
     def write(self, vals):
         posted = self.filtered(lambda e: e.state == "posted")
         if posted and not self.env.context.get("jdg_posting"):
-            blocked = set(vals) - MUTABLE_AFTER_POST - {"write_uid", "write_date"}
+            blocked = set(vals) - MUTABLE_AFTER_POST - {"write_uid", "write_date", "pln_currency_id"}
             if blocked:
                 raise UserError(
                     "Zaksięgowany wpis jest niezmienny (zapisany na stałe). Błąd? Dodaj wpis korygujący. "
@@ -312,6 +340,7 @@ class JdgIncomeEntry(models.Model):
                     manual = None
                 new = self._money_values(entry.currency_id, entry.income_date, entry.amount, entry.fee_amount, manual,
                                          entry.fx_table_no)
+                new.update(self._vat_values(entry.kind, new["pln_amount"], entry.income_date, entry.company_id))
                 super(JdgIncomeEntry, entry).write(new)
         return res
 
@@ -377,6 +406,7 @@ class JdgIncomeEntry(models.Model):
             new = self._money_values(entry.currency_id, entry.income_date, entry.amount, entry.fee_amount, None,
                                      entry.fx_table_no)
             if new.get("fx_source") != "missing":
+                new.update(self._vat_values(entry.kind, new["pln_amount"], entry.income_date, entry.company_id))
                 super(JdgIncomeEntry, entry).write(new)  # z pominięciem write(), które liczyłoby kwoty drugi raz
                 resolved |= entry
         for entry in resolved.filtered("post_when_rate_ready"):

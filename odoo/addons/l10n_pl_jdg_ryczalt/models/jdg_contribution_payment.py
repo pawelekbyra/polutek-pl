@@ -26,7 +26,7 @@ class JdgContributionPayment(models.Model):
     _amount_check = models.Constraint("CHECK(amount >= 0)", "Kwota zapłaty nie może być ujemna.")
 
     company_id = fields.Many2one("res.company", "Firma", required=True, default=lambda self: self.env.company)
-    currency_id = fields.Many2one("res.currency", compute="_compute_currency")
+    currency_id = fields.Many2one("res.currency", compute="_compute_currency", store=True)
     kind = fields.Selection(KINDS, "Co zapłacono", required=True, default="health")
     for_month = fields.Date("Za miesiąc", required=True, default=lambda self: fields.Date.context_today(self).replace(day=1),
                             help="Miesiąc, którego dotyczy składka (dla zaliczki kwartalnej: pierwszy miesiąc kwartału). "

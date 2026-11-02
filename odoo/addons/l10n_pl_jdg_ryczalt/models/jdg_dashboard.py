@@ -212,6 +212,7 @@ class JdgDashboard(models.AbstractModel):
             "rate_warning": RATE_WARNING,
             "thresholds": thresholds,
             "donations": ctx.donations(today),
+            "vat": ctx.vat_card(today),
             "deadlines": ctx.upcoming_deadlines(limit=4),
             "chart": {"days": days, "label": "%s %d" % (MONTHS[today.month - 1], today.year),
                       "max": max([d["revenue"] for d in days] + [0.0])},

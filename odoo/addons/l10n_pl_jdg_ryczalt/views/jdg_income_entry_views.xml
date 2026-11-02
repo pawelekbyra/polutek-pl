@@ -16,6 +16,7 @@
                 <field name="fx_info" optional="show"/>
                 <field name="pln_amount" sum="Razem PLN"/>
                 <field name="rate_pct" optional="show"/>
+                <field name="vat_shadow" optional="show" sum="VAT w cieniu"/>
                 <field name="country_code" optional="hide"/>
                 <field name="is_test" widget="boolean" string="Test" optional="show"/>
                 <field name="state" widget="badge" decoration-success="state == 'posted'" decoration-info="state == 'draft'"/>
@@ -64,6 +65,16 @@
                             <field name="rate_pct" readonly="state == 'posted'"/>
                             <field name="fee_amount" readonly="state == 'posted'"/>
                             <field name="fee_pln" invisible="not fee_amount"/>
+                        </group>
+                    </group>
+                    <group string="VAT w cieniu (na wypadek przekroczenia limitu)">
+                        <group>
+                            <field name="vat_rate_pct"/>
+                            <field name="vat_net"/>
+                        </group>
+                        <group>
+                            <field name="vat_shadow"/>
+                            <field name="vat_due"/>
                         </group>
                     </group>
                     <group string="Dodatkowe">
@@ -125,6 +136,7 @@
                 <field name="income_date" type="row" interval="month"/>
                 <field name="currency_id" type="col"/>
                 <field name="pln_amount" type="measure"/>
+                <field name="vat_shadow" type="measure"/>
             </pivot>
         </field>
     </record>

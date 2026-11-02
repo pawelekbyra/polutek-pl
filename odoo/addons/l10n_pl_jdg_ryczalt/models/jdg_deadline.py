@@ -12,7 +12,7 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 from . import engine
-from .calc import MONTHS_GEN, ROMAN, CalcContext, _money, date_long
+from .calc import MONTHS, ROMAN, CalcContext, _money, date_long
 
 _logger = logging.getLogger(__name__)
 
@@ -54,10 +54,10 @@ class JdgDeadline(models.Model):
     _key_uniq = models.UniqueIndex("(company_id, key)", "Taki termin już istnieje.")
 
     company_id = fields.Many2one("res.company", "Firma", required=True, default=lambda self: self.env.company, index=True)
-    pln_currency_id = fields.Many2one("res.currency", compute="_compute_pln_currency")
+    pln_currency_id = fields.Many2one("res.currency", compute="_compute_pln_currency", store=True)
     key = fields.Char("Klucz", required=True, index=True, readonly=True,
                       help="Techniczny identyfikator (rodzaj + okres), dzięki któremu generator nie dubluje terminów.")
-    name = fields.Char("Termin", required=True)
+    name = fields.Char("Nazwa terminu", required=True)
     kind = fields.Selection(KINDS, "Rodzaj", required=True, index=True)
     date_due = fields.Date("Termin", required=True, index=True)
     date_original = fields.Date("Termin przed przesunięciem", help="Gdy termin wypada w dzień wolny, przesuwamy go na "
@@ -142,7 +142,7 @@ class JdgDeadline(models.Model):
         day_key = "deadline.zus_day_employer" if profile.has_employees else "deadline.zus_day"
         month = max(start_month, engine.add_months(engine.month_start(today), -2))
         while month <= horizon:
-            label = "%s %d" % (MONTHS_GEN[month.month - 1], month.year)
+            label = "%s %d" % (MONTHS[month.month - 1], month.year)
             raw = safe(lambda month=month: engine.add_months(month, 1).replace(day=int(ctx.rules.num(day_key, month))))
             if raw:
                 social = safe(lambda month=month: ctx.social_for_month(month))
@@ -171,7 +171,7 @@ class JdgDeadline(models.Model):
                 elif ps <= today:
                     got = safe(lambda ps=ps, pe=pe, year=year: ctx._ctx_for(year).period_advance(ps, pe)["advance"])
                     amount = got
-                label = (MONTHS_GEN[ps.month - 1] + " %d" % ps.year) if profile.advance_rhythm == "monthly" \
+                label = (MONTHS[ps.month - 1] + " %d" % ps.year) if profile.advance_rhythm == "monthly" \
                     else "%s kwartał %d" % (ROMAN[(ps.month - 1) // 3], ps.year)
                 add("advance:%s" % ps.strftime("%Y-%m"), "advance", "Zaliczka na ryczałt za %s" % label, raw, amount)
 
@@ -212,8 +212,8 @@ class JdgDeadline(models.Model):
         month = max(start_month, engine.add_months(engine.month_start(today), -2))
         while month <= horizon:
             raw = engine.add_months(month, 1).replace(day=10)
-            add("close:%s" % month.strftime("%Y-%m"), "close", "Zamknij miesiąc %s %d w module (Zamykanie okresów)" % (
-                MONTHS_GEN[month.month - 1], month.year), raw)
+            add("close:%s" % month.strftime("%Y-%m"), "close", "Zamknij miesiąc: %s %d (menu Zamykanie okresów)" % (
+                MONTHS[month.month - 1], month.year), raw)
             month = engine.add_months(month, 1)
 
         # zapis do bazy: dodaj, odśwież niezałatwione, usuń niepotrzebne (tylko niezałatwione, bez powiadomień)

@@ -55,7 +55,10 @@ class JdgProfile(models.Model):
         ("exempt_113", "Zwolniony z VAT (art. 113 ustawy o VAT)"),
         ("active", "Czynny podatnik VAT"),
         ("not_decided", "Jeszcze nie zdecydowano"),
-    ], string="Status VAT", default="exempt_113", required=True)
+    ], string="Status VAT", default="exempt_113", required=True,
+        help="Zwolniony (art. 113): cena nie zawiera VAT, przychód ryczałtowy to cała cena, a VAT jest liczony tylko „w cieniu” "
+             "(brutto x 23 / 123) z alertami przy 80/90/100% limitu. Czynny: VAT jest należny, przychód ryczałtowy to kwota "
+             "NETTO, zaliczki liczą się od netto. Status stosuje się do NOWYCH wpisów.")
     vat_exempt_basis = fields.Char("Podstawa zwolnienia z VAT (na fakturze)", default="art. 113 ust. 1 ustawy o VAT")
     oss_registered = fields.Boolean(
         "Zarejestrowany w OSS", default=False,

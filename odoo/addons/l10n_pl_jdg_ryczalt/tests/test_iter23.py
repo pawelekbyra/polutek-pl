@@ -426,12 +426,15 @@ class TestAlerts(JdgCase):
         self.assertFalse(self.Alert._evaluate(self.company, self.today, notify=False))
 
     def test_vat_limit_alert(self):
-        self._entry(170000, dt.date(2027, 3, 1))  # 70,8% z 240 000
+        self._entry(170000, dt.date(2027, 3, 1))  # 70,8%: VAT alarmuje dopiero od 80%
         self.Alert._evaluate(self.company, self.today, notify=False)
-        self.assertEqual(self._levels("vat_limit"), ["70"])
-        self._entry(70000, dt.date(2027, 4, 1))  # 240 000 = 100%
+        self.assertEqual(self._levels("vat_limit"), [])
+        self._entry(30000, dt.date(2027, 3, 2))  # 200 000 = 83%
         self.Alert._evaluate(self.company, self.today, notify=False)
-        self.assertEqual(self._levels("vat_limit"), ["100", "70", "90"])
+        self.assertEqual(self._levels("vat_limit"), ["80"])
+        self._entry(40000, dt.date(2027, 4, 1))  # 240 000 = 100%
+        self.Alert._evaluate(self.company, self.today, notify=False)
+        self.assertEqual(self._levels("vat_limit"), ["100", "80", "90"])
 
     def test_vat_alert_off_when_active_vat(self):
         self.profile.vat_status = "active"
@@ -620,8 +623,140 @@ class TestViews(JdgCase):
             views = self.env[model].get_views([(False, kind) for kind in kinds])
             self.assertEqual(set(views["views"]), set(kinds), model)
 
+    def test_entry_display_name_and_form_read(self):
+        entry = self._entry(100, dt.date(2027, 3, 1), description="Dostęp 30 dni")
+        self.assertEqual(entry.display_name, "%s Dostęp 30 dni" % entry.name)
+        data = entry.web_read({"name": {}, "display_name": {}, "fx_info": {}, "state": {}})
+        self.assertEqual(data[0]["state"], "posted")
+
     def test_actions_open(self):
         action = self.env["jdg.period"].action_open_periods()
         self.assertEqual(action["res_model"], "jdg.period")
         self.assertIn("pivot", action["view_mode"])
         self.assertEqual(self.env["jdg.fx.rate"].action_fetch_now.__name__, "action_fetch_now")
+
+
+@tagged("post_install", "-at_install", "jdg_iter3", "jdg_vat")
+class TestVatShadow(JdgCase):
+    """VAT „w cieniu” (brutto x 23 / 123) i limit zwolnienia z VAT: pod limitem, równo na limicie, przekroczenie w roku."""
+
+    def setUp(self):
+        super().setUp()
+        self.profile.write({"start_date": dt.date(2027, 1, 1), "vat_status": "exempt_113"})
+        self.Alert = self.env["jdg.alert"]
+        self.today = dt.date(2027, 8, 20)
+
+    def _info(self, **kw):
+        from odoo.addons.l10n_pl_jdg_ryczalt.models.calc import CalcContext
+        return CalcContext(self.env, self.profile, self.today, **kw).vat_limit_info(self.today)
+
+    def test_shadow_vat_math_and_flag(self):
+        entry = self._entry(123, dt.date(2027, 2, 1))
+        self.assertAlmostEqual(entry.vat_rate_pct, 23.0)
+        self.assertAlmostEqual(entry.vat_shadow, 23.0)
+        self.assertAlmostEqual(entry.vat_net, 100.0)
+        self.assertFalse(entry.vat_due)
+        self.assertAlmostEqual(entry.tax_base_pln, 123.0)  # zwolniony: przychód = cała cena
+        odd = self._entry(49.99, dt.date(2027, 2, 2))
+        self.assertAlmostEqual(odd.vat_shadow, 9.35)  # 49,99 x 23 / 123 = 9,347 -> 9,35
+        self.assertAlmostEqual(odd.vat_net + odd.vat_shadow, 49.99)
+
+    def test_refund_and_donation(self):
+        refund = self._entry(-123, dt.date(2027, 2, 3), kind="refund")
+        self.assertAlmostEqual(refund.vat_shadow, -23.0)
+        gift = self._entry(100, dt.date(2027, 2, 4), kind="donation", donor_key="K-9")
+        self.assertEqual((gift.vat_shadow, gift.vat_net, gift.vat_due), (0.0, 0.0, False))
+
+    def test_active_vat_status_taxes_net(self):
+        self.profile.vat_status = "active"
+        entry = self._entry(123, dt.date(2027, 2, 1))
+        self.assertTrue(entry.vat_due)
+        self.assertAlmostEqual(entry.tax_base_pln, 100.0)  # przychód ryczałtowy bez VAT
+        self.assertAlmostEqual(entry.pln_amount, 123.0)
+        data = self.env["jdg.dashboard"].get_data(on_date=dt.date(2027, 2, 1))
+        self.assertAlmostEqual(data["today"]["revenue"], 100.0)
+        self.assertTrue(data["vat"]["active"])
+        self.assertFalse(data["vat"]["banner"])
+        self.assertFalse([t for t in data["thresholds"] if t["key"] == "vat"])
+
+    def test_rate_is_a_rule_parameter(self):
+        rule = self.env["jdg.tax.rule"]._lookup("vat.shadow_rate_pct", dt.date(2027, 2, 1))
+        self.assertEqual(rule.value_num, 23.0)
+        self.assertEqual(rule.group, "vat")
+
+    def test_below_limit(self):
+        self._entry(100000, dt.date(2027, 3, 1))
+        info = self._info()
+        self.assertFalse(info["exceeded"])
+        self.assertFalse(info["reached"])
+        self.assertEqual(info["used"], D("100000"))
+        self.assertEqual(info["limit"], D("240000"))
+        self.assertAlmostEqual(info["pct"], 41.7, places=1)
+        self.assertEqual(info["remaining"], D("140000"))
+        self.Alert._evaluate(self.company, self.today, notify=False)
+        self.assertFalse(self.Alert.search([("kind", "=", "vat_limit")]))
+        data = self.env["jdg.dashboard"].get_data(on_date=self.today)
+        self.assertFalse(data["vat"]["banner"])
+        self.assertAlmostEqual(data["vat"]["year"], 100000 * 23 / 123, places=2)
+
+    def test_exactly_at_limit_is_still_exempt(self):
+        self._entry(120000, dt.date(2027, 3, 1))
+        self._entry(120000, dt.date(2027, 4, 1))
+        info = self._info()
+        self.assertEqual(info["used"], D("240000"))
+        self.assertTrue(info["reached"])
+        self.assertFalse(info["exceeded"])  # przekroczenie dopiero „ponad” limit
+        self.Alert._evaluate(self.company, self.today, notify=False)
+        self.assertEqual(sorted(self.Alert.search([("kind", "=", "vat_limit")]).mapped("level")), ["100", "80", "90"])
+        banner = self.env["jdg.dashboard"].get_data(on_date=self.today)["vat"]["banner"]
+        self.assertIn("osiągnięty", banner)
+
+    def test_exceeded_mid_year_points_to_the_sale(self):
+        self._entry(100000, dt.date(2027, 2, 10))
+        self._entry(100000, dt.date(2027, 3, 10))
+        self._entry(30000, dt.date(2027, 4, 10))  # 230 000
+        over = self._entry(20000, dt.date(2027, 5, 10), doc_ref="FV-77")  # 250 000 > 240 000
+        later = self._entry(5000, dt.date(2027, 6, 10))
+        info = self._info()
+        self.assertTrue(info["exceeded"])
+        self.assertEqual(info["entry"]["id"], over.id)
+        self.assertEqual(info["entry"]["date"], dt.date(2027, 5, 10))
+        self.assertEqual(info["over_by"], D("10000"))
+        # VAT w cieniu od sprzedaży, która przekroczyła limit, i od późniejszych
+        self.assertAlmostEqual(float(info["vat_since"]), over.vat_shadow + later.vat_shadow, places=2)
+        self.assertIn(over.name, info["text"])
+        self.assertIn("art. 113 ust. 5", info["text"])
+        self.assertIn("10 maja 2027", info["text"])
+        self.Alert._evaluate(self.company, self.today, notify=False)
+        alert = self.Alert.search([("kind", "=", "vat_limit"), ("level", "=", "100")])
+        self.assertTrue(alert)
+        self.assertIn(over.name, alert.message)
+        data = self.env["jdg.dashboard"].get_data(on_date=self.today)
+        self.assertTrue(data["vat"]["exceeded"])
+        self.assertEqual(data["vat"]["since"]["date"], "2027-05-10")
+        self.assertIn("LIMIT PRZEKROCZONY", data["vat"]["banner"])
+
+    def test_refund_before_threshold_delays_exceedance(self):
+        self._entry(200000, dt.date(2027, 2, 10))
+        self._entry(-30000, dt.date(2027, 2, 20), kind="refund")
+        self._entry(60000, dt.date(2027, 3, 10))  # 230 000: jeszcze nie
+        self.assertFalse(self._info()["exceeded"])
+        self._entry(20000, dt.date(2027, 3, 11))  # 250 000
+        self.assertTrue(self._info()["exceeded"])
+
+    def test_limit_prorated_in_start_year(self):
+        self.profile.start_date = dt.date(2027, 7, 1)
+        self._entry(100000, dt.date(2027, 7, 15))
+        info = self._info()
+        self.assertTrue(info["prorated"])
+        self.assertEqual(info["days"], 184)
+        self.assertAlmostEqual(float(info["limit"]), 240000 * 184 / 365, places=2)  # 120 986,30
+        self._entry(25000, dt.date(2027, 7, 16))  # 125 000 > 120 986,30
+        self.assertTrue(self._info()["exceeded"])
+
+    def test_oss_alert_is_separate_from_vat(self):
+        self.Rate.create({"currency_id": self.eur.id, "rate_date": dt.date(2027, 2, 26), "mid": 4.3})
+        self._entry(9500, dt.date(2027, 3, 1), currency_id=self.eur.id, country_code="DE", buyer_type="b2c")
+        self.Alert._evaluate(self.company, self.today, notify=False)
+        self.assertTrue(self.Alert.search([("kind", "=", "oss10k")]))
+        self.assertFalse(self.Alert.search([("kind", "=", "vat_limit")]))  # 9 500 EUR x 4,3 = 40 850 zł: daleko od limitu VAT

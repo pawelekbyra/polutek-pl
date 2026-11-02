@@ -19,7 +19,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 from . import engine
-from .calc import CalcContext, _money, date_long, period_label
+from .calc import MONTHS, CalcContext, _money, date_long, period_label
 from .engine import ZERO
 
 MANAGER_GROUP = "l10n_pl_jdg_ryczalt.group_jdg_manager"
@@ -40,7 +40,7 @@ class JdgPeriod(models.Model):
     _period_uniq = models.UniqueIndex("(company_id, kind, date_from)", "Taki okres już istnieje.")
 
     company_id = fields.Many2one("res.company", "Firma", required=True, default=lambda self: self.env.company, index=True)
-    pln_currency_id = fields.Many2one("res.currency", compute="_compute_pln_currency")
+    pln_currency_id = fields.Many2one("res.currency", compute="_compute_pln_currency", store=True)
     kind = fields.Selection([("month", "Miesiąc"), ("quarter", "Kwartał")], "Rodzaj", required=True, index=True)
     date_from = fields.Date("Od", required=True, index=True)
     date_to = fields.Date("Do", required=True)
@@ -94,12 +94,14 @@ class JdgPeriod(models.Model):
                 "Podatek narastająco: %s zł (podstawa %s zł)." % (
                     _money(engine.dec(data["tax"]["cum_tax"])), _money(engine.dec(data["tax"]["base"])))]
             for item in data["months"]:
-                lines.append("%s: zdrowotna %s zł, społeczne %s zł, FP %s zł." % (
-                    item["month"], _money(engine.dec(item["health"])), _money(engine.dec(item["social"])),
-                    _money(engine.dec(item["fp"]))))
+                year, month = (int(x) for x in item["month"].split("-"))
+                lines.append("%s %d: zdrowotna %s zł, społeczne %s zł, FP %s zł." % (
+                    MONTHS[month - 1].capitalize(), year, _money(engine.dec(item["health"])),
+                    _money(engine.dec(item["social"])), _money(engine.dec(item["fp"]))))
             if data.get("advance"):
                 adv = data["advance"]
-                lines.append("Zaliczka na ryczałt: %s zł (termin %s)." % (_money(engine.dec(adv["advance"])), adv["due_date"]))
+                lines.append("Zaliczka na ryczałt: %s zł (termin %s)." % (
+                    _money(engine.dec(adv["advance"])), date_long(dt.date.fromisoformat(adv["due_date"]))))
             period.snapshot_text = "\n".join(lines)
 
     # ------------------------------------------------------------------ tworzenie okresów

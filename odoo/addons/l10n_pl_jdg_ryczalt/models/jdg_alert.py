@@ -33,7 +33,7 @@ class JdgAlert(models.Model):
 
     company_id = fields.Many2one("res.company", "Firma", required=True, default=lambda self: self.env.company, index=True)
     kind = fields.Selection(KINDS, "Próg", required=True, index=True)
-    level = fields.Selection([("70", "70%"), ("90", "90%"), ("100", "100% (osiągnięty)")], "Poziom", required=True)
+    level = fields.Selection([("70", "70%"), ("80", "80%"), ("90", "90%"), ("100", "100% (osiągnięty)")], "Poziom", required=True)
     year = fields.Integer("Rok", required=True, index=True)
     triggered_on = fields.Date("Kiedy", required=True)
     value_at_trigger = fields.Float("Wartość", digits=(16, 2))
@@ -66,7 +66,7 @@ class JdgAlert(models.Model):
             if limit <= 0 or value <= ZERO:
                 continue
             pct = float(value / limit * 100)
-            reached = [lv for lv in LEVELS if pct >= lv]
+            reached = [lv for lv in metric.get("levels", LEVELS) if pct >= lv]
             if not reached:
                 continue
             have = set(sudo.search([("company_id", "=", company.id), ("kind", "=", metric["kind"]),
