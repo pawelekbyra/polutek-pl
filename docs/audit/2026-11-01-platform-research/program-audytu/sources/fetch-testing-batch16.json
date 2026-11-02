@@ -1,0 +1,18 @@
+[
+  {
+    "date": "2026-11-02",
+    "file": "playwright-best-practices.md",
+    "url": "https://raw.githubusercontent.com/microsoft/playwright/v1.61.1/docs/src/best-practices-js.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "785e6244815ed457ceb0a9109e0ead34a114fd89b09c0689174a5b421eed8512"
+  },
+  {
+    "date": "2026-11-02",
+    "file": "playwright-LICENSE",
+    "url": "https://raw.githubusercontent.com/microsoft/playwright/v1.61.1/LICENSE",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb"
+  }
+]

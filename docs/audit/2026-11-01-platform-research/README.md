@@ -6,6 +6,9 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 
 | Materiał | Znaczenie |
 |---|---|
+| [Co już wiemy — dla właściciela](program-audytu/WNIOSEK-DLA-WLASCICIELA.md) | Mocne fundamenty, odtworzone błędy i granice gotowości bez oceny w punktach |
+| [Plan domknięcia wszystkich obszarów](program-audytu/DOMKNIECIE-DOWODOW.csv) | Brakujące dowody i warunki odbioru dla D01–D18; żaden obszar nie jest zamknięty |
+| [Bramki gotowości](program-audytu/BRAMKI-GOTOWOSCI.csv) | Osobne wymagania dla lokalnego runtime, bety, sprzedaży, otwartej platformy i 10000 widzów |
 | [Raport bazowy](RAPORT.md) | Pogłębione porównanie, 22 obszary oceny, wyniki kontroli i eksperymentów |
 | [Program pełnego badania](program-audytu/PROGRAM.md) | Zakres 18 obszarów, etapy, wymagania dowodu i warunki ukończenia |
 | [Stan i następny krok](program-audytu/STAN.md) | Punkt wznowienia każdej kolejnej sesji |
@@ -37,6 +40,9 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [D17: wdrożenia i odtwarzanie](program-audytu/obszary/D17-WDROZENIA-I-ODTWARZANIE.md) | Działające kontrole skryptów i rzeczywisty lokalny SQL restore; R09/R12 rozszerzone, R37: fałszywy sukces pomocniczego weryfikatora |
 | [Mapa odzyskiwania](program-audytu/ODTWARZANIE-POKRYCIE.csv) | 14 zasobów, granice dowodu i wymagane próby odtworzenia |
 | [Scenariusze wdrożeń](program-audytu/SCENARIUSZE-WDROZENIA.csv) | 26 obserwacji z atrapami i trzy rzeczywiste SQL; pełny produkt niewykonany |
+| [D18: testy i proces jakości](program-audytu/obszary/D18-TESTY-I-PROCES-JAKOSCI.md) | 547 plików AST i osiem prób skuteczności istniejących testów, bez nowego pełnego CI |
+| [Warstwy testów](program-audytu/WARSTWY-TESTOW.csv) | Co sprawdza tekst, funkcja, baza, proces i przeglądarka; czego każdy dowód nie obejmuje |
+| [Inwentarz testów](program-audytu/TESTY-INWENTARZ.csv) | Mechaniczne markery/config selection, nie wynik wykonania ani ocena każdego pliku |
 | [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R37, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
@@ -70,6 +76,8 @@ Z korzenia repo, po przygotowaniu zależności i aktywacji Node 22:
 ```bash
 node --import tsx docs/audit/2026-11-01-platform-research/pipeline-experiments.ts
 node --import tsx docs/audit/2026-11-01-platform-research/storage-experiment.ts
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/test-inventory.cjs
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/test-oracle-probe.py
 PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/backup-boundaries-experiment.py
 PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/deployment-boundaries-experiment.py
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/restore-verifier-experiment.cjs

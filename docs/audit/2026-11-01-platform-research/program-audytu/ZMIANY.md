@@ -175,3 +175,14 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Istniejący Vitest local-ci 28/28 i static 7/7 passed, oba exit 0; 17 celowo pominiętych nie zaliczono. Bez całego pipeline/generate/npm audit. Rozszerzono R09 i R12, bez zmiany priorytetów i starego raportu.
 - PeerTube: dziewięć wybranych źródeł, GPG podpisy i staged release/migration/rollback; brak pg_dump fallback i nieweryfikowane podpisy downloadera jako kontrargumenty. Brak runtime/benchmarku. SLSA v1.2 i Community Specification License 1.0 z przypiętego SHA, trzy HTTP 200; initial network i dwa 404 zachowane.
 - Sześć pominiętych źródeł operatora dodano do powierzchni: 286 rekordów, 79/207. ASVS 55/290, rejestr R01–R37, 17 obszarów rozpoczętych/jeden niezbadany, zero zamkniętych. Następnie D18.
+
+
+## 2 listopada 2026 — partia 16: testy i plan domknięcia
+
+- Rozpoczęto D18: wszystkie 18 obszarów W_TRAKCIE, zero zamkniętych. Dodano wniosek dla właściciela, plan brakujących dowodów dla każdego obszaru, pięć bramek gotowości i 12 warstw testów.
+- AST 547 plików (533 unit/2 integration/12 postgres), 4214 literalne deklaracje, zero diagnostics. Markery mocków/filesystem i coverage globs są mechaniczne, nie manual review/wykonanie/procent pokrycia.
+- Osiem rzeczywistych prób Vitest 4.1.10 na temp kopiach i niezmienionych testach; trzy baseline 17 assertions passed. Dwa wrong-accept mutanty wykryte, trzy przeżyły wybrany zakres. Brak globalnego mutation score i błędnego sumowania powtarzanych testów. 17 ops behavior tests celowo filtrowanych.
+- Rozszerzono R08 i R37: brak E2E i jeden brakujący critical-path file; four verifier tests pass with DB body disabled. Rzeczywiste PG/FFmpeg/authz i komponenty mają wartość; nie zdeprecjonowano ich wszystkich. Nie dodano R38 i nie zmieniono dawnych priorytetów.
+- Zinterpretowano stary pełny JSON bez rerun: 535 rekordów plików, 219 failed bez assertions, 2602 registered/2556 pass/35 failed/11 pending. To nie liczba błędów produkcji. Full suite/generate/npm audit/build/browser/SQL nie powtarzane.
+- Dziesięć źródeł PeerTube częściowo; pełniejsze API/process/browser wzorce, z ograniczeniami object-storage i currentTime, bez runtime/benchmarku. Playwright best practices v1.61.1 i Apache 2.0 HTTP 200/hash. Zachowano initial AST EPERM oraz korektę metadanych wersji runnera; aplikacja i testy bez zmian.
+- R01–R37 pozostają stabilne; ASVS 55/290, wejścia 79/207 z 286, bez zaliczeń. Następnie systematyczna kwalifikacja ASVS V1/V2 i wejść według planu domknięcia, pełny runtime nadal zależy od wspieranej konfiguracji środowiska.

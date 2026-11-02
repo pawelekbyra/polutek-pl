@@ -227,23 +227,43 @@
       "id": "R08",
       "title": "Brak działających E2E mimo konfiguracji",
       "baseline_priority_and_evidence": "P1, A/B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE_W_BAZOWYM_URUCHOMIENIU_I_ZRODLACH",
+      "note": "Baseline list result retained without repeat; declared tests/e2e absent at unchanged source SHA. Batch16 adds AST test/config inventory and isolated test-oracle diagnostics; many useful component/PG/FFmpeg tests exist, no blanket claim tests are worthless.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D18"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Zmiana może przejść testy funkcji/tekstu, a mimo tego zepsuć pełny upload, logowanie, odtwarzanie lub zadanie twórcy. Liczba testów nie potwierdza ich połączenia w produkt.",
+      "conditions": "Playwright points at absent tests/e2e; critical-path command includes one missing file; integrated use-case test uses Map/pass-through transaction. No new full app execution.",
+      "evidence_paths": [
+        "obszary/D18-TESTY-I-PROCES-JAKOSCI.md",
+        "WARSTWY-TESTOW.csv",
+        "TESTY-INWENTARZ.csv",
+        "SCENARIUSZE-JAKOSC.csv",
+        "DOMKNIECIE-DOWODOW.csv",
+        "evidence/batch16-review.json",
+        "evidence/test-inventory.json",
+        "evidence/test-oracle-probe.json",
+        "evidence/test-run-interpretation.json"
+      ],
+      "counterarguments": [
+        "547 baseline test files include 12 declared real-Postgres files, real FFmpeg/process tests and component controls; these should be preserved.",
+        "Existing health tests detect two intentional wrong-accept mutations.",
+        "Static-only selection is not the full ops behavior suite; no claim all tests accept broken deploy.",
+        "A missing critical-path file does not prove zero tests run when another target exists.",
+        "Earlier real SQL/browser component experiments provide distinct partial evidence; they do not close full product E2E."
+      ],
+      "standard_refs": [
+        "Playwright v1.61.1 Best Practices (guidance only)"
+      ],
+      "proposed_fix": "Keep cheap unit/static/real SQL/process tests, add a small isolated full app/API/worker/storage/browser suite for critical journeys and their failure/denial controls; bind required results to exact artifact.",
+      "acceptance_test": "Own video upload/resume/encode/publish/playback plus other-channel/guest denial, source replacement, cancel/delete and payment test-mode retry execute across declared real boundaries; list skipped/services/digest and demonstrate seeded regressions fail.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-02",
+      "deployment_scope": "SOURCE_AND_ISOLATED_TEST_DIAGNOSTICS;FULL_APPLICATION_E2E_UNVERIFIED"
     },
     {
       "id": "R09",
@@ -1332,7 +1352,7 @@
       "baseline_priority_and_evidence": "NEW: P2; unchanged TS in VM subprocess, real process.exit, explicit synthetic query fixtures",
       "status": "POTWIERDZONE_W_KOMPONENTACH_Z_ATRAPAMI",
       "evidence_level": "B_ACTUAL_SCRIPT_REAL_PROCESS_STATUS_SYNTHETIC_DB_QUERIES",
-      "note": "Rejected count only logs/returns null, manifest missing actual field warns, migration query error warns, finished_at null with rolled_back_at/logs null not counted as unfinished. Corrected real-exit child controls avoid the initial harness exception-catch artifact.",
+      "note": "Rejected count only logs/returns null, manifest missing actual field warns, migration query error warns, finished_at null with rolled_back_at/logs null not counted as unfinished. Corrected real-exit child controls avoid the initial harness exception-catch artifact. Batch16: four existing helper tests pass both baseline and temp source with verification body disabled; they check preflight/logging/redaction, not completed verification.",
       "source_report": "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
@@ -1347,14 +1367,18 @@
         "evidence/batch15-review.json",
         "evidence/restore-verifier-experiment.json",
         "evidence/batch15-harness-diagnostics.json",
-        "tools/restore-verifier-experiment.cjs"
+        "tools/restore-verifier-experiment.cjs",
+        "evidence/test-oracle-probe.json",
+        "tools/test-oracle-probe.py",
+        "obszary/D18-TESTY-I-PROCES-JAKOSCI.md"
       ],
       "counterarguments": [
         "Missing URL, missing opt-in and exact production URL match refuse before client construction.",
         "Known manifest mismatch, logged migration failure and orphan grant correctly exit nonzero.",
         "Count witness models one failed count followed by working queries, not a missing whole table.",
         "DB/Prisma are explicit fixtures; no actual corrupt restored DB, production use or real incident proven.",
-        "R12 is the broader product recovery gap, this is a distinct false-verdict implementation in a manual helper."
+        "R12 is the broader product recovery gap, this is a distinct false-verdict implementation in a manual helper.",
+        "Mutation probe uses a minimal temp Vitest configuration and existing test mocks; it is not a whole-project mutation score or newly corrupted production verifier."
       ],
       "standard_refs": [],
       "proposed_fix": "Track all failed mandatory model/metadata checks; missing expected aggregate is failure/incomplete, verify explicit migration completion and expected identity; never emit full success with unresolved required checks.",
@@ -1362,7 +1386,8 @@
       "independent_review": "PENDING",
       "retest": null,
       "created_at": "2026-11-02",
-      "deployment_scope": "OPTIONAL_HELPER_COMPONENT;PRODUCTION_USE_UNVERIFIED"
+      "deployment_scope": "OPTIONAL_HELPER_COMPONENT;PRODUCTION_USE_UNVERIFIED",
+      "updated_at": "2026-11-02"
     }
   ]
 }

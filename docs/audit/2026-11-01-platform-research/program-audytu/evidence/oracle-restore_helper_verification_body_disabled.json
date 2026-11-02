@@ -1,0 +1,88 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 2,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 4,
+  "numPassedTests": 4,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1793597544280,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "verify-restored-database script safety and logic"
+          ],
+          "fullName": "verify-restored-database script safety and logic should fail if RESTORE_DATABASE_URL is missing",
+          "status": "passed",
+          "title": "should fail if RESTORE_DATABASE_URL is missing",
+          "duration": 30.546044999999992,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "verify-restored-database script safety and logic"
+          ],
+          "fullName": "verify-restored-database script safety and logic should fail if ALLOW_RESTORE_VERIFICATION is not true",
+          "status": "passed",
+          "title": "should fail if ALLOW_RESTORE_VERIFICATION is not true",
+          "duration": 13.631038999999987,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "verify-restored-database script safety and logic"
+          ],
+          "fullName": "verify-restored-database script safety and logic should fail if RESTORE_DATABASE_URL matches DATABASE_URL",
+          "status": "passed",
+          "title": "should fail if RESTORE_DATABASE_URL matches DATABASE_URL",
+          "duration": 8.567868000000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "verify-restored-database script safety and logic"
+          ],
+          "fullName": "verify-restored-database script safety and logic should redact credentials in log output",
+          "status": "passed",
+          "title": "should redact credentials in log output",
+          "duration": 18.871965999999986,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793597544429,
+      "endTime": 1793597544500.872,
+      "status": "passed",
+      "message": "",
+      "name": "/tmp/audit-test-oracle-4sv0gp6k/tests/unit/operations/verify-restored-database.test.ts"
+    }
+  ]
+}

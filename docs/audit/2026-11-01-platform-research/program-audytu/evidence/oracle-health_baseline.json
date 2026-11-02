@@ -1,0 +1,112 @@
+{
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 3,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 6,
+  "numPassedTests": 6,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1793597540698,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "constantTimeEqual"
+          ],
+          "fullName": "constantTimeEqual compares equal and different strings, including different lengths",
+          "status": "passed",
+          "title": "compares equal and different strings, including different lengths",
+          "duration": 1.7134969999999896,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized accepts the x-health-token header",
+          "status": "passed",
+          "title": "accepts the x-health-token header",
+          "duration": 16.28152800000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized rejects wrong, shorter and longer tokens without throwing",
+          "status": "passed",
+          "title": "rejects wrong, shorter and longer tokens without throwing",
+          "duration": 0.4253669999999943,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized is false when the env var is unset or empty, even if the header is empty",
+          "status": "passed",
+          "title": "is false when the env var is unset or empty, even if the header is empty",
+          "duration": 1.5184500000000014,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized ignores the legacy header names (only x-health-token is accepted)",
+          "status": "passed",
+          "title": "ignores the legacy header names (only x-health-token is accepted)",
+          "duration": 0.36975499999999784,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized does not look at a query-string token",
+          "status": "passed",
+          "title": "does not look at a query-string token",
+          "duration": 0.19367400000001567,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793597540850,
+      "endTime": 1793597540871.3699,
+      "status": "passed",
+      "message": "",
+      "name": "/tmp/audit-test-oracle-1dmu927l/tests/unit/api/health-token.test.ts"
+    }
+  ]
+}

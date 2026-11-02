@@ -1,0 +1,53 @@
+{
+  "date": "2026-11-02",
+  "method": "Read archived earlier full run; NOT rerun; no changed assertions or suppression",
+  "historical_artifact": "../vitest-results.json",
+  "historical_sha256": "65618fac220df5d89a6d6eaf7e50ceaebaa62a32f230b794492ee91f2c82bacc",
+  "historical_success": false,
+  "historical_file_records": 535,
+  "historical_file_states": [
+    {
+      "status": "failed",
+      "empty_assertion_list": true,
+      "files": 219
+    },
+    {
+      "status": "passed",
+      "empty_assertion_list": false,
+      "files": 304
+    },
+    {
+      "status": "failed",
+      "empty_assertion_list": false,
+      "files": 12
+    }
+  ],
+  "registered_tests": 2602,
+  "passed": 2556,
+  "failed_assertions_not_confirmed_production_bugs": 35,
+  "pending": 11,
+  "empty_failed_files": 219,
+  "empty_failure_first_line_counts": {
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.": 136,
+    "Cannot read properties of undefined (reading 'PENDING')": 34,
+    "Cannot read properties of undefined (reading 'PUBLIC')": 17,
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this c": 9,
+    "Prisma.validator is not a function": 17,
+    "Cannot read properties of undefined (reading 'VISIBLE')": 5,
+    "Cannot read properties of undefined (reading 'SUCCEEDED')": 1
+  },
+  "new_oracle_runs": 8,
+  "new_baseline_cases": [
+    "health_baseline",
+    "ops_static_baseline",
+    "restore_helper_existing_test_baseline"
+  ],
+  "new_mutant_results": "Two intentionally failed wrong-accept mutants; three surviving targeted mutations; no whole-project mutation score or fresh full-suite success claimed",
+  "installed_runner_version": "4.1.10",
+  "limits": [
+    "Nested suites != files",
+    "Failed imports and missing generated enums != confirmed product defects",
+    "Static declarations != runtime test registrations or passed checks",
+    "Surviving handpicked mutants != a statistical project-wide mutation score"
+  ]
+}
