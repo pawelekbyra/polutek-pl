@@ -26,6 +26,8 @@ Przy ręcznej weryfikacji nie dziedzicz `ADMIN_DEV_FIXTURES=1`, `ADMIN_DEV_BYPAS
 
 Test `db-cleanup-migration.pg.test.ts` buduje historyczny stan wyłącznie z migracji poprzedzających cleanup, sprawdza cleanup na danych, a następnie stosuje późniejsze migracje w kolejności i porównuje wynik z bieżącym schematem. Nie odtwarzać pojedynczej starej migracji na schemacie zawierającym już jej następców. Test granicy dnia analityki używa niedawnej daty, żeby retencja godzinowa nie usunęła badanej próbki.
 
+Fixture HLG w `encode-hls.ffmpeg.test.ts` jawnie zapisuje metadane VUI przez `-x264-params`, a niezależny odczyt ffprobe potwierdza transfer HLG i BT.2020 przed testem enkodera. Brak tych tagów jest błędem fixture, nie powodem do pominięcia testu. `ENCODE_SMOKE=1` wymaga FFmpeg/ffprobe i filtrów zscale/tonemap; w docelowym workerze wszystkie trzy scenariusze muszą się wykonać.
+
 ## Budowanie i warunki wydania
 
 Obie konfiguracje Next (`next.config.mjs`, `apps/admin/next.config.mjs`) mają `typescript.ignoreBuildErrors=false`. Błąd typu blokuje budowę strony lub panelu również w Dockerze. Nie naprawiać takiej porażki przez ponowne wyłączenie kontroli; rozstrzygnąć przyczynę, także brak prawdziwego wygenerowanego klienta Prisma.
