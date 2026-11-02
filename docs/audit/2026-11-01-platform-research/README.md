@@ -30,7 +30,11 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [Scenariusze prywatności](program-audytu/SCENARIUSZE-PRYWATNOSC.csv) | 15 obserwacji komponentów, pełny stos niewykonany |
 | [Scenariusze pełnego HTTP](program-audytu/SCENARIUSZE-D03-D04.csv) | 46 planowanych prób; osobne kolumny dla dowodów izolowanych i SQL, powiązania z D06/D07/D08/D11/D14 |
 | [Powierzchnia wejść](program-audytu/POWIERZCHNIA-WEJSC.csv) | Trasy, Server Actions, strony, zdarzenia workerów i wejścia operacyjne do kontroli |
-| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R35, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
+| [D16: monitoring i incydenty](program-audytu/obszary/D16-MONITORING-I-INCYDENTY.md) | R18: granice health; R36: recovery alert utracony przy HTTP/quota; poprawne kontrole, bez prawdziwych alarmów |
+| [Mapa monitoringu](program-audytu/MONITORING-POKRYCIE.csv) | 14 obszarów sygnałów i otwarte próby detekcji/reakcji |
+| [Mapa logów](program-audytu/LOGOWANIE-POKRYCIE.csv) | 9 źródeł, korelacja/redakcja oraz nieustalona retencja i dostęp |
+| [Scenariusze monitoringu](program-audytu/SCENARIUSZE-MONITORING.csv) | 22 obserwacje komponentów z atrapami; pełny stos niewykonany |
+| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R36, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
 | [Plan eksperymentów i pomiarów](PLAN-WERYFIKACJI.md) | Dalsze testy runtime, awarie, benchmark i model kosztów |
@@ -63,6 +67,8 @@ Z korzenia repo, po przygotowaniu zależności i aktywacji Node 22:
 ```bash
 node --import tsx docs/audit/2026-11-01-platform-research/pipeline-experiments.ts
 node --import tsx docs/audit/2026-11-01-platform-research/storage-experiment.ts
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/watchdog-delivery-experiment.cjs
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/monitoring-boundaries-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/identity-context-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/session-revocation-experiment.mjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/resource-scope-experiment.cjs

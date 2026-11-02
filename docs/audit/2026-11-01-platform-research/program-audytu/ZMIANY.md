@@ -153,3 +153,14 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Zachowano logi błędów własnego harnessu i szybkich pomiarów fokusu; finalny pomiar po dwóch klatkach, brak nowej podatności Base UI. Nie zmieniano aplikacji w celu uzyskania wyniku.
 - PeerTube: osiem konkretnych źródeł dialogów, report/checkbox, języka treści i procesu tłumaczeń. keyboard:false i odmienny lifecycle są kontrargumentami; bez runtime i ogólnej przewagi. W3C APG i licencja pobrane HTTP 200/hash, kopie niezmienione.
 - Rejestr R01–R35, R20 rozszerzony; 15 obszarów rozpoczętych/3 niezbadane, żaden zamknięty; ASVS 51/294 i wejścia 70/210 bez zaliczenia. Następnie D16.
+
+
+## 2 listopada 2026 — partia 14: monitoring i incydenty
+
+- Rozpoczęto D16. Mapa 14 obszarów sygnałów, dziewięciu źródeł logów i 22 scenariuszy; częściowy zakres/hash plików w batch14-review.json, nie suma nowych/w pełni zaudytowanych plików.
+- Actual Worker.fetch z fake D1/fetch/zegarem: dziewięć obserwacji, exit 0. R36: po przyjętym DOWN recovery odrzucone HTTP/limitem nie jest ponawiane. DOWN retry oraz recovery network throw działają w kontrolach. Bez realnego provider/Cloudflare/e-maila.
+- 13 obserwacji 15 rzeczywistych modułów TS, exit 0; wzmocniono R18 (public health bez DB, status-only panel, root zamiast manifestu/segmentu). Poprawne token/Redis/encoder kontrole; host health.sh nie wysyła diagnostycznego nagłówka. Raport bazowy zachowany.
+- Istniejący Vitest: pięć plików i 22/22 zarejestrowanych assertions passed, jeden plik zablokowany przed rejestracją przez Prisma, global exit 1. Bez ponawiania pełnego CI/generowania lub obchodzenia blokady.
+- Redakcja i requestId pozytywnie sprawdzone. Path marker bez ważnego tokenu/log-call witness i INFO=0/0 to ograniczenia/pytania, bez nowych znalezisk. Zachowano initial module-format failure harnessu, nie klasyfikowano go jako defektu aplikacji.
+- Dziesięć źródeł PeerTube częściowo: metryki/kolejki/repliki/QoE/logger/tracing/config; bez runtime i benchmarku, z zastrzeżeniem default off/cardinality/privacy. OpenTelemetry Signals i CC BY 4.0 HTTP 200/hash, niezmienione kopie.
+- Rejestr R01–R36, rozszerzony R18 bez zmiany historycznego priorytetu. ASVS 53/292, wejścia 73/207, 16 obszarów rozpoczętych/dwa niezbadane, zero zamkniętych. Pełne stosy i niezależne przeglądy nadal otwarte. Następnie D17: dostarczanie i odtwarzanie.

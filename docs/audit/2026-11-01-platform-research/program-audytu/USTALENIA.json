@@ -548,23 +548,40 @@
       "id": "R18",
       "title": "Watchdog sprawdza dostępność procesu, ale nie pełną usługę wideo",
       "baseline_priority_and_evidence": "P2, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE_W_KODZIE_I_KOMPONENTACH",
+      "note": "Baseline retained. Batch14 strengthens detection-boundary evidence, not a claim of a real production outage. External pings/status-only checks do not exercise video manifests or segments. Host health.sh does not pass x-health-token; DB container state is not a diagnostic SQL query.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D16"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Panel i watchdog mogą wyglądać na zdrowe mimo awarii części odtwarzania; samo odpowiadanie procesu nie potwierdza, że widz obejrzy film.",
+      "conditions": "Public health without diagnostic header; root video check; status-only admin probe. Actual deployments and real failures not exercised.",
+      "evidence_paths": [
+        "obszary/D16-MONITORING-I-INCYDENTY.md",
+        "SCENARIUSZE-MONITORING.csv",
+        "MONITORING-POKRYCIE.csv",
+        "evidence/batch14-review.json",
+        "evidence/watchdog-delivery-experiment.json",
+        "evidence/monitoring-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Authorized health use case detects synthetic DB failure; host separately checks containers/resources and heartbeat.",
+        "Redis probe requires PONG and encoder stale/queue rules work in component controls.",
+        "QoE tracker and analytics exist; full delivery/aggregate/alert chain was not executed.",
+        "Zero content can be intentional; consumers may inspect detailed fields. No actual R2 outage or universal monitor failure was demonstrated."
+      ],
+      "standard_refs": [
+        "ASVS5.0:V16.1.1 (partial inventory only)",
+        "OpenTelemetry signals (conceptual reference, not conformance requirement)"
+      ],
+      "proposed_fix": "Separate liveness/readiness and owned functional-video canary; join QoE/queue/provider freshness with explicit alert routing and stale-data state, safe cost and token redaction.",
+      "acceptance_test": "Isolated DB failure, missing manifest/segment or failed first frame, old encoder heartbeat and stale telemetry: observe correct severity, routed/received alert, recovery and bounded detection time. Do not trigger production incidents.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "deployment_scope": "SOURCE_AND_SYNTHETIC_COMPONENTS;PRODUCTION_OCCURRENCE_UNVERIFIED",
+      "updated_at": "2026-11-02"
     },
     {
       "id": "R19",
@@ -1239,6 +1256,43 @@
       "retest": null,
       "created_at": "2026-11-01",
       "deployment_scope": "ISOLATED_COMPONENT_BROWSER;FULL_STUDIO_AND_PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "id": "R36",
+      "kind": "BLAD_PONOWIEN_POWIADOMIEN_OPERACYJNYCH",
+      "title": "Watchdog może utracić powiadomienie o powrocie usługi",
+      "priority": "P2_OPERACYJNY",
+      "baseline_priority_and_evidence": "NEW: P2; actual unchanged Worker.fetch with synthetic D1, clock and total provider/probe fetch stubs",
+      "status": "POTWIERDZONE_W_KOMPONENTACH_Z_ATRAPAMI",
+      "evidence_level": "B_ACTUAL_HANDLER_SYNTHETIC_D1_PROVIDER_AND_CLOCK;NO_CLOUDFLARE_OR_INBOX",
+      "note": "Recovery clears last_alert and sets healthy before send result. Non-2xx or day cap returns false; retry rollback requires last_alert===now (DOWN), so healthy state persists and recovery is not retried. A network exception aborts before persistence and does retry; not all delivery failures have this result.",
+      "source_report": "obszary/D16-MONITORING-I-INCYDENTY.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D16"
+      ],
+      "impact_plain_language": "Operator może dostać alarm o awarii, ale po błędzie dostawcy lub limicie nie dostać ponowionej informacji o jej zakończeniu.",
+      "conditions": "Previously accepted DOWN; later healthy result; recovery sendMail returns false from provider non-2xx or 20/day quota; following runs healthy. Provider acceptance is not proof of inbox delivery.",
+      "evidence_paths": [
+        "obszary/D16-MONITORING-I-INCYDENTY.md",
+        "SCENARIUSZE-MONITORING.csv",
+        "evidence/batch14-review.json",
+        "evidence/watchdog-delivery-experiment.json",
+        "tools/watchdog-delivery-experiment.cjs"
+      ],
+      "counterarguments": [
+        "Initial DOWN non-2xx/day-cap controls retry on continuing failure.",
+        "Recovery transport exception preserves previous DOWN and retries next healthy run.",
+        "Fake D1 is not a Cloudflare SQL transaction or concurrency test. No real provider messages or production incident.",
+        "R05 covers application publication notification creation; this is a different watchdog recovery lifecycle."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Persist delivery events separately from measured service state with incident id, retry/timeout/quota policy and idempotency strategy. Acknowledge acceptance explicitly and preserve recovery pending after service returns.",
+      "acceptance_test": "Accepted DOWN -> recovery 503 or quota -> next healthy run/new day retries recovery until accepted; retain network-throw controls; verify D1 write failure, concurrent scheduled/manual runs, duplicate and new incident before old recovery.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-02",
+      "deployment_scope": "ISOLATED_WORKER_HANDLER;PRODUCTION_OCCURRENCE_UNVERIFIED"
     }
   ]
 }

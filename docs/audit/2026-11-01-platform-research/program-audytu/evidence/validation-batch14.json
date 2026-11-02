@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-02",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_APPLICATION_OR_OPERATIONAL_READINESS",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 16,
+    "NIEZBADANE": 2
+  },
+  "asvs_status_counts": {
+    "NIEZBADANE": 292,
+    "W_TRAKCIE": 53
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 73,
+    "NIEZBADANE": 207
+  },
+  "stable_finding_count": 36,
+  "new_distinct_findings": [
+    "R36"
+  ],
+  "existing_finding_extended": "R18",
+  "other_findings_and_baseline_priorities_preserved": true,
+  "earlier_raw_evidence_and_sources_preserved": 166,
+  "partial_source_scope_files": 37,
+  "partial_peertube_reference_files": 10,
+  "peertube_executed": false,
+  "watchdog_actual_handler_synthetic_IO_observations": 9,
+  "actual_TS_module_count": 15,
+  "TS_component_synthetic_IO_observations": 13,
+  "monitoring_map_rows": 14,
+  "logging_map_rows": 9,
+  "targeted_vitest_passed_files": 5,
+  "targeted_vitest_registered_and_passed": 22,
+  "targeted_vitest_failed_registered_assertions": 0,
+  "targeted_vitest_blocked_before_registration_files": 1,
+  "targeted_vitest_exit": 1,
+  "targeted_vitest_whole_run_success": false,
+  "full_suite_repeated": false,
+  "real_network_provider_messages_DB_or_production": false,
+  "full_Next_Cloudflare_SQL_or_generated_Prisma_client_executed": false,
+  "real_alert_receipt_or_SLO_certification": false,
+  "harness_module_format_diagnostic_preserved": true,
+  "logger_path_marker_has_no_valid_token_or_application_log_witness": true,
+  "local_links_checked": 389,
+  "new_report_pinned_GitHub_paths_exist_locally": 8,
+  "broken_local_links": [],
+  "syntax": "Node --check on two research CJS and Python AST parse; not application typecheck",
+  "whitespace": "Staged and unstaged diff --check passed excluding unmodified upstream CC BY 4.0 license final blank line; upstream bytes/hash preserved",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "credential_scan": "No listed patterns in changed/new text; bounded scan, not universal certification",
+  "independent_review": "PENDING"
+}

@@ -1,0 +1,10 @@
+id,source,file_or_boundary,observed,unknown_or_limit,evidence_scope,status,production_verified
+MAP-LOG-01,Application logger,lib/logger.ts,Sensitive key/query/userinfo masking and shared requestId observed,Some raw URL paths retained in synthetic control; no real signed-token log witness,VM component + existing 2 tests,W_TRAKCIE,NIE
+MAP-LOG-02,Public health API,app/api/health/route.ts,Scoped requestId in route source,No executed Next request or trace continuation,Source only,W_TRAKCIE,NIE
+MAP-LOG-03,Payments webhook,lib/modules/payments/application/handle-stripe-webhook.use-case.ts,Event id/type/retry outcome in selected logging sites,Correlation to HTTP/job/encoder not proven; no payload collection here,Selected logging source only,W_TRAKCIE,NIE
+MAP-LOG-04,Host health,scripts/serwerek/health.sh,health.log tail limited to 5000 lines in source,No effective host log policy or operator access inspected,"Source only, script never run",W_TRAKCIE,NIE
+MAP-LOG-05,Host mail/cron jobs,scripts/serwerek/common.sh,"alerts.log append, telemetry.job_run best effort",External logrotate/retention and concurrent throttle unverified,"Source only, no env files read",W_TRAKCIE,NIE
+MAP-LOG-06,Host failed jobs,scripts/serwerek/unit-failed.sh; scripts/serwerek/cron-runner.sh,"Unit, journalctl pointer, HTTP status and exit code",No actual journal persistence or response drill,Source only,W_TRAKCIE,NIE
+MAP-LOG-07,Watchdog D1,workers/pp-watchdog/worker.mjs,Latest check_state + daily send counter; old day cleanup,Not a durable incident/delivery outbox; recovery can disappear R36,Actual handler with fake D1/fetch,W_TRAKCIE,NIE
+MAP-LOG-08,Player/telemetry aggregates,lib/telemetry/client/playback-qoe.ts; lib/modules/admin-analytics/infrastructure/telemetry.repository.ts,Attempt/video fields and QoE read models exist,"Full ingestion, loss, privacy and retention not certified",6 tests plus selected source; prior D12 scope separate,W_TRAKCIE,NIE
+MAP-LOG-09,Infrastructure logs,Reverse proxy/CDN/Docker/journald/DB,No active configuration read in this batch,"Unknown redaction, retention, off-host copy and access",NIEZBADANE_RUNTIME,NIEZBADANE,NIE
