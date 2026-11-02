@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-01",
+  "node": "22.23.4",
+  "browser": "154.0.8037.57",
+  "packages": {
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "playwright": "1.61.1",
+    "esbuild": "0.28.1",
+    "@base-ui/react": "1.6.0",
+    "@tailwindcss/postcss": "4.3.2",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10",
+    "jsdom": "25.0.1"
+  },
+  "build": "Standalone esbuild browser fixture; NODE_ENV=production, other browser process.env empty; original globals.css compiled with Tailwind optimize=false",
+  "full_Next_or_production_fonts": false,
+  "actual_application_network": false
+}

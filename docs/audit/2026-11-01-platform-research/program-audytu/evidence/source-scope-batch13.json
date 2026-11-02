@@ -1,0 +1,31 @@
+{
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "96b3421b8fb72ea1321ee4dc2b6e6ac122440601",
+  "checked_paths": [
+    "app",
+    "apps",
+    "lib",
+    "prisma",
+    "workers",
+    "services",
+    "scripts",
+    "deploy",
+    "components",
+    "public",
+    "tests",
+    "package.json",
+    "package-lock.json",
+    "next.config.mjs",
+    "next.config.ts",
+    "tsconfig.json",
+    "vitest.config.ts",
+    "middleware.ts",
+    "proxy.ts",
+    "Dockerfile"
+  ],
+  "application_diff_paths": [],
+  "method": "git diff baseline application/config/tests/deployment; batch13 research only",
+  "production_access": false,
+  "real_person_data_used": false,
+  "local_HTTP": "Static loopback research fixture for unchanged components, not application API"
+}

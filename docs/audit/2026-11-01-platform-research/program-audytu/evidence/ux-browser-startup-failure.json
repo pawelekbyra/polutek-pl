@@ -1,0 +1,9 @@
+{
+  "mode": "confirm",
+  "errors": [
+    "process is not defined"
+  ],
+  "body": "",
+  "scriptCount": 1,
+  "message": "page.waitForFunction: Timeout 6000ms exceeded."
+}

@@ -608,23 +608,36 @@
       "id": "R20",
       "title": "Dostępność i wejście do aplikacji wymagają testów produktu",
       "baseline_priority_and_evidence": "P2/P3, B/D",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONY_ZRODLOWO_KOMPROMIS_ZOOM;PELNE_BADANIE_PRODUKTU_OTWARTE",
+      "note": "Viewport maximumScale=1/userScalable=false oraz ZoomLock blokują powiększanie gestami według jawnej decyzji właściciela. Nie zmieniono wyglądu/zoom. Wybrane komponenty zbadano w Chromium; brak pełnej przeglądarkowej próby bramki, Safari/touch/screen reader i oceny całej strony.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D15"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
+      "impact_plain_language": "Osoby potrzebujące powiększania gestami mają świadomie ograniczoną możliwość użycia strony. Istnieją zabezpieczenia fokusu i reduced motion, ale całego doświadczenia nie potwierdzono.",
+      "conditions": "Bieżąca deklaracja viewport/ZoomLock; rzeczywisty wpływ na konkretne urządzenia i grupy użytkowników do pomiaru.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D15-UX-DOSTEPNOSC-I-JEZYKI.md",
+        "SCENARIUSZE-UX.csv",
+        "ZADANIA-UZYTKOWNIKA.csv",
+        "WCAG-POKRYCIE.csv",
+        "evidence/batch13-review.json"
+      ],
+      "counterarguments": [
+        "Decyzja właściciela jest jawna i zamrożona; badanie nie upoważnia do zmiany produktu.",
+        "Skróty klawiatury, napisy, statusy, fokus i reduced motion występują w źródłach; wybrane kontrole i testy przeszły.",
+        "Nie wszystkie osiem języków dotyczy treści filmów, e-maili i dokumentów — ograniczenie opisano w dokumentacji.",
+        "Brak pełnego pomiaru WCAG/screen reader/urządzeń lub porzuceń bramki."
+      ],
       "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "proposed_fix": "Najpierw test z osobami potrzebującymi powiększenia i technologiami asystującymi; pokazać wpływ właścicielowi, a zmianę decyzji o zoom/wyglądzie uzgodnić osobno. Dokończyć zadania użytkownika i przegląd języków.",
+      "acceptance_test": "Jawne wyniki krytycznych zadań klawiaturą/screen readerem/zoom/touch/reduced motion, polityka języków i świadoma decyzja produktowa na podstawie danych, bez deklarowania zgodności na podstawie samych markerów.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "evidence_level": "B_OWNER_DECISION_VIEWPORT_AND_GESTURE_HANDLERS;COMPONENT_BROWSER_OTHER_CONTROLS_ONLY"
     },
     {
       "id": "R21",
@@ -1181,6 +1194,51 @@
       "created_at": "2026-11-01",
       "deployment_scope": "STRUCTURAL_ARCHITECTURE_AND_TEST_ISOLATION;PRODUCTION_FAILURE_UNVERIFIED",
       "id_history_note": "R34 first registered in batch12. Batch10 initial export label R34 was provisional, folded into existing R16 before registry insertion; do not confuse those artifacts."
+    },
+    {
+      "id": "R35",
+      "kind": "BLAD_UX_IZOLACJI_FOKUSU_MODALNEGO;NIE_OBEJSCIE_AUTHZ",
+      "title": "Dialog potwierdzenia wypuszcza fokus do tła podczas operacji",
+      "priority": "P2_DOSTEPNOSC_I_SPOJNOSC_INTERAKCJI",
+      "baseline_priority_and_evidence": "NEW: P2; real Chromium keyboard on unchanged ConfirmDialog, synthetic pending callback",
+      "status": "POTWIERDZONE_W_PRZEGLADARCE_DLA_KOMPONENTU",
+      "evidence_level": "A_REAL_CHROMIUM_ACTUAL_REACT_COMPONENT_AND_CSS_SYNTHETIC_PENDING_ACTION",
+      "note": "Po busy=true oba przyciski są disabled; trap sprawdza tylko aktywne button i wraca przy pustej liście. Tab osiąga opener/background/link, Enter uruchamia syntetyczną akcję tła przy nadal otwartym aria-modal. Kontrole normalnego Tab/Escape/restore działają.",
+      "source_report": "obszary/D15-UX-DOSTEPNOSC-I-JEZYKI.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D15"
+      ],
+      "impact_plain_language": "Podczas oczekiwania na usunięcie playlisty użytkownik klawiatury może znaleźć się i działać za nadal otwartym oknem potwierdzenia. Zachowanie okna przestaje odpowiadać temu, co widać.",
+      "conditions": "ConfirmDialog pozostaje otwarty z busy=true, np. do zakończenia DELETE playlisty; fixture celowo utrzymuje stan pending. Brak prawdziwego usuwania/backendu w eksperymencie.",
+      "evidence_paths": [
+        "obszary/D15-UX-DOSTEPNOSC-I-JEZYKI.md",
+        "SCENARIUSZE-UX.csv",
+        "ZADANIA-UZYTKOWNIKA.csv",
+        "WCAG-POKRYCIE.csv",
+        "evidence/batch13-review.json",
+        "evidence/ux-browser-experiment.json",
+        "evidence/ux-confirm-busy.png",
+        "tools/ux-browser-harness.tsx",
+        "tools/ux-browser-experiment.cjs"
+      ],
+      "counterarguments": [
+        "Normalny stan koncentruje Cancel, zawija Tab/Shift+Tab i przywraca opener po Escape.",
+        "Wyjście do tła nie jest dowodem obejścia autoryzacji lub usunięcia danych; callback tła był syntetyczny.",
+        "Realna operacja może zakończyć się szybko i usunąć okno; problem dotyczy czasu oczekiwania.",
+        "BaseUI ReportDialog w ustalonym pomiarze utrzymywał fokus; nie uogólniono problemu na wszystkie dialogi.",
+        "Nie wykonano Safari/Firefox/screen readera ani pełnego Studia, niezależny przegląd PENDING."
+      ],
+      "standard_refs": [
+        "APG:dialog-modal (non-normative pattern)",
+        "WCAG2.2:2.4.3 (scoped candidate, not whole-page conformance verdict)"
+      ],
+      "proposed_fix": "Zachować fokus wewnątrz przy pustej liście aktywnych kontrolek, np. fokusowalny panel, oraz odizolować tło; rozważyć wspólny sprawdzony prymityw dialogu. Uzgodnić politykę Escape/cancel podczas operacji i ogłaszanie busy.",
+      "acceptance_test": "Realny Chromium plus docelowe przeglądarki: Tab/Shift+Tab przed i podczas busy nie trafia do tła, Enter nie uruchamia jego akcji; sukces/błąd/odmontowany opener prowadzi do właściwego miejsca fokusu, bez ponownego wykonania operacji.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "ISOLATED_COMPONENT_BROWSER;FULL_STUDIO_AND_PRODUCTION_OCCURRENCE_UNVERIFIED"
     }
   ]
 }

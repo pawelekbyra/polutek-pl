@@ -1,0 +1,34 @@
+[
+  {
+    "date": "2026-11-01",
+    "file": "apg-modal-dialog.html",
+    "url": "https://raw.githubusercontent.com/w3c/aria-practices/main/content/patterns/dialog-modal/dialog-modal-pattern.html",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "14ce04000352a8d8ee6cf2ec4419e1cf28a8d6648736a1cf6653d38bc24099e3"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "apg-radio-group.html",
+    "url": "https://raw.githubusercontent.com/w3c/aria-practices/main/content/patterns/radio/radio-group-pattern.html",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "b441e2988c88ecffbdb9e3ad4a072be6a996e154c5e57656dc8016da59878b43"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "apg-listbox.html",
+    "url": "https://raw.githubusercontent.com/w3c/aria-practices/main/content/patterns/listbox/listbox-pattern.html",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "291221ce08796169162804ca35d3f20d51bb34eec5a3e7b705e3a2eeb6e024f0"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "aria-practices-LICENSE.md",
+    "url": "https://raw.githubusercontent.com/w3c/aria-practices/main/LICENSE.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "7519b8221b1bf98b4105477c2fec93323e97a1c9699b3856ec65f492e9076727"
+  }
+]

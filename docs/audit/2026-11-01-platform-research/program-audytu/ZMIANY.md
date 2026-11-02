@@ -139,3 +139,17 @@
 - Trzy istniejące pliki Vitest, 12/12 passed, exit 0 podzbioru. 12 modułów TS wykonanych w VM i 17 obserwacji komponentów/bramki. Zero pełnego HTTP/SQL/Next/Prisma. Bez ponawiania pełnego CI, generowania i npm audit.
 - 18 źródeł PeerTube częściowo, kontrakty w pakietach i OpenAPI/TS references oraz ograniczenia: barrels, modele w controllerach, strict=false, docUrl/typy bez dowodu walidacji body. Brak runtime, równego grafu i benchmarku. Oficjalne TypeScript type-only import docs i CC BY 4.0 HTTP 200.
 - Rejestr R01–R34; 14 obszarów rozpoczętych/4 niezbadane, żaden zamknięty. ASVS 51/294, wejścia 70/210 bez zaliczenia. Następnie D15, z zachowaniem decyzji wizualnych właściciela.
+
+## 1 listopada 2026 — partia 13: UX, dostępność i języki
+
+Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem limit usługi approval review. Po odnowieniu i poleceniu kontynuacji zatwierdzona kontrola przeszła; nie powtarzano testów aplikacji/Chromium i nie obchodzono bramki.
+
+- Rozpoczęto D15: częściowy zakres 59 plików (w tym zliczane katalogi), 12 zadań, 14 scenariuszy komponentów, 15 wybranych kryteriów WCAG bez pełnego werdyktu i osiem języków. Brak certyfikacji lub uznania pełnych zadań za wykonane.
+- Prawdziwy Chromium na lokalnej stronie niezmienionych komponentów i CSS; 14 obserwacji finalnie exit 0. Bez rzeczywistego API/auth/Next/Prisma/Stripe/HLS, zewnętrznych żądań i danych osób.
+- Nowy R35: podczas busy ConfirmDialog Tab trafia do tła, Enter aktywuje syntetyczną akcję przy otwartym modalu. Potwierdzono również poprawne kontrole normalnego fokusu/Escape/restore. P2 UX, nie auth bypass; niezależny przegląd PENDING.
+- ReportDialog zachowuje notatkę po awarii i pokazuje alert; Base UI utrzymuje ustalony fokus i Escape. Radio ma rozbieżność APG, lecz Tab/Space działa. Języki wspierają Home/End/type-ahead/Enter/Escape; 320 px sprawdzono tylko dla komponentu.
+- 62/62 istniejących assertions w siedmiu plikach passed, exit 0 podzbioru. Pomiar 1589 tx/txRich w 144 plikach, 1245 kluczy i kompletnych sześciu katalogów dla tego zakresu; 20 wielowariantowych PL/EN kluczy do kontekstowej oceny, nie nowe błędy. Bez native review.
+- R20 doprecyzowane jako jawny kompromis zoom/viewport; zamrożony wygląd/intro/logo bez zmian. Osiem języków UI nie oznacza treści, napisów, e-maili i legal w ośmiu językach.
+- Zachowano logi błędów własnego harnessu i szybkich pomiarów fokusu; finalny pomiar po dwóch klatkach, brak nowej podatności Base UI. Nie zmieniano aplikacji w celu uzyskania wyniku.
+- PeerTube: osiem konkretnych źródeł dialogów, report/checkbox, języka treści i procesu tłumaczeń. keyboard:false i odmienny lifecycle są kontrargumentami; bez runtime i ogólnej przewagi. W3C APG i licencja pobrane HTTP 200/hash, kopie niezmienione.
+- Rejestr R01–R35, R20 rozszerzony; 15 obszarów rozpoczętych/3 niezbadane, żaden zamknięty; ASVS 51/294 i wejścia 70/210 bez zaliczenia. Następnie D16.

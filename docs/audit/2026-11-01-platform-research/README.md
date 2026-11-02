@@ -30,7 +30,7 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [Scenariusze prywatności](program-audytu/SCENARIUSZE-PRYWATNOSC.csv) | 15 obserwacji komponentów, pełny stos niewykonany |
 | [Scenariusze pełnego HTTP](program-audytu/SCENARIUSZE-D03-D04.csv) | 46 planowanych prób; osobne kolumny dla dowodów izolowanych i SQL, powiązania z D06/D07/D08/D11/D14 |
 | [Powierzchnia wejść](program-audytu/POWIERZCHNIA-WEJSC.csv) | Trasy, Server Actions, strony, zdarzenia workerów i wejścia operacyjne do kontroli |
-| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R34, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
+| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R35, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
 | [Plan eksperymentów i pomiarów](PLAN-WERYFIKACJI.md) | Dalsze testy runtime, awarie, benchmark i model kosztów |
@@ -125,3 +125,13 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/progra
 ```
 
 Wymagane istniejące node_modules i Node 22; skrypty wyłącznie badawcze, zapisują evidence. Graf zawiera ścieżki/hashe/zależności, nie treść całego kodu. Probe konstruktora nie jest zainstalowanym klientem Prisma. Bramka architektury przeszła, hotspots nie przeszła (cztery pliki); trzy celowane pliki Vitest dały 12/12 passed. Pełny stos i typecheck nadal niepotwierdzone. R34 ma tu pierwszy wpis rejestru; roboczy eksport R34 w historycznym initial JSON partii 10 był przypisany do istniejącego R16 i nie jest tym nowym ustaleniem.
+
+
+Partia 13: [D15 — UX, dostępność i języki](program-audytu/obszary/D15-UX-DOSTEPNOSC-I-JEZYKI.md), [12 zadań](program-audytu/ZADANIA-UZYTKOWNIKA.csv), [14 scenariuszy](program-audytu/SCENARIUSZE-UX.csv), [wybrane WCAG](program-audytu/WCAG-POKRYCIE.csv), [języki](program-audytu/JEZYKI-POKRYCIE.csv). Rzeczywisty Chromium na izolowanych komponentach: nowe R35 (fokus do tła podczas busy), działające kontrole normalnego dialogu i języków. R20/zoom to jawny kompromis właściciela, bez zmian produktu. 62/62 celowanych assertions passed; nie pełne E2E ani certyfikat WCAG. 15 obszarów rozpoczętych, żaden zamknięty.
+
+```bash
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs
+node node_modules/tsx/dist/cli.mjs docs/audit/2026-11-01-platform-research/program-audytu/tools/i18n-catalog-measurement.ts
+```
+
+Wymagane istniejące node_modules, Node 22, /usr/bin/chromium i dostęp do lokalnego portu. Harness buduje się w /tmp i sprząta po sobie; nie używa prawdziwego backendu lub danych. Snapshoty po dwóch klatkach oddzielają odroczony fokus biblioteki od trwałego wyjścia do tła. Wcześniejsze błędy konfiguracji/fast diagnostics zachowano jako historię harnessu. Ponowne uruchomienie nadpisze bieżące pliki wynikowe/screenshoty — archiwizować je w nowej partii, nie zmieniać dawnych dowodów bez adnotacji.
