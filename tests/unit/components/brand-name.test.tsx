@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import BrandName from "@/app/components/BrandName";
 import PolutekWordmark from "@/app/components/brand/PolutekWordmark";
@@ -152,6 +152,63 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
       const { container } = render(<BrandName variant="glasses" className="h-[40px]" />);
 
       expect(container.firstElementChild?.className).toContain("h-[40px]");
+    });
+  });
+
+  describe("the three variants and the one-line switch (glasses <-> wordmark-blue <-> wordmark)", () => {
+    afterEach(() => {
+      vi.doUnmock("@/lib/ui-flags");
+      vi.resetModules();
+    });
+
+    it.each([
+      ["wordmark-blue", 'svg[data-brand-logo="wordmark-blue"]'],
+      ["glasses", 'img[src="/logo-glasses.svg"]'],
+      ["wordmark", 'svg[data-brand-logo="wordmark"]'],
+    ] as const)("flipping BRAND_LOGO_VARIANT to %s renders that logo by default", async (variant, selector) => {
+      vi.resetModules();
+      vi.doMock("@/lib/ui-flags", async () => ({ ...(await vi.importActual<object>("@/lib/ui-flags")), BRAND_LOGO_VARIANT: variant }));
+      const { default: Fresh } = await import("@/app/components/BrandName");
+      const { container } = render(<Fresh decorative />);
+
+      expect(container.querySelector(selector)).not.toBeNull();
+    });
+
+    it("the glasses assets stay in the repo, complete, and the archive copy is byte-identical", () => {
+      const files = [
+        "logo-glasses.svg", "icon-glasses.svg", "icon-glasses-32.png", "icon-glasses-180.png", "icon-glasses-192.png",
+        "icon-glasses-512.png", "icon-glasses-maskable-512.png", "icon-glasses.ico",
+      ];
+      for (const f of files) {
+        const live = readFileSync(path.join(process.cwd(), "public", f));
+        const archived = readFileSync(path.join(process.cwd(), "public/brand/archive/glasses", f));
+        expect(live.length).toBeGreaterThan(100);
+        expect(archived.equals(live)).toBe(true);
+      }
+      expect(readFileSync(path.join(process.cwd(), "public/logo-glasses.svg"), "utf8")).toContain('viewBox="0 0 2048 506"');
+    });
+
+    it("the agent passphrase is documented where agents read (CLAUDE.md, AGENTS.md, architecture doc)", () => {
+      for (const f of ["CLAUDE.md", "AGENTS.md", "docs/architecture/public-shell-and-player.md"]) {
+        const text = readFileSync(path.join(process.cwd(), f), "utf8");
+        expect(text).toContain("przywróć okularki");
+        expect(text).toContain("BRAND_LOGO_VARIANT");
+        expect(text).toContain("public/brand/archive/glasses");
+      }
+    });
+  });
+
+  describe("blue wordmark spacing (generator: EXTRA_GAP, optical, in source px; cap height 297.8 px)", () => {
+    it("adds a moderate extra gap (at most 6% of the cap height each) and the viewBox follows the generator", async () => {
+      const gen = await import("../../../scripts/brand/generate-wordmark-blue.mjs");
+
+      for (const extra of Object.values(gen.EXTRA_GAP) as number[]) {
+        expect(extra).toBeGreaterThan(0);
+        expect(extra / 297.8).toBeLessThanOrEqual(0.06);
+      }
+      // L|U is the tightest pair in the original (foot of the L next to the U stem), so it gets the most
+      expect(gen.EXTRA_GAP.U).toBe(Math.max(...(Object.values(gen.EXTRA_GAP) as number[])));
+      expect(WORDMARK_BLUE_VIEWBOX).toBe(gen.VIEWBOX);
     });
   });
 });
