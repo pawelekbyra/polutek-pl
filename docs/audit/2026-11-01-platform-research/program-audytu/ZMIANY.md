@@ -239,3 +239,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - K01: nowa pusta lokalna baza PostgreSQL 17.11, konfiguracja poza repo 0600, sprawdzona powtarzalność bez resetu. Nie wykonano migracji lub sztucznego bazowania starych danych.
 - Szkic środowiska rev. 6 zapisany (dwie domeny + start_skill); `requires_publish=true`, runtime spec. 1 nadal bez hostów. Nie obchodzono proxy/TLS/checksum i nie ponawiano npm audit/GraphQL przy niezmienionej blokadzie.
 - Uporządkowano bieżący punkt przejęcia w STAN/POSTEP i maszynowym h1-status.json. H1 częściowe, wszystkie pełne obszary nadal otwarte; brak nowego PASS ASVS. USTALENIA.json i przyjęte materiały zewnętrznego przebiegu Windows bez zmian.
+
+## 2 listopada 2026 — kontrola po zgłoszeniu Full Access
+
+- Jednorazowe odczyty po zgłoszonej zmianie: Prisma nadal CONNECT 403 / curl 56, API GitHub Forbidden / gh 1. Aktywna polityka nadal restricted/spec. 1.
+- Nie uruchamiano niezmienionej instalacji/testów ani obejść. H1 pozostaje częściowe; zapisano potrzebę rozpoznania rzeczywistego widoku UI zamiast ponawiania niejasnej instrukcji publikacji.

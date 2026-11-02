@@ -56,3 +56,10 @@ Harnessy są na gałęzi audytu; przed przełączeniem kodu skopiować je poza c
 K06 tryb `baseline` odtwarza akceptację złego typu na `e3801c27` (oba stare configi); tryb `fixed` sprawdza zły i legalny kod na gałęzi H1. K03: `node node_modules/vitest/vitest.mjs run tests/unit/operations/verify-restored-database-process.test.ts --maxWorkers=1`. Cała komenda `npm run test:critical-path` pozostaje niezaliczona do czasu odblokowania klienta.
 
 Nie uruchamiać ponownie kosztownych prób bez zmiany/hipotezy. Nie kontynuować ogólnego V3+ zamiast odbioru H1, nie uznawać warunkowych NA za PASS i nie przywracać przyjętej partii 17 z archiwum. Pełny audyt pozostaje celem dalszych kamieni; bieżącą blokadą jest środowisko, nie brak zgody właściciela na H1.
+
+
+## Ponowna próba po zgłoszeniu „Full Access”
+
+2 listopada 2026 właściciel zgłosił zmianę na Full Access. Jednorazowo powtórzono dotknięte odczyty: Prisma checksum nadal proxy CONNECT 403 (curl exit 56, HTTP celu 000), API GitHub nadal Forbidden (gh exit 1). Runtime potwierdza enforced/restricted/spec. 1. [Dowód](program-audytu/evidence/h1-full-access-recheck.json).
+
+Ta zgłoszona zmiana nie usunęła obserwowanej blokady tej instancji. Nie wiadomo, który dokładnie przełącznik UI został zmieniony; nie utożsamiać uprawnień wykonywania poleceń z aktywacją reguł HTTP. Potrzebny zrzut widoku, w którym właściciel zmienił Full Access, aby wskazać właściwą konfigurację bez zgadywania. Nie ponawiano instalacji, testów ani zapisu niezmienionego szkicu, nie próbowano alternatywnego hosta/proxy i nie proszono o nowy token.

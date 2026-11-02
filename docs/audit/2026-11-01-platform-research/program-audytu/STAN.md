@@ -187,6 +187,9 @@ Bez zgody na deploy, main, produkcyjne migracje/korekty danych i koszty. Nowe kw
 
 ## Następne działanie — odbiór H1 po zmianie warunku zewnętrznego
 
+**Najnowsza próba:** po zgłoszeniu Full Access nadal proxy 403 dla Prisma i Forbidden dla API GitHuba; [dowód](evidence/h1-full-access-recheck.json). Runtime enforced/restricted/spec. 1. Następne doprecyzowanie: zrzut widoku, w którym właściciel zmienił Full Access; nie zgadywać przycisków i nie powtarzać zablokowanych operacji bez nowego warunku.
+
+
 1. Właściciel przegląda i zapisuje szkic środowiska rev. 6 oraz publikuje go (narzędzie zwróciło `requires_publish=true`). To nie prośba o ponowną zgodę na H1; runtime nie stosuje szkicu automatycznie.
 2. Agent potwierdza aktywne `binaries.prisma.sh` i `api.github.com`, wybiera czystą gałąź `fix/polutek-h1-foundations` i uruchamia prawdziwe `npm ci --no-audit --no-fund`/generate, potem migracje na nowej bazie i pełne wymagane bramki. Instrukcje w POSTEP i zapisanym start_skill. Nie używać starych baz raw SQL ani klienta-atrapy.
 3. Dokończyć realny odbiór K03/R37, pełne K02 i K06 (w tym konkretne powiązanie źródeł/testów z artefaktem); K05 wymaga aktywnego profilu i dziewięciu jawnych decyzji. Nie ogłaszać gotowości z testów fixture. Po dostępie API przygotować małe szkice PR, nie scalać i nie wdrażać.
