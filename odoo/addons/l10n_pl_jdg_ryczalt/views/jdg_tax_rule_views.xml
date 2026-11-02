@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jdg_tax_rule_list" model="ir.ui.view">
+        <field name="name">jdg.tax.rule.list</field>
+        <field name="model">jdg.tax.rule</field>
+        <field name="arch" type="xml">
+            <list decoration-warning="is_unverified" decoration-muted="state == 'retired'">
+                <field name="group"/>
+                <field name="label"/>
+                <field name="key" optional="show"/>
+                <field name="value_display"/>
+                <field name="valid_from"/>
+                <field name="valid_to" optional="show"/>
+                <field name="confidence" widget="badge" decoration-success="confidence == 'P'"
+                       decoration-warning="confidence == 'PR'" decoration-danger="confidence == 'N'"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'active'"/>
+                <field name="verified_on" optional="show"/>
+                <field name="verified_by" optional="hide"/>
+                <field name="is_unverified" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_tax_rule_form" model="ir.ui.view">
+        <field name="name">jdg.tax.rule.form</field>
+        <field name="model">jdg.tax.rule</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_verify" type="object" string="Oznacz jako zweryfikowaną"
+                            class="btn-primary" invisible="verified_on"
+                            groups="l10n_pl_jdg_ryczalt.group_jdg_manager"/>
+                    <button name="action_unverify" type="object" string="Cofnij weryfikację"
+                            invisible="not verified_on" groups="l10n_pl_jdg_ryczalt.group_jdg_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="verified_on">
+                        Reguła niezweryfikowana: pulpit liczy z niej, ale pokazuje ostrzeżenie. Sprawdź wartość w źródle
+                        (link poniżej) lub u księgowego i kliknij „Oznacz jako zweryfikowaną”.
+                    </div>
+                    <div class="alert alert-info" role="alert" invisible="not verified_on">
+                        Reguła zweryfikowana: nie zmieniamy jej wartości. Gdy parametr się zmieni, dodaj NOWĄ regułę z nową
+                        datą „obowiązuje od”, a tej ustaw datę „obowiązuje do”.
+                    </div>
+                    <group>
+                        <group string="Co to jest">
+                            <field name="label"/>
+                            <field name="key"/>
+                            <field name="group"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Wartość i okres">
+                            <field name="value_num"/>
+                            <field name="value_char"/>
+                            <field name="value_json"/>
+                            <field name="unit"/>
+                            <field name="valid_from"/>
+                            <field name="valid_to"/>
+                        </group>
+                    </group>
+                    <group string="Skąd ta liczba">
+                        <group>
+                            <field name="confidence"/>
+                            <field name="source_url" widget="url"/>
+                            <field name="verified_on" readonly="1"/>
+                            <field name="verified_by" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="supersedes_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="source_note" placeholder="Akt prawny, komunikat, interpretacja albo uwaga księgowego"/>
+                        <field name="description" placeholder="Do czego służy ten parametr"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_jdg_tax_rule_search" model="ir.ui.view">
+        <field name="name">jdg.tax.rule.search</field>
+        <field name="model">jdg.tax.rule</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="label"/>
+                <field name="key"/>
+                <filter name="unverified" string="Do weryfikacji" domain="[('verified_on', '=', False), ('state', '!=', 'retired')]"/>
+                <filter name="draft" string="Projekty i prognozy" domain="[('state', '=', 'draft')]"/>
+                <filter name="uncertain" string="Pewność [N]" domain="[('confidence', '=', 'N')]"/>
+                <filter name="current" string="Obowiązujące dziś"
+                        domain="[('state', '!=', 'retired'), ('valid_from', '&lt;=', context_today().strftime('%Y-%m-%d')),
+                                 '|', ('valid_to', '=', False), ('valid_to', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="group_group" string="Grupa" context="{'group_by': 'group'}"/>
+                    <filter name="group_key" string="Klucz" context="{'group_by': 'key'}"/>
+                    <filter name="group_conf" string="Pewność" context="{'group_by': 'confidence'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_jdg_tax_rule" model="ir.actions.act_window">
+        <field name="name">Reguły i parametry</field>
+        <field name="res_model">jdg.tax.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_group': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Brak reguł</p>
+            <p>Tu leżą wszystkie stawki, progi i podstawy ZUS. Każda ma datę obowiązywania, źródło i poziom pewności.</p>
+        </field>
+    </record>
+</odoo>

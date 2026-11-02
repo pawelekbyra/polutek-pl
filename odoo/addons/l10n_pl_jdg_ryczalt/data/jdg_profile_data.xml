@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Profil firmy startowy. Edytowalny w Firma > Ustawienia > Profil firmy (noupdate: aktualizacja modułu go nie nadpisze). -->
+    <data noupdate="1">
+        <record id="profile_main" model="jdg.profile">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="start_date">2027-01-01</field>
+            <field name="tax_form">ryczalt</field>
+            <field name="ryczalt_rate_key">ryczalt.rate.vod_85</field>
+            <field name="advance_rhythm">quarterly</field>
+            <field name="uses_ulga_na_start" eval="True"/>
+            <field name="vat_status">exempt_113</field>
+            <field name="invoice_policy">on_request</field>
+        </record>
+    </data>
+</odoo>

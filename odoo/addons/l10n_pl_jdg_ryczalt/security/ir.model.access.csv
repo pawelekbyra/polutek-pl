@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_jdg_profile_user,jdg.profile user,model_jdg_profile,group_jdg_user,1,0,0,0
+access_jdg_profile_manager,jdg.profile manager,model_jdg_profile,group_jdg_manager,1,1,1,0
+access_jdg_tax_rule_user,jdg.tax.rule user,model_jdg_tax_rule,group_jdg_user,1,0,0,0
+access_jdg_tax_rule_manager,jdg.tax.rule manager,model_jdg_tax_rule,group_jdg_manager,1,1,1,1
+access_jdg_fx_rate_user,jdg.fx.rate user,model_jdg_fx_rate,group_jdg_user,1,0,1,0
+access_jdg_fx_rate_manager,jdg.fx.rate manager,model_jdg_fx_rate,group_jdg_manager,1,1,1,1
+access_jdg_income_entry_user,jdg.income.entry user,model_jdg_income_entry,group_jdg_user,1,1,1,0
+access_jdg_income_entry_manager,jdg.income.entry manager,model_jdg_income_entry,group_jdg_manager,1,1,1,1
+access_jdg_payment_user,jdg.contribution.payment user,model_jdg_contribution_payment,group_jdg_user,1,0,1,0
+access_jdg_payment_manager,jdg.contribution.payment manager,model_jdg_contribution_payment,group_jdg_manager,1,1,1,1
+access_jdg_correct_wizard_user,jdg.income.correct.wizard user,model_jdg_income_correct_wizard,group_jdg_user,1,1,1,1

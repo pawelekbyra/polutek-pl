@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_jdg_dashboard" model="ir.actions.client">
+        <field name="name">Dzisiaj</field>
+        <field name="tag">jdg_dashboard</field>
+    </record>
+    <record id="action_jdg_taxes" model="ir.actions.client">
+        <field name="name">Podatki i składki</field>
+        <field name="tag">jdg_taxes</field>
+    </record>
+</odoo>

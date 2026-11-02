@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="l10n_pl_jdg_ryczalt.Taxes">
+        <div class="o_jdg_app">
+            <div class="o_jdg_page">
+                <header class="o_jdg_header">
+                    <h1 class="o_jdg_title">Podatki i składki</h1>
+                    <div class="o_jdg_header_tools">
+                        <span class="o_jdg_pill o_jdg_pill_warn">szacunek, nie porada podatkowa</span>
+                    </div>
+                </header>
+
+                <div t-if="state.loading and !state.data" class="o_jdg_skeleton" aria-busy="true">
+                    <div class="o_jdg_skel_block"/><div class="o_jdg_skel_block"/>
+                </div>
+
+                <div t-elif="state.error" class="o_jdg_card o_jdg_error" role="alert">
+                    <strong>Nie udało się policzyć rozliczenia.</strong>
+                    <p class="mb-2"><t t-out="state.error"/></p>
+                    <button class="btn btn-secondary" t-on-click="() => this.load()">Spróbuj ponownie</button>
+                    <button class="btn btn-link" t-on-click="openRules">Reguły i parametry</button>
+                </div>
+
+                <t t-elif="state.data">
+                    <t t-set="d" t-value="state.data"/>
+                    <div class="o_jdg_toolbar">
+                        <label class="o_jdg_inline">
+                            Okres
+                            <select class="form-select form-select-sm" t-on-change="onPeriodChange">
+                                <option t-foreach="d.periods" t-as="p" t-key="p.key" t-att-value="p.key" t-att-selected="p.key === d.period" t-att-disabled="p.disabled">
+                                    <t t-out="p.label"/>
+                                </option>
+                            </select>
+                        </label>
+                        <span class="o_jdg_toolbar_spacer"/>
+                        <label class="o_jdg_inline" title="Podgląd na inny dzień, np. w styczniu 2027">
+                            Na dzień
+                            <input type="date" class="form-control form-control-sm" t-att-value="state.onDate" t-on-change="onDateChange"/>
+                        </label>
+                        <label t-if="d.meta.test_entries or state.includeTest" class="o_jdg_inline">
+                            <input type="checkbox" t-att-checked="state.includeTest" t-on-change="onToggleTest"/>
+                            Pokaż dane testowe
+                        </label>
+                        <button class="btn btn-primary" t-on-click="addPayment">Zapłaciłem składkę lub zaliczkę</button>
+                    </div>
+
+                    <div t-if="d.rate.unverified" class="o_jdg_note o_jdg_note_warn" role="status">
+                        <i class="fa fa-exclamation-triangle me-1"/> <strong>Stawka <t t-out="fmt.num(d.rate.pct, 1)"/>%:</strong> <t t-out="d.rate_warning"/>
+                    </div>
+                    <div t-if="d.meta.rules_unverified" class="o_jdg_note o_jdg_note_warn" role="status">
+                        <i class="fa fa-exclamation-triangle me-1"/>
+                        Parametry niezweryfikowane (<t t-out="d.meta.rules_unverified"/>): liczymy z nich, ale musi je potwierdzić księgowy.
+                        <a href="#" t-on-click.prevent="openRules">Zobacz reguły</a>
+                    </div>
+
+                    <div class="o_jdg_main o_jdg_main_taxes">
+                        <article class="o_jdg_card">
+                            <h2 class="o_jdg_card_label"><t t-out="d.title"/></h2>
+                            <table class="o_jdg_steps">
+                                <thead><tr><th>Krok</th><th class="text-end">Kwota</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="d.steps" t-as="step" t-key="step_index">
+                                        <tr t-att-class="'o_jdg_step o_jdg_step_' + step.kind">
+                                            <td>
+                                                <button type="button" class="o_jdg_rowlabel" t-on-click="() => this.toggleWhy('s' + step_index)">
+                                                    <t t-out="step.label"/> <i class="fa fa-question-circle-o o_jdg_why_icon" title="Skąd ta liczba?"/>
+                                                </button>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-if="step.kind === 'result' or step.kind === 'total' or step.kind === 'base'"><strong><t t-out="fmt.num(step.amount, step.kind === 'base' ? 2 : 0)"/></strong></t>
+                                                <t t-else=""><t t-out="fmt.num(step.amount, 2)"/></t>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="state.openWhy['s' + step_index]"><td colspan="2" class="o_jdg_why"><t t-out="step.why"/></td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <p t-if="d.shadow and d.shadow.diff > 0" class="o_jdg_shadow_box" role="note">
+                                <strong>Cień stawki <t t-out="fmt.num(d.shadow.rate, 0)"/>%:</strong> <t t-out="d.shadow.text"/>
+                                Podatek narastająco przy tej stawce: <t t-out="fmt.money(d.shadow.tax, 0)"/>.
+                            </p>
+                            <p class="o_jdg_muted o_jdg_small mt-2 mb-0">
+                                Odliczenia liczą się tylko ze składek ZAPŁACONYCH (Firma &gt; Zapłacone składki). Kwoty w złotych.
+                            </p>
+                        </article>
+
+                        <div class="o_jdg_col">
+                            <article class="o_jdg_card">
+                                <h2 class="o_jdg_card_label">Składka zdrowotna</h2>
+                                <div class="o_jdg_big o_jdg_big_dark"><t t-out="fmt.money(d.health.amount)"/></div>
+                                <div class="o_jdg_sub o_jdg_muted">za <t t-out="d.health.month_label"/> · próg <t t-out="fmt.num(d.health.tier_pct, 0)"/>% · W = <t t-out="fmt.money(d.health.avg_wage)"/></div>
+                                <t t-if="d.health.threshold">
+                                    <div class="o_jdg_threshold_text"><t t-out="d.health.threshold.text"/></div>
+                                    <div class="o_jdg_meter" role="progressbar" t-att-aria-valuenow="d.health.threshold.pct" aria-valuemin="0" aria-valuemax="100" aria-label="Próg składki zdrowotnej">
+                                        <div t-att-class="'o_jdg_meter_fill o_jdg_level_' + d.health.threshold.level" t-att-style="'width:' + Math.min(100, d.health.threshold.pct) + '%'"/>
+                                    </div>
+                                    <div class="o_jdg_threshold_value">Przychód narastająco (po społecznych): <t t-out="fmt.money(d.health.threshold.value, 0)"/> / <t t-out="fmt.money(d.health.threshold.limit, 0)"/></div>
+                                </t>
+                                <ul class="o_jdg_rows o_jdg_tiers">
+                                    <li t-foreach="d.health.tiers" t-as="tier" t-key="tier_index"><div class="o_jdg_row"><span><t t-out="fmt.num(tier.tier, 0)"/>% W</span><strong class="o_jdg_rowamount"><t t-out="fmt.money(tier.amount)"/></strong></div></li>
+                                </ul>
+                                <p class="o_jdg_why"><t t-out="d.health.why"/></p>
+                            </article>
+
+                            <article class="o_jdg_card">
+                                <h2 class="o_jdg_card_label">ZUS (składki społeczne)</h2>
+                                <div class="o_jdg_big o_jdg_big_dark"><t t-out="fmt.money(d.zus.social)"/></div>
+                                <div class="o_jdg_sub o_jdg_muted"><t t-out="d.zus.variant_label"/> · <t t-out="d.zus.month_label"/></div>
+                                <ul class="o_jdg_rows" t-if="d.zus.lines.length">
+                                    <li t-foreach="d.zus.lines" t-as="ln" t-key="ln_index"><div class="o_jdg_row"><span><t t-out="ln.label"/></span><strong class="o_jdg_rowamount"><t t-out="fmt.money(ln.amount)"/></strong></div></li>
+                                </ul>
+                                <p class="o_jdg_sub" t-if="d.zus.window.length"><t t-out="d.zus.window.join(', potem ')"/>.</p>
+                                <p class="o_jdg_why"><t t-out="d.zus.why"/></p>
+                            </article>
+
+                            <article class="o_jdg_card">
+                                <h2 class="o_jdg_card_label">Stawka ryczałtu</h2>
+                                <div class="o_jdg_row">
+                                    <span><strong><t t-out="fmt.num(d.rate.pct, 1)"/>%</strong>
+                                        <span t-att-class="'o_jdg_pill ' + (d.rate.confidence === 'N' ? 'o_jdg_pill_bad' : 'o_jdg_pill_warn')">pewność [<t t-out="d.rate.confidence"/>]</span></span>
+                                    <span class="o_jdg_muted">od <t t-out="d.rate.since_long"/></span>
+                                </div>
+                                <p class="o_jdg_sub o_jdg_muted"><t t-out="d.rate.alternatives"/></p>
+                                <p class="o_jdg_why" t-if="d.rate.note"><t t-out="d.rate.note"/></p>
+                            </article>
+                        </div>
+                    </div>
+
+                    <footer class="o_jdg_footer"><t t-out="d.meta.footer"/></footer>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>
