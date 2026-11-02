@@ -73,6 +73,6 @@ describe('notification panel on phones: a centred popover, never a bottom sheet'
     const css = readFileSync('app/components/notifications/notification-panel.module.css', 'utf8');
     expect(bell).not.toMatch(/Drawer|NotificationSheet/);
     expect(css).not.toMatch(/sheet/i);
-    expect(css).toMatch(/max-width: 767\.98px[\s\S]*width: min\(380px, calc\(100vw - 24px\)\)[\s\S]*100dvh - var\(--header-h, 47px\) - 16px/);
+    expect(css).toMatch(/max-width: 767\.98px[\s\S]*width: min\(440px, calc\(100vw - 16px - 2 \* max\(env\(safe-area-inset-left, 0px\), env\(safe-area-inset-right, 0px\)\)\)\)[\s\S]*100dvh - var\(--header-h, 47px\) - 16px/);
   });
 });

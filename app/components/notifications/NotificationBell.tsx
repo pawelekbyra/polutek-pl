@@ -113,7 +113,7 @@ function NotificationBellForAccount({ accountId }: { accountId: string | null })
         {feed.unread > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--chan-blue)] px-1 text-[10px] font-bold leading-none text-white">{badge}</span>}
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Positioner align={narrow ? "center" : "end"} anchor={narrow ? () => viewportBand(triggerRef.current) : undefined} sideOffset={-3} collisionPadding={12} className={styles.positioner}>
+        <Popover.Positioner align={narrow ? "center" : "end"} anchor={narrow ? () => viewportBand(triggerRef.current) : undefined} sideOffset={-3} collisionPadding={8} className={styles.positioner}>
           <Popover.Popup role="dialog" className={styles.panel} initialFocus={titleRef} aria-busy={feed.status === "loading"}>
             <Popover.Close aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
             <div className={styles.head}>

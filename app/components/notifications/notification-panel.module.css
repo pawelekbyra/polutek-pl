@@ -10,7 +10,7 @@
 .panel[data-starting-style], .panel[data-ending-style] { opacity: 0; transform: translateY(-4px) scale(.98); }
 /* Phones: the positioner centres the panel on the screen (equal side margins); the height leaves room for the top bar and scrolls inside. */
 @media (max-width: 767.98px) {
-  .panel { width: min(380px, calc(100vw - 24px)); max-height: min(calc(100dvh - var(--header-h, 47px) - 16px), var(--available-height, 9999px)); }
+  .panel { width: min(440px, calc(100vw - 16px - 2 * max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)))); max-height: min(calc(100dvh - var(--header-h, 47px) - 16px), var(--available-height, 9999px)); }
 }
 
 /* Header: title left, quiet icon actions right (the popover close disc sits in the corner after them). */
