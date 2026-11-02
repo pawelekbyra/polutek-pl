@@ -60,6 +60,24 @@ describe('unlistAdminVideo and the PUBLISHED <-> UNLISTED <-> DRAFT transitions'
     expect(syncPublicThumbnail.mock.calls[0][0]).toMatchObject({ id: 'v1', status: 'UNLISTED' });
   });
 
+  it.each([['UNLISTED', unlistAdminVideo], ['DRAFT', unpublishAdminVideo]] as const)(
+    'reuses an existing transaction when changing visibility to %s',
+    async (status, changeVisibility) => {
+      const transactionClient = { ...mockPrisma };
+      delete transactionClient.$transaction;
+      mockPrisma.video.findFirst.mockResolvedValue({ ...draft, status: 'PUBLISHED' });
+      mockPrisma.video.update.mockResolvedValue({ ...draft, status });
+      const ctx = createAppContext({
+        actor: { type: 'admin', userId: 'a1' }, prisma: transactionClient, channelId: 'c1',
+      });
+
+      expect((await changeVisibility('v1', ctx)).ok).toBe(true);
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status }) }));
+    },
+  );
+
   it('respects the publication blockers for a draft (no READY route)', async () => {
     mockPrisma.video.findFirst.mockResolvedValue({ ...draft, activePlaybackRoute: null });
     const result = await unlistAdminVideo('v1', staffCtx());
