@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from "react";
+import { tidyWrap } from "@/lib/i18n/typography";
 import { PLACEHOLDER_PATTERN, type Tx } from "@/lib/i18n/ui";
 
 /**
@@ -8,7 +9,19 @@ import { PLACEHOLDER_PATTERN, type Tx } from "@/lib/i18n/ui";
  *   txRich(tx, "Akceptuję {0} i {1}.", "I accept the {0} and the {1}.", termsLink, privacyLink)
  */
 export function txRich(tx: Tx, pl: string, en: string, ...nodes: ReactNode[]): ReactNode {
-  const template = tx(pl, en);
+  return renderTemplate(tx(pl, en), nodes);
+}
+
+/**
+ * `txRich` with line-break protection (see `tidyWrap`): short words stay with the word after
+ * them, French punctuation keeps its no-break space. For dialog and card texts that must not
+ * wrap awkwardly; the translations themselves stay plain.
+ */
+export function txRichTidy(tx: Tx, pl: string, en: string, ...nodes: ReactNode[]): ReactNode {
+  return renderTemplate(tidyWrap(tx(pl, en), tx.language), nodes);
+}
+
+function renderTemplate(template: string, nodes: ReactNode[]): ReactNode {
   const parts: ReactNode[] = [];
   let last = 0;
   for (const match of template.matchAll(PLACEHOLDER_PATTERN)) {
