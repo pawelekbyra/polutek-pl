@@ -5,8 +5,9 @@ import EmailSubscriptionConsentModal from '@/app/components/subscriptions/EmailS
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { txFor } from "../../i18n/mock-language";
+import type { Locale } from '@/lib/i18n/routing';
 
-const lang = vi.hoisted(() => ({ language: 'pl' }));
+const lang = vi.hoisted(() => ({ language: 'pl' as Locale }));
 
 // Mock LanguageContext
 vi.mock('@/app/components/LanguageContext', () => ({
@@ -128,7 +129,7 @@ describe('EmailSubscriptionConsentModal', () => {
   });
 
   it("protects line breaking in CSS, in any language: balanced text, width cap, lang for hyphenation, CJK rules", () => {
-    for (const language of ['pl', 'de', 'zh']) {
+    for (const language of ['pl', 'de', 'zh'] as const) {
       lang.language = language;
       render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
       const dialog = screen.getByRole('dialog');

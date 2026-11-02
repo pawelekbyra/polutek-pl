@@ -238,8 +238,8 @@ describe("funnel (B6, B7)", () => {
     expect(r.data.steps[3].pctOfPrevious).toBeCloseTo(25);
     expect(r.data.sample).toBe("low");
     expect(r.data.attribution.available).toBe(false);
-    expect(r.data.accounts.current.reduce((a, v) => a + (v ?? 0), 0)).toBe(2);
-    expect(r.data.tips.current.reduce((a, v) => a + (v ?? 0), 0)).toBe(1);
+    expect(r.data.accounts.current.reduce<number>((a, v) => a + (v ?? 0), 0)).toBe(2);
+    expect(r.data.tips.current.reduce<number>((a, v) => a + (v ?? 0), 0)).toBe(1);
     expect(r.data.lossHint).toContain("Nowe konta");
   });
 

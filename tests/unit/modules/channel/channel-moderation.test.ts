@@ -11,7 +11,7 @@ import {
 
 function makePrisma(over: Record<string, unknown> = {}) {
   const tx = {
-    creator: { updateMany: vi.fn(async () => ({ count: 1 })) },
+    creator: { updateMany: vi.fn<(args: unknown) => Promise<{ count: number }>>(async () => ({ count: 1 })) },
     moderationDecision: { create: vi.fn(async () => ({ id: "dec1" })) },
     auditLog: { create: vi.fn(async () => ({})) },
     contentReport: { updateMany: vi.fn(async () => ({ count: 1 })), update: vi.fn(async () => ({})) },

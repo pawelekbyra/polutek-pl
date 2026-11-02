@@ -8,9 +8,9 @@ const OFF = {};
 
 function makePrisma(over: Record<string, unknown> = {}) {
   const tx = {
-    order: { create: vi.fn(async () => ({ id: "o1" })), updateMany: vi.fn(async () => ({ count: 1 })) },
+    order: { create: vi.fn<(args: unknown) => Promise<{ id: string }>>(async () => ({ id: "o1" })), updateMany: vi.fn(async () => ({ count: 1 })) },
     entitlement: { upsert: vi.fn(async () => ({})), updateMany: vi.fn(async () => ({ count: 1 })) },
-    ledgerEntry: { create: vi.fn(async () => ({})) },
+    ledgerEntry: { create: vi.fn<(args: unknown) => Promise<object>>(async () => ({})) },
     videoPrice: { upsert: vi.fn(async () => ({})) },
     video: { update: vi.fn(async () => ({})) },
     auditLog: { create: vi.fn(async () => ({})) },

@@ -121,7 +121,7 @@ describe('events for a payment that is not recorded as paid yet', () => {
   it('after the payment is recorded the redelivered refund event applies (supporter marker and totals intact)', async () => {
     const payment = seedPayment();
     const refundEvent = signedRequest('charge.refunded', charge(payment.stripeIntentId, 400), { id: 'evt_refund_early' });
-    await POST(refundEvent.clone());
+    await POST(new NextRequest(refundEvent.clone()));
 
     await POST(signedRequest('payment_intent.succeeded', intent(payment.stripeIntentId, payment.id)));
     expect(payment.status).toBe('SUCCEEDED');
