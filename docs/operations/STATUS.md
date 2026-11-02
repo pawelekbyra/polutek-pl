@@ -1,5 +1,7 @@
 # Stan prac
 
+Aktualne rozdzielenie produktu i rejestr otwartych decyzji: [product-profile.md](../architecture/product-profile.md) (2 listopada 2026). Datowane niżej opisy niekomercyjnego serwisu i wyłącznie napiwków poprzedzają decyzje z 13 i 21 października; nie są opisem całego obecnego kodu strefy patrona. Aktualna konfiguracja produkcji wymaga osobnej weryfikacji; ten dopisek nie zmienia flag ani decyzji właściciela.
+
 Jedyna lista otwartych prac. Aktualizuj ją w tym samym PR, który coś zamyka albo otwiera. Rzeczy
 zrobionych tu nie trzymamy (są w git). Przed uznaniem punktu za otwarty sprawdź stan faktyczny
 (`git log origin/main`, `gh pr list`, serwer, DNS).
