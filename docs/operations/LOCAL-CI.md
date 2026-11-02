@@ -18,7 +18,9 @@ Wynik: tabela `bramka / wynik / czas / przyczyna`, kod wyjścia 0 tylko wtedy, g
 
 ## Celowane testy krytyczne
 
-`npm run test:critical-path` uruchamia procesowe testy `verify-restored-database-process.test.ts` oraz istniejący komponentowy `launch-candidate-critical-path.test.ts`. Oba wskazane pliki istnieją; procesowe przypadki zastępują dawny nieistniejący cel architektoniczny. Ten zestaw obejmuje jawne atrapy DB i nie zastępuje testów PostgreSQL ani pełnego E2E. Jego niezerowego wyniku nie wolno traktować jako zielonej bramki.
+`npm run test:critical-path` przez `scripts/test-critical-path.mjs` uruchamia procesowe testy `verify-restored-database-process.test.ts` oraz komponentowy `launch-candidate-critical-path.test.ts`. Strażnik najpierw sprawdza istnienie obu plików, potem wynik procesu i raport JSON prawdziwego Vitest. Każdy wymagany plik musi zawierać wykonane testy; wszystkie muszą przejść. Brak pliku w raporcie, pusty zestaw, `skip`, `todo`, uszkodzony raport lub błąd procesu oznacza porażkę. Sam filtr plików Vitest nie wystarcza: jeden istniejący plik może ukryć brak drugiego.
+
+Dozwolone opcje to `--maxWorkers=N` (dodatnia liczba, domyślnie 2) i `--report-json=/ścieżka/wynik.json` (raport zapisywany po sukcesie; rozstrzyga kod wyjścia bieżącego uruchomienia). Przykład: `npm run test:critical-path -- --maxWorkers=1`. Filtry testów, wykluczenia i `--passWithNoTests` są odrzucane. Regresje strażnika w `tests/unit/operations/critical-path-runner.test.ts` uruchamiają prawdziwy Vitest na małych zestawach kontrolnych; nie są dowodem działania platformy. Właściwy zestaw krytyczny obejmuje jawne atrapy DB i nie zastępuje testów PostgreSQL ani pełnego E2E.
 
 Przy ręcznej weryfikacji nie dziedzicz `ADMIN_DEV_FIXTURES=1`, `ADMIN_DEV_BYPASS_AUTH=1` ani `ADMIN_DEV_BYPASS_ACCESS=1` z konfiguracji podglądu panelu. Dane demonstracyjne celowo blokują zapisy (409), a obejścia logowania zmieniają badany wariant. Użyj jawnego środowiska testowego i własnej bazy, bez poświadczeń usług produkcyjnych.
 

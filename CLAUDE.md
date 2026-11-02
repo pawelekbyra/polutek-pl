@@ -359,6 +359,7 @@ nie otwieraj portów, nie osłabiaj SSH i zapory, nie usuwaj serwera ani dysku, 
 Wdrożenie (`git archive` → `deploy.sh`, panel `deploy-admin.sh`, rollback `--rollback`) opisano w SERWEREK.md rozdz. 7 i wykonuje się tylko na zgodę właściciela.
 
 **Konwencje:**
+- `npm run test:critical-path` uruchamia `scripts/test-critical-path.mjs`: oba wymagane pliki muszą istnieć, każdy wykonać co najmniej jeden test i wszystkie testy muszą przejść. Brak pliku, pusty zestaw, `skip`/`todo`, błąd procesu lub raportu blokuje sukces. Nie omijać strażnika filtrami Vitest; zasady: `docs/operations/LOCAL-CI.md`.
 - Budowa Next strony i panelu sprawdza typy (`ignoreBuildErrors=false`). Nie przywracać pomijania typów dla uzyskania zielonego obrazu; lokalne testy/quality pozostają osobnymi wymaganiami. Sam build nie potwierdza związania wszystkich wyników z SHA/digest konkretnego wydania; opis: `docs/operations/LOCAL-CI.md`.
 - Opcjonalny `scripts/verify-restored-database.ts` jest tylko do odczytu oddzielnej odtworzonej bazy: nieudana obowiązkowa kontrola lub brak oczekiwanego agregatu oznacza niezerowy kod wyjścia, bez komunikatu sukcesu. Zakończone/wycofane próby migracji są historią; blokują próby nieukończone i niewycofane. Nie zastępuje cotygodniowego restore-test.sh ani odzysku całego produktu; opis: `docs/operations/RESTORE-VERIFICATION.md`.
 - Tekst interfejsu: polski i angielski obok siebie przez `tx("polski", "english")`, inne języki z katalogów (§4.11). Strona i panel nie ładują niczego z zewnętrznych CDN (czcionki lokalne, `hls.js` z bundla).
