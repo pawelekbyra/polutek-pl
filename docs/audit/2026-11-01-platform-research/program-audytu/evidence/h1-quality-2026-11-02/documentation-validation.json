@@ -1,0 +1,19 @@
+{
+  "result": "PASS",
+  "findings": 37,
+  "packages": 40,
+  "canonical_counts_unchanged": true,
+  "private_values_absent": true,
+  "code_sha": "de69f521f873be54f4d2ec30ae543331700c8397",
+  "tsconfig_unchanged": true,
+  "typecheck_not_disabled": true,
+  "legacy_enum_assertion_is_explicit_test_boundary": true,
+  "required_remaining_failures": [
+    "hotspots",
+    "strict-escapes",
+    "artifact binding",
+    "full HLS integration",
+    "K05 decisions"
+  ],
+  "release_ready": false
+}

@@ -257,3 +257,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Typy aplikacji/architektura/env i build panelu PASS. Typy całego repo: 81 diagnostyk w 41 plikach testów; build strony FAIL. Lint zatrzymany konfiguracją, hotspots 4 przekroczenia, strict-escapes 5 dopasowań. Pełny odbiór H1 i protokół artefaktu nadal otwarte; nie obniżono bramek.
 - Nieudane przebiegi i dokładna atrybucja zachowane w `evidence/h1-cloud-2026-11-02`. Utworzono szkic PR #2065 na dokładnym SHA. Zaktualizowano POSTEP/STAN/CSV/status; 37/37 ustaleń pozostaje w rejestrze, zero zamkniętych i zero nowych PASS ASVS.
 - Instrukcje startowe zapisane i odczytane ze szkicu środowiska rev. 8; instalacja i aktywna sieć bez zmian. Publikacja instrukcji jest osobnym krokiem ustawień, nie blokadą bieżącej pracy.
+
+## 2 listopada 2026 — usunięcie blokad typów/lint i oba buildy H1
+
+- Sześć małych commitów od 76ba1ff4 do de69f521: bieżące/legacy poziomy dostępu w testach, kompletne fixtures/props/mocki i JSDoc CLI, poprawny zakres ESLint, izolowany BOLA unit, fixtures lint i rzeczywista poprawka callbacków powiadomień przy zawieszonym renderze.
+- 81 diagnostyk typów→0. Pełny lint0; bez wyłączenia reguł i bez zmiany tsconfig. Nowa regresja Suspense RED 8/9 → GREEN 9/9, 65/65 celowanych follow-up; wcześniejsze 158/158 i 269/269 zachowane.
+- Finalny czysty SHA de69f521: unit 4687 PASS/0 FAIL/3 pominięte w 541 plikach, PG 75/75 w 12 plikach, oba typecheck/architektura/env/lint PASS, public i admin build PASS. Hotspots 4 i strict-escapes 5 nadal FAIL; zbiorczy exit 1. Obraz/protokół artefaktu/full HLS i decyzje K05 otwarte.
+- Dowody w evidence/h1-quality-2026-11-02, aktualizacja PR #2065 i przekazania. Zero zamkniętych całych pakietów/ustaleń, brak nowych kwalifikacji ASVS, merge, deploy, produkcji i kosztów. Na polecenie właściciela raportujemy szacunek: H1 około 65%, całość 5–10%, pozostało 35% i 90–95%. Bieżące działające środowisko bez kolejnej publikacji.
