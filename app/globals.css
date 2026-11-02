@@ -704,7 +704,10 @@
     flex:1 1 auto; min-width:0;
     display:flex; align-items:center;
     height:100%;
-    margin: 0 12px;
+    /* The glyph boxes carry empty space (play box 40px around a 26px glyph, which has its own viewBox padding),
+       so the track pulls in over the box edge to sit ~10px from the visible ink on both sides (before: ~27px
+       left of the track, 14px right of it). Left -4px, right 8px (+2px bar gap) next to the duration. */
+    margin: 0 8px 0 -4px;
   }
   .mc-group { display:flex; align-items:center; gap:2px; flex-shrink:0; }
 
@@ -1064,7 +1067,7 @@
     .mc-play { --mc-play-glyph: 24px; width:40px; height:var(--mc-row); }
     .mc-play::before { content:""; position:absolute; inset:-4px -2px; }
     .mc-btn--badge { padding:0 4px; }
-    .mc-track-area { margin:0 6px; }
+    .mc-track-area { margin:0 0 0 -4px; }
     .mc-duration, .mc-pip, .mc-chapters > .mc-btn { display:none; }
     .mc-menu-item--narrow { display:flex; }
     .mc-menu-sep.mc-menu-item--narrow { display:block; }
