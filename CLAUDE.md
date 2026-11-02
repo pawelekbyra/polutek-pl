@@ -26,10 +26,9 @@ Numeracja §4.x jest stabilna: odwołują się do niej komentarze w kodzie i tes
 - **Kierunek (decyzja właściciela 2026-10-13, zastępuje decyzje z 2026-09-22 „jeden kanał” i „serwis niekomercyjny”):** platforma wielu twórców. Każdy zalogowany użytkownik może założyć kanał, wgrywać filmy i zarządzać nimi
   w Studiu (`/studio`); administrator platformy nie ma kanału i działa wyłącznie w panelu (§4.20). Docelowo twórca może sprzedawać dostęp do filmów (cena stała lub „zapłać, ile chcesz”), a platforma jest sprzedawcą (merchant of record).
   Pełny opis, bramki i stan etapów: `docs/architecture/multi-creator-platform.md`.
-- **Stan do czasu spełnienia bramek (tam):** serwis działa jak dotąd: jeden kanał (`MainChannelService`), filmy darmowe (`PUBLIC`, `LOGGED_IN`), nigdzie na stronie nie ma bramki płatności, a wsparcie to dobrowolny, bezzwrotny napiwek przez Stripe,
-  który niczego nie odblokowuje i nie daje publicznej odznaki (§4.1, §4.10). **Sprzedaż dostępu i tworzenie kanałów przez innych użytkowników są wyłączone wyłącznikami (`lib/platform-gates.ts`) i włącza je tylko właściciel.**
-- Komentarze czytają wszyscy; pisanie i reakcje wymagają konta (§4.9). Poziomy dostępu filmu to **tylko dwa**: `PUBLIC` i `LOGGED_IN`. Wartość `PATRON` istnieje jeszcze w enumie `schema.prisma` do migracji czyszczącej;
-  cały kod czyta poziomy przez `lib/access-tier.ts`, który traktuje zabłąkane `PATRON` jak `LOGGED_IN`.
+- **Bieżący profil produktu:** [docs/architecture/product-profile.md](docs/architecture/product-profile.md) rozdziela darmowe VOD i ukryte napiwki, obecną strefę patrona oraz przyszły marketplace. Strefa patrona jest produktem końcowym według decyzji z 2026-10-21 (§0/§4.10); opis „wyłącznie darmowy serwis i napiwki” nie obejmuje już całego kodu. Napiwek nadal niczego nie odblokowuje; `PatronGrant` pozostaje prywatną ewidencją, nie uprawnieniem.
+- **Wyłączniki i gotowość:** tworzenie kanałów, sprzedaż i wypłaty mają odrębne bramki (`lib/platform-gates.ts`). Premium ma własne `PREMIUM_PASS_*`; prawdziwe płatności live wymagają dodatkowo `sales=on`, ale nie oznacza to gotowego marketplace. Aktywne ustawienia produkcji trzeba zweryfikować osobno; włącza je wyłącznie właściciel po właściwych bramkach. Ten opis nie daje zgody na aktywację.
+- Komentarze czytają wszyscy; pisanie i reakcje wymagają konta oraz właściwych reguł dostępu (§4.9). `Video.tier` ma `PUBLIC`, `LOGGED_IN` i bramkowane `PAID`; enum `PATRON` nie istnieje w bieżącym schemacie. Dodatkowa reguła Premium według slugów nie zmienia poziomu filmu. Decyzja dostępu nadal wyłącznie przez `checkVideoAccess()` (§4.4), bez tokenu/źródła dla odmowy.
 
 ## 2. Stos
 

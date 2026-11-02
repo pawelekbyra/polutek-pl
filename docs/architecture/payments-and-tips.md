@@ -1,6 +1,6 @@
 # Napiwki i płatności (Stripe)
 
-Stan 2026-10-05. Serwis jest niekomercyjny: napiwek niczego nie odblokowuje. Płatności istnieją tylko jako dobrowolne wsparcie i prywatna ewidencja właściciela.
+Ten dokument opisuje przepływ napiwków: napiwek niczego nie odblokowuje i pozostaje prywatną ewidencją właściciela. Okno napiwku jest obecnie ukryte. Płatny dostęp obecnej strefy patrona korzysta ze wspólnego stosu `Payment`/Stripe, ale ma odrębne uprawnienie; opis: [patron-zone.md](patron-zone.md). Przyszły marketplace jest trzecim odrębnym przepływem. Aktualne rozdzielenie produktu i otwarte decyzje: [product-profile.md](product-profile.md).
 Źródło prawdy o nazwach: kod (`lib/modules/payments/`, `lib/modules/patron/`, `app/components/support/`). Audyt płatności: `../audit/2026-10-05/audit-payments.md`.
 
 ## Ewidencja wspierających (`PatronGrant`)
