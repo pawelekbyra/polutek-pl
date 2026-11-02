@@ -16,6 +16,12 @@ Opcje: `--all` (eslint całego repo), `--unit-full` (cały zestaw Vitest), `--bu
 
 Wynik: tabela `bramka / wynik / czas / przyczyna`, kod wyjścia 0 tylko wtedy, gdy każda wymagana bramka ma PASS (SKIP z braku narzędzia nie blokuje, chyba że `--strict`). Raport z hashem HEAD: `.claude/local-ci-last.json` i `.claude/local-ci-last.md`, pełne wyjście każdej bramki: `.claude/local-ci-logs/<bramka>.log` (wszystko w `.gitignore`).
 
+## Budowanie i warunki wydania
+
+Obie konfiguracje Next (`next.config.mjs`, `apps/admin/next.config.mjs`) mają `typescript.ignoreBuildErrors=false`. Błąd typu blokuje budowę strony lub panelu również w Dockerze. Nie naprawiać takiej porażki przez ponowne wyłączenie kontroli; rozstrzygnąć przyczynę, także brak prawdziwego wygenerowanego klienta Prisma.
+
+Ta kontrola nie zastępuje istniejących testów, lint i bramek lokalnego CI. Raport z SHA źródeł i udany build nie stanowią jeszcze automatycznego powiązania wszystkich wyników z digest obrazu: pełne wymuszenie tego protokołu dla wspieranych ścieżek wydania pozostaje osobnym zakresem K06. Bez tych dowodów nie ogłaszać gotowości konkretnego wydania.
+
 ## Scalanie bez GitHub Actions
 
 ```bash
