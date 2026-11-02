@@ -97,7 +97,7 @@ Stripe          -> webhook payment_intent.succeeded (podpis na surowym ciele; li
 - **Dostęp przyznaje wyłącznie `fulfillPayment()`** po weryfikacji, że Stripe mówi `succeeded`, a kwota, waluta, intent i użytkownik zgadzają się z wierszem `Payment`. Test `premium-pass-no-money.test.ts` pilnuje, że żadna trasa ani komponent nie woła `grantPatronAccessForPayment`.
 - **Pełny zwrot** (`REFUNDED`) zdejmuje udział tej wpłaty (30 dni albo znacznik lifetime; `revokePatronAccessForPayment`). Częściowy zwrot, spór i cofnięty zwrot właściciel obsługuje ręcznie (dostęp się nie zmienia sam; zob. audyt). Kod niczego nie zwraca sam.
 - **Księga:** płatność idzie do tabeli `Payment` (ta sama co napiwki; widać ją w panelu „Płatności”), odróżnia ją `metadata.purpose`. Pasek zbiórki liczy tylko napiwki (`fundraising-progress.service.ts` odejmuje płatności strefy).
-- **Czego nie ma:** zapisu do `Order`/`Entitlement`/`LedgerEntry`/`PatronGrant`, maila z potwierdzeniem (art. 21 u.p.k.), faktur ani paragonów, odznaki patrona za zakup. To są punkty audytu.
+- **Czego nie ma:** zapisu do `Order`/`Entitlement`/`LedgerEntry`/`PatronGrant`, maila z potwierdzeniem (art. 21 u.p.k.), faktur ani paragonów, odznaki patrona za napiwek. To są punkty audytu. Jedyna publiczna widoczność zakupu to goła plakietka „VIP” przy komentarzach (decyzja właściciela 2026-11-02): tylko za aktywny, opłacony dostęp (Stripe, nie DEMO), bez dat i typu dostępu, nigdy z napiwków; patrz `comments-and-reactions.md`.
 
 ## Decyzja dostępu i plan odtwarzania
 
