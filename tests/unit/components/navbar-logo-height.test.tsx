@@ -20,9 +20,12 @@ const NAV_PAD = 3; // py-[3px] on the nav, top and bottom
 const LINE = 1; // the bar's bottom line
 const LINK_PAD = 4; // py-1 on the logo link
 
-function logoHeights(variant: "wordmark" | "glasses") {
+type Variant = "wordmark-blue" | "wordmark" | "glasses";
+const markTag = (variant: Variant) => (variant === "glasses" ? "img" : "svg");
+
+function logoHeights(variant: Variant) {
   const { container } = render(<BrandName variant={variant} decorative />);
-  const el = container.querySelector(variant === "wordmark" ? "svg" : "img");
+  const el = container.querySelector(markTag(variant));
   const cls = (el?.getAttribute("class") ?? "").split(/\s+/);
   // "h-[21px]" (prefix "") or "md:h-[25px]" (prefix "md:"); other breakpoints (max-[350px]:) do not match
   const at = (prefix: string) => {
@@ -62,6 +65,7 @@ describe("the top bar: even margins, and the logo decides its height", () => {
   });
 
   it.each([
+    ["wordmark-blue", 47, 47],
     ["wordmark", 47, 47],
     ["glasses", 47, 49],
   ] as const)("with the %s logo the bar is %ipx on phones and %ipx from md up, logo margins top = bottom", (variant, phoneBar, mdBar) => {
@@ -77,12 +81,9 @@ describe("the top bar: even margins, and the logo decides its height", () => {
     }
   });
 
-  it.each([
-    ["wordmark", "svg"],
-    ["glasses", "img"],
-  ] as const)("the %s mark has a fixed height below the 38px row and no margin, padding or min-height", (variant, tag) => {
+  it.each(["wordmark-blue", "wordmark", "glasses"] as const)("the %s mark has a fixed height below the 40px row and no margin, padding or min-height", (variant) => {
     const { container } = render(<BrandName variant={variant} decorative />);
-    const el = container.querySelector(tag);
+    const el = container.querySelector(markTag(variant));
     const cls = (el?.getAttribute("class") ?? "").split(/\s+/);
 
     expect(el).not.toBeNull();
@@ -106,9 +107,25 @@ describe("the top bar: even margins, and the logo decides its height", () => {
     expect(wrapper).toContain("md:px-6");
   });
 
-  it("the wordmark svg is display:block (no inline baseline gap)", () => {
-    const { container } = render(<BrandName variant="wordmark" decorative />);
+  it.each(["wordmark-blue", "wordmark"] as const)("the %s svg is display:block (no inline baseline gap)", (variant) => {
+    const { container } = render(<BrandName variant={variant} decorative />);
 
     expect(container.querySelector("svg")?.getAttribute("class")).toContain("block");
+  });
+
+  it("the blue wordmark: letters 18-22px tall on desktop (svg 22px, cap height 100/104.06 of it), 20px on phones, 18px under 350px, a reserved width/height box", () => {
+    const { container } = render(<BrandName variant="wordmark-blue" decorative />);
+    const svg = container.querySelector("svg")!;
+    const cls = (svg.getAttribute("class") ?? "").split(/\s+/);
+    const [, , vbW, vbH] = (svg.getAttribute("viewBox") ?? "").split(" ").map(Number);
+
+    expect(cls).toContain("h-[20px]");
+    expect(cls).toContain("md:h-[22px]");
+    expect(cls).toContain("max-[350px]:h-[18px]");
+    const capDesktop = 22 * (100 / vbH);
+    expect(capDesktop).toBeGreaterThanOrEqual(18);
+    expect(capDesktop).toBeLessThanOrEqual(22);
+    expect(svg.getAttribute("height")).toBe("22");
+    expect(Number(svg.getAttribute("width"))).toBe(Math.round((vbW / vbH) * 22));
   });
 });

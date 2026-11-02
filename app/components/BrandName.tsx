@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { BRAND_LOGO_VARIANT, type BrandLogoVariant } from "@/lib/ui-flags";
 import PolutekWordmark from "./brand/PolutekWordmark";
+import PolutekWordmarkBlue from "./brand/PolutekWordmarkBlue";
 
 interface BrandNameProps {
   className?: string;
@@ -11,14 +12,17 @@ interface BrandNameProps {
   variant?: BrandLogoVariant;
 }
 
-// The top-bar logo. One switch (BRAND_LOGO_VARIANT in lib/ui-flags.ts) chooses between the
-// POLUTEK.COM wordmark and the original glasses graphic (public/logo-glasses.svg), which stays in
-// the code so it can be restored with a one-line change.
+// The top-bar logo. One switch (BRAND_LOGO_VARIANT in lib/ui-flags.ts) chooses between the blue POLUTEK wordmark
+// ("wordmark-blue", the owner's image redrawn as SVG), the older POLUTEK lockup with the play badge ("wordmark") and the
+// original glasses graphic (public/logo-glasses.svg). All stay in the code, so going back is a one-line change.
 export default function BrandName({
   className,
   decorative = false,
   variant = BRAND_LOGO_VARIANT,
 }: BrandNameProps) {
+  if (variant === "wordmark-blue") {
+    return <PolutekWordmarkBlue decorative={decorative} className={className} />;
+  }
   if (variant === "wordmark") {
     return <PolutekWordmark decorative={decorative} className={className} />;
   }
