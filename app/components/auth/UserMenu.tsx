@@ -102,23 +102,25 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
       if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
-    // The page behind must not scroll: lock both the root and the body (either may be the scroller). `html` has
-    // `scrollbar-gutter: stable` (globals.css), so the scrollbar's space stays reserved while it is hidden and the
-    // layout does not move. Padding the body as well would shift the page by the scrollbar's width a second time, so
-    // it is added only in a browser without scrollbar-gutter support (where the gutter is NOT kept).
+    // The page behind must not scroll: lock the ROOT only (the viewport is the scroller). An inline overflow on the body must NOT
+    // be set: with `html` already non-visible it stops propagating to the viewport and makes the body a scroll
+    // container of its own, so the sticky top bar loses its viewport anchor and rises by `scrollY` (and the page can
+    // scroll sideways when the focus moves into the sliding panel). `html` has `scrollbar-gutter: stable`
+    // (globals.css), so the scrollbar's space normally stays reserved while it is hidden and the layout does not move.
+    // Padding the body as well would shift the page by the scrollbar's width a second time, so it is added only when
+    // the MEASURED width of the page actually grew (a browser that does not keep the gutter), by exactly that growth.
     const root = document.documentElement;
     const body = document.body;
-    const previous = { rootOverflow: root.style.overflow, bodyOverflow: body.style.overflow, bodyPaddingRight: body.style.paddingRight };
-    const gutterKept = typeof CSS !== "undefined" && CSS.supports("scrollbar-gutter", "stable");
-    const scrollbar = window.innerWidth - root.clientWidth;
+    const previous = { rootOverflow: root.style.overflow, bodyPaddingRight: body.style.paddingRight };
+    const widthBefore = body.getBoundingClientRect().width;
     root.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-    if (!gutterKept && scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
-    closeRef.current?.focus();
+    const grew = body.getBoundingClientRect().width - widthBefore;
+    if (grew > 0.5) body.style.paddingRight = `${grew}px`;
+    // preventScroll: the panel is still translated off-screen while it slides in; never scroll anything to reach it.
+    closeRef.current?.focus({ preventScroll: true });
     return () => {
       document.removeEventListener("keydown", onKey);
       root.style.overflow = previous.rootOverflow;
-      body.style.overflow = previous.bodyOverflow;
       body.style.paddingRight = previous.bodyPaddingRight;
     };
   }, [open, close]);
