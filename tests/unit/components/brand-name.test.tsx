@@ -13,11 +13,19 @@ import { BRAND_LOGO_VARIANT } from "@/lib/ui-flags";
 describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
   afterEach(() => cleanup());
 
-  it("ships the blue wordmark as the site logo (the older lockup and the glasses are kept, one switch away)", () => {
-    expect(BRAND_LOGO_VARIANT).toBe("wordmark-blue");
+  // The live logo. `npm run logo -- <variant>` (scripts/brand/set-logo.mjs) rewrites this line together with BRAND_LOGO_VARIANT.
+  const LIVE_LOGO = "wordmark-blue";
+  const LIVE_SELECTOR: Record<string, string> = {
+    "wordmark-blue": 'svg[data-brand-logo="wordmark-blue"]',
+    wordmark: 'svg[data-brand-logo="wordmark"]',
+    glasses: 'img[src="/logo-glasses.svg"]',
+  };
+
+  it("ships LIVE_LOGO as the site logo (the other variants are kept, one command away: npm run logo -- <variant>)", () => {
+    expect(BRAND_LOGO_VARIANT).toBe(LIVE_LOGO);
     const { container } = render(<BrandName />);
-    expect(container.querySelector('svg[data-brand-logo="wordmark-blue"]')).not.toBeNull();
-    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector(LIVE_SELECTOR[LIVE_LOGO])).not.toBeNull();
+    if (LIVE_LOGO !== "glasses") expect(container.querySelector("img")).toBeNull();
   });
 
   describe("wordmark-blue variant (the owner's POLUTEK image redrawn as SVG)", () => {
