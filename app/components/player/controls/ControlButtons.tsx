@@ -13,9 +13,6 @@ import {
 } from "./PlayerIconSet";
 
 /** The bar's icons are the "Marker" set (PlayerIconSet.tsx); `.mc-icon` (globals.css) sets the 20px box. */
-/** Dormant: the CC switch stays on the bar at every width (owner 2026-10-28); a width here would move it into the settings menu. */
-export const CAPTIONS_IN_MENU_QUERY = "(max-width: 0px)";
-
 /** Play/pause: the main action, a plain icon button (larger glyph, no surface) at the left of the row. */
 export function PlayPauseButton() {
   const copy = usePlayerCopy();

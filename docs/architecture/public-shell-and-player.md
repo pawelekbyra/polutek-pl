@@ -50,8 +50,7 @@ Dźwięk w odtwarzaczu i przycisk logo: `../operations/PLAYER-SOUND.md`. Języki
 ## Napisy (WebVTT)
 
 `Video.subtitleUrlPl` / `subtitleUrlEn` (i `VideoTranslation.subtitleUrl`) to opcjonalne napisy WebVTT: odnośnik `hlscap:<język>-<sha256>.vtt` do prywatnego pliku w `polutek-hls` (stare wartości: adres https albo ścieżka tego samego serwisu). `PlaybackService` wkłada je jako `textTracks` do `PlaybackPlan.player` tylko planu odtwarzalnego (plany odmowy ich nie niosą), a `buildSelfHlsPlan` zamienia odnośnik na adres Workera z tym samym tokenem co film (`withDeliveryCaptions`); szczegóły i wdrożenie: `docs/operations/HLS-SELF-HOSTED.md` „Napisy prywatne”.
-`VideoPlayer` montuje tylko ścieżkę w języku strony (`pickCaptionTrack()` w `player/captions.ts`, bez języka zastępczego); host Workera jest już w CSP `connect-src` (host starego publicznego `.vtt` też musi tam być do końca migracji). Przycisk CC (`player/CaptionsToggle.tsx`) to tylko włącznik
-(klawisz `c`, `aria-pressed`), ukryty gdy brak ścieżki w języku strony; wybór to preferencja widza w `localStorage` (`polutek:captions`, domyślnie włączone). Pliki lokalne: `public/subtitles/<slug>/<język>.vtt`;
+`VideoPlayer` montuje wszystkie ścieżki napisów z planu. `CaptionsSync` wybiera zapamiętany język, w przeciwnym razie język strony, a gdy go brak — pierwszą dostępną ścieżkę. Menu ustawień udostępnia wybór języka i wyłączenie napisów; CC (klawisz `c`) nadal włącza/wyłącza aktualny wybór. Preferencje są w `localStorage`: stan (`polutek:captions`) oraz język (`polutek:caption-language`). Host Workera jest już w CSP `connect-src` (host starego publicznego `.vtt` też musi tam być do końca migracji). Pliki lokalne: `public/subtitles/<slug>/<język>.vtt`;
 `tests/unit/subtitles-files.test.ts` sprawdza je z długością filmu. Zarządzany upload i walidacja napisów nie są kompletne.
 
 ## Wznawianie oglądania, `?t=` i ustawienia (2026-10-14)

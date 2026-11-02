@@ -31,8 +31,7 @@ import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
 import { usePlaybackQoe } from '@/lib/telemetry/client/use-playback-qoe';
 import { shouldSkipGate, usePageRevealReady } from './preload/PageRevealGate';
 import { buildSelfHlsConfig, loadHlsLibrary, streamIdentity } from './player/self-hls';
-import { pickCaptionTrack, writeCaptionsEnabled } from './player/captions';
-import { useOptionalLanguage } from './LanguageContext';
+import { writeCaptionsEnabled } from './player/captions';
 import { useOptionalTx } from "@/lib/i18n/language-context";
 import { announceVideoEnded } from './playlists/video-ended-event';
 import { ChaptersParts } from './player/chapters/ChaptersParts';
@@ -99,11 +98,9 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     const { source, tracking, player: playerConfig } = playbackPlan || {};
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
-    // Only the caption track in the page language is mounted (captions.ts): it is what the CC
-    // switch turns on and off; without one the player has no captions and no CC button.
-    const language = useOptionalLanguage();
+    // All available subtitle languages are mounted so viewers can choose a track in settings.
     const tx = useOptionalTx();
-    const captionTrack = pickCaptionTrack(normalizeTextTracks(playerConfig?.textTracks), language);
+    const captionTracks = normalizeTextTracks(playerConfig?.textTracks);
 
     // One stream = one video version; a renewed token is the same stream. The player is mounted
     // with the URL it started with; later requests get the newest token (see player/self-hls.ts).
@@ -599,8 +596,8 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         }}
                     >
                         <MediaProvider>
-                            {captionTrack && (
-                                // No `default`: CaptionsSync applies the viewer's on/off choice.
+                            {captionTracks.map((captionTrack) => (
+                                // No `default`: CaptionsSync applies the viewer's language/on-off choice.
                                 <Track
                                     key={`${captionTrack.kind}:${captionTrack.language}:${captionTrack.src}`}
                                     src={captionTrack.src}
@@ -609,7 +606,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                                     language={captionTrack.language}
                                     type="vtt"
                                 />
-                            )}
+                            ))}
                         </MediaProvider>
                         <ChaptersParts videoId={video.id} chapters={playerConfig?.chapters} />
                         {(playerConfig ? playerConfig.controls : true) && <PolutekControls />}

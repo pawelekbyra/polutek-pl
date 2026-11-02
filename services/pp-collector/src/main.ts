@@ -10,6 +10,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
 import { BEACON_MAX_BYTES } from '../../../lib/telemetry/beacon-constants';
+import { CLOUDFLARE_POLL_INTERVAL_MS, collectCloudflareSnapshots } from './cloudflare';
 import { RowBuffer } from './buffer';
 import { createSaltStore, createSql, insertRows } from './db';
 import { processBeacon } from './handler';
@@ -140,6 +141,7 @@ const timers = [
   setInterval(() => void flush(), flushIntervalMs),
   setInterval(() => void safely('rollup', () => runRollup(sql, host)), ROLLUP_INTERVAL_MS),
   setInterval(() => void safely('retention', () => runRetention(sql, host)), RETENTION_INTERVAL_MS),
+  setInterval(() => void safely('cloudflare-analytics', async () => { await collectCloudflareSnapshots(sql, host); }), CLOUDFLARE_POLL_INTERVAL_MS),
   setInterval(() => {
     if (stats.accepted || stats.insertErrors || Object.keys(stats.rejected).length) {
       console.log(JSON.stringify({ msg: 'pp-collector stats', ...stats, buffered: buffer.size, dropped: buffer.dropped }));
@@ -151,7 +153,9 @@ const timers = [
   }, 60_000),
 ];
 
-void safely('retention', () => runRetention(sql, host)).then(() => safely('rollup', () => runRollup(sql, host)));
+void safely('retention', () => runRetention(sql, host))
+  .then(() => safely('rollup', () => runRollup(sql, host)))
+  .then(() => safely('cloudflare-analytics', async () => { await collectCloudflareSnapshots(sql, host); }));
 
 server.listen(port, '0.0.0.0', () => console.log(`[pp-collector] listening on :${port}, hosts ${allowedHosts.join(',')}`));
 

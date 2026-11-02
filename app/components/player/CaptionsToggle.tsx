@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { isTrackCaptionKind, useMediaPlayer, useMediaRemote, useMediaState } from "@vidstack/react";
-import { useCaptionsEnabled } from "./captions";
+import { isTrackCaptionKind, useMediaPlayer, useMediaRemote, useMediaState, type TextTrack } from "@vidstack/react";
+import { pickCaptionTrack, useCaptionLanguage, useCaptionsEnabled } from "./captions";
+import { useOptionalLanguage } from "../LanguageContext";
 import { CaptionsOffIcon, CaptionsOnIcon } from "./controls/PlayerIconSet";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
@@ -17,7 +18,7 @@ export function CaptionsIcon({ crossed }: { crossed: boolean }) {
 
 /**
  * Captions on/off switch. Always in the row so the control is easy to find; when the video has no caption track
- * in the page language (VideoPlayer mounts only that one) it shows the crossed icon, inert (full white, crossed).
+ * it shows the crossed icon, inert (full white, crossed).
  * Plain CC icon = captions on, crossed CC = off. The label stays "Captions" and the state is in
  * aria-pressed (a toggle button must not also change its name); the tooltip says what a click does.
  */
@@ -52,25 +53,32 @@ export function CaptionsToggleButton() {
 }
 
 /**
- * Applies the viewer's captions choice to the player's caption track: on its first appearance (a
- * new video, a language switch) and whenever the choice changes, also from another tab.
+ * Applies the viewer's captions choice to the available tracks, including after a source renewal or
+ * a preference change in another tab.
  */
 export function CaptionsSync() {
   const player = useMediaPlayer();
   const tracks = useMediaState("textTracks");
   const enabled = useCaptionsEnabled();
+  const preferredLanguage = useCaptionLanguage();
+  const pageLanguage = useOptionalLanguage();
 
-  // `tracks` (state) re-runs this when a track is added; the modes are set on the player's own list.
+  // `tracks` re-runs this when a source is added or renewed. Preserve the viewer's explicit
+  // language choice; otherwise prefer the page language and fall back to an available track.
   useEffect(() => {
     if (!player) return;
-    let shown = false;
-    for (const track of player.textTracks) {
-      if (!isTrackCaptionKind(track)) continue;
-      const mode = enabled && !shown ? "showing" : "disabled";
-      if (mode === "showing") shown = true;
+    const captions = Array.from(player.textTracks).filter((track): track is TextTrack => Boolean(track && isTrackCaptionKind(track)));
+    const current = captions.find((track) => track.mode === "showing");
+    const target = enabled
+      ? (preferredLanguage
+          ? pickCaptionTrack(captions, pageLanguage, preferredLanguage)
+          : current ?? pickCaptionTrack(captions, pageLanguage))
+      : null;
+    for (const track of captions) {
+      const mode = track === target ? "showing" : "disabled";
       if (track.mode !== mode) track.setMode(mode);
     }
-  }, [player, tracks, enabled]);
+  }, [player, tracks, enabled, preferredLanguage, pageLanguage]);
 
   return null;
 }

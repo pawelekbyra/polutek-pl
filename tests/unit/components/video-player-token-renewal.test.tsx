@@ -175,25 +175,25 @@ describe("VideoPlayer captions", () => {
     localStorage.clear();
   });
 
-  it("mounts only the track in the page language (Polish site)", async () => {
+  it("mounts all subtitle tracks (Polish site)", async () => {
     document.documentElement.lang = "pl";
     const view = render(<Harness value={ctx(withTracks(BOTH))} />);
     await act(async () => {});
-    expect(view.getAllByTestId("track").map((t) => t.getAttribute("data-lang"))).toEqual(["pl"]);
+    expect(view.getAllByTestId("track").map((t) => t.getAttribute("data-lang"))).toEqual(["pl", "en"]);
   });
 
-  it("mounts only the track in the page language (English site)", async () => {
+  it("mounts all subtitle tracks (English site)", async () => {
     document.documentElement.lang = "en";
     const view = render(<Harness value={ctx(withTracks(BOTH))} />);
     await act(async () => {});
-    expect(view.getAllByTestId("track").map((t) => t.getAttribute("data-src"))).toEqual(["/subtitles/v/en.vtt"]);
+    expect(view.getAllByTestId("track").map((t) => t.getAttribute("data-src"))).toEqual(["/subtitles/v/pl.vtt", "/subtitles/v/en.vtt"]);
   });
 
-  it("mounts no track when there is none in the page language", async () => {
+  it("mounts the available track when the page language is not available", async () => {
     document.documentElement.lang = "en";
     const view = render(<Harness value={ctx(withTracks([BOTH[0]]))} />);
     await act(async () => {});
-    expect(view.queryByTestId("track")).toBeNull();
+    expect(view.getByTestId("track").getAttribute("data-lang")).toBe("pl");
   });
 
   it("remembers the viewer's own captions switch (CC button or c key)", async () => {

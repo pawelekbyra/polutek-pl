@@ -15,6 +15,7 @@ function buildPlayerCopy(tx: Tx) {
     volume: tx("Głośność", "Volume"),
     progress: tx("Postęp odtwarzania", "Playback progress"),
     captions: tx("Napisy", "Captions"),
+    captionsOff: tx("Wyłączone", "Off"),
     disableCaptions: tx("Wyłącz napisy", "Turn captions off"),
     enableCaptions: tx("Włącz napisy", "Turn captions on"),
     exitFullscreen: tx("Zamknij pełny ekran", "Exit fullscreen"),
