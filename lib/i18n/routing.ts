@@ -27,6 +27,8 @@ export const ROUTES = {
   studio: { pl: "/studio", en: "/en/studio" },
   // The viewer's own subscriptions: signed-in only (middleware gate), never indexed, so not in the public mirrors.
   subscriptions: { pl: "/subskrypcje", en: "/en/subscriptions" },
+  // The signed-in viewer's full notification inbox.
+  notifications: { pl: "/powiadomienia", en: "/en/notifications" },
   // patron zone (docs/architecture/patron-zone.md): the demo pass offer and its draft terms (noindex, 404 when off).
   // (No "js" in these paths: the middleware matcher skips every path containing "js", see the PR notes.)
   pass: { pl: "/premium", en: "/en/premium" },
@@ -79,6 +81,7 @@ export function localizedPathFromLegacyPath(pathname: string, locale: Locale): s
   if (pathname === "/regulamin") return getLocalizedHref(locale, "terms");
   if (pathname === "/polityka-prywatnosci") return getLocalizedHref(locale, "privacy");
   if (pathname === "/subskrypcje") return getLocalizedHref(locale, "subscriptions");
+  if (pathname === "/powiadomienia" || pathname === "/notifications") return getLocalizedHref(locale, "notifications");
   if (pathname === "/studio") return getLocalizedHref(locale, "studio");
   if (pathname === "/premium") return getLocalizedHref(locale, "pass"); // patron zone
   if (pathname === "/regulamin-premium") return getLocalizedHref(locale, "passTerms"); // patron zone
@@ -101,6 +104,7 @@ export function switchLocalePath(pathname: string, targetLocale: Locale): string
   if (segment === "regulamin" || segment === "terms") return getLocalizedHref(targetLocale, "terms");
   if (segment === "polityka-prywatnosci" || segment === "privacy-policy") return getLocalizedHref(targetLocale, "privacy");
   if (segment === "subskrypcje" || segment === "subscriptions") return getLocalizedHref(targetLocale, "subscriptions");
+  if (segment === "powiadomienia" || segment === "notifications") return getLocalizedHref(targetLocale, "notifications");
   if (segment === "studio") return getLocalizedHref(targetLocale, "studio");
   if (segment === "premium") return getLocalizedHref(targetLocale, "pass"); // patron zone
   if (segment === "regulamin-premium" || segment === "premium-terms") return getLocalizedHref(targetLocale, "passTerms"); // patron zone

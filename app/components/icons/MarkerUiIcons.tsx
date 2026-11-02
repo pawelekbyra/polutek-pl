@@ -5,8 +5,8 @@ import type { SVGProps } from "react";
  * spinner, the player's error screen, the top bar's search (lens, close) and anything else that needs the same hand.
  * Same drawing method and wrapper as the player set (`player/controls/PlayerIconSet.tsx`) and the bell: plain JSX paths
  * inheriting `currentColor`, no icon library, no raw HTML injection. The player-style icons draw a 2.4 line (2px at 20px);
- * the top bar's lens and close (`SearchIcon`, `CloseIcon`) use the thin pen of the Szeruj/Lajk icons instead: `strokeWidth`
- * defaults to `ICON_PEN_PX * 24 / size`, i.e. 1.2px on screen at any size.
+ * the top bar's lens and close (`SearchIcon`, `CloseIcon`) use the thin 1.2px pen of Szeruj/Lajk;
+ * `strokeWidth` defaults to `ICON_PEN_PX * 24 / size` so it stays consistent at any rendered size.
  *
  * Generated from icongen/gen_ui.py (path data is not edited by hand). The spinner arc has no offset so that it
  * turns around the centre of the box.
@@ -31,7 +31,7 @@ function MarkerIcon({ size = 24, strokeWidth = 2.4, ...rest }: MarkerIconProps &
   );
 }
 
-/** Rendered pen width in CSS px for the top bar's lens and close: equal to Szeruj/Lajk (16px icon, strokeWidth 1.8). */
+/** Rendered pen width in CSS px for the top bar's lens and close: equal to Szeruj/Lajk (16px, strokeWidth 1.8). */
 export const ICON_PEN_PX = 1.2;
 
 function penStrokeWidth(size: number | string): number {

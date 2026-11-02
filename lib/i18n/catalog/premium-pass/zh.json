@@ -31,7 +31,6 @@
  "Complaints and refunds: support@polutek.com.": "投诉与退款：support@polutek.com。",
  "Confirming your payment…": "正在确认你的付款…",
  "Consent to immediate access": "同意立即访问",
- "Currency": "货币",
  "DEMO MODE": "演示模式",
  "Delete my access": "删除我的访问权限",
  "Demo mode · simulated payment · nothing will be charged": "演示模式 · 模拟付款 · 不会扣取任何费用",
@@ -50,7 +49,6 @@
  "Is this a subscription?": "这是订阅吗？",
  "Method": "方式",
  "No. Every payment is a one-time payment: 30-day access ends after 30 days, unlimited access has no end. Nothing is charged again and there is nothing to cancel.": "不是。每笔付款都是一次性的：30 天访问权限在 30 天后结束，无限期访问没有终点。不会再次扣款，也无需取消。",
- "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.": "不会真正扣款。测试卡：4242 4242 4242 4242，日期和 CVC 任意。",
  "On every device you sign in on": "在你登录的所有设备上",
  "Open in a new tab": "在新标签页中打开",
  "Order no.": "订单号",
@@ -79,7 +77,6 @@
  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or unlimited access. No subscription.": "支持本项目，进入赞助者专区：这里的内容别处看不到。可选 30 天或无限期访问。无需订阅。",
  "TEST MODE": "测试模式",
  "Terms of service": "服务条款",
- "Test mode": "测试模式",
  "The account is free. After signing in you come back to the purchase.": "账户免费。登录后会回到购买流程。",
  "The confirmation goes to {0}": "确认信息将发送至 {0}",
  "The patron zone is a closed part of the site with videos for the project's patrons.": "赞助者专区是网站的非公开部分，提供给项目赞助者的视频。",
@@ -133,5 +130,7 @@
  "Seller information": "卖家信息",
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "你正在向上述卖家购买。发票信息和联系方式见条款。",
  "Demo mode: nothing will be charged.": "演示模式：不会扣款。",
- "Payments are encrypted and handled by a trusted provider. We never store your card details.": "付款经过加密，由值得信赖的服务商处理。我们绝不会保存你的银行卡信息。"
+ "Payments are encrypted and handled by a trusted provider. We never store your card details.": "付款经过加密，由值得信赖的服务商处理。我们绝不会保存你的银行卡信息。",
+ "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.": "选择 Premium 访问权限，探索为支持者准备的内容。这是测试结账流程，你可以完整体验而不会产生真实付款。",
+ "Payment currency": "支付货币"
 }

@@ -106,3 +106,14 @@ describe('My subscriptions route', () => {
     expect(localizedPathFromLegacyPath('/subskrypcje', 'en')).toBe('/en/subscriptions');
   });
 });
+
+describe('notification center route', () => {
+  it('uses localized paths and stays on the same page when switching languages', () => {
+    expect(getLocalizedHref('pl', 'notifications')).toBe('/powiadomienia');
+    expect(getLocalizedHref('en', 'notifications')).toBe('/en/notifications');
+    expect(getLocalizedHref('de', 'notifications')).toBe('/de/notifications');
+    expect(switchLocalePath('/powiadomienia', 'en')).toBe('/en/notifications');
+    expect(switchLocalePath('/en/notifications', 'pl')).toBe('/powiadomienia');
+    expect(localizedPathFromLegacyPath('/notifications', 'de')).toBe('/de/notifications');
+  });
+});

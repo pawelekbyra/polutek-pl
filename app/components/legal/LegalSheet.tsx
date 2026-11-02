@@ -13,11 +13,12 @@
 // it also works without JavaScript, and the sheet offers the same page as a small "open in a new tab" action.
 import React, { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import { passTermsTitle } from "../premium-pass/PassTermsContent";
 import { LegalSheetContext, type LegalSheetApi, type LegalSheetDoc } from "./legal-sheet-context";
+import { CloseButton } from "@/components/ui/close-button";
 import styles from "./legal-sheet.module.css";
 
 export { LegalLink, useLegalSheet, type LegalSheetDoc } from "./legal-sheet-context";
@@ -183,10 +184,7 @@ function LegalSheet({ open, doc, tx, language, demo, openerRef, onClose }: Legal
                   {tx("Otwórz w nowej karcie", "Open in a new tab")}
                 </a>
               </div>
-              <DialogPrimitive.Close className={styles.close}>
-                <X aria-hidden="true" focusable="false" />
-                <span>{tx("Zamknij", "Close")}</span>
-              </DialogPrimitive.Close>
+              <DialogPrimitive.Close aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
             </div>
           </div>
           {/* Focusable on purpose: the arrow keys, Space and Page Up/Down scroll the document from the keyboard. */}

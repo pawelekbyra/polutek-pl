@@ -60,3 +60,7 @@ Pełny opis niezmienników: CLAUDE.md §4.26. Skrót: `POST /api/videos/[id]/pro
 **Ulubione:** przycisk-serce „Dodaj do ulubionych” w rzędzie akcji `Hero` (`app/components/FavoriteButton.tsx`, tuż przed „Zostań patronem”) zapisuje film do prywatnej listy widza (`VideoFavorite`, moduł `lib/modules/favorites`, `PUT /api/videos/[id]/favorite`), a półka „Ulubione” (`channel/FavoritesShelf`, `GET /api/user/favorites`) stoi pod odtwarzaczem obok „Kontynuuj oglądanie”. Opis: CLAUDE.md §4.26.
 `PlayerSettingsMenu` (w `PolutekControls`) daje jakość (Auto + poziomy z manifestu HLS), prędkość 0,5-2x i obraz w obrazie. Półka „Kontynuuj oglądanie” (`channel/ContinueWatchingShelf.tsx`) jest renderowana w `ChannelHome` z danych `HomeExperience`.
 Menu Udostępnij (`ShareButton`, `getStartSeconds`) dodaje pozycję „Zacznij od aktualnego czasu”, która dopisuje `?t=` do linków menu.
+
+## Przyciski zamykania
+
+Okna logowania, subskrypcji, konta, karty profilu, kasa, dokumenty prawne i menu konta korzystają z `CloseButton` (`components/ui/close-button.tsx`). Pole kliknięcia ma 44 × 44 px i leży 6 px od górnej i prawej krawędzi panelu; w środku jest szare kółko 32 px ze znakiem × (18 px, pogrubiony). Fokus ma niebieską obwódkę. Zamykanie wyszukiwarki w pasku używa tego samego przycisku wewnątrz istniejącego pola 40 px, bez zmiany wysokości paska. Każde okno zachowuje swoje zasady zamykania i blokady podczas zapisu.

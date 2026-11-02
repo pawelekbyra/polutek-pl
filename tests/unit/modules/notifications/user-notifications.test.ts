@@ -183,3 +183,36 @@ describe("viewer notifications", () => {
     expect(markNotificationsReadSchema.safeParse({ all: true, before: "2026-10-28T12:00:00.000Z" }).success).toBe(true);
   });
 });
+
+describe('notification center query and read controls', () => {
+  it('uses the explicitly requested UI language without changing the account', async () => {
+    const { ctx, prisma } = ctxFor(user, { findMany: vi.fn().mockResolvedValue([{ ...row('n1'), templateKey: 'new_video', params: { channelName: 'Channel', title: 'Film', titleEn: 'Movie' } }]) });
+    prisma.user.findUnique.mockResolvedValue({ language: 'pl' });
+    const page = await listUserNotifications(ctx, { limit: 10, language: 'de' });
+    expect(page.items[0]).toMatchObject({ title: 'Neues Video: Channel', body: 'Movie' });
+    expect(listUserNotificationsQuerySchema.safeParse({ language: 'unknown' }).success).toBe(false);
+  });
+
+  it('revalidates up to fifty explicitly named own rows, including read rows in the unread view', async () => {
+    const { ctx, notification } = ctxFor(user, { findMany: vi.fn().mockResolvedValue([{ ...row('mine'), read: true, params: { secret: 'not exposed' } }]) });
+    const page = await listUserNotifications(ctx, { limit: 1, ids: ['mine', 'someone-elses-id'], unreadOnly: true });
+    expect(notification.findMany.mock.calls[0][0]).toMatchObject({ where: { userId: 'me', id: { in: ['mine', 'someone-elses-id'] } }, take: 50 });
+    expect(notification.findMany.mock.calls[0][0].where).not.toHaveProperty('read');
+    expect(page.nextCursor).toBeNull();
+    expect(page.items[0]).not.toHaveProperty('params');
+    expect(page.items[0]).toHaveProperty('read', true);
+    expect(listUserNotificationsQuerySchema.parse({ ids: 'a,b' }).ids).toEqual(['a', 'b']);
+    for (const ids of ['', '../other', 'a b', Array.from({ length: 51 }, (_, i) => `n${i}`).join(',')]) expect(listUserNotificationsQuerySchema.safeParse({ ids }).success).toBe(false);
+    await expect(listUserNotifications(ctx, { limit: 10, ids: Array.from({ length: 51 }, () => 'n') })).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('makes unread a scoped idempotent mutation and retains the old mark-read request', async () => {
+    const { ctx, notification } = ctxFor(user);
+    await markNotificationsRead(ctx, { id: 'n1', read: false });
+    expect(notification.updateMany).toHaveBeenCalledWith({ where: { id: 'n1', userId: 'me', read: true }, data: { read: false } });
+    expect(markNotificationsReadSchema.parse({ id: 'n1' })).toEqual({ id: 'n1' });
+    expect(markNotificationsReadSchema.safeParse({ all: true, read: false }).success).toBe(false);
+    expect(userNotificationType('COMMENT', null, { eventType: 'comment_like' })).toBe('comment_like');
+    expect(userNotificationType('COMMENT', null, { eventType: 'creator_like' })).toBe('creator_like');
+  });
+});

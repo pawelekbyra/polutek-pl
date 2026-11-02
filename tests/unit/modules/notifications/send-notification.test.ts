@@ -41,7 +41,7 @@ describe("sendNotification template key", () => {
     const data = create.mock.calls[0][0].data;
     expect(data).toMatchObject({ titlePl: "A", titleEn: "B" });
     expect(data).not.toHaveProperty("templateKey");
-    expect(data).not.toHaveProperty("params");
+    expect(data.params).toEqual({ eventType: "welcome" });
   });
 
   it("keeps the key when skipTemplate ignores the override", async () => {

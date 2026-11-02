@@ -20,8 +20,9 @@ import { LegalSheetProvider } from "../legal/LegalSheet";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";
 import { FIELD_LABEL_CLASS } from "../support/TipSelect";
+import { playPassCashSound, preloadPassCashSound } from "./pass-cash-sound";
 import { ArrowLeft } from "../icons";
-import { CrossIcon } from "./PassIcons";
+import { CloseButton } from "@/components/ui/close-button";
 import { PassMethodStep, PassPayHead, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
@@ -151,6 +152,12 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const total = price(language, amountMinor, currency);
   const processing = stage.kind === "processing";
   const locked = busy || processing;
+  const changeOpen = (next: boolean) => {
+    if (locked || next === open) return;
+    onOpenChange(next);
+  };
+
+  useEffect(() => preloadPassCashSound(), []);
   const email = maskEmail(user?.primaryEmailAddress?.emailAddress);
 
   // ---- opening: a fresh attempt (or the return from a redirect method), Stripe.js only from here
@@ -353,7 +360,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   );
 
   const watch = () => {
-    onOpenChange(false);
+    changeOpen(false);
     onWatch();
   };
 
@@ -369,10 +376,10 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   );
 
   return (
-    <DialogPrimitive.Root open={open && dialogReady} onOpenChange={(next) => { if (!locked) onOpenChange(next); }} disablePointerDismissal>
+    <DialogPrimitive.Root open={open && dialogReady} onOpenChange={changeOpen} disablePointerDismissal>
       <DialogPrimitive.Portal>
         {/* A tap on the dimmed area closes the checkout. Done on the backdrop itself (not base-ui's outside press, which stays disabled): Stripe's 3DS / wallet / BLIK layers are appended to <body> and must never count as an outside press. */}
-        <DialogPrimitive.Backdrop className={styles.overlay} onClick={() => { if (!locked) onOpenChange(false); }} />
+        <DialogPrimitive.Backdrop className={styles.overlay} onClick={() => changeOpen(false)} />
         <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-modal="true" aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>
           {/* Legal documents open in a sheet ON TOP of this dialog (nested), so nothing here is unmounted or reset. */}
           <LegalSheetProvider tx={tx} language={language} demo={!stripeMode}>
@@ -380,14 +387,12 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
               {tx("Kup se Premium", "Get Premium")}
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close className={styles.close} disabled={locked} aria-label={tx("Zamknij", "Close")}>
-              <CrossIcon className="h-4 w-4" />
-            </DialogPrimitive.Close>
+            <DialogPrimitive.Close disabled={locked} aria-label={tx("Zamknij", "Close")} onClick={playPassCashSound} render={<CloseButton />} />
           </div>
 
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}
           {testMode && stage.kind !== "success" && (
-            <p className={styles.testNote}><span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span> {tx("Nic nie zostanie pobrane naprawdę. Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.")}</p>
+            <p className={styles.testNote}>{tx("Wybierz dostęp Premium i odkrywaj materiały przygotowane dla patronów. To wersja testowa kasy, więc możesz przejść cały proces bez prawdziwej płatności.", "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.")}</p>
           )}
 
           {stage.kind === "plan" && (
@@ -496,11 +501,11 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {(stage.kind === "processing" || stage.kind === "success" || stage.kind === "pending" || stage.kind === "declined" || stage.kind === "max-ahead") && (
             <div className={styles.sheetBody}>
               {stage.kind === "processing" && (
-                <PassPending ref={headingRef} tx={tx} timedOut={false} onCheck={() => undefined} onClose={() => onOpenChange(false)} />
+                <PassPending ref={headingRef} tx={tx} timedOut={false} onCheck={() => undefined} onClose={() => changeOpen(false)} />
               )}
               {stage.kind === "success" && <PassSuccess ref={headingRef} tx={tx} language={language} pass={stage.pass} onWatch={watch} watchLabel={watchLabel} />}
               {stage.kind === "pending" && (
-                <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, 4)} onClose={() => onOpenChange(false)} />
+                <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, 4)} onClose={() => changeOpen(false)} />
               )}
               {stage.kind === "declined" && <PassDeclined ref={headingRef} tx={tx} onRetry={retry} onChangeMethod={retry} />}
               {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} lifetime={stage.lifetime} onWatch={watch} />}

@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import NotificationBell from '@/app/components/notifications/NotificationBell';
 import { txFor } from '../i18n/mock-language';
 const mocks = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock('@/lib/auth/react', () => ({ useAuth: () => ({ userId: 'u1' }) }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock('@/app/components/LanguageContext', () => ({ useLanguage: () => ({ language: 'pl', tx: txFor('pl') }) }));
 
@@ -22,15 +23,18 @@ describe('notification bell interactions', () => {
   it('shows a distinct decorative event icon and uses client navigation instead of an anchor reload', async () => {
     render(<NotificationBell />);
     fireEvent.click(screen.getByRole('button', { name: /Powiadomienia/ }));
-    const link = await screen.findByRole('menuitem', { name: /Notification like/ });
-    expect(link.querySelector('[data-notification-type="comment_like"] svg')).not.toBeNull(); // Marker set B, not lucide
-    expect(link.querySelector('svg.lucide')).toBeNull();
-    expect(link.querySelector('svg')?.parentElement).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.getByRole('menuitem', { name: /Notification reply/ }).querySelector('[data-notification-type="comment_reply"] svg')).not.toBeNull();
+    const link = await screen.findByRole('link', { name: /Notification like/ });
+    expect(link.closest('li')!.querySelector('[data-notification-type="comment_like"] svg')).not.toBeNull(); // Marker set B, not lucide
+    expect(link.closest('li')!.querySelector('svg.lucide')).toBeNull();
+    expect(link.closest('li')!.querySelector('svg')?.parentElement).toHaveAttribute('aria-hidden', 'true');
+    expect(link.closest('ul')!.querySelector('[data-notification-type="comment_reply"] svg')).not.toBeNull();
+    const viewAll = await screen.findByRole('link', { name: 'Zobacz wszystkie' });
+    expect(viewAll).toHaveAttribute('href', '/powiadomienia');
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => url.includes('limit=5'))).toBe(true);
     expect(link).toHaveAttribute('href', '/watch/first#comment-c1');
     fireEvent.click(link);
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/watch/first#comment-c1', { scroll: false }));
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const writes = vi.mocked(fetch).mock.calls.filter(([, options]) => options?.method === 'POST');
     expect(JSON.parse(String(writes[0][1]?.body))).toEqual({ id: 'like' });
   });
@@ -39,9 +43,9 @@ describe('notification bell interactions', () => {
     render(<NotificationBell />);
     const bell = screen.getByRole('button', { name: /Powiadomienia/ });
     bell.focus();
-    fireEvent.keyDown(bell, { key: 'ArrowDown' });
-    await screen.findByRole('menuitem', { name: /Notification like/ });
-    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+    fireEvent.click(bell);
+    await screen.findByRole('link', { name: /Notification like/ });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     await waitFor(() => expect(bell).toHaveFocus());
   });
 });

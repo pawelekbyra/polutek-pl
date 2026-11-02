@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { NotificationKind } from "@prisma/client";
+import { NOTIFICATION_LANGUAGES } from "./notification-render";
 
 /** The viewer's own notification feed (the bell). Pure: schemas, DTOs and the link rule. */
 
@@ -9,6 +10,8 @@ export const USER_NOTIFICATIONS_MAX_LIMIT = 50;
 export const listUserNotificationsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(USER_NOTIFICATIONS_MAX_LIMIT).default(USER_NOTIFICATIONS_DEFAULT_LIMIT),
   cursor: z.string().trim().min(1).max(160).optional(),
+  language: z.enum(NOTIFICATION_LANGUAGES).optional(),
+  ids: z.string().max(3300).optional().transform((value) => value?.split(",").filter(Boolean)).refine((value) => !value || (value.length > 0 && value.length <= 50 && value.every((id) => id.length <= 64 && /^[A-Za-z0-9_-]+$/.test(id))), "Invalid notification ids"),
   unread: z
     .enum(["1", "true", "0", "false"])
     .optional()
@@ -18,7 +21,7 @@ export type ListUserNotificationsQuery = z.infer<typeof listUserNotificationsQue
 
 /** Mark one notification (`id`) or every unread one (`all`) as read. */
 export const markNotificationsReadSchema = z.union([
-  z.object({ id: z.string().trim().min(1).max(64) }).strict(),
+  z.object({ id: z.string().trim().min(1).max(64), read: z.boolean().optional() }).strict(),
   z.object({ all: z.literal(true), before: z.string().datetime().optional() }).strict(),
 ]);
 export type MarkNotificationsReadInput = z.infer<typeof markNotificationsReadSchema>;
@@ -27,12 +30,15 @@ export const USER_NOTIFICATION_TYPES = ["welcome", "support", "comment_reply", "
 export type UserNotificationType = (typeof USER_NOTIFICATION_TYPES)[number];
 
 /** Presentation semantics are stable across languages; storage kinds remain unchanged. */
-export function userNotificationType(kind: NotificationKind, templateKey?: string | null): UserNotificationType {
+export function userNotificationType(kind: NotificationKind, templateKey?: string | null, params?: unknown): UserNotificationType {
+  // Static administrator overrides have no render key, but retain the event identity internally.
+  const eventType = params && typeof params === "object" && !Array.isArray(params) ? (params as Record<string, unknown>).eventType : null;
+  const key = templateKey ?? (typeof eventType === "string" ? eventType : null);
   if (kind === "COMMENT") {
-    if (templateKey === "creator_like" || templateKey === "comment_like") return templateKey;
+    if (key === "creator_like" || key === "comment_like") return key;
     return "comment_reply";
   }
-  if (kind === "NEW_VIDEO") return templateKey === "premiere" ? "premiere" : "new_video";
+  if (kind === "NEW_VIDEO") return key === "premiere" ? "premiere" : "new_video";
   if (kind === "WELCOME") return "welcome";
   if (kind === "PATRON" || kind === "SUPPORT") return "support";
   if (kind === "MODERATION") return "moderation";

@@ -347,8 +347,8 @@ describe('legal documents inside the checkout: one mechanism, one source of text
 
   it('the sheet is full screen on every width, with a readable 760 px column and the 44 px Close; safe areas, contained scrolling, a higher layer than the checkout and reduced motion', () => {
     const css = read('app/components/legal/legal-sheet.module.css');
-    expect(css).toMatch(/\.close\s*\{[^}]*min-height:\s*44px/);
-    expect(css).toMatch(/\.close\s*\{[^}]*min-width:\s*44px/);
+    expect(read('app/components/legal/LegalSheet.tsx')).toContain('render={<CloseButton />}');
+    expect(read('components/ui/close-button.tsx')).toContain('h-11 w-11');
     expect(css).toMatch(/\.sheet\s*\{[^}]*inset:\s*0;[^}]*width:\s*100%;[^}]*height:\s*100dvh/);
     expect(css).toContain('760px');
     expect(css).toContain('env(safe-area-inset-top)');

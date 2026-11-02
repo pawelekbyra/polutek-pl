@@ -74,7 +74,7 @@ export async function createCreatorReply(
     });
     // The author of the answered comment hears about the answer and about the heart (best effort, once per answer).
     if (!outcome.duplicate) {
-      await notifyCommentReply({ answeredCommentId: target.id, replierId: authorId, replyText: text });
+      await notifyCommentReply({ answeredCommentId: target.id, replyCommentId: outcome.id, replierId: authorId, replyText: text });
       if (outcome.hearted) await notifyCreatorLike({ commentId: target.id });
     }
     return ok({ id: outcome.id, parentId: root.id, duplicate: outcome.duplicate });

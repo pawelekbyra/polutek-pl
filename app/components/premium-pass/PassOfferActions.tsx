@@ -12,6 +12,7 @@ import { DemoControls } from "./DemoControls";
 import { TicketIcon } from "./PassIcons";
 import { PASS_CHECKOUT_PARAM } from "./PremiumPassOverlay";
 import { price } from "./pass-copy";
+import { playPassCashSound, preloadPassCashSound } from "./pass-cash-sound";
 import styles from "./premium-pass.module.css";
 
 /** The button and the checkout it opens; `firstSlug` is where "enter the patron zone" goes after a success. */
@@ -22,6 +23,8 @@ export function PassOfferActions({ offer, productId, firstSlug }: { offer: Premi
   const [open, setOpen] = useState(false);
   const product = offer.products.find((p) => p.id === productId) ?? offer.products[0]!;
   const currency = patronCurrencyForLanguage(language);
+
+  useEffect(() => preloadPassCashSound(), []);
 
   // After sign-in the page is shown again; the marker set before the sign-in window reopens the checkout.
   useEffect(() => {
@@ -39,6 +42,7 @@ export function PassOfferActions({ offer, productId, firstSlug }: { offer: Premi
 
   const buy = useCallback(() => {
     if (userId) {
+      playPassCashSound();
       setOpen(true);
       return;
     }

@@ -25,21 +25,14 @@
 .grabber { display: block; width: 40px; height: 4px; margin: 0 auto 8px; border-radius: 999px; background: var(--chan-line-soft, #d5dce8); }
 @media (min-width: 561px) { .grabber { display: none; } }
 .headRow { display: flex; align-items: flex-start; gap: 12px; }
-.headText { flex: 1 1 auto; min-width: 0; padding-top: 2px; }
+.headText { padding-right: 44px; flex: 1 1 auto; min-width: 0; padding-top: 2px; }
 .title { margin: 0; font-size: 19px; line-height: 1.2; font-weight: 800; letter-spacing: -.01em; outline: none; overflow-wrap: anywhere; }
 .newTab {
   display: inline-flex; align-items: center; gap: 5px; min-height: 32px; margin-top: 2px; padding-right: 4px;
   font-size: 12.5px; color: var(--chan-muted, #5d6679); text-decoration: underline; text-underline-offset: 2px;
 }
 .newTab svg { width: 13px; height: 13px; flex: 0 0 auto; }
-.close {
-  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 14px 0 12px;
-  border: 0; border-radius: 12px; cursor: pointer; font: inherit; font-size: 15px; font-weight: 700;
-  background: var(--chan-surface, #f0f3f8); color: var(--chan-ink, #111827);
-}
-.close svg { width: 20px; height: 20px; stroke-width: 2.2; flex: 0 0 auto; }
-.close:hover { background: var(--chan-line, #e1e6ef); }
-.close:focus-visible, .newTab:focus-visible, .body:focus-visible { outline: 3px solid var(--chan-focus-ring, #2563eb); outline-offset: 2px; }
+.newTab:focus-visible, .body:focus-visible { outline: 3px solid var(--chan-focus-ring, #2563eb); outline-offset: 2px; }
 .body:focus-visible { outline-offset: -3px; }
 
 /* The only scrolling part. overscroll-behavior stops scroll chaining to the page (and, on iOS 16+, the rubber band

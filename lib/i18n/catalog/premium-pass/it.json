@@ -31,7 +31,6 @@
  "Complaints and refunds: support@polutek.com.": "Reclami e rimborsi: support@polutek.com.",
  "Confirming your payment…": "Conferma del pagamento in corso…",
  "Consent to immediate access": "Consenso all’accesso immediato",
- "Currency": "Valuta",
  "DEMO MODE": "MODALITÀ DEMO",
  "Delete my access": "Elimina il mio accesso",
  "Demo mode · simulated payment · nothing will be charged": "Modalità demo · pagamento simulato · non verrà addebitato nulla",
@@ -50,7 +49,6 @@
  "Is this a subscription?": "È un abbonamento?",
  "Method": "Metodo",
  "No. Every payment is a one-time payment: 30-day access ends after 30 days, unlimited access has no end. Nothing is charged again and there is nothing to cancel.": "No. Ogni pagamento è un pagamento unico: l’accesso di 30 giorni termina dopo 30 giorni, quello illimitato non ha fine. Non viene addebitato nulla di nuovo e non c’è nulla da annullare.",
- "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.": "Non viene addebitato nulla davvero. Carta di prova: 4242 4242 4242 4242, qualsiasi data e CVC.",
  "On every device you sign in on": "Su ogni dispositivo in cui accedi",
  "Open in a new tab": "Apri in una nuova scheda",
  "Order no.": "N. ordine",
@@ -79,7 +77,6 @@
  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or unlimited access. No subscription.": "Sostieni il progetto ed entra nell’area dei sostenitori: contenuti che non trovi altrove. Scegli l’accesso di 30 giorni o illimitato. Nessun abbonamento.",
  "TEST MODE": "MODALITÀ TEST",
  "Terms of service": "Termini del servizio",
- "Test mode": "Modalità test",
  "The account is free. After signing in you come back to the purchase.": "L’account è gratuito. Dopo l’accesso torni all’acquisto.",
  "The confirmation goes to {0}": "La conferma verrà inviata a {0}",
  "The patron zone is a closed part of the site with videos for the project's patrons.": "L’area dei sostenitori è una parte riservata del sito con video per i sostenitori del progetto.",
@@ -133,5 +130,7 @@
  "Seller information": "Informazioni sul venditore",
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "Acquisti dal venditore indicato sopra. I dati per la fattura e il contatto sono nei Termini.",
  "Demo mode: nothing will be charged.": "Modalità demo: non verrà addebitato nulla.",
- "Payments are encrypted and handled by a trusted provider. We never store your card details.": "I pagamenti sono cifrati e gestiti da un fornitore affidabile. Non conserviamo mai i dati della tua carta."
+ "Payments are encrypted and handled by a trusted provider. We never store your card details.": "I pagamenti sono cifrati e gestiti da un fornitore affidabile. Non conserviamo mai i dati della tua carta.",
+ "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.": "Scegli l’accesso Premium e scopri i contenuti per i sostenitori. Questo è un checkout di prova che puoi completare senza effettuare un pagamento reale.",
+ "Payment currency": "Valuta di pagamento"
 }

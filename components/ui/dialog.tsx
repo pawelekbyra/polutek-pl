@@ -5,7 +5,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
+import { CloseButton } from "@/components/ui/close-button"
 import { useOptionalTx } from "@/lib/i18n/language-context"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
@@ -64,18 +64,9 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            render={
-              <Button
-                variant="ghost"
-                className="absolute top-2 right-2"
-                size="icon"
-              />
-            }
-          >
-            <XIcon
-            />
-            <span className="sr-only">{tx("Zamknij", "Close")}</span>
-          </DialogPrimitive.Close>
+            aria-label={tx("Zamknij", "Close")}
+            render={<CloseButton />}
+          />
         )}
       </DialogPrimitive.Popup>
     </DialogPortal>

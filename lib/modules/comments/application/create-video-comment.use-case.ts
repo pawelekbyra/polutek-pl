@@ -128,7 +128,7 @@ export async function createVideoComment(
 
     // An answer that people can see tells the author of the answered comment (best effort, never blocks the answer).
     if (parentId && newStatus === CommentStatus.VISIBLE) {
-      await notifyCommentReply({ answeredCommentId: parentId, replierId: userId, replyText: text });
+      await notifyCommentReply({ answeredCommentId: parentId, replyCommentId: newComment.id, replierId: userId, replyText: text });
     }
 
     const commentWithRelations = await repo.findCommentForDto(newComment.id, userId, canModerate);
