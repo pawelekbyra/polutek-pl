@@ -2,7 +2,7 @@
 
 Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-audit`** w repozytorium `pawelekbyra/polutek-pl`. Właściciel 1 listopada 2026 polecił zachowywać tutaj także poprzednie badanie i dopisywać kolejne wnioski na tej samej gałęzi.
 
-**Roadmapa v1 zatwierdzona przez właściciela 2 listopada 2026. Rozpoczęto H1.** [Bieżący postęp i blokady](POSTEP-NAPRAW.md). Weryfikacja obejmuje ten etap; szersze nowe ASVS pozostaje odłożone w tej instancji. Zachowano równoległe wyniki Windows i adopcję partii 17. Bez scalenia i wdrożenia.
+**Roadmapa v1 zatwierdzona przez właściciela 2 listopada 2026. H1: kandydaty zapisane, pełny odbiór blokuje środowisko.** [Bieżący postęp i blokady](POSTEP-NAPRAW.md). Weryfikacja obejmuje ten etap; szersze nowe ASVS pozostaje odłożone w tej instancji. Zachowano równoległe wyniki Windows i adopcję partii 17. Bez scalenia i wdrożenia.
 
 ## Zacznij tutaj
 

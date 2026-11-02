@@ -1,10 +1,14 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 2 listopada 2026. **Właściciel zatwierdził roadmapę v1 i rozpoczęcie prac słowami „ok droga wolna dzialaj”. Bieżący zakres: H1 — K01/K02/K05, następnie odblokowane części K03/K06.**
+Aktualizacja: 2 listopada 2026. **Roadmapa v1 zatwierdzona przez właściciela („ok droga wolna dzialaj”). H1 przygotowane częściowo; pełny odbiór BLOCKED przez niezastosowane reguły środowiska.**
 
-Naprawa K02 jest na osobnej gałęzi `fix/polutek-k02-security-dependencies`, commit `e582ead4`, oparty na aktualnym `main` `5f848a9304d19a6d03860444808abbe120b57623` (nowszym od historycznego baseline audytu). Gałąź audytu przechowuje wyniki i punkty przejęcia. Bez scalenia, wdrożenia, produkcyjnych zmian danych lub kosztów. K02 jest kandydatem, nie ukończonym odbiorem.
+**Najpierw czytaj [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md) i [h1-status.json](evidence/h1-status.json).** Tam są małe commity, gałęzie, pełne wyniki, ograniczenia i dokładne polecenia wznowienia. Kod zbiorczy: `fix/polutek-h1-foundations`, commit `f5e061546ef4e309cc69994810ba20a5ffd68a0b`; baza napraw `main` `5f848a9304d19a6d03860444808abbe120b57623`, nowsza od historycznego baseline raportu `c397b9e`. Aktualnie checkout pozostaje na gałęzi audytu. Żadna poprawka nie została scalona ani wdrożona.
 
-Aktualny postęp i ograniczenia: [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md). [Roadmapa](../ROADMAPA-NAPRAW.md) i [harmonogram](../PLAN-WDROZENIA-NAPRAW.md) v1 zostały zatwierdzone; historyczny maszynowy indeks v1 opisuje pierwotną propozycję, nie bieżące wyniki. Do przyszłego agenta: najpierw stan i postęp, potem właściwa gałąź/commit; nie stosować historycznych poleceń pauzy ani dawnych statusów jako aktualnej zgody.
+Przygotowano K02 (zależności), narzędziową część K03/R37 i selekcję testów, dokumentację K05 oraz kontrolę typów w buildach K06. 46 istniejących testów K02 i 31 procesowych R37 PASS; sześć małych buildów fixture potwierdza usunięcie pomijania typów. To nie pełne quality, integracja DB ani buildy produktu. Cała komenda krytyczna nadal exit 1 (drugi plik nie rejestruje testów przez Prisma).
+
+K01: działa PostgreSQL 17.11; przygotowano świeżą pustą bazę i prywatny `/workspace/.cloud-setup/h1.env` (0600), bez zmian starszych baz. Nie wykonano Prisma/migracji. Szkic środowiska rev. 6 ma obie domeny i instrukcje startowe, ale runtime spec. 1 nadal ich nie ma. Potrzebne przejrzenie/zapisanie i publikacja środowiska przez właściciela; nie obchodzić ograniczenia i nie ponawiać niezmienionych prób.
+
+Bez zgody na deploy, main, produkcyjne migracje/korekty danych i koszty. Nowe kwalifikacje ASVS poza H1 nie zostały rozpoczęte. Historyczne statusy propozycji v1 lub dawne instrukcje pauzy nie cofają aktualnej zgody na H1.
 
 ## Odrębny przebieg na Windows — zachowane wyniki z 2 listopada 2026
 
@@ -181,19 +185,15 @@ Aktualny postęp i ograniczenia: [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md). [Roadm
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
-## Następne działanie — zatwierdzony H1
+## Następne działanie — odbiór H1 po zmianie warunku zewnętrznego
 
-Dokończyć K01/K02/K05 oraz niezależne przygotowanie K03/K06. K01 w tej instancji cloud jest BLOCKED: szkic rev. 3 zawiera `binaries.prisma.sh`, lecz reguła nie jest aktywna w runtime. Windows ma odrębny udany generate i baseline, bez DB i na Node 24; nie przenosić tego wyniku na Node 22/cloud lub PostgreSQL. Nie obchodzić proxy/checksum ani nie instalować klienta-atrapy.
+1. Właściciel przegląda i zapisuje szkic środowiska rev. 6 oraz publikuje go (narzędzie zwróciło `requires_publish=true`). To nie prośba o ponowną zgodę na H1; runtime nie stosuje szkicu automatycznie.
+2. Agent potwierdza aktywne `binaries.prisma.sh` i `api.github.com`, wybiera czystą gałąź `fix/polutek-h1-foundations` i uruchamia prawdziwe `npm ci --no-audit --no-fund`/generate, potem migracje na nowej bazie i pełne wymagane bramki. Instrukcje w POSTEP i zapisanym start_skill. Nie używać starych baz raw SQL ani klienta-atrapy.
+3. Dokończyć realny odbiór K03/R37, pełne K02 i K06 (w tym konkretne powiązanie źródeł/testów z artefaktem); K05 wymaga aktywnego profilu i dziewięciu jawnych decyzji. Nie ogłaszać gotowości z testów fixture. Po dostępie API przygotować małe szkice PR, nie scalać i nie wdrażać.
 
-K02: 46/46 istniejących testów w 4 plikach, architektura i rzeczywisty fixture HTTP Next/sharp przechodzą; typy exit 2 z 515 diagnostykami, w tym brak eksportów niewygenerowanego Prisma. Pełna instalacja bez pomijania skryptów, quality, oba buildy i faktyczne obrazy wymagają dalszej próby. Nie klasyfikować wszystkich diagnostyk jako Prisma bez ponownego sprawdzenia po generate.
+Do tego czasu zachować gotowe kandydaty i dowody, bez powtarzania identycznie blokowanych operacji. Wszystkie D01–D18 nadal otwarte; kanoniczne ASVS 86/254/5 warunkowych NA/0 PASS, wejścia 84/202. Wyniki Windows i mechaniczna adopcja partii 17 pozostają zachowane. Nie rozpoczynać zamiast H1 kolejnego ogólnego V3+ ani przywracać archiwum nad nowszymi plikami.
 
-Przy kolejnej zmianie kodu tworzyć małą gałąź z właściwego aktualnego main (bez worktree). Szkic PR K02 nie powstał: GitHub GraphQL zwrócił Forbidden; sama gałąź K02 jest wypchnięta. Nie prosić o nowy token na podstawie tego błędu. Kontynuować niezależne prace; zaktualizować brakujące domeny wspieranym szkicem i jawnie zgłosić jego zastosowanie do runtime jako blokadę.
-
-Kanoniczny zakres po zachowanych zmianach zdalnych: wszystkie D01–D18 otwarte; ASVS 86 częściowych / 254 NIEZBADANE / 5 warunkowych NA / 0 PASS, wejścia 84 rozpoczęte / 202 NIEZBADANE. Zamrożona partia 17 została przyjęta mechanicznie w odrębnym commicie, bez niezależnego przeglądu ręcznych uzasadnień. Nie przywracać jej z archiwum ani nie nadpisywać nowszych materiałów. Nowe kwalifikacje poza H1 nie zostały rozpoczęte w tej instancji.
-
-K03/R37 ma osobnego kandydata `5d78380d` na `fix/polutek-k03-restore-verifier`, ułożonego na K02; 31/31 testów procesowych oraz lint/typy nowego testu/architektura PASS, bez rzeczywistej DB i bez pełnego zamknięcia K03. Następnie niezależne K05 i przygotowanie K06; ograniczenia i polecenia w POSTEP.
-
-Przed przerwą: czysty stan, commit/push i zgodność remote SHA; zaktualizować POSTEP oraz dokładne referencje i polecenia odbioru. Bez scalenia i wdrożenia.
+Po nowym kroku: aktualizować POSTEP, statusy CSV, historię i manifest; commit/push i porównanie remote SHA. Raporty mają wskazywać właściwą wersję aplikacji i środowisko.
 
 ## Zapis po każdej partii — po zatwierdzonym wznowieniu
 

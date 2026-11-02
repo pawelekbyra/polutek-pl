@@ -230,3 +230,12 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Osobny kandydat 5d78380dfe659eedd0ef776cccb0ccb81566fa84 na fix/polutek-k03-restore-verifier, rodzic K02 e582ead4. Naprawiono obowiązkowe odczyty, stan migracji, oczekiwane agregaty/kształt manifestu i zamykanie klienta przy obsłużonych błędach.
 - 29 przypadków RED (24 fail); dodatkowy RED manifestu: 31 przypadków/2 fail; końcowe 31/31 PASS. Lint, typy nowego testu i architektura PASS. Granica DB syntetyczna; realny proces, bez zainstalowanej atrapy Prisma.
 - Pełne K03 i odbiór prawdziwego PostgreSQL pozostają otwarte. Bez merge/deploy, bez nowego PASS ASVS.
+
+## 2 listopada 2026 — H1: profil, build types, selekcja testów i świeża baza
+
+- K05 `e3801c27`: dokumentacyjny profil trzech przepływów i rejestr 9 otwartych decyzji, bez aktywacji lub wyboru polityk za właściciela.
+- K06 `2f8ff906`: oba configi `ignoreBuildErrors=false`; przed zmianą dwa małe buildy przyjęły celowy zły typ, po zmianie dwa odmawiają i dwa legalne przechodzą. To nie pełne buildy produktu ani gotowy protokół artefaktu.
+- K03 `f5e06154`: komenda krytyczna wskazuje dwa istniejące pliki. 31 testów procesu PASS, plik integracyjny zablokowany przed rejestracją przez niewygenerowane Prisma; cała komenda exit 1. Gałąź zbiorcza `fix/polutek-h1-foundations` zawiera małe commity przez ich rodziców, bez merge/deploy.
+- K01: nowa pusta lokalna baza PostgreSQL 17.11, konfiguracja poza repo 0600, sprawdzona powtarzalność bez resetu. Nie wykonano migracji lub sztucznego bazowania starych danych.
+- Szkic środowiska rev. 6 zapisany (dwie domeny + start_skill); `requires_publish=true`, runtime spec. 1 nadal bez hostów. Nie obchodzono proxy/TLS/checksum i nie ponawiano npm audit/GraphQL przy niezmienionej blokadzie.
+- Uporządkowano bieżący punkt przejęcia w STAN/POSTEP i maszynowym h1-status.json. H1 częściowe, wszystkie pełne obszary nadal otwarte; brak nowego PASS ASVS. USTALENIA.json i przyjęte materiały zewnętrznego przebiegu Windows bez zmian.
