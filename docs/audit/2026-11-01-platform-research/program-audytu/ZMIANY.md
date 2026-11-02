@@ -224,3 +224,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Osobna gałąź fix/polutek-k02-security-dependencies, commit e582ead4e1a20ec1e4080c1d1f6a899650304a09, baza aktualny main 5f848a93. Dwa pliki zależności, bez cofania nowszych zmian UI/kodu.
 - 46/46 istniejących testów, architektura i fixture Next HTTP/natywne librsvg 2.63.2 przeszły. Typecheck exit 2 z 515 diagnostykami; pełny odbiór pozostaje zablokowany Prisma. Nie scalono, nie wdrożono, R01 nie zamknięto.
 - Szkic PR nie powstał (GraphQL Forbidden). Wspieranym szkicem dodano api.github.com, zachowano binaries.prisma.sh; requires_publish=true, bez twierdzenia o aktywacji reguł.
+
+## 2 listopada 2026 — K03/R37: wiarygodny wynik procesu weryfikacji
+
+- Osobny kandydat 5d78380dfe659eedd0ef776cccb0ccb81566fa84 na fix/polutek-k03-restore-verifier, rodzic K02 e582ead4. Naprawiono obowiązkowe odczyty, stan migracji, oczekiwane agregaty/kształt manifestu i zamykanie klienta przy obsłużonych błędach.
+- 29 przypadków RED (24 fail); dodatkowy RED manifestu: 31 przypadków/2 fail; końcowe 31/31 PASS. Lint, typy nowego testu i architektura PASS. Granica DB syntetyczna; realny proces, bez zainstalowanej atrapy Prisma.
+- Pełne K03 i odbiór prawdziwego PostgreSQL pozostają otwarte. Bez merge/deploy, bez nowego PASS ASVS.

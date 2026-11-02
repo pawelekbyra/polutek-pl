@@ -191,6 +191,8 @@ Przy kolejnej zmianie kodu tworzyć małą gałąź z właściwego aktualnego ma
 
 Kanoniczny zakres po zachowanych zmianach zdalnych: wszystkie D01–D18 otwarte; ASVS 86 częściowych / 254 NIEZBADANE / 5 warunkowych NA / 0 PASS, wejścia 84 rozpoczęte / 202 NIEZBADANE. Zamrożona partia 17 została przyjęta mechanicznie w odrębnym commicie, bez niezależnego przeglądu ręcznych uzasadnień. Nie przywracać jej z archiwum ani nie nadpisywać nowszych materiałów. Nowe kwalifikacje poza H1 nie zostały rozpoczęte w tej instancji.
 
+K03/R37 ma osobnego kandydata `5d78380d` na `fix/polutek-k03-restore-verifier`, ułożonego na K02; 31/31 testów procesowych oraz lint/typy nowego testu/architektura PASS, bez rzeczywistej DB i bez pełnego zamknięcia K03. Następnie niezależne K05 i przygotowanie K06; ograniczenia i polecenia w POSTEP.
+
 Przed przerwą: czysty stan, commit/push i zgodność remote SHA; zaktualizować POSTEP oraz dokładne referencje i polecenia odbioru. Bez scalenia i wdrożenia.
 
 ## Zapis po każdej partii — po zatwierdzonym wznowieniu

@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-02",
+  "package": "K03_INDEPENDENT_VERIFIER_SUBSTEP",
+  "finding": "R37",
+  "status": "CANDIDATE_SCOPED_PROCESS_TESTS_PASS_REAL_DB_PENDING",
+  "branch": "fix/polutek-k03-restore-verifier",
+  "commit": "5d78380dfe659eedd0ef776cccb0ccb81566fa84",
+  "parent": "e582ead4",
+  "stacked_on": "fix/polutek-k02-security-dependencies",
+  "tests": {
+    "initial_red": {
+      "total": 29,
+      "passed": 5,
+      "failed": 24
+    },
+    "additional_manifest_red": {
+      "total": 31,
+      "passed": 29,
+      "failed": 2
+    },
+    "final": {
+      "total": 31,
+      "passed": 31,
+      "failed": 0
+    },
+    "changed_script_and_tests_lint": "PASS",
+    "new_test_isolated_typecheck": "PASS",
+    "architecture": "PASS"
+  },
+  "boundary": "Actual CLI source transpiled by TypeScript and run in real child processes. Synthetic read-only DB boundary only; process.exit/exitCode are genuine. No installed Prisma files replaced; no DB/network access.",
+  "changes": [
+    "Mandatory migration query/model counts/manifest shape and expected keys fail closed",
+    "Unfinished null-log migration rejected; resolved rolled-back history accepted",
+    "Handled errors return nonzero and disconnect in finally",
+    "Four weak exit-mocked assertions replaced with process tests",
+    "Operational documentation states scope and limitations"
+  ],
+  "not_completed": [
+    "Real generated Prisma/PostgreSQL restore and connection cleanup proof",
+    "Full application typecheck/quality/build",
+    "K03 full baseline and critical-path selection repair",
+    "Independent technical review"
+  ],
+  "deployed": false,
+  "merged": false,
+  "draft_pr_created": false
+}
