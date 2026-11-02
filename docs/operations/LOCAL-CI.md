@@ -32,6 +32,8 @@ Fixture HLG w `encode-hls.ffmpeg.test.ts` jawnie zapisuje metadane VUI przez `-x
 
 Obie konfiguracje Next (`next.config.mjs`, `apps/admin/next.config.mjs`) mają `typescript.ignoreBuildErrors=false`. Błąd typu blokuje budowę strony lub panelu również w Dockerze. Nie naprawiać takiej porażki przez ponowne wyłączenie kontroli; rozstrzygnąć przyczynę, także brak prawdziwego wygenerowanego klienta Prisma.
 
+W zarządzanym środowisku z proxy TLS oba Dockerfile obsługują opcjonalny sekret BuildKit: do `docker build` dodać `--secret id=proxy_ca,src="$CODEX_PROXY_CERT"`. Używa go wyłącznie proces Node w sieciowych krokach instalacji/generowania; `npm ci` zachowuje `strict-ssl=true`. Certyfikat i zmienna z jego ścieżką nie trafiają do końcowego obrazu. Poza takim środowiskiem nie podawać sekretu; nie kopiować sesyjnego CA do źródeł i nie wyłączać weryfikacji TLS.
+
 Ta kontrola nie zastępuje istniejących testów, lint i bramek lokalnego CI. Raport z SHA źródeł i udany build nie stanowią jeszcze automatycznego powiązania wszystkich wyników z digest obrazu: pełne wymuszenie tego protokołu dla wspieranych ścieżek wydania pozostaje osobnym zakresem K06. Bez tych dowodów nie ogłaszać gotowości konkretnego wydania.
 
 ## Scalanie bez GitHub Actions
