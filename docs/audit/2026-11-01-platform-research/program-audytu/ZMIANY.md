@@ -204,3 +204,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Jedyna porażka (migracja video_chapters_search, znak `\r`) to artefakt CRLF z `core.autocrlf=true`; do potwierdzenia na checkoucie LF.
 - Brak Postgresa/Dockera: testy DB i integracyjne nadal NIEWYKONANE. Baseline nie jest dowodem zgodności produktu.
 - Zamrożona partia 17 (ASVS V1–V2, kodowanie) rozpakowana tylko do porównania; NIE przyjęta do aktywnych dokumentów, wymaga walidacji.
+
+## 2 listopada 2026 — walidacja i przyjęcie partii 17
+
+- Zamrożoną partię 17 (ASVS V1/V2, kodowanie) zwalidowano: kod aplikacji bez zmian względem c397b9e, eksperyment i inwentarz powtórzone bez różnic, 51/51 testów celowanych ([walidacja](evidence/batch17-validation-2026-11-02.json)).
+- Przyjęto 43 kwalifikacje ASVS V1/V2 (38 W_TRAKCIE, 5 warunkowych NA, 0 PASS) oraz powiązane rejestry. Bez niezależnego przeglądu.
+- Wykryto: na checkoucie CRLF hashe inwentarza nie zgadzają się; po `autocrlf=false` 1701/1701 zgodnych.

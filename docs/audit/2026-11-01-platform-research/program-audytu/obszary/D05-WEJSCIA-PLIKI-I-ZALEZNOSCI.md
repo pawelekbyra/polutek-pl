@@ -88,3 +88,8 @@ PeerTube nie był uruchamiany ani testowany w tej partii. To porównanie wskazan
 Nie oceniono całej obsługi XSS/SQL/NoSQL/template injection, nagłówków/CSP, wszystkich uploadów, API/CSRF, sekretów, konfiguracji sieci i dostawców ani całego łańcucha zależności. Wymagania ASVS powiązane z tą partią mają wyłącznie W_TRAKCIE. Żadne nie zostało zaliczone na podstawie kilku kontroli.
 
 Potrzebne: rzeczywisty limit HTTP przez proxy/Next dla wszystkich parserów, formaty i fuzzing dokładnego obrazu encodera, zasoby/czas/dekodery obrazu, kontrolowane redirect/DNS, aktualizacja zależności w osobnym etapie oraz niezależna ocena. Znana blokada pobrania Prisma nadal uniemożliwia pełną walidację stosu. Kolejna partia programu powinna rozszerzyć zasięg na **D10: pieniądze, uprawnienia płatne i integracje zdarzeń**, zachowując otwarte pytania D05.
+
+
+## Rozwinięcie z 2 listopada 2026 — partia 17
+
+[Kwalifikacja ASVS V1/V2](ASVS-V1-V2-KWALIFIKACJA.md) obejmuje wszystkie 43 wymagania tych rozdziałów, 16 obserwacji czystych komponentów i 46 celowanych assertions passed. To osobny poziom przeglądu: 38 wymagań częściowo W_TRAKCIE, pięć warunkowych wyłączeń nieobecnych technologii, bez PASS. [Szczegóły](../ASVS-V1-V2.csv), [otwarte pytania](../PYTANIA-ASVS-V1-V2.csv). Nie dodano nowego ID, nie zmieniono dawnych dowodów R01/R15 ani aplikacji. Bieżący następny krok jest w STAN.md; opis kolejności partii 08 powyżej pozostaje historyczny.

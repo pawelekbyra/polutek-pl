@@ -2,9 +2,18 @@
 
 Aktualizacja: 2 listopada 2026. **Przygotowano ROADMAPĘ NAPRAW v1: 40 pakietów / 8 etapów / R01–R37. Status: DO ZATWIERDZENIA.**
 
-**Dalszy pogłębiony audyt i kwalifikacja ASVS są TYMCZASOWO WSTRZYMANE na polecenie właściciela, wyłącznie na potrzeby przygotowania i zatwierdzenia roadmapy. Cel pełnego badania pozostaje aktualny. Nie rozpoczęto napraw, nie zmieniono aplikacji, nie wdrożono i nie scalono gałęzi.**
+**[WZNOWIONE 2 listopada 2026 na polecenie właściciela. Poniższy tekst o pauzie jest historyczny.] Dalszy pogłębiony audyt i kwalifikacja ASVS były TYMCZASOWO WSTRZYMANE na polecenie właściciela, wyłącznie na potrzeby przygotowania i zatwierdzenia roadmapy. Cel pełnego badania pozostaje aktualny. Nie rozpoczęto napraw, nie zmieniono aplikacji, nie wdrożono i nie scalono gałęzi.**
 
 Dokumenty do decyzji: [ROADMAPA-NAPRAW.md](../ROADMAPA-NAPRAW.md), [KOLEJNOSC-NAPRAW.csv](../KOLEJNOSC-NAPRAW.csv), [PLAN-WDROZENIA-NAPRAW.md](../PLAN-WDROZENIA-NAPRAW.md). Źródło planu: rejestr R01–R37 i dokumentacja do commitu `90de980e45bb827da72ddfea1aca18611bacb2e8` (partia 16); rejestr niezmieniony. Wszystkie testy odbioru w roadmapie są przyszłymi wymaganiami, nie nowymi wynikami.
+
+## Wznowienie — 2 listopada 2026
+
+- Właściciel polecił wznowić audyt i zwalidować partię 17. Roadmapa v1 nadal DO ZATWIERDZENIA; nie rozpoczęto napraw, nie zmieniono aplikacji.
+- Baseline Vitest z prawdziwym klientem Prisma: [wynik](evidence/baseline-real-prisma-2026-11-02.json) (4573/4596 pass; jedyny fail to artefakt CRLF).
+- Partia 17 zwalidowana i przyjęta: [walidacja](evidence/batch17-validation-2026-11-02.json). Eksperyment (16 obserwacji) i inwentarz (1233 pliki) powtórzone bez różnic, 51/51 testów celowanych. ASVS: 254 NIEZBADANE / 86 częściowych / 5 warunkowych NA / 0 PASS. Brak niezależnego przeglądu; uzasadnienia 43 ocen nie były powtórnie czytane ręcznie.
+- Uwaga środowiskowa: na Windows ustawić `core.autocrlf=false`, inaczej hashe inwentarza (LF) nie zgadzają się.
+- Nadal brak Postgresa/Dockera i Node 22: obszary DB/integracja pozostają NIEWYKONANE.
+- Następny krok: kolejny rozdział ASVS (V3+) lub K01 z Postgresem — do decyzji właściciela.
 
 ## Cel i decyzje właściciela
 

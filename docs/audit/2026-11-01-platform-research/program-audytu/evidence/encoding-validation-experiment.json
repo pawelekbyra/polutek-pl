@@ -1,0 +1,284 @@
+{
+  "date": "2026-11-02",
+  "actual_source_sha256": {
+    "lib/modules/shared/csv.ts": "340f2ec24ab9803529bd0a10383676f30f1c3ffc18f6c5b8c765da3239277c58",
+    "lib/modules/admin-community/domain/csv.ts": "18a4cf6c4f625523cd1e21d1316accb54a7a9ce39c82e61f4865468af204bd86",
+    "lib/modules/email/domain/render-email.ts": "2c301c58519ed614b16893c072785070527b50087d6afc571c11cfd2f4f8a5a8",
+    "lib/modules/email/domain/email-content.ts": "9eb8fffe89fb9a801281af0852e66cd49d8848742ffb583acb096d0a5aa418c1",
+    "lib/modules/email/application/email-templates.use-cases.ts": "30ae3fdb3bad0e2696592cb27e5719f8f7b7e5bb28c57f81c4aa190593eceaf2",
+    "lib/modules/syndication/domain/rss.ts": "cf1dc023c090e352f5e6b17e970ad0b4ac233243e4cc1655e41a0f5bba1f3d74",
+    "lib/payments/checkout.schema.ts": "67bc7592588b4842a5c3fa76465559c2be5a846edf806d2a6be55c98cdc7b74c",
+    "lib/constants.ts": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+    "lib/api/studio-schemas.ts": "2d3f84ddd846e66c079afc43ae1847e9da7c47f1a30c4f7451fe9d1a05d566d2",
+    "lib/video-metadata.ts": "37d559896ea5ea4ee4993409f2d1e9455ca21d821a09911c4a3c985db0a2fb15",
+    "lib/video-chapters.ts": "764e41e779585eba8acf672e3cf6cef043c8f93682ace80ed0f0a5f04d39cff9",
+    "lib/video-start-time.ts": "3ab664fe6b5b7ce57ca72649caa2b6edcc53afa8f88e57cb94648e89af83c417",
+    "lib/modules/channel/domain/channel-about.ts": "9564fbb6800fded5c689cfc56f87c87b6840d0bd580d27442ad174b5c4f283fb",
+    "lib/modules/channel/domain/channel-banner-limits.ts": "291894ccc2f977ca0333f70e030ae57854b0dac5d5f4e3271790c8802d117425",
+    "lib/auth/route-matcher.ts": "2f579410abe0b9ea69d1ac31b1a893028cc4ea33d4feec43948da7ebf9acfc7d"
+  },
+  "observations": [
+    {
+      "case": "csv_basic_prefix_and_RFC_quoting_controls",
+      "cells": [
+        {
+          "input": "=1+1",
+          "shared": "'=1+1",
+          "admin": "\"'=1+1\""
+        },
+        {
+          "input": "+1",
+          "shared": "'+1",
+          "admin": "\"'+1\""
+        },
+        {
+          "input": "-1",
+          "shared": "'-1",
+          "admin": "\"'-1\""
+        },
+        {
+          "input": "@SUM(1,1)",
+          "shared": "\"'@SUM(1,1)\"",
+          "admin": "\"'@SUM(1,1)\""
+        },
+        {
+          "input": "\t=1+1",
+          "shared": "'\t=1+1",
+          "admin": "\"'\t=1+1\""
+        },
+        {
+          "input": "\r=1+1",
+          "shared": "\"'\r=1+1\"",
+          "admin": "\"' =1+1\""
+        },
+        {
+          "input": "simple",
+          "shared": "simple",
+          "admin": "\"simple\""
+        },
+        {
+          "input": "a,b",
+          "shared": "\"a,b\"",
+          "admin": "\"a,b\""
+        },
+        {
+          "input": "a\"b",
+          "shared": "\"a\"\"b\"",
+          "admin": "\"a\"\"b\""
+        },
+        {
+          "input": "a\nb",
+          "shared": "\"a\nb\"",
+          "admin": "\"a b\""
+        }
+      ],
+      "classification": "POSITIVE_SCOPED_OUTPUT_CONTROLS"
+    },
+    {
+      "case": "csv_control_space_fullwidth_prefix_policy_difference",
+      "cells": [
+        {
+          "input": "\u0000=1+1",
+          "shared": "\u0000=1+1",
+          "admin": "\"'\u0000=1+1\""
+        },
+        {
+          "input": "\u0001=1+1",
+          "shared": "\u0001=1+1",
+          "admin": "\"'\u0001=1+1\""
+        },
+        {
+          "input": " =1+1",
+          "shared": " =1+1",
+          "admin": "\"' =1+1\""
+        },
+        {
+          "input": "＝1+1",
+          "shared": "＝1+1",
+          "admin": "\"'＝1+1\""
+        }
+      ],
+      "classification": "OPEN_QUESTION_NOT_SPREADSHEET_EXECUTION_OR_FULL_INPUT_REACHABILITY"
+    },
+    {
+      "case": "csv_document_BOM_CRLF_quotes",
+      "document": "﻿title\r\n'=1+1\r\n\"a,b\"\r\n\"a\"\"b\"\r\n",
+      "admin_computed_negative_number": "-100",
+      "classification": "FORMAT_ONLY_NOT_SPREADSHEET_CERTIFICATION"
+    },
+    {
+      "case": "email_placeholder_HTML_escaping",
+      "output": "<p>&lt;img src=x onerror=&quot;synthetic()&quot;&gt;</p>",
+      "classification": "POSITIVE_NO_EMAIL_SENT"
+    },
+    {
+      "case": "email_header_control_chars_removed",
+      "output": "Hello Research Bcc: synthetic@example.invalid",
+      "classification": "POSITIVE_NO_SMTP_OR_PROVIDER_EXECUTION"
+    },
+    {
+      "case": "email_actual_sanitizer_policy_active_content",
+      "output": "<p>Text<img /><a>link</a></p>",
+      "classification": "ACTUAL_LIBRARY_AND_EXTRACTED_OPTIONS_NOT_FULL_SAVE_PREVIEW_OR_MAIL_CLIENT"
+    },
+    {
+      "case": "email_HTML_escaping_is_not_URL_protocol_validation",
+      "output": "<a href=\"javascript:synthetic()\">Open</a>",
+      "classification": "HELPER_PRECONDITION_QUESTION_NO_UNTRUSTED_ACTION_URL_CALLER_WITNESS"
+    },
+    {
+      "case": "RSS_XML_context_escaping_invalid_chars",
+      "output": "A&lt;/title&gt;&lt;script&gt;synthetic()&lt;/script&gt;&amp;&quot;",
+      "classification": "TWO_ACTUAL_FUNCTIONS_NOT_XML_INPUT_PARSER_OR_FULL_FEED"
+    },
+    {
+      "case": "checkout_integer_currency_whitelist",
+      "valid": {
+        "amountMinor": 1000,
+        "currency": "PLN"
+      },
+      "rejected": [
+        {
+          "value": "NaN",
+          "accepted": false
+        },
+        {
+          "value": "Infinity",
+          "accepted": false
+        },
+        {
+          "value": "1.5",
+          "accepted": false
+        },
+        {
+          "value": "-1",
+          "accepted": false
+        },
+        {
+          "value": "0",
+          "accepted": false
+        }
+      ],
+      "classification": "SCHEMA_ONLY_NO_CHECKOUT_PAYMENT_OR_DB"
+    },
+    {
+      "case": "checkout_business_limits_after_shape",
+      "min": "Kwota jest zbyt niska (min. 10 PLN)",
+      "max": "Kwota jest zbyt wysoka (max. 5000 PLN)",
+      "normal": null,
+      "classification": "STATIC_DEFAULT_LIMITS_NOT_LIVE_CURRENCY_SETTINGS"
+    },
+    {
+      "case": "checkout_large_integer_shape_vs_business_cap",
+      "value": "9007199254740992",
+      "shape_accepted": true,
+      "default_business_limit_rejects": true,
+      "classification": "LAYERED_CONTROL_NOT_ACCEPTED_PAYMENT_OR_OVERFLOW_EXPLOIT"
+    },
+    {
+      "case": "studio_tier_field_allowlist_and_related_fields",
+      "paid_tier_accepted": false,
+      "unlisted_premiere_accepted": false,
+      "normalized_whitelist": {
+        "title": "Synthetic"
+      },
+      "classification": "ACTUAL_SCHEMA_NOT_ROUTE_OR_ROLE_AUTHORIZATION"
+    },
+    {
+      "case": "chapter_canonical_order_before_domain_validation",
+      "normalized": [
+        {
+          "startSeconds": 0,
+          "title": "A"
+        },
+        {
+          "startSeconds": 20,
+          "title": "C"
+        },
+        {
+          "startSeconds": 30,
+          "title": "B"
+        }
+      ],
+      "classification": "POSITIVE_CANONICALIZATION_NOT_INVALID_ORDER_ACCEPTANCE"
+    },
+    {
+      "case": "chapter_shape_vs_domain_sequence",
+      "shape_accepted": true,
+      "domain_problems": [
+        {
+          "code": "TOO_CLOSE",
+          "index": 1
+        }
+      ],
+      "classification": "POSITIVE_SEPARATE_VALIDATION_LAYERS"
+    },
+    {
+      "case": "channel_link_scheme_credentials_private_literal_controls",
+      "results": [
+        {
+          "input": "https://example.invalid/path",
+          "result": {
+            "ok": true,
+            "url": "https://example.invalid/path"
+          }
+        },
+        {
+          "input": "javascript:synthetic()",
+          "result": {
+            "ok": false,
+            "problem": "LINK_NOT_HTTPS"
+          }
+        },
+        {
+          "input": "https://127.0.0.1/",
+          "result": {
+            "ok": false,
+            "problem": "LINK_HOST"
+          }
+        },
+        {
+          "input": "https://0x7f000001/",
+          "result": {
+            "ok": false,
+            "problem": "LINK_HOST"
+          }
+        },
+        {
+          "input": "https://name:pass@example.invalid/",
+          "result": {
+            "ok": false,
+            "problem": "LINK_URL"
+          }
+        },
+        {
+          "input": "https://example.invalid/\nheader",
+          "result": {
+            "ok": false,
+            "problem": "LINK_URL"
+          }
+        }
+      ],
+      "classification": "LINK_RULES_ONLY_NO_DNS_FETCH_OR_SSRF_PROOF"
+    },
+    {
+      "case": "route_matcher_literal_regex_metacharacters",
+      "literal_match": true,
+      "unescaped_wildcard_rejected": true,
+      "declared_wildcard_works": true,
+      "classification": "TRUSTED_PATTERN_LIST_ONLY_NOT_FULL_PROXY_AUTHZ"
+    }
+  ],
+  "real_network_calls": 0,
+  "real_DB_or_provider_calls": 0,
+  "real_email_or_spreadsheet_execution": false,
+  "installed_Prismaclient_changed": false,
+  "sanitizer_version": "2.17.7",
+  "zod_version": "3.25.76",
+  "limits": [
+    "Actual pure TS modules with real zod/sanitize-html, synthetic env only; no generated Prisma",
+    "Sanitizer options and two RSS function declarations evaluated exactly from source AST; not whole use cases/feed",
+    "CSV outputs and helper URL protocol example are questions, not Excel execution/XSS/SSRF exploit witnesses",
+    "No full HTTP/browser/DB/provider/mail-client or global ASVS pass"
+  ]
+}
