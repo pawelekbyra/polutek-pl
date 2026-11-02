@@ -244,3 +244,7 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Jednorazowe odczyty po zgłoszonej zmianie: Prisma nadal CONNECT 403 / curl 56, API GitHub Forbidden / gh 1. Aktywna polityka nadal restricted/spec. 1.
 - Nie uruchamiano niezmienionej instalacji/testów ani obejść. H1 pozostaje częściowe; zapisano potrzebę rozpoznania rzeczywistego widoku UI zamiast ponawiania niejasnej instrukcji publikacji.
+
+## 2 listopada 2026 — środowisko i sieć odzyskane
+
+- Runtime spec. 2 connected/enforced/unrestricted. Suma Prisma HTTP 200 i odczyt API prywatnego repo udane. Przejście do normalnej instalacji oraz realnego odbioru H1; nie oznacza jeszcze PASS testów/buildu.

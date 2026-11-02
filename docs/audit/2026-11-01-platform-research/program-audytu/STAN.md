@@ -1,6 +1,6 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 2 listopada 2026. **Roadmapa v1 zatwierdzona przez właściciela („ok droga wolna dzialaj”). H1 przygotowane częściowo; pełny odbiór BLOCKED przez niezastosowane reguły środowiska.**
+Aktualizacja: 2 listopada 2026. **Roadmapa v1 zatwierdzona przez właściciela („ok droga wolna dzialaj”). Sieć i maszyna odzyskane; rozpoczęto rzeczywisty odbiór H1.**
 
 **Najpierw czytaj [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md) i [h1-status.json](evidence/h1-status.json).** Tam są małe commity, gałęzie, pełne wyniki, ograniczenia i dokładne polecenia wznowienia. Kod zbiorczy: `fix/polutek-h1-foundations`, commit `f5e061546ef4e309cc69994810ba20a5ffd68a0b`; baza napraw `main` `5f848a9304d19a6d03860444808abbe120b57623`, nowsza od historycznego baseline raportu `c397b9e`. Aktualnie checkout pozostaje na gałęzi audytu. Żadna poprawka nie została scalona ani wdrożona.
 
@@ -185,7 +185,10 @@ Bez zgody na deploy, main, produkcyjne migracje/korekty danych i koszty. Nowe kw
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
-## Następne działanie — odbiór H1 po zmianie warunku zewnętrznego
+## Następne działanie — odbiór H1 po odzyskaniu sieci
+
+**Nowszy stan:** runtime connected/enforced/unrestricted/spec. 2; oficjalna suma Prisma HTTP 200, API prywatnego repo GitHub dostępne. [Dowód](evidence/h1-network-recovered.json). Wznowić H1 na czystej gałęzi `fix/polutek-h1-foundations`: normalne npm ci z postinstall, prawdziwe generate/migracje/DB i pełne bramki. Starsze wpisy o niedostępności są historią. Bez merge/deploy.
+
 
 **Najnowsza próba:** po zgłoszeniu Full Access nadal proxy 403 dla Prisma i Forbidden dla API GitHuba; [dowód](evidence/h1-full-access-recheck.json). Runtime enforced/restricted/spec. 1. Następne doprecyzowanie: zrzut widoku, w którym właściciel zmienił Full Access; nie zgadywać przycisków i nie powtarzać zablokowanych operacji bez nowego warunku.
 

@@ -1,3 +1,5 @@
+> Aktualizacja po odzyskaniu środowiska: runtime connected/enforced/unrestricted/spec. 2, Prisma HTTP 200 i API GitHub dostępne. [Dowód](program-audytu/evidence/h1-network-recovered.json). Rozpoczęto normalną instalację i rzeczywisty odbiór H1; poniższe wyniki/blokady opisują wcześniejszą partię do uaktualnienia po nowych próbach.
+
 # Postęp realizacji roadmapy — H1
 
 Stan: 2 listopada 2026. Właściciel zatwierdził roadmapę słowami „ok droga wolna dzialaj”. Bieżący zakres: **K01/K02/K05 oraz odblokowane części K03/K06**. To pierwsza partia kandydatów, nie pełny odbiór H1. Bez scalenia, wdrożenia, produkcyjnych zmian danych lub płatnych zasobów zewnętrznych.
