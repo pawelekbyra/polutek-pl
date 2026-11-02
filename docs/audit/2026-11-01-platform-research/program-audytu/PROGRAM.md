@@ -1,6 +1,6 @@
 # Program pełnego badania Polutka
 
-> Aktualizacja priorytetu właściciela 2 listopada 2026: przygotowano [roadmapę napraw v1](../ROADMAPA-NAPRAW.md). Dalszy audyt jest tymczasowo wstrzymany do odrębnej decyzji; cel i zakres tego programu pozostają aktualne. Nie rozpoczynać jego następnego etapu ani napraw na podstawie historycznych instrukcji. Bieżący punkt: [STAN.md](STAN.md).
+> Aktualizacja 2 listopada 2026: właściciel zatwierdził [roadmapę v1](../ROADMAPA-NAPRAW.md) i rozpoczęto H1. Bieżący zakres i blokady: [STAN.md](STAN.md), [postęp](../POSTEP-NAPRAW.md). Weryfikacja na razie dotyczy H1, bez nowych kwalifikacji poza H1. Mechanicznie przyjętą na Windows partię 17 zachowano w zdalnej historii; nie odtwarzać jej ponownie z archiwum.
 
 Wersja 1.0, 1 listopada 2026. Cel właściciela: duża platforma konkurująca z PeerTube funkcjami i skalą. Bieżący tryb: **analiza i zapisywanie dowodów; bez napraw aplikacji i bez zmian na produkcji**.
 

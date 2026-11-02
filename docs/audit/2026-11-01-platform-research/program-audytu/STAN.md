@@ -1,19 +1,19 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 2 listopada 2026. **Przygotowano ROADMAPĘ NAPRAW v1: 40 pakietów / 8 etapów / R01–R37. Status: DO ZATWIERDZENIA.**
+Aktualizacja: 2 listopada 2026. **Właściciel zatwierdził roadmapę v1 i rozpoczęcie prac słowami „ok droga wolna dzialaj”. Bieżący zakres: H1 — K01/K02/K05, następnie odblokowane części K03/K06.**
 
-**[WZNOWIONE 2 listopada 2026 na polecenie właściciela. Poniższy tekst o pauzie jest historyczny.] Dalszy pogłębiony audyt i kwalifikacja ASVS były TYMCZASOWO WSTRZYMANE na polecenie właściciela, wyłącznie na potrzeby przygotowania i zatwierdzenia roadmapy. Cel pełnego badania pozostaje aktualny. Nie rozpoczęto napraw, nie zmieniono aplikacji, nie wdrożono i nie scalono gałęzi.**
+Naprawa K02 jest na osobnej gałęzi `fix/polutek-k02-security-dependencies`, commit `e582ead4`, oparty na aktualnym `main` `5f848a9304d19a6d03860444808abbe120b57623` (nowszym od historycznego baseline audytu). Gałąź audytu przechowuje wyniki i punkty przejęcia. Bez scalenia, wdrożenia, produkcyjnych zmian danych lub kosztów. K02 jest kandydatem, nie ukończonym odbiorem.
 
-Dokumenty do decyzji: [ROADMAPA-NAPRAW.md](../ROADMAPA-NAPRAW.md), [KOLEJNOSC-NAPRAW.csv](../KOLEJNOSC-NAPRAW.csv), [PLAN-WDROZENIA-NAPRAW.md](../PLAN-WDROZENIA-NAPRAW.md). Źródło planu: rejestr R01–R37 i dokumentacja do commitu `90de980e45bb827da72ddfea1aca18611bacb2e8` (partia 16); rejestr niezmieniony. Wszystkie testy odbioru w roadmapie są przyszłymi wymaganiami, nie nowymi wynikami.
+Aktualny postęp i ograniczenia: [POSTEP-NAPRAW.md](../POSTEP-NAPRAW.md). [Roadmapa](../ROADMAPA-NAPRAW.md) i [harmonogram](../PLAN-WDROZENIA-NAPRAW.md) v1 zostały zatwierdzone; historyczny maszynowy indeks v1 opisuje pierwotną propozycję, nie bieżące wyniki. Do przyszłego agenta: najpierw stan i postęp, potem właściwa gałąź/commit; nie stosować historycznych poleceń pauzy ani dawnych statusów jako aktualnej zgody.
 
-## Wznowienie — 2 listopada 2026
+## Odrębny przebieg na Windows — zachowane wyniki z 2 listopada 2026
 
-- Właściciel polecił wznowić audyt i zwalidować partię 17. Roadmapa v1 nadal DO ZATWIERDZENIA; nie rozpoczęto napraw, nie zmieniono aplikacji.
+- Na zdalnej gałęzi zastano odrębne commity `b3a19a64` i `f7e288bd` dotyczące runtime Windows i walidacji partii 17. Zachowano je w całości; nie są wynikami instancji cloud. Zapisany w tamtym przebiegu status oczekiwania na roadmapę zastępuje obecna wyraźna zgoda właściciela na H1.
 - Baseline Vitest z prawdziwym klientem Prisma: [wynik](evidence/baseline-real-prisma-2026-11-02.json) (4573/4596 pass; jedyny fail to artefakt CRLF).
 - Partia 17 zwalidowana i przyjęta: [walidacja](evidence/batch17-validation-2026-11-02.json). Eksperyment (16 obserwacji) i inwentarz (1233 pliki) powtórzone bez różnic, 51/51 testów celowanych. ASVS: 254 NIEZBADANE / 86 częściowych / 5 warunkowych NA / 0 PASS. Brak niezależnego przeglądu; uzasadnienia 43 ocen nie były powtórnie czytane ręcznie.
 - Uwaga środowiskowa: na Windows ustawić `core.autocrlf=false`, inaczej hashe inwentarza (LF) nie zgadzają się.
-- Nadal brak Postgresa/Dockera i Node 22: obszary DB/integracja pozostają NIEWYKONANE.
-- Następny krok: kolejny rozdział ASVS (V3+) lub K01 z Postgresem — do decyzji właściciela.
+- W tym odrębnym przebiegu Windows brakowało Postgresa/Dockera i Node 22: obszary DB/integracja pozostały NIEWYKONANE. Nie oznacza to braku lokalnego Dockera w chmurze.
+- Historyczna propozycja kolejnego rozdziału V3+ nie jest bieżącym zleceniem. Teraz realizujemy H1; nie powtarzać ani nie cofać przyjętej partii 17.
 
 ## Cel i decyzje właściciela
 
@@ -181,15 +181,17 @@ Dokumenty do decyzji: [ROADMAPA-NAPRAW.md](../ROADMAPA-NAPRAW.md), [KOLEJNOSC-NA
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
-## Następne działanie — OCZEKIWANIE NA DECYZJĘ WŁAŚCICIELA
+## Następne działanie — zatwierdzony H1
 
-**Nie wykonywać poprzedniego polecenia rozpoczęcia V1/V2. Nie badać kolejnych plików, nie kwalifikować ASVS i nie naprawiać aplikacji samodzielnie.** Najpierw właściciel zatwierdza roadmapę v1 oraz proponowany harmonogram H1–H6/W01–W07. Propozycja pierwszego późniejszego zakresu: K01/K02/K05, następnie K03/K06. To propozycja, nie zgoda na wykonanie.
+Dokończyć K01/K02/K05 oraz niezależne przygotowanie K03/K06. K01 w tej instancji cloud jest BLOCKED: szkic rev. 3 zawiera `binaries.prisma.sh`, lecz reguła nie jest aktywna w runtime. Windows ma odrębny udany generate i baseline, bez DB i na Node 24; nie przenosić tego wyniku na Node 22/cloud lub PostgreSQL. Nie obchodzić proxy/checksum ani nie instalować klienta-atrapy.
 
-Pauza nie oznacza zakończenia ani rezygnacji z audytu. Wszystkie D01–D18 pozostają W_TRAKCIE, zero zamkniętych; ASVS 55 W_TRAKCIE / 290 NIEZBADANE / 0 PASS, wejścia 79 W_TRAKCIE / 207 NIEZBADANE z 286. Braki integracji, bezpieczeństwa, niezależnego przeglądu i pełnego środowiska mają jawny plan w sekcji 6 roadmapy i ścieżkach W01–W07.
+K02: 46/46 istniejących testów w 4 plikach, architektura i rzeczywisty fixture HTTP Next/sharp przechodzą; typy exit 2 z 515 diagnostykami, w tym brak eksportów niewygenerowanego Prisma. Pełna instalacja bez pomijania skryptów, quality, oba buildy i faktyczne obrazy wymagają dalszej próby. Nie klasyfikować wszystkich diagnostyk jako Prisma bez ponownego sprawdzenia po generate.
 
-Niedokończoną partię 17 zachowano bez dalszego przeglądu jako [zamrożone archiwum](../provenance/paused-batch17-before-roadmap-v1.tar.gz) i [metadane/hash](../provenance/paused-batch17-before-roadmap-v1.json), `PAUSED_UNVALIDATED_NOT_ACTIVE_AUDIT_RESULTS`. Nie adoptowano roboczych kwalifikacji; aktywne dokumenty i macierze przywrócono do kanonicznego punktu partii 16 przed opracowaniem planu. Po odrębnej decyzji o wznowieniu najpierw porównać archiwum z aktualnym stanem, nie nadpisywać późniejszych zmian.
+Przy kolejnej zmianie kodu tworzyć małą gałąź z właściwego aktualnego main (bez worktree). Szkic PR K02 nie powstał: GitHub GraphQL zwrócił Forbidden; sama gałąź K02 jest wypchnięta. Nie prosić o nowy token na podstawie tego błędu. Kontynuować niezależne prace; zaktualizować brakujące domeny wspieranym szkicem i jawnie zgłosić jego zastosowanie do runtime jako blokadę.
 
-Zapis roadmapy obejmuje walidację dokumentów, commit i push na `docs/polutek-platform-audit`. Nie jest zgodą na dalszy audyt, naprawy, produkcyjne zmiany danych, koszty zewnętrzne, wdrożenie ani scalenie. Przed przyszłym wznowieniem przeczytać ten stan, roadmapę, plan wdrożenia i aktualne instrukcje repo; zakres musi wynikać z nowej decyzji właściciela.
+Kanoniczny zakres po zachowanych zmianach zdalnych: wszystkie D01–D18 otwarte; ASVS 86 częściowych / 254 NIEZBADANE / 5 warunkowych NA / 0 PASS, wejścia 84 rozpoczęte / 202 NIEZBADANE. Zamrożona partia 17 została przyjęta mechanicznie w odrębnym commicie, bez niezależnego przeglądu ręcznych uzasadnień. Nie przywracać jej z archiwum ani nie nadpisywać nowszych materiałów. Nowe kwalifikacje poza H1 nie zostały rozpoczęte w tej instancji.
+
+Przed przerwą: czysty stan, commit/push i zgodność remote SHA; zaktualizować POSTEP oraz dokładne referencje i polecenia odbioru. Bez scalenia i wdrożenia.
 
 ## Zapis po każdej partii — po zatwierdzonym wznowieniu
 

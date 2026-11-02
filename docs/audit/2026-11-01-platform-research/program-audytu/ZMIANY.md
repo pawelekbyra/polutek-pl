@@ -210,3 +210,11 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Zamrożoną partię 17 (ASVS V1/V2, kodowanie) zwalidowano: kod aplikacji bez zmian względem c397b9e, eksperyment i inwentarz powtórzone bez różnic, 51/51 testów celowanych ([walidacja](evidence/batch17-validation-2026-11-02.json)).
 - Przyjęto 43 kwalifikacje ASVS V1/V2 (38 W_TRAKCIE, 5 warunkowych NA, 0 PASS) oraz powiązane rejestry. Bez niezależnego przeglądu.
 - Wykryto: na checkoucie CRLF hashe inwentarza nie zgadzają się; po `autocrlf=false` 1701/1701 zgodnych.
+
+## 2 listopada 2026 — zgoda na realizację, start H1
+
+- Właściciel zatwierdził roadmapę i start prac słowami „ok droga wolna dzialaj”. Rozpoczęto K01/K02/K05, następnie K03/K06 zgodnie z zależnościami. Bez zgody na wdrożenie, scalenie i koszty.
+- Zapisano stan runtime vs szkic: domena Prisma jest w szkicu rev. 3, ale nie w aktywnej regule instancji. Nie obchodzono ograniczenia ani nie powtarzano tej samej instalacji.
+- Dodano POSTEP-NAPRAW.md; ten wpis dokumentuje start, nie ukończenie napraw lub nowy PASS ASVS.
+
+- Podczas push wykryto nowsze commity audytu z Windows (b3a19a64/f7e288bd). Zachowano je przez rebase naszego lokalnego zapisu, bez force push i bez cofnięcia przyjętej partii 17. K02 oparto na aktualnym main; raporty nadal odnoszą się do historycznego baseline.
