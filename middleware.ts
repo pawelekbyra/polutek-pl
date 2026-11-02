@@ -250,8 +250,10 @@ export default async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files (vtt: caption files in public/subtitles)
-    "/((?!_next|[^?]*\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|m4a|ogg|wav|vtt)).*)",
+    // Skip Next.js internals and all static files (vtt: caption files in public/subtitles).
+    // Keep `\\.` double-escaped: a single `\.` in a JS string is just `.`, which made the lookahead
+    // skip any path containing e.g. "js" or "png" (tests/unit/auth/middleware-matcher.test.ts).
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|m4a|ogg|wav|vtt)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],
