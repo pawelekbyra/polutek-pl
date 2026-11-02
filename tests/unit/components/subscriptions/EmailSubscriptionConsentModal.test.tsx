@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import EmailSubscriptionConsentModal from '@/app/components/subscriptions/EmailSubscriptionConsentModal';
 import React from 'react';
+import { readFileSync } from 'node:fs';
 import { txFor } from "../../i18n/mock-language";
 
 const lang = vi.hoisted(() => ({ language: 'pl' }));
@@ -115,7 +116,7 @@ describe('EmailSubscriptionConsentModal', () => {
     ] as const) {
       lang.language = language;
       render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
-      expect(screen.getByTestId('email-consent-legal').textContent).toContain(withdraw);
+      expect(screen.getByTestId('email-consent-legal').textContent!.replace(/ /g, ' ')).toContain(withdraw);
       for (const [name, href] of [[privacy, privacyHref], [terms, termsHref]]) {
         const link = screen.getByRole('link', { name });
         expect(link.getAttribute('href')).toBe(href);
@@ -124,5 +125,31 @@ describe('EmailSubscriptionConsentModal', () => {
       }
       cleanup();
     }
+  });
+
+  it("protects line breaking in CSS, in any language: balanced text, width cap, lang for hyphenation, CJK rules", () => {
+    for (const language of ['pl', 'de', 'zh']) {
+      lang.language = language;
+      render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
+      const dialog = screen.getByRole('dialog');
+      expect(dialog.getAttribute('lang')).toBe(language === 'zh' ? 'zh-CN' : language);
+      expect(dialog.className).toContain('min(400px,calc(100vw-2rem))');
+      expect(dialog.className).not.toContain('340px');
+      expect(dialog.className).toContain('[line-break:strict]');
+      const description = dialog.querySelector('[data-slot="dialog-description"]') as HTMLElement;
+      expect(description.className).toContain('text-balance');
+      expect(description.className).toContain('hyphens-auto');
+      expect(dialog.querySelector('[data-slot="dialog-title"]')!.className).toContain('text-balance');
+      expect(screen.getByTestId('email-consent-legal').className).toContain('text-balance');
+      cleanup();
+    }
+  });
+
+  it("keeps short Polish words with the next word via no-break spaces, not hand-made breaks in the dictionary", () => {
+    render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
+    const text = screen.getByRole('dialog').querySelector('[data-slot="dialog-description"]')!.textContent!;
+    expect(text).toContain('na otrzymywanie');
+    const dictionary = readFileSync('lib/i18n/dictionary.ts', 'utf8');
+    expect(dictionary).not.toMatch(/confirmSubscribeText:[^\n]*(&nbsp;|\u00a0|<br)/);
   });
 });

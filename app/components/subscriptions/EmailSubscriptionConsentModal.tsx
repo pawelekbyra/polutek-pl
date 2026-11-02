@@ -12,7 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { txRich } from "@/lib/i18n/rich";
+import { txRichTidy } from "@/lib/i18n/rich";
+import { tidyWrap } from "@/lib/i18n/typography";
+import { htmlLang } from "@/lib/i18n/ui";
 
 type EmailSubscriptionConsentModalProps = {
   open: boolean;
@@ -40,17 +42,17 @@ export default function EmailSubscriptionConsentModal({
     >
       <DialogContent
         showCloseButton={false}
-        className="!w-[calc(100%-2rem)] !max-w-[340px] max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] gap-0 overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-5 py-6 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)] ring-0 sm:px-6 sm:py-7 motion-reduce:animate-none"
+        lang={htmlLang(language)}
+        className="!w-[min(400px,calc(100vw-2rem))] !max-w-none [line-break:strict] max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] gap-0 overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-5 py-6 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)] ring-0 sm:px-6 sm:py-7 motion-reduce:animate-none"
       >
         <DialogClose disabled={pending} aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
         <DialogHeader className="gap-3 text-center">
           <DialogTitle className="min-w-0 break-words px-6 text-balance font-brand text-2xl font-bold leading-tight tracking-tight">
-            {t.confirmSubscribeTitle}
+            {tidyWrap(t.confirmSubscribeTitle, language)}
           </DialogTitle>
-          <DialogDescription className="text-left text-sm leading-relaxed text-[var(--chan-muted)]">
-            {t.confirmSubscribeText}
+          <DialogDescription className="text-balance break-words hyphens-auto text-left text-sm leading-relaxed text-[var(--chan-muted)]">
+            {tidyWrap(t.confirmSubscribeText, language, { widow: true })}
           </DialogDescription>
-
         </DialogHeader>
 
         {errorMessage && (
@@ -77,8 +79,8 @@ export default function EmailSubscriptionConsentModal({
             {t.no}
           </button>
         </div>
-          <p data-testid="email-consent-legal" className="mt-4 text-center text-[11px] min-[360px]:text-xs leading-relaxed text-[var(--chan-muted)]">
-            {txRich(
+          <p data-testid="email-consent-legal" className="mt-4 text-balance break-words hyphens-manual text-center text-[11px] min-[360px]:text-xs leading-relaxed text-[var(--chan-muted)]">
+            {txRichTidy(
               tx,
               "Zgodę wycofasz w każdej chwili. Szczegóły: {0} i {1}.",
               "You can withdraw consent at any time. Details: {0} and {1}.",
