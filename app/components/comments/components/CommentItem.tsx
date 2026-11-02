@@ -214,9 +214,11 @@ function CommentItemComponent({
         isHighlighted && "-mx-2 bg-[var(--chan-blue-soft)]/60 px-2",
       )}
     >
-      {/* Badges live under the avatar (never next to the name). The badge is positioned absolutely,
-          centred on the avatar, so it never changes the column width or the text alignment. */}
-      <div className="relative z-[5] shrink-0" style={{ width: avatarSize, height: avatarSize }}>
+      {/* Badges live under the avatar (never next to the name). The column is exactly as wide as the avatar and the pill
+          hangs centred from a zero-width slot, so it never changes the column width or the text alignment; the slot only
+          reserves its own height under the avatar. */}
+      <div className="relative z-[5] shrink-0" style={{ width: avatarSize }}>
+        <div className="relative" style={{ width: avatarSize, height: avatarSize }}>
         {canOpenProfile ? (
           <button
             type="button"
@@ -230,7 +232,7 @@ function CommentItemComponent({
               src={avatarSrc}
               alt={comment.author?.displayName || "Avatar"}
               size={avatarSize}
-              className={cn("border border-[var(--chan-line)]", authorBadge && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
+              className={cn("border border-[var(--chan-line)]", authorBadge === "AUTHOR" && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
             />
           </button>
         ) : (
@@ -238,8 +240,16 @@ function CommentItemComponent({
             src={avatarSrc}
             alt={comment.author?.displayName || "Avatar"}
             size={avatarSize}
-            className={cn("border border-[var(--chan-line)]", authorBadge && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
+            className={cn("border border-[var(--chan-line)]", authorBadge === "AUTHOR" && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
           />
+        )}
+        </div>
+        {authorBadge && (
+          <div className="relative mt-1.5 flex justify-center" style={{ width: avatarSize, height: isReply ? 15 : 17 }}>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2">
+              <AuthorBadge kind={authorBadge} language={language} size={isReply ? "sm" : "md"} />
+            </div>
+          </div>
         )}
       </div>
       <div className="relative z-[5] min-w-0 flex-1">
@@ -262,7 +272,6 @@ function CommentItemComponent({
                 {profileName}
               </span>
             )}
-            {authorBadge && <AuthorBadge kind={authorBadge} language={language} />}
             <time
               className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
               dateTime={validCreatedAt ? comment.createdAt : undefined}

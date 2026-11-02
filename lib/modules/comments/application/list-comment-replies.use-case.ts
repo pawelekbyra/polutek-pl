@@ -4,6 +4,7 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, CommentDtoContext, canSeeCommentContent, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
+import { loadVipAuthorIds } from "./comment-vip";
 import { checkVideoAccess } from "@/lib/modules/access";
 
 export const MAX_REPLIES_PAGE_SIZE = 50;
@@ -54,9 +55,10 @@ export async function listCommentReplies(
 
     const rows = await repo.findReplies(commentId, userId, canModerate, cursor, limit + 1);
     const page = rows.slice(0, limit);
+    const withVip: CommentDtoContext = { ...context, vipAuthorIds: await loadVipAuthorIds(ctx, page) };
 
     return ok({
-      replies: page.map((reply) => mapCommentToDto(reply, context)),
+      replies: page.map((reply) => mapCommentToDto(reply, withVip)),
       nextCursor: rows.length > limit ? page[page.length - 1].id : null,
     });
   } catch (error) {

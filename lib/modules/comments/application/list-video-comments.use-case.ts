@@ -7,6 +7,7 @@ import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { isUuid } from "@/lib/utils/uuid";
+import { loadVipAuthorIds } from "./comment-vip";
 
 export interface ListVideoCommentsInput {
   videoId: string;
@@ -96,8 +97,9 @@ export async function listVideoComments(
   const videoRow = await prisma.video.findUnique({ where: { id: resolvedVideoId }, select: { commentsMode: true } });
   const commentsDisabled = CommentPolicy.statusForNewComment(videoRow?.commentsMode, canModerate) === null;
 
-  const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
   const comments = rows.slice(0, limit);
+  const vipAuthorIds = await loadVipAuthorIds(ctx, comments);
+  const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess, vipAuthorIds };
   const mappedComments = comments.map(c => mapCommentToDto(c, context));
 
   return ok({

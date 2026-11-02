@@ -4,6 +4,7 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, CommentDtoContext, canSeeCommentContent, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
+import { loadVipAuthorIds } from "./comment-vip";
 import { checkVideoAccess } from "@/lib/modules/access";
 
 export interface GetCommentContextInput {
@@ -62,14 +63,16 @@ export async function getCommentContext(
     // Moderation or account deletion can happen between the lightweight lookup and the DTO read.
     if (!full || !isViewable(full)) return fail(NOT_FOUND);
 
-    let parentComment: CommentDto | null = null;
+    let parent: Awaited<ReturnType<typeof repo.findCommentForDto>> = null;
     if (comment.parentId) {
-      const parent = await repo.findCommentForDto(comment.parentId, userId, canModerate);
-      if (parent && isViewable(parent)) parentComment = mapCommentToDto(parent, context);
+      parent = await repo.findCommentForDto(comment.parentId, userId, canModerate);
     }
+    const visibleParent = parent && isViewable(parent) ? parent : null;
+    const withVip: CommentDtoContext = { ...context, vipAuthorIds: await loadVipAuthorIds(ctx, visibleParent ? [full, visibleParent] : [full]) };
+    const parentComment: CommentDto | null = visibleParent ? mapCommentToDto(visibleParent, withVip) : null;
 
     return ok({
-      comment: mapCommentToDto(full, context),
+      comment: mapCommentToDto(full, withVip),
       parentComment,
       videoId: comment.videoId,
       canView: true,

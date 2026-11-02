@@ -11,8 +11,11 @@ export type CommentReportReasonDto = 'SPAM' | 'HARASSMENT' | 'HATE' | 'NSFW' | '
 
 export type CommentReactionDto = 'LIKE' | 'DISLIKE';
 
-/** No supporter badge on purpose: tips never buy a public distinction (patron status is admin-only). */
-export type CommentAuthorBadgeDto = 'ADMIN' | 'AUTHOR';
+/**
+ * 'VIP' is a bare yes/no: the author holds an ACTIVE, PAID patron-zone access (never a tip or donation: tips buy no
+ * public distinction, CLAUDE.md 4.1). It carries no date, product or price.
+ */
+export type CommentAuthorBadgeDto = 'ADMIN' | 'AUTHOR' | 'VIP';
 
 export type AccessTierDto = 'PUBLIC' | 'LOGGED_IN';
 

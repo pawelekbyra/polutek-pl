@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { canModerateVideoComments } from "./authorize-comments";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
+import { loadVipAuthorIds } from "./comment-vip";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
@@ -134,7 +135,8 @@ export async function createVideoComment(
     const commentWithRelations = await repo.findCommentForDto(newComment.id, userId, canModerate);
     if (!commentWithRelations) return fail(commentDatabaseError("COMMENT_CREATE_READBACK_ERROR", new Error("Created comment not found")));
 
-    return ok(mapCommentToDto(commentWithRelations, { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess }));
+    const vipAuthorIds = await loadVipAuthorIds(ctx, [commentWithRelations]);
+    return ok(mapCommentToDto(commentWithRelations, { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess, vipAuthorIds }));
   } catch (error) {
     return fail(commentDatabaseError("COMMENT_CREATE_ERROR", error));
   }
