@@ -418,11 +418,11 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     open(TEST);
     const dialog = within(await screen.findByRole('dialog'));
     const root = screen.getByRole('dialog');
-    expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Spółka zarejestrowana w Polsce');
+    expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Paweł Perfect');
     expect(root.querySelector('[data-legal-footer]')).toHaveTextContent('Regulamin i Polityka prywatności');
     clickNext(dialog, 'Dalej · 29,99 zł');
     await dialog.findByRole('heading', { name: 'Metoda płatności' });
-    expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Spółka zarejestrowana w Polsce');
+    expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Paweł Perfect');
     clickNext(dialog, 'Dalej · 29,99 zł');
     await dialog.findByRole('textbox', { name: 'Kod BLIK' });
     expect(root.querySelectorAll('[data-seller-card]')).toHaveLength(1);

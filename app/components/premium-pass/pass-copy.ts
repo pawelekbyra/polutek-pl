@@ -5,19 +5,23 @@ import type { Locale } from "@/lib/i18n/routing";
 import { formatPassPrice } from "@/lib/modules/patron-zone/domain/offer";
 import { describeTipMethod } from "../support/tip-flow-config";
 
-/** Owner decision 2026-10-20: the seller shown in the checkout and the receipt (the company does not exist yet). */
+/**
+ * The seller name, the ONE place to edit it (owner decision 2026-11-02: just "Paweł Perfect", no legal form). The NBSP
+ * keeps the two words together. Used by the seller card (PATRON_SELLER.name) and, with the demo suffix, by sellerName().
+ */
+export const SELLER_NAME = "Paweł Perfect";
+
+/** The seller shown in the terms and the receipt (the company does not exist yet, hence the demo suffix). */
 export function sellerName(tx: Tx): string {
-  return tx("Paweł Perfect sp. z o.o. (dane demo)", "Paweł Perfect sp. z o.o. (demo data)");
+  return tx("{0} (dane demo)", "{0} (demo data)", SELLER_NAME);
 }
 
 /**
  * The seller shown on the seller card of the checkout (steps 1-3). ONE place to edit once the company exists:
  * `nip` is null until the owner supplies it (the card then shows no tax id at all); never put an invented number here.
- * `registryLine` is the claim "registered in Poland": the owner must confirm it when the company is registered.
  */
-export const PATRON_SELLER: { name: string; registryLine: (tx: Tx) => string; nip: string | null } = {
-  name: "Paweł Perfect sp. z o.o.",
-  registryLine: (tx) => tx("Spółka zarejestrowana w Polsce", "Company registered in Poland"),
+export const PATRON_SELLER: { name: string; nip: string | null } = {
+  name: SELLER_NAME,
   nip: null,
 };
 

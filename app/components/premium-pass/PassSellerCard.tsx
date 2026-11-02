@@ -12,7 +12,7 @@ import styles from "./premium-pass.module.css";
 export function PassSellerCard({ tx, compact }: { tx: Tx; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const noteId = useId();
-  const details = [compact ? null : PATRON_SELLER.registryLine(tx), PATRON_SELLER.nip ? tx("NIP: {0}", "Tax ID (NIP): {0}", PATRON_SELLER.nip) : null].filter(Boolean);
+  const details = [PATRON_SELLER.nip ? tx("NIP: {0}", "Tax ID (NIP): {0}", PATRON_SELLER.nip) : null].filter(Boolean);
   return (
     <section className={cn(styles.sellerCard, compact && styles.sellerCardCompact)} aria-label={tx("Sprzedawca", "Seller")} data-seller-card="">
       <div className={styles.sellerCardRow}>
