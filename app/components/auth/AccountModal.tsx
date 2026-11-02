@@ -65,7 +65,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-12px)] w-[min(920px,calc(100vw-24px))] max-w-none flex-col gap-0 overflow-hidden rounded-3xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-0 text-[var(--chan-ink)] shadow-[0_28px_90px_-30px_rgba(15,23,42,0.4)] sm:max-h-[calc(100dvh-24px)] sm:max-w-none">
+      <DialogContent className="flex max-h-[calc(100dvh-12px)] w-[min(760px,calc(100vw-24px))] max-w-none flex-col gap-0 overflow-hidden rounded-3xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-0 text-[var(--chan-ink)] shadow-[0_28px_90px_-30px_rgba(15,23,42,0.4)] sm:max-h-[calc(100dvh-24px)] sm:max-w-none">
         <DialogHeader className="relative flex-none border-b border-[var(--chan-line)] px-5 py-3 pr-16 sm:px-8 sm:py-6">
           <DialogTitle className="font-brand text-[23px] font-bold leading-tight tracking-tight text-[var(--chan-ink)] sm:text-[26px]">
             {tx("Moje konto", "My account")}
@@ -76,9 +76,9 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
           value={section}
           onValueChange={(value) => setSection(value as Section)}
           orientation="vertical"
-          className="grid min-h-0 min-w-0 flex-1 grid-cols-1 md:grid-cols-[212px_minmax(0,1fr)]"
+          className="grid min-h-0 min-w-0 flex-1 grid-cols-1 md:grid-cols-[216px_minmax(0,1fr)]"
         >
-          <Tabs.List activateOnFocus aria-label={tx("Sekcje konta", "Account sections")} className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-[var(--chan-line)] p-4 md:flex">
+          <Tabs.List activateOnFocus aria-label={tx("Sekcje konta", "Account sections")} className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-[var(--chan-line)] px-3 py-4 md:flex">
             {sections.map(({ id, label, icon: Icon, danger }) => (
               <Tabs.Tab
                 key={id}
