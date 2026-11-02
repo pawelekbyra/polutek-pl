@@ -104,8 +104,9 @@ describe("authorize()", () => {
   it("asks the database only for the asking user's own membership", async () => {
     const { ctx, prisma } = ctxFor({ type: "user", userId: "user-e" });
     await authorize(ctx, "video.update", { channelId: "ch-t" });
-    const select = (prisma.creator.findUnique.mock.calls[0][0] as { select: { members: { where: { userId: string } } } }).select;
-    expect(select.members.where).toEqual({ userId: "user-e" });
+    expect(prisma.creator.findUnique).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      select: expect.objectContaining({ members: expect.objectContaining({ where: { userId: "user-e" } }) }),
+    }));
   });
 
   it("assertAuthorized throws the same error", async () => {

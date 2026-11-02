@@ -84,10 +84,9 @@ function layoutPayload(title: string) {
 const baseProps = {
   sortedVideos: [VIDEO],
   selectedVideoId: "video-1",
-  viewerIsPatron: false,
   t: { views: "views" },
   language: "pl",
-};
+} satisfies React.ComponentProps<typeof SidebarPlaylist>;
 
 // Mirrors ChannelHome's real markup: the always-mounted mobile "videos" tab panel
 // and the desktop aside both render a SidebarPlaylist at the same time.

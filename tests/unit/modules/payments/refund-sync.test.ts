@@ -67,6 +67,7 @@ function seedPaid(overrides: Record<string, unknown> = {}) {
     status: 'SUCCEEDED',
     stripeIntentId: `pi_${db.payment.rows.length + 1}`,
     refundedAmountMinor: 0,
+    refundedById: null as string | null,
     requestId: null,
     metadata: {},
     createdAt: new Date(),
@@ -124,7 +125,7 @@ describe('refund.failed / refund.updated (BLIK, P24 and bank refunds can come ba
     const payment = seedPaid();
     setRefunds(payment.stripeIntentId, [{ id: 're_1', amount: 400, status: 'pending' }]);
     const early = signedRequest('charge.refunded', chargeObject(payment.stripeIntentId), { id: 'evt_charge_refunded_old' });
-    await POST(early.clone());
+    await POST(new NextRequest(early.clone()));
     setRefunds(payment.stripeIntentId, [{ id: 're_1', amount: 400, status: 'failed' }]);
     await POST(signedRequest('refund.failed', refundObject(payment.stripeIntentId, 're_1', 'failed')));
     expect(payment.refundedAmountMinor).toBe(0);

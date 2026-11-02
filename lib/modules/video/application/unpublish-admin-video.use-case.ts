@@ -31,7 +31,7 @@ export async function unpublishAdminVideo(
     return ok(toAdminVideoDto(video));
   }
 
-  const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const updated = await ctx.db.writeTransaction(async (tx) => {
     const result = await tx.video.update({
       where: { id: videoId },
       data: {

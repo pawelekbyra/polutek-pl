@@ -20,6 +20,7 @@ Link do komentarza otwiera zakładkę komentarzy, pobiera jeden uprawniony konte
 
 ## Dane i spójność
 
+- Callbacki odświeżania i synchronizacji używają ostatnio zatwierdzonego stanu React. Zawieszony lub porzucony render innego języka nie zmienia języka aktywnego odświeżania; referencje są aktualizowane w layout effect, przed efektami odpytywania. Regresję sprawdza rzeczywisty Suspense w `notification-feed.test.tsx`.
 - API listy i liczników zwraca tylko własne wiersze widza, z `Cache-Control: private, no-store`. Mutacje są idempotentne, ograniczane na użytkownika i chronione kontrolą origin w middleware.
 - DTO zawiera `kind`, prezentacyjny `type` wyprowadzony z rodzaju/szablonu i czas `snapshotAt`; nie ujawnia surowych parametrów ani danych innych kont. Tekst jest renderowany w aktywnym języku UI (`language` z dozwolonej listy), a przy jego braku w języku konta. Zapytanie `ids` synchronizuje maksymalnie 50 własnych wierszy naraz i nadal przechodzi przez filtr właściciela.
 - Keyset `createdAt + id` pozwala kontynuować listę po usunięciu granicznego wiersza. Stare kursory będące ID są obsługiwane tylko dla własnych powiadomień. Paginacja deduplikuje wyniki i blokuje równoległe kliknięcia „Pokaż starsze”.

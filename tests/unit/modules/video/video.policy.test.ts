@@ -69,11 +69,11 @@ describe('VideoPolicy', () => {
       })).toBe(true);
     });
 
-    it('returns false for PATRON tier', () => {
+    it('returns false for LOGGED_IN tier', () => {
       expect(VideoPolicy.canBeHero({
         title: 'Title',
         slug: 'slug',
-        tier: AccessTier.PATRON,
+        tier: AccessTier.LOGGED_IN,
         status: VideoStatus.PUBLISHED,
         asset: validAsset,
         activePlaybackRoute: activeRoute
@@ -95,7 +95,7 @@ describe('VideoPolicy', () => {
       const video = {
         title: 'Title',
         slug: 'slug',
-        tier: AccessTier.PATRON,
+        tier: AccessTier.LOGGED_IN,
         status: VideoStatus.DRAFT,
         asset: validAsset,
         activePlaybackRoute: activeRoute

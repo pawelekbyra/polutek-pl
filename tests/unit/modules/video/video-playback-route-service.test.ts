@@ -41,7 +41,7 @@ describe('VideoPlaybackRouteService', () => {
   });
 
   it.each([StorageProvider.CLOUDFLARE_STREAM, StorageProvider.MUX, StorageProvider.YOUTUBE, StorageProvider.VIMEO, StorageProvider.VERCEL_BLOB, StorageProvider.R2, StorageProvider.S3])('refuses to route a legacy %s asset, for any tier', async (provider) => {
-    for (const tier of [AccessTier.PUBLIC, AccessTier.PATRON]) {
+    for (const tier of Object.values(AccessTier)) {
       const { ctx } = ctxForRoute({ provider });
       ctx.prisma.video.findUnique = async () => ({ id: 'video-1', tier });
       await expect(new VideoPlaybackRouteService().activateRoute({ videoId: 'video-1', assetId: 'asset-1', activatedBy: 'ADMIN' }, ctx)).rejects.toThrow(/cannot be activated/);

@@ -15,6 +15,7 @@ albo znika w tym samym PR. Historia jest w git.
 
 | Temat | Plik |
 |---|---|
+| Bieżący profil produktu: darmowe VOD/napiwki, Premium i przyszły marketplace; otwarte decyzje | [`architecture/product-profile.md`](architecture/product-profile.md) |
 | Logowanie i konta (Better Auth) | [`architecture/auth-better-auth.md`](architecture/auth-better-auth.md) |
 | Panel widza „Moje konto”: nawigacja i ustawienia profilu | [`architecture/account-settings.md`](architecture/account-settings.md) |
 | Własny HLS: decyzje i budowa | [`architecture/self-hosted-hls.md`](architecture/self-hosted-hls.md) |
@@ -51,9 +52,11 @@ albo znika w tym samym PR. Historia jest w git.
 |---|---|
 | Serwer: układ, deploy, rollback, kopie, crony | [`operations/SERWEREK.md`](operations/SERWEREK.md) |
 | Obudź projekt od zera: kolejność odtworzenia na nowym serwerze z kopii R2, testy dymne, czego nie da się odtworzyć | [`operations/WAKE-UP.md`](operations/WAKE-UP.md) |
+| Opcjonalna kontrola odtworzonej bazy: obowiązkowe sprawdzenia i kody wyjścia | [`operations/RESTORE-VERIFICATION.md`](operations/RESTORE-VERIFICATION.md) |
 | Konta i usługi zewnętrzne (bez sekretów), kalendarz odnowień i wygasania, co monitorować | [`operations/ACCOUNTS.md`](operations/ACCOUNTS.md) |
 | Języki interfejsu (osiem języków): jak działa `tx()`, jak dodać tekst lub język, decyzje, słownik | [`operations/I18N.md`](operations/I18N.md) |
 | Lokalne CI przed scaleniem (zamiast GitHub Actions) | [`operations/LOCAL-CI.md`](operations/LOCAL-CI.md) |
+| Rdzeń dowodu źródeł/testów/obrazów; integracja publikacji pozostaje otwarta | [`operations/RELEASE-PROOF.md`](operations/RELEASE-PROOF.md) |
 | Dzienna odprawa „co słychać?” (raport tylko do odczytu, skill `odprawa`) | [`operations/DAILY-BRIEFING.md`](operations/DAILY-BRIEFING.md) |
 | Dźwięk w odtwarzaczu i przycisk logo | [`operations/PLAYER-SOUND.md`](operations/PLAYER-SOUND.md) |
 | Wydajność: pomiary CPX22 z 2026-10-01 (aplikacja, ffmpeg) | [`operations/BENCHMARK-2026-10-01.md`](operations/BENCHMARK-2026-10-01.md) |

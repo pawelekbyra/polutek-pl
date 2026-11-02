@@ -277,7 +277,7 @@ export class VideoContentService {
           },
         },
       });
-      if (!video || !isVideoPubliclyVisible(video as any)) return null;
+      if (!video || !isVideoPubliclyVisible(video)) return null;
 
       const adminData = await findMainCreatorAdminAvatar();
       const creator = video.creator
@@ -310,7 +310,7 @@ export class VideoContentService {
         creator: { select: { status: true, deletedAt: true } },
       },
     });
-    if (!video || !isVideoPubliclyVisible(video as any)) return null;
+    if (!video || !isVideoPubliclyVisible(video)) return null;
     return { id: video.id, description: video.description, descriptionEn: video.descriptionEn };
   }
 

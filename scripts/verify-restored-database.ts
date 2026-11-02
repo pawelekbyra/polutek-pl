@@ -19,17 +19,20 @@ async function main() {
   // 1. Safety Checks
   if (!restoreUrl) {
     console.error("ERROR: RESTORE_DATABASE_URL is missing.");
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   if (!allowVerification) {
     console.error("ERROR: ALLOW_RESTORE_VERIFICATION=true is required.");
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   if (productionUrl && restoreUrl === productionUrl) {
     console.error("ERROR: RESTORE_DATABASE_URL exactly matches DATABASE_URL. Verification refused for safety.");
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   // Redacted URL for logging
@@ -53,21 +56,26 @@ async function main() {
       console.log(`✓ Reachable. Server time: ${dbTime[0].now.toISOString()}`);
     } catch (e: any) {
       console.error(`❌ Connection failed: ${e.message}`);
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
 
     // B. Migration/schema state
     console.log("\n[B] Migration/Schema State");
     try {
       const migrations = await prisma.$queryRaw<any[]>`SELECT * FROM _prisma_migrations`;
-      const failedMigrations = migrations.filter(m => m.rolled_back_at !== null || m.logs !== null);
+      // A rolled-back attempt is resolved history. Only unresolved attempts block verification.
+      const failedMigrations = migrations.filter(m => m.finished_at === null && m.rolled_back_at === null);
       console.log(`✓ _prisma_migrations accessible. Count: ${migrations.length}`);
       if (failedMigrations.length > 0) {
         console.error(`❌ Detected ${failedMigrations.length} failed or unfinished migrations!`);
-        process.exit(1);
+        process.exitCode = 1;
+        return;
       }
     } catch (e: any) {
-      console.warn(`! Unable to access _prisma_migrations: ${e.message}`);
+      console.error(`❌ Unable to verify _prisma_migrations: ${e.message}`);
+      process.exitCode = 1;
+      return;
     }
 
     // C & D. Critical models & Safe aggregates
@@ -82,7 +90,7 @@ async function main() {
         return count;
       } catch (e: any) {
         console.error(`❌ ${name} is NOT queryable: ${e.message}`);
-        return null;
+        throw e;
       }
     };
 
@@ -168,12 +176,17 @@ async function main() {
       console.log("\n[F] Expected Manifest Comparison");
       try {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+        if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)
+          || !manifest.counts || typeof manifest.counts !== 'object' || Array.isArray(manifest.counts)) {
+          throw new Error('Expected manifest.counts to be an object.');
+        }
         let manifestMismatches = 0;
 
-        for (const [key, expectedValue] of Object.entries(manifest.counts || {})) {
+        for (const [key, expectedValue] of Object.entries(manifest.counts)) {
           const actualValue = counts[key];
           if (actualValue === undefined) {
-            console.warn(`! Field ${key} not found in restored aggregates.`);
+            console.error(`❌ Field ${key} not found in restored aggregates.`);
+            manifestMismatches++;
           } else if (actualValue !== expectedValue) {
             console.error(`❌ Mismatch for ${key}: expected ${expectedValue}, got ${actualValue}`);
             manifestMismatches++;
@@ -184,24 +197,28 @@ async function main() {
 
         if (manifestMismatches > 0) {
           console.error(`❌ Detected ${manifestMismatches} manifest mismatch(es)!`);
-          process.exit(1);
+          process.exitCode = 1;
+          return;
         }
       } catch (e: any) {
         console.error(`❌ Error reading/parsing manifest: ${e.message}`);
-        process.exit(1);
+        process.exitCode = 1;
+        return;
       }
     }
 
     if (integrityFailures > 0) {
       console.error(`\n❌ VERIFICATION FAILED: ${integrityFailures} integrity issue(s) detected.`);
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
 
     console.log("\n🚀 VERIFICATION SUCCESSFUL: Restored database appears valid.");
 
   } catch (e: any) {
     console.error(`\n❌ UNEXPECTED ERROR: ${e.message}`);
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   } finally {
     await prisma.$disconnect();
   }

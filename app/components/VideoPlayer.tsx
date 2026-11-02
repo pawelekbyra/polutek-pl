@@ -122,7 +122,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
 
     const player = useRef<MediaPlayerInstance>(null);
     // From the click on the entry gate until its flash the hero must stay paused at its start (the
-    // warp has its own sound): any play in between (a resumed autoplay, a buffering restart) is undone.
+    // warp has its own sound): playback in between (a resumed autoplay, a buffering restart) is undone.
     const gateHoldRef = useRef(false);
     // Resume watching and the ?t= start (player/useVideoProgress.ts): the start position, the position
     // reports (every ~10 s, pause, tab close) (resuming is silent, like YouTube: no on-screen notice).
