@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Production image of the Next.js app for "serwerek" (see docs/operations/SERWEREK.md, section "Produkcja na serwerku").
 # Build from the repo root:
 #   docker build -f deploy/serwerek/Dockerfile -t polutek-app:<tag> \
@@ -13,7 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm ci --no-audit --no-fund
+# Optional trust for managed build proxies; the certificate is a BuildKit secret, never an image layer.
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+    npm ci --no-audit --no-fund --strict-ssl=true
 
 FROM deps AS build
 # Defaults are harmless dummies so a plain `docker build` still works (test stack); production passes real values.
@@ -22,6 +26,7 @@ ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 # Optional, patron-zone checkout only (PREMIUM_PASS_STRIPE_*): empty = the checkout uses NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.
 ARG NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY=
 ARG NEXT_PUBLIC_R2_PUBLIC_HOST=
+ARG NEXT_PUBLIC_BLOB_PUBLIC_HOST=
 ARG NEXT_PUBLIC_APP_NAME=
 ARG NEXT_PUBLIC_SUPPORT_EMAIL=
 # Test-version stage (lib/site-stage.ts): default beta; set false at launch (build.env: NEXT_PUBLIC_SITE_BETA=false).
@@ -38,14 +43,18 @@ ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     NEXT_TELEMETRY_DISABLED=1 \
     NODE_OPTIONS=--max-old-space-size=3072
 COPY . .
-RUN npx prisma generate && npx next build
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+    npx prisma generate && npx next build
 
 # Only the prisma CLI + schema + migrations (no app node_modules), version pinned from package-lock.json.
 FROM node:22-bookworm-slim AS migrator
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package-lock.json ./
-RUN PRISMA_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/prisma'].version")" \
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+    PRISMA_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/prisma'].version")" \
     && npm init -y >/dev/null && npm install --no-audit --no-fund "prisma@${PRISMA_VERSION}" "@prisma/client@${PRISMA_VERSION}"
 COPY prisma ./prisma
 ENV NEXT_TELEMETRY_DISABLED=1
