@@ -16,6 +16,10 @@ Opcje: `--all` (eslint całego repo), `--unit-full` (cały zestaw Vitest), `--bu
 
 Wynik: tabela `bramka / wynik / czas / przyczyna`, kod wyjścia 0 tylko wtedy, gdy każda wymagana bramka ma PASS (SKIP z braku narzędzia nie blokuje, chyba że `--strict`). Raport z hashem HEAD: `.claude/local-ci-last.json` i `.claude/local-ci-last.md`, pełne wyjście każdej bramki: `.claude/local-ci-logs/<bramka>.log` (wszystko w `.gitignore`).
 
+## Celowane testy krytyczne
+
+`npm run test:critical-path` uruchamia procesowe testy `verify-restored-database-process.test.ts` oraz istniejący komponentowy `launch-candidate-critical-path.test.ts`. Oba wskazane pliki istnieją; procesowe przypadki zastępują dawny nieistniejący cel architektoniczny. Ten zestaw obejmuje jawne atrapy DB i nie zastępuje testów PostgreSQL ani pełnego E2E. Jego niezerowego wyniku nie wolno traktować jako zielonej bramki.
+
 ## Budowanie i warunki wydania
 
 Obie konfiguracje Next (`next.config.mjs`, `apps/admin/next.config.mjs`) mają `typescript.ignoreBuildErrors=false`. Błąd typu blokuje budowę strony lub panelu również w Dockerze. Nie naprawiać takiej porażki przez ponowne wyłączenie kontroli; rozstrzygnąć przyczynę, także brak prawdziwego wygenerowanego klienta Prisma.
