@@ -1,6 +1,6 @@
 # ROADMAPA NAPRAW v1 — Polutek
 
-Data: 2 listopada 2026. **Status: plan do zatwierdzenia przez właściciela. Nie rozpoczęto napraw.**
+Data propozycji v1: 2 listopada 2026. **Aktualizacja: właściciel zatwierdził roadmapę i rozpoczęto H1.** Bieżąca realizacja, gałęzie i ograniczenia: [POSTEP-NAPRAW.md](POSTEP-NAPRAW.md), [STAN.md](program-audytu/STAN.md). Dalsza treść zachowuje założenia i wymagania propozycji v1; historyczne polecenia oczekiwania nie zastępują obecnej zgody na H1.
 
 Plan zawiera **40 pakietów pracy w 8 etapach i rozlicza wszystkie 37 ustaleń R01–R37**. Pakiet może być naprawą, przygotowaniem testów, weryfikacją lub decyzją produktową; nie oznacza to 40 dowiedzionych błędów aplikacji. Najpierw zatwierdzenie tej roadmapy i harmonogramu, później osobno uzgodniona realizacja. Nie zmieniono aplikacji, nie wdrożono i nie scalono gałęzi.
 
@@ -52,7 +52,7 @@ Etapy grupują odpowiedzialność; nie nakazują czekać z każdym zadaniem na c
 
 ## 4. Rejestr wszystkich ustaleń
 
-Pełne priorytety oryginalne, ograniczenia dowodów, zależności, statusy i identyfikatory testów znajdują się w [KOLEJNOSC-NAPRAW.csv](KOLEJNOSC-NAPRAW.csv). Wszystkie wpisy mają status **PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO**. Ta tabela nie zamyka ustaleń.
+Pełne priorytety oryginalne, ograniczenia dowodów, zależności, statusy i identyfikatory testów znajdują się w [KOLEJNOSC-NAPRAW.csv](KOLEJNOSC-NAPRAW.csv). W propozycji v1 wszystkie wpisy miały status **PLAN_DO_ZATWIERDZENIA_NIE_ROZPOCZETO**. CSV i POSTEP pokazują aktualny stan realizacji; ta tabela nie zamyka ustaleń.
 
 | ID | Tytuł źródłowy | Klasyfikacja planu | Pilność | Pakiety |
 |---|---|---|---|---|

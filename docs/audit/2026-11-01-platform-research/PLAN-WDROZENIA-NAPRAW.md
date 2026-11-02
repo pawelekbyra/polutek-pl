@@ -1,6 +1,6 @@
 # PLAN WDROŻENIA NAPRAW v1 — propozycja do zatwierdzenia
 
-2 listopada 2026. Ten dokument określa przyszłą kolejność realizacji, weryfikacji i odbioru. **Obecnie wykonujemy wyłącznie zapis roadmapy. Nie ma zgody na rozpoczęcie napraw, wznowienie audytu, migracje, wdrożenie lub scalenie.** Pauza badań jest tymczasowa; pełny cel bezpieczeństwa, niezawodności i jakości pozostaje w mocy.
+2 listopada 2026. **Aktualizacja: właściciel zatwierdził roadmapę; rozpoczęto H1 (K01/K02/K05, następnie K03/K06).** Aktualny punkt wykonania: [POSTEP-NAPRAW.md](POSTEP-NAPRAW.md) i [STAN.md](program-audytu/STAN.md). Dalsza treść zachowuje propozycję v1 i jej warunki odbioru; historyczne instrukcje oczekiwania nie cofają tej zgody. Nie ma zgody na wdrożenie, scalenie, produkcyjne migracje lub koszty zewnętrzne.
 
 Karty i testy: [ROADMAPA-NAPRAW.md](ROADMAPA-NAPRAW.md). Wszystkie 37 ustaleń: [KOLEJNOSC-NAPRAW.csv](KOLEJNOSC-NAPRAW.csv). Rejestr źródłowy nie został przepisany. Maszynowy indeks 40 pakietów i zależności: [roadmap-v1-plan.json](program-audytu/evidence/roadmap-v1-plan.json).
 

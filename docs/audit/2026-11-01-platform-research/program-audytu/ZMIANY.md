@@ -218,3 +218,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Dodano POSTEP-NAPRAW.md; ten wpis dokumentuje start, nie ukończenie napraw lub nowy PASS ASVS.
 
 - Podczas push wykryto nowsze commity audytu z Windows (b3a19a64/f7e288bd). Zachowano je przez rebase naszego lokalnego zapisu, bez force push i bez cofnięcia przyjętej partii 17. K02 oparto na aktualnym main; raporty nadal odnoszą się do historycznego baseline.
+
+## 2 listopada 2026 — K02: kandydat aktualizacji zależności
+
+- Osobna gałąź fix/polutek-k02-security-dependencies, commit e582ead4e1a20ec1e4080c1d1f6a899650304a09, baza aktualny main 5f848a93. Dwa pliki zależności, bez cofania nowszych zmian UI/kodu.
+- 46/46 istniejących testów, architektura i fixture Next HTTP/natywne librsvg 2.63.2 przeszły. Typecheck exit 2 z 515 diagnostykami; pełny odbiór pozostaje zablokowany Prisma. Nie scalono, nie wdrożono, R01 nie zamknięto.
+- Szkic PR nie powstał (GraphQL Forbidden). Wspieranym szkicem dodano api.github.com, zachowano binaries.prisma.sh; requires_publish=true, bez twierdzenia o aktywacji reguł.

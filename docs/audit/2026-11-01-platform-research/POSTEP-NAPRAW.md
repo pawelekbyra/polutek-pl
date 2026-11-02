@@ -19,3 +19,12 @@ Pozostałe pakiety nie rozpoczęte. Odrębny przebieg na Windows (`b3a19a64`/`f7
 - **K02:** `fix/polutek-k02-security-dependencies`, commit `e582ead4`; tylko package.json/lockfile, baza `5f848a93`. Gałąź wypchnięta, bez scalenia. `gh pr create --draft` zwróciło Forbidden dla GraphQL; PR nie utworzono.
 - Środowisko cloud i lokalna maszyna Windows to osobne źródła dowodów. Nie zastępować brakujących testów cloud wynikami innej wersji Node/DB.
 - Przygotowany szkic instalacji nadal wymaga zastosowania reguły Prisma; sprawdzić aktualną gotowość przed ponowieniem blokowanego kroku. Nie ponawiać npm audit ani obchodzić wcześniejszego odrzucenia wysłania grafu.
+
+
+## Dowody i odtworzenie K02
+
+Podsumowanie z pełnym SHA i ograniczeniami: [h1-k02-summary.json](program-audytu/evidence/h1-k02-summary.json). [Wynik runtime obrazów](program-audytu/evidence/h1-k02-image-runtime.json), [46 testów](program-audytu/evidence/h1-k02-vitest.json), [architektura](program-audytu/evidence/h1-k02-architecture.log), [nieudana kontrola typów](program-audytu/evidence/h1-k02-typecheck.log).
+
+Po przełączeniu na gałąź K02, z Node 22 i jej zainstalowanym lockfile: `node <ścieżka-do-audytu>/program-audytu/tools/k02-image-runtime-check.mjs` z katalogu repo. Harness używa własnego katalogu temp/loopback i zapisuje wyniki w `/workspace/.cloud-setup` (utworzyć ten katalog); nie potrzebuje DB ani prawdziwego storage. To test runtime/config, nie pełnej strony. Pierwszy fixture błędnie użył szerokości 16; poprawiono go do dozwolonego 32. Nie zmieniano konfiguracji aplikacji pod test.
+
+W szkicu środowiska zachowano domenę Prisma i dodano `api.github.com`. Zapis potwierdzony, `requires_publish=true`; **nie jest to zastosowanie do runtime**. Potrzebne przejrzenie i zapisanie zmian w ustawieniach oraz publikacja środowiska. Do tego czasu bez niezmienionych ponowień generate/PR i bez próśb o nowy token.
