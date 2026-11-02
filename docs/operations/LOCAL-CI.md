@@ -14,7 +14,9 @@ node scripts/ops/local-ci.mjs --only=unit,lint      # wybrane bramki (+ ich zale
 
 Opcje: `--all` (eslint całego repo), `--unit-full` (cały zestaw Vitest), `--build` (next build + admin build), `--coverage` (testy z `--coverage`, jak job `tests/coverage`), `--strict` (brak Dockera, sieci lub ffmpeg to FAIL zamiast SKIP), `--skip=a,b`, `--base=<ref>` (domyślnie `origin/main`; zrób `git fetch` wcześniej), `--jobs=<n>` (sloty CPU, domyślnie liczba rdzeni).
 
-Wynik: tabela `bramka / wynik / czas / przyczyna`, kod wyjścia 0 tylko wtedy, gdy każda wymagana bramka ma PASS (SKIP z braku narzędzia nie blokuje, chyba że `--strict`). Raport z hashem HEAD: `.claude/local-ci-last.json` i `.claude/local-ci-last.md`, pełne wyjście każdej bramki: `.claude/local-ci-logs/<bramka>.log` (wszystko w `.gitignore`).
+Wynik: tabela `bramka / wynik / czas / przyczyna`, kod wyjścia 0 tylko wtedy, gdy każda wymagana bramka ma PASS i źródła nie zmieniły się podczas kontroli (SKIP z braku narzędzia nie blokuje, chyba że `--strict`). Raport z HEAD, inwentarzem/hashami źródeł przed i po kontroli oraz podsumowaniami testów: `.claude/local-ci-last.json` i `.claude/local-ci-last.md`, pełne wyjście każdej bramki: `.claude/local-ci-logs/<bramka>.log` (wszystko w `.gitignore`). Raport częściowy lub z brudnego checkoutu nie jest dowodem wydania; kontrakt: [RELEASE-PROOF.md](RELEASE-PROOF.md).
+
+Runner wymusza `ADMIN_DEV_FIXTURES=0`, `ADMIN_DEV_BYPASS_AUTH=0` i `ADMIN_DEV_BYPASS_ACCESS=0`. Raporty testowe muszą wskazywać rzeczywiście wykonane testy; brak raportu nie jest sukcesem.
 
 ## Scalanie bez GitHub Actions
 
@@ -38,21 +40,22 @@ Scala tylko przy PASS (`gh pr merge --squash --admin --match-head-commit <sha>`,
 | `ci-parity` | (nowa) | FAIL, gdy ci.yml ma krok `run:`, którego local-ci nie odwzorowuje; zmienne `env:` czytane wprost z ci.yml |
 | `migrations` | część integration-postgres | UTF-8 bez BOM; nowe migracje: nazwa `<14 cyfr>_<snake_case>`, znacznik późniejszy niż ostatnia migracja na bazie, tylko operacje addytywne (migracja czyszcząca zatwierdzona przez właściciela musi mieć komentarz `-- local-ci: allow-destructive <powód>`); istniejących migracji nie wolno edytować ani usuwać |
 | `unit` | tests/coverage | domyślnie `vitest related` dla zmienionych źródeł i testów + wszystkie testy czytające źródła jako tekst (graf importów ich nie widzi); cały zestaw przy `--full`/`--unit-full` albo zmianie `package*.json`, `vitest*.config.*`, `tsconfig*.json`, `tests/setup.ts`, `prisma/schema.prisma`; pokrycie tylko z `--coverage` |
+| `critical-path` | dodatkowa kontrola lokalna | strażnik obu wymaganych plików; niepusty raport bez pominięć |
 | `typecheck` | typecheck | `tsc -p tsconfig.typecheck.json --noEmit` |
-| `typecheck-all` | (nowa) | `tsc -p tsconfig.json --noEmit` na całym repo razem z testami (CI ich nie sprawdza); błędy w `.next/` pomijane |
+| `typecheck-all` | (nowa) | `tsc -p tsconfig.json --noEmit` na całym repo razem z testami; także błędy w `.next/` kończą się FAIL |
 | `lint` | lint | eslint zmienionych plików (z cache w `.claude/local-ci-cache/`, wynik jak bez cache); całe repo przy `--all`/`--full` albo zmianie `eslint.config.mjs`, `package*.json`, `tsconfig.json` |
 | `architecture`, `hotspots`, `strict-escapes` | jak w CI | |
 | `env` | environment validation | `validate-env --mode=production` na fikcyjnych wartościach z ci.yml |
 | `audit` | npm audit/security | `scripts/audit-high.mjs` (zależności produkcyjne); SKIP bez sieci |
-| `postgres` | integration-postgres | tymczasowy kontener `postgres:16` (jak CI; `LOCAL_CI_PG_IMAGE=postgres:17` dla wersji produkcyjnej) na losowym porcie, `migrate deploy`, `db:smoke`, `vitest.postgres.config.ts`; SKIP bez Dockera |
-| `encode-smoke` | encode-smoke (ffmpeg) | SKIP bez `ffmpeg`/`ffprobe` w PATH |
+| `postgres` | integration-postgres | tymczasowy kontener `postgres:16` (jak CI; `LOCAL_CI_PG_IMAGE=postgres:17` dla wersji produkcyjnej), migracje/smoke i niepusty raport testów bez pominięć; SKIP bez Dockera |
+| `encode-smoke` | encode-smoke (ffmpeg) | trzy wykonane przypadki i niepusty raport bez pominięć; SKIP bez `ffmpeg`/`ffprobe` w PATH |
 | `build`, `admin-build` | build, admin build | tylko z `--build`/`--full` (zostawiają `.next/`, ok. 1 GB) |
 
-Równoległość: każda bramka zajmuje „sloty” CPU (Vitest: rdzenie − 1 i tyle samo wątków, tsc/eslint/skrypty: 1, build: cała maszyna), więc obok Vitesta biegnie jedna lżejsza bramka. Procesy potomne dostają zmienne z ci.yml (fikcyjne sekrety, `DATABASE_URL` na localhost) i `CI=true`; prawdziwe sekrety z lokalnego `.env` nie są używane.
+Równoległość: każda bramka zajmuje „sloty” CPU (Vitest: rdzenie − 1 i tyle samo wątków, tsc/eslint/skrypty: 1, build: cała maszyna), więc obok Vitesta biegnie jedna lżejsza bramka. Procesy potomne dostają wartości z ci.yml (fikcyjne sekrety, `DATABASE_URL` na localhost), `CI=true` i wyłączone obejścia panelu. Wartości wymienione w ci.yml nadpisują środowisko rodzica; pozostałe zmienne są dziedziczone. Uruchamiać w jawnym środowisku testowym bez poświadczeń produkcji.
 
 ## Różnice względem CI GitHuba
 
-- Node: lokalny (na maszynie właściciela 24), CI używa 22 z `.nvmrc`; skrypt to wypisuje. Różnice wersji w praktyce dotyczą tylko ostrzeżeń `EBADENGINE`.
+- Node: runner wypisuje lokalną wersję; dowód wydania wymaga Node 22 zgodnego z `.nvmrc`.
 - Domyślnie testy i lint tylko dla zmian; pełny odpowiednik CI to `--full --coverage`.
 - `postgres` i `encode-smoke` wymagają Dockera i ffmpeg; bez nich SKIP (na maszynie właściciela 2026-10-04 nie ma żadnego z nich). `--strict` zamienia to w FAIL.
 - Dodatkowo względem CI: `ci-parity`, `migrations` i `typecheck-all`.
