@@ -57,6 +57,10 @@ class JdgProfile(models.Model):
         ("not_decided", "Jeszcze nie zdecydowano"),
     ], string="Status VAT", default="exempt_113", required=True)
     vat_exempt_basis = fields.Char("Podstawa zwolnienia z VAT (na fakturze)", default="art. 113 ust. 1 ustawy o VAT")
+    oss_registered = fields.Boolean(
+        "Zarejestrowany w OSS", default=False,
+        help="Włącza terminy deklaracji OSS (koniec miesiąca po kwartale) i stały pasek progu 10 000 EUR na pulpicie. "
+             "Próg 10 000 EUR liczy się i tak, gdy są wpisy B2C z innych państw UE (kraj klienta).")
     invoice_policy = fields.Selection([
         ("on_request", "Tylko na żądanie kupującego (B2B z NIP)"),
         ("always", "Zawsze"),

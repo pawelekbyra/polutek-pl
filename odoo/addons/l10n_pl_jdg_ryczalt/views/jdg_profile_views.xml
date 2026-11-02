@@ -49,6 +49,7 @@
                             <field name="vat_status"/>
                             <field name="vat_exempt_basis"/>
                             <field name="invoice_policy"/>
+                            <field name="oss_registered"/>
                         </group>
                         <group string="Notatki">
                             <field name="note" nolabel="1" placeholder="Np. ustalenia z księgowym"/>

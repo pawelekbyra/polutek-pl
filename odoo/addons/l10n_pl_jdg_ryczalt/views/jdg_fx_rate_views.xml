@@ -22,8 +22,8 @@
                 <sheet>
                     <div class="alert alert-info" role="alert">
                         Kurs średni NBP, tabela A. Do przeliczenia przychodu używamy tabeli z ostatniego dnia roboczego
-                        PRZED dniem przychodu. Kursów nie edytujemy (to dowód): popraw błąd nowym wpisem.
-                        Automatyczne pobieranie z api.nbp.pl dojdzie w iteracji 2.
+                        PRZED dniem przychodu. Kursy pobiera się automatycznie z api.nbp.pl (co godzinę, z numerem tabeli); można je też
+                        wpisać ręcznie. Kursów nie edytujemy (to dowód): popraw błąd nowym wpisem.
                     </div>
                     <group>
                         <group>
@@ -48,7 +48,40 @@
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Brak kursów</p>
-            <p>Dodaj kurs średni NBP (tabela A) dla waluty obcej. Wpis w EUR lub USD użyje kursu z ostatniej tabeli sprzed dnia przychodu.</p>
+            <p>Kursy pobierają się same (api.nbp.pl). Kliknij „Pobierz teraz” w menu Kursy NBP lub dodaj kurs ręcznie. Wpis w EUR lub USD
+                użyje kursu z ostatniej tabeli sprzed dnia przychodu.</p>
         </field>
+    </record>
+
+    <record id="action_jdg_fx_fetch_now" model="ir.actions.server">
+        <field name="name">Pobierz kursy NBP teraz</field>
+        <field name="model_id" ref="model_jdg_fx_rate"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_fetch_now()</field>
+    </record>
+
+    <record id="view_jdg_fx_fetch_list" model="ir.ui.view">
+        <field name="name">jdg.fx.fetch.list</field>
+        <field name="model">jdg.fx.fetch</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="state == 'error'" create="0" edit="0">
+                <field name="fetched_at"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="covered_until"/>
+                <field name="tables_count"/>
+                <field name="rates_created"/>
+                <field name="state" widget="badge" decoration-success="state == 'ok'" decoration-danger="state == 'error'"/>
+                <field name="attempts" optional="show"/>
+                <field name="trigger" optional="show"/>
+                <field name="message"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_jdg_fx_fetch" model="ir.actions.act_window">
+        <field name="name">Dziennik pobrań NBP</field>
+        <field name="res_model">jdg.fx.fetch</field>
+        <field name="view_mode">list</field>
     </record>
 </odoo>

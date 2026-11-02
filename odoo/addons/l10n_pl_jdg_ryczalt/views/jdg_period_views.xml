@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Okresy (zamykanie) ===== -->
+    <record id="view_jdg_period_list" model="ir.ui.view">
+        <field name="name">jdg.period.list</field>
+        <field name="model">jdg.period</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state == 'closed'" decoration-muted="not is_ended and state == 'open'">
+                <field name="name"/>
+                <field name="kind"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="state" widget="badge" decoration-success="state == 'closed'" decoration-warning="state == 'open'"/>
+                <field name="is_ended" column_invisible="True"/>
+                <field name="revenue" sum="Razem"/>
+                <field name="advance_due" sum="Razem"/>
+                <field name="health_due" sum="Razem"/>
+                <field name="social_due" sum="Razem"/>
+                <field name="closed_at" optional="show"/>
+                <field name="pln_currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_period_form" model="ir.ui.view">
+        <field name="name">jdg.period.form</field>
+        <field name="model">jdg.period</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_close" type="object" string="Zamknij okres" class="btn-primary"
+                            invisible="state != 'open' or not is_ended" groups="l10n_pl_jdg_ryczalt.group_jdg_manager"
+                            confirm="Zamknięcie zapisze liczby okresu i zablokuje nowe wpisy oraz płatności z datami w tym okresie. Kontynuować?"/>
+                    <button name="action_verify" type="object" string="Sprawdź spójność" invisible="state != 'closed'"/>
+                    <button name="action_open_reopen_wizard" type="object" string="Cofnij zamknięcie" invisible="state != 'closed'"
+                            groups="l10n_pl_jdg_ryczalt.group_jdg_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="open,closed"/>
+                </header>
+                <sheet>
+                    <field name="is_ended" invisible="1"/>
+                    <field name="pln_currency_id" invisible="1"/>
+                    <div class="alert alert-info" role="alert" invisible="state != 'open' or is_ended">
+                        Okres jeszcze trwa. Zamknąć go można po zakończeniu (po zaksięgowaniu wszystkich wpisów roboczych).
+                    </div>
+                    <div class="alert alert-success" role="alert" invisible="state != 'closed'">
+                        Okres zamknięty: liczby poniżej są zapisane na stałe (migawka z dnia zamknięcia). Nowe wpisy i płatności z datą
+                        w tym okresie są zablokowane; błąd poprawia wpis korygujący w pierwszym otwartym okresie.
+                    </div>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group string="Okres">
+                            <field name="kind"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="closed_at" invisible="state != 'closed'"/>
+                            <field name="closed_by" invisible="state != 'closed'"/>
+                            <field name="reopen_count" invisible="reopen_count == 0"/>
+                        </group>
+                        <group string="Liczby (szacunek, nie porada podatkowa)" invisible="state != 'closed'">
+                            <field name="entry_count"/>
+                            <field name="revenue"/>
+                            <field name="cum_revenue"/>
+                            <field name="tax_cum"/>
+                            <field name="advance_due"/>
+                            <field name="health_due"/>
+                            <field name="social_due"/>
+                            <field name="fp_due"/>
+                        </group>
+                    </group>
+                    <notebook invisible="state != 'closed'">
+                        <page string="Podsumowanie">
+                            <field name="snapshot_text" nolabel="1"/>
+                            <group><field name="totals_hash"/></group>
+                        </page>
+                        <page string="Zaliczka">
+                            <field name="advance_ids" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="advance_due"/>
+                                    <field name="due_date"/>
+                                    <field name="paid_amount"/>
+                                    <field name="state"/>
+                                    <field name="pln_currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Dane techniczne (migawka i reguły)" groups="base.group_no_one">
+                            <field name="totals_json" readonly="1"/>
+                            <field name="rules_snapshot_json" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_jdg_period_search" model="ir.ui.view">
+        <field name="name">jdg.period.search</field>
+        <field name="model">jdg.period</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="months" string="Miesiące" domain="[('kind', '=', 'month')]"/>
+                <filter name="quarters" string="Kwartały" domain="[('kind', '=', 'quarter')]"/>
+                <separator/>
+                <filter name="open" string="Otwarte" domain="[('state', '=', 'open')]"/>
+                <filter name="closed" string="Zamknięte" domain="[('state', '=', 'closed')]"/>
+                <group>
+                    <filter name="group_kind" string="Rodzaj" context="{'group_by': 'kind'}"/>
+                    <filter name="group_state" string="Stan" context="{'group_by': 'state'}"/>
+                    <filter name="group_year" string="Rok" context="{'group_by': 'date_from:year'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_jdg_period_pivot" model="ir.ui.view">
+        <field name="name">jdg.period.pivot</field>
+        <field name="model">jdg.period</field>
+        <field name="arch" type="xml">
+            <pivot string="Okresy">
+                <field name="date_from" type="row" interval="month"/>
+                <field name="state" type="col"/>
+                <field name="revenue" type="measure"/>
+                <field name="advance_due" type="measure"/>
+                <field name="health_due" type="measure"/>
+                <field name="social_due" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_jdg_period_graph" model="ir.ui.view">
+        <field name="name">jdg.period.graph</field>
+        <field name="model">jdg.period</field>
+        <field name="arch" type="xml">
+            <graph string="Przychód i zobowiązania w okresach" type="bar">
+                <field name="date_from" interval="month"/>
+                <field name="revenue" type="measure"/>
+                <field name="health_due" type="measure"/>
+                <field name="social_due" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_jdg_period_open" model="ir.actions.server">
+        <field name="name">Zamykanie okresów</field>
+        <field name="model_id" ref="model_jdg_period"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_periods()</field>
+    </record>
+
+    <!-- ===== Wizard cofnięcia ===== -->
+    <record id="view_jdg_period_reopen_wizard" model="ir.ui.view">
+        <field name="name">jdg.period.reopen.wizard.form</field>
+        <field name="model">jdg.period.reopen.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <div class="alert alert-warning" role="alert">
+                    Cofnięcie zamknięcia odblokowuje okres i usuwa zapisaną migawkę oraz zaliczkę (wpis w historii zostaje).
+                    Używaj tylko, gdy musisz poprawić dane z tego okresu.
+                </div>
+                <group>
+                    <field name="period_id"/>
+                    <field name="reason" placeholder="Np. brakujący przychód z 28 stycznia"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Cofnij zamknięcie" class="btn-primary"/>
+                    <button string="Anuluj" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===== Zaliczki ===== -->
+    <record id="view_jdg_tax_advance_list" model="ir.ui.view">
+        <field name="name">jdg.tax.advance.list</field>
+        <field name="model">jdg.tax.advance</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="is_overdue" decoration-success="state in ('paid', 'zero')" default_order="date_from desc">
+                <field name="period_id"/>
+                <field name="cum_revenue"/>
+                <field name="cum_tax"/>
+                <field name="prev_advances"/>
+                <field name="advance_due" sum="Razem"/>
+                <field name="shadow_advance" optional="show"/>
+                <field name="due_date"/>
+                <field name="paid_amount" sum="Razem"/>
+                <field name="state" widget="badge" decoration-success="state in ('paid', 'zero')"
+                       decoration-warning="state in ('due', 'partial')"/>
+                <field name="is_overdue" column_invisible="True"/>
+                <field name="pln_currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_tax_advance_form" model="ir.ui.view">
+        <field name="name">jdg.tax.advance.form</field>
+        <field name="model">jdg.tax.advance</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0" delete="0">
+                <sheet>
+                    <field name="pln_currency_id" invisible="1"/>
+                    <field name="is_overdue" invisible="1"/>
+                    <div class="alert alert-danger" role="alert" invisible="not is_overdue">Termin płatności minął, a zaliczka nie jest zapłacona.</div>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group string="Jak policzono (migawka z zamknięcia)">
+                            <field name="cum_revenue"/>
+                            <field name="cum_social_paid"/>
+                            <field name="cum_health_paid"/>
+                            <field name="base_rounded"/>
+                            <field name="cum_tax"/>
+                            <field name="prev_advances"/>
+                            <field name="advance_due"/>
+                        </group>
+                        <group string="Płatność">
+                            <field name="due_date"/>
+                            <field name="state"/>
+                            <field name="paid_amount"/>
+                            <field name="paid_on"/>
+                            <field name="shadow_rate_pct"/>
+                            <field name="shadow_advance"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_jdg_tax_advance_graph" model="ir.ui.view">
+        <field name="name">jdg.tax.advance.graph</field>
+        <field name="model">jdg.tax.advance</field>
+        <field name="arch" type="xml">
+            <graph string="Zaliczki na ryczałt" type="bar">
+                <field name="date_from" interval="quarter"/>
+                <field name="advance_due" type="measure"/>
+                <field name="paid_amount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_jdg_tax_advance_pivot" model="ir.ui.view">
+        <field name="name">jdg.tax.advance.pivot</field>
+        <field name="model">jdg.tax.advance</field>
+        <field name="arch" type="xml">
+            <pivot string="Zaliczki na ryczałt">
+                <field name="date_from" type="row" interval="quarter"/>
+                <field name="state" type="col"/>
+                <field name="advance_due" type="measure"/>
+                <field name="paid_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_jdg_tax_advance" model="ir.actions.act_window">
+        <field name="name">Zaliczki na ryczałt</field>
+        <field name="res_model">jdg.tax.advance</field>
+        <field name="view_mode">list,form,graph,pivot</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Zaliczki pojawią się po zamknięciu okresu</p>
+            <p>Zamknij kwartał (lub miesiąc, zależnie od rytmu w profilu firmy): zaliczka zostanie wyliczona i zapisana z terminem płatności.</p>
+        </field>
+    </record>
+</odoo>

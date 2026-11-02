@@ -7,6 +7,7 @@ Nie jest modelem Odoo: to zwykła klasa, więc łatwo ją testować i wołać z 
 Wszystko to SZACUNEK, NIE PORADA PODATKOWA.
 """
 
+import bisect
 import datetime as dt
 from decimal import Decimal
 
@@ -23,6 +24,11 @@ MONTHS_GEN = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lip
               "października", "listopada", "grudnia"]
 MONTHS_SHORT = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"]
 ROMAN = ["I", "II", "III", "IV"]
+
+
+# Państwa UE poza Polską (OSS dotyczy sprzedaży usług elektronicznych konsumentom w innych państwach UE).
+EU_COUNTRIES_NO_PL = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT",
+                      "LU", "MT", "NL", "PT", "RO", "SK", "SI", "ES", "SE"]
 
 
 def date_long(d):
@@ -105,6 +111,77 @@ class CalcContext:
                     "do urzędu skarbowego (szczegóły w raporcie ODPOWIEDZI.md; do potwierdzenia z księgowym). "
                     "Limit %s zł to parametr w tabeli reguł." % (years, _money(limit, 0)),
         }
+
+    def oss_totals(self, today):
+        """Sprzedaż usług elektronicznych konsumentom (B2C) w innych państwach UE, w EUR, osobno dla roku bieżącego i
+        poprzedniego (próg 10 000 EUR dotyczy roku bieżącego, a przekroczenie w poprzednim roku też zobowiązuje) [PR].
+        Waluta inna niż EUR: kwota w PLN przeliczona kursem EUR z NBP (ostatnia tabela przed dniem przychodu).
+        Wpisy bez kraju klienta nie wchodzą do licznika, tylko do listy „do wyjaśnienia” (SPEC 4.7)."""
+        self.env.flush_all()
+        cr = self.env.cr
+        d0 = dt.date(today.year - 1, 1, 1)
+        cr.execute(
+            """SELECT e.income_date, c.name, e.amount, e.tax_base_pln
+                 FROM jdg_income_entry e JOIN res_currency c ON c.id = e.currency_id
+                WHERE e.company_id = %s AND e.state = 'posted' AND (%s OR NOT e.is_test) AND e.kind = ANY(%s)
+                  AND e.buyer_type = 'b2c' AND UPPER(e.country_code) = ANY(%s)
+                  AND e.income_date >= %s AND e.income_date <= %s""",
+            (self.company.id, self.include_test, list(TAXABLE_KINDS), EU_COUNTRIES_NO_PL, d0, today))
+        rows = cr.fetchall()
+        cr.execute(
+            """SELECT r.rate_date, r.mid FROM jdg_fx_rate r JOIN res_currency c ON c.id = r.currency_id
+                WHERE c.name = 'EUR' AND r.rate_date >= %s AND r.rate_date <= %s ORDER BY r.rate_date""",
+            (d0 - dt.timedelta(days=15), today))
+        eur_rates = cr.fetchall()
+        eur_dates = [d for d, _m in eur_rates]
+        totals = {today.year - 1: ZERO, today.year: ZERO}
+        no_rate = 0
+        for income_date, currency, amount, pln in rows:
+            if currency == "EUR":
+                totals[income_date.year] += dec(amount)
+                continue
+            idx = bisect.bisect_left(eur_dates, income_date) - 1
+            if idx < 0:
+                no_rate += 1
+                continue
+            totals[income_date.year] += dec(pln) / dec(eur_rates[idx][1])
+        cr.execute(
+            """SELECT COUNT(*) FROM jdg_income_entry e JOIN res_currency c ON c.id = e.currency_id
+                WHERE e.company_id = %s AND e.state = 'posted' AND (%s OR NOT e.is_test) AND e.kind = 'sale'
+                  AND e.buyer_type = 'b2c' AND COALESCE(e.country_code, '') = '' AND c.name <> 'PLN'
+                  AND e.income_date >= %s AND e.income_date <= %s""",
+            (self.company.id, self.include_test, d0, today))
+        missing_country = cr.fetchone()[0]
+        year = max(totals, key=lambda y: totals[y])
+        return {"by_year": totals, "value": totals[year], "year": year, "missing_country": int(missing_country),
+                "no_rate": no_rate}
+
+    def alert_metrics(self):
+        """Wskaźniki progów do alertów 70/90/100% (SPEC 4.7): [{kind, title, value, limit, unit, text}]."""
+        upto = self.as_of
+        basis = max(ZERO, self.cum(upto) - self.social_paid(upto))
+        limits = [dec(x) for x in self.rules.json("health.tier_limits", upto)]
+        items = [
+            {"kind": "health60", "title": "Składka zdrowotna: próg %s zł" % _money(limits[0], 0), "value": basis,
+             "limit": limits[0], "unit": "PLN",
+             "text": "Przychód narastająco pomniejszony o zapłacone składki społeczne: %s zł. Po przekroczeniu %s zł "
+                     "składka zdrowotna rośnie (podstawa 100%% przeciętnego wynagrodzenia)." % (_money(basis), _money(limits[0], 0))},
+            {"kind": "health300", "title": "Składka zdrowotna: próg %s zł" % _money(limits[1], 0), "value": basis,
+             "limit": limits[1], "unit": "PLN",
+             "text": "Przychód narastająco pomniejszony o zapłacone składki społeczne: %s zł. Po przekroczeniu %s zł "
+                     "składka zdrowotna rośnie do najwyższego progu (180%%)." % (_money(basis), _money(limits[1], 0))},
+        ]
+        for th in self.thresholds():
+            if th["key"] == "vat":
+                items.append({"kind": "vat_limit", "title": th["title"], "value": dec(th["value"]), "limit": dec(th["limit"]),
+                              "unit": "PLN", "text": th["text"]})
+            elif th["key"] == "oss":
+                items.append({"kind": "oss10k", "title": th["title"], "value": dec(th["value"]), "limit": dec(th["limit"]),
+                              "unit": "EUR", "text": th["text"]})
+        don = self.donations(upto)
+        items.append({"kind": "donation_limit", "title": "Darowizny od jednej osoby (limit %s zł)" % _money(dec(don["limit"]), 0),
+                      "value": dec(don["top_total"]), "limit": dec(don["limit"]), "unit": "PLN", "text": don["text"]})
+        return items
 
     def _load(self):
         self.env.flush_all()  # surowy SQL niżej nie widzi zmian czekających w pamięci ORM
@@ -350,6 +427,20 @@ class CalcContext:
                 "why": "Limit zwolnienia podmiotowego z VAT (art. 113): %s zł rocznie, w roku startu proporcjonalnie "
                        "do liczby dni działalności. Liczymy sprzedaż bez VAT narastająco od 1 stycznia." % _money(vat_limit, 0),
             })
+        oss = self.oss_totals(upto)
+        if oss["value"] > 0 or self.profile.oss_registered:
+            oss_limit = self.rules.num("oss.threshold_eur", upto)
+            pct, level = engine.threshold_level(oss["value"], oss_limit)
+            items.append({
+                "key": "oss", "title": "OSS: sprzedaż do konsumentów UE (próg %s EUR)" % _money(oss_limit, 0),
+                "value": num(oss["value"]), "limit": num(oss_limit), "pct": round(pct, 1), "level": level, "unit": "EUR",
+                "text": "Sprzedaż usług elektronicznych konsumentom w innych państwach UE w roku %d: %s EUR z progu %s EUR.%s" % (
+                    oss["year"], _money(oss["value"]), _money(oss_limit, 0),
+                    (" Wpisów bez kraju klienta (do wyjaśnienia): %d." % oss["missing_country"]) if oss["missing_country"] else ""),
+                "why": "Suma sprzedaży B2C do konsumentów z innych państw UE (kraj klienta z wpisu), w EUR; inne waluty przez "
+                       "kurs EUR z NBP. Liczymy rok bieżący i poprzedni osobno, bierzemy większy [PR]. Po przekroczeniu "
+                       "10 000 EUR VAT liczy się wg stawki kraju konsumenta (OSS) [PR: do potwierdzenia z księgowym].",
+            })
         return items
 
     # ------------------------------------------------------------------ terminy
@@ -388,7 +479,7 @@ class CalcContext:
             month = engine.add_months(month, 1)
 
         # zaliczki na ryczałt
-        for year in (today.year, today.year + 1):
+        for year in (today.year - 1, today.year, today.year + 1):
             for ps, pe in engine.year_periods(year, profile.advance_rhythm):
                 if pe < profile.start_date:
                     continue

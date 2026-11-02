@@ -8,10 +8,17 @@
     <menuitem id="menu_jdg_entries" name="Ewidencja przychodów" parent="menu_jdg_root" action="action_jdg_income_entry" sequence="20"/>
     <menuitem id="menu_jdg_taxes" name="Podatki i składki" parent="menu_jdg_root" action="action_jdg_taxes" sequence="30"/>
     <menuitem id="menu_jdg_payments" name="Zapłacone składki" parent="menu_jdg_root" action="action_jdg_payment" sequence="40"/>
+    <menuitem id="menu_jdg_periods" name="Zamykanie okresów" parent="menu_jdg_root" action="action_jdg_period_open" sequence="35"/>
+    <menuitem id="menu_jdg_advances" name="Zaliczki na ryczałt" parent="menu_jdg_root" action="action_jdg_tax_advance" sequence="36"/>
+    <menuitem id="menu_jdg_deadlines" name="Terminy" parent="menu_jdg_root" action="action_jdg_deadline" sequence="38"/>
+    <menuitem id="menu_jdg_alerts" name="Alerty progów" parent="menu_jdg_root" action="action_jdg_alert" sequence="39"/>
     <menuitem id="menu_jdg_fx" name="Kursy NBP" parent="menu_jdg_root" action="action_jdg_fx_rate" sequence="50"/>
+    <menuitem id="menu_jdg_fx_fetch_now" name="Pobierz kursy NBP teraz" parent="menu_jdg_root" action="action_jdg_fx_fetch_now" sequence="51"
+              groups="l10n_pl_jdg_ryczalt.group_jdg_manager"/>
 
     <menuitem id="menu_jdg_settings" name="Ustawienia" parent="menu_jdg_root" sequence="90"
               groups="l10n_pl_jdg_ryczalt.group_jdg_manager"/>
     <menuitem id="menu_jdg_profile" name="Profil firmy" parent="menu_jdg_settings" action="action_jdg_profile_open" sequence="10"/>
+    <menuitem id="menu_jdg_fx_log" name="Dziennik pobrań NBP" parent="menu_jdg_settings" action="action_jdg_fx_fetch" sequence="30"/>
     <menuitem id="menu_jdg_rules" name="Reguły i parametry" parent="menu_jdg_settings" action="action_jdg_tax_rule" sequence="20"/>
 </odoo>
