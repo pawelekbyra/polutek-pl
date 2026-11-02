@@ -6,7 +6,6 @@
 import React, { useEffect, useState } from "react";
 import type { PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { PassCheckoutSheet } from "./PassCheckoutSheet";
-import { playPassCashSound, preloadPassCashSound } from "./pass-cash-sound";
 import { fetchPassStatus } from "./usePremiumPass";
 
 export const OPEN_PATRON_EVENT = "polutek:open-patron";
@@ -16,10 +15,8 @@ export function PatronCheckoutHost() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    preloadPassCashSound();
     let alive = true;
     const onOpen = () => {
-      playPassCashSound();
       void fetchPassStatus("checkout").then((status) => {
         if (!alive || !status) return;
         setOffer({ ...status.offer, signedIn: true });
