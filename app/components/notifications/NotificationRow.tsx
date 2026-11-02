@@ -5,6 +5,7 @@ import type { Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import type { UserNotificationDTO } from "@/lib/modules/notifications";
 import { NotificationIcon } from "./NotificationIcon";
+import { NotificationThumb } from "./NotificationThumb";
 import { formatNotificationAge } from "./notification-events";
 import styles from "./notification-panel.module.css";
 
@@ -60,6 +61,9 @@ export function NotificationRow({ item, link, language, tx, now, pending, onRead
           )}
         </div>
       </div>
+      {item.thumbnailUrl && (
+        <NotificationThumb src={item.thumbnailUrl} link={link} onClick={(event) => { if (!item.read) onRead(true); if (link.href) onFollow(event, link.href, link.external); }} />
+      )}
       <button type="button" className={styles.readButton} disabled={pending} aria-label={`${readLabel}: ${item.title}`} title={readLabel} onClick={() => onRead(!item.read)}>
         <span aria-hidden="true" className={item.read ? styles.dotRead : styles.dotUnread} />
       </button>

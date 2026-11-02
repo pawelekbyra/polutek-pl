@@ -12,6 +12,7 @@ import {
   USER_NOTIFICATIONS_MAX_LIMIT,
 } from "../domain/user-notifications";
 import { notificationViewerLanguage, renderNotification } from "../domain/notification-render";
+import { notificationTypeHasVideo, notificationVideoPreview, type NotificationVideoRow } from "../domain/notification-video";
 
 /** The signed-in viewer's notification feed. Only ever the caller's own rows (the user id comes from the actor). */
 
@@ -23,6 +24,23 @@ function ownerId(ctx: AppContext): string {
 
 export async function countUnreadNotifications(ctx: AppContext): Promise<number> {
   return ctx.prisma.notification.count({ where: { userId: ownerId(ctx), read: false } });
+}
+
+/**
+ * One batched read for the whole page (at most 50 ids, none when the page has no video notification): small
+ * columns only, no per-row queries. A missing row (video deleted) simply has no preview.
+ */
+async function loadNotificationVideos(ctx: AppContext, ids: string[]): Promise<Map<string, NotificationVideoRow>> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+  const rows = await ctx.prisma.video.findMany({
+    where: { id: { in: unique } },
+    select: {
+      id: true, slug: true, status: true, publishedAt: true, moderationStatus: true, thumbnailUrl: true, thumbnailPublicUrl: true,
+      creator: { select: { status: true, deletedAt: true } },
+    },
+  });
+  return new Map(rows.map((row) => [row.id, { ...row, moderationStatus: row.moderationStatus as string | null }]));
 }
 
 export async function listUserNotifications(
@@ -57,7 +75,7 @@ export async function listUserNotifications(
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: query.ids ? 50 : query.limit + 1,
-      select: { id: true, kind: true, titlePl: true, titleEn: true, bodyPl: true, bodyEn: true, templateKey: true, params: true, href: true, read: true, createdAt: true },
+      select: { id: true, kind: true, titlePl: true, titleEn: true, bodyPl: true, bodyEn: true, templateKey: true, params: true, href: true, videoId: true, read: true, createdAt: true },
     }),
     ctx.prisma.notification.count({ where: { userId, read: false } }),
   ]);
@@ -65,19 +83,25 @@ export async function listUserNotifications(
   const language = notificationViewerLanguage(query.language ?? user?.language);
   const pl = notificationLanguage(language) === "pl";
   const page = query.ids ? rows : rows.slice(0, query.limit);
-  const items: UserNotificationDTO[] = page.map((n) => {
+  const types = page.map((n) => userNotificationType(n.kind, n.templateKey, n.params));
+  const videos = await loadNotificationVideos(ctx, page.flatMap((n, index) => (n.videoId && notificationTypeHasVideo(types[index]) ? [n.videoId] : [])));
+  const items: UserNotificationDTO[] = page.map((n, index) => {
+    const preview = n.videoId && notificationTypeHasVideo(types[index]) ? notificationVideoPreview(videos.get(n.videoId), snapshotTime, process.env) : null;
     // Polish and English always read the stored text (as before); other languages use the keyed template when the
     // row has one, and fall back to the stored English text otherwise (old rows, unknown keys, statements of reasons).
     const rendered = pl || language === "en" ? null : renderNotification(n.templateKey, n.params, language);
     return {
       id: n.id,
       kind: n.kind,
-      type: userNotificationType(n.kind, n.templateKey, n.params),
+      type: types[index],
       title: rendered ? rendered.title : pl ? n.titlePl : n.titleEn,
       body: rendered ? rendered.body : pl ? n.bodyPl : n.bodyEn,
       href: safeNotificationHref(n.href),
       read: n.read,
       createdAt: n.createdAt.toISOString(),
+      videoId: preview?.videoId ?? null,
+      videoSlug: preview?.videoSlug ?? null,
+      thumbnailUrl: preview?.thumbnailUrl ?? null,
     };
   });
   return { items, nextCursor: !query.ids && rows.length > query.limit ? encodeUserNotificationCursor(page[page.length - 1]) : null, unreadCount, snapshotAt };

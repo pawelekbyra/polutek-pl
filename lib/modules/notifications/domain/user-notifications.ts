@@ -72,6 +72,14 @@ export interface UserNotificationDTO {
   href: string | null;
   read: boolean;
   createdAt: string;
+  /**
+   * Only for `new_video` / `premiere` and only while the recipient may see the video (published, due, not removed,
+   * public channel): the video id and slug, and the safe cover address (public R2 copy or the thumbnail proxy
+   * path, never the stored value). `null` for every other type and for hidden, removed or deleted videos.
+   */
+  videoId: string | null;
+  videoSlug: string | null;
+  thumbnailUrl: string | null;
 }
 
 export interface UserNotificationPage {

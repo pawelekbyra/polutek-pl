@@ -19,3 +19,4 @@ export * from './domain/notification-render';
 export * from './domain/notification-preferences';
 export { notifyDuePremieres } from './application/premiere-notifications.use-case';
 export type { PremiereNotificationsResult } from './application/premiere-notifications.use-case';
+export * from "./domain/notification-video";
