@@ -17,6 +17,7 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
   const LIVE_LOGO = "wordmark-blue-symbol";
   const LIVE_SELECTOR: Record<string, string> = {
     "wordmark-blue-symbol": 'svg[data-brand-logo="wordmark-blue-symbol"]',
+    "wordmark-blue-symbol-orbit": 'svg[data-brand-logo="wordmark-blue-symbol-orbit"]',
     "wordmark-blue": 'svg[data-brand-logo="wordmark-blue"]',
     wordmark: 'svg[data-brand-logo="wordmark"]',
     glasses: 'img[src="/logo-glasses.svg"]',
@@ -57,18 +58,37 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
       expect(new Set(ids).size).toBe(ids.length);
     });
 
-    it("the standalone files match the generator (variant A, ink #01286a)", async () => {
+    it("has no orbit arcs (owner 2026-11-02): the navy path is the rim only (outline + opening); the -orbit variant has 2 more", () => {
+      const { container } = render(<BrandName variant="wordmark-blue-symbol" decorative />);
+      const rim = container.querySelector("[data-symbol-rim]")!.getAttribute("d")!;
+      const { container: c2 } = render(<BrandName variant="wordmark-blue-symbol-orbit" decorative />);
+      const rimOrbit = c2.querySelector("[data-symbol-rim]")!.getAttribute("d")!;
+
+      expect(rim.match(/M/g)).toHaveLength(2);
+      expect(rimOrbit.match(/M/g)).toHaveLength(4);
+      expect(rimOrbit.startsWith(rim.slice(0, 20))).toBe(false); // the plain body is drawn bigger (BODY_SCALE), not just cut
+    });
+
+    it("the standalone files match the generator (variant A, ink #01286a; plain = no arcs, -orbit = with arcs)", async () => {
       const gen = await import("../../../scripts/brand/generate-symbol.mjs");
-      const { SYMBOL_LOCKUP_VIEWBOX, SYMBOL_VARIANT } = await import("@/app/components/brand/polutek-symbol-paths");
-      const lockup = readFileSync(path.join(process.cwd(), "public/brand/polutek-wordmark-blue-symbol.svg"), "utf8");
+      const { SYMBOL, SYMBOL_ORBIT, SYMBOL_VARIANT } = await import("@/app/components/brand/polutek-symbol-paths");
+      const read = (f: string) => readFileSync(path.join(process.cwd(), "public/brand", f), "utf8");
+      const lockup = read("polutek-wordmark-blue-symbol.svg");
+      const lockupOrbit = read("polutek-wordmark-blue-symbol-orbit.svg");
 
       expect(gen.CHOSEN).toBe("A");
+      expect(gen.ARCS).toBe(false);
       expect(SYMBOL_VARIANT).toBe("A");
-      expect(lockup).toContain(`viewBox="${SYMBOL_LOCKUP_VIEWBOX}"`);
+      expect(lockup).toContain(`viewBox="${SYMBOL.viewBox}"`);
+      expect(lockupOrbit).toContain(`viewBox="${SYMBOL_ORBIT.viewBox}"`);
       expect(lockup).toContain('aria-label="POLUTEK"');
       expect(lockup).toContain("#01286a");
-      expect(gen.lockupSvg(gen.buildSymbol(gen.VARIANTS.A), { id: "pws" })).toBe(lockup);
-      for (const f of ["polutek-symbol.svg", "polutek-symbol-small.svg"]) {
+      expect(gen.lockupSvg(gen.buildSymbol(gen.liveParams(false)), { id: "pws", gapRatio: gen.liveGapRatio(false) })).toBe(lockup);
+      expect(gen.lockupSvg(gen.buildSymbol(gen.liveParams(true)), { id: "pwo", gapRatio: gen.liveGapRatio(true) })).toBe(lockupOrbit);
+      // vertically centred on the letters: the body box is symmetric about the cap-height middle (52 units)
+      const [, top, , h] = SYMBOL.viewBox.split(" ").map(Number);
+      expect(Math.abs(top + h / 2 - 52)).toBeLessThan(0.01);
+      for (const f of ["polutek-symbol.svg", "polutek-symbol-orbit.svg", "polutek-symbol-small.svg"]) {
         expect(readFileSync(path.join(process.cwd(), "public/brand", f), "utf8")).toContain("<svg");
       }
     });
@@ -217,6 +237,7 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
 
     it.each([
       ["wordmark-blue-symbol", 'svg[data-brand-logo="wordmark-blue-symbol"]'],
+      ["wordmark-blue-symbol-orbit", 'svg[data-brand-logo="wordmark-blue-symbol-orbit"]'],
       ["wordmark-blue", 'svg[data-brand-logo="wordmark-blue"]'],
       ["glasses", 'img[src="/logo-glasses.svg"]'],
       ["wordmark", 'svg[data-brand-logo="wordmark"]'],

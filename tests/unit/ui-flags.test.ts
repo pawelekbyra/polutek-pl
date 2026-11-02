@@ -17,7 +17,7 @@ describe("ui flags", () => {
     const flags = readFileSync(path.join(process.cwd(), "lib/ui-flags.ts"), "utf8");
     const declared = [...(flags.match(/export type BrandLogoVariant =([^;]+);/)?.[1] ?? "").matchAll(/"([a-z-]+)"/g)].map((m) => m[1]);
 
-    expect(declared).toEqual(expect.arrayContaining(["wordmark-blue-symbol", "wordmark-blue", "wordmark", "glasses"]));
+    expect(declared).toEqual(expect.arrayContaining(["wordmark-blue-symbol", "wordmark-blue-symbol-orbit", "wordmark-blue", "wordmark", "glasses"]));
     expect(declared).toContain(BRAND_LOGO_VARIANT);
     for (const v of declared) {
       for (const f of (VARIANT_ASSETS as Record<string, string[]>)[v] ?? ["(no assets listed for " + v + ")"]) expect(existsSync(path.join(process.cwd(), f)), f).toBe(true);

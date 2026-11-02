@@ -29,8 +29,31 @@ export { INK };
 const CAP_MID = 52.0; // vertical centre of the cap height in wordmark units (L/E/T: 1.98 .. 101.98)
 /** The live variant (owner's choice 2026-11-02 from the preview sheet /opt/claude/shots-logo/symbol-variants.png). */
 export const CHOSEN = "A";
-/** Optical gap from the body apex to the P stem, as a share of the cap height (0.40 = 40 units). */
+/** Optical gap from the body apex to the P stem, as a share of the cap height (0.40 = 40 units), with the orbit arcs. */
 export const GAP_RATIO = 0.4;
+/**
+ * The orbit arcs ("swooshes"). Owner 2026-11-02, after seeing it live: no arcs, the rim + orange play alone. The arc code stays:
+ * ARCS = true makes the plain symbol files carry the arcs again; the arcs version is also always written as the
+ * "-orbit" files (logo variant "wordmark-blue-symbol-orbit", passphrase "przywróć łuki").
+ */
+export const ARCS = false;
+/**
+ * Without the arcs the body alone faces the letters, so it is drawn a little bigger than with them (the arcs used to add
+ * visual mass): every length of variant A scaled by BODY_SCALE (body 104 -> 110 units against 100-unit letters; 104 looked
+ * small next to the lettering, 114 started to compete with it), and a gap of 0.38 of the cap height (0.34 felt tight at 21px).
+ */
+export const BODY_SCALE = 110 / 104;
+export const GAP_RATIO_PLAIN = 0.38;
+const SCALED = ["height", "rLeft", "rApex", "rim", "gap", "rPlayLeft", "rPlayApex", "playShift"];
+/** Parameters of the live symbol: variant CHOSEN, with or without the arcs. */
+export function liveParams(arcs = ARCS) {
+  const p = VARIANTS[CHOSEN];
+  if (arcs) return p;
+  const q = { ...p, swoosh: null };
+  for (const k of SCALED) q[k] = p[k] * BODY_SCALE;
+  return q;
+}
+export const liveGapRatio = (arcs = ARCS) => (arcs ? GAP_RATIO : GAP_RATIO_PLAIN);
 
 const f = (v) => String(Math.round(v * 100) / 100);
 const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
@@ -220,9 +243,10 @@ export function buildSymbol(p) {
     ? filleted(Tp.map((v, i) => [...v, i === 1 ? p.rPlayApex : p.rPlayLeft]))
     : hole; // the play fills the opening
   const bodyBox = bbox(outer.poly);
-
   // orbit centre: centre of the body ink box
   const O = [(bodyBox.x0 + bodyBox.x1) / 2, (bodyBox.y0 + bodyBox.y1) / 2];
+  if (!p.swoosh) return { H, T, outer, hole, play, sw1: null, sw2: null, O, R: null, box: bodyBox, bodyBox, params: p };
+
   const s = p.swoosh, M = squash(s.tilt, s.squash);
   const a1 = s.mid - s.span / 2, a2 = s.mid + s.span / 2, aq = s.mid + (s.lead * s.span) / 2;
   const build = (R) => {
@@ -275,7 +299,7 @@ export function symbolParts(g, { x0 = 0, cy = CAP_MID } = {}) {
   const mv = (d) => movePath(d, dx, dy);
   const pb = bbox(g.play.poly);
   return {
-    navy: mv(g.outer.d) + mv(reverse(g.hole.d)) + mv(g.sw1.d) + mv(g.sw2.d),
+    navy: mv(g.outer.d) + mv(reverse(g.hole.d)) + (g.sw1 ? mv(g.sw1.d) + mv(g.sw2.d) : ""),
     hole: mv(g.hole.d),
     play: mv(g.play.d),
     playY: [Math.round((pb.y0 + dy) * 100) / 100, Math.round((pb.y1 + dy) * 100) / 100],
@@ -322,7 +346,7 @@ export function symbolMarkup(g, { id = "ps", x0 = 0, cy = CAP_MID, ink = `var(--
     defs.push(`<linearGradient id="${id}-g" gradientUnits="userSpaceOnUse" x1="0" y1="${f(py0)}" x2="0" y2="${f(py1)}"><stop offset="0" stop-color="#fff" stop-opacity="${f(0.75 * e.gloss)}"/><stop offset=".22" stop-color="#fff" stop-opacity="${f(0.32 * e.gloss)}"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>`);
     layers += `<path fill="url(#${id}-g)" d="${playD}"/>`;
   }
-  const navy = `<path style="fill:${ink}" fill-rule="evenodd" d="${rimD}${mv(g.sw1.d)}${mv(g.sw2.d)}"/>`;
+  const navy = `<path style="fill:${ink}" fill-rule="evenodd" d="${rimD}${g.sw1 ? mv(g.sw1.d) + mv(g.sw2.d) : ""}"/>`;
   return {
     defs: `<defs>${defs.join("")}</defs>`,
     body: navy + layers,
@@ -408,27 +432,35 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   } else if (!cmd) {
     // the live symbol (owner's choice 2026-11-02: variant A) -> TS paths for the header component + standalone files
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-    const g = buildSymbol(VARIANTS[CHOSEN]);
-    const parts = symbolParts(g);
-    const l = lockupMarkup(g, { id: "pws" });
-    const shift = parts.bodyRight + GAP_RATIO * 100;
+    const set = (arcs) => {
+      const g = buildSymbol(liveParams(arcs));
+      const parts = symbolParts(g);
+      const l = lockupMarkup(g, { id: "pws", gapRatio: liveGapRatio(arcs) });
+      return { g, parts, l, shift: parts.bodyRight + liveGapRatio(arcs) * 100, arcs };
+    };
+    const plain = set(ARCS), orbit = set(true);
+    const obj = ({ parts, l, shift, arcs }) =>
+      `{\n  viewBox: "${l.vb}",\n  wordmarkDx: ${f(shift)},\n` +
+      `  /** rim (evenodd hole)${arcs ? " + both orbit arcs" : ""}, in the ink colour */\n  navy: "${parts.navy}",\n` +
+      `  /** the opening of the rim (clip for the orange halo) */\n  hole: "${parts.hole}",\n` +
+      `  /** the orange play */\n  play: "${parts.play}",\n` +
+      `  /** top and bottom of the play (gradient axis) */\n  playY: [${parts.playY.join(", ")}],\n  haloBlur: ${parts.blur},\n} as const`;
+    const e = plain.parts.effect;
     const ts =
       `// Generated by scripts/brand/generate-symbol.mjs (variant ${CHOSEN}): do not edit by hand.\n` +
-      `// Units: wordmark units (cap height 100). The lockup = symbol at x 0 + the wordmark path shifted right by SYMBOL_WORDMARK_DX.\n` +
+      `// Units: wordmark units (cap height 100). A lockup = the symbol at x 0 + the wordmark path shifted right by wordmarkDx.\n` +
       `export const SYMBOL_VARIANT = "${CHOSEN}";\n` +
-      `export const SYMBOL_LOCKUP_VIEWBOX = "${l.vb}";\n` +
-      `export const SYMBOL_WORDMARK_DX = ${f(shift)};\n` +
-      `/** rim (evenodd hole) + both swooshes, in the ink colour */\nexport const SYMBOL_NAVY_PATH =\n  "${parts.navy}";\n` +
-      `/** the opening of the rim (clip for the orange halo) */\nexport const SYMBOL_HOLE_PATH =\n  "${parts.hole}";\n` +
-      `/** the orange play */\nexport const SYMBOL_PLAY_PATH =\n  "${parts.play}";\n` +
-      `/** top and bottom of the play (gradient axis) */\nexport const SYMBOL_PLAY_Y = [${parts.playY.join(", ")}] as const;\n` +
-      `export const SYMBOL_HALO_BLUR = ${parts.blur};\n` +
-      `export const SYMBOL_EFFECT = ${JSON.stringify({ stops: parts.effect.stops, glow: parts.effect.glow, shade: f(0.45 * parts.effect.shade), glossTop: f(0.75 * parts.effect.gloss), glossMid: f(0.32 * parts.effect.gloss) })} as const;\n`;
+      `/** The live symbol (ARCS = ${ARCS}): logo variant "wordmark-blue-symbol". */\nexport const SYMBOL = ${obj(plain)};\n` +
+      `/** The same symbol with the two orbit arcs: logo variant "wordmark-blue-symbol-orbit". */\nexport const SYMBOL_ORBIT = ${obj(orbit)};\n` +
+      `export const SYMBOL_EFFECT = ${JSON.stringify({ stops: e.stops, glow: e.glow, shade: f(0.45 * e.shade), glossTop: f(0.75 * e.gloss), glossMid: f(0.32 * e.gloss) })} as const;\n`;
     writeFileSync(path.join(root, "app/components/brand/polutek-symbol-paths.ts"), ts);
-    writeFileSync(path.join(root, "public/brand/polutek-wordmark-blue-symbol.svg"), lockupSvg(g, { id: "pws" }));
-    writeFileSync(path.join(root, "public/brand/polutek-symbol.svg"), symbolSvg(g, { id: "ps" }));
-    writeFileSync(path.join(root, "public/brand/polutek-symbol-small.svg"), symbolSvg(g, { id: "pss", simple: true }));
-    console.log("written variant", CHOSEN, l.vb, "wordmark dx", f(shift));
+    const gap = (arcs) => ({ gapRatio: liveGapRatio(arcs) });
+    writeFileSync(path.join(root, "public/brand/polutek-wordmark-blue-symbol.svg"), lockupSvg(plain.g, { id: "pws", ...gap(ARCS) }));
+    writeFileSync(path.join(root, "public/brand/polutek-wordmark-blue-symbol-orbit.svg"), lockupSvg(orbit.g, { id: "pwo", ...gap(true) }));
+    writeFileSync(path.join(root, "public/brand/polutek-symbol.svg"), symbolSvg(plain.g, { id: "ps" }));
+    writeFileSync(path.join(root, "public/brand/polutek-symbol-orbit.svg"), symbolSvg(orbit.g, { id: "po" }));
+    writeFileSync(path.join(root, "public/brand/polutek-symbol-small.svg"), symbolSvg(plain.g, { id: "pss", simple: true }));
+    console.log("written variant", CHOSEN, "plain", plain.l.vb, "dx", f(plain.shift), "| orbit", orbit.l.vb, "dx", f(orbit.shift));
   } else {
     console.log("usage: (no args) | --variants <dir> | --print <A..E>");
   }
