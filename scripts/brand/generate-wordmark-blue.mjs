@@ -125,20 +125,33 @@ const order = ["P", "O", "L", "U", "T", "E", "K"];
 export const LETTERS = { P, O, L: Lt, U, T, E, K };
 
 // ---- scale: cap height 100 units, origin at the top-left of the ink box ----
-const X0 = 59.9, Y0 = 202.6, X1 = 1928.8, Y1 = 512.5;
+// ---- spacing (owner request 2026-11-02: the letters were tight) ----
+// Extra space added in front of each letter, in source pixels (cap height 297.8 px, so 10 px = 3.4% of the cap height).
+// Optical, not mathematical: the gap depends on the shapes that face each other. Original gaps (px): P|O 15.5 (two rounds),
+// O|L 30.6 (round|straight, looks open already), L|U 11.2 (foot of the L nearly touches the U stem: tightest),
+// U|T 23.2, T|E 24.2 (the T bar overhangs, so the visible gap is wider), E|K 28. Set TRACKING to 0 to get the original image back.
+export const TRACKING = 1; // global multiplier of the extra spacing
+export const EXTRA_GAP = { O: 8, L: 5, U: 15, T: 9, E: 6, K: 9 }; // before the letter named, source px
+const shifts = {};
+{ let acc = 0; for (const k of order) { acc += (EXTRA_GAP[k] ?? 0) * TRACKING; shifts[k] = acc; } }
+export const SHIFTS = shifts;
+
+// ---- scale: cap height 100 units, origin at the top-left of the ink box ----
+const X0 = 59.9, Y0 = 202.6, Y1 = 512.5;
+const X1 = 1928.8 + shifts.K;
 const SCALE = 100 / (506.3 - 208.5);
-function transform(d) {
+function transform(d, dx = 0) {
   return d.replace(/([MLA])([^MLAZ]*)/g, (_, cmd, args) => {
     const n = args.trim().split(/[\s,]+/).map(Number);
     if (cmd === "A") {
       const [rx, ry, rot, large, sweep, x, y] = n;
-      return `A${f(rx * SCALE)} ${f(ry * SCALE)} ${rot} ${large} ${sweep} ${f((x - X0) * SCALE)} ${f((y - Y0) * SCALE)}`;
+      return `A${f(rx * SCALE)} ${f(ry * SCALE)} ${rot} ${large} ${sweep} ${f((x + dx - X0) * SCALE)} ${f((y - Y0) * SCALE)}`;
     }
-    return cmd + f((n[0] - X0) * SCALE) + " " + f((n[1] - Y0) * SCALE);
+    return cmd + f((n[0] + dx - X0) * SCALE) + " " + f((n[1] - Y0) * SCALE);
   });
 }
 export const VIEWBOX = `0 0 ${f((X1 - X0) * SCALE)} ${f((Y1 - Y0) * SCALE)}`;
-export const PATH_D = order.flatMap((k) => LETTERS[k]).map(transform).join("");
+export const PATH_D = order.flatMap((k) => LETTERS[k].map((d) => transform(d, shifts[k]))).join("");
 export const SOURCE_BOX = { X0, Y0, X1, Y1, SCALE };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
