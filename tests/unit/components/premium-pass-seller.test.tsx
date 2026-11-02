@@ -15,21 +15,22 @@ afterEach(() => {
 });
 
 describe('seller card', () => {
-  it('shows the NBSP-protected name and the registry line, and no NIP by default', () => {
+  it('shows the NBSP-protected name (no legal form, no registry line) and no NIP by default', () => {
     render(<PassSellerCard tx={txFor('pl')} />);
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
     // The label is on its own row and the company name (bold) on the next one, so the name never breaks away from it.
     expect(card.querySelector('span')?.textContent).toBe('Sprzedawca:');
-    expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('Paweł Perfect sp. z o.o.');
-    expect(card.textContent).toContain('sp. z o.o.');
-    expect(card).toHaveTextContent('Spółka zarejestrowana w Polsce');
+    expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('Paweł Perfect');
+    expect(card.textContent).not.toContain('sp. z o.o.');
+    expect(card).not.toHaveTextContent('Spółka zarejestrowana');
+    expect(card.querySelectorAll('span')).toHaveLength(1);
     expect(card).not.toHaveTextContent('NIP');
   });
 
-  it('shows the NIP only when one is configured', () => {
+  it('shows the NIP under the name only when one is configured', () => {
     PATRON_SELLER.nip = '1234567890';
     render(<PassSellerCard tx={txFor('pl')} />);
-    expect(screen.getByRole('region', { name: 'Sprzedawca' })).toHaveTextContent('Spółka zarejestrowana w Polsce, NIP: 1234567890');
+    expect(screen.getByRole('region', { name: 'Sprzedawca' })).toHaveTextContent('NIP: 1234567890');
   });
 
   it('the info button toggles the extra paragraph with aria-expanded / aria-controls', () => {
@@ -46,18 +47,20 @@ describe('seller card', () => {
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('the compact variant (step 3) drops the registry line and keeps the info button', () => {
+  it('the compact variant (step 3) is one line and keeps the info button', () => {
     PATRON_SELLER.nip = '1234567890';
     render(<PassSellerCard tx={txFor('pl')} compact />);
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
-    expect(card).toHaveTextContent('Sprzedawca: Paweł Perfect sp. z o.o.');
-    expect(card).not.toHaveTextContent('Spółka zarejestrowana');
+    expect(card).toHaveTextContent('Sprzedawca: Paweł Perfect');
+    expect(card).not.toHaveTextContent('sp. z o.o.');
     expect(screen.getByRole('button', { name: 'Informacje o sprzedawcy' })).toBeInTheDocument();
   });
 
   it('speaks English too', () => {
     render(<PassSellerCard tx={txFor('en')} />);
-    expect(screen.getByRole('region', { name: 'Seller' })).toHaveTextContent('Company registered in Poland');
+    const card = screen.getByRole('region', { name: 'Seller' });
+    expect(card).toHaveTextContent('Seller:');
+    expect(card).not.toHaveTextContent('registered in Poland');
   });
 });
 
