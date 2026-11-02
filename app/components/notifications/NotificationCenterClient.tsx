@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/react";
 import { localizedPathFromLegacyPath } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
-import { BellIcon, SubscribeCheckIcon } from "../icons/MarkerBellIcons";
+import { BellIcon, SettingsIcon, SubscribeCheckIcon } from "../icons/MarkerBellIcons";
+import { RefreshIcon } from "../icons/MarkerUiIcons";
 import { useNotificationFeed, type NotificationFilter } from "./useNotificationFeed";
 import { NotificationRow } from "./NotificationRow";
 import { navigateNotification } from "./notification-navigation";
@@ -79,8 +80,8 @@ export default function NotificationCenterClient() {
           <button type="button" className={styles.filter} aria-pressed={filter === "all"} onClick={() => setFilter("all")}>{tx("Wszystkie", "All")}</button>
           <button type="button" className={styles.filter} aria-pressed={filter === "unread"} onClick={() => setFilter("unread")}>{tx("Nieprzeczytane", "Unread")}</button>
         </div>
-        {feed.unread > 0 && <button type="button" className={styles.markAll} disabled={feed.writing || feed.status !== "idle"} onClick={() => void feed.markRead().then(() => requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true })))}>
-          <SubscribeCheckIcon size={16} />{tx("Oznacz wszystkie jako przeczytane", "Mark all as read")}
+        {feed.unread > 0 && <button type="button" className={styles.markAll} aria-label={tx("Oznacz wszystkie jako przeczytane", "Mark all as read")} title={tx("Oznacz wszystkie jako przeczytane", "Mark all as read")} disabled={feed.writing || feed.status !== "idle"} onClick={() => void feed.markRead().then(() => requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true })))}>
+          <SubscribeCheckIcon size={18} />
         </button>}
       </div>
       {feed.hasNew && <button type="button" className={styles.newItems} disabled={feed.refreshing || feed.writing} onClick={() => { void feed.showNew().then((shown) => { if (shown) requestAnimationFrame(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; titleRef.current?.focus({ preventScroll: true }); }); }); }}>
@@ -107,8 +108,10 @@ export default function NotificationCenterClient() {
         </button>}
       </div>
       <footer className={`${styles.footer} ${styles.centerFooter}`}>
-        <button type="button" className={styles.settings} onClick={() => window.dispatchEvent(new CustomEvent(NOTIFICATION_SETTINGS_EVENT))}>{tx("Ustawienia powiadomień", "Notification settings")}</button>
-        <button type="button" className={styles.refresh} disabled={feed.refreshing || feed.writing || feed.status === "loading"} onClick={() => void feed.refresh()}>{feed.refreshing ? tx("Odświeżanie…", "Refreshing…") : tx("Odśwież", "Refresh")}</button>
+        <div className={styles.footerLinks}>
+          <button type="button" className={styles.settings} aria-label={tx("Ustawienia powiadomień", "Notification settings")} title={tx("Ustawienia powiadomień", "Notification settings")} onClick={() => window.dispatchEvent(new CustomEvent(NOTIFICATION_SETTINGS_EVENT))}><SettingsIcon size={18} /></button>
+          <button type="button" className={`${styles.refresh} ${feed.refreshing ? styles.refreshing : ""}`} aria-label={feed.refreshing ? tx("Odświeżanie…", "Refreshing…") : tx("Odśwież", "Refresh")} title={feed.refreshing ? tx("Odświeżanie…", "Refreshing…") : tx("Odśwież", "Refresh")} aria-busy={feed.refreshing} disabled={feed.refreshing || feed.writing || feed.status === "loading"} onClick={() => void feed.refresh()}><RefreshIcon size={18} strokeWidth={1.6} /></button>
+        </div>
       </footer>
     </section>
     </>
