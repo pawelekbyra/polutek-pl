@@ -8,13 +8,16 @@
 //
 // Result: a PASS/FAIL/SKIP table, exit code 0 only when every required gate passed, a JSON report
 // in .claude/local-ci-last.json (+ .md summary) and per-gate logs in .claude/local-ci-logs/.
-// Child processes get the workflow-level env of ci.yml (fake values), never the local .env secrets.
+// Workflow-level CI values override the inherited runtime env; use an isolated test environment.
+// Development fixtures and authentication/access bypasses are explicitly disabled.
 // Docs: docs/operations/LOCAL-CI.md. Pure logic: scripts/ops/local-ci-lib.mjs.
 import { spawn, spawnSync } from 'node:child_process';
 import { lookup } from 'node:dns/promises';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { captureGitSource } from './release/source.mjs';
+import { testSummaryPasses } from './release/policy.mjs';
 import {
   STATUS,
   blockedBy,
@@ -71,7 +74,13 @@ const CAPACITY = opts.jobs ?? CPUS;
 
 const head = git('rev-parse', 'HEAD').out;
 const branch = git('rev-parse', '--abbrev-ref', 'HEAD').out;
-const dirty = git('status', '--porcelain', '--untracked-files=no').out !== '';
+const dirty = git('status', '--porcelain').out !== '';
+// Local development can still run on dirty files. A release proof additionally requires clean,
+// identical tracked-file inventories before and after every gate.
+const snapshot = () => {
+  try { return captureGitSource(ROOT); } catch { return null; }
+};
+const sourceBefore = snapshot();
 const baseRef = opts.base;
 const mergeBase = git('merge-base', 'HEAD', baseRef);
 const base = mergeBase.ok ? mergeBase.out : null;
@@ -94,7 +103,8 @@ const { changed, deleted } = changedFiles();
 const classified = classifyChanges(changed, deleted);
 const workflowText = existsSync(WORKFLOW) ? readFileSync(WORKFLOW, 'utf8') : '';
 const ciEnv = parseWorkflowEnv(workflowText);
-const childEnv = { ...process.env, ...ciEnv, CI: 'true', FORCE_COLOR: '0', NO_COLOR: '1' };
+const childEnv = { ...process.env, ...ciEnv, CI: 'true', FORCE_COLOR: '0', NO_COLOR: '1',
+  ADMIN_DEV_FIXTURES: '0', ADMIN_DEV_BYPASS_AUTH: '0', ADMIN_DEV_BYPASS_ACCESS: '0', NEXT_TELEMETRY_DISABLED: '1' };
 
 function bin(pkg, name = pkg) {
   const pkgJsonPath = path.join(ROOT, 'node_modules', pkg, 'package.json');
@@ -250,7 +260,25 @@ const gates = [
         const why = failures.length ? `nieudane: ${failures.slice(0, 5).join(', ')}${failures.length > 5 ? ` (+${failures.length - 5})` : ''}` : tail(extra?.output ?? r.output);
         return fail(`${scope}; ${describe(summary)}${extra ? ` + ${describe(extra.summary)}` : ''}; ${why}`);
       }
-      return pass(`${scope}; ${describe(summary)}${extra ? ` + ${describe(extra.summary)}` : ''}`);
+      if (plan.mode === 'full' && !testSummaryPasses(summary)) return fail('caly zestaw: brak niepustego, poprawnego raportu testow');
+      return { ...pass(`${scope}; ${describe(summary)}${extra ? ` + ${describe(extra.summary)}` : ''}`), testSummary: summary };
+    },
+  },
+  {
+    id: 'critical-path',
+    title: 'oba wymagane zestawy krytyczne',
+    ci: ['npm run test:critical-path'],
+    weight: 1,
+    deps: ['prisma'],
+    run: async () => {
+      const jsonPath = path.join(LOG_DIR, 'critical-path.vitest.json');
+      rmSync(jsonPath, { force: true });
+      const r = await node('critical-path', 'critical-path guard', 'scripts/test-critical-path.mjs', [`--maxWorkers=${Math.max(1, CAPACITY - 1)}`, `--report-json=${jsonPath}`]);
+      let summary = null;
+      try { summary = parseVitestJson(JSON.parse(readFileSync(jsonPath, 'utf8'))); } catch { /* failure below */ }
+      return r.code === 0 && testSummaryPasses(summary, { noSkips: true }) && summary.files === 2
+        ? { ...pass('oba pliki wykonane bez pominiec'), testSummary: summary }
+        : fail(`testy krytyczne: ${tail(r.output, 2) || 'brak poprawnego raportu'}`);
     },
   },
   {
@@ -275,8 +303,8 @@ const gates = [
     run: async () => {
       const r = await node('typecheck-all', 'tsc', bin('typescript', 'tsc'), ['-p', 'tsconfig.json', '--noEmit']);
       const { relevant, ignored, files } = parseTscOutput(r.output, ['.next/']);
-      if (relevant.length === 0 && (r.code === 0 || ignored.length)) return pass(`0 bledow${ignored.length ? ` (pominieto ${ignored.length} w .next/)` : ''}`);
-      return fail(relevant.length ? `${relevant.length} bledow w: ${files.slice(0, 4).join(', ')}` : tail(r.output));
+      if (r.code === 0) return pass('0 bledow');
+      return fail(relevant.length ? `${relevant.length} bledow w: ${files.slice(0, 4).join(', ')}` : ignored.length ? `${ignored.length} bledow w .next/; sprawdz wygenerowane typy` : tail(r.output));
     },
   },
   {
@@ -370,8 +398,14 @@ const gates = [
     deps: ['prisma'],
     run: async () => {
       if (!commandWorks('ffmpeg', ['-version']) || !commandWorks('ffprobe', ['-version'])) return skip('brak ffmpeg/ffprobe w PATH', 'env');
-      const r = await node('encode-smoke', 'vitest', bin('vitest'), ['run', 'tests/unit/hls/encode-hls.ffmpeg.test.ts'], { env: { ...childEnv, ENCODE_SMOKE: '1' } });
-      return r.code === 0 ? pass('prawdziwy ffmpeg: OK') : fail(tail(r.output, 2));
+      const jsonPath = path.join(LOG_DIR, 'encode-smoke.vitest.json');
+      rmSync(jsonPath, { force: true });
+      const r = await node('encode-smoke', 'vitest', bin('vitest'), ['run', 'tests/unit/hls/encode-hls.ffmpeg.test.ts', '--maxWorkers=1', '--reporter=dot', '--reporter=json', `--outputFile.json=${jsonPath}`], { env: { ...childEnv, ENCODE_SMOKE: '1' } });
+      let summary = null;
+      try { summary = parseVitestJson(JSON.parse(readFileSync(jsonPath, 'utf8'))); } catch { /* failure below */ }
+      return r.code === 0 && testSummaryPasses(summary, { noSkips: true }) && summary.total === 3
+        ? { ...pass('prawdziwy ffmpeg: 3 wykonane przypadki'), testSummary: summary }
+        : fail(tail(r.output, 2) || 'brak poprawnego raportu trzech testow enkodera');
     },
   },
   {
@@ -425,12 +459,17 @@ async function runPostgresGate() {
     const env = { ...childEnv, DATABASE_URL: url, DATABASE_URL_UNPOOLED: url };
     // Same as `npm run test:integration:postgres`, minus the second `prisma generate` (done by the
     // prisma gate with the same schema; regenerating here would race the running unit tests).
+    const jsonPath = path.join(LOG_DIR, 'postgres.vitest.json');
+    rmSync(jsonPath, { force: true });
     const result = await steps('postgres', [
       ['prisma migrate deploy', process.execPath, [bin('prisma'), 'migrate', 'deploy'], { env }],
       ['db:smoke', process.execPath, [bin('tsx'), 'scripts/db-smoke.ts'], { env }],
-      ['vitest postgres', process.execPath, [bin('vitest'), 'run', '--config', 'vitest.postgres.config.ts', '--reporter=dot'], { env }],
+      ['vitest postgres', process.execPath, [bin('vitest'), 'run', '--config', 'vitest.postgres.config.ts', '--maxWorkers=1', '--reporter=dot', '--reporter=json', `--outputFile.json=${jsonPath}`], { env }],
     ]);
-    return { ...result, reason: `${image}: ${result.reason}` };
+    let summary = null;
+    try { summary = parseVitestJson(JSON.parse(readFileSync(jsonPath, 'utf8'))); } catch { /* failure below */ }
+    if (result.status === STATUS.PASS && !testSummaryPasses(summary, { noSkips: true })) return fail('PostgreSQL: brak niepustego raportu bez pominiec');
+    return { ...result, reason: `${image}: ${result.reason}`, testSummary: summary };
   } finally {
     spawnSync('docker', ['rm', '-f', name], { windowsHide: true });
   }
@@ -546,11 +585,17 @@ await new Promise((resolveAll) => {
 
 const ordered = gates.map((g) => results.get(g.id));
 const verdict = summarize(ordered, { strict: opts.strict });
+const sourceAfter = snapshot();
+const sourceStable = Boolean(sourceBefore && sourceAfter && sourceBefore.fingerprint === sourceAfter.fingerprint);
 const report = {
-  ok: verdict.ok,
+  ok: verdict.ok && sourceStable,
   head,
   branch,
   dirty,
+  dirtyAfter: git('status', '--porcelain').out !== '',
+  sourceBefore,
+  sourceAfter,
+  sourceStable,
   base,
   baseRef,
   node: process.version,
@@ -562,7 +607,7 @@ const report = {
   durationMs: Date.now() - t0,
   failed: verdict.failed,
   strictSkips: verdict.strictSkips,
-  results: ordered.map(({ id, title, status, durationMs, reason, skipKind }) => ({ id, title, status, durationMs, reason, ...(skipKind ? { skipKind } : {}) })),
+  results: ordered.map(({ id, title, status, durationMs, reason, skipKind, testSummary }) => ({ id, title, status, durationMs, reason, ...(skipKind ? { skipKind } : {}), ...(testSummary ? { testSummary } : {}) })),
 };
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(REPORT_JSON, `${JSON.stringify(report, null, 2)}\n`);
@@ -570,6 +615,7 @@ writeFileSync(REPORT_MD, `${formatMarkdown(report)}\n`);
 
 console.log(`\n${formatTable(report.results)}\n`);
 const strictNote = verdict.strictSkips.length ? `; --strict: SKIP z braku narzedzi (${verdict.strictSkips.join(', ')})` : '';
-console.log(`${verdict.ok ? 'WYNIK: PASS' : `WYNIK: FAIL (${verdict.failed.join(', ')}${strictNote})`}, ${formatDuration(report.durationMs)}. Raport: .claude/local-ci-last.json`);
+if (!sourceStable) console.error('FAIL: zrodla zmienily sie podczas kontroli lub nie mozna odczytac inwentarza');
+console.log(`${report.ok ? 'WYNIK: PASS' : `WYNIK: FAIL (${verdict.failed.join(', ')}${strictNote})`}, ${formatDuration(report.durationMs)}. Raport: .claude/local-ci-last.json`);
 for (const fn of cleanup) fn();
-process.exit(verdict.exitCode);
+process.exit(report.ok ? 0 : 1);
