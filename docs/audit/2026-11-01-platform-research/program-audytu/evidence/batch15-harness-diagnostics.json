@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-02",
+  "classification": "RESEARCH_DIAGNOSTICS_NOT_APPLICATION_FINDINGS",
+  "attempts": [
+    {
+      "experiment": "backup-boundaries-experiment.py",
+      "exit_code": 1,
+      "assertion": "partial_dump_failure was initially expected to pass",
+      "observed_log": "pg dump FAILED: research-db (error, too small or not valid gzip); required dump MISSING; done fail=1",
+      "correction": "set -uo pipefail enables pipefail. Suspicion rejected: nonzero partial producer and secret tar errors are detected. Only harness expectations changed.",
+      "stable_finding_registered": false
+    },
+    {
+      "experiment": "restore-verifier-experiment.cjs",
+      "exit_code": 1,
+      "error": "Error: Unexpected outcome failed_migration_logs",
+      "cause": "Initial VM process.exit fixture threw an exception caught by the source's migration catch, unlike real process.exit; invalid false-green control.",
+      "correction": "Each scenario now runs in a real child process; VM process.exit terminates that child. Unchanged source and existing installed Prisma client. Final outcomes independently checked using process status and success message.",
+      "provisional_ids_note": "Initial harness draft used R37 for the disproved backup suspicion and R38 for the verifier candidate; neither was registered. Final registry assigns next free R37 only after corrected execution to the verifier. Preserve this diagnostic, do not reinterpret initial drafts as two confirmed findings."
+    }
+  ]
+}

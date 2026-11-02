@@ -249,24 +249,38 @@
       "id": "R09",
       "title": "Zielony build nie oznacza zielonych typów",
       "baseline_priority_and_evidence": "P1, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE_W_PRZEGLADZIE_ZRODEL",
+      "note": "Baseline type-check bypass retained. Batch15 maps separate CI/image publication/local gates; no full build/typecheck repeated or actual bad deployment demonstrated.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D17",
         "D18"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Udana budowa obrazu nie zapewnia, że dokładnie to wydanie przeszło typy, testy i wymagane kontrole.",
+      "conditions": "Next ignoreBuildErrors in public/admin; Docker build invokes Next without quality; manually/tag-triggered image workflow has no CI dependency in inspected YAML. External required checks and operator process unknown.",
+      "evidence_paths": [
+        "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
+        "evidence/release-evidence-map.json",
+        "evidence/batch15-review.json",
+        "evidence/release-local-ci-vitest.json"
+      ],
+      "counterarguments": [
+        "CI declares dedicated typecheck/tests/lint/integration jobs; local quality also checks types/tests.",
+        "28 existing local-ci logic tests and 7 static script tests passed; that is not whole pipeline execution.",
+        "Operator/branch protection may impose additional controls; active settings not inspected.",
+        "BuildKit may provide default attestations; registry attestations were not inspected."
+      ],
+      "standard_refs": [
+        "SLSA v1.2 Build Track Basics/Build Requirements (partial reference, no level awarded)"
+      ],
+      "proposed_fix": "Bind release approval and publication to exact tested source/build inputs and artifact digest; define blocking vs explicitly accepted warning outcomes and validate provenance before activation.",
+      "acceptance_test": "Known type/test failure for a release candidate prevents publication/activation in the agreed process; an untested/mismatched digest is refused; approved exception and previous artifact remain traceable.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-02",
+      "deployment_scope": "SOURCE_ONLY_RELEASE_CHAIN;PRODUCTION_SETTINGS_UNVERIFIED"
     },
     {
       "id": "R10",
@@ -338,24 +352,40 @@
       "id": "R12",
       "title": "Backup bazy nie oznacza możliwości odtworzenia platformy",
       "baseline_priority_and_evidence": "P1/P2, B/C/D",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE_OGRANICZENIA_W_ZAKRESIE_ZRODEL",
+      "note": "Baseline full-platform recovery gap retained. Actual 81-migration synthetic local SQL dump/restore succeeded; backup failure controls work. This is not production/offsite/full product restoration.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D12",
         "D17"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
+      "impact_plain_language": "Poprawna kopia bazy nie odzyska skasowanych filmów lub brakującego klucza i konfiguracji; odtworzenie starej bazy może wymagać uzgodnienia późniejszych płatności.",
+      "conditions": "Runbook declares daily DB snapshots, no WAL/PITR and no video original/HLS/thumbnail copies; weekly test restores local DB and optionally checks encrypted object presence. Actual cloud policies/keys/current cron outcomes not inspected.",
+      "evidence_paths": [
+        "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
+        "ODTWARZANIE-POKRYCIE.csv",
+        "SCENARIUSZE-WDROZENIA.csv",
+        "evidence/batch15-review.json",
+        "evidence/backup-boundaries-experiment.json",
+        "evidence/database-restore-drill.json",
+        "tools/database-restore-drill.py"
+      ],
+      "counterarguments": [
+        "Backup rejects missing DB, empty and partial failed dump, failed secret tar/encryption/upload check in explicit command fixtures.",
+        "Weekly test source isolates container and checks age/data/migration count; no claim it is absent.",
+        "Real local PostgreSQL restored selected synthetic account/video/asset/payment/grant values and constraint behavior after all 81 SQL migrations.",
+        "Runbook records historical successful encryption/decryption/restore; not current independently repeated production proof.",
+        "No actual media loss, compromised key, or current R2 misconfiguration demonstrated."
+      ],
       "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "proposed_fix": "Define recovery resources/consistency point, safe ownership of decryption keys and independent copies for non-reconstructible media; measure isolated offsite-only product recovery including payment reconciliation.",
+      "acceptance_test": "Without original host, recover approved snapshot from offsite, roles/config/secrets/own media and safe app jobs; verify login/access/first-frame and test-mode financial reconciliation within agreed RPO/RTO. No live charges or production fault injection.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-02",
+      "deployment_scope": "SOURCE_AND_SYNTHETIC_LOCAL_SQL;PRODUCTION_OR_FULL_PLATFORM_RECOVERY_UNVERIFIED"
     },
     {
       "id": "R13",
@@ -1293,6 +1323,46 @@
       "retest": null,
       "created_at": "2026-11-02",
       "deployment_scope": "ISOLATED_WORKER_HANDLER;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "id": "R37",
+      "kind": "FALSZYWY_SUKCES_NARZEDZIA_WERYFIKACJI_ODTWORZENIA",
+      "title": "Pomocniczy weryfikator odtworzonej bazy może zgłosić sukces mimo nieudanych kontroli",
+      "priority": "P2_NARZEDZIE_OPERACYJNE",
+      "baseline_priority_and_evidence": "NEW: P2; unchanged TS in VM subprocess, real process.exit, explicit synthetic query fixtures",
+      "status": "POTWIERDZONE_W_KOMPONENTACH_Z_ATRAPAMI",
+      "evidence_level": "B_ACTUAL_SCRIPT_REAL_PROCESS_STATUS_SYNTHETIC_DB_QUERIES",
+      "note": "Rejected count only logs/returns null, manifest missing actual field warns, migration query error warns, finished_at null with rolled_back_at/logs null not counted as unfinished. Corrected real-exit child controls avoid the initial harness exception-catch artifact.",
+      "source_report": "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D17",
+        "D18"
+      ],
+      "impact_plain_language": "Operator używający tego narzędzia może uznać odtworzoną bazę za sprawdzoną, choć część obowiązkowych kontroli nie zakończyła się powodzeniem.",
+      "conditions": "Optional scripts/verify-restored-database.ts, selected rejected count or migration metadata query, or unfinished null-log row; later synthetic integrity queries succeed. Active use not proven; NOT weekly restore-test.sh.",
+      "evidence_paths": [
+        "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
+        "SCENARIUSZE-WDROZENIA.csv",
+        "evidence/batch15-review.json",
+        "evidence/restore-verifier-experiment.json",
+        "evidence/batch15-harness-diagnostics.json",
+        "tools/restore-verifier-experiment.cjs"
+      ],
+      "counterarguments": [
+        "Missing URL, missing opt-in and exact production URL match refuse before client construction.",
+        "Known manifest mismatch, logged migration failure and orphan grant correctly exit nonzero.",
+        "Count witness models one failed count followed by working queries, not a missing whole table.",
+        "DB/Prisma are explicit fixtures; no actual corrupt restored DB, production use or real incident proven.",
+        "R12 is the broader product recovery gap, this is a distinct false-verdict implementation in a manual helper."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Track all failed mandatory model/metadata checks; missing expected aggregate is failure/incomplete, verify explicit migration completion and expected identity; never emit full success with unresolved required checks.",
+      "acceptance_test": "Each four failing witness variants produces nonzero exit without success; valid restore stays successful; preserve preflight and real process termination in test harness.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-02",
+      "deployment_scope": "OPTIONAL_HELPER_COMPONENT;PRODUCTION_USE_UNVERIFIED"
     }
   ]
 }

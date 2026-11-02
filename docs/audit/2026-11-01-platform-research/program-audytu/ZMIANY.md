@@ -164,3 +164,14 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Redakcja i requestId pozytywnie sprawdzone. Path marker bez ważnego tokenu/log-call witness i INFO=0/0 to ograniczenia/pytania, bez nowych znalezisk. Zachowano initial module-format failure harnessu, nie klasyfikowano go jako defektu aplikacji.
 - Dziesięć źródeł PeerTube częściowo: metryki/kolejki/repliki/QoE/logger/tracing/config; bez runtime i benchmarku, z zastrzeżeniem default off/cardinality/privacy. OpenTelemetry Signals i CC BY 4.0 HTTP 200/hash, niezmienione kopie.
 - Rejestr R01–R36, rozszerzony R18 bez zmiany historycznego priorytetu. ASVS 53/292, wejścia 73/207, 16 obszarów rozpoczętych/dwa niezbadane, zero zamkniętych. Pełne stosy i niezależne przeglądy nadal otwarte. Następnie D17: dostarczanie i odtwarzanie.
+
+
+## 2 listopada 2026 — partia 15: wdrożenia i odtwarzanie
+
+- Rozpoczęto D17: częściowy zakres źródeł, mapa 13 zadań CI i czterech obrazów, 14 zasobów odzyskiwania i 29 scenariuszy. Nie uruchomiono CI/build/realnego deploy/produkcyjnego restore.
+- Siedem kontroli actual backup.sh z total command stubs: normalny wariant i sześć poprawnych odmów. Podejrzenie pipefail odrzucone; część danych przed błędem nie daje sukcesu. Osiem kontroli actual deploy.sh: blokada, dump/migration gating, rollback i jawne warnings; brak zmian hosta.
+- Nowy R37: false-success w manual helperze verify-restored-database.ts, cztery warianty i siedem kontroli w 11 prawdziwych procesach z TS VM/query fixtures. Weekly restore to odrębny skrypt. Błędny initial exit mock i oczekiwanie backupu zachowane w diagnostyce, bez dwóch pozornych znalezisk.
+- Realny lokalny PostgreSQL 17.11: wszystkie 81 migracji SQL, syntetyczne konto/kanał/film/asset/payment/grant, pg_dump/gzip/psql i zgodny wybrany snapshot. FK/unique po restore odmawiają; obie własne bazy usunięte, dump niezapisany. Bez Prisma history/roles/offsite/media/aplikacji/RPO/RTO.
+- Istniejący Vitest local-ci 28/28 i static 7/7 passed, oba exit 0; 17 celowo pominiętych nie zaliczono. Bez całego pipeline/generate/npm audit. Rozszerzono R09 i R12, bez zmiany priorytetów i starego raportu.
+- PeerTube: dziewięć wybranych źródeł, GPG podpisy i staged release/migration/rollback; brak pg_dump fallback i nieweryfikowane podpisy downloadera jako kontrargumenty. Brak runtime/benchmarku. SLSA v1.2 i Community Specification License 1.0 z przypiętego SHA, trzy HTTP 200; initial network i dwa 404 zachowane.
+- Sześć pominiętych źródeł operatora dodano do powierzchni: 286 rekordów, 79/207. ASVS 55/290, rejestr R01–R37, 17 obszarów rozpoczętych/jeden niezbadany, zero zamkniętych. Następnie D18.

@@ -34,7 +34,10 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [Mapa monitoringu](program-audytu/MONITORING-POKRYCIE.csv) | 14 obszarów sygnałów i otwarte próby detekcji/reakcji |
 | [Mapa logów](program-audytu/LOGOWANIE-POKRYCIE.csv) | 9 źródeł, korelacja/redakcja oraz nieustalona retencja i dostęp |
 | [Scenariusze monitoringu](program-audytu/SCENARIUSZE-MONITORING.csv) | 22 obserwacje komponentów z atrapami; pełny stos niewykonany |
-| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R36, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
+| [D17: wdrożenia i odtwarzanie](program-audytu/obszary/D17-WDROZENIA-I-ODTWARZANIE.md) | Działające kontrole skryptów i rzeczywisty lokalny SQL restore; R09/R12 rozszerzone, R37: fałszywy sukces pomocniczego weryfikatora |
+| [Mapa odzyskiwania](program-audytu/ODTWARZANIE-POKRYCIE.csv) | 14 zasobów, granice dowodu i wymagane próby odtworzenia |
+| [Scenariusze wdrożeń](program-audytu/SCENARIUSZE-WDROZENIA.csv) | 26 obserwacji z atrapami i trzy rzeczywiste SQL; pełny produkt niewykonany |
+| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R37, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
 | [Plan eksperymentów i pomiarów](PLAN-WERYFIKACJI.md) | Dalsze testy runtime, awarie, benchmark i model kosztów |
@@ -67,6 +70,11 @@ Z korzenia repo, po przygotowaniu zależności i aktywacji Node 22:
 ```bash
 node --import tsx docs/audit/2026-11-01-platform-research/pipeline-experiments.ts
 node --import tsx docs/audit/2026-11-01-platform-research/storage-experiment.ts
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/backup-boundaries-experiment.py
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/deployment-boundaries-experiment.py
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/restore-verifier-experiment.cjs
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/database-restore-drill.py
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/release-evidence-map.py
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/watchdog-delivery-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/monitoring-boundaries-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/identity-context-experiment.cjs

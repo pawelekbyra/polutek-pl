@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-02",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_APP_OR_PRODUCTION_RECOVERY",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 17,
+    "NIEZBADANE": 1
+  },
+  "asvs_status_counts": {
+    "NIEZBADANE": 290,
+    "W_TRAKCIE": 55
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 79,
+    "NIEZBADANE": 207
+  },
+  "entry_count": 286,
+  "manual_surface_additions": 6,
+  "stable_finding_count": 37,
+  "new_distinct_findings": [
+    "R37"
+  ],
+  "existing_findings_extended": [
+    "R09",
+    "R12"
+  ],
+  "other_findings_and_baseline_priorities_preserved": true,
+  "earlier_raw_evidence_sources_preserved": 177,
+  "partial_source_files": 29,
+  "partial_PeerTube_files": 9,
+  "PeerTube_executed": false,
+  "controlled_actual_script_observations": 26,
+  "real_local_SQL_restore_observations": 3,
+  "baseline_SQL_migrations_applied": 81,
+  "synthetic_restore_snapshot_equal": true,
+  "restored_FK_and_unique_controls": true,
+  "own_databases_removed": true,
+  "raw_dump_saved": false,
+  "targeted_vitest_assertions_passed": 35,
+  "intentionally_filtered_tests_not_passed": 17,
+  "targeted_vitest_exit_codes": [
+    0,
+    0
+  ],
+  "full_suite_build_Prismagenerate_or_npmaudit_repeated": false,
+  "real_deployment_or_provider_messages_charges_production_data": false,
+  "full_Next_Prismamigration_history_roles_offsite_or_media_restore": false,
+  "real_RPO_RTO_or_SLSA_certification": false,
+  "initial_harness_diagnostics_and_rejected_backup_suspicion_preserved": true,
+  "official_source_HTTP_200": 3,
+  "HTTP_404_not_sources": 2,
+  "initial_curl7_no_HTTP_recorded": true,
+  "local_links_checked": 427,
+  "new_report_pinned_GitHub_paths_exist_locally": 11,
+  "broken_local_links": [],
+  "syntax": "Node --check, four Python AST parse and four Bash -n, not app typecheck",
+  "whitespace": "Staged/unstaged diff --check; new upstream SLSA source/404 bytes preserved and hash-verified, excluded from whitespace normalization",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "credential_scan": "No listed patterns in changed/new text, bounded check only",
+  "independent_review": "PENDING"
+}

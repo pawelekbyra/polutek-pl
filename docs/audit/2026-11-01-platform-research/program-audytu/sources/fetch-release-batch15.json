@@ -1,0 +1,47 @@
+[
+  {
+    "date": "2026-11-02",
+    "file": "slsa-v1.2-levels.md-404.txt",
+    "url": "https://raw.githubusercontent.com/slsa-framework/slsa/releases/v1.2/spec/levels.md",
+    "http_status": 404,
+    "curl_exit": 0,
+    "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+    "classification": "HTTP_404_NOT_READ_AS_SPECIFICATION"
+  },
+  {
+    "date": "2026-11-02",
+    "file": "slsa-v1.2-LICENSE-404.txt",
+    "url": "https://raw.githubusercontent.com/slsa-framework/slsa/releases/v1.2/LICENSE",
+    "http_status": 404,
+    "curl_exit": 0,
+    "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+    "classification": "HTTP_404_NOT_READ_AS_SPECIFICATION"
+  },
+  {
+    "date": "2026-11-02",
+    "file": "slsa-v1.2-build-track-basics.md",
+    "url": "https://raw.githubusercontent.com/slsa-framework/slsa/ae7fc76215004e8fae250c877eff8919bf048e3b/spec/build-track-basics.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "34b57d8975d02fde8519f857da3fb61bc184d110800d257e4228e0072547ff8f",
+    "source_revision": "ae7fc76215004e8fae250c877eff8919bf048e3b"
+  },
+  {
+    "date": "2026-11-02",
+    "file": "slsa-v1.2-build-requirements.md",
+    "url": "https://raw.githubusercontent.com/slsa-framework/slsa/ae7fc76215004e8fae250c877eff8919bf048e3b/spec/build-requirements.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "d8c53cda269484383aa5e11a8cbdd062039cad6e9d0c24eac7d45676eb3e36a5",
+    "source_revision": "ae7fc76215004e8fae250c877eff8919bf048e3b"
+  },
+  {
+    "date": "2026-11-02",
+    "file": "slsa-v1.2-LICENSE.md",
+    "url": "https://raw.githubusercontent.com/slsa-framework/slsa/ae7fc76215004e8fae250c877eff8919bf048e3b/LICENSE.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "f40b1d00369c21b963293189b4617b5de439a11858541c07c620984634fb63b7",
+    "source_revision": "ae7fc76215004e8fae250c877eff8919bf048e3b"
+  }
+]

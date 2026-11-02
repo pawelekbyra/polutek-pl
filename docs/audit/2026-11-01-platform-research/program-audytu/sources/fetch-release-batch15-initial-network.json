@@ -1,0 +1,20 @@
+[
+  {
+    "date": "2026-11-02",
+    "file": "slsa-v1.2-levels.md",
+    "url": "https://raw.githubusercontent.com/slsa-framework/slsa/releases/v1.2/spec/levels.md",
+    "http_status": null,
+    "curl_exit": 7,
+    "sha256": null,
+    "note": "curl exit 7 before target HTTP response; initial sandbox network attempt, no source fetched"
+  },
+  {
+    "date": "2026-11-02",
+    "file": "slsa-v1.2-LICENSE",
+    "url": "https://raw.githubusercontent.com/slsa-framework/slsa/releases/v1.2/LICENSE",
+    "http_status": null,
+    "curl_exit": 7,
+    "sha256": null,
+    "note": "curl exit 7 before target HTTP response; initial sandbox network attempt, no source fetched"
+  }
+]

@@ -1,0 +1,257 @@
+{
+  "date": "2026-11-02",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "3318f5321e54d3a613bbfe120700642be724785b",
+  "source_review_scope": [
+    {
+      "file": ".dockerignore",
+      "sha256": "4990dbeeac4582fa6eee75642e51ec9a6b91a21fdc10c96fdab4d3d14d04ef52",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": ".github/workflows/ci.yml",
+      "sha256": "1fa10b7c27b247adf30bd47b551d12710163e1c6b1b3ec2215697b7ddf64791a",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": ".github/workflows/images.yml",
+      "sha256": "fd03e9a667e2b48587a557e59b1e9483bee9e6983e77937366edbb672bd13fa8",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/next.config.mjs",
+      "sha256": "562d722ce1a03f01f174163b54e9e2f0981926e33e2c04299c9fc96497f6c3c2",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "deploy/serwerek/Dockerfile",
+      "sha256": "038431c0f5b5f730d3a080c10f50d6c1337fbc8763cd8b379d5ac467356ab92f",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "deploy/serwerek/Dockerfile.admin",
+      "sha256": "00ec13b7d5c22167ed04f2d942a38d87e97bba9f22e883337418798578371a30",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "deploy/serwerek/RESTORE.md",
+      "sha256": "7bc96881af7e3e93476225d5c7b69969dcc938af6ec277a4f8c0ce98aaad5008",
+      "scope": "Recovery runbook source, no real key retrieval or offsite restore"
+    },
+    {
+      "file": "deploy/serwerek/deploy-admin.sh",
+      "sha256": "7bec92afea97163caeac1542c806451a0e0b693d04150c63168c102b5585d94e",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "deploy/serwerek/deploy.sh",
+      "sha256": "7773f106d9d993c9a94807c9e3977381de5788744c25e73cf05daae9b70f949c",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "deploy/serwerek/docker-compose.override.yml",
+      "sha256": "0405e5c4531f7b0f29a72c52f57cfd4d839a1308a35e3d9c186c9a69aa4c216f",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "deploy/serwerek/docker-compose.yml",
+      "sha256": "84cc968a52822d615fc65f3d8ef35aef5db162a15445930234679d11300bafa7",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "deploy/serwerek/systemd/serwerek-backup.service",
+      "sha256": "1da52adbecf284e3953cf60282c43b2375c4661acb0da6cc4ca691f0f82c45f3",
+      "scope": "Unit definition, not active service inspection"
+    },
+    {
+      "file": "deploy/serwerek/systemd/serwerek-backup.timer",
+      "sha256": "152e31789c070d440dbcc8c5548bec1120eb5724f72654d0d3b8371d2cbc1323",
+      "scope": "Calendar and persistence source, not enabled-state proof"
+    },
+    {
+      "file": "deploy/serwerek/systemd/serwerek-restore-test.service",
+      "sha256": "e3d44210da6a3921a131d39ba0984fb2862543cd9e9c4bc30a1b02bc4b21b3ae",
+      "scope": "Unit definition and limits, not executed weekly script"
+    },
+    {
+      "file": "deploy/serwerek/systemd/serwerek-restore-test.timer",
+      "sha256": "d96a39f10aa3ea86e268df505e5e74a84e522756f9157129becb688126c11e8a",
+      "scope": "Calendar source only"
+    },
+    {
+      "file": "docs/operations/SERWEREK.md",
+      "sha256": "ddda60312e135183666ff01edd639284d7e4ed764541cf421e792f779c003b8b",
+      "scope": "Selected deploy/backup/restore/current-vs-historical limitations and key-location contradiction"
+    },
+    {
+      "file": "next.config.mjs",
+      "sha256": "ee9b8a7089ef7decf43d164ca90503eae5a7bd2d6504a106814bc5626285dd08",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "package.json",
+      "sha256": "402fa1299a550cb4ee8905c2bb5ff31f086b38396125e5dd9e7b33b54ea165b7",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+      "scope": "Selected fixture fields and enum/required columns; full SQL schema apply/restore evidence is separate"
+    },
+    {
+      "file": "scripts/db-smoke.ts",
+      "sha256": "efe9933afb6ce7a8cd2e1c3938080321b9092ac1ccef3fed6552bf6ed8df71e2",
+      "scope": "Selected critical model/column checks source; not executed Prisma"
+    },
+    {
+      "file": "scripts/ops/local-ci-lib.mjs",
+      "sha256": "95a9450e38fa089d2e9b664e98583a161231cc70a8987c6c17c96a45288bfe9a",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "scripts/ops/local-ci.mjs",
+      "sha256": "938c1865d2077067e7d8754d03292d305015d9b710893265856a709e724f3cd1",
+      "scope": "PARTIAL source/config inventory; parsed by release map, not build/run or whole-file security sign-off"
+    },
+    {
+      "file": "scripts/ops/mergedeploy.sh",
+      "sha256": "d7ddbca7d334e2e516cd04b30f226750dbb07ad87a50290ad9c9929b0b7e94cd",
+      "scope": "Selected local/remote CI binding and deploy flow source only; never gh/SSH/merge"
+    },
+    {
+      "file": "scripts/serwerek/backup.sh",
+      "sha256": "1302548c834e9071ad68195ec1a0b97716f21674ad9f01e5adb5e6915985c2ed",
+      "scope": "Full script control flow with total service/archive/provider stubs; real gzip/files only, no backup of actual data"
+    },
+    {
+      "file": "scripts/serwerek/restore-test.sh",
+      "sha256": "e0847f8e09ed628e1c3e37ce713ea4e8d7bcfc36471412bf8c9165a0c3c0b306",
+      "scope": "Source read; weekly scheduled script NOT executed, no D1/R2/secret access"
+    },
+    {
+      "file": "scripts/verify-restored-database.ts",
+      "sha256": "d5c24a55ad1a335912722d7aabb7594e7293cbec56d10e8953b6adc16256bfbb",
+      "scope": "Actual unchanged TS in per-scenario VM subprocess; real exit, synthetic query fixture; NOT generated Prisma"
+    },
+    {
+      "file": "tests/unit/operations/verify-restored-database.test.ts",
+      "sha256": "36bbe2ea8a7296fd442fa92b44c649c0d84ae33280aab7069619c2449e306fc5",
+      "scope": "Source read of 4 tests with nonterminating exit mock; NOT executed or used as runtime verification proof"
+    },
+    {
+      "file": "tests/unit/ops/local-ci-lib.test.ts",
+      "sha256": "9e669a1abf90b916a4b588d1ecb91955cd45e83c42d6b3a69310ab5f40cfdd4d",
+      "scope": "Existing 28 assertions executed; pure gate logic, not whole pipeline"
+    },
+    {
+      "file": "tests/unit/ops/serwerek-scripts.test.ts",
+      "sha256": "5deb243bf5764d2f78cedddccb9623012131bb243bc848769fe87b45ef1d00fb",
+      "scope": "Existing 7 static assertions executed, 17 behavior tests intentionally filtered; selected source reviewed"
+    }
+  ],
+  "scope_warning": "Partial and overlapping prior batches; dependency/config/source reading not whole-file sign-off. 81 migration files separately hashed/mechanically applied, not added as 81 manual audits.",
+  "controlled_script_experiments": {
+    "backup": 7,
+    "deployment": 8,
+    "verifier": 11,
+    "all_final_exit_codes": 0,
+    "total_fakes_service_network_calls": 0,
+    "initial_harness_diagnostics_preserved": true
+  },
+  "real_local_SQL_restore": {
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "migration_files": 81,
+    "observations": 3,
+    "own_databases_removed": true,
+    "synthetic_data_only": true,
+    "Prisma_migration_engine_or_history": false,
+    "production_offsite_roles_media_or_full_app": false
+  },
+  "targeted_vitest": [
+    {
+      "artifact": "release-local-ci-vitest.json",
+      "exit_code": 0,
+      "success": true,
+      "passed": 28,
+      "failed": 0,
+      "intentionally_filtered_pending": 0,
+      "files": 1
+    },
+    {
+      "artifact": "release-static-vitest.json",
+      "exit_code": 0,
+      "success": true,
+      "passed": 7,
+      "failed": 0,
+      "intentionally_filtered_pending": 17,
+      "files": 1
+    }
+  ],
+  "full_suite_or_npm_audit_repeated": false,
+  "Prisma_client_generated_or_installed_client_replaced": false,
+  "new_distinct_findings": [
+    "R37"
+  ],
+  "existing_findings_extended": [
+    "R09",
+    "R12"
+  ],
+  "rejected_suspicions": [
+    "backup.sh pipefail: partial dump and secrets tar producer failures correctly rejected"
+  ],
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "executed": false,
+    "equal_benchmark": false,
+    "files": [
+      {
+        "file": "scripts/upgrade.sh",
+        "sha256": "2dda62b7eb123270fe043fe593bec31c29d2f855d2421fa3f383bd02627be232",
+        "scope": "Small compatibility wrapper source"
+      },
+      {
+        "file": "server/scripts/upgrade.sh",
+        "sha256": "0b4faf4668ec701bface61a52b4d961321c84bd9102e08896d76cf218812c35b",
+        "scope": "Upgrade flow: disk/pg_dump/file download/symlink/config; not run"
+      },
+      {
+        "file": "scripts/release.sh",
+        "sha256": "1f1160304cb043ae46cb4b7817bdd9838a79f9f003db54630cde171fafaa6ab7",
+        "scope": "Selected branch/build/GPG archive signing and publish commands; no keys or releases used"
+      },
+      {
+        "file": "support/doc/development/release.md",
+        "sha256": "295e51a06ee92708cb98b30f5c9646ca3f8ac400348b7e677dfe36e7facb1e46",
+        "scope": "Checklist migrations/localization/CI/E2E/staged instances, not proof completed"
+      },
+      {
+        "file": "support/doc/development/ci.md",
+        "sha256": "c2eba2f1c9db44ad3853b714b780e746c22ac4bdc1daa743904c5176b1427b08",
+        "scope": "CI documentation overview, not current pass status"
+      },
+      {
+        "file": "support/doc/production.md",
+        "sha256": "51516bdc017163cae5c200f25745ad0c37e7262da13c10f314deae0ff1e0e9b2",
+        "scope": "Selected upgrade/SQL backup and rollback sections only"
+      },
+      {
+        "file": ".github/workflows/docker.yml",
+        "sha256": "16177e27a232cf2ee886c9875d1e0e677ec528cbcc90b2ff8e2aac25f582240c",
+        "scope": "Image matrix/refs/build steps and published tags source only"
+      },
+      {
+        "file": ".github/workflows/test.yml",
+        "sha256": "3166194584bd148c50672f5c4f964ceaaf3d7c7f3b37fcd95796bb38204140a1",
+        "scope": "Selected matrix/services/object-storage source, not tests run"
+      },
+      {
+        "file": "support/docker/production/Dockerfile",
+        "sha256": "ea901a323ed304496f6688352c656410778665f098dc831541864cc1cfb4f441",
+        "scope": "Production build/dependency/user source, no image build"
+      }
+    ]
+  },
+  "production_access_or_real_person_data": false,
+  "real_deployment_merge_or_external_messages": false,
+  "independent_review": "PENDING"
+}
