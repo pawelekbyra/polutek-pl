@@ -100,7 +100,7 @@ describe('Admin Video Details & Diagnostics', () => {
         title: 'Video',
         slug: 'slug',
         status: VideoStatus.PUBLISHED,
-        tier: AccessTier.PATRON,
+        tier: AccessTier.LOGGED_IN,
         videoUrl: 'https://bucket.s3.amazonaws.com/raw.mp4',
         asset: null
       };
@@ -123,7 +123,7 @@ describe('Admin Video Details & Diagnostics', () => {
         title: 'Video',
         slug: 'slug',
         status: VideoStatus.PUBLISHED,
-        tier: AccessTier.PATRON,
+        tier: AccessTier.LOGGED_IN,
         videoUrl: 'https://bucket.s3.amazonaws.com/raw.mp4',
         asset: { provider: 'SELF_HLS', processingState: 'PROCESSING', isPrimary: true, objectKey: 'videos/v1/v/v1' }
       };

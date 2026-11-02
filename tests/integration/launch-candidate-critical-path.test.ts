@@ -414,7 +414,7 @@ function createHarness() {
       slug: id,
       videoUrl: 'https://legacy.example.test/private.mp4?signature=secret',
       thumbnailUrl: '/thumb.jpg',
-      tier: AccessTier.PATRON,
+      tier: AccessTier.LOGGED_IN,
       status: VideoStatus.PUBLISHED,
       publishedAt: new Date('2026-06-01T00:00:00Z'),
       views: 0,

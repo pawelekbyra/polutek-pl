@@ -9,7 +9,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MainChannelService } from '@/lib/modules/channel';
 
 // 2026-09-22 model (see CLAUDE.md §4.4): checkVideoAccess() no longer reads PatronGrant at
-// all. PATRON-tier videos are handled identically to LOGGED_IN — any signed-in, non-deleted
+// all. LOGGED_IN videos are handled identically to LOGGED_IN — any signed-in, non-deleted
 // user gets access, guests are always LOGIN_REQUIRED. This file used to assert the opposite
 // (PatronGrant-gated write access via getPatronStatus()); it was rewritten to match current
 // behavior after that access-gate removal made the old assertions permanently red on `main`.
@@ -27,7 +27,7 @@ vi.mock('@/lib/modules/audit', () => ({
   recordAuditEventSafe: vi.fn(),
 }));
 
-describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGrant gate)', () => {
+describe('Comments write access on LOGGED_IN videos (sign-in only, no PatronGrant gate)', () => {
   const now = new Date('2026-01-01T12:00:00Z');
   const mainChannel = { id: 'main-channel-id', slug: 'polutek', status: 'ACTIVE' };
   const videoId = '11111111-1111-4111-8111-111111111111';
@@ -41,7 +41,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
     slug: 'patron-video',
     creatorId: mainChannel.id,
     status: VideoStatus.PUBLISHED,
-    tier: AccessTier.PATRON,
+    tier: AccessTier.LOGGED_IN,
     publishedAt: new Date(now.getTime() - 1000),
     creator: { id: mainChannel.id, userId: 'creator-1', status: 'ACTIVE' },
   };
