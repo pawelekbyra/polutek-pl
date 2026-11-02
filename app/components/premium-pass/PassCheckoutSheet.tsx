@@ -20,7 +20,6 @@ import { LegalSheetProvider } from "../legal/LegalSheet";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";
 import { FIELD_LABEL_CLASS } from "../support/TipSelect";
-import { playPassCashSound, preloadPassCashSound } from "./pass-cash-sound";
 import { ArrowLeft } from "../icons";
 import { CloseButton } from "@/components/ui/close-button";
 import { PassMethodStep, PassPayHead, PassPlanStep } from "./PassPlanSteps";
@@ -156,8 +155,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     if (locked || next === open) return;
     onOpenChange(next);
   };
-
-  useEffect(() => preloadPassCashSound(), []);
   const email = maskEmail(user?.primaryEmailAddress?.emailAddress);
 
   // ---- opening: a fresh attempt (or the return from a redirect method), Stripe.js only from here
@@ -387,7 +384,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
               {tx("Kup se Premium", "Get Premium")}
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close disabled={locked} aria-label={tx("Zamknij", "Close")} onClick={playPassCashSound} render={<CloseButton />} />
+            <DialogPrimitive.Close disabled={locked} aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
           </div>
 
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}

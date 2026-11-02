@@ -8,9 +8,6 @@ import { txFor } from '../i18n/mock-language';
 import { buildPremiumPassOffer } from '@/lib/modules/patron-zone/domain/offer';
 import type { PremiumPaymentsDto } from '@/lib/modules/patron-zone/domain/payments-mode';
 
-const passSound = vi.hoisted(() => ({ play: vi.fn(), preload: vi.fn() }));
-vi.mock('@/app/components/premium-pass/pass-cash-sound', () => ({ playPassCashSound: passSound.play, preloadPassCashSound: passSound.preload }));
-
 vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'u1', isLoaded: true }),
   useUser: () => ({ user: { primaryEmailAddress: { emailAddress: 'pawel.perfect@gmail.com' } } }),
@@ -415,14 +412,6 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     open({ mode: 'stripe', available: true, stripeMode: 'live' });
     const dialog = within(await screen.findByRole('dialog'));
     expect(dialog.queryByText('Tryb testowy')).toBeNull();
-  });
-
-  it('plays the cash sound when the X is clicked', async () => {
-    passSound.play.mockClear();
-    open(TEST);
-    const dialog = within(await screen.findByRole('dialog'));
-    fireEvent.click(dialog.getByRole('button', { name: 'Zamknij' }));
-    expect(passSound.play).toHaveBeenCalledTimes(1);
   });
 
   it('seller card in every step (compact in step 3) and the provider-neutral footer without the word Stripe', async () => {
