@@ -84,6 +84,14 @@ function CommentItemComponent({
   const isDeletedForPublic = comment.status === 'DELETED';
 
   const authorBadge = getAuthorBadge(comment.author);
+  // Decorative ring (a box-shadow, nothing for assistive tech): blue for the creator, amber for VIP. getAuthorBadge lets the
+  // creator win over VIP, so a creator who is also VIP keeps the blue ring. Same width and offset for both, so no layout shift.
+  const avatarRing = authorBadge
+    ? cn(
+        "border-transparent ring-2 ring-offset-2 ring-offset-[var(--chan-card)]",
+        authorBadge === "AUTHOR" ? "ring-[var(--chan-blue)]" : "ring-[var(--chan-amber-bright)]",
+      )
+    : undefined;
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text || "");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -232,7 +240,7 @@ function CommentItemComponent({
               src={avatarSrc}
               alt={comment.author?.displayName || "Avatar"}
               size={avatarSize}
-              className={cn("border border-[var(--chan-line)]", authorBadge === "AUTHOR" && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
+              className={cn("border border-[var(--chan-line)]", avatarRing)}
             />
           </button>
         ) : (
@@ -240,7 +248,7 @@ function CommentItemComponent({
             src={avatarSrc}
             alt={comment.author?.displayName || "Avatar"}
             size={avatarSize}
-            className={cn("border border-[var(--chan-line)]", authorBadge === "AUTHOR" && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
+            className={cn("border border-[var(--chan-line)]", avatarRing)}
           />
         )}
         </div>

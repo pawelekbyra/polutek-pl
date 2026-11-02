@@ -76,7 +76,7 @@ describe('comment badges under the avatar', () => {
     const pill = screen.getByText('VIP');
     expect(pill).toHaveAttribute('aria-label', 'Użytkownik VIP');
     expect(pill).toHaveAttribute('title', 'Użytkownik VIP');
-    expect(pill.className).toContain('bg-[var(--chan-amber-bright)]');
+    expect(pill.className).toContain('bg-[var(--cm-amber-14)]');
     expect(pill.className).toContain('text-[var(--chan-amber-ink)]');
     expect(screen.getByRole('img', { name: 'Użytkownik VIP' })).toBe(pill);
     cleanup();
@@ -84,12 +84,32 @@ describe('comment badges under the avatar', () => {
     expect(screen.getByText('VIP')).toHaveAttribute('aria-label', 'VIP user');
   });
 
-  it('VIP is under the avatar and the avatar has no creator ring', () => {
+  it('VIP gets an amber ring like the creator ring (same width and offset, also in replies); the creator ring wins', () => {
+    const ringOf = () => (screen.getByAltText('Jurek').closest('[class*="ring-offset-2"]') as HTMLElement | null)?.className ?? '';
+    renderItem(commentBy(['VIP']));
+    expect(ringOf()).toContain('ring-2');
+    expect(ringOf()).toContain('ring-[var(--chan-amber-bright)]');
+    expect(ringOf()).not.toContain('ring-[var(--chan-blue)]');
+    cleanup();
+    renderItem(commentBy(['VIP']), 'pl', true);
+    expect(ringOf()).toContain('ring-[var(--chan-amber-bright)]');
+    cleanup();
+    renderItem(commentBy(['AUTHOR']));
+    const creatorRing = ringOf();
+    cleanup();
+    renderItem(commentBy(['AUTHOR', 'VIP']));
+    expect(ringOf()).toBe(creatorRing);
+    expect(ringOf()).not.toContain('amber');
+    cleanup();
+    renderItem(commentBy([]));
+    expect(ringOf()).toBe('');
+  });
+
+  it('VIP is under the avatar', () => {
     renderItem(commentBy(['VIP']));
     const avatar = screen.getByAltText('Jurek');
     const column = screen.getByText('VIP').closest('[style*="height: 17px"]')!.parentElement as HTMLElement;
     expect(column).toContainElement(avatar);
-    expect(avatar.className).not.toContain('ring-[var(--chan-blue)]');
   });
 
   it('a creator who is also VIP shows ONE pill, "Twórca" (the more important), so the column never grows', () => {
@@ -129,6 +149,21 @@ describe('comment badges under the avatar', () => {
     const name = screen.getByText('Bardzo Długi Nick Który Się Nie Mieści W Jednym Wierszu');
     expect(name.className).toContain('truncate');
     expect(name).not.toContainElement(screen.getByText('VIP'));
+  });
+
+  it('VIP and creator pills share one shape (only the colours differ) and neither has a border, ring or outline', () => {
+    const { container } = render(
+      <>
+        <AuthorBadge kind="AUTHOR" language="pl" />
+        <AuthorBadge kind="VIP" language="pl" />
+      </>,
+    );
+    const [creator, vip] = [...container.querySelectorAll('[data-badge]')].map((el) => el.className.split(' '));
+    const shape = (list: string[]) => list.filter((c) => !/^(bg-|text-\[var)/.test(c)).sort();
+    expect(shape(vip)).toEqual(shape(creator));
+    for (const list of [creator, vip]) expect(list.join(' ')).not.toMatch(/border|ring|outline|shadow/);
+    expect(creator.join(' ')).toContain('bg-[var(--cm-blue-14)]');
+    expect(vip.join(' ')).toContain('bg-[var(--cm-amber-14)]');
   });
 
   it('AuthorBadge works alone for both kinds', () => {
