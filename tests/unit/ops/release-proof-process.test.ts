@@ -93,6 +93,9 @@ describe('real local CI compiler result', () => {
     });
     expect(result.error).toBeUndefined(); expect(result.status, result.stdout + result.stderr).toBe(1);
     const report = JSON.parse(readFileSync(path.join(f.repo, '.claude/local-ci-last.json'), 'utf8'));
+    const compilerLog = readFileSync(path.join(f.repo, '.claude/local-ci-logs/typecheck-all.log'), 'utf8');
+    expect(compilerLog).toContain('TS2322');
+    expect(compilerLog).toContain('.next/invalid.ts');
     expect(report.results.find((g: { id: string }) => g.id === 'typecheck-all'), result.stdout + result.stderr).toMatchObject({ status: 'FAIL' });
     expect(report.ok).toBe(false);
     expect(report.sourceBefore.fingerprint).toBe(report.sourceAfter.fingerprint);
