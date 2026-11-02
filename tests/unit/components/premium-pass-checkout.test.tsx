@@ -94,8 +94,11 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(within(group).getAllByText('Bestseller')).toHaveLength(1);
     expect(summaryOf(dialog)).toHaveTextContent('Dostęp bez limitu');
     expect(summaryOf(dialog)).toHaveTextContent('29,99');
-    expect(summaryOf(dialog)).toHaveTextContent('zawiera VAT');
-    expect(dialog.getByText('zawiera VAT').closest('[class*="orderTotal"]')).toHaveTextContent('Razem do zapłaty (brutto)'); // the note sits inside the total bar, not as a line under the box
+    // VAT status exempt (the default, lib/config/vat.ts): final price, no VAT amount; the note sits inside the total bar, not as a line under the box (the active mode is covered by premium-pass-vat.test.tsx)
+    expect(summaryOf(dialog)).toHaveTextContent('sprzedawca zwolniony z VAT');
+    expect(summaryOf(dialog)).not.toHaveTextContent('zawiera VAT');
+    expect(dialog.getByText('sprzedawca zwolniony z VAT').closest('[class*="orderTotal"]')).toHaveTextContent('Razem do zapłaty');
+    expect(summaryOf(dialog)).not.toHaveTextContent('brutto');
     // payment method and legal links belong to step 2; nothing to tick, no text field
     expect(dialog.queryByRole('combobox', { name: 'Metoda płatności' })).toBeNull();
     expect(dialog.queryAllByRole('checkbox')).toHaveLength(0);

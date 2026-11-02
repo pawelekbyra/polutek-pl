@@ -8,7 +8,7 @@ import type { Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import type { PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
 import { CheckIcon, CrossIcon, PlayIcon } from "./PassIcons";
-import { methodLabel, passDate, price, productName, sellerName } from "./pass-copy";
+import { methodLabel, passDate, price, productName, receiptPriceSuffix, sellerName } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
 type ActivePass = Exclude<PassStatusDto, { state: "none" }>;
@@ -26,7 +26,7 @@ export function PassReceipt({ tx, language, pass }: { tx: Tx; language: Locale; 
       <div><dt>{tx("Produkt", "Product")}</dt><dd>{productName(tx, pass.productId)}</dd></div>
       <div>
         <dt>{tx("Kwota", "Amount")}</dt>
-        <dd>{price(language, pass.priceMinor, pass.currency)} {tx("brutto", "gross")} {demo && <span className={styles.muted}>{tx("(demo: nic nie pobrano)", "(demo: nothing charged)")}</span>}</dd>
+        <dd>{price(language, pass.priceMinor, pass.currency)}{receiptPriceSuffix(tx) ? ` ${receiptPriceSuffix(tx)}` : ""} {demo && <span className={styles.muted}>{tx("(demo: nic nie pobrano)", "(demo: nothing charged)")}</span>}</dd>
       </div>
       <div><dt>{tx("Metoda", "Method")}</dt><dd>{methodLabel(tx, pass.method)}{demo ? ` ${tx("(symulacja)", "(simulated)")}` : ""}</dd></div>
       <div><dt>{tx("Ważny do", "Valid until")}</dt><dd>{pass.lifetime || !pass.expiresAt ? tx("Dostęp bez limitu", "Unlimited access") : passDate(language, pass.expiresAt, true)}</dd></div>

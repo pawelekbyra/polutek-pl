@@ -3,6 +3,7 @@ import type { Tx } from "@/lib/i18n/ui";
 import { intlLocale } from "@/lib/i18n/ui";
 import type { Locale } from "@/lib/i18n/routing";
 import { formatPassPrice } from "@/lib/modules/patron-zone/domain/offer";
+import { isVatExempt } from "@/lib/config/vat";
 import { describeTipMethod } from "../support/tip-flow-config";
 
 /**
@@ -32,8 +33,30 @@ export function sellerLine(tx: Tx): string {
   return tx("Sprzedawca: {0}", "Seller: {0}", sellerName(tx));
 }
 
+/*
+ * VAT wording (lib/config/vat.ts, `VAT_STATUS`). DO UZGODNIENIA z właścicielem/księgowym: sformułowania dla konsumenta w trybie
+ * "exempt" (sprzedawca zwolniony podmiotowo z VAT). Podstawa prawna zwolnienia (art. 113 ustawy o VAT) ma być tylko na fakturze,
+ * nie w interfejsie. Tryb "active" zachowuje dotychczasowe teksty ("zawiera VAT", ceny brutto). Kwoty płatności są takie same w obu trybach.
+ */
+
+/** The short VAT note under the total and on the offer cards. */
 export function vatLine(tx: Tx): string {
-  return tx("zawiera VAT", "includes VAT");
+  return isVatExempt() ? tx("sprzedawca zwolniony z VAT", "seller exempt from VAT") : tx("zawiera VAT", "includes VAT");
+}
+
+/** The VAT note in the terms footer (longer than `vatLine`, a full statement). */
+export function vatTermsNote(tx: Tx): string {
+  return isVatExempt() ? tx("Cena końcowa; sprzedawca jest zwolniony z VAT", "Final price; the seller is exempt from VAT") : tx("zawiera VAT", "includes VAT");
+}
+
+/** The label of the total in the order summary. */
+export function totalLabel(tx: Tx): string {
+  return isVatExempt() ? tx("Razem do zapłaty", "Total to pay") : tx("Razem do zapłaty (brutto)", "Total to pay (incl. VAT)");
+}
+
+/** The word after the amount on the receipt ("brutto" while VAT is active; nothing when the seller is exempt: the price is just final). */
+export function receiptPriceSuffix(tx: Tx): string {
+  return isVatExempt() ? "" : tx("brutto", "gross");
 }
 
 /** Stripe method ids and the demo ids share one label (the tip gateway's own tile copy). */
