@@ -8,6 +8,10 @@
   transform-origin: var(--transform-origin); transition: opacity 160ms ease, transform 160ms ease;
 }
 .panel[data-starting-style], .panel[data-ending-style] { opacity: 0; transform: translateY(-4px) scale(.98); }
+/* Phones: the positioner centres the panel on the screen (equal side margins); the height leaves room for the top bar and scrolls inside. */
+@media (max-width: 767.98px) {
+  .panel { width: min(380px, calc(100vw - 24px)); max-height: min(calc(100dvh - var(--header-h, 47px) - 16px), var(--available-height, 9999px)); }
+}
 
 /* Header: title left, quiet icon actions right (the popover close disc sits in the corner after them). */
 .head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 56px 4px 16px; }
@@ -98,50 +102,3 @@
 }
 @media (max-width: 359px) { .head { padding-left: 12px; } .toolbar { padding-inline: 12px; } .filter { padding: 0 10px; } .item { gap: 10px; } }
 @media (prefers-reduced-motion: reduce) { .panel { transition: none; } .refreshing svg { animation: none; } }
-
-/* ---------------------------------------------------------------------------------------------------------------------
-   Bottom sheet (phones, < 768 px; the popover above stays for wider screens). Base UI Drawer: modal, swipe down to dismiss.
-   One curve both ways (same as the patron checkout sheet) and 260 ms; only transform and opacity move.
-   The popup carries a 48 px bleed under the visible part so a rubber-band drag or a dynamic toolbar never shows a gap. */
-.sheetBackdrop {
-  position: fixed; inset: 0; z-index: 1100; min-height: 100dvh; touch-action: none; background: rgba(5, 7, 13, .5);
-  opacity: calc(1 - var(--drawer-swipe-progress, 0)); transition: opacity 260ms cubic-bezier(.22, 1, .36, 1);
-}
-@supports (-webkit-touch-callout: none) { .sheetBackdrop { position: absolute; } }
-.sheetBackdrop[data-starting-style], .sheetBackdrop[data-ending-style] { opacity: 0; }
-.sheetBackdrop[data-swiping] { transition-duration: 0ms; }
-.sheetViewport { position: fixed; inset: 0; z-index: 1101; display: flex; align-items: flex-end; justify-content: center; touch-action: none; isolation: isolate; }
-.sheet {
-  --bleed: 48px;
-  position: relative; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; overflow: hidden; outline: none;
-  height: calc(min(78dvh, 100dvh - 48px) + var(--bleed)); max-height: calc(100dvh - 48px + var(--bleed)); margin-bottom: calc(-1 * var(--bleed)); padding-bottom: var(--bleed);
-  border-radius: 22px 22px 0 0; background: var(--chan-card); color: var(--chan-ink); font-family: var(--font-geist-sans, sans-serif);
-  box-shadow: 0 -12px 40px -14px rgba(15, 23, 42, .3); touch-action: none; will-change: transform;
-  transform: translateY(var(--drawer-swipe-movement-y, 0px)); transition: transform 260ms cubic-bezier(.22, 1, .36, 1);
-}
-.sheet[data-starting-style], .sheet[data-ending-style] { transform: translateY(100%); }
-.sheet[data-swiping] { transition-duration: 0ms; user-select: none; -webkit-user-select: none; }
-.sheet[data-ending-style][data-swiping] { transition-duration: 260ms; }
-.sheetDrag { flex: none; padding-top: 8px; cursor: grab; user-select: none; -webkit-user-select: none; }
-.grabber { display: block; width: 36px; height: 4px; margin: 0 auto 2px; border-radius: 999px; background: var(--chan-line-soft, #d5dce8); }
-.sheet .head { padding: 4px 56px 0 16px; min-height: 48px; }
-.sheet .iconButton { width: 44px; height: 44px; }
-.sheet .toolbar { padding-block: 2px 4px; min-height: 48px; }
-.sheet .filter { position: relative; }
-.sheet .filter::before, .sheet .newItems::before, .sheet .expand::before { content: ""; position: absolute; inset: -6px -2px; }
-.sheet .newItems, .sheet .expand { position: relative; }
-.sheet .expand::before { inset: -10px -8px; }
-.sheet .readButton { position: relative; }
-.sheet .readButton::before { content: ""; position: absolute; inset: -2px -6px; }
-.sheet .destination { position: relative; }
-.sheet .destination::before { content: ""; position: absolute; inset: -3px 0; }
-.sheet .retry { min-height: 44px; }
-.sheet .scroll { touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
-.sheet .footer { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
-.sheet .viewAll { min-height: 44px; }
-.sheet button:not([data-close-button]):disabled { cursor: wait; opacity: .5; }
-.sheet button:not([data-close-button]):focus-visible, .sheet a:focus-visible { outline: 2px solid var(--chan-blue); outline-offset: 2px; }
-@media (max-width: 359px) { .sheet .head { padding-left: 12px; } }
-/* Panel switched popover <-> sheet while open (rotation): appear in place, no slide or fade. */
-.panel[data-instant], .sheet[data-instant], .sheetBackdrop[data-instant] { transition: none; }
-@media (prefers-reduced-motion: reduce) { .sheet, .sheetBackdrop { transition: none !important; } }

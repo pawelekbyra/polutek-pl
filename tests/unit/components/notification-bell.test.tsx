@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import NotificationBell from '@/app/components/notifications/NotificationBell';
 import { txFor } from '../i18n/mock-language';
@@ -47,5 +48,31 @@ describe('notification bell interactions', () => {
     await screen.findByRole('link', { name: /Notification like/ });
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     await waitFor(() => expect(bell).toHaveFocus());
+  });
+});
+
+describe('notification panel on phones: a centred popover, never a bottom sheet', () => {
+  const phone = (matches: boolean) => { window.matchMedia = vi.fn().mockReturnValue({ matches, addEventListener: vi.fn(), removeEventListener: vi.fn() }); };
+  const open = async () => { fireEvent.click(screen.getByRole('button', { name: /Powiadomienia/ })); await screen.findByRole('link', { name: /Notification like/ }); return screen.getByRole('dialog'); };
+
+  it('is centred on the screen below 768 px and aligned to the bell above it', async () => {
+    phone(true);
+    const { unmount } = render(<NotificationBell />);
+    const dialog = await open();
+    expect(dialog.parentElement).toHaveAttribute('data-align', 'center');
+    expect(dialog).not.toHaveAttribute('aria-modal');
+    expect(document.querySelector('[data-notification-sheet]')).toBeNull();
+    unmount(); cleanup();
+    phone(false);
+    render(<NotificationBell />);
+    expect((await open()).parentElement).toHaveAttribute('data-align', 'end');
+  });
+
+  it('has no bottom sheet code and sizes the phone popover from the viewport and the top bar', () => {
+    const bell = readFileSync('app/components/notifications/NotificationBell.tsx', 'utf8');
+    const css = readFileSync('app/components/notifications/notification-panel.module.css', 'utf8');
+    expect(bell).not.toMatch(/Drawer|NotificationSheet/);
+    expect(css).not.toMatch(/sheet/i);
+    expect(css).toMatch(/max-width: 767\.98px[\s\S]*width: min\(380px, calc\(100vw - 24px\)\)[\s\S]*100dvh - var\(--header-h, 47px\) - 16px/);
   });
 });
