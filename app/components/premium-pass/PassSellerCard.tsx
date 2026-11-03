@@ -4,10 +4,10 @@
 // the (i) button opens a short extra paragraph (height animated with the grid-rows trick, no motion when reduced).
 import React, { useId, useState } from "react";
 import { Info, Store } from "lucide-react";
-import { ShieldCheck } from "../icons";
 import { cn } from "@/lib/utils";
 import type { Tx } from "@/lib/i18n/ui";
 import { PATRON_SELLER } from "./pass-copy";
+import { TrustShieldIcon } from "./PassIcons";
 import type { PassPayMode } from "./PassTrustRow";
 import styles from "./premium-pass.module.css";
 
@@ -20,22 +20,23 @@ export function PassSellerCard({ tx, compact, mode = "demo" }: { tx: Tx; compact
       <div className={styles.sellerCardRow}>
         <span className={styles.sellerCardIconBox} aria-hidden="true"><Store size={compact ? 15 : 17} strokeWidth={1.8} focusable="false" /></span>
         <div className={styles.sellerCardText}>
-          {compact ? (
-            <b>{tx("Sprzedawca: {0}", "Seller: {0}", PATRON_SELLER.name)}</b>
-          ) : (
-            <>
-              <span className={styles.sellerLabel}>{tx("Sprzedawca", "Seller")}:</span>
-              <b>{PATRON_SELLER.name}</b>
-            </>
-          )}
+          {compact ? null : <span className={styles.sellerLabel}>{tx("Sprzedawca", "Seller")}:</span>}
+          <span className={styles.sellerNameRow}>
+            <b>{compact ? tx("Sprzedawca: {0}", "Seller: {0}", PATRON_SELLER.name) : PATRON_SELLER.name}</b>
+            {/* A badge, NOT a claim of verification: it never says "verified" and its label is true (the payment is secure / test mode). It shows only while a gateway runs. */}
+            {mode !== "demo" && (
+              <span
+                className={styles.sellerBadge}
+                role="img"
+                data-trust-badge=""
+                aria-label={mode === "live" ? tx("Bezpieczna płatność", "Secure payment") : tx("Tryb testowy: bez prawdziwej płatności", "Test mode: no real payment")}
+                title={mode === "live" ? tx("Bezpieczna płatność", "Secure payment") : tx("Tryb testowy: bez prawdziwej płatności", "Test mode: no real payment")}
+              >
+                <TrustShieldIcon />
+              </span>
+            )}
+          </span>
           {details.length > 0 && <span>{details.join(", ")}</span>}
-          {/* NOT "verified seller": no independent party has verified the seller. The true statement is who processes the payment (Stripe); in test mode it says so. */}
-          {!compact && mode !== "demo" && (
-            <span className={styles.sellerStripe} data-stripe-badge="">
-              <ShieldCheck size={14} aria-hidden="true" focusable="false" />
-              {mode === "live" ? tx("Płatność przetwarza Stripe", "Payment processed by Stripe") : tx("Stripe (tryb testowy)", "Stripe (test mode)")}
-            </span>
-          )}
         </div>
         <button
           type="button"

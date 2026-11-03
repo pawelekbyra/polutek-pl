@@ -137,6 +137,6 @@
  "Secure SSL payment": "Sichere SSL-Zahlung",
  "Secure SSL connection": "Sichere SSL-Verbindung",
  "Accepted payment methods": "Akzeptierte Zahlungsmethoden",
- "Payment processed by Stripe": "Zahlung wird von Stripe verarbeitet",
- "Stripe (test mode)": "Stripe (Testmodus)"
+ "Secure payment": "Sichere Zahlung",
+ "Test mode: no real payment": "Testmodus: keine echte Zahlung"
 }
