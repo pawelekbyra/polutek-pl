@@ -140,7 +140,7 @@ describe("comment list use cases: one batched lookup for the whole page (no N+1)
       const table: Record<string, string> = {
         [passKey("vip-1")]: pass(),
         [passKey("expired-1")]: pass({ expiresAt: new Date(NOW.getTime() - DAY).toISOString() }),
-        [passKey("life-1")]: pass({ productId: "ACCESS_LIFETIME", lifetime: true, expiresAt: null }),
+        [passKey("life-1")]: pass({ productId: "ACCESS_LIFETIME", priceMinor: 2999, expiresAt: new Date(NOW.getTime() + 89 * DAY).toISOString() }), // the 3-month plan
       };
       return where.key.in.filter((key) => key in table).map((key) => ({ key, value: table[key] }));
     });

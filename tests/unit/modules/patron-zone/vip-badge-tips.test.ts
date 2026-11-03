@@ -116,10 +116,13 @@ describe("VIP badge: paid access yes, tips never", () => {
     expect(await isVip()).toBe(false);
   });
 
-  it("the unlimited access is a permanent badge", async () => {
+  it("the 3-month access gives the badge for 3 months only, then it disappears", async () => {
     const life = seedPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
     await POST(signedRequest("payment_intent.succeeded", intent(life, { purpose: "premium_pass" })));
-    expect((await listVipUserIds(db as never, ["user_1"], new Date("2099-01-01T00:00:00.000Z"))).has("user_1")).toBe(true);
+    const later = (days: number) => new Date(Date.now() + days * 86_400_000);
+    expect((await listVipUserIds(db as never, ["user_1"], later(80))).has("user_1")).toBe(true); // 3 months are 89 to 92 days
+    expect((await listVipUserIds(db as never, ["user_1"], later(94))).has("user_1")).toBe(false);
+    expect((await listVipUserIds(db as never, ["user_1"], new Date("2099-01-01T00:00:00.000Z"))).has("user_1")).toBe(false);
   });
 });
 
