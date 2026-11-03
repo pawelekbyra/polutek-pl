@@ -2,10 +2,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { releaseControl } from '../../fixtures/release-control.mjs';
+import { validateDockerfileBases } from '../../../scripts/ops/release/dockerfile.mjs';
 import { buildRelease } from '../../../scripts/ops/release/build.mjs';
 
 const fixtures: ReturnType<typeof releaseControl>[] = [];
-function fixture() { const f = releaseControl(); fixtures.push(f); return f; }
+function fixture(overrides?: Record<string, string>) { const f = releaseControl(overrides); fixtures.push(f); return f; }
 afterEach(() => { for (const f of fixtures.splice(0)) rmSync(f.directory, { recursive: true, force: true }); });
 
 describe('release producer boundary (controlled Docker port)', () => {
@@ -73,5 +74,25 @@ describe('release producer boundary (controlled Docker port)', () => {
     const f = fixture();
     const args = { report: f.report, inputs: f.inputs, revision: f.revision, sourceRoot: f.archive, output: f.archive };
     expect(() => buildRelease(args, () => {})).toThrow('outside');
+  });
+});
+
+
+describe('Dockerfile inputs really control external build sources', () => {
+  it('accepts the actual application and admin Dockerfiles', () => {
+    expect(() => validateDockerfileBases(process.cwd())).not.toThrow();
+  });
+  it.each([
+    ['mutable FROM', 'ARG NODE_BASE=node:22\nFROM node:22 AS runner\n'],
+    ['uncontrolled COPY source', 'ARG NODE_BASE=node:22\nFROM ${NODE_BASE} AS runner\nCOPY --from=unreviewed:latest /bin/tool /bin/tool\n'],
+  ])('rejects %s before calling Docker even when all declared inputs are pinned', (_name, dockerfile) => {
+    const f = fixture({ 'deploy/serwerek/Dockerfile': dockerfile }); let builds = 0;
+    expect(() => buildRelease({ report: f.report, inputs: f.inputs, revision: f.revision, sourceRoot: f.archive,
+      output: path.join(f.directory, 'output') }, (args: string[]) => {
+        builds++;
+        const iid = args[args.indexOf('--iidfile') + 1];
+        writeFileSync(iid, f.metadata[path.basename(iid, '.iid')].Id);
+      }, f.inspect)).toThrow(/Dockerfile/);
+    expect(builds).toBe(0);
   });
 });

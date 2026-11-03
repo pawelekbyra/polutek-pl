@@ -1,6 +1,6 @@
 # Dowód źródeł, kontroli i tożsamości obrazów — rdzeń K06
 
-`scripts/ops/release-proof.mjs` zawiera wspólny walidator i zapis dowodu. **Budowanie pięciu obrazów z przypiętych wejść jest dostępne przez `build`. Producent uruchamia pełne kontrole i archiwizuje sprawdzone źródła; podłączenie do `images.yml`, `deploy.sh`, `deploy-admin.sh` i ręcznych ścieżek nie są jeszcze gotowe.** Samo dodanie tego narzędzia nie zabezpiecza obecnych ścieżek publikacji i nie upoważnia do wydania platformy.
+`scripts/ops/release-proof.mjs` zawiera wspólny walidator i zapis dowodu. **Budowanie pięciu obrazów z przypiętych wejść jest dostępne przez `build`. Producent uruchamia pełne kontrole i archiwizuje sprawdzone źródła; podłączenie do `images.yml`, `deploy.sh`, `deploy-admin.sh` i ręcznych ścieżek nie jest jeszcze gotowe.** Samo dodanie tego narzędzia nie zabezpiecza obecnych ścieżek publikacji i nie upoważnia do wydania platformy.
 
 ## Kontrakt
 
@@ -43,3 +43,5 @@ Dockerfile strony i panelu przyjmują globalne `NODE_BASE`, `FFMPEG_BASE`, `COLL
 Po zaliczeniu kontroli producent zachowuje `quality.json`, `inputs.json`, rzeczywiste archiwum Git i rozpakowany, ponownie sprawdzony kontekst. Buduje pięć obrazów i zwraca hash dowodu. Jest to nadal dowód zaufanego lokalnego operatora, bez podpisu/SLSA. Testy producenta używają prawdziwego Git/tar oraz jawnych portów kontrolnych CI i Dockera; nie dowodzą zaliczenia pełnego produktu.
 
 W tej partii nie uruchamiano pełnego producenta: obowiązkowe `audit` nadal wymaga rozstrzygnięcia historycznej odmowy uploadu, a gałąź audytu nie zawiera jeszcze wszystkich poprawek historycznego H1. Nie obchodzić tych warunków filtrami ani syntetycznym raportem. Publikacja i aktywacja nadal wymagają osobnego podłączenia.
+
+Przed pierwszą budową `release/dockerfile.mjs` sprawdza ograniczony kontrakt obu Dockerfile: zewnętrzne `FROM` muszą używać globalnie zadeklarowanych `NODE_BASE`, `FFMPEG_BASE` lub `COLLECTOR_BASE`, właściwych dla rodzaju etapu; `COPY --from` może wskazywać tylko wcześniejszy lokalny etap. Nowe dyrektywy parsera i montowane zewnętrzne źródła wymagają przeglądu. To kontrola użycia deklarowanych baz, nie pełny parser, audyt poleceń RUN ani gwarancja powtarzalności repozytoriów apt/npm.

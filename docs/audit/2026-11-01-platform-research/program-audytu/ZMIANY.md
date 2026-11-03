@@ -301,3 +301,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Nowy producent wymaga czystego dokładnego SHA, sam uruchamia pełne ścisłe CI z jednym slotem, odrzuca stary raport przez losowy runId, archiwizuje Git i sprawdza źródła przed budową.
 - 121/121 testów (w tym local-ci-lib), lint i skupione strict types PASS; rzeczywisty Git/tar i jawne porty CI/Dockera. Nie uruchomiono pełnej bramki audit ani produktu. H1 nadal ~80%, całość 5–10%, K06 otwarte.
 - Następne: granica faktycznego użycia przypiętych baz w Dockerfile, brakujące zależności H1 i wszyscy konsumenci. Bez publikacji i produkcji.
+
+## 3 listopada 2026 — K06: Dockerfile musi używać zadeklarowanych baz
+
+- Dwie rzeczywiście czerwone próby akceptacji ruchomego FROM i zewnętrznego COPY; preflight teraz odrzuca oba przed wywołaniem Dockera. Przejrzany ograniczony kontrakt, bez ogólnej deklaracji powtarzalności buildów.
+- 124/124 celowane, lint i skupione strict types PASS; aktualne oba Dockerfile akceptowane. Nie wykonano prawdziwego builda ani odbioru produktu.
+- K06/H1 otwarte, szacunki ~80% / 5–10% bez zmiany. Dalej brakujące zależności H1 i konsumenci.

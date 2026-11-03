@@ -6,7 +6,7 @@ import path from 'node:path';
 import { captureGitSource, sha256 } from '../../scripts/ops/release/source.mjs';
 import { IMAGE_KINDS, PUBLIC_ARGS, REQUIRED_GATES, expectedLabels } from '../../scripts/ops/release/policy.mjs';
 
-export function releaseControl() {
+export function releaseControl(dockerfileOverrides = {}) {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'polutek-release-control-'));
   const repo = path.join(directory, 'repo');
   const archive = path.join(directory, 'archive');
@@ -16,6 +16,21 @@ export function releaseControl() {
   writeFileSync(path.join(repo, 'bin/tool.sh'), '#!/bin/sh\nexit 0\n');
   writeFileSync(path.join(repo, '.gitignore'), 'node_modules\n.claude\n');
   chmodSync(path.join(repo, 'bin/tool.sh'), 0o755);
+  const dockerfiles = {
+    'deploy/serwerek/Dockerfile': [
+      'ARG NODE_BASE=node:22', 'ARG FFMPEG_BASE=ffmpeg:8', 'ARG COLLECTOR_BASE=node:22-alpine',
+      'FROM ${NODE_BASE} AS deps', 'FROM deps AS build', 'FROM ${NODE_BASE} AS migrator',
+      'FROM ${FFMPEG_BASE} AS ffmpeg', 'FROM ${NODE_BASE} AS worker',
+      'COPY --from=ffmpeg /ffmpeg /usr/local/bin/ffmpeg',
+      'FROM ${COLLECTOR_BASE} AS collector', 'FROM ${NODE_BASE} AS runner',
+    ].join('\n'),
+    'deploy/serwerek/Dockerfile.admin': 'ARG NODE_BASE=node:22\nFROM ${NODE_BASE} AS admin\n',
+    ...dockerfileOverrides,
+  };
+  for (const [name, content] of Object.entries(dockerfiles)) {
+    mkdirSync(path.dirname(path.join(repo, name)), { recursive: true });
+    writeFileSync(path.join(repo, name), content);
+  }
   const git = (...args) => execFileSync('git', ['-C', repo, ...args], { stdio: 'pipe' });
   git('init', '--quiet');
   git('add', '.');
@@ -23,6 +38,7 @@ export function releaseControl() {
   git('-c', 'user.name=Release Control', '-c', 'user.email=control@example.invalid', 'commit', '--quiet', '-m', 'control fixture');
   const source = captureGitSource(repo);
   for (const file of source.files) {
+    mkdirSync(path.dirname(path.join(archive, file.path)), { recursive: true });
     copyFileSync(path.join(repo, file.path), path.join(archive, file.path));
     if (process.platform !== 'win32') chmodSync(path.join(archive, file.path), file.mode === '100755' ? 0o755 : 0o644);
   }

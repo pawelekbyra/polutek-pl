@@ -4,6 +4,7 @@ import path from 'node:path';
 import { IMAGE_ID, hashJson, requireValue, verifySourceArchive } from './source.mjs';
 import { IMAGE_KINDS, expectedLabels, validateInputs, validateQuality } from './policy.mjs';
 import { createProof, inspectImage } from './proof.mjs';
+import { validateDockerfileBases } from './dockerfile.mjs';
 
 const TARGETS = Object.freeze({ app: 'runner', migrator: 'migrator', worker: 'worker', collector: 'collector', admin: 'admin' });
 
@@ -19,6 +20,7 @@ export function buildRelease({ report, inputs, revision, sourceRoot, output }, b
   const quality = validateQuality(report, revision);
   validateInputs(inputs);
   verifySourceArchive(sourceRoot, quality.source);
+  validateDockerfileBases(sourceRoot);
   const context = path.resolve(sourceRoot);
   const destination = path.resolve(output);
   const relative = path.relative(context, destination);

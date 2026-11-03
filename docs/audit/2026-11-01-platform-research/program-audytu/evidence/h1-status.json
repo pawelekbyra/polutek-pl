@@ -1358,12 +1358,12 @@
       "f72bbe27",
       "37eb1edb"
     ],
-    "package": "K06_LOCAL_PRODUCER_IMPLEMENTED_ALL_CONSUMERS_AND_REAL_PRODUCT_OPEN",
-    "tests_passed": 121,
+    "package": "K06_PRODUCER_AND_DOCKERFILE_INPUT_GUARD_PASS_CONSUMERS_PREREQUISITES_OPEN",
+    "tests_passed": 124,
     "lint_exit": 0,
     "whole_types_exit": 2,
     "release_ready": false,
-    "evidence": "k06-local-producer-2026-11-03/produce-result.json",
+    "evidence": "k06-local-producer-2026-11-03/pins-result.json",
     "historical_candidate_not_identical_to_current_tree": true,
     "focused_types_exit": 0
   }

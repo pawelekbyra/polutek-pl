@@ -4,7 +4,9 @@
 
 Producent dodany po części budowania (`c546726a`): `release-produce.mjs` uruchamia pełne ścisłe CI z jednym slotem, wymaga czystego wskazanego SHA przed/po i świeżego `runId`, tworzy rzeczywiste archiwum Git i dopiero przekazuje je do budowania. **121/121 testów**, lint zmienionych plików i skupiona ścisła kontrola typów PASS. Testy CI/Dockera kontrolowane, Git/tar rzeczywiste. Nie uruchomiono pełnego producenta aplikacji; brak kompletnego dowodu wydania. [Dowody producenta](program-audytu/evidence/k06-local-producer-2026-11-03/produce-result.json).
 
-Następne: sprawdzić, czy Dockerfile faktycznie konsumują przypięte wejścia (ujemna próba ignorowanego ARG), uzupełnić brakujące zależności H1 w tej gałęzi i zintegrować wszystkich konsumentów. K06 pozostaje otwarte, szacunki bez zmian.
+Domknięto kontrolę konsumowania baz w Dockerfile: dwa testy rzeczywiście czerwone (zaakceptowany ruchomy FROM i zewnętrzny COPY) → zielone; preflight odrzuca je przed Dockerem. **124/124 testy**, lint i skupione strict types PASS, oba rzeczywiste Dockerfile zgodne z kontraktem. [Dowody](program-audytu/evidence/k06-local-producer-2026-11-03/pins-result.json). Producent: `6f5d09c0`, wcześniejsze budowanie: `c546726a`.
+
+Następne: uzupełnić brakujące zależności H1 w tej gałęzi i zintegrować wszystkich konsumentów. K06 pozostaje otwarte, szacunki bez zmian.
 
 Obowiązuje `/opt/codex/ZADANIE-AUDYT.md`: implementacja tylko w tym worktree na `docs/polutek-platform-audit`, bez PR/merge/deploy. Cztery commity rdzenia K06 przeniesiono lokalnie do `37eb1edb`; wcześniejsze wyniki H1 niżej zachowują przypisanie do historycznych SHA. Pozostałych zmian tamtego kandydata jeszcze nie przeniesiono; nie traktować tej gałęzi jako identycznej z f9edc23a.
 

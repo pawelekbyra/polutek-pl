@@ -1,0 +1,24 @@
+{
+  "source_parent": "6f5d09c0",
+  "package": "K06-part-dockerfile-inputs",
+  "source_hashes": {
+    "scripts/ops/release/build.mjs": "5a2dd6cb46d1ccd59e80d0988a202402aabdde95285fb2a00580b77990b04e2b",
+    "scripts/ops/release/dockerfile.mjs": "fc7926be1e94d8f124e2337b308174ee5d464c7b860af90df674e58f939e023b",
+    "tests/fixtures/release-control.mjs": "513588cd905f00cef0f360abc5dd4863adf48715b657b9c5ac6f52b3ff3db6cd",
+    "tests/unit/ops/release-build.test.ts": "7b9dbc7cdb97f82ef4f287101efd3f7b7a74f5cadcc07ccd5d75b8afe5282182"
+  },
+  "red": {
+    "failed": 2,
+    "passed": 6,
+    "reason": "Builder accepted a mutable external FROM and an external COPY despite declared pinned inputs."
+  },
+  "green": {
+    "passed": 124,
+    "failed": 0,
+    "skipped": 0
+  },
+  "lint_exit": 0,
+  "focused_strict_types_exit": 0,
+  "scope": "Actual current Dockerfiles validated. Controlled Docker port, no real build or full product acceptance.",
+  "release_ready": false
+}
