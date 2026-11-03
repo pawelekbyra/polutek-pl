@@ -321,27 +321,19 @@
 .payHead { display: flex; flex-direction: column; gap: var(--pass-gap); padding: var(--pass-title-gap) var(--pass-gutter) var(--pass-gap); }
 /* The seller card is light blue, in the family of the order summary (--pass-blue-fill) and the currency field. */
 /* Passive info row, NOT a card: no fill, no edge, no shadow, default cursor; only the (i) button is clickable. */
-.sellerCard { border: 1px solid var(--pass-gray-200); border-radius: 12px; background: var(--pass-gray-100); box-shadow: none; cursor: default; padding: 14px 8px 14px 14px; }
-/* Icon, label + name and the (i) all sit on ONE vertical centre line of the card (equal top and bottom padding, touch height >= 44 px). */
+.sellerCard { border: 1px solid var(--pass-gray-200); border-radius: 12px; background: var(--pass-gray-100); box-shadow: none; cursor: default; padding: 14px; }
+/* Icon, label + name and the trust shield all sit on ONE vertical centre line of the card (equal top and bottom padding); the shield's right margin equals the icon's left padding (14 px). */
 .sellerCardRow { display: flex; align-items: center; gap: 12px; min-height: 36px; }
 .sellerCardIconBox { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 8px; background: var(--pass-gray-200); color: var(--pass-gray-500); }
 .sellerCardText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 .sellerCardText b { font-size: 14px; line-height: 20px; font-weight: 700; color: var(--pass-gray-700); text-wrap: balance; overflow-wrap: anywhere; }
 .sellerCardText span { font-size: 11px; line-height: 14px; color: var(--pass-gray-500); }
 .sellerCardText .sellerLabel { font-size: 11px; line-height: 14px; font-weight: 500; color: var(--pass-gray-500); }
-.sellerCardInfo { flex: 0 0 auto; width: 44px; height: 44px; margin: -4px 0; display: grid; place-items: center; border: 0; border-radius: 999px; background: transparent; color: var(--pass-gray-500); cursor: pointer; }
-.sellerCardInfo[aria-expanded="true"] { color: var(--pass-gray-700); }
-.sellerCardInfo:focus-visible { outline: 3px solid var(--chan-blue, #2563eb); outline-offset: 0; }
-.sellerCardNote { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 220ms ease, visibility 0s linear 220ms; }
-.sellerCardNoteOpen { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 220ms ease, visibility 0s; }
-.sellerCardNote > div { min-height: 0; overflow: hidden; }
-.sellerCardNote p { margin: 0; padding: 10px 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--chan-body, #344054); }
 .sellerCardCompact { padding-top: 6px; padding-bottom: 6px; }
 .sellerCardCompact .sellerCardRow { gap: 10px; }
 .sellerCardCompact .sellerCardIconBox { width: 28px; height: 28px; }
 .sellerCardCompact .sellerCardText b { font-size: 13.5px; }
 @media (min-width: 350px) { .sellerCardCompact .sellerCardText b { white-space: nowrap; } }
-@media (prefers-reduced-motion: reduce) { .sellerCardNote, .sellerCardNoteOpen { transition: none; } }
 /* Short phones (360x640 and below): the same rhythm, just tighter, so steps 1 and 2 fit without scrolling. */
 @media (max-height: 700px) { .pass { --pass-title-gap: 14px; --pass-gap: 10px; --pass-box-y: 7px; --pass-bar-y: 8px; }
   .testNote { margin-bottom: 0; padding: 2px 0; font-size: 12px; line-height: 1.35; }
@@ -357,9 +349,65 @@
 .trustLogos { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 0 auto; padding: 0; list-style: none; }
 .trustLogos li { display: block; line-height: 0; }
 .trustLogos img { display: block; height: 15px; width: auto; }
-.sellerNameRow { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.sellerCardText .sellerNameRow b { min-width: 0; }
-.sellerCardText .sellerBadge { flex: 0 0 auto; display: inline-grid; place-items: center; width: 24px; height: 24px; margin: -2px 0; color: var(--pass-ok); }
-.sellerBadge svg { width: 24px; height: 24px; display: block; }
-.sellerCardCompact .sellerBadge { width: 20px; height: 20px; margin: -1px 0; }
-.sellerCardCompact .sellerBadge svg { width: 20px; height: 20px; }
+
+/* ===== Checkout palette A (owner decision 2026-11-03): navy CTA, vivid blue accent, navy-tinted neutrals. Scoped to the checkout sheet (.sheet),
+   so the offer page and the locked stage keep their own tokens. Amber stays ONLY on BESTSELLER / VIP, green ONLY on security elements.
+   Contrasts (checked in tests/unit/premium-pass-palette-contrast.test.ts): text >= 4.5:1, control edges >= 3:1. ===== */
+.sheet {
+  /* shared gate components read --chan-ink / --chan-body / --chan-muted: inside the checkout they become navy-tinted */
+  --chan-ink: #0b1b3d;
+  --chan-body: #334155;
+  --chan-muted: #56627a;
+  --pass-cta: #01286a;
+  --pass-cta-hover: #011d4d;
+  --pass-cta-ink: #ffffff;
+  --pass-accent: #1d4ed8;          /* selection, focus */
+  --pass-tint: #eaf2ff;            /* order summary, selected card, currency row */
+  --pass-tint-line: #b9cdf0;
+  --pass-card-line: #c5d3ec;       /* neutral card edge */
+  --pass-edge: #6b87c0;            /* control edges: 3.59:1 on white, 3.19:1 on the tint */
+  --pass-ok: #15803d;              /* security only */
+  --pass-err: #b91c1c;
+  --pass-gray-500: #56627a;
+  --pass-gray-600: #475569;
+  --pass-gray-700: #334155;
+  --pass-gray-800: #1b2a4e;
+  --pass-gray-900: #0b1b3d;
+  --pass-gray-300: #6b87c0;        /* rings of radios / pill (controls) */
+  --pass-blue-600: #1d4ed8;
+  --pass-blue-400: #1d4ed8;
+  --pass-blue-100: #b9cdf0;
+  --pass-blue-50-80: #eaf2ff;
+  --pass-blue-50-50: #eaf2ff;
+  --pass-blue-edge: #6b87c0;       /* select fields of the shared gate */
+  --pass-field-ring: rgba(29, 78, 216, .22);
+  --pass-shadow-sm: 0 1px 2px 0 rgba(1, 40, 106, .08);
+  box-shadow: 0 40px 80px -30px rgba(1, 40, 106, .55);
+}
+/* A very light blue wash behind the title row, fading to white inside the (unchanged) header height. */
+.sheet .sheetHead { background: linear-gradient(180deg, #e6efff 0%, #ffffff 100%); }
+.sheet .sheetTitle, .sheet .productName, .sheet .productPrice, .sheet .orderSoloPrice { color: var(--chan-ink); }
+.sheet .orderSoloLabel, .sheet .sellerCardText b { color: var(--chan-body); }
+.sheet .inkBtn { background: var(--pass-cta); color: var(--pass-cta-ink); box-shadow: 0 10px 18px -8px rgba(1, 40, 106, .55), 0 3px 6px -2px rgba(1, 40, 106, .3); }
+.sheet .inkBtn:hover:not(:disabled) { background: var(--pass-cta-hover); }
+.sheet .product { border-color: var(--pass-card-line); }
+.sheet .product:hover { border-color: var(--pass-accent); }
+.sheet .product:has(input:checked) { border-color: var(--pass-accent); background: var(--pass-tint); box-shadow: 0 12px 24px -12px rgba(1, 40, 106, .5), 0 2px 4px -1px rgba(1, 40, 106, .12); }
+.sheet .productCheck { border-color: var(--pass-edge); }
+.sheet .product:has(input:checked) .productCheck { border-color: var(--pass-accent); }
+.sheet .productCheck::after { background: var(--pass-accent); }
+.sheet .currencyRow { background: var(--pass-tint); border-color: var(--pass-tint-line); }
+.sheet .orderSolo, .sheet .summaryRow { background: var(--pass-tint); border-color: var(--pass-tint-line); }
+.sheet .sellerCard { background: #f3f6fc; border-color: #d5deef; }
+.sheet .sellerCardIconBox { background: #dce6f8; color: #1e3a8a; }
+.sheet .stepPip { background: #b9c8e3; }
+.sheet .stepPipNow { background: var(--pass-cta); }
+.sheet .stepItem:not(:last-child)::after, .sheet .stepItemDone:not(:last-child)::after { background: #c5d3ec; }
+.sheet .stepBtn { background: var(--pass-edge); }
+.sheet .legalSep { background: var(--pass-edge); opacity: .7; }
+.sheet .backBtn { border-color: var(--pass-edge); color: var(--chan-ink); }
+.sheet .pay, .sheet .secureFooter { border-top-color: var(--pass-card-line); }
+
+/* Trust shield: informative only, on the card's right edge (32 px, centred on the card). Green = security only. */
+.sellerBadge { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; color: var(--pass-ok); }
+.sellerBadge svg { width: 32px; height: 32px; display: block; }

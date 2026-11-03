@@ -114,8 +114,6 @@
  "one-time, {0} days": "一次性付款，{0} 天",
  "test mode": "测试模式",
  "Tax ID (NIP): {0}": "NIP（税号）：{0}",
- "Seller information": "卖家信息",
- "You are buying from the seller named above. Invoice details and contact are in the Terms.": "你正在向上述卖家购买。发票信息和联系方式见条款。",
  "Demo mode: nothing will be charged.": "演示模式：不会扣款。",
  "Payments are encrypted and handled by a trusted provider. We never store your card details.": "付款经过加密，由值得信赖的服务商处理。我们绝不会保存你的银行卡信息。",
  "Payment currency": "支付货币",
