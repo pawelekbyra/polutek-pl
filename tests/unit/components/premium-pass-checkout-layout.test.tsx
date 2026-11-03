@@ -70,8 +70,8 @@ describe('patron checkout layout', () => {
     const dialog = within(await screen.findByRole('dialog'));
     const legend = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'LEGEND')!;
     expect(legend.className).toContain('sr-only');
-    const visible = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'DIV')!;
-    expect(visible).toBeInTheDocument();
+    expect(dialog.getAllByText('Wybierz dostęp')).toHaveLength(1); // only the screen-reader legend: no visible title row
+    expect(dialog.getByRole('group', { name: 'Wybierz dostęp' })).toBe(legend.closest('fieldset'));
     const field = dialog.getByRole('combobox', { name: 'Waluta płatności' });
     const row = field.closest('[class*="currencyRow"]') as HTMLElement;
     const visibleLabel = row.querySelector('[class*="currencyLabel"]') as HTMLElement;
@@ -81,7 +81,7 @@ describe('patron checkout layout', () => {
     expect(field.className).toContain('h-8 '); // 32 px pill, not the 52 px tile
     expect(field.className).not.toContain('w-full');
     expect(field.className).toContain('before:-inset-y-[6px]'); // 6 + 32 + 6 = 44 px touch height
-    expect(row.nextElementSibling).toBe(visible); // access cards follow the currency row
+    expect(row.nextElementSibling?.className).toContain('productGrid'); // access cards follow the currency row directly
     expect(FIELD_LABEL_CLASS).toMatch(/text-\[13px\].*text-\[var\(--chan-body\)\]|text-\[var\(--chan-body\)\].*text-\[13px\]/);
     expect(FIELD_LABEL_CLASS).toContain('font-[weight:var(--field-label-weight,400)]'); // regular in the gate, bold in the checkout via the one variable
     expect(FIELD_LABEL_CLASS).toContain('mb-[var(--field-label-gap,8px)]'); // label to field: one variable (8 px in the gate, 0 in the checkout, like step 3)
