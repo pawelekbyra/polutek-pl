@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/react";
 import { useAuthModal } from './auth/AuthModalProvider';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
+import { PatronCheckoutHost } from './premium-pass/PatronCheckoutHost';
 import Link from 'next/link';
 import VideoPlayer from './VideoPlayer';
 import { SafeAvatar } from './SafeAvatar';
@@ -347,7 +348,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             </div>
 
             <div className={cn("flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap", styles.actionRail)}>
-               {/* The gold patron button: PatronCheckoutHost (mounted in the account panel, UserMenu, on every page) opens the patron checkout on the
+               {/* The gold patron button: PatronCheckoutHost (mounted below) opens the patron checkout on the
                    "polutek:open-patron" event. It deliberately does not touch the URL: a router navigation
                    re-renders the whole page on the server. Signed-out click opens sign-in first, since buying
                    needs an account. The row's last item, so it fills the remaining space (flex-1 below lg:,
@@ -483,6 +484,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         </div>
         <VideoTaxonomyChips category={video.category} tags={video.tags} locale={language} tx={tx} className="mt-2 px-1" />
       </div>
+      <PatronCheckoutHost />
     </section>
   );
 };

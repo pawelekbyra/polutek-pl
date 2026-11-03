@@ -15,7 +15,6 @@ import { useSwitchLanguage } from "../useSwitchLanguage";
 import { cn } from "@/lib/utils";
 import { roleRingClass, type RoleBadgeKind } from "@/lib/role-badge";
 import { roleLabel } from "@/lib/role-label";
-import { PatronCheckoutHost, OPEN_PATRON_EVENT } from "../premium-pass/PatronCheckoutHost";
 
 interface UserMenuProps {
   isAdmin: boolean;
@@ -109,12 +108,6 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
   const close = useCallback(() => {
     dismiss();
     triggerRef.current?.focus();
-  }, [dismiss]);
-
-  // Same entry as the gold "Kup se Premium" button in Hero: the checkout host answers this event (it is mounted below).
-  const buyPremium = useCallback(() => {
-    dismiss();
-    window.dispatchEvent(new CustomEvent(OPEN_PATRON_EVENT));
   }, [dismiss]);
 
   const openAccount = useCallback((section: "profile" | "notifications") => {
@@ -276,18 +269,6 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
               </div>
               <CloseButton ref={closeRef} onClick={close} aria-label={tx("Zamknij menu", "Close menu")} />
             </div>
-            {role === "BASE" ? (
-              <section aria-label="Premium" className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-xl bg-[var(--chan-blue-soft)] px-3 py-2">
-                <p className="min-w-0 flex-1 text-[12px] font-semibold leading-tight text-[var(--chan-blue)]">{tx("Nie masz jeszcze Premium.", "You don't have Premium yet.")}</p>
-                <button
-                  type="button"
-                  onClick={buyPremium}
-                  className="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-[var(--chan-blue)] px-3 text-[12px] font-bold text-white transition-colors hover:bg-[var(--chan-blue)]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-focus-ring)] focus-visible:ring-offset-2"
-                >
-                  {tx("Kup Premium", "Get Premium")}
-                </button>
-              </section>
-            ) : null}
             <div className="flex justify-end px-4 pb-3">
               <Suspense fallback={null}>
                 <PanelLanguage />
@@ -378,7 +359,6 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
         </div>
       ) : null}
 
-      <PatronCheckoutHost />
       <AccountModal open={accountOpen} onOpenChange={setAccountOpen} isAdmin={isAdmin} initialSection={accountSection} />
     </>
   );
