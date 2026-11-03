@@ -1,0 +1,9 @@
+id,case,process_exit,passed_assertions,failed_assertions,filtered_or_pending,verdict,evidence,full_stack_status
+TQ-001,health_baseline,0,6,0,0,BASELINE_PASS,evidence/oracle-health_baseline.json,NIEWYKONANE
+TQ-002,health_wrong_equality_accepts,1,4,2,0,EXPECTED_DETECTION,evidence/oracle-health_wrong_equality_accepts.json,NIEWYKONANE
+TQ-003,health_missing_token_accepts,1,2,4,0,EXPECTED_DETECTION,evidence/oracle-health_missing_token_accepts.json,NIEWYKONANE
+TQ-004,health_plain_equality_same_boolean_semantics,0,6,0,0,SURVIVING_TARGETED_MUTATION_NOT_GLOBAL_VERDICT,evidence/oracle-health_plain_equality_same_boolean_semantics.json,NIEWYKONANE
+TQ-005,ops_static_baseline,0,7,0,17,BASELINE_PASS,evidence/oracle-ops_static_baseline.json,NIEWYKONANE
+TQ-006,ops_static_deploy_early_success,0,7,0,17,SURVIVING_TARGETED_MUTATION_NOT_GLOBAL_VERDICT,evidence/oracle-ops_static_deploy_early_success.json,NIEWYKONANE
+TQ-007,restore_helper_existing_test_baseline,0,4,0,0,BASELINE_PASS,evidence/oracle-restore_helper_existing_test_baseline.json,NIEWYKONANE
+TQ-008,restore_helper_verification_body_disabled,0,4,0,0,SURVIVING_TARGETED_MUTATION_NOT_GLOBAL_VERDICT,evidence/oracle-restore_helper_verification_body_disabled.json,NIEWYKONANE

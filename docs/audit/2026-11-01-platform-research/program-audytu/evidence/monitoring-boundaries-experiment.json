@@ -1,0 +1,132 @@
+{
+  "date": "2026-11-02",
+  "actual_source_sha256": {
+    "lib/modules/health/application/check-health.use-case.ts": "ee4fd8e7c089318058dd9fedcae22d663248230d7aa9759f5af6c8bdf1569af7",
+    "lib/modules/media/domain/media.policy.ts": "4d31f153475b72747a349a22fc3f0f6dda52daf0349606504d8d60feed6a1bc0",
+    "lib/modules/media/domain/media-safety.ts": "11a9be10c3fc773b8c943a2adbd37a31ab4bcb49461ea99b7f76e2ab3854f470",
+    "lib/modules/media/domain/media.errors.ts": "cfe1e3dc30d92f079a891cc1056abb18d1e0dac60ab272ca92d9fbb3ab1cfc3c",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "lib/api/health-token.ts": "1b675d3765549d635d0646857ec42dfca81f7dcfe98cb6f6e0698d80e7749cce",
+    "lib/modules/channel/domain/channel.policy.ts": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+    "lib/modules/channel/domain/channel.errors.ts": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+    "lib/modules/admin-overview/infrastructure/probes.ts": "cab69f5406f40d9d3d1dbc1e1329e7c564d7dcb1545092218167155823d1f7fe",
+    "lib/modules/admin-overview/application/collect-health.ts": "23056619c1bf7768b498cead96693cb48ed779543e1a515f2cf7821063651409",
+    "lib/modules/admin-overview/domain/format.ts": "c204644a99ffc9b457a2ebf038d715215ec04bdc4ece6859bf2d2de2bf9e6d2d",
+    "lib/modules/admin-overview/domain/time.ts": "e659a68e20426dfb2ce97cfcf45377c572c3556e18b0bc5f347598887b3bb384",
+    "lib/modules/admin-overview/domain/rules.ts": "436c095bd25957a72d4e24a1c8098ccc02943625c9214276d5abb5eedb48db68",
+    "lib/constants.ts": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+    "lib/logger.ts": "fe0811c20deaebbaa5ad984c1e6fbcedd91ad629f35305d30c1fb98e515d7398"
+  },
+  "observations": [
+    {
+      "case": "public_health_ok_without_DB_query",
+      "result": {
+        "ok": true
+      },
+      "raw_queries": 0,
+      "finding": "R18"
+    },
+    {
+      "case": "wrong_health_token_no_diagnostic_data_control",
+      "result": {
+        "ok": true
+      },
+      "raw_queries": 0
+    },
+    {
+      "case": "authorized_health_detects_DB_failure",
+      "result": {
+        "ok": false,
+        "database": "failed"
+      },
+      "raw_queries": 1
+    },
+    {
+      "case": "authorized_health_reports_missing_content_but_top_ok_true",
+      "ok": true,
+      "database": "ok",
+      "content": {
+        "allVideosCount": 0,
+        "publishedVideosCount": 0,
+        "visibleVideosCount": 0,
+        "publicCreatorExists": false,
+        "mainChannelPublic": false,
+        "mainFeaturedVideoExists": false,
+        "mediaHostsConfigured": true
+      },
+      "finding": "R18",
+      "limit": "The consumer may inspect content fields; no full route executed."
+    },
+    {
+      "case": "admin_app_probe_200_failed_body_still_ok",
+      "ok": true,
+      "detail": "HTTP 200",
+      "finding": "R18"
+    },
+    {
+      "case": "admin_app_probe_404_ok_502_critical_boundary",
+      "status404ok": true,
+      "status502ok": false
+    },
+    {
+      "case": "HLS_probe_checks_only_root_HEAD",
+      "ok": true,
+      "requests": [
+        {
+          "url": "https://synthetic-video.invalid/",
+          "method": "HEAD"
+        }
+      ],
+      "finding": "R18"
+    },
+    {
+      "case": "redis_requires_PONG_positive_and_negative_control",
+      "good": true,
+      "bad": false
+    },
+    {
+      "case": "encoder_stale_heartbeat_queue_and_fresh_controls",
+      "stale_kind": "crit",
+      "old_queue_kind": "warn",
+      "fresh_kind": "ok"
+    },
+    {
+      "case": "unmeasured_info_does_not_raise_summary_alarm",
+      "kind": "ok",
+      "headline": "Działa: 0 z 0 kontroli OK",
+      "counts": {
+        "ok": 0,
+        "warn": 0,
+        "crit": 0,
+        "info": 1
+      },
+      "classification": "DECLARED_POLICY_TRADEOFF_NOT_NEW_FAILURE"
+    },
+    {
+      "case": "logger_redacts_sensitive_keys_query_and_URL_userinfo_control",
+      "sensitive_key_redacted": true,
+      "query_redacted": true,
+      "userinfo_redacted": true
+    },
+    {
+      "case": "logger_preserves_URL_path_marker_open_question",
+      "path_marker_preserved": true,
+      "classification": "NO_VALID_TOKEN_OR_ACTUAL_APPLICATION_LOG_CALL_WITNESS;NO_NEW_FINDING"
+    },
+    {
+      "case": "scoped_logger_retains_same_correlation_control",
+      "messages": 2,
+      "same_request_id": true
+    }
+  ],
+  "real_network_calls": 0,
+  "real_DB_queries": 0,
+  "real_messages_sent": 0,
+  "boundaries": [
+    "Real TS functions with enum names checked against schema; no generated Prisma client",
+    "DB/query/channel lookup are explicit synthetic fixtures",
+    "Probe fetches entirely injected; no service or local HTTP server",
+    "Logger probe uses synthetic markers, no actual secrets or valid signed URL",
+    "VM env is synthetic; production configuration and full route/schedulers not read or executed"
+  ]
+}

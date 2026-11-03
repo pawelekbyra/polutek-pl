@@ -1,0 +1,253 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "b5d982f8822746518e83329d07e548b873dbc42c",
+  "source_review_scope": [
+    {
+      "file": "app/api/media-source/[videoId]/route.ts",
+      "sha256": "67013c9915c530f0b584ecc62931ffc3d764c29674d99c1a0f98e2335bc0dfae",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "app/api/search/categories/route.ts",
+      "sha256": "05d863585d6fb2eb7a9349f30d211afc6bdcd58b01a26247e3e99b9debfc4313",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "app/api/search/route.ts",
+      "sha256": "e7258c067e8aff475ca310ae581ff1d0cb60c28adf7f09b5a528f0f7431a54c8",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "deploy/serwerek/docker-compose.yml",
+      "sha256": "84cc968a52822d615fc65f3d8ef35aef5db162a15445930234679d11300bafa7",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "docs/audit/2026-10-12/cost_model.py",
+      "sha256": "11d60c48554899e457101a5b7281007c7aa26bbd9f0a4e50d09fab12bd8385b1",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/access-tier.ts",
+      "sha256": "30b78aac04a51e067ec807f725b3e7b8f4e1729004bdb29ae1e4eef8dde8ef03",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/admin-overview/domain/server-capacity.config.ts",
+      "sha256": "7de28654bac3638dff112f1153fb032b6655cb24659fd4650647aabdb3ccb3eb",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "sha256": "6113d9e7ba13a026d0df59132d706b0c4a56156d66d5fd5e1925b1f6bcfddd98",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/playback/application/self-hls-plan.ts",
+      "sha256": "066b767bc8c419c4b2c2a76870ab75695d338fb183c6f7a49244caa49e4a4d71",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/privacy/domain/client-hash.ts",
+      "sha256": "4d17b666012375006ed4069241ffa55c84f5c6e875b6d6920503076139206e37",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/channel-limits.ts",
+      "sha256": "083160674b290c45e9d20b341f75195e3c76da17004fdc9b3faa8f85ee5774f7",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/video-pipeline/domain/upload-policy.ts",
+      "sha256": "057b7d9dd3642bdf9a9e6732abf760e9096be0913d216328198c44e628e96906",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/video-pipeline/infrastructure/encode-job.repository.ts",
+      "sha256": "7f6aade8a70173d032f0b5d375eb57faa0be9da25a7261dcf094ea19deb90d7b",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/video/application/public-search.service.ts",
+      "sha256": "5cb03334009f7970584143ba0169921a0b77576ba3ee3626fcc4df72e6c0b950",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/modules/video/domain/search-query.ts",
+      "sha256": "5b405bcc4490d3120ed44b506c4dffbd6aaeca9dc01d31af11d3bade98aac6a2",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/prisma.ts",
+      "sha256": "036a65c0323a8bd563efdd33a151f25bcb22bbbad4994a481cfb3d4b3b63706c",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/search-options.ts",
+      "sha256": "92ab4d92cfd2a1f8d78b563d43ab47d59f268c497196c422c8314e6f64f3d652",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "lib/video-metadata.ts",
+      "sha256": "37d559896ea5ea4ee4993409f2d1e9455ca21d821a09911c4a3c985db0a2fb15",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "prisma/migrations/20261019170000_video_search/migration.sql",
+      "sha256": "736701667cb476311ebddf9022228b4cb4f1b287168813222c8f65970bd12d7a",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "scripts/hls/encode-hls.mjs",
+      "sha256": "0b185c3e40e6468112ac82f06ced28b23c53e5670a0d5847212beaa7dab94bb6",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "scripts/loadtest/README.md",
+      "sha256": "7e9f9bfccae4763adce6651e164786cd0c9a2f75020af3b60ffcc972ec33f9a9",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "scripts/loadtest/cleanup.sh",
+      "sha256": "a34883bda03dca670f4e6aace392232126834d35eb07e8749a6acabb69286ae5",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "scripts/loadtest/k6-guest.js",
+      "sha256": "9cc8b9de760aec317e64d5b182d5262cdfe5de1c1139fedb36e54eddd3f79f9b",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "scripts/loadtest/run-steps.sh",
+      "sha256": "64f398ec07195fe3f789f5b1f4ca91f68c424645e779dddd999c61437c5993e9",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "scripts/loadtest/summarize.py",
+      "sha256": "c00ce66b20e02ca2d7e91409ad69e8e627951744829bc8c0c18ce1e4a06cc856",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "tests/unit/modules/video/search-query.test.ts",
+      "sha256": "be6b189c1e6cf54e73596e3e2301c7683bb40b6fc1b25f12a518f09dcdb6dbfe",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "tests/unit/video-pipeline/channel-limits.test.ts",
+      "sha256": "e1543df2c8a73247efa71af5decd7096d93ac7d41e545a7c0af7e11037a4a45b",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    },
+    {
+      "file": "workers/hls-edge/worker.mjs",
+      "sha256": "40dd2da194d28a816689adf8f8d7980b66beb4bce18666a0347fd02fa836c3b8",
+      "scope": "PARTIAL selected SQL/ranking/limits/queue/resources/loadtest/cache/price assumptions, imports and test assertions; not whole-file review"
+    }
+  ],
+  "owner_scale": "kilkanaście twórców i 10 tys. widzów, odpowiedź na pytanie o szczyt jednoczesnych widzów",
+  "creators_15_is_approximation": true,
+  "actual_TS_modules": 6,
+  "generated_prisma_client_executed": false,
+  "SQL_template_adapter": "Official installed @prisma/client/runtime/library sqltag/join/raw/empty; namespace explicitly supplied only in research VM; nothing installed/replaced",
+  "SQL_observations": 16,
+  "SQL_cleanup": "ROLLBACK; temp tables only; no persistent fixture or schema mutation",
+  "SQL_limits": [
+    "one observation per case/size; no percentile or concurrent capacity",
+    "channel-name lookup, hydrate, facets, Prisma, network and HTTP excluded",
+    "local temp buffers, synthetic text/data distribution and host differ from production",
+    "PeerTube not executed; no comparative benchmark"
+  ],
+  "targeted_vitest": {
+    "exit_code": 1,
+    "files": 2,
+    "passed_files": 1,
+    "blocked_files": 1,
+    "registered_and_passed": 22,
+    "failed_assertions": 0,
+    "full_suite_repeated": false,
+    "command": "PATH=<Node22>/bin:$PATH node node_modules/vitest/vitest.mjs run tests/unit/modules/video/search-query.test.ts tests/unit/video-pipeline/channel-limits.test.ts --reporter=json --outputFile=<evidence>/scale-targeted-vitest.json"
+  },
+  "harness_history": "Initial SQL capture git subprocess hit sandbox EPERM before evidence; switched research guard to archived baseline hashes. Final capture/SQL/model/summary probes exit 0. No app edits. Model regenerated after owner clarified small creator count and 10000 peak viewers.",
+  "cost_model": "conditional R2+Workers only; 10 arithmetic invariants, no invoice/compute quote or measured scale",
+  "loadtest_probe": "4 synthetic summaries; exits 0/0/11/10; actual HMAC helper with synthetic key differs from cleanup plain SHA",
+  "new_distinct_findings": [],
+  "existing_findings_extended": [
+    "R06",
+    "R10",
+    "R11"
+  ],
+  "production_access": false,
+  "full_HTTP_executed": false,
+  "full_load_test_executed": false,
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "files": [
+      {
+        "file": "server/core/lib/job-queue/job-queue.ts",
+        "sha256": "4a327cb5fce5fcbf17285c493254f0204bd22f4c9bc17f60609e7d3f4da05848"
+      },
+      {
+        "file": "server/core/models/video/video-search.ts",
+        "sha256": "600ac9470e05564ffbe293419fb9f3ebfacac9654b9f07c71f897aacad060589"
+      },
+      {
+        "file": "server/core/models/video/sql/video/videos-id-list-query-builder.ts",
+        "sha256": "5a5c2cc7914533b268f0713bfe33f8b308df2d79a749f3dbb2356800905df385"
+      },
+      {
+        "file": "server/core/lib/transcoding/create-transcoding-job.ts",
+        "sha256": "10b307cfce77f0800f4633de1de0cd22aa0fb44393f7fec5ce4bfb56f7f327b3"
+      },
+      {
+        "file": "server/core/lib/transcoding/shared/job-builders/transcoding-job-queue-builder.ts",
+        "sha256": "fa22ef089ea64ec69b47cce3f494c6d3f1bf4d989a5306f49444249337de35b7"
+      },
+      {
+        "file": "server/core/lib/runners/job-handlers/abstract-vod-transcoding-job-handler.ts",
+        "sha256": "9816e6d03932eb313b0e02aca920fa4ad89241d07c14bff6777133edd93f65bd"
+      },
+      {
+        "file": "server/core/initializers/database.ts",
+        "sha256": "34a6ff12b6bcc71a6dd8ce545b9d5ac69307d1c5297a044f259b946bf9ca630c"
+      },
+      {
+        "file": "config/default.yaml",
+        "sha256": "29093a9ebbaa2959b4453dfa1af4447cba32818f02ec6b9cd503e0892375b9b2"
+      },
+      {
+        "file": "server/server.ts",
+        "sha256": "ebac3f86014c5bbd1c2cc8c82e2394edd158b372ea94f72868da06452e4f312b"
+      },
+      {
+        "file": "server/core/lib/database-replicas/database-replicas.ts",
+        "sha256": "9e3cd29c15ac35dd01daf7226205ad80d127ebbabb732463f3ee843d3fc153e4"
+      },
+      {
+        "file": "server/core/lib/database-replicas/shared/read-replica-router.ts",
+        "sha256": "391fde29a96645c6088bb6ccf578d04891c1a19218515d121b4cb87e68344033"
+      },
+      {
+        "file": "server/core/lib/database-replicas/shared/user-recent-writes.ts",
+        "sha256": "25833cb8f29607a60a0cc93d763cd2aa117a6e7c7fdb9ae0f4dbe33492257fa8"
+      },
+      {
+        "file": "server/core/lib/search.ts",
+        "sha256": "a6adb8f78b944a5a72da939b32d4cabac5331ddfabcfb52790a7b9a03a14690c"
+      }
+    ],
+    "scope": "Selected queue concurrency/global distinction, local/remote builder selection, job dependencies, runner cancel/failure, stored search vector/trigram candidates, process roles, pool size and opt-in replica/read-your-writes boundaries. Not full-file review.",
+    "executed": false,
+    "benchmark": false,
+    "limitations": [
+      "More distributed dependencies and consistency work; not automatic fault tolerance",
+      "Read-your-writes Redis recording catches write-record errors; no outage proof",
+      "FTS+trigram semantics differ; no equal workload or query benchmark"
+    ]
+  },
+  "independent_review": "PENDING"
+}

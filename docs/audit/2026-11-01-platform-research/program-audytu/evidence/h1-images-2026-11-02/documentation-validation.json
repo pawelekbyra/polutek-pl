@@ -1,0 +1,12 @@
+{
+  "result": "PASS",
+  "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+  "canonical_counts_unchanged": true,
+  "findings": 37,
+  "packages": 40,
+  "private_values_absent": true,
+  "local_image_probe_count": 15,
+  "http_passed": 9,
+  "worker_encodes": 3,
+  "release_ready": false
+}

@@ -1,0 +1,12 @@
+▲ Next.js 16.4.1 (webpack)
+✓ Running next.config.mjs took 21ms
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+- Experiments (use with caution):
+  · cpus: 1
+
+  Running TypeScript ...
+
+  We detected TypeScript in your project and created a tsconfig.json file for you.
+pages/index.tsx(1,7): error TS2322: Type 'string' is not assignable to type 'number'.
+Failed to type check.
+

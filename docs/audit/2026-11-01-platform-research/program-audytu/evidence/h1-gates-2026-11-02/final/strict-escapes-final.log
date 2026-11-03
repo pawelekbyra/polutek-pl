@@ -1,0 +1,54 @@
+Strict escapes scope: all production source files.
+Strict escapes baseline entries: 134
+Scoped baseline entries: 72
+Active baseline entries: 72
+Deleted-file baseline entries: 0
+Matched historical violations: 37
+Missing/stale baseline entries: 33
+New unbaselined violations: 0
+Duplicate historical baseline identities: 9
+Missing or stale strict-escapes baseline entries detected; tolerated because they indicate removed or moved historical debt, not new escape hatches:
+- app/api/subscriptions/route.ts:77 [explicit any annotation] const claims = sessionClaims as any;
+- app/api/subscriptions/route.ts:110 [explicit any annotation] name: (sessionClaims as any)?.name,
+- app/api/subscriptions/route.ts:111 [explicit any annotation] username: (sessionClaims as any)?.username,
+- app/api/subscriptions/route.ts:113 [explicit any annotation] (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture,
+- app/api/videos/[id]/comments/route.ts:42 [explicit any annotation] const sortBy = (searchParams.get("sortBy") as any) || "newest";
+- app/components/comments/hooks/useComments.ts:105 [explicit any annotation] badges: badges as any[],
+- app/components/comments/hooks/useComments.ts:176 [explicit any annotation] export function useComments(videoId: string, sortBy: "newest" | "top", language: string = "pl", userProfile?: any) {
+- lib/blob.ts:109 [explicit any annotation] _prefetchedVideo?: any, // Ignored in modular access
+- lib/modules/comments/domain/comment.dto.ts:95 [explicit any annotation] isHearted: (comment as any).isHearted || false,
+- lib/modules/comments/domain/comment.errors.ts:7 [explicit any annotation] | { type: "VALIDATION_ERROR"; message: string; errors?: any }
+- lib/modules/comments/infrastructure/comment.repository.ts:168 [explicit any annotation] const comment = await this.db.comment.findUnique({ where: { id }, select: { isHearted: true } as any });
+- lib/modules/comments/infrastructure/comment.repository.ts:169 [explicit any annotation] const nextValue = !(comment as any)?.isHearted;
+- lib/modules/email/application/handle-resend-webhook.use-case.ts:52 [explicit any annotation] created_at: (input as any).created_at,
+- lib/modules/email/application/handle-resend-webhook.use-case.ts:219 [explicit any annotation] status: recipient.status as any
+- lib/modules/email/application/handle-resend-webhook.use-case.ts:222 [explicit any annotation] status: status as any,
+- lib/modules/email/domain/email.dto.ts:77 [explicit any annotation] attachments?: any[];
+- lib/modules/payments/application/fulfill-payment.use-case.ts:35 [explicit any annotation] const result = await ctx.db.writeTransaction(async (tx): Promise<any> => {
+- lib/modules/payments/application/handle-stripe-webhook.use-case.ts:27 [explicit any annotation] const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' as any });
+- lib/modules/payments/application/admin-dispute-sync.use-case.ts:23 [explicit any annotation] return new Stripe(key, { apiVersion: "2024-12-18.acacia" as any });
+- lib/modules/payments/application/admin-refund.use-case.ts:31 [explicit any annotation] return new Stripe(key, { apiVersion: "2024-12-18.acacia" as any });
+- lib/modules/payments/application/handle-stripe-webhook.use-case.ts:103 [explicit any annotation] await repo.updatePaymentStatusWithCAS(payment.id, PaymentStatus.PENDING, PaymentStatus.FAILED, ctx.prisma as any);
+- lib/modules/users/application/update-user-language.use-case.ts:15 [explicit any annotation] updateUserMetadata(userId: string, metadata: Record<string, any>): Promise<void>;
+- lib/modules/users/infrastructure/user.repository.ts:133 [explicit any annotation] } as any
+- lib/modules/video/application/update-admin-video.use-case.ts:31 [explicit any annotation] if (input.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as any)) {
+- lib/modules/video/infrastructure/video-content.service.ts:128 [explicit any annotation] if (field in dto) delete (dto as any)[field];
+- lib/modules/playback/application/playback.service.ts:171 [explicit any annotation] accessReason: decision.reason as any,
+- lib/modules/playback/application/playback.service.ts:191 [explicit any annotation] tier = fallback.tier as any;
+- lib/modules/playback/application/playback.service.ts:250 [explicit any annotation] accessTier: tier as any,
+- lib/modules/playback/application/playback.service.ts:338 [explicit any annotation] accessTier: tier as any,
+- lib/modules/playback/application/playback.service.ts:403 [explicit any annotation] accessTier: tier as any,
+- lib/modules/playback/application/playback.service.ts:486 [explicit any annotation] accessTier: tier as any,
+- lib/modules/playback/application/playback.service.ts:598 [explicit any annotation] accessTier: tier as any,
+- app/api/cron/stripe-reconciliation/route.ts:24 [explicit any annotation] const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' as any });
+Duplicate historical strict-escapes baseline identities detected; tolerated because line-drift matching uses file/label/text identity:
+- lib/modules/audit/infrastructure/audit.repository.ts:38 [explicit any annotation] return await (this.db as any).auditLog.findMany({
+- lib/modules/payments/infrastructure/stripe-event-lock.service.ts:70 [explicit any annotation] await (this.db.write as any).stripeEvent.update({
+- lib/modules/users/infrastructure/user.repository.ts:66 [explicit any annotation] const db = tx || (this.db as any);
+- lib/modules/users/infrastructure/user.repository.ts:77 [explicit any annotation] const db = tx || (this.db as any);
+- lib/modules/video/application/publish-after-asset-ready.use-case.ts:61 [explicit any annotation] await (ctx.prisma as any).$transaction(async (tx: any) => {
+- lib/modules/playback/application/playback.service.ts:338 [explicit any annotation] accessTier: tier as any,
+- lib/modules/playback/application/playback.service.ts:403 [explicit any annotation] accessTier: tier as any,
+- lib/modules/playback/application/playback.service.ts:486 [explicit any annotation] accessTier: tier as any,
+- lib/modules/playback/application/playback.service.ts:598 [explicit any annotation] accessTier: tier as any,
+Only approved historical strict TypeScript escape hatches were found in scanned production source files; no new debt detected.

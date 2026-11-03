@@ -1,0 +1,111 @@
+{
+  "code_sha": "de69f521f873be54f4d2ec30ae543331700c8397",
+  "before_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+  "pull_request": "https://github.com/pawelekbyra/polutek-pl/pull/2065",
+  "changes": [
+    {
+      "sha": "76ba1ff4775ba5d6d83e70ac2a399259b033cf5c",
+      "parent": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+      "subject": "fix(test): use real access tiers and explicit legacy fixtures (K03)",
+      "files": [
+        "tests/integration/launch-candidate-critical-path.test.ts",
+        "tests/unit/access-source-of-truth.test.ts",
+        "tests/unit/api/access-route.test.ts",
+        "tests/unit/modules/access/check-video-access.use-case.test.ts",
+        "tests/unit/modules/admin-community/community.test.ts",
+        "tests/unit/modules/comments/patron-grant-write-access.test.ts",
+        "tests/unit/modules/video/get-admin-video-details.test.ts",
+        "tests/unit/modules/video/update-admin-video.use-case.test.ts",
+        "tests/unit/modules/video/video-playback-route-service.test.ts",
+        "tests/unit/modules/video/video-repository-safety.test.ts",
+        "tests/unit/modules/video/video.policy.test.ts",
+        "tests/unit/patron-grant-truth.test.ts",
+        "tests/unit/patron-tier-comments-sign-in.test.ts",
+        "tests/unit/services/video-search-service.test.ts",
+        "tests/unit/video-pipeline/self-hls-publication.test.ts"
+      ]
+    },
+    {
+      "sha": "f3e9c3234ada4fe1922d6d9f7fae51c1fc6eb119",
+      "parent": "76ba1ff4775ba5d6d83e70ac2a399259b033cf5c",
+      "subject": "fix(test): align fixture shapes and mock call contracts (K03)",
+      "files": [
+        "apps/admin/scripts/admin-enroll.mjs",
+        "tests/unit/admin-analytics/morning-report.test.ts",
+        "tests/unit/admin-analytics/use-cases.test.ts",
+        "tests/unit/admin-app/community-components.test.tsx",
+        "tests/unit/admin-app/single-key-shortcuts.test.tsx",
+        "tests/unit/admin-phase3/default-thumbnail.test.ts",
+        "tests/unit/admin-phase3/gate-audit.test.ts",
+        "tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx",
+        "tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx",
+        "tests/unit/components/notification-bell.test.tsx",
+        "tests/unit/components/premium-pass-seller.test.tsx",
+        "tests/unit/components/subscriptions/EmailSubscriptionConsentModal.test.tsx",
+        "tests/unit/cron/stripe-reconciliation.test.ts",
+        "tests/unit/modules/authz/authorize.test.ts",
+        "tests/unit/modules/channel/channel-moderation.test.ts",
+        "tests/unit/modules/channel/moderation-appeals.test.ts",
+        "tests/unit/modules/payments/refund-sync.test.ts",
+        "tests/unit/modules/payments/webhook-out-of-order.test.ts",
+        "tests/unit/modules/sales/sales-use-cases.test.ts",
+        "tests/unit/modules/subscriptions/list-subscribed-channels.test.ts",
+        "tests/unit/modules/subscriptions/subscriptions-route-boundary.test.ts",
+        "tests/unit/modules/video/public-search.service.test.ts",
+        "tests/unit/modules/watch-progress/video-progress.use-cases.test.ts",
+        "tests/unit/ops/actions-lib.test.ts",
+        "tests/unit/video-pipeline/encode-job-repository.test.ts",
+        "tests/unit/video-pipeline/process-encode-job.test.ts"
+      ]
+    },
+    {
+      "sha": "6b939d7d947ac6c64f2cd8d16af1a6cd5a74da57",
+      "parent": "f3e9c3234ada4fe1922d6d9f7fae51c1fc6eb119",
+      "subject": "fix(lint): scope hook overrides to Next React files (K03)",
+      "files": [
+        "eslint.config.mjs"
+      ]
+    },
+    {
+      "sha": "d4a8fe2b367f0440cdce3891da0ab734b8272034",
+      "parent": "6b939d7d947ac6c64f2cd8d16af1a6cd5a74da57",
+      "subject": "fix(test): isolate comment authorization from Redis transport (K03)",
+      "files": [
+        "tests/unit/bola-protection.test.ts"
+      ]
+    },
+    {
+      "sha": "58f62ddd7d68be4d88d7ec90deb16dc7a1a7686a",
+      "parent": "d4a8fe2b367f0440cdce3891da0ab734b8272034",
+      "subject": "fix(test): keep lint fixtures valid without rule overrides (K03)",
+      "files": [
+        "tests/unit/a11y-audit-a15-a17-contrast.test.ts",
+        "tests/unit/components/legal-sheet.test.tsx",
+        "tests/unit/components/polutek-controls-menus.test.tsx"
+      ]
+    },
+    {
+      "sha": "de69f521f873be54f4d2ec30ae543331700c8397",
+      "parent": "58f62ddd7d68be4d88d7ec90deb16dc7a1a7686a",
+      "subject": "fix(notifications): publish callback state after React commits",
+      "files": [
+        "CLAUDE.md",
+        "app/components/notifications/useNotificationFeed.ts",
+        "docs/architecture/notifications.md",
+        "tests/unit/components/notification-feed.test.tsx"
+      ]
+    }
+  ],
+  "attribution": {
+    "final/acceptance-run.json": "Final clean committed de69f521. Workflow synthetic CI environment, owned local PostgreSQL17; real providers are not verified.",
+    "access-fixtures.json": "158/158 on the first 15 changed test files before commit76ba1ff4.",
+    "typecheck-after-fixtures.log": "Dirty intermediate test corrections: 2 remaining diagnostics, retained as a failed iteration.",
+    "intermediate-checks.json": "Dirty intermediate: whole-repo types0,269 tests pass, lint1 with11 actual errors after resolving the config crash.",
+    "notification-ref-red.json": "New Suspense regression before hook correction: 8/9 pass,1 fail. Hook blob is identical to BEFORE.",
+    "lint-followup-tests.json": "65/65 on final working-tree changes before their small commits; includes Suspense9/9 and BOLA under CI placeholders.",
+    "lint-cjs-before.log": "Targeted config failure before scope correction; config matches BEFORE despite other dirty test edits.",
+    "lint-config-after.json": "Actual ESLint config load succeeds for CJS; hook plugin/error rule and existing warning overrides remain active for TSX."
+  },
+  "unchanged_restore_code_schema_migrations": true,
+  "release_ready": false
+}

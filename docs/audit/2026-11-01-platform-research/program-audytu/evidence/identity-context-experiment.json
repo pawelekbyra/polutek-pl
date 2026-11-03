@@ -1,0 +1,184 @@
+{
+  "kind": "isolated_actual_source_with_fake_io",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "limits": "No HTTP, real sessions, Prisma client, DB, route activation, encoding, storage, or actual publisher execution. Demotion case starts with a DB USER, not a real stale cookie.",
+  "actual_source_sha256": {
+    "lib/api/auth.ts": "518c5cb4d4965a4b253a6c674c62189a334cde5ee63059ed39eb1c383c1caaaf",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "lib/api/studio-session.ts": "53f688bf1dcd644437000e070c74582fbcd801b4eb1af954e92950e0c04b180e",
+    "lib/modules/shared/app-context.ts": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+    "lib/modules/channel/application/main-channel.service.ts": "9b3d9977e8a1cbe5162260e7f28a1d60638e43f5e61b5a72b5a5ec0393bfabd3",
+    "lib/modules/channel/infrastructure/channel.repository.ts": "d315a0ea7a2dc7d4a2b733664a6064253e0c94168ada97bd5bc7222467f1c541",
+    "lib/modules/channel/domain/main-channel-setting.ts": "0c4dff7d35dd255f172351b98e221a9e519501a2d2088fc2529167f2b7218618",
+    "lib/modules/channel/domain/channel.errors.ts": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+    "lib/modules/channel/domain/channel.policy.ts": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+    "lib/modules/authz/application/authorize.ts": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
+    "lib/modules/authz/domain/policy.ts": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+    "lib/modules/authz/domain/actions.ts": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+    "lib/modules/authz/domain/matrix.ts": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+    "lib/modules/authz/domain/principal.ts": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+    "lib/modules/video-pipeline/application/finalize-self-hls.ts": "b8258141def95e163bdc220a76ee296c7f0ad018557647de1a0c8db55a02f89e",
+    "lib/modules/video/application/publish-after-asset-ready.use-case.ts": "dd1118220db69bab272ed1438c9ddaa2c317eec9e22c2e45e0de36d453d23f90",
+    "lib/modules/video/infrastructure/video.repository.ts": "ff10ebcab2f0acefeff5fc5ed11da1f37c9e135838471e704aecda1e58fe1049",
+    "lib/modules/video/domain/video-asset.constants.ts": "22e110c56f16ab6349c05642e54214093fd50a5543c371f497c8ec51488d490e",
+    "lib/modules/video/domain/video.errors.ts": "94a5cc812aa71bc4d1aa55d423da540c36370565d8277ac2d2ed3661c4e936fb",
+    "lib/modules/video/domain/video.policy.ts": "799a09cf2026746f9a0d1b2218913b44fe4febcd7b514e3ddc9fc1d8f43aabe8",
+    "lib/modules/video/domain/video-asset-selection.ts": "000a83ff31d906d226a25dfee97629f107fc4f9e3bda9452fd52060cf77ffb43",
+    "lib/modules/video/application/ready-visibility.ts": "a3e2ff22665f10051fcf7b882ffd48c9d7de333fe6c42c1773c70ddb07054e1b"
+  },
+  "stub_import_boundaries": [
+    "../domain/fundraising",
+    "./publish-admin-video.use-case",
+    "./unlist-admin-video.use-case",
+    "@/lib/access-tier",
+    "@/lib/auth/server",
+    "@/lib/errors",
+    "@/lib/logger",
+    "@/lib/modules/audit",
+    "@/lib/modules/channel",
+    "@/lib/modules/media",
+    "@/lib/modules/video",
+    "@/lib/prisma",
+    "@prisma/client"
+  ],
+  "observations": [
+    {
+      "scenario": "Identity remains user after DB role demotion",
+      "actor": {
+        "type": "user",
+        "userId": "user-a"
+      }
+    },
+    {
+      "scenario": "Deleted account is denied",
+      "statusCode": 403
+    },
+    {
+      "scenario": "Admin actor explicitly bypasses cookie cache",
+      "sessionOptions": {
+        "fresh": true
+      }
+    },
+    {
+      "scenario": "Studio ADMIN downgrades; foreign selection falls back to first own channel",
+      "requested": "foreign-channel",
+      "selected": "channel-a",
+      "actor": {
+        "type": "user",
+        "userId": "user-a"
+      }
+    },
+    {
+      "scenario": "own channel",
+      "action": "video.update",
+      "expectedStatus": null,
+      "observedStatus": null
+    },
+    {
+      "scenario": "foreign channel",
+      "action": "video.update",
+      "expectedStatus": 403,
+      "observedStatus": 403
+    },
+    {
+      "scenario": "foreign video",
+      "action": "video.upload",
+      "expectedStatus": 403,
+      "observedStatus": 403
+    },
+    {
+      "scenario": "absent video",
+      "action": "video.upload",
+      "expectedStatus": 404,
+      "observedStatus": 404
+    },
+    {
+      "scenario": "guest",
+      "action": "video.update",
+      "expectedStatus": 401,
+      "observedStatus": 401
+    },
+    {
+      "scenario": "onboarding pending",
+      "action": "video.update",
+      "expectedStatus": 403,
+      "observedStatus": 403
+    },
+    {
+      "scenario": "editor own with membership lookup",
+      "action": "video.update",
+      "expectedStatus": null,
+      "observedStatus": null
+    },
+    {
+      "scenario": "editor cannot delete",
+      "action": "video.delete",
+      "expectedStatus": 403,
+      "observedStatus": 403
+    },
+    {
+      "scenario": "staff cannot change payout",
+      "action": "payout.manage",
+      "expectedStatus": 403,
+      "observedStatus": 403
+    },
+    {
+      "scenario": "ordinary user cannot staff-action",
+      "action": "platform.settings",
+      "expectedStatus": 403,
+      "observedStatus": 403
+    },
+    {
+      "scenario": "frozen owner",
+      "action": "video.update",
+      "expectedStatus": 403,
+      "observedStatus": 403
+    },
+    {
+      "scenario": "actual worker finalizer: main",
+      "jobChannelId": "main",
+      "result": {
+        "assetId": "fixture-asset"
+      },
+      "lookup": {
+        "id": "video-main",
+        "creatorId": "main"
+      },
+      "publicationBoundaryCalls": [
+        {
+          "videoId": "video-main",
+          "visibility": "PUBLISHED",
+          "channelId": null
+        }
+      ],
+      "storedAutoPublishError": null
+    },
+    {
+      "scenario": "actual worker finalizer: creator",
+      "jobChannelId": "creator",
+      "result": {
+        "assetId": "fixture-asset"
+      },
+      "lookup": {
+        "id": "video-creator",
+        "creatorId": "main"
+      },
+      "publicationBoundaryCalls": [],
+      "storedAutoPublishError": null
+    },
+    {
+      "scenario": "positive control: explicit non-main channel context",
+      "lookup": {
+        "id": "video-creator",
+        "creatorId": "creator"
+      },
+      "publicationBoundaryCalls": [
+        {
+          "videoId": "video-creator",
+          "visibility": "PUBLISHED",
+          "channelId": "creator"
+        }
+      ]
+    }
+  ]
+}

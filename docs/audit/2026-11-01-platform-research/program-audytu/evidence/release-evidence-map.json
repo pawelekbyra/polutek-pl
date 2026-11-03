@@ -1,0 +1,324 @@
+{
+  "date": "2026-11-02",
+  "method": "PyYAML BaseLoader and bounded regex source inventory, no runtime/workflow execution",
+  "parser_version": "6.0.3",
+  "source_sha256": {
+    ".github/workflows/ci.yml": "1fa10b7c27b247adf30bd47b551d12710163e1c6b1b3ec2215697b7ddf64791a",
+    ".github/workflows/images.yml": "fd03e9a667e2b48587a557e59b1e9483bee9e6983e77937366edbb672bd13fa8",
+    "deploy/serwerek/Dockerfile": "038431c0f5b5f730d3a080c10f50d6c1337fbc8763cd8b379d5ac467356ab92f",
+    "deploy/serwerek/Dockerfile.admin": "00ec13b7d5c22167ed04f2d942a38d87e97bba9f22e883337418798578371a30",
+    ".dockerignore": "4990dbeeac4582fa6eee75642e51ec9a6b91a21fdc10c96fdab4d3d14d04ef52",
+    "package.json": "402fa1299a550cb4ee8905c2bb5ff31f086b38396125e5dd9e7b33b54ea165b7",
+    "deploy/serwerek/docker-compose.yml": "84cc968a52822d615fc65f3d8ef35aef5db162a15445930234679d11300bafa7",
+    "deploy/serwerek/docker-compose.override.yml": "0405e5c4531f7b0f29a72c52f57cfd4d839a1308a35e3d9c186c9a69aa4c216f",
+    "deploy/serwerek/deploy.sh": "7773f106d9d993c9a94807c9e3977381de5788744c25e73cf05daae9b70f949c",
+    "deploy/serwerek/deploy-admin.sh": "7bec92afea97163caeac1542c806451a0e0b693d04150c63168c102b5585d94e",
+    "next.config.mjs": "ee9b8a7089ef7decf43d164ca90503eae5a7bd2d6504a106814bc5626285dd08",
+    "apps/admin/next.config.mjs": "562d722ce1a03f01f174163b54e9e2f0981926e33e2c04299c9fc96497f6c3c2",
+    "scripts/ops/local-ci.mjs": "938c1865d2077067e7d8754d03292d305015d9b710893265856a709e724f3cd1",
+    "scripts/ops/local-ci-lib.mjs": "95a9450e38fa089d2e9b664e98583a161231cc70a8987c6c17c96a45288bfe9a"
+  },
+  "CI": {
+    "triggers": {
+      "pull_request": "",
+      "push": {
+        "branches": [
+          "main",
+          "master",
+          "work"
+        ]
+      }
+    },
+    "jobs": [
+      {
+        "id": "environment-validation",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run env:validate:prod"
+        ]
+      },
+      {
+        "id": "prisma-validation-generation",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npx prisma validate",
+          "npx prisma generate"
+        ]
+      },
+      {
+        "id": "strict-escapes",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run quality:strict-escapes"
+        ]
+      },
+      {
+        "id": "hotspots",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run quality:hotspots"
+        ]
+      },
+      {
+        "id": "architecture-boundaries",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run quality:architecture-boundaries"
+        ]
+      },
+      {
+        "id": "typecheck",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npx tsc -p tsconfig.typecheck.json --noEmit"
+        ]
+      },
+      {
+        "id": "tests-coverage",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run test:coverage"
+        ]
+      },
+      {
+        "id": "lint",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run lint"
+        ]
+      },
+      {
+        "id": "build",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run build"
+        ]
+      },
+      {
+        "id": "admin-build",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run admin:build"
+        ]
+      },
+      {
+        "id": "integration-postgres",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run test:integration:postgres"
+        ]
+      },
+      {
+        "id": "encode-smoke",
+        "needs": [],
+        "run_commands": [
+          "sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg",
+          "npm ci",
+          "npx vitest run tests/unit/hls/encode-hls.ffmpeg.test.ts"
+        ]
+      },
+      {
+        "id": "security",
+        "needs": [],
+        "run_commands": [
+          "npm ci",
+          "npm run audit:high"
+        ]
+      }
+    ],
+    "workflow_env_variable_names": [
+      "ADMIN_EMAIL",
+      "BETTER_AUTH_SECRET",
+      "DATABASE_URL",
+      "DATABASE_URL_UNPOOLED",
+      "EMAIL_FROM",
+      "EMAIL_UNSUBSCRIBE_SIGNING_SECRET",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "HEALTHCHECK_TOKEN",
+      "HLS_TOKEN_SECRET",
+      "MEDIA_BUCKET_HOST",
+      "NEXT_PUBLIC_APP_URL",
+      "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+      "REFERRAL_PATRON_THRESHOLD",
+      "RESEND_API_KEY",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "TURNSTILE_SECRET_KEY",
+      "TURNSTILE_SITE_KEY",
+      "UPSTASH_REDIS_REST_TOKEN",
+      "UPSTASH_REDIS_REST_URL"
+    ]
+  },
+  "images": {
+    "triggers": {
+      "workflow_dispatch": "",
+      "push": {
+        "tags": [
+          "deploy-*"
+        ]
+      }
+    },
+    "jobs": [
+      "build"
+    ],
+    "needs": [],
+    "build_steps": [
+      {
+        "name": "app (runner)",
+        "target": "runner",
+        "build_argument_names": [
+          "NEXT_PUBLIC_APP_URL",
+          "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+          "NEXT_PUBLIC_R2_PUBLIC_HOST",
+          "NEXT_PUBLIC_APP_NAME",
+          "NEXT_PUBLIC_SUPPORT_EMAIL"
+        ],
+        "explicit_provenance_option": null,
+        "explicit_sbom_option": null,
+        "push": "true"
+      },
+      {
+        "name": "migrator",
+        "target": "migrator",
+        "build_argument_names": [],
+        "explicit_provenance_option": null,
+        "explicit_sbom_option": null,
+        "push": "true"
+      },
+      {
+        "name": "worker (video encoder)",
+        "target": "worker",
+        "build_argument_names": [],
+        "explicit_provenance_option": null,
+        "explicit_sbom_option": null,
+        "push": "true"
+      },
+      {
+        "name": "collector (pp-collector)",
+        "target": "collector",
+        "build_argument_names": [],
+        "explicit_provenance_option": null,
+        "explicit_sbom_option": null,
+        "push": "true"
+      }
+    ],
+    "CI_workflow_dependency_declared": false,
+    "builder_default_provenance_or_registry_attestations_verified": false
+  },
+  "Dockerfile": {
+    "FROM_references": [
+      "deps",
+      "mwader/static-ffmpeg:8.0.1",
+      "node:22-alpine",
+      "node:22-bookworm-slim"
+    ],
+    "public_ARG_names": [
+      "NEXT_PUBLIC_APP_URL",
+      "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+      "NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY",
+      "NEXT_PUBLIC_R2_PUBLIC_HOST",
+      "NEXT_PUBLIC_APP_NAME",
+      "NEXT_PUBLIC_SUPPORT_EMAIL",
+      "NEXT_PUBLIC_SITE_BETA"
+    ],
+    "public_ARG_not_passed_by_images_app_step": [
+      "NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY",
+      "NEXT_PUBLIC_SITE_BETA"
+    ],
+    "lockfile_used_for_deps": true,
+    "quality_typecheck_tests_in_build_stage": false,
+    "build_context_exclusions": [
+      "node_modules",
+      ".next",
+      ".git",
+      ".claude",
+      ".vercel",
+      ".env*",
+      "!.env.example",
+      "tests",
+      "docs",
+      "coverage",
+      "*.zip",
+      "tsconfig*.tsbuildinfo",
+      "apps/admin/.next"
+    ]
+  },
+  "runtime_compose": {
+    "service_names": [
+      "db",
+      "app",
+      "encoder",
+      "admin",
+      "collector",
+      "migrate"
+    ],
+    "published_ports": {
+      "db": [
+        "127.0.0.1:5432:5432"
+      ],
+      "app": [
+        "127.0.0.1:3000:3000"
+      ],
+      "encoder": [],
+      "admin": [
+        "127.0.0.1:3100:3100"
+      ],
+      "collector": [],
+      "migrate": []
+    },
+    "hardening_keys": {
+      "db": [
+        "mem_limit"
+      ],
+      "app": [
+        "mem_limit"
+      ],
+      "encoder": [
+        "mem_limit",
+        "logging"
+      ],
+      "admin": [
+        "read_only",
+        "security_opt",
+        "cap_drop",
+        "mem_limit",
+        "logging"
+      ],
+      "collector": [
+        "read_only",
+        "security_opt",
+        "cap_drop",
+        "pids_limit",
+        "mem_limit",
+        "logging"
+      ],
+      "migrate": []
+    }
+  },
+  "package_gate_definitions": {
+    "quality": "npm run quality:architecture-boundaries && npm run typecheck && npm test -- --run",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "predeploy:prod": "npm run db:migrate:deploy && npm run db:generate && npm run db:smoke",
+    "test:integration:postgres": "prisma migrate deploy && prisma generate && npm run db:smoke && vitest run --config vitest.postgres.config.ts"
+  },
+  "deployment_readiness_policy": "Warning only after app image promotion; diagnostic database body checked when token configured. No real deployment here.",
+  "boundaries": [
+    "Declared workflow jobs != jobs passed or required branch protection",
+    "Image job has no dependency on the separate CI workflow in inspected YAML; external approvals/required checks unknown",
+    "BuildKit/build-push-action may generate default attestations; registry/defaults not inspected. No SLSA level awarded.",
+    "Tag named after source SHA != immutable digest or proof of exact tested artifact",
+    "Build config argument gaps are recorded for investigation, not demonstrated checkout failure or new finding"
+  ]
+}

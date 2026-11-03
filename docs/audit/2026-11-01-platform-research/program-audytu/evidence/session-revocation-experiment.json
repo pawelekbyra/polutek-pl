@@ -1,0 +1,73 @@
+{
+  "kind": "ISOLATED_REAL_BETTER_AUTH_HTTP_WITH_OFFICIAL_MEMORY_ADAPTER",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "dependency_version": "1.7.7",
+  "config_source": "lib/auth/config.ts",
+  "config_sha256": "47313f5b7a355b2cbdd9826af83a9daebb412fd7945807f423abe329e1955e22",
+  "sessionOptions": {
+    "expiresIn": 2592000,
+    "updateAge": 86400,
+    "freshAge": 86400,
+    "cookieCache": {
+      "enabled": true,
+      "maxAge": 60
+    }
+  },
+  "differences_from_application": [
+    "Official memory adapter instead of Prisma/PostgreSQL",
+    "No application hooks/plugins, DB-backed role/status resolver, Next middleware or Next routes",
+    "Fixture registration without email verification; random test password/secret; rate limiting disabled",
+    "Loopback HTTP with non-Secure cookies; no Cloudflare/OAuth/production traffic"
+  ],
+  "cookie_names_only": [
+    "pp.session_data",
+    "pp.session_token"
+  ],
+  "observations": {
+    "before": {
+      "status": 200,
+      "authenticated": true
+    },
+    "sessionRowsAfterLogout": 0,
+    "loggedOutBrowser": {
+      "status": 200,
+      "authenticated": false
+    },
+    "replayAfterLogout": {
+      "status": 200,
+      "authenticated": true
+    },
+    "freshAfterLogout": {
+      "status": 200,
+      "authenticated": false
+    },
+    "tokenOnlyAfterLogout": {
+      "status": 200,
+      "authenticated": false
+    },
+    "sessionRowsAfterRevokeOthers": 1,
+    "replayAfterRevokeOthers": {
+      "status": 200,
+      "authenticated": true
+    },
+    "freshAfterRevokeOthers": {
+      "status": 200,
+      "authenticated": false
+    },
+    "revokerStillAuthenticated": {
+      "status": 200,
+      "authenticated": true
+    },
+    "replayAfterExpiry": {
+      "status": 200,
+      "authenticated": false
+    },
+    "otherReplayAfterExpiry": {
+      "status": 200,
+      "authenticated": false
+    }
+  },
+  "real_elapsed_since_logout_observation_ms": 62191,
+  "real_elapsed_since_other_revocation_observation_ms": 62015,
+  "interpretation": "Revoked session cookies including a valid cache still authenticate at the library endpoint before TTL; force-fresh reads and token-only replay refuse. Not a full Polutek HTTP or production test."
+}

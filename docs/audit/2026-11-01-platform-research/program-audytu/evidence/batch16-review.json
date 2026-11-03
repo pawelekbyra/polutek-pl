@@ -1,0 +1,244 @@
+{
+  "date": "2026-11-02",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "51a0639cd48d9fb4051ed9949b1d3c3f045c286d",
+  "source_review_scope": [
+    {
+      "file": ".github/workflows/ci.yml",
+      "sha256": "1fa10b7c27b247adf30bd47b551d12710163e1c6b1b3ec2215697b7ddf64791a",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "deploy/serwerek/deploy-admin.sh",
+      "sha256": "7bec92afea97163caeac1542c806451a0e0b693d04150c63168c102b5585d94e",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "deploy/serwerek/deploy.sh",
+      "sha256": "7773f106d9d993c9a94807c9e3977381de5788744c25e73cf05daae9b70f949c",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "docs/operations/LOCAL-CI.md",
+      "sha256": "48f41e99dfec1c90a9fb556bfe5c69ce2e9bee986d9c7d22160abc0305cf89ef",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/health-token.ts",
+      "sha256": "1b675d3765549d635d0646857ec42dfca81f7dcfe98cb6f6e0698d80e7749cce",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "package.json",
+      "sha256": "402fa1299a550cb4ee8905c2bb5ff31f086b38396125e5dd9e7b33b54ea165b7",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "playwright.config.ts",
+      "sha256": "5123f0a3456b485e89c67fa84c7031b60143974c94afe9297dfc024e4412673d",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "scripts/ops/local-ci-lib.mjs",
+      "sha256": "95a9450e38fa089d2e9b664e98583a161231cc70a8987c6c17c96a45288bfe9a",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "scripts/ops/local-ci.mjs",
+      "sha256": "938c1865d2077067e7d8754d03292d305015d9b710893265856a709e724f3cd1",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "scripts/ops/mergedeploy.sh",
+      "sha256": "d7ddbca7d334e2e516cd04b30f226750dbb07ad87a50290ad9c9929b0b7e94cd",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "scripts/serwerek/backup.sh",
+      "sha256": "1302548c834e9071ad68195ec1a0b97716f21674ad9f01e5adb5e6915985c2ed",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "scripts/validate-e2e-env.ts",
+      "sha256": "14401b8e85b99a813df53aedb5e316ab4f07e029c03874c1b48b0c236c2d4cb7",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "scripts/verify-restored-database.ts",
+      "sha256": "d5c24a55ad1a335912722d7aabb7594e7293cbec56d10e8953b6adc16256bfbb",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "tests/integration/email-event-idempotency.test.ts",
+      "sha256": "b1c9bb823dd899756466db04bacfde1ec6640cf0481d52c7a507e8ca1ef77253",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/integration/launch-candidate-critical-path.test.ts",
+      "sha256": "ce90394ffb89f49e1300f0330aeefa0d42b19962370881d2db6e79ac87e5148e",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/postgres/durable-job.repository.pg.test.ts",
+      "sha256": "01da930655b5e8bef6695321f3cf7ef42b0b4f05b1b90e08b211e1254a846ddb",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/postgres/encode-job.repository.pg.test.ts",
+      "sha256": "77c1e7f9b34a09eae71086d0d32483d86dee48c813d22a41208438171b5ef97a",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/postgres/payments.pg.test.ts",
+      "sha256": "732c0f81602ed514c404027a5fcad790b56738cd103531f731220a45275eafaf",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/api/health-token.test.ts",
+      "sha256": "691f3929438bbf551642d8d2a0990e33321ad76b2cc73745cf5625801d049c24",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "tests/unit/auth/auth-rate-limit-failure.test.ts",
+      "sha256": "2654192f32d1f44d2de0d35695745186fdc89b3fce554c5b4896f3b38432c445",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/hls/encode-hls.ffmpeg.test.ts",
+      "sha256": "e4ab354e359581b2165fee22310352de2b171eefba3240ae40af915287712f69",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/hls/run-limits.test.ts",
+      "sha256": "a3f057c914d4e1e9e291c74fd904dd83f45be88e0fb1221cb79714c8d0e3d4e8",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/modules/authz/authorize.test.ts",
+      "sha256": "663a3ea2bbc8375fc6e272afb0ea5d5e518cdfd2897db4bba9b807ab9846878e",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/modules/authz/schema-contract.test.ts",
+      "sha256": "4ae6527ff2182538b1fab20a504e25f106354611a8adbbca2f32b05b3ebd5282",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/operations/verify-restored-database.test.ts",
+      "sha256": "36bbe2ea8a7296fd442fa92b44c649c0d84ae33280aab7069619c2449e306fc5",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "tests/unit/ops/serwerek-scripts.test.ts",
+      "sha256": "5deb243bf5764d2f78cedddccb9623012131bb243bc848769fe87b45ef1d00fb",
+      "scope": "Actual existing test file or unchanged baseline source copied to disposable probe; selected assertions/source, no working-tree changes"
+    },
+    {
+      "file": "tests/unit/post-merge-verification.test.ts",
+      "sha256": "9f2209c8a4d1cef857e8846316b2e155e2b8f4cc52e659251fcf2022134f33dd",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "vitest.config.ts",
+      "sha256": "5785542dfed342b5aecd85cf8183bba946ff320d7449f520ef3d9b238a9bd48c",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    },
+    {
+      "file": "vitest.postgres.config.ts",
+      "sha256": "6fd7352ea94c039ad850828481b8c30f9843abd1db0a249fcdd1924765a2eeae",
+      "scope": "PARTIAL selected config, marker or test boundary review, not whole-file sign-off"
+    }
+  ],
+  "mechanical_test_inventory": {
+    "files": 547,
+    "AST_literal_test_declarations": 4214,
+    "parse_diagnostics": 0,
+    "default_selection": 535,
+    "postgres_selection": 12,
+    "files_with_mock_marker": 275,
+    "files_with_fs_read_marker": 58,
+    "not_manual_or_runtime_coverage": true
+  },
+  "oracle_probe": {
+    "research_script_exit": 0,
+    "actual_vitest_version": "4.1.10",
+    "runs": 8,
+    "baseline_distinct_test_files": 3,
+    "baseline_assertions_passed": 17,
+    "mutants": 5,
+    "intentionally_detected_mutants": 2,
+    "surviving_handpicked_mutants": 3,
+    "full_project_mutation_score": null,
+    "static_filter_excludes_behavior_tests": 17,
+    "minimal_temp_config_not_full_repo_CI": true,
+    "real_provider_DB_or_application_access": false,
+    "installed_Prismaclient_changed": false,
+    "source_and_test_working_tree_changes": false
+  },
+  "new_distinct_findings": [],
+  "existing_findings_extended": [
+    "R08",
+    "R37"
+  ],
+  "historical_full_suite_repeated": false,
+  "Prisma_generate_npmaudit_build_browser_or_SQL_repeated": false,
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "executed": false,
+    "equal_benchmark": false,
+    "files": [
+      {
+        "file": "packages/tests/src/api/transcoding/hls.ts",
+        "sha256": "3da1e191974841a857348c59a1bd1e651a49b38e9876f489e2559dae603e880b",
+        "scope": "Selected API upload/jobs/playlists/concurrency/storage setup"
+      },
+      {
+        "file": "packages/tests/src/shared/streaming-playlists.ts",
+        "sha256": "0d15730eec0f373400decc41678cdaed6c718f22981656756f1d23c3c1977395",
+        "scope": "Selected segment Range/206/hash helper, not whole file"
+      },
+      {
+        "file": "packages/tests/src/peertube-runner/shutdown.ts",
+        "sha256": "7283758ef5bf73c6ef0b55659e69cf445ddedea90ee9c5e879e01ea56c7f6430",
+        "scope": "Runner shutdown scenario source"
+      },
+      {
+        "file": "packages/tests/src/shared/peertube-runner-process.ts",
+        "sha256": "c64b8c68476f54af7cf12ff34c1a63a8c6d5d0c38d555dd5d253158fe80a5b40",
+        "scope": "Selected actual fork/readiness helper"
+      },
+      {
+        "file": "packages/server-commands/src/requests/requests.ts",
+        "sha256": "c42399cd9acde913089e0f11740f60eb908e9eebd9f6877bb985a241ea8477c3",
+        "scope": "Selected supertest-backed requests helper"
+      },
+      {
+        "file": "client/e2e/wdio.main.conf.ts",
+        "sha256": "65c644d3bd65f156d988ee171abcb0ba1cefdd372fbe890c76d08151431874b4",
+        "scope": "Selected suites/baseURL/retries settings"
+      },
+      {
+        "file": "client/e2e/wdio.local-test.conf.ts",
+        "sha256": "ed8d7972d981fc459cc036f56f232c79ed110d15f61805895ac5262ae2f347eb",
+        "scope": "Local browser target/fixture setup source"
+      },
+      {
+        "file": "client/e2e/src/suites-all/private-videos.e2e-spec.ts",
+        "sha256": "5ec19fbfb843d6e97fd14bea56bf57326c193d3d39cc759b11f204d47d3f1405",
+        "scope": "Login and actual player currentTime assertions source"
+      },
+      {
+        "file": "client/e2e/src/suites-local/publish.e2e-spec.ts",
+        "sha256": "642ecd62ba934e7161d898809378ba611c91aaf6446da8378d181066ba1f9f9d",
+        "scope": "Selected user upload/publish/schedule source"
+      },
+      {
+        "file": "support/doc/development/tests.md",
+        "sha256": "86762a2047d269bc0131f2a9fc01164c5f14953c8f3b9932ca4a1727cd28c8ae",
+        "scope": "Selected preparation, server and browser tests/enable flags"
+      }
+    ]
+  },
+  "production_or_real_person_data_used": false,
+  "independent_review": "PENDING"
+}

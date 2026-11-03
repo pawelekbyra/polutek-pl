@@ -1,0 +1,11 @@
+{
+  "revision": 8,
+  "status": "saved",
+  "requires_publish": true,
+  "start_instructions_verified": true,
+  "install_preserved": true,
+  "network_policy": {
+    "type": "unrestricted"
+  },
+  "note": "Only start_skill updated and read back; install script and unrestricted network preserved. Draft save does not publish; current runtime/network remain working."
+}

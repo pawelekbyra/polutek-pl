@@ -1,0 +1,221 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "9e3ee45e2950e5b7396fdb6be2e2ef0515d94885",
+  "source_review_scope": [
+    {
+      "file": "apps/admin/app/(panel)/tresci/actions.ts",
+      "sha256": "2c30910196e886a3b774c3edd0ec356345467e9871219645c2904af9a1967c1b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-content/application/storage-cleanup-job.ts",
+      "sha256": "67afbc6f62a81acc481b51246df174e8b91d2370bde4823d11252373251f3636",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/audit/application/record-audit-event.use-case.ts",
+      "sha256": "baa7c5a45e014c73e16f0c94f5a359c68299d508ad19cf3480f079ee4e06c4dd",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/audit/infrastructure/audit.repository.ts",
+      "sha256": "cf53b9e0f0189abf83d277798f0eedf27f7f3f700324a431d908ba206843b704",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "sha256": "6113d9e7ba13a026d0df59132d706b0c4a56156d66d5fd5e1925b1f6bcfddd98",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playback/domain/primary-playable-asset.ts",
+      "sha256": "71f33593517b0c8da5dc317016180b83b479a427a5d2da1168d63af44b039cb5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-context.ts",
+      "sha256": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/result.ts",
+      "sha256": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/finalize-self-hls.ts",
+      "sha256": "b8258141def95e163bdc220a76ee296c7f0ad018557647de1a0c8db55a02f89e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/output-cleanup.use-cases.ts",
+      "sha256": "b2cae56d237bc76b72f806c396635cb54bb360f83dd8e901ea6e15ea03712c44",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/process-encode-job.ts",
+      "sha256": "c93fa1a91c2e753d321bee952af3eb03d26121e2e346e2d5ee8c4c6d66835af6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/video-guard.ts",
+      "sha256": "dd35a6607a5626ed4bdaa6695b1b82aa7ba48869846d2056fc50a5abbbc1b584",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/worker-loop.ts",
+      "sha256": "0c03a02e99f7d00c545e5e229980583e37e9ad9bd889d76d7a17ede81e55adf8",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/domain/encode-job.state.ts",
+      "sha256": "c8670992e7994df56eaa0c44936823a00d3f3257917a45b9f8a4f1ea7b58a221",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/domain/keys.ts",
+      "sha256": "c9e7c96b99e798e640247a3fcbacac60caa606e932bd0353a5c14216a7296a4d",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/infrastructure/encode-job.repository.ts",
+      "sha256": "7f6aade8a70173d032f0b5d375eb57faa0be9da25a7261dcf094ea19deb90d7b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/infrastructure/r2-storage.ts",
+      "sha256": "7c35ebd301eed74b727725b4d2984d15612439abf93d059b5c922e6d778eb52f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/publish-admin-video.use-case.ts",
+      "sha256": "79ba6da65e3331cc6385880fa2a78660d3f4b6ebf9e3c8daffd56e9f422fd637",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/video-playback-route.service.ts",
+      "sha256": "77274646b92f2176964ede7d3660bd85d72dd6fcc5cb433ba102085fab8218ac",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video-asset-selection.ts",
+      "sha256": "000a83ff31d906d226a25dfee97629f107fc4f9e3bda9452fd52060cf77ffb43",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video-asset.constants.ts",
+      "sha256": "22e110c56f16ab6349c05642e54214093fd50a5543c371f497c8ec51488d490e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "scripts/video-worker.ts",
+      "sha256": "4e63329175d91919ed4fbefdf32767152096c3cfd9dbed0857623fbd600182ca",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/postgres/encode-job.repository.pg.test.ts",
+      "sha256": "77c1e7f9b34a09eae71086d0d32483d86dee48c813d22a41208438171b5ef97a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/modules/video/video-playback-route-service.test.ts",
+      "sha256": "cbf9cb52499099900236ed9be5e89a0be6a234599b3dc1362abbc63eba704f5b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/video-pipeline/finalize-self-hls.test.ts",
+      "sha256": "bee98009d9840419c4586660c0c6b998a34cafa6b164c275e04dea776588bad7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/video-pipeline/output-cleanup.test.ts",
+      "sha256": "e9220d96dd7a5ab318834b31bdd90d91a97253ba9c988e5526476b0769f3f41c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/video-pipeline/process-encode-job.test.ts",
+      "sha256": "82011af59df5c9b6bc265b7442bb8f12bef9217a2048f67fb489df834fa0d89b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: boundaries of activation/audit/cleanup/ownership, selected wiring/test assertions; not whole-file sign-off"
+    }
+  ],
+  "unchanged_typescript_modules_executed": 16,
+  "component_observations": 11,
+  "positive_controls": 7,
+  "problem_witnesses": 4,
+  "problem_witnesses_by_finding": {
+    "R02": 1,
+    "R28": 2,
+    "R29": 1
+  },
+  "new_distinct_findings": [
+    "R28",
+    "R29"
+  ],
+  "existing_finding_extended": "R02",
+  "component_exit_code": 0,
+  "postgres_protocol_exit_code": 0,
+  "real_postgres_protocol_observations": 3,
+  "postgres_positive_controls": 1,
+  "database_metadata": {
+    "database": "polutek_research_1793539467",
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "transaction_isolation": "read committed"
+  },
+  "fixtures_removed": true,
+  "component_output": "evidence/pipeline-boundaries-experiment.json",
+  "postgres_output": "evidence/playback-cascade-experiment.json",
+  "initial_harness_error": {
+    "exit_code": 1,
+    "log": "evidence/pipeline-boundaries-initial-harness-error.log",
+    "cause": "Research transpileModule needed esModuleInterop for the existing node:path default import; fixed harness only, then full execution exit 0. Added storage-call counters and corrected primary flags in legal active cleanup controls before final run."
+  },
+  "boundaries": [
+    "No actual Prisma client, database, HTTP, R2, encoder or publication was executed.",
+    "Fake DB models transactions/cascades; their PostgreSQL behavior is checked separately.",
+    "Legal staff authorization/channel lookup assumed by explicit boundary; no auth bypass claim.",
+    "Runtime enum strings derived from pinned Prisma schema; JsonNull placeholder is local to this harness.",
+    "Loss of claim and audit/status failures are deterministic injected I/O events, not observed production incidents.",
+    "Playback selection/eligibility helpers executed; complete PlaybackService and viewers were not executed."
+  ],
+  "prisma_client_executed": false,
+  "full_application_http_executed": 0,
+  "real_r2_or_ffmpeg_executed": false,
+  "vitest_repeated": false,
+  "prior_R03_R04_experiments_repeated": false,
+  "full_playback_service_executed": false,
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "files": [
+      {
+        "file": "server/core/lib/runners/job-handlers/abstract-job-handler.ts",
+        "sha256": "07fae0751a0c24c1fed57e41e869296cf270f020308b378fc4a72e5f77d7476f"
+      },
+      {
+        "file": "server/core/lib/runners/job-handlers/shared/pending-completions.ts",
+        "sha256": "85e9fc0ea8936e424a4e932bf7876bd2fcdc6198a6299c3bf23550d912c0beef"
+      },
+      {
+        "file": "server/core/lib/runners/job-handlers/vod-hls-transcoding-job-handler.ts",
+        "sha256": "7e24d4210e98fb89a9d6a39ca97f017b71e35aafc7690860f3616ee7f9a7e165"
+      },
+      {
+        "file": "server/core/lib/runners/job-handlers/video-studio-transcoding-job-handler.ts",
+        "sha256": "bbedd9c63deef8e0e832133ee6c6f3b14d80ec4372a4d9b5ba772bc26b877f09"
+      }
+    ],
+    "scope": "Selected completion lifecycle, pending map, VOD HLS completion and Studio callback before irreversible changes; no runtime or equivalent fault test",
+    "executed": false
+  },
+  "independent_review": "PENDING"
+}

@@ -1,0 +1,120 @@
+{
+  "date": "2026-11-02",
+  "actual_source": "workers/pp-watchdog/worker.mjs",
+  "sha256": "c00df99ee6cfa2907eb3fd468944764d90d583551a60ecc1b96d20111c845ec9",
+  "observations": [
+    {
+      "case": "unauthorized_control_no_probe_or_provider",
+      "status": 404,
+      "DB_queries": 0,
+      "fetch_calls": 0
+    },
+    {
+      "case": "liveness_healthy_without_any_manifest_or_segment_probe",
+      "all_ok": true,
+      "probe_urls": [
+        "https://www.pawelperfect.com/api/health",
+        "https://video.pawelperfect.com/",
+        "https://support.pawelperfect.com/"
+      ],
+      "mail_attempts": 0,
+      "finding": "R18",
+      "limit": "No media object was requested; real R2/manifest state not modeled or tested."
+    },
+    {
+      "case": "first_failed_check_no_alert",
+      "fails": 1,
+      "mail_attempts": 0
+    },
+    {
+      "case": "second_failed_check_delivers_down_control",
+      "attempt": {
+        "subject": "[pp-watchdog] DOWN: www",
+        "mode": "success"
+      },
+      "last_alert_set": true
+    },
+    {
+      "case": "recovery_http_503_is_not_retried_next_healthy_run",
+      "finding": "R36",
+      "attempts": [
+        {
+          "subject": "[pp-watchdog] DOWN: www",
+          "mode": "success"
+        },
+        {
+          "subject": "[pp-watchdog] OK again: www",
+          "mode": "503"
+        }
+      ],
+      "stored_state_after_failed_delivery": {
+        "name": "www",
+        "ok": 1,
+        "fails": 0,
+        "since": 1793589000000,
+        "last_alert": null,
+        "detail": "HTTP 200",
+        "checked_at": 1793589000000
+      },
+      "later_healthy_mail_attempts": 0
+    },
+    {
+      "case": "down_http_503_retries_on_next_failed_run_control",
+      "attempts": [
+        {
+          "subject": "[pp-watchdog] DOWN: www",
+          "mode": "503"
+        },
+        {
+          "subject": "[pp-watchdog] DOWN: www",
+          "mode": "success"
+        }
+      ],
+      "last_alert_set": true
+    },
+    {
+      "case": "recovery_network_throw_retries_control",
+      "attempts": [
+        {
+          "subject": "[pp-watchdog] DOWN: www",
+          "mode": "success"
+        },
+        {
+          "subject": "[pp-watchdog] OK again: www",
+          "mode": "throw"
+        },
+        {
+          "subject": "[pp-watchdog] OK again: www",
+          "mode": "success"
+        }
+      ],
+      "final_ok": true,
+      "limit": "Transport exceptions and non-2xx are observably different; no real provider delivery."
+    },
+    {
+      "case": "recovery_daily_cap_not_retried_next_day",
+      "finding": "R36",
+      "delivered_down_attempts": 1,
+      "recovery_provider_attempts": 0,
+      "stored_ok": true
+    },
+    {
+      "case": "down_daily_cap_retries_next_day_control",
+      "attempts": [
+        {
+          "subject": "[pp-watchdog] DOWN: www",
+          "mode": "success"
+        }
+      ]
+    }
+  ],
+  "real_network_calls": 0,
+  "real_messages_sent": 0,
+  "boundaries": [
+    "Actual Worker.fetch/runChecks/nextState/sendMail with explicit in-memory D1 model",
+    "Fetch is completely stubbed and rejects every unknown URL; provider modes 200/503/throw are synthetic",
+    "Clock is simulated; no real 5-minute cron, Cloudflare/D1 SQL, Resend or delivery inbox",
+    "Storage atomicity/concurrent schedules/timeouts and production occurrence unverified"
+  ],
+  "independent_review": "PENDING"
+}

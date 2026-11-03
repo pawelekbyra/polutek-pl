@@ -1,0 +1,553 @@
+{
+  "database_metadata": {
+    "database": "polutek_research_1793539467",
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "transaction_isolation": "read committed"
+  },
+  "constraints": [
+    {
+      "table_name": "AuditLog",
+      "conname": "AuditLog_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Creator",
+      "conname": "Creator_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Creator",
+      "conname": "Creator_userId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "DurableJob",
+      "conname": "DurableJob_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "LedgerEntry",
+      "conname": "LedgerEntry_channelId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"channelId\") REFERENCES \"Creator\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "LedgerEntry",
+      "conname": "LedgerEntry_orderId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"orderId\") REFERENCES \"Order\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+    },
+    {
+      "table_name": "LedgerEntry",
+      "conname": "LedgerEntry_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "ModerationDecision",
+      "conname": "ModerationDecision_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Playlist",
+      "conname": "Playlist_channelId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"channelId\") REFERENCES \"Creator\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "Playlist",
+      "conname": "Playlist_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "PlaylistItem",
+      "conname": "PlaylistItem_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "PlaylistItem",
+      "conname": "PlaylistItem_playlistId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"playlistId\") REFERENCES \"Playlist\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "PlaylistItem",
+      "conname": "PlaylistItem_videoId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"videoId\") REFERENCES \"Video\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "User",
+      "conname": "User_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Video",
+      "conname": "Video_activeOriginalId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"activeOriginalId\") REFERENCES \"VideoOriginal\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+    },
+    {
+      "table_name": "Video",
+      "conname": "Video_activePlaybackRouteId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"activePlaybackRouteId\") REFERENCES \"VideoPlaybackRoute\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+    },
+    {
+      "table_name": "Video",
+      "conname": "Video_chapters_shape_check",
+      "contype": "c",
+      "definition": "CHECK (((chapters IS NULL) OR ((jsonb_typeof(chapters) = 'array'::text) AND ((jsonb_array_length(chapters) >= 1) AND (jsonb_array_length(chapters) <= 50)))))"
+    },
+    {
+      "table_name": "Video",
+      "conname": "Video_creatorId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"creatorId\") REFERENCES \"Creator\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "Video",
+      "conname": "Video_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "Video",
+      "conname": "Video_tags_max_15_check",
+      "contype": "c",
+      "definition": "CHECK ((cardinality(tags) <= 15))"
+    },
+    {
+      "table_name": "VideoAsset",
+      "conname": "VideoAsset_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "VideoAsset",
+      "conname": "VideoAsset_videoId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"videoId\") REFERENCES \"Video\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "VideoEncodeJob",
+      "conname": "VideoEncodeJob_originalId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"originalId\") REFERENCES \"VideoOriginal\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "VideoEncodeJob",
+      "conname": "VideoEncodeJob_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "VideoEncodeJob",
+      "conname": "VideoEncodeJob_videoId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"videoId\") REFERENCES \"Video\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "VideoOriginal",
+      "conname": "VideoOriginal_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "VideoOriginal",
+      "conname": "VideoOriginal_videoId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"videoId\") REFERENCES \"Video\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "VideoPlaybackRoute",
+      "conname": "VideoPlaybackRoute_assetId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"assetId\") REFERENCES \"VideoAsset\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "VideoPlaybackRoute",
+      "conname": "VideoPlaybackRoute_pkey",
+      "contype": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "VideoPlaybackRoute",
+      "conname": "VideoPlaybackRoute_videoId_fkey",
+      "contype": "f",
+      "definition": "FOREIGN KEY (\"videoId\") REFERENCES \"Video\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    }
+  ],
+  "indexes": [
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_action_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_action_idx\" ON public.\"AuditLog\" USING btree (action)"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_actorUserId_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_actorUserId_idx\" ON public.\"AuditLog\" USING btree (\"actorUserId\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_channelId_createdAt_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_channelId_createdAt_idx\" ON public.\"AuditLog\" USING btree (\"channelId\", \"createdAt\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_createdAt_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_createdAt_idx\" ON public.\"AuditLog\" USING btree (\"createdAt\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"AuditLog_pkey\" ON public.\"AuditLog\" USING btree (id)"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_targetType_targetId_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_targetType_targetId_idx\" ON public.\"AuditLog\" USING btree (\"targetType\", \"targetId\")"
+    },
+    {
+      "tablename": "Creator",
+      "indexname": "Creator_handle_lower_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Creator_handle_lower_key\" ON public.\"Creator\" USING btree (lower(handle)) WHERE (handle IS NOT NULL)"
+    },
+    {
+      "tablename": "Creator",
+      "indexname": "Creator_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Creator_pkey\" ON public.\"Creator\" USING btree (id)"
+    },
+    {
+      "tablename": "Creator",
+      "indexname": "Creator_slug_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Creator_slug_key\" ON public.\"Creator\" USING btree (slug)"
+    },
+    {
+      "tablename": "DurableJob",
+      "indexname": "DurableJob_kind_dedupeKey_key",
+      "indexdef": "CREATE UNIQUE INDEX \"DurableJob_kind_dedupeKey_key\" ON public.\"DurableJob\" USING btree (kind, \"dedupeKey\")"
+    },
+    {
+      "tablename": "DurableJob",
+      "indexname": "DurableJob_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"DurableJob_pkey\" ON public.\"DurableJob\" USING btree (id)"
+    },
+    {
+      "tablename": "DurableJob",
+      "indexname": "DurableJob_status_runAfter_idx",
+      "indexdef": "CREATE INDEX \"DurableJob_status_runAfter_idx\" ON public.\"DurableJob\" USING btree (status, \"runAfter\")"
+    },
+    {
+      "tablename": "LedgerEntry",
+      "indexname": "LedgerEntry_channelId_availableAt_idx",
+      "indexdef": "CREATE INDEX \"LedgerEntry_channelId_availableAt_idx\" ON public.\"LedgerEntry\" USING btree (\"channelId\", \"availableAt\")"
+    },
+    {
+      "tablename": "LedgerEntry",
+      "indexname": "LedgerEntry_orderId_idx",
+      "indexdef": "CREATE INDEX \"LedgerEntry_orderId_idx\" ON public.\"LedgerEntry\" USING btree (\"orderId\")"
+    },
+    {
+      "tablename": "LedgerEntry",
+      "indexname": "LedgerEntry_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"LedgerEntry_pkey\" ON public.\"LedgerEntry\" USING btree (id)"
+    },
+    {
+      "tablename": "ModerationDecision",
+      "indexname": "ModerationDecision_channelId_createdAt_idx",
+      "indexdef": "CREATE INDEX \"ModerationDecision_channelId_createdAt_idx\" ON public.\"ModerationDecision\" USING btree (\"channelId\", \"createdAt\")"
+    },
+    {
+      "tablename": "ModerationDecision",
+      "indexname": "ModerationDecision_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"ModerationDecision_pkey\" ON public.\"ModerationDecision\" USING btree (id)"
+    },
+    {
+      "tablename": "ModerationDecision",
+      "indexname": "ModerationDecision_targetType_targetId_idx",
+      "indexdef": "CREATE INDEX \"ModerationDecision_targetType_targetId_idx\" ON public.\"ModerationDecision\" USING btree (\"targetType\", \"targetId\")"
+    },
+    {
+      "tablename": "Playlist",
+      "indexname": "Playlist_channelId_deletedAt_visibility_idx",
+      "indexdef": "CREATE INDEX \"Playlist_channelId_deletedAt_visibility_idx\" ON public.\"Playlist\" USING btree (\"channelId\", \"deletedAt\", visibility)"
+    },
+    {
+      "tablename": "Playlist",
+      "indexname": "Playlist_channelId_slug_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Playlist_channelId_slug_key\" ON public.\"Playlist\" USING btree (\"channelId\", slug)"
+    },
+    {
+      "tablename": "Playlist",
+      "indexname": "Playlist_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Playlist_pkey\" ON public.\"Playlist\" USING btree (id)"
+    },
+    {
+      "tablename": "PlaylistItem",
+      "indexname": "PlaylistItem_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"PlaylistItem_pkey\" ON public.\"PlaylistItem\" USING btree (id)"
+    },
+    {
+      "tablename": "PlaylistItem",
+      "indexname": "PlaylistItem_playlistId_position_idx",
+      "indexdef": "CREATE INDEX \"PlaylistItem_playlistId_position_idx\" ON public.\"PlaylistItem\" USING btree (\"playlistId\", \"position\")"
+    },
+    {
+      "tablename": "PlaylistItem",
+      "indexname": "PlaylistItem_playlistId_videoId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"PlaylistItem_playlistId_videoId_key\" ON public.\"PlaylistItem\" USING btree (\"playlistId\", \"videoId\")"
+    },
+    {
+      "tablename": "PlaylistItem",
+      "indexname": "PlaylistItem_videoId_idx",
+      "indexdef": "CREATE INDEX \"PlaylistItem_videoId_idx\" ON public.\"PlaylistItem\" USING btree (\"videoId\")"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_email_idx",
+      "indexdef": "CREATE INDEX \"User_email_idx\" ON public.\"User\" USING btree (email)"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_email_key",
+      "indexdef": "CREATE UNIQUE INDEX \"User_email_key\" ON public.\"User\" USING btree (email)"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_name_lower_active_key",
+      "indexdef": "CREATE UNIQUE INDEX \"User_name_lower_active_key\" ON public.\"User\" USING btree (lower(name)) WHERE ((\"isDeleted\" = false) AND (\"onboardingPending\" = false))"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"User_pkey\" ON public.\"User\" USING btree (id)"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_stripeCustomerId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"User_stripeCustomerId_key\" ON public.\"User\" USING btree (\"stripeCustomerId\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_activeOriginalId_idx",
+      "indexdef": "CREATE INDEX \"Video_activeOriginalId_idx\" ON public.\"Video\" USING btree (\"activeOriginalId\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_activeOriginalId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Video_activeOriginalId_key\" ON public.\"Video\" USING btree (\"activeOriginalId\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_activePlaybackRouteId_idx",
+      "indexdef": "CREATE INDEX \"Video_activePlaybackRouteId_idx\" ON public.\"Video\" USING btree (\"activePlaybackRouteId\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_activePlaybackRouteId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Video_activePlaybackRouteId_key\" ON public.\"Video\" USING btree (\"activePlaybackRouteId\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_creatorId_idx",
+      "indexdef": "CREATE INDEX \"Video_creatorId_idx\" ON public.\"Video\" USING btree (\"creatorId\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_creatorId_status_idx",
+      "indexdef": "CREATE INDEX \"Video_creatorId_status_idx\" ON public.\"Video\" USING btree (\"creatorId\", status)"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Video_pkey\" ON public.\"Video\" USING btree (id)"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_premiereAt_idx",
+      "indexdef": "CREATE INDEX \"Video_premiereAt_idx\" ON public.\"Video\" USING btree (\"premiereAt\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_publishAfterAssetReady_idx",
+      "indexdef": "CREATE INDEX \"Video_publishAfterAssetReady_idx\" ON public.\"Video\" USING btree (\"publishAfterAssetReady\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_published_category_idx",
+      "indexdef": "CREATE INDEX \"Video_published_category_idx\" ON public.\"Video\" USING btree (category, \"publishedAt\" DESC) WHERE ((status = 'PUBLISHED'::\"VideoStatus\") AND (category IS NOT NULL))"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_published_search_fts_idx",
+      "indexdef": "CREATE INDEX \"Video_published_search_fts_idx\" ON public.\"Video\" USING gin (to_tsvector('simple'::regconfig, \"searchText\")) WHERE (status = 'PUBLISHED'::\"VideoStatus\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_published_views_idx",
+      "indexdef": "CREATE INDEX \"Video_published_views_idx\" ON public.\"Video\" USING btree (views DESC, \"publishedAt\" DESC) WHERE (status = 'PUBLISHED'::\"VideoStatus\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_slug_idx",
+      "indexdef": "CREATE INDEX \"Video_slug_idx\" ON public.\"Video\" USING btree (slug)"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_slug_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Video_slug_key\" ON public.\"Video\" USING btree (slug)"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_status_createdAt_idx",
+      "indexdef": "CREATE INDEX \"Video_status_createdAt_idx\" ON public.\"Video\" USING btree (status, \"createdAt\")"
+    },
+    {
+      "tablename": "Video",
+      "indexname": "Video_status_publishedAt_idx",
+      "indexdef": "CREATE INDEX \"Video_status_publishedAt_idx\" ON public.\"Video\" USING btree (status, \"publishedAt\")"
+    },
+    {
+      "tablename": "VideoAsset",
+      "indexname": "VideoAsset_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"VideoAsset_pkey\" ON public.\"VideoAsset\" USING btree (id)"
+    },
+    {
+      "tablename": "VideoAsset",
+      "indexname": "VideoAsset_processingState_idx",
+      "indexdef": "CREATE INDEX \"VideoAsset_processingState_idx\" ON public.\"VideoAsset\" USING btree (\"processingState\")"
+    },
+    {
+      "tablename": "VideoAsset",
+      "indexname": "VideoAsset_provider_idx",
+      "indexdef": "CREATE INDEX \"VideoAsset_provider_idx\" ON public.\"VideoAsset\" USING btree (provider)"
+    },
+    {
+      "tablename": "VideoAsset",
+      "indexname": "VideoAsset_videoId_idx",
+      "indexdef": "CREATE INDEX \"VideoAsset_videoId_idx\" ON public.\"VideoAsset\" USING btree (\"videoId\")"
+    },
+    {
+      "tablename": "VideoAsset",
+      "indexname": "VideoAsset_videoId_isPrimary_idx",
+      "indexdef": "CREATE INDEX \"VideoAsset_videoId_isPrimary_idx\" ON public.\"VideoAsset\" USING btree (\"videoId\", \"isPrimary\")"
+    },
+    {
+      "tablename": "VideoEncodeJob",
+      "indexname": "VideoEncodeJob_channelId_status_idx",
+      "indexdef": "CREATE INDEX \"VideoEncodeJob_channelId_status_idx\" ON public.\"VideoEncodeJob\" USING btree (\"channelId\", status)"
+    },
+    {
+      "tablename": "VideoEncodeJob",
+      "indexname": "VideoEncodeJob_idempotencyKey_key",
+      "indexdef": "CREATE UNIQUE INDEX \"VideoEncodeJob_idempotencyKey_key\" ON public.\"VideoEncodeJob\" USING btree (\"idempotencyKey\")"
+    },
+    {
+      "tablename": "VideoEncodeJob",
+      "indexname": "VideoEncodeJob_originalId_idx",
+      "indexdef": "CREATE INDEX \"VideoEncodeJob_originalId_idx\" ON public.\"VideoEncodeJob\" USING btree (\"originalId\")"
+    },
+    {
+      "tablename": "VideoEncodeJob",
+      "indexname": "VideoEncodeJob_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"VideoEncodeJob_pkey\" ON public.\"VideoEncodeJob\" USING btree (id)"
+    },
+    {
+      "tablename": "VideoEncodeJob",
+      "indexname": "VideoEncodeJob_status_nextAttemptAt_createdAt_idx",
+      "indexdef": "CREATE INDEX \"VideoEncodeJob_status_nextAttemptAt_createdAt_idx\" ON public.\"VideoEncodeJob\" USING btree (status, \"nextAttemptAt\", \"createdAt\")"
+    },
+    {
+      "tablename": "VideoEncodeJob",
+      "indexname": "VideoEncodeJob_videoId_createdAt_idx",
+      "indexdef": "CREATE INDEX \"VideoEncodeJob_videoId_createdAt_idx\" ON public.\"VideoEncodeJob\" USING btree (\"videoId\", \"createdAt\")"
+    },
+    {
+      "tablename": "VideoOriginal",
+      "indexname": "VideoOriginal_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"VideoOriginal_pkey\" ON public.\"VideoOriginal\" USING btree (id)"
+    },
+    {
+      "tablename": "VideoOriginal",
+      "indexname": "VideoOriginal_status_idx",
+      "indexdef": "CREATE INDEX \"VideoOriginal_status_idx\" ON public.\"VideoOriginal\" USING btree (status)"
+    },
+    {
+      "tablename": "VideoOriginal",
+      "indexname": "VideoOriginal_videoId_idx",
+      "indexdef": "CREATE INDEX \"VideoOriginal_videoId_idx\" ON public.\"VideoOriginal\" USING btree (\"videoId\")"
+    },
+    {
+      "tablename": "VideoOriginal",
+      "indexname": "VideoOriginal_videoId_version_idx",
+      "indexdef": "CREATE INDEX \"VideoOriginal_videoId_version_idx\" ON public.\"VideoOriginal\" USING btree (\"videoId\", version)"
+    },
+    {
+      "tablename": "VideoOriginal",
+      "indexname": "VideoOriginal_videoId_version_key",
+      "indexdef": "CREATE UNIQUE INDEX \"VideoOriginal_videoId_version_key\" ON public.\"VideoOriginal\" USING btree (\"videoId\", version)"
+    },
+    {
+      "tablename": "VideoPlaybackRoute",
+      "indexname": "VideoPlaybackRoute_assetId_idx",
+      "indexdef": "CREATE INDEX \"VideoPlaybackRoute_assetId_idx\" ON public.\"VideoPlaybackRoute\" USING btree (\"assetId\")"
+    },
+    {
+      "tablename": "VideoPlaybackRoute",
+      "indexname": "VideoPlaybackRoute_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"VideoPlaybackRoute_pkey\" ON public.\"VideoPlaybackRoute\" USING btree (id)"
+    },
+    {
+      "tablename": "VideoPlaybackRoute",
+      "indexname": "VideoPlaybackRoute_provider_idx",
+      "indexdef": "CREATE INDEX \"VideoPlaybackRoute_provider_idx\" ON public.\"VideoPlaybackRoute\" USING btree (provider)"
+    },
+    {
+      "tablename": "VideoPlaybackRoute",
+      "indexname": "VideoPlaybackRoute_videoId_status_idx",
+      "indexdef": "CREATE INDEX \"VideoPlaybackRoute_videoId_status_idx\" ON public.\"VideoPlaybackRoute\" USING btree (\"videoId\", status)"
+    }
+  ],
+  "triggers": [
+    {
+      "table_name": "AuditLog",
+      "tgname": "audit_log_no_truncate",
+      "tgenabled": "O",
+      "definition": "CREATE TRIGGER audit_log_no_truncate BEFORE TRUNCATE ON public.\"AuditLog\" FOR EACH STATEMENT EXECUTE FUNCTION audit_log_no_truncate()"
+    },
+    {
+      "table_name": "AuditLog",
+      "tgname": "audit_log_tamper_guard",
+      "tgenabled": "O",
+      "definition": "CREATE TRIGGER audit_log_tamper_guard BEFORE DELETE OR UPDATE ON public.\"AuditLog\" FOR EACH ROW EXECUTE FUNCTION audit_log_tamper_guard()"
+    },
+    {
+      "table_name": "LedgerEntry",
+      "tgname": "ledger_entry_immutable",
+      "tgenabled": "O",
+      "definition": "CREATE TRIGGER ledger_entry_immutable BEFORE DELETE OR UPDATE ON public.\"LedgerEntry\" FOR EACH ROW EXECUTE FUNCTION ledger_entry_immutable()"
+    },
+    {
+      "table_name": "ModerationDecision",
+      "tgname": "moderation_decision_immutable",
+      "tgenabled": "O",
+      "definition": "CREATE TRIGGER moderation_decision_immutable BEFORE DELETE OR UPDATE ON public.\"ModerationDecision\" FOR EACH ROW EXECUTE FUNCTION moderation_decision_immutable()"
+    },
+    {
+      "table_name": "Video",
+      "tgname": "Video_search_refresh",
+      "tgenabled": "O",
+      "definition": "CREATE TRIGGER \"Video_search_refresh\" BEFORE INSERT OR UPDATE OF title, \"titleEn\", description, \"descriptionEn\", tags, category, tier, duration, chapters ON public.\"Video\" FOR EACH ROW EXECUTE FUNCTION video_search_refresh()"
+    }
+  ]
+}

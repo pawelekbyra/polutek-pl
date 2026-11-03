@@ -1,0 +1,390 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "ffd645e8a51a43b0eac37a17690614477cbac78a",
+  "source_review_scope": [
+    {
+      "file": "app/api/cron/retention/route.ts",
+      "sha256": "da99d72ea7a09bb4e6ae3c5648ca03fb4c7e90763a8de6dba5b3423452bb4300",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "app/api/t/route.ts",
+      "sha256": "2d17d469766809471bbdb10533e379b92526428a862e8c21ab37fd3acf56d1f6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "app/api/user/account/route.ts",
+      "sha256": "6df91201cc1923dc0b96df862ce6a7e61da77b90760f67198d8ed4d4ac3b159b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "app/api/user/export/route.ts",
+      "sha256": "9b85c540360bb466f801f5684dc200736aa3ed4e6054c2287f670a6e76ad0a6e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "app/components/auth/AccountSections.tsx",
+      "sha256": "2f24fc9a70e14f6ab784e62187d1cd7b99a127b59a63875073d6a542cae73a3b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "app/components/legal/LegalDocs.tsx",
+      "sha256": "a78920eac76a17bb78d76bbe3001880f4ad228d1e09a1f2bf4c96a7cc6e348c4",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "deploy/serwerek/systemd/polutek-cron-retention.timer",
+      "sha256": "af500d84824d7ea2a6dc078b3cf441713bab71117f9b46b952a6bbcd1709f47e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "docs/architecture/privacy-email-retention.md",
+      "sha256": "78dc9a1999498f0e00913fa0d84796e446c3608e1a5be98d5a70397dc0088111",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/application/channel-lifecycle.use-cases.ts",
+      "sha256": "6881852feb8eb23631725c189009452a6fa262df82cd5ad0a7ff4132fad9419e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/application/channel-page.loader.ts",
+      "sha256": "cc2b447e9f54824caa7584eb15c6bdc4e150f2fcded8edca4db90786afcf57dd",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/application/main-channel.service.ts",
+      "sha256": "9b3d9977e8a1cbe5162260e7f28a1d60638e43f5e61b5a72b5a5ec0393bfabd3",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/domain/channel-about.ts",
+      "sha256": "9564fbb6800fded5c689cfc56f87c87b6840d0bd580d27442ad174b5c4f283fb",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/domain/channel-avatar.ts",
+      "sha256": "ed333a1af26596b1b4912e2ac2071f3db9e33fd1a44eb27b1e1811226cd0be29",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/domain/channel-banner-limits.ts",
+      "sha256": "291894ccc2f977ca0333f70e030ae57854b0dac5d5f4e3271790c8802d117425",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.errors.ts",
+      "sha256": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.policy.ts",
+      "sha256": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/infrastructure/channel.repository.ts",
+      "sha256": "d315a0ea7a2dc7d4a2b733664a6064253e0c94168ada97bd5bc7222467f1c541",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/channel/infrastructure/creator-content.service.ts",
+      "sha256": "fbe44d2e92911a8177a4f1ea99b2135521446ba52946ab4837f2bbe76a2b46d4",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/payments/application/stripe-customer-anonymization.use-case.ts",
+      "sha256": "2aa0ed802534d1dced558fc3c4ad91016215b101244c8b908500caf25c94c0b6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/privacy/application/anonymize-technical-data.use-case.ts",
+      "sha256": "48a7fbbf6847da12f700749bdae2023b7000db71f60d56ece37e4558c7f2ad2d",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/privacy/domain/client-hash.ts",
+      "sha256": "4d17b666012375006ed4069241ffa55c84f5c6e875b6d6920503076139206e37",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/privacy/domain/retention.ts",
+      "sha256": "f75f3039370a60f6856e96d3571abd4b31a173ddf9fc594af952edf6bc954d88",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/shared/result.ts",
+      "sha256": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/subscriptions/application/contact-removal.use-case.ts",
+      "sha256": "2e764634a69fdc4540af162dc1a1a6221d494cd53e32b6c41b62253ac6b70c4c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/subscriptions/domain/email-address.ts",
+      "sha256": "d7eb0d6342d1bda29879f12c3091c7d9f5787551c6cabd82ff89d1ce70547d6e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/users/application/account-deletion-cleanup.use-case.ts",
+      "sha256": "75e2c3010576858a68385481e93806279049e16f160fa59843d3469aeb37a79c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/users/application/admin-manage-user.use-case.ts",
+      "sha256": "4248a18b95b0255209836c7c702095c74a60254ae55253bb00f5bf87d2b49bb7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/modules/users/application/export-own-data.use-case.ts",
+      "sha256": "89d872985476e0060b6bdafa2912a9d7793d8c8b81c9b1ae200fe0de21a342c7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/telemetry/beacon-constants.ts",
+      "sha256": "40d3395add36598631ad3305f6d655760b192e72c9cb33f2d9fd4c9fb42ea530",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/telemetry/beacon-contract.ts",
+      "sha256": "643462b9d1b9c0e7b745d3cdf9aa392d538c7fc4bb543c2f025d387f6dd2d830",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/telemetry/config.ts",
+      "sha256": "e47f53fb9fec8a3b7580504d49f07f67de1653fb618a5737ae120b5713dd32a2",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "lib/telemetry/retention.ts",
+      "sha256": "6e6202972d2115c80a3eccf5fa1ed6191bf2cf1928bb910f1af2a645306382a9",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "prisma/migrations/20261004210000_telemetry_schema/migration.sql",
+      "sha256": "82ea00af0226e6ac63f7b8b979dc70f6a00a6104964c5cfcb8368e3a3b6d2fea",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "services/pp-collector/src/classify.ts",
+      "sha256": "7912b7392c66781ae41d525f2d561492183c234060374329c214edf9c7d4dd0f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "services/pp-collector/src/handler.ts",
+      "sha256": "e4b5795b62c372cf13b7737fc4daa7dd1c166a5afefecd113805eadada1c6386",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "services/pp-collector/src/maintenance.ts",
+      "sha256": "710c8f1c69ed6c6f5067ccc3e4a4929f9cae636ef4d68e9ccd5805fccb1da3e2",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "services/pp-collector/src/visitor.ts",
+      "sha256": "add0e0eefa0789ed0afbba2725a666b58f27080947235368c4f54685ab3f30bd",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/users/account-deletion-cleanup.use-case.test.ts",
+      "sha256": "f50b519b6f29d029689691f0b49bbc744643167161d8c4355125447f4c48a3b8",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/modules/users/export-own-data.test.ts",
+      "sha256": "669bcdaaf31af11455245e7a1d34de16853d47894d401e6f0d227723c2d78b4f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/privacy/client-hash.test.ts",
+      "sha256": "14f1539a92b903652538a36f80dbff51c758f02e2358a1c6e3602b9053564e69",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/privacy/retention-jobs.test.ts",
+      "sha256": "849d0e8471d6daea920ecd123f43a16a54fa1989ff92583e74df6d011bdbbee8",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    },
+    {
+      "file": "tests/unit/telemetry/collector-parts.test.ts",
+      "sha256": "70973a29a3a6c6c57e34a86c61ec4e019a81b03fac69da6cc33bc52d3bb9dba5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: privacy/export/deletion/retention/public channel header/collector; selected routes/UI/config/migration/test assertions. Not whole-file sign-off."
+    }
+  ],
+  "actual_typescript_modules_executed": 20,
+  "schema_read_for_enum_and_field_names": true,
+  "generated_prisma_client_executed": false,
+  "component_experiment": {
+    "exit_code": 0,
+    "observations": 15,
+    "R33_witnesses": 1,
+    "R16_properties": 2,
+    "actual_cleanup_and_public_header_chain": true,
+    "database_and_transaction_model": "Schema-checked fields, filter/select and explicit rollback; not Prisma/FK/SQL",
+    "provider_network_executed": false
+  },
+  "targeted_vitest": {
+    "exit_code": 1,
+    "success": false,
+    "file_count": 5,
+    "passed_files": 3,
+    "blocked_files": 2,
+    "registered_tests": 19,
+    "passed": 19,
+    "failed_assertions": 0,
+    "pending": 0,
+    "files": [
+      {
+        "file": "tests/unit/privacy/client-hash.test.ts",
+        "status": "passed",
+        "registered_tests": 5,
+        "message": ""
+      },
+      {
+        "file": "tests/unit/privacy/retention-jobs.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again."
+      },
+      {
+        "file": "tests/unit/telemetry/collector-parts.test.ts",
+        "status": "passed",
+        "registered_tests": 12,
+        "message": ""
+      },
+      {
+        "file": "tests/unit/modules/users/account-deletion-cleanup.use-case.test.ts",
+        "status": "failed",
+        "registered_tests": 0,
+        "message": "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again."
+      },
+      {
+        "file": "tests/unit/modules/users/export-own-data.test.ts",
+        "status": "passed",
+        "registered_tests": 2,
+        "message": ""
+      }
+    ],
+    "command": "PATH=<Node22>/bin:$PATH nice -n 10 node_modules/.bin/vitest run tests/unit/modules/users/export-own-data.test.ts tests/unit/modules/users/account-deletion-cleanup.use-case.test.ts tests/unit/privacy/retention-jobs.test.ts tests/unit/privacy/client-hash.test.ts tests/unit/telemetry/collector-parts.test.ts --maxWorkers=1 --reporter=json --outputFile=<evidence>/privacy-targeted-vitest.json",
+    "full_suite_repeated": false
+  },
+  "new_distinct_findings": [
+    "R33"
+  ],
+  "existing_finding_extended": "R16",
+  "provisional_R34_folded_into_existing_R16": true,
+  "harness_history": "First run exit 0, initial JSON preserved. Baseline R16 already included omitted channel/pass categories, so provisional R34 was reclassified as R16; only research attribution changed, final run exit 0. Application unchanged.",
+  "boundaries": [
+    "Schema-checked in-memory scalar fields/filter/select and transaction rollback, not Prisma/SQL/FK enforcement.",
+    "Actual public channel header function executed; video aggregate and non-main-channel resolution are explicit fakes; no browser/HTTP/cache.",
+    "Synthetic identities/providers only; no production, actual Stripe/Resend or email delivery.",
+    "Retention update counts use modeled rows, not actual AuditLog trigger privileges or scheduled execution.",
+    "Collector processBeacon executed, not collector HTTP/Next proxy/PostgreSQL or real daily salt deletion.",
+    "R16 is parse/query architecture evidence, not a measured memory exhaustion result.",
+    "Export omissions describe functionality and scope, not a legal finding of GDPR violation."
+  ],
+  "full_application_http_executed": 0,
+  "real_SQL_executed_in_this_batch": false,
+  "production_access": false,
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "file_count": 16,
+    "files": [
+      {
+        "file": "server/core/controllers/api/users/user-exports.ts",
+        "sha256": "f3fed96e38e192a1f884e1992660bc940f6e90a0f878cb968cc922dae888c855"
+      },
+      {
+        "file": "server/core/middlewares/validators/users/user-exports.ts",
+        "sha256": "11acae2b80c7b587c8d93bdc8714a27654ac36643201984f7ab16bfc92d5d636"
+      },
+      {
+        "file": "server/core/lib/job-queue/handlers/create-user-export.ts",
+        "sha256": "82ce9bdcb29d36b5edd304ab6380ef242bbcffda55fa3d82e8c5df02d6e31df7"
+      },
+      {
+        "file": "server/core/lib/user-import-export/user-exporter.ts",
+        "sha256": "53c7b521694361f84e9f05a4848e519b383c7512dc41c8ec9217f14f7f2aef3b"
+      },
+      {
+        "file": "server/core/lib/user-import-export/exporters/abstract-user-exporter.ts",
+        "sha256": "d17cec9c2dfe2366de312bcc3028f1352386eaf8e94367734b609c8ba7f01287"
+      },
+      {
+        "file": "server/core/lib/user-import-export/exporters/channels-exporter.ts",
+        "sha256": "1297a0ee79269d320e9eadd2b71490909b873fdaa719262dbe4b8795e3ab162e"
+      },
+      {
+        "file": "server/core/lib/user-import-export/exporters/comments-exporter.ts",
+        "sha256": "b57964f5369b25d4c2b535df91a1f27ea80a445cf234108e5aae59afe2babc91"
+      },
+      {
+        "file": "server/core/lib/user-import-export/exporters/user-settings-exporter.ts",
+        "sha256": "9beefc9654317df498c11ca10702d999d8e1ad3d523badcfae160ec390e676ee"
+      },
+      {
+        "file": "server/core/lib/schedulers/remove-expired-user-exports-scheduler.ts",
+        "sha256": "8f9f0c01a4732ea7f6866cf19d564cdf0421aaf162a7b7450928686249f89892"
+      },
+      {
+        "file": "server/core/models/user/user.ts",
+        "sha256": "4023c6ca719026616ed8241895d777a9edd5f79b4d188df67a915697468c7c11"
+      },
+      {
+        "file": "server/core/models/account/account.ts",
+        "sha256": "c80761d89de607c07a2794c8dabee56fd1716e8fb23bf61a91544063be781c03"
+      },
+      {
+        "file": "server/core/models/video/video-channel.ts",
+        "sha256": "bb3a5c76879ede1d0fd5b52d929a28c277a5c3a67a685df16c4f4684c0ebd29c"
+      },
+      {
+        "file": "server/core/controllers/api/users/me.ts",
+        "sha256": "27fc3e1b13f5703642d04b00c2daa451803bae0e980629814dd8ac762885a4bb"
+      },
+      {
+        "file": "server/core/models/user/user-export.ts",
+        "sha256": "7d8931217b5db7c0787eb887a61d4fd83113916f626b9f5724c2ba9c459090d9"
+      },
+      {
+        "file": "server/core/models/video/video-comment.ts",
+        "sha256": "d322f5ae9fc413f0e6129d84dfb7070387d8a00e6281e8b3a33850c4f2bcf6a2"
+      },
+      {
+        "file": "packages/tests/src/api/users/user-export.ts",
+        "sha256": "b7b0ab68f53c3a41e677164a0db6a133f9a7451b3498976223c6498876fc4d2b"
+      }
+    ],
+    "scope": "Selected request/validation/ownership/quota/JWT, job/archive states and domain exporters, expiry scheduler and best-effort file removal, User→Account→VideoChannels hooks, tests for channel/archive/expiry assertions. Not whole files or whole privacy audit.",
+    "positive_reference_patterns": [
+      "Export jobs outside HTTP worker",
+      "Domain-specific categories including channels and settings",
+      "Export lifecycle/state/expiry/download authorization",
+      "Linked account/channel deletion hooks"
+    ],
+    "limitations_observed": [
+      "Export model save and queue insert are separate steps; no demonstrated atomic outbox",
+      "Comments findAll, appendJSON stringify and accumulated AP outbox still use memory",
+      "File-removal hook catches failures asynchronously; no proof no orphan files remain",
+      "Federation Delete hooks do not prove every remote copy is removed"
+    ],
+    "executed": false,
+    "benchmark_performed": false,
+    "independent_review": "PENDING"
+  },
+  "legal_compliance_opinion": false,
+  "independent_review": "PENDING"
+}

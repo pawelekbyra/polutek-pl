@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "local_links_checked": 83,
+  "broken_local_links": [],
+  "asvs_status_counts": {
+    "NIEZBADANE": 314,
+    "W_TRAKCIE": 31
+  },
+  "entry_status_counts": {
+    "NIEZBADANE": 234,
+    "W_TRAKCIE": 45
+  },
+  "planned_full_application_http_scenarios": 44,
+  "full_application_http_scenarios_executed": 0,
+  "isolated_observations": 26,
+  "problem_reproductions": 2,
+  "distinct_new_findings": 1,
+  "stable_finding_count": 25,
+  "baseline_source_hashes_match": true,
+  "source_files_partially_reviewed_this_batch": 44,
+  "research_script_syntax": "passed node --check",
+  "experiment_repeat": "byte-identical output after clarifying fixture timestamps; actual source hashes enforced",
+  "vitest_repeated": false,
+  "diff_whitespace_check": "passed git diff --check",
+  "credential_pattern_scan": "No matches in changed/new files for listed patterns; not a complete secret-detection guarantee",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "scope": "Artifact consistency and scoped reproduction; not full application security, legal compliance or production validation."
+}

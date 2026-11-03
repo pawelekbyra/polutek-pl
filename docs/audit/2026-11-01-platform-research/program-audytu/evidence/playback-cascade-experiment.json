@@ -1,0 +1,79 @@
+{
+  "kind": "REAL_LOCAL_POSTGRESQL_INSPECTED_ACTIVATION_DELETE_PROTOCOL",
+  "database_metadata": {
+    "database": "polutek_research_1793539467",
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "transaction_isolation": "read committed"
+  },
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "observations": [
+    {
+      "mode": "activation_control",
+      "initial_active_new_route_count": 0,
+      "after_activation_commit": {
+        "active_points_new": true,
+        "active_pointer_is_null": false,
+        "new_asset_exists": true,
+        "new_route_exists": true,
+        "old_route_status": "PREVIOUS",
+        "old_asset_primary": false
+      },
+      "final": {
+        "active_points_new": true,
+        "active_pointer_is_null": false,
+        "new_asset_exists": true,
+        "new_route_exists": true,
+        "old_route_status": "PREVIOUS",
+        "old_asset_primary": false
+      }
+    },
+    {
+      "mode": "post_commit_asset_delete",
+      "initial_active_new_route_count": 0,
+      "after_activation_commit": {
+        "active_points_new": true,
+        "active_pointer_is_null": false,
+        "new_asset_exists": true,
+        "new_route_exists": true,
+        "old_route_status": "PREVIOUS",
+        "old_asset_primary": false
+      },
+      "final": {
+        "active_points_new": null,
+        "active_pointer_is_null": true,
+        "new_asset_exists": false,
+        "new_route_exists": false,
+        "old_route_status": "PREVIOUS",
+        "old_asset_primary": false
+      }
+    },
+    {
+      "mode": "cleanup_check_before_activation",
+      "initial_active_new_route_count": 0,
+      "after_activation_commit": {
+        "active_points_new": true,
+        "active_pointer_is_null": false,
+        "new_asset_exists": true,
+        "new_route_exists": true,
+        "old_route_status": "PREVIOUS",
+        "old_asset_primary": false
+      },
+      "final": {
+        "active_points_new": null,
+        "active_pointer_is_null": true,
+        "new_asset_exists": false,
+        "new_route_exists": false,
+        "old_route_status": "PREVIOUS",
+        "old_asset_primary": false
+      }
+    }
+  ],
+  "fixtures_removed": true,
+  "application_source_sha256": {
+    "prisma/schema.prisma": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+    "lib/modules/video/application/video-playback-route.service.ts": "77274646b92f2176964ede7d3660bd85d72dd6fcc5cb433ba102085fab8218ac",
+    "lib/modules/video-pipeline/application/finalize-self-hls.ts": "b8258141def95e163bdc220a76ee296c7f0ad018557647de1a0c8db55a02f89e",
+    "lib/modules/video-pipeline/application/output-cleanup.use-cases.ts": "b2cae56d237bc76b72f806c396635cb54bb360f83dd8e901ea6e15ea03712c44"
+  },
+  "limits": "Actual SQL COMMIT/FK cascades, not actual TypeScript/Prisma/HTTP/R2. No real audit failure injected here; its reachability is separate component/source evidence."
+}

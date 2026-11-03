@@ -1,0 +1,9 @@
+locale,html_lang,ui_source_mode,catalog_keys,missing_keys,orphan_keys,broken_placeholders,empty_values,same_as_English,content_email_legal_scope,native_speaker_review,full_locale_browser_flow,evidence
+pl,pl,INLINE_PL_EN,0,0,0,0,0,0,PL_EN;non_PL_EN_English_fallback_by_documented_policy,NIEWYKONANE,NIEWYKONANE,evidence/i18n-catalog-measurement.json
+en,en,INLINE_PL_EN,0,0,0,0,0,0,PL_EN;non_PL_EN_English_fallback_by_documented_policy,NIEWYKONANE,NIEWYKONANE,evidence/i18n-catalog-measurement.json
+de,de,CATALOGUE,1245,0,0,0,0,41,PL_EN;non_PL_EN_English_fallback_by_documented_policy,NIEWYKONANE,NIEWYKONANE,evidence/i18n-catalog-measurement.json
+es,es,CATALOGUE,1245,0,0,0,0,17,PL_EN;non_PL_EN_English_fallback_by_documented_policy,NIEWYKONANE,NIEWYKONANE,evidence/i18n-catalog-measurement.json
+fr,fr,CATALOGUE,1245,0,0,0,0,31,PL_EN;non_PL_EN_English_fallback_by_documented_policy,NIEWYKONANE,NIEWYKONANE,evidence/i18n-catalog-measurement.json
+it,it,CATALOGUE,1245,0,0,0,0,25,PL_EN;non_PL_EN_English_fallback_by_documented_policy,NIEWYKONANE,NIEWYKONANE,evidence/i18n-catalog-measurement.json
+pt,pt-BR,CATALOGUE,1245,0,0,0,0,22,PL_EN;non_PL_EN_English_fallback_by_documented_policy,NIEWYKONANE,NIEWYKONANE,evidence/i18n-catalog-measurement.json
+zh,zh-CN,CATALOGUE,1245,0,0,0,0,6,PL_EN;non_PL_EN_English_fallback_by_documented_policy,NIEWYKONANE,NIEWYKONANE,evidence/i18n-catalog-measurement.json

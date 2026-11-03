@@ -1,0 +1,158 @@
+{
+  "code_sha": "55f3a6d8637257075d6037810eb3006977b0f790",
+  "control_only": true,
+  "application_acceptance": false,
+  "published": false,
+  "started_at": "2026-11-02T22:05:58.250Z",
+  "checks": [
+    {
+      "name": "source-and-quality",
+      "exit": 0,
+      "expected_exit": 0,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "seal",
+      "exit": 0,
+      "expected_exit": 0,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "verify-all",
+      "exit": 0,
+      "expected_exit": 0,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "verify-app",
+      "exit": 0,
+      "expected_exit": 0,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "verify-admin",
+      "exit": 0,
+      "expected_exit": 0,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "mutable-tag-does-not-redirect",
+      "exit": 0,
+      "expected_exit": 0,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "edited-proof-rejected",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "wrong-approval-hash",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "wrong-revision",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "changed-inputs",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "changed-source",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "failed-type",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "failed-test",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "skipped-security",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    },
+    {
+      "name": "wrong-base-ancestry",
+      "exit": 1,
+      "expected_exit": 1,
+      "signal": null,
+      "matched": true
+    }
+  ],
+  "images": [
+    {
+      "kind": "app",
+      "reference": "polutek-release-control-app:fc639beef750",
+      "id": "sha256:4096002e15a99c550a85e49fa72cbae71b2d757b0f0b7815c82fd68e57c2aee9",
+      "wrong_base": false
+    },
+    {
+      "kind": "migrator",
+      "reference": "polutek-release-control-migrator:fc639beef750",
+      "id": "sha256:94f85b890ed7f90c51da82ddf7fbe368dbc265a8f3100e03fbae60517dd014f7",
+      "wrong_base": false
+    },
+    {
+      "kind": "worker",
+      "reference": "polutek-release-control-worker:fc639beef750",
+      "id": "sha256:9f16a4e6bc731779933706a55ac76bd230c6f509d7663aff77d82b4dac599fc1",
+      "wrong_base": false
+    },
+    {
+      "kind": "collector",
+      "reference": "polutek-release-control-collector:fc639beef750",
+      "id": "sha256:1b7c495beb377368c42334a9b14b3be7111bff5c22e12e4f1f83a336233b5ce8",
+      "wrong_base": false
+    },
+    {
+      "kind": "admin",
+      "reference": "polutek-release-control-admin:fc639beef750",
+      "id": "sha256:12a140760161f993b1e17212b5cf43c01dd9a2b908044472e15e299f802b3d72",
+      "wrong_base": false
+    },
+    {
+      "kind": "app",
+      "reference": "polutek-release-control-wrongbase:fc639beef750",
+      "id": "sha256:4c8aedaa7009eecffe359c1375890b5deeaca4dbade7eb9429e4437512b9cbdc",
+      "wrong_base": true
+    }
+  ],
+  "control_revision": "fc639beef750ec918020fa350557054b57569618",
+  "control_source_fingerprint": "8c3dd0bb31cc31dab912c276143e89a816dedb5447a51188987a3e71fdd9969b",
+  "pinned_node_base": "node@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da",
+  "finished_at": "2026-11-02T22:06:03.070Z",
+  "all_control_expectations_passed": true,
+  "release_ready": false
+}

@@ -1,0 +1,17 @@
+valid-restored-db: PASS
+matching-manifest: PASS
+unknown-manifest-aggregate: PASS
+mismatched-manifest-count: PASS
+invalid-manifest-shape: PASS
+migration-read-denied: PASS
+required-model-read-denied: PASS
+unfinished-migration: PASS
+resolved-rollback-history: PASS
+same-database-url-guard: PASS
+missing-explicit-enable: PASS
+{
+  "database": "polutek_h1_restore_db630f5c63",
+  "passed": 11,
+  "failed": 0,
+  "code_sha": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b"
+}

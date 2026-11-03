@@ -1,0 +1,116 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 6.76kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.3s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/mwader/static-ffmpeg:8.0.1
+#4 ...
+
+#5 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#5 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/mwader/static-ffmpeg:8.0.1
+#4 DONE 1.7s
+
+#6 [internal] load .dockerignore
+#6 transferring context: 165B done
+#6 DONE 0.0s
+
+#7 [deps 1/6] FROM docker.io/library/node:22-bookworm-slim
+#7 DONE 0.0s
+
+#8 [deps 2/6] RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+#8 CACHED
+
+#9 [ffmpeg 1/1] FROM docker.io/mwader/static-ffmpeg:8.0.1@sha256:252705ff88532fa338e7065c21792756552f8fe7c212f84bc503d3c340689594
+#9 resolve docker.io/mwader/static-ffmpeg:8.0.1@sha256:252705ff88532fa338e7065c21792756552f8fe7c212f84bc503d3c340689594 done
+#9 ...
+
+#10 [internal] load build context
+#10 transferring context: 94.87kB 0.1s done
+#10 DONE 0.1s
+
+#11 [deps 4/6] COPY package.json package-lock.json ./
+#11 CACHED
+
+#12 [deps 5/6] COPY prisma ./prisma
+#12 CACHED
+
+#13 [deps 3/6] WORKDIR /app
+#13 CACHED
+
+#14 [deps 6/6] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npm ci --no-audit --no-fund --strict-ssl=true
+#14 CACHED
+
+#9 [ffmpeg 1/1] FROM docker.io/mwader/static-ffmpeg:8.0.1@sha256:252705ff88532fa338e7065c21792756552f8fe7c212f84bc503d3c340689594
+#9 sha256:252705ff88532fa338e7065c21792756552f8fe7c212f84bc503d3c340689594 741B / 741B done
+#9 sha256:9a4bf2b7915ef1c4d725a176159438146b68485cc613bf6662e2786c661cd16d 529B / 529B done
+#9 sha256:c98067e5f62a3a0d08a8eb0d6b560dc8f0fa7b1572c842ed5a2a8d02434e98d6 826B / 826B done
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 0B / 122.97MB 0.2s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 6.29MB / 122.97MB 0.7s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 13.63MB / 122.97MB 1.0s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 20.97MB / 122.97MB 1.3s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 27.26MB / 122.97MB 1.6s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 36.70MB / 122.97MB 2.0s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 44.04MB / 122.97MB 2.3s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 51.38MB / 122.97MB 2.6s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 57.67MB / 122.97MB 2.9s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 63.96MB / 122.97MB 3.2s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 73.40MB / 122.97MB 3.6s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 79.69MB / 122.97MB 3.9s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 87.03MB / 122.97MB 4.2s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 95.42MB / 122.97MB 4.6s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 102.76MB / 122.97MB 4.9s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 109.05MB / 122.97MB 5.2s
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 117.44MB / 122.97MB 5.6s
+#9 extracting sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7
+#9 sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 122.97MB / 122.97MB 5.8s done
+#9 extracting sha256:c6236431e8b6eadc7ecf0ccb9b2511fa1b78acf121517f668115bd12dc9e1da7 1.8s done
+#9 DONE 7.7s
+
+#15 [worker  3/13] COPY --from=ffmpeg /ffmpeg /usr/local/bin/ffmpeg
+#15 DONE 4.5s
+
+#16 [worker  4/13] COPY --from=ffmpeg /ffprobe /usr/local/bin/ffprobe
+#16 DONE 4.3s
+
+#17 [worker  5/13] WORKDIR /app
+#17 DONE 2.4s
+
+#18 [worker  6/13] COPY --from=deps --chown=node:node /app/node_modules ./node_modules
+#18 DONE 12.1s
+
+#19 [worker  7/13] COPY --chown=node:node package.json tsconfig.json ./
+#19 DONE 12.9s
+
+#20 [worker  8/13] COPY --chown=node:node prisma ./prisma
+#20 DONE 12.1s
+
+#21 [worker  9/13] COPY --chown=node:node lib ./lib
+#21 DONE 13.8s
+
+#22 [worker 10/13] COPY --chown=node:node app ./app
+#22 DONE 13.1s
+
+#23 [worker 11/13] COPY --chown=node:node components ./components
+#23 DONE 8.5s
+
+#24 [worker 12/13] COPY --chown=node:node scripts ./scripts
+#24 DONE 8.1s
+
+#25 [worker 13/13] RUN mkdir -p /work && chown node:node /work
+#25 DONE 4.1s
+
+#26 exporting to image
+#26 exporting layers
+#26 exporting layers 11.8s done
+#26 writing image sha256:fcb719454310a81fd93c220e4c007cdeadd21154a94a961e4f04721bb5b8ce46 done
+#26 naming to docker.io/library/polutek-h1-worker:835348d77cef done
+#26 DONE 11.8s

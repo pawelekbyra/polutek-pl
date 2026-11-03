@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-01",
+  "actual_source_sha256": {
+    "lib/modules/video/domain/video-visibility.ts": "f453481e0b1b4798291fa7ff07ccb375b46b62f76ba466ba041f05440d40f7e9",
+    "lib/modules/authz/index.ts": "5608d795bf2371e29a2bafb6b50c916b95f4f82f078fcd78f2a9c6b4b7987722",
+    "lib/modules/authz/domain/actions.ts": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+    "lib/modules/authz/domain/policy.ts": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+    "lib/modules/authz/domain/matrix.ts": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+    "lib/modules/authz/domain/principal.ts": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+    "lib/modules/authz/domain/resources.ts": "315e32dcb4153a97a6cd9bf462cd3c769b83cfd93274f13613dac280defb0f34",
+    "lib/modules/authz/application/authorize.ts": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "lib/modules/shared/app-context.ts": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+    "lib/prisma.ts": "036a65c0323a8bd563efdd33a151f25bcb22bbbad4994a481cfb3d4b3b63706c"
+  },
+  "observations": [
+    {
+      "case": "direct_pure_visibility_helper",
+      "results": [
+        true,
+        false,
+        true,
+        true
+      ],
+      "prisma_constructor_calls": 0
+    },
+    {
+      "case": "authz_public_index_remains_isolated",
+      "owner_role_present": true,
+      "authorize_function_exported": true,
+      "prisma_constructor_calls": 0
+    },
+    {
+      "case": "context_import_initializes_default_before_injection",
+      "prisma_constructor_calls_before_createContext": 1,
+      "prisma_constructor_calls_after_injection": 1,
+      "injected_db_preserved": true,
+      "real_database_queries": 0
+    },
+    {
+      "case": "default_context_reuses_singleton_probe",
+      "default_actor": "guest",
+      "reuses_import_time_client": true,
+      "prisma_constructor_calls": 1,
+      "real_database_queries": 0
+    }
+  ],
+  "boundaries": [
+    "PrismaClient is a constructor probe supplied to VM only; no generated client or network",
+    "No Next/SWC optimization or full public video/channel barrel execution",
+    "Does not measure bundle size, request latency or production outage",
+    "No authorization result claimed from mere import of authz module"
+  ]
+}

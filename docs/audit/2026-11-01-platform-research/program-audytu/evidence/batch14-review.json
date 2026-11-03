@@ -1,0 +1,326 @@
+{
+  "date": "2026-11-02",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "fe1efe563f311d6fa4cf8a62779b699627ae5d66",
+  "source_review_scope": [
+    {
+      "file": "app/api/health/route.ts",
+      "sha256": "5fff2b55e2c3f636d42e8e4cacb926ede3ae17de087ddbb4dca22752e9b5462a",
+      "scope": "Whole small route read; no Next execution"
+    },
+    {
+      "file": "deploy/serwerek/systemd/serwerek-alert@.service",
+      "sha256": "4a3f319e4d3b235187e748174c5bccc2935895d5003825d9bc0128113496fd76",
+      "scope": "Whole short unit source; not active systemd inspection"
+    },
+    {
+      "file": "docs/operations/SERWEREK.md",
+      "sha256": "ddda60312e135183666ff01edd639284d7e4ed764541cf421e792f779c003b8b",
+      "scope": "Selected monitoring and backup sections; documentation, not production state"
+    },
+    {
+      "file": "lib/api/api-response.ts",
+      "sha256": "0283b6a81e377cc5c21f260696afc4fb0ec1261ae58228c76a6553b4380d7f2f",
+      "scope": "Response helper source read; health default HTTP status, no HTTP execution"
+    },
+    {
+      "file": "lib/api/health-token.ts",
+      "sha256": "1b675d3765549d635d0646857ec42dfca81f7dcfe98cb6f6e0698d80e7749cce",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/constants.ts",
+      "sha256": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/logger.ts",
+      "sha256": "fe0811c20deaebbaa5ad984c1e6fbcedd91ad629f35305d30c1fb98e515d7398",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-analytics/infrastructure/telemetry.repository.ts",
+      "sha256": "c6ca448ea57a9594ab4839edda41fc29bcdb68c500729ee853694be5d13c52d3",
+      "scope": "Selected playback daily/hourly QoE aggregation source, not executed SQL"
+    },
+    {
+      "file": "lib/modules/admin-overview/application/collect-health.ts",
+      "sha256": "23056619c1bf7768b498cead96693cb48ed779543e1a515f2cf7821063651409",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-overview/domain/alert-thresholds.ts",
+      "sha256": "41f18d309e9467af0a5c24acc184703431e13f1affb6200b008829599b88b691",
+      "scope": "UI-only threshold scope and validation source; selected existing tests run"
+    },
+    {
+      "file": "lib/modules/admin-overview/domain/format.ts",
+      "sha256": "c204644a99ffc9b457a2ebf038d715215ec04bdc4ece6859bf2d2de2bf9e6d2d",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-overview/domain/rules.ts",
+      "sha256": "436c095bd25957a72d4e24a1c8098ccc02943625c9214276d5abb5eedb48db68",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-overview/domain/time.ts",
+      "sha256": "e659a68e20426dfb2ce97cfcf45377c572c3556e18b0bc5f347598887b3bb384",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-overview/infrastructure/probes.ts",
+      "sha256": "cab69f5406f40d9d3d1dbc1e1329e7c564d7dcb1545092218167155823d1f7fe",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.errors.ts",
+      "sha256": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.policy.ts",
+      "sha256": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/health/application/check-health.use-case.ts",
+      "sha256": "ee4fd8e7c089318058dd9fedcae22d663248230d7aa9759f5af6c8bdf1569af7",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/media-safety.ts",
+      "sha256": "11a9be10c3fc773b8c943a2adbd37a31ab4bcb49461ea99b7f76e2ab3854f470",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/media.errors.ts",
+      "sha256": "cfe1e3dc30d92f079a891cc1056abb18d1e0dac60ab272ca92d9fbb3ab1cfc3c",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/media.policy.ts",
+      "sha256": "4d31f153475b72747a349a22fc3f0f6dda52daf0349606504d8d60feed6a1bc0",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/payments/application/fulfill-payment.use-case.ts",
+      "sha256": "386060febe7f6f5e6a8cdc4f7f494811981685e2cb10c387a7c42ba4db00a7f3",
+      "scope": "Selected logging sites only; previous D10 evidence remains separate"
+    },
+    {
+      "file": "lib/modules/payments/application/handle-refund.use-case.ts",
+      "sha256": "955c8ae305b32678aa94c8da05b393620e81f6d58d700366faf77ee46f475d2b",
+      "scope": "Selected logging sites only; previous D10 evidence remains separate"
+    },
+    {
+      "file": "lib/modules/payments/application/handle-stripe-webhook.use-case.ts",
+      "sha256": "6af56fbe1618c749bb09ae9ae92377ee96fb88a101df83af73cb47e004da425a",
+      "scope": "Selected logging sites/correlation only; no new payment runtime"
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "ACTUAL_TS_COMPONENT_EXECUTED_IN_VM; partial source review, explicit synthetic I/O, not whole-file sign-off"
+    },
+    {
+      "file": "lib/telemetry/client/playback-qoe.ts",
+      "sha256": "a27c9e7ee39f1d0f454c63df00fa673d4ec36c166b4a981ce62bdddeb72c4895",
+      "scope": "Selected tracker/start/stall/collect fields; six existing unit tests run, no browser media"
+    },
+    {
+      "file": "lib/telemetry/client/use-playback-qoe.ts",
+      "sha256": "78af050d7467ed322e8f8219c74702465d1edbf550aca57992ae43c1b5a6a822",
+      "scope": "Small hook source read, registration/lifecycle only, no transport proof"
+    },
+    {
+      "file": "scripts/serwerek/common.sh",
+      "sha256": "394dc913cccfc22f08371bfbab6c02aae6fe1ecb6a73bd8ee7c65773624e2124",
+      "scope": "Whole helper source, job_run/send_alert/dedupe; NEVER executed or secret files read"
+    },
+    {
+      "file": "scripts/serwerek/cron-runner.sh",
+      "sha256": "7be2d48ac68cfec48f7a4264eab324f0d25ce3fd439ac1dbef085c5722affd3c",
+      "scope": "Whole source read, HTTP result recording and exit; NEVER executed"
+    },
+    {
+      "file": "scripts/serwerek/health.sh",
+      "sha256": "e3fde59a20727e3cbd15935153faa6ca1fc6d47de8e15c1186e63e1fd0d2746b",
+      "scope": "Whole health script source, thresholds/pings/files; NEVER executed"
+    },
+    {
+      "file": "scripts/serwerek/unit-failed.sh",
+      "sha256": "55bd6299e89756843e2a5f6000a5b65d6bba3ccbbb3e7fa05418992a938ae160",
+      "scope": "Whole source read, OnFailure text and shared throttle; NEVER executed"
+    },
+    {
+      "file": "tests/unit/admin-overview/time-and-rules.test.ts",
+      "sha256": "46c9d72f775a1698ee3585ac30bd163a8ee0b80f2c3e75ddefa3f6b47511c121",
+      "scope": "Existing targeted Vitest selected assertions/read; execution status recorded separately, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/admin-phase3/alert-thresholds.test.ts",
+      "sha256": "0e96288185fbeaf6e16201014219802eaf917a44a7dca3d419b5e55766918515",
+      "scope": "Existing targeted Vitest selected assertions/read; execution status recorded separately, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/api/health-token.test.ts",
+      "sha256": "691f3929438bbf551642d8d2a0990e33321ad76b2cc73745cf5625801d049c24",
+      "scope": "Existing targeted Vitest selected assertions/read; execution status recorded separately, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/logger.test.ts",
+      "sha256": "343f1a0e36a7a54b6c1b4baa8369bab8b135a57ffa8080844092f2542602db40",
+      "scope": "Existing targeted Vitest selected assertions/read; execution status recorded separately, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/telemetry/playback-qoe.test.ts",
+      "sha256": "e49ddfe1e393bc8aa94bc2aa149c066a80dd907ad54f5e0841dd55ee3062de6f",
+      "scope": "Existing targeted Vitest selected assertions/read; execution status recorded separately, not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/workers/pp-watchdog.test.ts",
+      "sha256": "beef690ff7a501427ff19a9022e785ed8906241a8cb5460c8c668dd9a401608d",
+      "scope": "Existing targeted Vitest selected assertions/read; execution status recorded separately, not whole-file sign-off"
+    },
+    {
+      "file": "workers/pp-watchdog/worker.mjs",
+      "sha256": "c00df99ee6cfa2907eb3fd468944764d90d583551a60ecc1b96d20111c845ec9",
+      "scope": "Whole worker source read; actual Worker.fetch with synthetic D1/fetch/clock executed, no Cloudflare or messages"
+    }
+  ],
+  "source_scope_warning": "Partial, overlapping previous batches. Executed dependencies and selected test assertions are included, not counts of completely audited/new files.",
+  "watchdog": {
+    "exit_code": 0,
+    "actual_worker_source_unchanged": true,
+    "observations": 9,
+    "source_sha256": "c00df99ee6cfa2907eb3fd468944764d90d583551a60ecc1b96d20111c845ec9",
+    "synthetic_D1_fetch_and_clock": true,
+    "real_messages_sent": 0,
+    "harness_initial_failure_preserved": true
+  },
+  "monitoring_components": {
+    "exit_code": 0,
+    "observations": 13,
+    "actual_TS_modules": 15,
+    "explicit_synthetic_DB_fetch_channel_and_env": true,
+    "real_network_or_DB": false
+  },
+  "targeted_vitest": {
+    "exit_code": 1,
+    "passed_files": 5,
+    "blocked_before_registration_files": 1,
+    "registered_and_passed": 22,
+    "failed_registered_assertions": 0,
+    "full_suite_repeated": false,
+    "files": [
+      {
+        "file": "tests/unit/logger.test.ts",
+        "status": "passed",
+        "registered": 2,
+        "blocked_before_registration": false
+      },
+      {
+        "file": "tests/unit/admin-overview/time-and-rules.test.ts",
+        "status": "failed",
+        "registered": 0,
+        "blocked_before_registration": true
+      },
+      {
+        "file": "tests/unit/admin-phase3/alert-thresholds.test.ts",
+        "status": "passed",
+        "registered": 6,
+        "blocked_before_registration": false
+      },
+      {
+        "file": "tests/unit/api/health-token.test.ts",
+        "status": "passed",
+        "registered": 6,
+        "blocked_before_registration": false
+      },
+      {
+        "file": "tests/unit/telemetry/playback-qoe.test.ts",
+        "status": "passed",
+        "registered": 6,
+        "blocked_before_registration": false
+      },
+      {
+        "file": "tests/unit/workers/pp-watchdog.test.ts",
+        "status": "passed",
+        "registered": 2,
+        "blocked_before_registration": false
+      }
+    ],
+    "blocker": "Uninitialized generated Prisma via broad imports; no Prisma generate retry or substitute installed client"
+  },
+  "new_distinct_findings": [
+    "R36"
+  ],
+  "existing_finding_extended": "R18",
+  "not_new_findings": [
+    "Logger preserves synthetic path marker: no valid token or actual application log call witness",
+    "All-INFO summary is a declared policy; unmeasured != healthy",
+    "No duplicate R05 publication notification or R12 restore finding"
+  ],
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "executed": false,
+    "equal_benchmark": false,
+    "files": [
+      {
+        "file": "server/core/lib/opentelemetry/metrics.ts",
+        "sha256": "c7483ed23d049b0663c884592cf98a1c7facc7c45e9502305ad45d0c2d61e199",
+        "scope": "Metric registration/export and request duration source"
+      },
+      {
+        "file": "server/core/controllers/api/metrics.ts",
+        "sha256": "2d171ee6ddd78172c09eb1d38534fced19b1292ae4f610567a6bfe00117f0259",
+        "scope": "Playback router/handler; must consider preceding validator"
+      },
+      {
+        "file": "server/core/middlewares/validators/metrics.ts",
+        "sha256": "05789911dc85eeec4723fae18b0d171550f26bca988b3e8353781d8ec69bb5a8",
+        "scope": "Playback fields, existing video, disabled metrics short circuit"
+      },
+      {
+        "file": "server/core/lib/opentelemetry/metric-helpers/job-queue-observers-builder.ts",
+        "sha256": "4010d3925a494c02f5304d7c5b0bb4559e8620d6b8a2eb92003e230b76781c10",
+        "scope": "Local jobs labels/states gauge source"
+      },
+      {
+        "file": "server/core/lib/opentelemetry/metric-helpers/runner-job-queue-observers-builder.ts",
+        "sha256": "512360a5ffbcf257b19fbe69e3c8a404a5d9ca94736346707239e39dfcf6b0f1",
+        "scope": "Runner jobs gauge incl zero state"
+      },
+      {
+        "file": "server/core/lib/opentelemetry/metric-helpers/playback-metrics.ts",
+        "sha256": "5075b460fbbcbf3fa7e2a5494453454849b363725fc642a286bee2c7d794727c",
+        "scope": "Viewer errors/stalls/quality/P2P stats; no runtime"
+      },
+      {
+        "file": "server/core/lib/opentelemetry/metric-helpers/database-read-replicas-observers-builder.ts",
+        "sha256": "c9eacfbf7e737bb55a51046d1cb244ac7aaf1237147700e0823212125335c60c",
+        "scope": "Replica lag/health/fallback metrics source"
+      },
+      {
+        "file": "server/core/lib/opentelemetry/tracing.ts",
+        "sha256": "ea1ab8477665566b63a436fa84932590d2f1a6ea920dfdb7e8156ad27140ef33",
+        "scope": "Selected exporters/instrumentation options and privacy questions"
+      },
+      {
+        "file": "server/core/helpers/logger.ts",
+        "sha256": "2d6d6d6594426d75ec2bef373967b3725e7f817ab6171ddd6116b4b5a78f34c3",
+        "scope": "Selected JSON, file rotation, trace context integration"
+      },
+      {
+        "file": "config/default.yaml",
+        "sha256": "29093a9ebbaa2959b4453dfa1af4447cba32818f02ec6b9cd503e0892375b9b2",
+        "scope": "Lines 392-414 metrics/tracing defaults; not whole config"
+      }
+    ]
+  },
+  "full_Next_HTTP_SQL_Cloudflare_or_generated_Prisma_client_executed": false,
+  "production_access": false,
+  "real_person_data_used": false,
+  "independent_review": "PENDING"
+}

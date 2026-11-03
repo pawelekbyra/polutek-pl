@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-02",
+  "draft_revision": 6,
+  "status": "saved",
+  "requires_publish": true,
+  "custom_domains": [
+    "api.github.com",
+    "binaries.prisma.sh"
+  ],
+  "start_instructions_saved": true,
+  "start_instructions_reference_h1_branch": true,
+  "install_script_preserved": true,
+  "secret_values_saved": false,
+  "runtime": {
+    "observations_current": true,
+    "spec_revision": "1",
+    "network_state": "enforced",
+    "prisma_host_effective": false,
+    "github_api_host_effective": false
+  },
+  "note": "Draft save does not apply network rules or establish environment readiness; no new blocked operation was retried unchanged."
+}

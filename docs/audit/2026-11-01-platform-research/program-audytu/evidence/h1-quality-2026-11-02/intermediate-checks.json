@@ -1,0 +1,20 @@
+[
+  {
+    "check": "typecheck-all",
+    "exit": 0,
+    "seconds": 7,
+    "dirty_source": true
+  },
+  {
+    "check": "updated-contracts",
+    "exit": 0,
+    "seconds": 11,
+    "dirty_source": true
+  },
+  {
+    "check": "lint",
+    "exit": 1,
+    "seconds": 31,
+    "dirty_source": true
+  }
+]

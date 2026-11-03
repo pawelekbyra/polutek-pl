@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-02",
+  "method": "Existing unchanged test files, actual Vitest 4.1.10, temporary minimal node config and source/dependency symlink; no application working-tree mutation",
+  "source_sha256": {
+    "lib/api/health-token.ts": "1b675d3765549d635d0646857ec42dfca81f7dcfe98cb6f6e0698d80e7749cce",
+    "tests/unit/api/health-token.test.ts": "691f3929438bbf551642d8d2a0990e33321ad76b2cc73745cf5625801d049c24",
+    "tests/unit/ops/serwerek-scripts.test.ts": "5deb243bf5764d2f78cedddccb9623012131bb243bc848769fe87b45ef1d00fb",
+    "scripts/serwerek/backup.sh": "1302548c834e9071ad68195ec1a0b97716f21674ad9f01e5adb5e6915985c2ed",
+    "deploy/serwerek/deploy.sh": "7773f106d9d993c9a94807c9e3977381de5788744c25e73cf05daae9b70f949c",
+    "deploy/serwerek/deploy-admin.sh": "7bec92afea97163caeac1542c806451a0e0b693d04150c63168c102b5585d94e",
+    "scripts/ops/mergedeploy.sh": "d7ddbca7d334e2e516cd04b30f226750dbb07ad87a50290ad9c9929b0b7e94cd",
+    "tests/unit/operations/verify-restored-database.test.ts": "36bbe2ea8a7296fd442fa92b44c649c0d84ae33280aab7069619c2449e306fc5",
+    "scripts/verify-restored-database.ts": "d5c24a55ad1a335912722d7aabb7594e7293cbec56d10e8953b6adc16256bfbb"
+  },
+  "observations": [
+    {
+      "case": "health_baseline",
+      "process_exit": 0,
+      "runner_success": true,
+      "registered": 6,
+      "passed_assertions": 6,
+      "failed_assertions": 0,
+      "pending_or_filtered": 0,
+      "unhandled_errors": null,
+      "artifact": "evidence/oracle-health_baseline.json",
+      "log": "evidence/oracle-health_baseline.log",
+      "mutated_source_paths": [],
+      "production_or_real_network_access": false
+    },
+    {
+      "case": "health_wrong_equality_accepts",
+      "process_exit": 1,
+      "runner_success": false,
+      "registered": 6,
+      "passed_assertions": 4,
+      "failed_assertions": 2,
+      "pending_or_filtered": 0,
+      "unhandled_errors": null,
+      "artifact": "evidence/oracle-health_wrong_equality_accepts.json",
+      "log": "evidence/oracle-health_wrong_equality_accepts.log",
+      "mutated_source_paths": [
+        "lib/api/health-token.ts"
+      ],
+      "production_or_real_network_access": false
+    },
+    {
+      "case": "health_missing_token_accepts",
+      "process_exit": 1,
+      "runner_success": false,
+      "registered": 6,
+      "passed_assertions": 2,
+      "failed_assertions": 4,
+      "pending_or_filtered": 0,
+      "unhandled_errors": null,
+      "artifact": "evidence/oracle-health_missing_token_accepts.json",
+      "log": "evidence/oracle-health_missing_token_accepts.log",
+      "mutated_source_paths": [
+        "lib/api/health-token.ts"
+      ],
+      "production_or_real_network_access": false
+    },
+    {
+      "case": "health_plain_equality_same_boolean_semantics",
+      "process_exit": 0,
+      "runner_success": true,
+      "registered": 6,
+      "passed_assertions": 6,
+      "failed_assertions": 0,
+      "pending_or_filtered": 0,
+      "unhandled_errors": null,
+      "artifact": "evidence/oracle-health_plain_equality_same_boolean_semantics.json",
+      "log": "evidence/oracle-health_plain_equality_same_boolean_semantics.log",
+      "mutated_source_paths": [
+        "lib/api/health-token.ts"
+      ],
+      "production_or_real_network_access": false
+    },
+    {
+      "case": "ops_static_baseline",
+      "process_exit": 0,
+      "runner_success": true,
+      "registered": 24,
+      "passed_assertions": 7,
+      "failed_assertions": 0,
+      "pending_or_filtered": 17,
+      "unhandled_errors": null,
+      "artifact": "evidence/oracle-ops_static_baseline.json",
+      "log": "evidence/oracle-ops_static_baseline.log",
+      "mutated_source_paths": [],
+      "production_or_real_network_access": false
+    },
+    {
+      "case": "ops_static_deploy_early_success",
+      "process_exit": 0,
+      "runner_success": true,
+      "registered": 24,
+      "passed_assertions": 7,
+      "failed_assertions": 0,
+      "pending_or_filtered": 17,
+      "unhandled_errors": null,
+      "artifact": "evidence/oracle-ops_static_deploy_early_success.json",
+      "log": "evidence/oracle-ops_static_deploy_early_success.log",
+      "mutated_source_paths": [
+        "deploy/serwerek/deploy.sh"
+      ],
+      "production_or_real_network_access": false
+    },
+    {
+      "case": "restore_helper_existing_test_baseline",
+      "process_exit": 0,
+      "runner_success": true,
+      "registered": 4,
+      "passed_assertions": 4,
+      "failed_assertions": 0,
+      "pending_or_filtered": 0,
+      "unhandled_errors": null,
+      "artifact": "evidence/oracle-restore_helper_existing_test_baseline.json",
+      "log": "evidence/oracle-restore_helper_existing_test_baseline.log",
+      "mutated_source_paths": [],
+      "production_or_real_network_access": false
+    },
+    {
+      "case": "restore_helper_verification_body_disabled",
+      "process_exit": 0,
+      "runner_success": true,
+      "registered": 4,
+      "passed_assertions": 4,
+      "failed_assertions": 0,
+      "pending_or_filtered": 0,
+      "unhandled_errors": null,
+      "artifact": "evidence/oracle-restore_helper_verification_body_disabled.json",
+      "log": "evidence/oracle-restore_helper_verification_body_disabled.log",
+      "mutated_source_paths": [
+        "scripts/verify-restored-database.ts"
+      ],
+      "production_or_real_network_access": false
+    }
+  ],
+  "full_project_mutation_score": null,
+  "interpretation": [
+    "Health token wrong-accept mutations detected by existing six tests",
+    "Plain equality mutation preserves boolean outputs; surviving this probe does not demonstrate a timing exploit or weakness of actual unchanged comparator",
+    "Text-only static filter accepts a synthetic early-success deploy copy; full behavior suite was intentionally not run and cannot be declared blind",
+    "Existing restore-helper baseline is green; all four tests also pass with verification body disabled. They cover preflight logging/mocked exit/redaction, not completed DB checks."
+  ],
+  "real_app_DB_provider_or_production_access": false,
+  "installed_Prismaclient_changed": false,
+  "actual_vitest_version": "4.1.10",
+  "metadata_correction": {
+    "initial_assumption": "4.1.7 from declared version range",
+    "actual_installed_runner_version": "4.1.10",
+    "verification": "node_modules/vitest/package.json after actual runs; behavior, JSON/logs and outcomes unchanged; no unnecessary test rerun"
+  }
+}

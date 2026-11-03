@@ -1,0 +1,32 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 0933a3a6..02efdcd4 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -6,3 +6,13 @@ Przewodnik dla agentów AI to [`CLAUDE.md`](CLAUDE.md): przeczytaj go w całośc
+ - Otwarte prace i decyzje: [`docs/operations/STATUS.md`](docs/operations/STATUS.md).
+ - Zmiany małe i izolowane; praca na gałęzi, scalanie do `main` lokalnie po zielonym `npm run quality` (bez GitHuba i bez GitHub Actions).
+ - Dokumenty opisują stan obecny. Historia jest w git; raportów z sesji nie zapisujemy w repo.
++
++<!-- BEGIN:nextjs-agent-rules -->
++
++## This is NOT the Next.js you know
++
++This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
++
++This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
++
++<!-- END:nextjs-agent-rules -->
+diff --git a/next-env.d.ts b/next-env.d.ts
+index ce4e94a6..a419cbe4 100644
+--- a/next-env.d.ts
++++ b/next-env.d.ts
+@@ -1,7 +1,7 @@
+ /// <reference types="next" />
+ /// <reference types="next/image-types/global" />
+-import "./.next/types/routes.d.ts";
+-import "./.next/types/root-params.d.ts";
++import "./.next/dev/types/routes.d.ts";
++import "./.next/dev/types/root-params.d.ts";
+ 
+ // NOTE: This file should not be edited
+ // see https://nextjs.org/docs/app/api-reference/config/typescript for more information.

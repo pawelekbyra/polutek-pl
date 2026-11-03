@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "findings": 37,
+  "packages": 40,
+  "canonical_counts_unchanged": true,
+  "private_values_absent": true,
+  "code_sha": "03115f0fefe47baf91622b3272b966344981beaf",
+  "local_acceptance_exit": 0,
+  "remaining": [
+    "Docker artifact/native libraries and enforced source/test/digest binding",
+    "Full owned API/worker/HLS/Redis/storage integration",
+    "Three explicit skips",
+    "K05 active configuration and nine decisions",
+    "Later repair packages and deeper audit"
+  ],
+  "release_ready": false
+}

@@ -1,0 +1,286 @@
+{
+  "ok": false,
+  "head": "072f23f1405bf3e76c202c4249e978b7c10df3e1",
+  "branch": "master",
+  "dirty": false,
+  "dirtyAfter": false,
+  "sourceBefore": {
+    "revision": "072f23f1405bf3e76c202c4249e978b7c10df3e1",
+    "files": [
+      {
+        "path": ".github/workflows/ci.yml",
+        "mode": "100644",
+        "sha256": "1fa10b7c27b247adf30bd47b551d12710163e1c6b1b3ec2215697b7ddf64791a"
+      },
+      {
+        "path": ".gitignore",
+        "mode": "100644",
+        "sha256": "a7e7370254fc919ab78ddf61e0e3763b80ea7ade18863c6650c329da44b8ec7b"
+      },
+      {
+        "path": ".next/invalid.ts",
+        "mode": "100644",
+        "sha256": "73d3530fe25bf3588d116ad9d12d245f8fe14945615c5b46fc573214915e8414"
+      },
+      {
+        "path": "app.txt",
+        "mode": "100644",
+        "sha256": "831b5a632f8d749aa85e3dc8b153ac224686bdaa7a728a343d0e2200987b7bf1"
+      },
+      {
+        "path": "bin/tool.sh",
+        "mode": "100755",
+        "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb"
+      },
+      {
+        "path": "scripts/ops/local-ci-lib.mjs",
+        "mode": "100644",
+        "sha256": "95a9450e38fa089d2e9b664e98583a161231cc70a8987c6c17c96a45288bfe9a"
+      },
+      {
+        "path": "scripts/ops/local-ci.mjs",
+        "mode": "100644",
+        "sha256": "954b7e5ace9c1112b460c9dcbedfb19402b97bb139900a430986b1f9c4cda4d6"
+      },
+      {
+        "path": "scripts/ops/release/policy.mjs",
+        "mode": "100644",
+        "sha256": "46bc345709b1e9aa638d4f0833a14c272f2ef59c30ae1be4c71a0848e5c8613d"
+      },
+      {
+        "path": "scripts/ops/release/source.mjs",
+        "mode": "100644",
+        "sha256": "fbf551e924aa5b7383c5d34d547a3b9fa8844b8829f2e5d94e62a3e889d167d3"
+      },
+      {
+        "path": "tsconfig.json",
+        "mode": "100644",
+        "sha256": "0a9b6b4da40434d8ea6ac677827d6ec7611bb1101c6fa8a671cbbdf4a555ef9e"
+      }
+    ],
+    "fingerprint": "1e8fb5dd86177f5a895bfb29c5f2f6c6f57cc3d2d61e09c1afa878a54c6610de"
+  },
+  "sourceAfter": {
+    "revision": "072f23f1405bf3e76c202c4249e978b7c10df3e1",
+    "files": [
+      {
+        "path": ".github/workflows/ci.yml",
+        "mode": "100644",
+        "sha256": "1fa10b7c27b247adf30bd47b551d12710163e1c6b1b3ec2215697b7ddf64791a"
+      },
+      {
+        "path": ".gitignore",
+        "mode": "100644",
+        "sha256": "a7e7370254fc919ab78ddf61e0e3763b80ea7ade18863c6650c329da44b8ec7b"
+      },
+      {
+        "path": ".next/invalid.ts",
+        "mode": "100644",
+        "sha256": "73d3530fe25bf3588d116ad9d12d245f8fe14945615c5b46fc573214915e8414"
+      },
+      {
+        "path": "app.txt",
+        "mode": "100644",
+        "sha256": "831b5a632f8d749aa85e3dc8b153ac224686bdaa7a728a343d0e2200987b7bf1"
+      },
+      {
+        "path": "bin/tool.sh",
+        "mode": "100755",
+        "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb"
+      },
+      {
+        "path": "scripts/ops/local-ci-lib.mjs",
+        "mode": "100644",
+        "sha256": "95a9450e38fa089d2e9b664e98583a161231cc70a8987c6c17c96a45288bfe9a"
+      },
+      {
+        "path": "scripts/ops/local-ci.mjs",
+        "mode": "100644",
+        "sha256": "954b7e5ace9c1112b460c9dcbedfb19402b97bb139900a430986b1f9c4cda4d6"
+      },
+      {
+        "path": "scripts/ops/release/policy.mjs",
+        "mode": "100644",
+        "sha256": "46bc345709b1e9aa638d4f0833a14c272f2ef59c30ae1be4c71a0848e5c8613d"
+      },
+      {
+        "path": "scripts/ops/release/source.mjs",
+        "mode": "100644",
+        "sha256": "fbf551e924aa5b7383c5d34d547a3b9fa8844b8829f2e5d94e62a3e889d167d3"
+      },
+      {
+        "path": "tsconfig.json",
+        "mode": "100644",
+        "sha256": "0a9b6b4da40434d8ea6ac677827d6ec7611bb1101c6fa8a671cbbdf4a555ef9e"
+      }
+    ],
+    "fingerprint": "1e8fb5dd86177f5a895bfb29c5f2f6c6f57cc3d2d61e09c1afa878a54c6610de"
+  },
+  "sourceStable": true,
+  "base": null,
+  "baseRef": "origin/main",
+  "node": "v22.23.4",
+  "platform": "linux 6.18.57",
+  "cpus": 4,
+  "options": {
+    "lintAll": false,
+    "unitFull": false,
+    "build": false,
+    "coverage": false,
+    "strict": false,
+    "only": [
+      "typecheck-all"
+    ],
+    "skip": [
+      "prisma"
+    ],
+    "base": "origin/main",
+    "jobs": 1,
+    "list": false,
+    "help": false
+  },
+  "changedFiles": 0,
+  "startedAt": "2026-11-02T22:11:16.644Z",
+  "durationMs": 340,
+  "failed": [
+    "typecheck-all"
+  ],
+  "strictSkips": [],
+  "results": [
+    {
+      "id": "prisma",
+      "title": "Prisma validation/generation",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "pominieta (--skip)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "ci-parity",
+      "title": "zgodnosc z ci.yml",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "migrations",
+      "title": "migracje (UTF-8 bez BOM, addytywne, rosnace znaczniki)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "unit",
+      "title": "tests/coverage (vitest)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "critical-path",
+      "title": "oba wymagane zestawy krytyczne",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "typecheck",
+      "title": "typecheck (tsconfig.typecheck.json)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "typecheck-all",
+      "title": "typecheck calego repo z testami (tsconfig.json, bez .next/)",
+      "status": "FAIL",
+      "durationMs": 329,
+      "reason": "1 bledow w .next/; sprawdz wygenerowane typy"
+    },
+    {
+      "id": "lint",
+      "title": "lint (eslint)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "architecture",
+      "title": "architecture boundaries",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "hotspots",
+      "title": "hotspots",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "strict-escapes",
+      "title": "strict escapes",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "env",
+      "title": "environment validation",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "audit",
+      "title": "npm audit/security",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "postgres",
+      "title": "integration-postgres (tymczasowy kontener)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "encode-smoke",
+      "title": "encode-smoke (ffmpeg)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "build",
+      "title": "build (next build)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "admin-build",
+      "title": "admin build (apps/admin)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    }
+  ]
+}

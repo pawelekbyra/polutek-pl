@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "local_links_checked": 107,
+  "broken_local_links": [],
+  "asvs_status_counts": {
+    "NIEZBADANE": 312,
+    "W_TRAKCIE": 33
+  },
+  "entry_status_counts": {
+    "NIEZBADANE": 232,
+    "W_TRAKCIE": 47
+  },
+  "planned_full_application_http_scenarios": 46,
+  "full_application_http_scenarios_executed": 0,
+  "stable_finding_count": 27,
+  "earlier_stable_findings_preserved": true,
+  "distinct_new_findings": 2,
+  "baseline_source_hashes_match": true,
+  "source_files_partially_reviewed_this_batch": 29,
+  "real_database_integrity_probes": 15,
+  "expected_rejections_observed": 8,
+  "expected_acceptances_observed": 7,
+  "catalog_selected_tables": 13,
+  "catalog_constraints": 30,
+  "catalog_indexes": 66,
+  "catalog_explicit_triggers": 5,
+  "quota_control_final": 100,
+  "quota_overlapping_final": 101,
+  "stale_retry_final_pointer": {
+    "active_version": 1,
+    "active_status": "SUPERSEDED"
+  },
+  "research_script_syntax": "passed Python ast.parse",
+  "experiment_repeat": "byte-identical JSON output after source baseline hash guard was added; no additional repeat during artifact validation",
+  "typescript_prisma_functions_executed": false,
+  "vitest_repeated": false,
+  "fixtures_removed": true,
+  "diff_whitespace_check": "passed git diff --check",
+  "credential_pattern_scan": "No matches in changed/new files for listed patterns; not a complete secret-detection guarantee",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "scope": "Artifact consistency and scoped SQL reproduction; not full application security, legal compliance or production validation."
+}

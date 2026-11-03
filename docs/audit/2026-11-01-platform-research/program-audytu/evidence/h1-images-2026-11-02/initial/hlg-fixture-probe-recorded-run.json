@@ -1,0 +1,26 @@
+{
+  "code_sha": "835348d77cef7819a6769f3b14cc1ae0c47593c6",
+  "image_id": "sha256:fcb719454310a81fd93c220e4c007cdeadd21154a94a961e4f04721bb5b8ce46",
+  "exit": 0,
+  "variants": [
+    {
+      "name": "original",
+      "matrix": "bt2020nc",
+      "pix_fmt": "yuv420p"
+    },
+    {
+      "name": "explicitVui",
+      "transfer": "arib-std-b67",
+      "primaries": "bt2020",
+      "matrix": "bt2020nc",
+      "pix_fmt": "yuv420p"
+    },
+    {
+      "name": "setparams",
+      "transfer": "arib-std-b67",
+      "primaries": "bt2020",
+      "matrix": "bt2020nc",
+      "pix_fmt": "yuv420p"
+    }
+  ]
+}

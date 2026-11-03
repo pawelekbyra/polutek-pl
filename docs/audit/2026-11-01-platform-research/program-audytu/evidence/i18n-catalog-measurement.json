@@ -1,0 +1,430 @@
+{
+  "date": "2026-11-01",
+  "actual_source_sha256": {
+    "tests/unit/i18n/extract-tx.ts": "d169a36e3c75538c8c21ecad3d5a1f6cc252f97696ecf022e8374fbfe97c47ab",
+    "lib/i18n/ui.ts": "c2f67ad27e3636117af86a80fd4a90076697856ae3a284a16e5ba0b7862735f1",
+    "lib/i18n/routing.ts": "a1d562cfac09ff6dfbc50c30dff193239b85e4512c618a75e83639c0ff812b7b",
+    "lib/i18n/catalog/index.ts": "951446f192c257a6ee724c2290db8f4580de70affd1f1c2c061abd6c5e5643fa",
+    "lib/i18n/dictionary.ts": "7d846a3dcc21919fa63821b695d455054fe1565faa210e1b166505d0be1b251e",
+    "lib/i18n/catalog/de.json": "a6c6e425f75d8381edea9f9a70eb50f3d5beed999bef33b92ef97bbfa60607f6",
+    "lib/i18n/catalog/premium-pass/de.json": "d58f3c81a1ce28e39bc6039ff891acc027b6eeb4ae05615949ef6f61100e6d9f",
+    "lib/i18n/catalog/es.json": "6222979c9ed886241a8b2c62e2a9f345e4a159423fe314e49932d35c07ce50f7",
+    "lib/i18n/catalog/premium-pass/es.json": "5df908d3f3fe12216abcbf8b31778e6f36a3404f86ceebe5534e140c6434e4e5",
+    "lib/i18n/catalog/fr.json": "97bc0e658fd1aa9319e8c2c053151137a7ddfef4719fb552807585890886c805",
+    "lib/i18n/catalog/premium-pass/fr.json": "0c9dd78e4c9853eab1c53994f970745336c47cee632ad01f15c410e2799ae00c",
+    "lib/i18n/catalog/it.json": "8d44c1ea4f9b510bdbd92f5bf0ed2afaf022b53587c57b4156b71d8325f53850",
+    "lib/i18n/catalog/premium-pass/it.json": "89ed1d78fef5fcca121c2973085e21c5662c1b545861dbc70bfbc5bcb5f8b90c",
+    "lib/i18n/catalog/pt.json": "b3634d500452f023d93af8a6abf66a74cef492674b922d877322673d9cb42671",
+    "lib/i18n/catalog/premium-pass/pt.json": "84f09ba3d07f25d9cd451cd54633199d9f986942ea3a36cd42249383cc01ca4a",
+    "lib/i18n/catalog/zh.json": "6e88350742ab529d5bb61a9b1ce81d7fa6dcfff1a2fedf14f4e4bd55c3903ad3",
+    "lib/i18n/catalog/premium-pass/zh.json": "3bc8f574e267f29f920bbc67b759a9ba0bae42378121a37a74025e48969e71ea"
+  },
+  "call_sites": 1589,
+  "unique_English_keys": 1245,
+  "source_files_with_calls": 144,
+  "extractor_problems": [],
+  "multiple_Polish_variants_for_one_English_key": [
+    {
+      "English": "Videos",
+      "Polish_variants": [
+        "Wideo",
+        "Filmy"
+      ],
+      "places": [
+        "app/[locale]/channel/[slug]/page.tsx:184",
+        "app/components/channel/ChannelAbout.tsx:88",
+        "app/components/studio/StudioAnalytics.tsx:84"
+      ]
+    },
+    {
+      "English": "Try again",
+      "Polish_variants": [
+        "Spróbuj ponownie",
+        "Spróbuj jeszcze raz"
+      ],
+      "places": [
+        "app/[locale]/search/page.tsx:124",
+        "app/components/PlayerErrorOverlay.tsx:68",
+        "app/components/SubscribeButton.tsx:219",
+        "app/components/auth/AccountSections.tsx:90",
+        "app/components/auth/NotificationsSection.tsx:70",
+        "app/components/auth/SecuritySection.tsx:365",
+        "app/components/auth/TurnstileWidget.tsx:205",
+        "app/components/comments/EmbeddedComments.tsx:349",
+        "app/components/comments/EmbeddedComments.tsx:537",
+        "app/components/comments/components/CommentThread.tsx:110",
+        "app/components/notifications/NotificationBell.tsx:150",
+        "app/components/playback-plan-state.ts:119",
+        "app/components/premium-pass/PassSuccess.tsx:103",
+        "app/components/studio/StudioUploadWizard.tsx:477",
+        "app/components/support/TipThanksStep.tsx:90",
+        "app/error.tsx:44"
+      ]
+    },
+    {
+      "English": "Public",
+      "Polish_variants": [
+        "Publiczne",
+        "Publiczna",
+        "Publiczny",
+        "Dla wszystkich"
+      ],
+      "places": [
+        "app/components/ChannelVideoCard.tsx:49",
+        "app/components/channel/SidebarPlaylist.tsx:318",
+        "app/components/studio/StudioPlaylistForm.tsx:13",
+        "app/components/studio/StudioVideoEditor.tsx:213",
+        "app/components/studio/StudioVideoList.tsx:141"
+      ]
+    },
+    {
+      "English": "Privacy Policy",
+      "Polish_variants": [
+        "Polityka prywatności",
+        "Politykę prywatności",
+        "Polityka Prywatności",
+        "Politykę Prywatności"
+      ],
+      "places": [
+        "app/components/Footer.tsx:51",
+        "app/components/legal/LegalDocLink.tsx:43",
+        "app/components/legal/LegalSheet.tsx:33",
+        "app/components/premium-pass/PassPaymentStep.tsx:58",
+        "app/components/premium-pass/PassSecurityFooter.tsx:37",
+        "app/components/subscriptions/EmailSubscriptionConsentModal.tsx:56",
+        "app/components/support/TipLegalDialog.tsx:34",
+        "app/components/support/TipRecipientStep.tsx:72"
+      ]
+    },
+    {
+      "English": "Could not load the video.",
+      "Polish_variants": [
+        "Nie udało się załadować materiału wideo.",
+        "Nie udało się wczytać filmu."
+      ],
+      "places": [
+        "app/components/PlayerErrorOverlay.tsx:36",
+        "app/components/studio/StudioVideoEditor.tsx:53"
+      ]
+    },
+    {
+      "English": "Sign out",
+      "Polish_variants": [
+        "Wyloguj się",
+        "Wyloguj"
+      ],
+      "places": [
+        "app/components/auth/AccountModal.tsx:103",
+        "app/components/auth/OnboardingDialog.tsx:131",
+        "app/components/auth/SecuritySection.tsx:342",
+        "app/components/auth/UserMenu.tsx:302"
+      ]
+    },
+    {
+      "English": "Loading…",
+      "Polish_variants": [
+        "Ładowanie…",
+        "Wczytuję…",
+        "Wczytywanie…"
+      ],
+      "places": [
+        "app/components/auth/NotificationsSection.tsx:79",
+        "app/components/auth/UserMenu.tsx:267",
+        "app/components/legal/LegalSheet.tsx:194",
+        "app/components/notifications/NotificationBell.tsx:134",
+        "app/components/notifications/NotificationBell.tsx:200",
+        "app/components/studio/StudioChannelAbout.tsx:166",
+        "app/components/studio/StudioComments.tsx:87",
+        "app/components/studio/StudioDecisions.tsx:119",
+        "app/components/studio/StudioPlaylistPicker.tsx:56",
+        "app/components/studio/StudioPlaylists.tsx:121",
+        "app/components/studio/StudioPlaylists.tsx:218",
+        "app/components/studio/StudioVideoEditor.tsx:185",
+        "app/components/studio/StudioVideoList.tsx:110"
+      ]
+    },
+    {
+      "English": "Cancel",
+      "Polish_variants": [
+        "Anuluj",
+        "Przerwij"
+      ],
+      "places": [
+        "app/components/auth/PasskeysSection.tsx:123",
+        "app/components/comments/components/DeleteCommentDialog.tsx:30",
+        "app/components/comments/components/ReportDialog.tsx:138",
+        "app/components/studio/StudioBans.tsx:75",
+        "app/components/studio/StudioDecisions.tsx:184",
+        "app/components/studio/StudioPlaylistForm.tsx:108",
+        "app/components/studio/StudioPlaylists.tsx:316",
+        "app/components/studio/StudioUploadWizard.tsx:493",
+        "app/components/studio/VideoChaptersEditor.tsx:232"
+      ]
+    },
+    {
+      "English": "Back",
+      "Polish_variants": [
+        "Wstecz",
+        "Wróć"
+      ],
+      "places": [
+        "app/components/channel/SupportModal.tsx:287",
+        "app/components/premium-pass/PassCheckoutSheet.tsx:441",
+        "app/components/premium-pass/PassCheckoutSheet.tsx:455",
+        "app/components/premium-pass/PassCheckoutSheet.tsx:487",
+        "app/components/studio/StudioUploadWizard.tsx:341"
+      ]
+    },
+    {
+      "English": "Sort by",
+      "Polish_variants": [
+        "Sortuj według",
+        "Sortuj",
+        "Sortuj wg"
+      ],
+      "places": [
+        "app/components/comments/EmbeddedComments.tsx:418",
+        "app/components/search/SearchFilters.tsx:127",
+        "app/components/studio/StudioVideoList.tsx:92",
+        "app/components/studio/analytics/AnalyticsVideosView.tsx:38"
+      ]
+    },
+    {
+      "English": "Could not load comments.",
+      "Polish_variants": [
+        "Nie udało się załadować komentarzy.",
+        "Nie udało się wczytać komentarzy."
+      ],
+      "places": [
+        "app/components/comments/EmbeddedComments.tsx:524",
+        "app/components/studio/StudioComments.tsx:31"
+      ]
+    },
+    {
+      "English": "Videos in this playlist",
+      "Polish_variants": [
+        "Filmy z playlisty",
+        "Filmy na playliście"
+      ],
+      "places": [
+        "app/components/playlists/PlaylistPage.tsx:80",
+        "app/components/studio/StudioPlaylists.tsx:254",
+        "app/components/studio/StudioPlaylists.tsx:265"
+      ]
+    },
+    {
+      "English": "Published",
+      "Polish_variants": [
+        "Opublikowany",
+        "Opublikowane"
+      ],
+      "places": [
+        "app/components/studio/StudioApp.tsx:164",
+        "app/components/studio/StudioVideoEditor.tsx:201",
+        "app/components/studio/StudioVideoList.tsx:48",
+        "app/components/studio/StudioVideoList.tsx:85"
+      ]
+    },
+    {
+      "English": "Unlisted",
+      "Polish_variants": [
+        "Niepubliczny",
+        "Niepubliczna",
+        "Niepubliczne"
+      ],
+      "places": [
+        "app/components/studio/StudioApp.tsx:165",
+        "app/components/studio/StudioPlaylistForm.tsx:14",
+        "app/components/studio/StudioUploadWizard.tsx:104",
+        "app/components/studio/StudioVideoEditor.tsx:202",
+        "app/components/studio/StudioVideoEditor.tsx:212",
+        "app/components/studio/StudioVideoList.tsx:49",
+        "app/components/studio/StudioVideoList.tsx:86"
+      ]
+    },
+    {
+      "English": "Archived",
+      "Polish_variants": [
+        "Zarchiwizowany",
+        "Zarchiwizowane"
+      ],
+      "places": [
+        "app/components/studio/StudioApp.tsx:166",
+        "app/components/studio/StudioVideoEditor.tsx:203",
+        "app/components/studio/StudioVideoList.tsx:50",
+        "app/components/studio/StudioVideoList.tsx:87"
+      ]
+    },
+    {
+      "English": "Creating…",
+      "Polish_variants": [
+        "Zakładam…",
+        "Tworzę…"
+      ],
+      "places": [
+        "app/components/studio/StudioApp.tsx:346",
+        "app/components/studio/StudioPlaylists.tsx:72"
+      ]
+    },
+    {
+      "English": "Next",
+      "Polish_variants": [
+        "Dalej",
+        "Następna"
+      ],
+      "places": [
+        "app/components/studio/StudioUploadWizard.tsx:338",
+        "app/components/studio/StudioVideoList.tsx:160",
+        "app/components/support/TipAmountStep.tsx:52",
+        "app/components/support/TipDisclaimerStep.tsx:26",
+        "app/components/support/TipMethodStep.tsx:43",
+        "app/components/support/TipRecipientStep.tsx:77"
+      ]
+    },
+    {
+      "English": "Previous",
+      "Polish_variants": [
+        "Wstecz",
+        "Poprzednia"
+      ],
+      "places": [
+        "app/components/studio/StudioUploadWizard.tsx:438",
+        "app/components/studio/StudioVideoList.tsx:156"
+      ]
+    },
+    {
+      "English": "Views per day",
+      "Polish_variants": [
+        "Wyświetlenia dzień po dniu",
+        "Wyświetlenia dziennie"
+      ],
+      "places": [
+        "app/components/studio/analytics/AnalyticsOverviewView.tsx:88",
+        "app/components/studio/analytics/AnalyticsOverviewView.tsx:90",
+        "app/components/studio/analytics/AnalyticsVideoDetailView.tsx:59"
+      ]
+    },
+    {
+      "English": "Back to the home page",
+      "Polish_variants": [
+        "Wróć do strony głównej",
+        "Wróć na stronę główną"
+      ],
+      "places": [
+        "app/error.tsx:50",
+        "app/not-found.tsx:24"
+      ]
+    }
+  ],
+  "locales": [
+    {
+      "locale": "pl",
+      "htmlLang": "pl",
+      "catalog_keys": 0,
+      "source_mode": "INLINE_PL_EN",
+      "missing": [],
+      "orphan": [],
+      "brokenPlaceholders": [],
+      "empty": [],
+      "same_as_English_count": 0,
+      "dictionary_keys": 38,
+      "example_close": "Zamknij"
+    },
+    {
+      "locale": "en",
+      "htmlLang": "en",
+      "catalog_keys": 0,
+      "source_mode": "INLINE_PL_EN",
+      "missing": [],
+      "orphan": [],
+      "brokenPlaceholders": [],
+      "empty": [],
+      "same_as_English_count": 0,
+      "dictionary_keys": 38,
+      "example_close": "Close"
+    },
+    {
+      "locale": "de",
+      "htmlLang": "de",
+      "catalog_keys": 1245,
+      "source_mode": "CATALOGUE",
+      "missing": [],
+      "orphan": [],
+      "brokenPlaceholders": [],
+      "empty": [],
+      "same_as_English_count": 41,
+      "dictionary_keys": 38,
+      "example_close": "Schließen"
+    },
+    {
+      "locale": "es",
+      "htmlLang": "es",
+      "catalog_keys": 1245,
+      "source_mode": "CATALOGUE",
+      "missing": [],
+      "orphan": [],
+      "brokenPlaceholders": [],
+      "empty": [],
+      "same_as_English_count": 17,
+      "dictionary_keys": 38,
+      "example_close": "Cerrar"
+    },
+    {
+      "locale": "fr",
+      "htmlLang": "fr",
+      "catalog_keys": 1245,
+      "source_mode": "CATALOGUE",
+      "missing": [],
+      "orphan": [],
+      "brokenPlaceholders": [],
+      "empty": [],
+      "same_as_English_count": 31,
+      "dictionary_keys": 38,
+      "example_close": "Fermer"
+    },
+    {
+      "locale": "it",
+      "htmlLang": "it",
+      "catalog_keys": 1245,
+      "source_mode": "CATALOGUE",
+      "missing": [],
+      "orphan": [],
+      "brokenPlaceholders": [],
+      "empty": [],
+      "same_as_English_count": 25,
+      "dictionary_keys": 38,
+      "example_close": "Chiudi"
+    },
+    {
+      "locale": "pt",
+      "htmlLang": "pt-BR",
+      "catalog_keys": 1245,
+      "source_mode": "CATALOGUE",
+      "missing": [],
+      "orphan": [],
+      "brokenPlaceholders": [],
+      "empty": [],
+      "same_as_English_count": 22,
+      "dictionary_keys": 38,
+      "example_close": "Fechar"
+    },
+    {
+      "locale": "zh",
+      "htmlLang": "zh-CN",
+      "catalog_keys": 1245,
+      "source_mode": "CATALOGUE",
+      "missing": [],
+      "orphan": [],
+      "brokenPlaceholders": [],
+      "empty": [],
+      "same_as_English_count": 6,
+      "dictionary_keys": 38,
+      "example_close": "关闭"
+    }
+  ],
+  "limits": [
+    "Extractor scans declared app/components/lib roots, not all admin/server email content",
+    "Matching keys/placeholders does not establish linguistic quality or visual fit",
+    "No real locale navigation/cookies/account persistence or full browser language matrix executed here"
+  ]
+}

@@ -1,0 +1,6 @@
+
+> kraufanding@0.1.0 test:critical-path
+> vitest run tests/unit/operations/verify-restored-database-process.test.ts tests/integration/launch-candidate-critical-path.test.ts --maxWorkers=1 --reporter=json --outputFile=/workspace/.cloud-setup/h1-critical-path.json
+
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+JSON report written to /workspace/.cloud-setup/h1-critical-path.json

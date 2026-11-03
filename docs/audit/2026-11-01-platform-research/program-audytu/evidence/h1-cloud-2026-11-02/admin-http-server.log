@@ -1,0 +1,6 @@
+▲ Next.js 16.4.1
+- Local:         http://127.0.0.1:3812
+- Network:       http://127.0.0.1:3812
+✓ Ready in 0ms
+✓ Running next.config took 2ms
+[admin-proxy] access denied: not_configured (CF_ACCESS_TEAM_DOMAIN i CF_ACCESS_AUD są wymagane) GET /tresci

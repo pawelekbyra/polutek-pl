@@ -1,0 +1,538 @@
+{
+  "date": "2026-11-01",
+  "batch": "02",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "15dffc0a14139946853699db1d840b4b00155375",
+  "node_version": "22.23.4",
+  "commands_run_with": "Node 22; sandbox escalation for Vitest process spawning; no production access",
+  "runs": [
+    {
+      "name": "identity-authz",
+      "command": "node node_modules/vitest/vitest.mjs run tests/unit/modules/authz tests/unit/modules/comments/moderation-channel-authz.test.ts tests/unit/modules/comments/creator-reply-authz.test.ts tests/unit/auth/admin-guard.test.ts tests/unit/auth/auth-config.test.ts tests/unit/auth/change-email-guard.test.ts tests/unit/auth/account-deletion-reauth.test.ts tests/unit/auth/onboarding-enforcement.test.ts tests/unit/admin-app/cf-access.test.ts tests/unit/admin-app/access-guard.test.ts tests/unit/api/studio-routes.test.ts tests/unit/video-pipeline/finalize-self-hls.test.ts tests/unit/video-pipeline/self-hls-publication.test.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=docs/audit/2026-11-01-platform-research/program-audytu/evidence/identity-authz-vitest.json",
+      "exit_code": 1,
+      "registered_tests": 110,
+      "passed_tests": 108,
+      "failed_tests": 2,
+      "files": [
+        {
+          "file": "tests/unit/admin-app/access-guard.test.ts",
+          "status": "failed",
+          "registered_tests": 0,
+          "failed_assertions": [],
+          "load_blocked": true
+        },
+        {
+          "file": "tests/unit/admin-app/cf-access.test.ts",
+          "status": "passed",
+          "registered_tests": 13,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/api/studio-routes.test.ts",
+          "status": "passed",
+          "registered_tests": 26,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/auth/account-deletion-reauth.test.ts",
+          "status": "passed",
+          "registered_tests": 9,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/auth/admin-guard.test.ts",
+          "status": "passed",
+          "registered_tests": 9,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/auth/auth-config.test.ts",
+          "status": "passed",
+          "registered_tests": 12,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/auth/change-email-guard.test.ts",
+          "status": "passed",
+          "registered_tests": 7,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/auth/onboarding-enforcement.test.ts",
+          "status": "failed",
+          "registered_tests": 0,
+          "failed_assertions": [],
+          "load_blocked": true
+        },
+        {
+          "file": "tests/unit/video-pipeline/finalize-self-hls.test.ts",
+          "status": "failed",
+          "registered_tests": 0,
+          "failed_assertions": [],
+          "load_blocked": true
+        },
+        {
+          "file": "tests/unit/video-pipeline/self-hls-publication.test.ts",
+          "status": "passed",
+          "registered_tests": 3,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/modules/authz/authorize.test.ts",
+          "status": "failed",
+          "registered_tests": 0,
+          "failed_assertions": [],
+          "load_blocked": true
+        },
+        {
+          "file": "tests/unit/modules/authz/channel-membership-roles.test.ts",
+          "status": "failed",
+          "registered_tests": 0,
+          "failed_assertions": [],
+          "load_blocked": true
+        },
+        {
+          "file": "tests/unit/modules/authz/policy.test.ts",
+          "status": "passed",
+          "registered_tests": 24,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/modules/authz/schema-contract.test.ts",
+          "status": "failed",
+          "registered_tests": 7,
+          "failed_assertions": [
+            {
+              "title": "authz domain constants match the Prisma enums channel roles",
+              "message": [
+                "TypeError: Cannot convert undefined or null to object\n    at Function.values (<anonymous>)\n    at /workspace/polutek-pl/tests/unit/modules/authz/schema-contract.test.ts:12:54\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+              ]
+            },
+            {
+              "title": "authz domain constants match the Prisma enums channel statuses",
+              "message": [
+                "TypeError: Cannot convert undefined or null to object\n    at Function.values (<anonymous>)\n    at /workspace/polutek-pl/tests/unit/modules/authz/schema-contract.test.ts:16:57\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+              ]
+            }
+          ],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/modules/comments/creator-reply-authz.test.ts",
+          "status": "failed",
+          "registered_tests": 0,
+          "failed_assertions": [],
+          "load_blocked": true
+        },
+        {
+          "file": "tests/unit/modules/comments/moderation-channel-authz.test.ts",
+          "status": "failed",
+          "registered_tests": 0,
+          "failed_assertions": [],
+          "load_blocked": true
+        }
+      ]
+    },
+    {
+      "name": "auth-failure-passkey",
+      "command": "node node_modules/vitest/vitest.mjs run tests/unit/auth/auth-rate-limit-failure.test.ts tests/unit/auth/passkey-server.test.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile.json=docs/audit/2026-11-01-platform-research/program-audytu/evidence/auth-failure-passkey-vitest.json",
+      "exit_code": 0,
+      "registered_tests": 13,
+      "passed_tests": 13,
+      "failed_tests": 0,
+      "files": [
+        {
+          "file": "tests/unit/auth/auth-rate-limit-failure.test.ts",
+          "status": "passed",
+          "registered_tests": 3,
+          "failed_assertions": [],
+          "load_blocked": false
+        },
+        {
+          "file": "tests/unit/auth/passkey-server.test.ts",
+          "status": "passed",
+          "registered_tests": 10,
+          "failed_assertions": [],
+          "load_blocked": false
+        }
+      ]
+    }
+  ],
+  "aggregate": {
+    "test_files": 18,
+    "passed_files": 10,
+    "blocked_before_test_registration": 7,
+    "registered_tests": 123,
+    "passed_tests": 121,
+    "failed_tests": 2
+  },
+  "failure_classification": "Seven files blocked before registration and two schema-contract assertions fail on undefined generated Prisma enums. No production/application defect inferred from these failures. No replacement Prisma client installed.",
+  "isolated_experiment": {
+    "script": "tools/identity-context-experiment.cjs",
+    "result": "evidence/identity-context-experiment.json",
+    "observation_records": 18,
+    "claims": "Function decisions and channel-context routing only; not HTTP or real publication"
+  },
+  "source_review_scope": [
+    {
+      "file": "app/api/studio/channel/route.ts",
+      "sha256": "419477d5ebca2bb37d9c0eaf4bfa96631f693a86891a87b98d8cb4e34ed39d54",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "app/api/studio/videos/[id]/publish/route.ts",
+      "sha256": "bb9fd1185adc760cc32540e6d25a33090effa134de99bf0822984a19d9b8de3e",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "app/api/studio/videos/[id]/route.ts",
+      "sha256": "5871edd518b6ab871671d6d7d6f195de82216a3f2602d76aa51d6b94ecb2bc44",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "app/api/studio/videos/[id]/upload/route.ts",
+      "sha256": "fd542c7b0c11ea83e67a7002a2fffa7c01ee82ddc2f4fc5adb98025d42812835",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "app/api/studio/videos/route.ts",
+      "sha256": "c541f68b43f9653ef2f007c822b06507bdc7c6fa3945177bb16bc59d219d9f1c",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/lib/auth/access-session.ts",
+      "sha256": "ababe0929239db00f97017e4aed3daa9092827716b497ace08d625e908dfae05",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/lib/auth/api-guard.ts",
+      "sha256": "30c11a96e945d9f62394ac5b2c590ce388c15c1f214e6d839aa33f0ab453e234",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/lib/auth/guard.ts",
+      "sha256": "a6878789ab550822fc6182ffe7656450a6ef33688248fec5f3b64b1683628665",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/lib/auth/roles.ts",
+      "sha256": "f773cbb93835eb9cf28142589054c79b36d07f6304826b6c9a9c9291a2cfd04a",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/lib/auth/session-rules.ts",
+      "sha256": "fe36927c7aea54337a54d1f0d1afe81494c4d3c3674d8693c82da8c558ae09bb",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/lib/config.ts",
+      "sha256": "b15cc90de778e7cc899c212f1ad24bfa78877f9e493320948ad636a8074de804",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/lib/security/cf-access.ts",
+      "sha256": "6aca986225892e344d67c0a25894458730b60e9738e44bc02979df816731f449",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "apps/admin/proxy.ts",
+      "sha256": "de4a2cf8cf87eb9209d9143e69506b4e393a15a65b5999d256f8173feed7cd1e",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/api/auth.ts",
+      "sha256": "518c5cb4d4965a4b253a6c674c62189a334cde5ee63059ed39eb1c383c1caaaf",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/api/csrf.ts",
+      "sha256": "411a298b8b9a8e4a737895dba18f2e61df56495f5ff8cf7b172f88ff25440c82",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/api/studio-route.ts",
+      "sha256": "dbae00e12e2b5efff0858c3134e9f239b2152710a14189d3b0a3979d977541d5",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/api/studio-session.ts",
+      "sha256": "53f688bf1dcd644437000e070c74582fbcd801b4eb1af954e92950e0c04b180e",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/auth/auth.ts",
+      "sha256": "75d19cc8f406462b4a6ecd381626ae989b7342909293866ae571c9b90be0ce5f",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/auth/config.ts",
+      "sha256": "47313f5b7a355b2cbdd9826af83a9daebb412fd7945807f423abe329e1955e22",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/auth/hooks.ts",
+      "sha256": "6c000037f9f5d642ad3dfae6afc1e73f9af1002eec794e3e0be5a6b03f8c6479",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/auth/passkey-signup.ts",
+      "sha256": "2e74bddce482dc3ac1354ce8a9b9979a46c8a667ee72b9fe8edbf91098e95fff",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/auth/passkey.ts",
+      "sha256": "802d66487c0c26ec609b402625d19f92721ad9a1553bf16598eba2a5585bc668",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/auth/rate-limit-storage.ts",
+      "sha256": "f273b47b8f2d9f6e0dcb118e868270e18f3e972067ad2cf97e06ff0ed3b6bb3b",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/auth/server.ts",
+      "sha256": "8a61b45a58efd42b7bb8a8665d96a3e942ba2a0f0e229b73f8c97ab740b517a5",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/authz/application/authorize.ts",
+      "sha256": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/actions.ts",
+      "sha256": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/matrix.ts",
+      "sha256": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/policy.ts",
+      "sha256": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/principal.ts",
+      "sha256": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/channel/application/channel-lifecycle.use-cases.ts",
+      "sha256": "6881852feb8eb23631725c189009452a6fa262df82cd5ad0a7ff4132fad9419e",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/channel/application/main-channel.service.ts",
+      "sha256": "9b3d9977e8a1cbe5162260e7f28a1d60638e43f5e61b5a72b5a5ec0393bfabd3",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.errors.ts",
+      "sha256": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.policy.ts",
+      "sha256": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/main-channel-setting.ts",
+      "sha256": "0c4dff7d35dd255f172351b98e221a9e519501a2d2088fc2529167f2b7218618",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/channel/infrastructure/channel.repository.ts",
+      "sha256": "d315a0ea7a2dc7d4a2b733664a6064253e0c94168ada97bd5bc7222467f1c541",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-context.ts",
+      "sha256": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/encode-queue.use-cases.ts",
+      "sha256": "1c6f2f8a33679ce6851efc0fc19b8ffc87adaedb6415ca1de084df7a49e2d9c9",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/finalize-self-hls.ts",
+      "sha256": "b8258141def95e163bdc220a76ee296c7f0ad018557647de1a0c8db55a02f89e",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/original-upload.use-cases.ts",
+      "sha256": "41b659dee9b051f7191dd2bc94e4ca5ce92483698f79b34703ff03160cfd0033",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/video-guard.ts",
+      "sha256": "dd35a6607a5626ed4bdaa6695b1b82aa7ba48869846d2056fc50a5abbbc1b584",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/create-admin-video.use-case.ts",
+      "sha256": "b74aa460f2f775048759a90ecf85b8d6018d50f6d78053a12eae6ccb0c591433",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/delete-admin-video.use-case.ts",
+      "sha256": "223786588c54fff136e9acb6eeae727b4c1f52622e4e092f6a5072d0cbbfdfda",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/get-admin-video-by-id.use-case.ts",
+      "sha256": "0bfde511313d8c6fb51c454ea5069bde2dde7b5ead6492931ac08c8d542445bb",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/get-admin-video-details.use-case.ts",
+      "sha256": "2db80bbc1faafb8f1ee1079ddcc9eb7d55d0ff6fc7c5c9fefe3f3d87aafd479a",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/publish-admin-video.use-case.ts",
+      "sha256": "79ba6da65e3331cc6385880fa2a78660d3f4b6ebf9e3c8daffd56e9f422fd637",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/publish-after-asset-ready.use-case.ts",
+      "sha256": "dd1118220db69bab272ed1438c9ddaa2c317eec9e22c2e45e0de36d453d23f90",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/ready-visibility.ts",
+      "sha256": "a3e2ff22665f10051fcf7b882ffd48c9d7de333fe6c42c1773c70ddb07054e1b",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/update-admin-video.use-case.ts",
+      "sha256": "a60664d4e384a0ba6285a5260a22e2b21a6b075d9eca6905c31c41cd1f009c18",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video-asset-selection.ts",
+      "sha256": "000a83ff31d906d226a25dfee97629f107fc4f9e3bda9452fd52060cf77ffb43",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video-asset.constants.ts",
+      "sha256": "22e110c56f16ab6349c05642e54214093fd50a5543c371f497c8ec51488d490e",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video.errors.ts",
+      "sha256": "94a5cc812aa71bc4d1aa55d423da540c36370565d8277ac2d2ed3661c4e936fb",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video.policy.ts",
+      "sha256": "799a09cf2026746f9a0d1b2218913b44fe4febcd7b514e3ddc9fc1d8f43aabe8",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "lib/modules/video/infrastructure/video.repository.ts",
+      "sha256": "ff10ebcab2f0acefeff5fc5ed11da1f37c9e135838471e704aecda1e58fe1049",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "middleware.ts",
+      "sha256": "4302f7278d5ed15a396c747b2331d1fa95c759e9e3133768f1fdb45567d1652f",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    },
+    {
+      "file": "scripts/video-worker.ts",
+      "sha256": "4e63329175d91919ed4fbefdf32767152096c3cfd9dbed0857623fbd600182ca",
+      "matches_baseline_inventory": true,
+      "review_scope": "TARGETED_PARTIAL: identity, role, channel context or selected operation; not whole-file security sign-off"
+    }
+  ],
+  "peertube": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "executed": false,
+    "partial_source_review": [
+      "server/core/controllers/api/videos/update.ts",
+      "server/core/middlewares/validators/videos/videos.ts",
+      "server/core/middlewares/validators/shared/videos.ts",
+      "server/core/middlewares/validators/shared/video-channels.ts",
+      "packages/tests/src/api/check-params/videos.ts",
+      "packages/tests/src/api/check-params/channel-collaborators.ts",
+      "packages/tests/src/api/users/oauth.ts",
+      "packages/tests/src/api/users/two-factor.ts"
+    ]
+  },
+  "http_runtime_tests_executed": 0,
+  "independent_review": "PENDING"
+}

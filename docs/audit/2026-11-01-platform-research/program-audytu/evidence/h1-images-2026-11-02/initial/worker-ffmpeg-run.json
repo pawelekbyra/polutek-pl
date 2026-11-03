@@ -1,0 +1,13 @@
+{
+  "code_sha": "835348d77cef7819a6769f3b14cc1ae0c47593c6",
+  "image_id": "sha256:fcb719454310a81fd93c220e4c007cdeadd21154a94a961e4f04721bb5b8ce46",
+  "exit": 1,
+  "cpuset": "0,1",
+  "network": "none",
+  "read_only_image": true,
+  "production_credentials": false,
+  "app_source": "Built image; unchanged test fixture mounted read-only from the matching git archive",
+  "passed": 2,
+  "failed": 0,
+  "pending": 1
+}

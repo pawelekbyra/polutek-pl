@@ -1,0 +1,404 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "browser": "154.0.8037.57",
+  "browser_executable": "/usr/bin/chromium",
+  "viewport_initial": {
+    "width": 1280,
+    "height": 900
+  },
+  "reduced_motion": "reduce",
+  "actual_bundle_source_sha256": {
+    "app/components/studio/ui.tsx": "ccef38ea6ed37247ee094a0f3b9d700a18fb094a0a20832ad36f90c6739234ab",
+    "app/components/studio/ConfirmDialog.tsx": "83963736b965b3edb638cd2522f066c6b1dba473df1281c192b1fca447588211",
+    "lib/i18n/ui.ts": "c2f67ad27e3636117af86a80fd4a90076697856ae3a284a16e5ba0b7862735f1",
+    "lib/utils.ts": "41fdb079540e328d49dccd9c343028af0d05386ea378fea6c9b445139cc3587d",
+    "components/ui/button.tsx": "6e91c5a02cd0798e27fb604fccda6e44e2fb2c86f10a950a965ffbd6333b3fd3",
+    "lib/i18n/routing.ts": "a1d562cfac09ff6dfbc50c30dff193239b85e4512c618a75e83639c0ff812b7b",
+    "lib/i18n/language-context.ts": "ae35c0b8170d1ea0e35ea15ab1679de3e251385ec14daf2497ee04cc1c34ea32",
+    "components/ui/dialog.tsx": "3f96c82011ad38dedb233bd82ccbf27d501aa37cfb5e55fd7ad3071665d38777",
+    "components/ui/label.tsx": "7f19b8476658d25ff197c84030e58cd7395059d876a54630e025951e474ebdae",
+    "components/ui/textarea.tsx": "58b58d84fc54ba5f4ca46937870c619349fd9eccc4d494250ac7bc73a94e05e9",
+    "app/components/comments/comment-errors.ts": "f87239b17378c9fa8578d33c7601871528f3fab24e24e335deb8f75973bc6f5a",
+    "app/components/comments/components/ReportDialog.tsx": "d966cb84bdba06485a09306189710cf4ce6d0ab05fe2a67e1b0763526bc3fdf3",
+    "app/components/comments/components/DeleteCommentDialog.tsx": "5908a0efec411cfc90f489a4bc82aebe1726f558533a308ff687e2c5a53abbf0",
+    "app/components/language-switcher/languages.ts": "534c7ccef87d78ec5206f36939bee4099990331adee59fcc4c117a16058697d7",
+    "app/components/language-switcher/LanguageFlag.tsx": "06999b030db168ca936bda09cda57f95bec87ad5179bb7dcde9a180348f64492",
+    "app/components/language-switcher/useLanguagePicker.ts": "31919f4f8f076ff32ea109740eeeb461df8894c52e35b75e87cd7e02fa55a987",
+    "app/components/language-switcher/LanguageSwitcher.module.css": "229325950f1bc75f15bda0321bfff439b5b9b1d401c16c9f6ee203485e945e4f",
+    "app/components/LanguageSwitcher.tsx": "a3f83e00ceca9f56076e13aafd9519e302da417ff545d8ec4be1e725d2529815",
+    "lib/i18n/catalog/de.json": "a6c6e425f75d8381edea9f9a70eb50f3d5beed999bef33b92ef97bbfa60607f6",
+    "lib/i18n/catalog/es.json": "6222979c9ed886241a8b2c62e2a9f345e4a159423fe314e49932d35c07ce50f7",
+    "lib/i18n/catalog/fr.json": "97bc0e658fd1aa9319e8c2c053151137a7ddfef4719fb552807585890886c805",
+    "lib/i18n/catalog/it.json": "8d44c1ea4f9b510bdbd92f5bf0ed2afaf022b53587c57b4156b71d8325f53850",
+    "lib/i18n/catalog/pt.json": "b3634d500452f023d93af8a6abf66a74cef492674b922d877322673d9cb42671",
+    "lib/i18n/catalog/zh.json": "6e88350742ab529d5bb61a9b1ce81d7fa6dcfff1a2fedf14f4e4bd55c3903ad3",
+    "lib/i18n/catalog/premium-pass/de.json": "d58f3c81a1ce28e39bc6039ff891acc027b6eeb4ae05615949ef6f61100e6d9f",
+    "lib/i18n/catalog/premium-pass/es.json": "5df908d3f3fe12216abcbf8b31778e6f36a3404f86ceebe5534e140c6434e4e5",
+    "lib/i18n/catalog/premium-pass/fr.json": "0c9dd78e4c9853eab1c53994f970745336c47cee632ad01f15c410e2799ae00c",
+    "lib/i18n/catalog/premium-pass/it.json": "89ed1d78fef5fcca121c2973085e21c5662c1b545861dbc70bfbc5bcb5f8b90c",
+    "lib/i18n/catalog/premium-pass/pt.json": "84f09ba3d07f25d9cd451cd54633199d9f986942ea3a36cd42249383cc01ca4a",
+    "lib/i18n/catalog/premium-pass/zh.json": "3bc8f574e267f29f920bbc67b759a9ba0bae42378121a37a74025e48969e71ea",
+    "lib/i18n/catalog/index.ts": "951446f192c257a6ee724c2290db8f4580de70affd1f1c2c061abd6c5e5643fa",
+    "lib/constants.ts": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+    "lib/i18n/dictionary.ts": "7d846a3dcc21919fa63821b695d455054fe1565faa210e1b166505d0be1b251e",
+    "app/globals.css": "50110a1e2c61357b16b11b8cb5a7930b2ffddb754e7b9fde60577cb2bc70a65c",
+    "tailwind.config.ts": "357873866942705b9b1c597f3eddb8b077ecc8d2de02d66d19f55ba90d8edc91"
+  },
+  "observations": [
+    {
+      "case": "confirm_opens_on_safe_cancel",
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Cancel",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "dialogName": "confirm-dialog-title"
+    },
+    {
+      "case": "confirm_normal_tab_wrap",
+      "backward": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Delete playlist",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "forward": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Cancel",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_escape_restores_opener",
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_busy_tab_reaches_background",
+      "busyStart": {
+        "id": "",
+        "tag": "BODY",
+        "text": "Local component research — synthetic dataNo application API, account, payment or database is connected.Open research dia",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "tabSequence": [
+        {
+          "id": "opener",
+          "tag": "BUTTON",
+          "text": "Open research dialog",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "background",
+          "tag": "BUTTON",
+          "text": "Background action",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "after",
+          "tag": "A",
+          "text": "Background link",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BODY",
+          "text": "Local component research — synthetic dataNo application API, account, payment or database is connected.Open research dia",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "opener",
+          "tag": "BUTTON",
+          "text": "Open research dialog",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        }
+      ],
+      "backgroundInert": false,
+      "finding": "R35"
+    },
+    {
+      "case": "confirm_busy_background_action_can_activate",
+      "events": [
+        {
+          "event": "close",
+          "mode": "confirm"
+        },
+        {
+          "event": "confirm"
+        },
+        {
+          "event": "background_action"
+        }
+      ],
+      "dialogStillPresent": true,
+      "finding": "R35"
+    },
+    {
+      "case": "report_radio_arrow_does_not_move_or_select",
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Spam",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "checkedLabels": [
+        "Spam"
+      ],
+      "radioTabStops": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "classification": "APG_PATTERN_DIVERGENCE;Tab/Space alternatives remain"
+    },
+    {
+      "case": "report_failure_keeps_note_and_announces_error",
+      "noteRetained": true,
+      "error": "Nie udało się wysłać zgłoszenia.",
+      "events": [
+        {
+          "event": "report",
+          "reason": "HARASSMENT",
+          "note": "Synthetic note retained on failure"
+        }
+      ]
+    },
+    {
+      "case": "report_baseui_tab_avoids_background",
+      "tabSequence": [
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Zamknij",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Spam",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Nękanie",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Mowa nienawiści",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Treści nieodpowiednie",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Spoiler",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Inne",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_0_-note",
+          "tag": "TEXTAREA",
+          "text": "Synthetic note retained on failure",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Anuluj",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Zgłoś",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Zamknij",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Spam",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        }
+      ],
+      "backgroundReached": false
+    },
+    {
+      "case": "report_escape_closes",
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "events": [
+        {
+          "event": "report",
+          "reason": "HARASSMENT",
+          "note": "Synthetic note retained on failure"
+        },
+        {
+          "event": "close",
+          "mode": "report"
+        }
+      ]
+    },
+    {
+      "case": "delete_comment_cancel_no_action",
+      "events": [
+        {
+          "event": "close",
+          "mode": "delete-comment"
+        }
+      ],
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Anuluj",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "language_listbox_focus_home_end",
+      "optionCount": 8,
+      "before": "_r_0_-PL",
+      "end": "_r_0_-ZH",
+      "home": "_r_0_-PL",
+      "listFocused": true
+    },
+    {
+      "case": "language_typeahead_selects_de",
+      "typed": "_r_0_-DE",
+      "htmlLang": "de",
+      "events": [
+        {
+          "event": "language",
+          "locale": "de"
+        }
+      ],
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "DE",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "listClosed": true
+    },
+    {
+      "case": "language_escape_returns_trigger",
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "DE",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "listClosed": true
+    },
+    {
+      "case": "language_at_320_component_only",
+      "viewport": 320,
+      "documentWidth": 310,
+      "listRect": {
+        "left": 9,
+        "right": 301,
+        "width": 292
+      },
+      "full_page_reflow_proof": false
+    }
+  ],
+  "original_CSS_compiled": true,
+  "synthetic_callbacks_only": true,
+  "real_API_requests": 0,
+  "blocked_external_requests": [],
+  "browser_page_errors": [],
+  "limitations": [
+    "Isolated real React components plus original compiled global/CSS module styles, not Next/full application",
+    "Harness provider/local state replaces page shell and navigation; callbacks never perform real delete/report",
+    "Fonts/media/production auth/Prisma/payment and mobile hardware not reproduced",
+    "Chromium desktop only; no Safari/Firefox/screen reader/actual touch or WCAG certification",
+    "Radio behavior compared with APG pattern; keyboard completion by Tab/Space still possible"
+  ],
+  "cleanup": "Browser/context/server closed and temporary bundle directory removed in finally"
+}

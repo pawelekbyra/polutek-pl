@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-01",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_APPLICATION_TESTS",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 14,
+    "NIEZBADANE": 4
+  },
+  "asvs_status_counts": {
+    "NIEZBADANE": 294,
+    "W_TRAKCIE": 51
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 70,
+    "NIEZBADANE": 210
+  },
+  "stable_finding_count": 34,
+  "new_distinct_findings": [
+    "R34"
+  ],
+  "new_finding_kind": "ARCHITECTURE_DEBT_NOT_SECURITY_VULNERABILITY",
+  "existing_finding_extended": "R21",
+  "other_findings_and_baseline_priorities_preserved": true,
+  "earlier_raw_evidence_and_sources_preserved": 127,
+  "partial_source_review_files": 52,
+  "mechanical_AST_files_not_manual_reviews": 1701,
+  "partial_peertube_reference_files": 18,
+  "peertube_executed": false,
+  "comparative_benchmark_or_full_PT_graph": false,
+  "actual_TS_modules_unique": 12,
+  "component_and_guard_observations": 17,
+  "architecture_guard_exit": 0,
+  "hotspot_guard_exit": 1,
+  "hotspot_failures": 4,
+  "targeted_vitest_passed_files": 3,
+  "targeted_vitest_assertions_passed": 12,
+  "targeted_vitest_exit": 0,
+  "full_suite_or_full_local_CI_repeated": false,
+  "full_HTTP_SQL_or_Next_build_executed": false,
+  "generated_Prisma_client_executed": false,
+  "production_or_real_person_data_used": false,
+  "local_links_checked": 300,
+  "broken_local_links": [],
+  "syntax": "3 Node --check and Python ast.parse passed",
+  "whitespace": "git diff --check passed",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "credential_scan": "No listed patterns in changed/new artifacts, bounded scan only",
+  "independent_review": "PENDING"
+}

@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-01",
+  "requests": [
+    {
+      "url": "https://raw.githubusercontent.com/better-auth/better-auth/v1.7.7/docs/content/docs/concepts/session-management.mdx",
+      "http_status": 200,
+      "curl_exit": 0,
+      "file": "better-auth-1.7.7-session-management.mdx",
+      "sha256": "0ab5aa1c321111418176850f2c1fb0aa86eda654a637e70fa0d038f07060c2fa",
+      "review_scope": "Session expiration/refresh and cookie cache/revocation notes; not entire document"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/better-auth/better-auth/v1.7.7/LICENSE",
+      "http_status": 404,
+      "curl_exit": 22,
+      "file": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/better-auth/better-auth/v1.7.7/LICENSE.md",
+      "http_status": 200,
+      "curl_exit": 0,
+      "file": "better-auth-1.7.7-LICENSE.txt",
+      "sha256": "7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4"
+    }
+  ]
+}

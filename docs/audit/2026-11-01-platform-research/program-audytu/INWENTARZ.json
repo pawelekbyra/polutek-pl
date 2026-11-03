@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-01",
+  "polutek_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "tracked_files": 2172,
+  "file_kinds": {
+    "documentation": 130,
+    "asset_or_other": 147,
+    "configuration": 34,
+    "code": 1861
+  },
+  "unreadable_files": [],
+  "asvs_requirements": 345,
+  "asvs_levels": {
+    "2": 183,
+    "1": 70,
+    "3": 92
+  },
+  "important": "Inventory is not a completed audit. All ASVS items remain unassessed."
+}

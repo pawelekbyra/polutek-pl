@@ -1,0 +1,96 @@
+{
+  "date": "2026-11-01",
+  "source": "scripts/check-architecture.ts",
+  "source_sha256": "e0b9dfba99a10998c27ee0bd4a6df43c40042e35a2660b9ebbbf6dbbdcc390f5",
+  "observations": [
+    {
+      "case": "allowed_module_barrel",
+      "fixture_files": {
+        "lib/modules/a/application/a.ts": "import { x } from '@/lib/modules/b'; export const y=x;",
+        "lib/modules/b/index.ts": "export const x=1;"
+      },
+      "exit_code": 0,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- Authorization coverage: 0 use case files checked, 32 exempt\n\u2705 Architecture check passed.\n",
+      "stderr": ""
+    },
+    {
+      "case": "forbidden_static_next_cache",
+      "fixture_files": {
+        "lib/modules/a/application/a.ts": "import { revalidatePath } from 'next/cache'; export const y=revalidatePath;"
+      },
+      "exit_code": 1,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- Authorization coverage: 0 use case files checked, 32 exempt\n",
+      "stderr": "\u274c Violation: Forbidden import 'next/cache' in lib/modules/a/application/a.ts\n\nFound 1 architectural violations.\n"
+    },
+    {
+      "case": "forbidden_dynamic_next_cache_not_detected",
+      "fixture_files": {
+        "lib/modules/a/application/a.ts": "export async function y(){return import('next/cache');}"
+      },
+      "exit_code": 0,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- Authorization coverage: 0 use case files checked, 32 exempt\n\u2705 Architecture check passed.\n",
+      "stderr": ""
+    },
+    {
+      "case": "forbidden_static_admin_public_auth",
+      "fixture_files": {
+        "apps/admin/app/api/probe/route.ts": "import { auth } from '@/lib/auth/server'; export const x=auth;"
+      },
+      "exit_code": 1,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- apps/admin files checked: 1\n- Authorization coverage: 0 use case files checked, 32 exempt\n",
+      "stderr": "\u274c Violation: apps/admin/app/api/probe/route.ts imports the public site auth (lib/auth); the panel has its own Better Auth instance.\n\nFound 1 architectural violations.\n"
+    },
+    {
+      "case": "forbidden_dynamic_admin_public_auth_not_detected",
+      "fixture_files": {
+        "apps/admin/app/api/probe/route.ts": "export async function x(){return import('@/lib/auth/server');}"
+      },
+      "exit_code": 0,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- apps/admin files checked: 1\n- Authorization coverage: 0 use case files checked, 32 exempt\n\u2705 Architecture check passed.\n",
+      "stderr": ""
+    },
+    {
+      "case": "authz_missing_marker",
+      "fixture_files": {
+        "lib/modules/video/application/probe.ts": "export const action=()=>42;"
+      },
+      "exit_code": 1,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- Authorization coverage: 1 use case files checked, 32 exempt\n",
+      "stderr": "\u274c Violation: lib/modules/video/application/probe.ts has no authorize()/assertAuthorized()/requireVideo() call (CLAUDE.md 4.23). Authorize in the use case, or exempt it in AUTHZ_EXEMPT with a reason.\n\nFound 1 architectural violations.\n"
+    },
+    {
+      "case": "authz_comment_marker_accepted",
+      "fixture_files": {
+        "lib/modules/video/application/probe.ts": "// authorize( is mentioned but never called\nexport const action=()=>42;"
+      },
+      "exit_code": 0,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- Authorization coverage: 1 use case files checked, 32 exempt\n\u2705 Architecture check passed.\n",
+      "stderr": ""
+    },
+    {
+      "case": "authz_syntax_call_marker_control",
+      "fixture_files": {
+        "lib/modules/video/application/probe.ts": "declare function authorize():unknown; export const action=()=>authorize();"
+      },
+      "exit_code": 0,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- Authorization coverage: 1 use case files checked, 32 exempt\n\u2705 Architecture check passed.\n",
+      "stderr": ""
+    },
+    {
+      "case": "mutual_public_module_cycle_not_detected",
+      "fixture_files": {
+        "lib/modules/a/index.ts": "export {b} from '@/lib/modules/b'; export const a=1;",
+        "lib/modules/b/index.ts": "export {a} from '@/lib/modules/a'; export const b=2;"
+      },
+      "exit_code": 0,
+      "stdout": "- Files importing @/lib/channel/main-channel.service: 0\n- Files with UserProfileService usage: 0 (0 allowlisted)\n- Files with decommissioned legacy access surface references: 0\n- Authorization coverage: 0 use case files checked, 32 exempt\n\u2705 Architecture check passed.\n",
+      "stderr": ""
+    }
+  ],
+  "limits": [
+    "Guard scans synthetic temp trees; real app is unchanged",
+    "Call/comment/import fixtures do not execute app logic or prove authorization bypass",
+    "Passing guard is a policy heuristic, not type checking, cycle analysis or security proof"
+  ],
+  "cleanup": "TemporaryDirectory removed each synthetic tree"
+}

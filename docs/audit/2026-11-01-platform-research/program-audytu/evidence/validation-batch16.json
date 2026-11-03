@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-02",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_AUDIT_OR_PRODUCT_READINESS",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 18
+  },
+  "closed_domain_count": 0,
+  "asvs_status_counts": {
+    "NIEZBADANE": 290,
+    "W_TRAKCIE": 55
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 79,
+    "NIEZBADANE": 207
+  },
+  "stable_finding_count": 37,
+  "new_distinct_findings": [],
+  "existing_findings_extended": [
+    "R08",
+    "R37"
+  ],
+  "all_baseline_priorities_and_other_findings_preserved": true,
+  "earlier_files_unchanged_except_named_mutable_docs": 291,
+  "partial_manual_source_scope_files": 29,
+  "mechanical_test_files": 547,
+  "literal_declarations_not_runtime_count": 4214,
+  "parser_diagnostics": 0,
+  "partial_PeerTube_reference_files": 10,
+  "PeerTube_executed": false,
+  "actual_vitest_version": "4.1.10",
+  "isolated_oracle_runs": 8,
+  "distinct_baseline_test_files": 3,
+  "baseline_assertions_passed": 17,
+  "handpicked_mutants": 5,
+  "detected_mutants": 2,
+  "surviving_targeted_mutants": 3,
+  "global_mutation_score": null,
+  "static_probe_filtered_behavior_tests": 17,
+  "intentional_mutant_failure_is_not_application_failure": true,
+  "coverage_percent_measured": false,
+  "coverage_include_app_paths": 586,
+  "coverage_examined_app_paths": 1145,
+  "historical_full_suite_repeated": false,
+  "Prisma_generate_npmaudit_build_SQL_browser_repeated": false,
+  "installed_Prismaclient_or_app_tests_modified": false,
+  "real_provider_DB_production_or_person_data_used": false,
+  "closure_plan_rows": 18,
+  "readiness_gate_rows": 5,
+  "test_layer_rows": 12,
+  "none_certify_readiness": true,
+  "official_source_HTTP_200": 2,
+  "local_links_checked": 469,
+  "new_report_pinned_GitHub_paths_exist_locally": 5,
+  "broken_local_links": [],
+  "syntax": "Node --check and Python AST, not whole-program typecheck",
+  "whitespace": "Staged/unstaged diff --check except hash-verified original upstream Playwright files",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "credential_scan": "No listed patterns in changed/new text; bounded scan, not universal certification",
+  "independent_review": "PENDING"
+}

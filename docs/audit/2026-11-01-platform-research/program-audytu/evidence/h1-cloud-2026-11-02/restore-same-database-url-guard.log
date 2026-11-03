@@ -1,0 +1,2 @@
+--- RESTORED DATABASE VERIFICATION ---
+ERROR: RESTORE_DATABASE_URL exactly matches DATABASE_URL. Verification refused for safety.

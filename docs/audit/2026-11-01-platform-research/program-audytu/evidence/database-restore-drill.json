@@ -1,0 +1,195 @@
+{
+  "date": "2026-11-02",
+  "kind": "REAL_LOCAL_POSTGRES_DUMP_GZIP_RESTORE_SYNTHETIC_BASELINE_SCHEMA",
+  "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+  "migration_files_applied": 81,
+  "migration_source_sha256": {
+    "prisma/migrations/0_init/migration.sql": "3a3872027acaad061775552ab4c9a806e42afc8496e5270964d28a51d2b84d30",
+    "prisma/migrations/20260603120000_add_comment_pinning/migration.sql": "427bb4ab0d37f5fdf50a276ec628844efd32fc859aa314000f1d13409ba65f18",
+    "prisma/migrations/20260603130000_refactor_email_templates/migration.sql": "83ad628ca230ac7d92404b1778d87245e9999ee86ee8b2450e2264ec250fcae7",
+    "prisma/migrations/20260603140000_add_video_presentation_columns/migration.sql": "b05bf7076711c5246e56f61166d2708bc84822467a778dc40142167ba103e7e7",
+    "prisma/migrations/20260604120000_add_user_patron_source/migration.sql": "34af86090147854cc7be71b2bf9dc479a886dfeb066cd93c5fd76de1a8b78e09",
+    "prisma/migrations/20260605000000_production_sync/migration.sql": "47ed37348899b81c70556f80f4e6557a9229639c0e4e49c9995024ef19898f17",
+    "prisma/migrations/20260605001000_production_schema_drift_guard/migration.sql": "70594da90c3fe98506ea3a0cf21ffaf0ba4d7d314e3fb2f8bfb04217163f5d31",
+    "prisma/migrations/20260606090000_add_payment_settings_and_subscriber_override/migration.sql": "f0e04ad4a379392a15d120116756ad6e1baa25d7017a5f79b38f75e1e2d9d702",
+    "prisma/migrations/20260606100000_add_broadcast_email/migration.sql": "7e4723a26e14afa9c033260e0e6a61977db8f237b2ee88a95e70ea52687a2acd",
+    "prisma/migrations/20260607000000_fix_schema_consistency/migration.sql": "6edae5df43db68e987fd9fef4a74a6964f2fdb207bfbbe6428eca808bc28e881",
+    "prisma/migrations/20260607010000_extend_playback_models/migration.sql": "e88513c490cc827c5cf78ae80cb635cac6d044afcf60d07131e7eaa919f6d904",
+    "prisma/migrations/20260608000000_comments_pro/migration.sql": "b438a8f1d17c5b06955da7d716b12182592dd33d8bc830e12b0fc118ef6753da",
+    "prisma/migrations/20260611000000_cloudflare_stream_video_asset_foundation/migration.sql": "b0598214f80362619895f353568e4b24b6b7f61d0983f2212a4983757a0e864d",
+    "prisma/migrations/20260614000000_add_email_event_idempotency/migration.sql": "822808b55a835c9f0139a686a55b0cd40e1f1871b5f335f775e245142edd98a2",
+    "prisma/migrations/20260615000000_make_videourl_nullable/migration.sql": "324a28b2daccd5da8629c14c2cba8e7e265f8291422beb1d16427847331807f3",
+    "prisma/migrations/20260620000000_add_comment_is_hearted/migration.sql": "aea3384761b22999f4ef1300399247e7d9f3d75f01c667d5c10f6286312a1f6d",
+    "prisma/migrations/20260620000000_payment_request_id/migration.sql": "22bc42bfef8b01be2ed97bc1afd3d38282e9491032e26dca9f216ff9f34503a1",
+    "prisma/migrations/20260620000000_video_publish_after_asset_ready/migration.sql": "c4beebd47c7730475696da498fa1226eedd722099b4280e841a4803eda76fe20",
+    "prisma/migrations/20260625121500_add_payment_request_id/migration.sql": "5840b37f184b576ca0d3633734296d6d6c6b5a94b2e7973defe28ea93e6b865c",
+    "prisma/migrations/20260626120000_video_assets_1n/migration.sql": "a70ac0c1d141be6019f21b2e27a03f1984a2543b90d314ac837d2c57fa169d4e",
+    "prisma/migrations/20260627200000_video_sources_youtube/migration.sql": "3380c5eaa3bb8112b8d2c67f52b78bb22f477747bd185f3169a5244f7fc718d0",
+    "prisma/migrations/20260628000000_add_mux_vimeo_pending_primary/migration.sql": "5e9afe9ea660ab7b2faf8f5c84e2a771b5b85ee55b87b3a5b8cf5b49a3b020b7",
+    "prisma/migrations/20260628000000_remove_referral_system/migration.sql": "3f4c8902d3ef9752a965ffd97c5b74e1d573e46e630eeeea292a61c82ccc8b4e",
+    "prisma/migrations/20260628100000_add_app_settings/migration.sql": "6ec004502f3934ab2e53908fd4bb30dde6ff0dd3626d0061d81e5788df227119",
+    "prisma/migrations/20260628120000_video_original_and_mirror_metadata/migration.sql": "2af0c85f0da61bb73eef17720ae1c93bf0fe0c93b012de5a3437ba958bc239c5",
+    "prisma/migrations/20260629000000_publish_after_asset_ready_provider/migration.sql": "0016265d954c6dfd7f7c51b278ccd79158845ab49e482802f06f455f82de1e79",
+    "prisma/migrations/20260629100000_add_email_template_name/migration.sql": "a6ffe2e1c00a0b717a1e1975453fe301518acfcfa6e6e54f849bfddf1a86c700",
+    "prisma/migrations/20260630000000_remove_legacy_user_patron_cache/migration.sql": "7ac86a2f428cd1f38906b93d1140b6145001e34eaf63826e3f5b279a8364d2c4",
+    "prisma/migrations/20260701000000_add_email_suppression/migration.sql": "70f03e442fbc7c941ca5268a57066afe60def20d720c112d2d62f5de0d0aec0e",
+    "prisma/migrations/20260701000001_add_subtitle_urls_and_default_thumbnail/migration.sql": "f04505cacb704f49c5e6dc182704347d8a0a48e35f108cda7a3ca131129aaab7",
+    "prisma/migrations/20260702000000_add_comment_dislike_reaction/migration.sql": "a145afbd8ac2c81928baf948100fb4dfd73897696e6b2162db945fcb12629268",
+    "prisma/migrations/20260703000000_add_patron_threshold_and_box_min/migration.sql": "2b6541ea2b159cbf698a64f8f9b5dfe63c40d77ee9cad88145427cb72e8e0a41",
+    "prisma/migrations/20260705000000_provider_neutral_video_distribution_phase1/migration.sql": "fa2917d67d2463e8601807e7c1631c7a4bb5997bc87383f484339660d2322b18",
+    "prisma/migrations/20260710000000_add_notification_model/migration.sql": "6a596e2c233e1f282d2975493c0546bf8b9fc253238964d7b5ac86a3c500c76e",
+    "prisma/migrations/20260710000100_add_notification_preferences_and_templates/migration.sql": "237651fa0d3de38b3ea483742efe11351d5dca6d98ffe66fd8ddd5d0b519be76",
+    "prisma/migrations/20260913000000_add_non_patrons_broadcast_recipient_group/migration.sql": "0d43285a2977aa01714982952ea57047ee284981a8a48a3c56971c2f09c87883",
+    "prisma/migrations/20260920000000_add_audit_log_target_index/migration.sql": "b1a937e60a9120caf9a1c74260022b0032165e2cdf6e03e2e516636bc9d89ad5",
+    "prisma/migrations/20260926120000_add_missing_schema_indexes/migration.sql": "9efaccfae0e30101e4457529266e987369d1cb64f1f46eacc85e0d6ab16a00b1",
+    "prisma/migrations/20260926120001_reconcile_notification_fk_onupdate/migration.sql": "5a1fbd0df382dbdcb4f04bd0d6086603952b2a913d9eed358c8fab77407686b2",
+    "prisma/migrations/20260926120002_reconcile_schema_nullable_default_drift/migration.sql": "d2fbb7a3fe2f7555bf6b8cdaf8164cd231d82cebad0989e1219d84788b6995ef",
+    "prisma/migrations/20260926150000_add_video_thumbnail_public_url/migration.sql": "85b9b80699c46b563d770e6780a96bf1275e2a4f1666c094fe3b0ea3ce6ae953",
+    "prisma/migrations/20260930120000_admin_audit_actor_columns/migration.sql": "54ea348e01a7fa35544588085acefe6af24e034bb3555fa1992e5e68278d34dd",
+    "prisma/migrations/20260930180000_add_video_premiere_at/migration.sql": "62e29801be710a778be6b4136797722f7c4c7489399edb6262b9d03fea55151f",
+    "prisma/migrations/20260930210000_add_video_fundraising_goal/migration.sql": "cad465151d5a3e8c8d70777d53cfb5bf4ebf6d7981fcf354be81065818444b1d",
+    "prisma/migrations/20260930230000_add_video_fundraising_manual_percent/migration.sql": "4314761cf0c70c15d3f19c1ac845f8c5fb44a138d881c6b8770b30127a199f0c",
+    "prisma/migrations/20261002100000_add_better_auth/migration.sql": "12624d80ec96d94357358398bfd7d48231dcc756532c8172c5ad5120f22c9a0a",
+    "prisma/migrations/20261002120000_better_auth_twofactor_fields/migration.sql": "3b26b5c80e939cac8cf3455f29c88859e1725973e769462ee4d3aeb4543c0817",
+    "prisma/migrations/20261002140000_add_self_hls_storage_provider/migration.sql": "8881463ca1107f40fc17117dabd23fec4904664b46a37026dceca64b7c0e86ab",
+    "prisma/migrations/20261003100000_add_video_encode_job/migration.sql": "c125965502ad4cb9d804f81f48a496b17c8f634bb3c48d9eee07cd3685af6c47",
+    "prisma/migrations/20261003110000_add_video_original_multipart/migration.sql": "66bef15fbf512ceb43db0aec62521668f0393134703178f5ad548f4d367ae622",
+    "prisma/migrations/20261003200000_email_overrides_and_broadcast_queue/migration.sql": "c705290f46fff51c36f0986a66c5fd6965df3724107d3012ad788beebd0a6cd2",
+    "prisma/migrations/20261003200000_user_nickname_unique_active/migration.sql": "c88a0f795db1ef803d2c1ed45f80e244daee6d2b1758e6628c3c111dc81f67c7",
+    "prisma/migrations/20261004120000_privacy_terms_acceptance_contact_removal/migration.sql": "47c1a224975cf2cdfb73f6c17018551ddb01919bbfbda2658aea483bdae39b14",
+    "prisma/migrations/20261004180000_add_passkey/migration.sql": "2c0bdae9b5613a1cd6bd21668eacb43ffd4c2eb3a4ebc6bc547531d7794655ec",
+    "prisma/migrations/20261004200000_add_admin_panel_auth/migration.sql": "a2512c5c51c0bd58b1023ca22f3fc70b90cd80e833951a6e972e6902c0f2182e",
+    "prisma/migrations/20261004210000_telemetry_schema/migration.sql": "82ea00af0226e6ac63f7b8b979dc70f6a00a6104964c5cfcb8368e3a3b6d2fea",
+    "prisma/migrations/20261004230000_video_tier_patron_to_logged_in/migration.sql": "c4af7a4912811161da5dbb520979f9726653895bb1f4ce3007c1df13906f24b4",
+    "prisma/migrations/20261005100000_add_video_translations/migration.sql": "abd9684a277eae1ae504710f5a5fe61c5271ef53bace21cf408269394f9503a2",
+    "prisma/migrations/20261005120000_add_user_comment_mute/migration.sql": "68eadeb6792a9421f2cfafa70e9d8b542959fdf08dffae08f0c5665ebf04a307",
+    "prisma/migrations/20261005120000_analytics_rollups/migration.sql": "d0ce958ebaa3be213924d9d931826f5870d6a17976d2c8c4de2b92b09b80fb1d",
+    "prisma/migrations/20261005200000_admin_phase3_roles_and_audit_immutable/migration.sql": "c2b0e1faec89c5f51dbefbb6e7e5759f826dc279611694208d1084443b7ea342",
+    "prisma/migrations/20261005210000_cleanup_dead_schema/migration.sql": "c10ec90d69cde06466c1377e7b4c94c6e5aebb5828ad56887262f0566168690c",
+    "prisma/migrations/20261006090000_payment_refunds_checked_at/migration.sql": "c2b4a9ac5858794d7dc393e9bceea2d08e6ef18a6263d67337dcc4b78c7b4eb8",
+    "prisma/migrations/20261006091000_stripe_customer_anonymization/migration.sql": "574ce0d9e908f23f4dabfcb31297b689bd2528c371fd8e7aed32e39ff9f6ae1a",
+    "prisma/migrations/20261013120000_multi_channel_schema/migration.sql": "d6d1424f02627f64cdbb2ac74af761ff4145b1f6449761b40eedb4c3af1220f0",
+    "prisma/migrations/20261013140000_sales_schema/migration.sql": "9f856274ccbf8563e6b598cd5ddcd7c67096ebae53f30caa839aeedacd6453a5",
+    "prisma/migrations/20261013160000_video_metadata/migration.sql": "427f363b7f634a86a9ee7e330c7caab654d5c4aa81be779dd6fdb06a4265df03",
+    "prisma/migrations/20261014090000_main_channel_setting/migration.sql": "a92e4935ca842d8b2adb24d37bd5d4350c1e3ab3b45ed66ce0093cebdf97c778",
+    "prisma/migrations/20261014120000_drop_creator_legacy_flags/migration.sql": "2bb17648e31863c47294fdb4bdec3ec3ec3a7399d642cb3f357cfba7a0b00c61",
+    "prisma/migrations/20261014180000_wave_schema/migration.sql": "8c84bb6ba2be24516022b38485ea1d717ba83b709673645241253c176aba0c7d",
+    "prisma/migrations/20261019120000_video_premiere_notified_at/migration.sql": "3d6871a0f486b58eff41d15dc373285fb7693918bd774aeb5d864c56de0793d5",
+    "prisma/migrations/20261019140000_comment_one_pinned_per_video/migration.sql": "3d8d5d19ffcc4efecdb6c4bf259f312b87e5d3f6f49532c9a62e282b05e336d4",
+    "prisma/migrations/20261019160000_notification_template_key/migration.sql": "7b122adceb0ba9afcaf0e35ab8a1c7dc468bf085ce09aa16364b9c1c58cf8937",
+    "prisma/migrations/20261019165000_channel_banner_about/migration.sql": "b74316cc9ba78f3895f4de91549872984ed5151f9a206f5a619b3bac312798ed",
+    "prisma/migrations/20261019170000_video_search/migration.sql": "736701667cb476311ebddf9022228b4cb4f1b287168813222c8f65970bd12d7a",
+    "prisma/migrations/20261019180000_playlists/migration.sql": "72ae5156f661fcb54f1d76144ab856047fbde506d7d0cfeb768369a45898fdbd",
+    "prisma/migrations/20261020120000_video_chapters/migration.sql": "4f980549837fcc4478dd7bd00b0fe7d523fda9ea64cffaf0285399daff5b5855",
+    "prisma/migrations/20261020130000_video_chapters_search/migration.sql": "6c7ba9599dae739474dff0aacb5d18cc2c026e3595903d8ef201c9cb5db48083",
+    "prisma/migrations/20261021120000_video_favorites/migration.sql": "f2955a13febb7cb0386968e4fda4f1e7b6f32c9ee96dc22cb9076d2369ed80c6",
+    "prisma/migrations/20261027120000_durable_jobs/migration.sql": "612060264d69ff5dcdbafde3fc494d8fe72130fd461bd34a540daefb210c89ff",
+    "prisma/migrations/20261028120000_video_ready_visibility/migration.sql": "3c973dd62a6575356cf4d4575122aee66005518f9601f81fa3d3c6f868f90bdc"
+  },
+  "snapshot_before": {
+    "tables": 71,
+    "constraints": 151,
+    "indexes": 259,
+    "triggers": 7,
+    "user": {
+      "id": "research-user",
+      "email": "restore@example.invalid"
+    },
+    "video": {
+      "id": "research-video",
+      "creatorId": "research-channel",
+      "title": "Synthetic restored video",
+      "slug": "research-video",
+      "status": "DRAFT",
+      "updatedAt": "2026-11-02T05:13:49.472"
+    },
+    "asset": {
+      "id": "research-asset",
+      "videoId": "research-video",
+      "provider": "SELF_HLS",
+      "objectKey": "synthetic/no-real-objects/master.m3u8"
+    },
+    "payment": {
+      "id": "research-payment",
+      "userId": "research-user",
+      "amountMinor": 1000,
+      "currency": "PLN",
+      "status": "SUCCEEDED"
+    },
+    "grant": {
+      "id": "research-grant",
+      "userId": "research-user",
+      "paymentId": "research-payment",
+      "source": "PAYMENT"
+    }
+  },
+  "snapshot_after": {
+    "tables": 71,
+    "constraints": 151,
+    "indexes": 259,
+    "triggers": 7,
+    "user": {
+      "id": "research-user",
+      "email": "restore@example.invalid"
+    },
+    "video": {
+      "id": "research-video",
+      "creatorId": "research-channel",
+      "title": "Synthetic restored video",
+      "slug": "research-video",
+      "status": "DRAFT",
+      "updatedAt": "2026-11-02T05:13:49.472"
+    },
+    "asset": {
+      "id": "research-asset",
+      "videoId": "research-video",
+      "provider": "SELF_HLS",
+      "objectKey": "synthetic/no-real-objects/master.m3u8"
+    },
+    "payment": {
+      "id": "research-payment",
+      "userId": "research-user",
+      "amountMinor": 1000,
+      "currency": "PLN",
+      "status": "SUCCEEDED"
+    },
+    "grant": {
+      "id": "research-grant",
+      "userId": "research-user",
+      "paymentId": "research-payment",
+      "source": "PAYMENT"
+    }
+  },
+  "observations": [
+    {
+      "case": "baseline_schema_and_synthetic_relations_restored",
+      "result": "EXACT_SELECTED_SNAPSHOT_MATCH"
+    },
+    {
+      "case": "restored_foreign_key_rejects_orphan",
+      "result": "REJECTED"
+    },
+    {
+      "case": "restored_unique_rejects_duplicate",
+      "result": "REJECTED"
+    }
+  ],
+  "dump_bytes": 193786,
+  "gzip_bytes": 24411,
+  "dump_sha256": "e3547e9aa689a643f21a98cc6c9500444a4f3412b82aa5436bf68bb2588d576a",
+  "timings_seconds_local_only": {
+    "apply_migrations": 0.695,
+    "dump_and_gzip": 0.164,
+    "restore": 0.526
+  },
+  "raw_dump_saved": false,
+  "real_network_provider_or_production_calls": 0,
+  "boundaries": [
+    "Actual PostgreSQL in existing local container over explicitly selected local Unix Docker socket",
+    "All baseline SQL migrations applied directly to a new empty database; NOT Prisma migration engine/history",
+    "Synthetic account/channel/video/asset/payment/grant only, no real video objects or money",
+    "pg_dump of database with --no-owner --no-privileges; NOT production pg_dumpall/roles or the weekly restore script",
+    "No age/R2/private key/offsite retrieval, Next application, functional playback, production RPO/RTO, large dataset or owner recovery proof"
+  ],
+  "own_databases_removed": true
+}

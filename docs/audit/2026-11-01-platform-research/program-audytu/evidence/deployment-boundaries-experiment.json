@@ -1,0 +1,123 @@
+{
+  "date": "2026-11-02",
+  "actual_source": "deploy/serwerek/deploy.sh",
+  "sha256": "7773f106d9d993c9a94807c9e3977381de5788744c25e73cf05daae9b70f949c",
+  "observations": [
+    {
+      "case": "healthy",
+      "script_exit": 0,
+      "current_app_image": "polutek-app:new",
+      "app_start_attempts": [
+        "polutek-app:new"
+      ],
+      "migration_attempts": 1,
+      "warning_outcome": false,
+      "real_Docker_calls": 0,
+      "real_network_calls": 0,
+      "log": "[deploy 05:09:16] images for new already built, skipping build\n[deploy 05:09:16] starting db\n[deploy 05:09:16] pre-deploy dump -> /tmp/audit-deploy-k2mr3lqp/backups/pre-deploy-new-20261102T050916.sql.gz\n[deploy 05:09:16] prisma migrate deploy\n[deploy 05:09:16] starting app on polutek-app:new\n[deploy 05:09:16] app healthy (polutek-app:new)\n[deploy 05:09:16] worker.env missing, encoder not started (see docs/operations/VIDEO-PIPELINE.md)\n[deploy 05:09:16] collector.env missing, collector not started (see docs/architecture/admin-telemetry.md)\n[deploy 05:09:16] readiness: database reachable from the app\n[deploy 05:09:16] readiness: redis running\n[deploy 05:09:16] readiness: srh running\n[deploy 05:09:16] OK: polutek-app:new is live\n",
+      "classification": "POSITIVE_CONTROL_OR_DECLARED_OPTIONAL_SERVICE_POLICY"
+    },
+    {
+      "case": "predeploy_dump_failure",
+      "script_exit": 1,
+      "current_app_image": "polutek-app:old",
+      "app_start_attempts": [],
+      "migration_attempts": 0,
+      "warning_outcome": false,
+      "real_Docker_calls": 0,
+      "real_network_calls": 0,
+      "log": "[deploy 05:09:16] images for new already built, skipping build\n[deploy 05:09:16] starting db\n[deploy 05:09:16] pre-deploy dump -> /tmp/audit-deploy-xjrn4x26/backups/pre-deploy-new-20261102T050916.sql.gz\n[deploy 05:09:16] ERROR: pre-deploy dump failed\n",
+      "classification": "POSITIVE_CONTROL_OR_DECLARED_OPTIONAL_SERVICE_POLICY"
+    },
+    {
+      "case": "migration_failure",
+      "script_exit": 1,
+      "current_app_image": "polutek-app:old",
+      "app_start_attempts": [],
+      "migration_attempts": 1,
+      "warning_outcome": false,
+      "real_Docker_calls": 0,
+      "real_network_calls": 0,
+      "log": "[deploy 05:09:16] images for new already built, skipping build\n[deploy 05:09:16] starting db\n[deploy 05:09:17] pre-deploy dump -> /tmp/audit-deploy-c8r2mwi5/backups/pre-deploy-new-20261102T050917.sql.gz\n[deploy 05:09:17] prisma migrate deploy\n[deploy 05:09:17] ERROR: migration failed; app NOT restarted (still on polutek-app:old)\n",
+      "classification": "POSITIVE_CONTROL_OR_DECLARED_OPTIONAL_SERVICE_POLICY"
+    },
+    {
+      "case": "new_app_start_failure",
+      "script_exit": 1,
+      "current_app_image": "polutek-app:old",
+      "app_start_attempts": [
+        "polutek-app:new",
+        "polutek-app:old"
+      ],
+      "migration_attempts": 1,
+      "warning_outcome": false,
+      "real_Docker_calls": 0,
+      "real_network_calls": 0,
+      "log": "[deploy 05:09:17] images for new already built, skipping build\n[deploy 05:09:17] starting db\n[deploy 05:09:17] pre-deploy dump -> /tmp/audit-deploy-1r5f77r5/backups/pre-deploy-new-20261102T050917.sql.gz\n[deploy 05:09:17] prisma migrate deploy\n[deploy 05:09:17] starting app on polutek-app:new\n[deploy 05:09:17] new image failed to start or did not become healthy in 2s; last logs:\n[deploy 05:09:17] rolling back to polutek-app:old\n[deploy 05:09:17] app healthy (polutek-app:old)\nsynthetic container log, no production data\n[deploy 05:09:17] ERROR: deploy of new FAILED, rolled back to polutek-app:old\n",
+      "classification": "POSITIVE_CONTROL_OR_DECLARED_OPTIONAL_SERVICE_POLICY"
+    },
+    {
+      "case": "readiness_failure",
+      "script_exit": 0,
+      "current_app_image": "polutek-app:new",
+      "app_start_attempts": [
+        "polutek-app:new"
+      ],
+      "migration_attempts": 1,
+      "warning_outcome": true,
+      "real_Docker_calls": 0,
+      "real_network_calls": 0,
+      "log": "[deploy 05:09:17] images for new already built, skipping build\n[deploy 05:09:17] starting db\n[deploy 05:09:17] pre-deploy dump -> /tmp/audit-deploy-o64wd2xr/backups/pre-deploy-new-20261102T050917.sql.gz\n[deploy 05:09:17] prisma migrate deploy\n[deploy 05:09:17] starting app on polutek-app:new\n[deploy 05:09:17] app healthy (polutek-app:new)\n[deploy 05:09:17] worker.env missing, encoder not started (see docs/operations/VIDEO-PIPELINE.md)\n[deploy 05:09:17] collector.env missing, collector not started (see docs/architecture/admin-telemetry.md)\n[deploy 05:09:17] WARN: readiness: app does not report a reachable database\n[deploy 05:09:17] readiness: redis running\n[deploy 05:09:18] readiness: srh running\n[deploy 05:09:18] OK (WITH WARNINGS): polutek-app:new is live, but: readiness: database not confirmed by /api/health\n",
+      "classification": "EXPLICIT_WARNING_POLICY_R18"
+    },
+    {
+      "case": "worker_start_failure",
+      "script_exit": 0,
+      "current_app_image": "polutek-app:new",
+      "app_start_attempts": [
+        "polutek-app:new"
+      ],
+      "migration_attempts": 1,
+      "warning_outcome": true,
+      "real_Docker_calls": 0,
+      "real_network_calls": 0,
+      "log": "[deploy 05:09:18] images for new already built, skipping build\n[deploy 05:09:18] starting db\n[deploy 05:09:18] pre-deploy dump -> /tmp/audit-deploy-tbbif7z7/backups/pre-deploy-new-20261102T050918.sql.gz\n[deploy 05:09:18] prisma migrate deploy\n[deploy 05:09:18] starting app on polutek-app:new\n[deploy 05:09:18] app healthy (polutek-app:new)\n[deploy 05:09:18] WARN: encoder failed to start or is not running on polutek-worker:new\n[deploy 05:09:18] collector.env missing, collector not started (see docs/architecture/admin-telemetry.md)\n[deploy 05:09:18] readiness: database reachable from the app\n[deploy 05:09:18] readiness: redis running\n[deploy 05:09:18] readiness: srh running\n[deploy 05:09:18] OK (WITH WARNINGS): polutek-app:new is live, but: encoder not running on polutek-worker:new\n",
+      "classification": "POSITIVE_CONTROL_OR_DECLARED_OPTIONAL_SERVICE_POLICY"
+    },
+    {
+      "case": "lock_busy",
+      "script_exit": 75,
+      "current_app_image": "polutek-app:old",
+      "app_start_attempts": [],
+      "migration_attempts": 0,
+      "warning_outcome": false,
+      "real_Docker_calls": 0,
+      "real_network_calls": 0,
+      "log": "[deploy 05:09:18] another deploy is already running (lock /tmp/audit-deploy-8wozz565/app/.deploy.lock); try again when it finishes\n",
+      "classification": "POSITIVE_CONTROL_OR_DECLARED_OPTIONAL_SERVICE_POLICY"
+    },
+    {
+      "case": "manual_rollback",
+      "script_exit": 0,
+      "current_app_image": "polutek-app:older",
+      "app_start_attempts": [
+        "polutek-app:older"
+      ],
+      "migration_attempts": 0,
+      "warning_outcome": false,
+      "real_Docker_calls": 0,
+      "real_network_calls": 0,
+      "log": "[deploy 05:09:18] rollback to polutek-app:older\n[deploy 05:09:19] app healthy (polutek-app:older)\n",
+      "classification": "POSITIVE_CONTROL_OR_DECLARED_OPTIONAL_SERVICE_POLICY"
+    }
+  ],
+  "real_Docker_calls": 0,
+  "real_network_calls": 0,
+  "production_access": false,
+  "boundaries": [
+    "Full unchanged deploy.sh from temporary copy; fake common.sh only records local job status",
+    "All Docker/curl/flock/sleep and host mkdir/chown commands stubbed; real file state/gzip only inside temp tree",
+    "No real images, migrations, container health, lock contention, application, database, services, SSH or production",
+    "Rollback demonstrates image control flow only; no restored schema or migration atomicity guarantee"
+  ]
+}

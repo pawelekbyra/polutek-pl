@@ -1,0 +1,279 @@
+{
+  "started_at": "2026-11-02T17:22:38.663395+00:00",
+  "code_sha": "835348d77cef7819a6769f3b14cc1ae0c47593c6",
+  "clean_source": true,
+  "inputs": {
+    "code_sha": "835348d77cef7819a6769f3b14cc1ae0c47593c6",
+    "source_archive_sha256": "d6063729e3f1294a0c1d829b22673f7a48afd5c22ad0cc77de325a0c145c5db8",
+    "public_build_args": {
+      "NEXT_PUBLIC_APP_URL": "http://127.0.0.1:3000",
+      "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "",
+      "NEXT_PUBLIC_R2_PUBLIC_HOST": "",
+      "NEXT_PUBLIC_BLOB_PUBLIC_HOST": ""
+    },
+    "files": {
+      "package-lock.json": "14bdf3558c2d260ad2d8fd2b02ef9f2228bcd7f9da06cd881ca7a4224e30b343",
+      "package.json": "8a1839e40eb93ffdaa98503532bc125b246745cde1b6ffd3b0e5f1ee9c14786a",
+      "deploy/serwerek/Dockerfile": "caff01505baddc200012906007693562e37cf68107bb4648f9902d29b7aab6b3",
+      "deploy/serwerek/Dockerfile.admin": "8192f2806665dc7331c37f4af9c67ea0dcf5786b6155d23f697420e9d24ac501",
+      ".dockerignore": "4990dbeeac4582fa6eee75642e51ec9a6b91a21fdc10c96fdab4d3d14d04ef52",
+      "next.config.mjs": "3a998d5667677def361186707e1d6799a82f0c49304aeb055b551191ca0c8af7",
+      "apps/admin/next.config.mjs": "f219291301a8c7ff2ff9c9f1412717f0433eadb79809d85d94272b7df0571ea0"
+    }
+  },
+  "inputs_sha256": "e8bb22602fa1c4b661a6abd922f409d3d186ec53eeacd52741dae15463db66ec",
+  "build_ca": "Optional ephemeral BuildKit secret, no TLS bypass, never copied into image",
+  "image_id_type": "Local Docker image configuration digest, not a pushed registry manifest digest",
+  "enforced_release_paths": false,
+  "release_ready": false,
+  "images": [
+    {
+      "kind": "public",
+      "target": "runner",
+      "tag": "polutek-h1-public:835348d77cef",
+      "started_at": "2026-11-02T17:22:38.663559+00:00",
+      "build_exit": 0,
+      "build_log": "public-build.log",
+      "image_id": "sha256:ff78ca7cd6ca526d83d2e4a6549d1aef1265f97e69fc71f1bed19963933461e3",
+      "repo_digests": [],
+      "architecture": "amd64",
+      "os": "linux",
+      "image_user": "node",
+      "size_bytes": 437013119,
+      "probe_exit": 0,
+      "probe_log": "public-probe.log",
+      "runtime": {
+        "node": "v22.23.4",
+        "uid": 1000,
+        "next": "16.4.1",
+        "sharp": {
+          "aom": "3.15.1",
+          "archive": "3.8.9",
+          "cairo": "1.18.6",
+          "cgif": "0.5.4",
+          "exif": "0.6.26",
+          "expat": "2.8.5",
+          "ffi": "3.8.0",
+          "fontconfig": "2.18.3",
+          "freetype": "2.14.3",
+          "fribidi": "1.0.17",
+          "glib": "2.90.0",
+          "harfbuzz": "14.5.0",
+          "heif": "1.23.5",
+          "highway": "1.4.0",
+          "imagequant": "2.4.1",
+          "lcms": "2.19.1",
+          "mozjpeg": "0826579",
+          "pango": "1.58.2",
+          "pixman": "0.46.4",
+          "png": "1.6.58",
+          "proxy-libintl": "0.5",
+          "rsvg": "2.63.2",
+          "tiff": "4.7.2",
+          "uhdr": "2.0.2",
+          "vips": "8.18.7",
+          "webp": "1.6.0",
+          "xml2": "2.15.4",
+          "zlib-ng": "2.3.3",
+          "sharp": "0.35.5"
+        },
+        "checks": [
+          {
+            "name": "legal-png",
+            "status": "PASS",
+            "bytes": 94
+          },
+          {
+            "name": "legal-jpeg",
+            "status": "PASS",
+            "bytes": 268
+          },
+          {
+            "name": "legal-webp",
+            "status": "PASS",
+            "bytes": 60
+          },
+          {
+            "name": "benign-svg-librsvg-render",
+            "status": "PASS",
+            "bytes": 96
+          },
+          {
+            "name": "invalid-image-bytes-rejected",
+            "status": "PASS"
+          }
+        ],
+        "build_ca_present": false,
+        "network": "none"
+      }
+    },
+    {
+      "kind": "admin",
+      "target": "admin",
+      "tag": "polutek-h1-admin:835348d77cef",
+      "started_at": "2026-11-02T17:24:29.003946+00:00",
+      "build_exit": 0,
+      "build_log": "admin-build.log",
+      "image_id": "sha256:9053867ad8d55ad729014efb5f59ab90c111aa978e15e613e73bfe1fa5d534e8",
+      "repo_digests": [],
+      "architecture": "amd64",
+      "os": "linux",
+      "image_user": "node",
+      "size_bytes": 411593838,
+      "probe_exit": 0,
+      "probe_log": "admin-probe.log",
+      "runtime": {
+        "node": "v22.23.4",
+        "uid": 1000,
+        "next": "16.4.1",
+        "sharp": {
+          "aom": "3.15.1",
+          "archive": "3.8.9",
+          "cairo": "1.18.6",
+          "cgif": "0.5.4",
+          "exif": "0.6.26",
+          "expat": "2.8.5",
+          "ffi": "3.8.0",
+          "fontconfig": "2.18.3",
+          "freetype": "2.14.3",
+          "fribidi": "1.0.17",
+          "glib": "2.90.0",
+          "harfbuzz": "14.5.0",
+          "heif": "1.23.5",
+          "highway": "1.4.0",
+          "imagequant": "2.4.1",
+          "lcms": "2.19.1",
+          "mozjpeg": "0826579",
+          "pango": "1.58.2",
+          "pixman": "0.46.4",
+          "png": "1.6.58",
+          "proxy-libintl": "0.5",
+          "rsvg": "2.63.2",
+          "tiff": "4.7.2",
+          "uhdr": "2.0.2",
+          "vips": "8.18.7",
+          "webp": "1.6.0",
+          "xml2": "2.15.4",
+          "zlib-ng": "2.3.3",
+          "sharp": "0.35.5"
+        },
+        "checks": [
+          {
+            "name": "legal-png",
+            "status": "PASS",
+            "bytes": 94
+          },
+          {
+            "name": "legal-jpeg",
+            "status": "PASS",
+            "bytes": 268
+          },
+          {
+            "name": "legal-webp",
+            "status": "PASS",
+            "bytes": 60
+          },
+          {
+            "name": "benign-svg-librsvg-render",
+            "status": "PASS",
+            "bytes": 96
+          },
+          {
+            "name": "invalid-image-bytes-rejected",
+            "status": "PASS"
+          }
+        ],
+        "build_ca_present": false,
+        "network": "none"
+      }
+    },
+    {
+      "kind": "worker",
+      "target": "worker",
+      "tag": "polutek-h1-worker:835348d77cef",
+      "started_at": "2026-11-02T17:25:36.764952+00:00",
+      "build_exit": 0,
+      "build_log": "worker-build.log",
+      "image_id": "sha256:fcb719454310a81fd93c220e4c007cdeadd21154a94a961e4f04721bb5b8ce46",
+      "repo_digests": [],
+      "architecture": "amd64",
+      "os": "linux",
+      "image_user": "node",
+      "size_bytes": 1732493225,
+      "probe_exit": 0,
+      "probe_log": "worker-probe.log",
+      "runtime": {
+        "node": "v22.23.4",
+        "uid": 1000,
+        "next": "16.4.1",
+        "sharp": {
+          "aom": "3.15.1",
+          "archive": "3.8.9",
+          "cairo": "1.18.6",
+          "cgif": "0.5.4",
+          "exif": "0.6.26",
+          "expat": "2.8.5",
+          "ffi": "3.8.0",
+          "fontconfig": "2.18.3",
+          "freetype": "2.14.3",
+          "fribidi": "1.0.17",
+          "glib": "2.90.0",
+          "harfbuzz": "14.5.0",
+          "heif": "1.23.5",
+          "highway": "1.4.0",
+          "imagequant": "2.4.1",
+          "lcms": "2.19.1",
+          "mozjpeg": "0826579",
+          "pango": "1.58.2",
+          "pixman": "0.46.4",
+          "png": "1.6.58",
+          "proxy-libintl": "0.5",
+          "rsvg": "2.63.2",
+          "tiff": "4.7.2",
+          "uhdr": "2.0.2",
+          "vips": "8.18.7",
+          "webp": "1.6.0",
+          "xml2": "2.15.4",
+          "zlib-ng": "2.3.3",
+          "sharp": "0.35.5"
+        },
+        "checks": [
+          {
+            "name": "legal-png",
+            "status": "PASS",
+            "bytes": 94
+          },
+          {
+            "name": "legal-jpeg",
+            "status": "PASS",
+            "bytes": 268
+          },
+          {
+            "name": "legal-webp",
+            "status": "PASS",
+            "bytes": 60
+          },
+          {
+            "name": "benign-svg-librsvg-render",
+            "status": "PASS",
+            "bytes": 96
+          },
+          {
+            "name": "invalid-image-bytes-rejected",
+            "status": "PASS"
+          }
+        ],
+        "build_ca_present": false,
+        "network": "none",
+        "ffmpeg": {
+          "version": "ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers",
+          "zscale": true,
+          "tonemap": true
+        }
+      }
+    }
+  ],
+  "note": "Local artifact evidence only. Existing server/GHCR/manual publication paths still need enforced source/input/test/digest verification.",
+  "finished_at": "2026-11-02T17:27:45.882186+00:00",
+  "all_executed_checks_passed": true
+}

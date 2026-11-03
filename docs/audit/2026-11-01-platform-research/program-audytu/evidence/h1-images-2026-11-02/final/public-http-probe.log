@@ -1,0 +1,1 @@
+{"checks":[{"name":"health-process-only","status":200},{"name":"local-static-png","status":200},{"name":"actual-next-image-optimizer","status":200},{"name":"unlisted-remote-host-rejected","status":400},{"name":"private-remote-host-rejected","status":400},{"name":"svg-optimizer-rejected","status":400},{"name":"invalid-quality-rejected","status":400}]}

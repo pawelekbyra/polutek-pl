@@ -1,0 +1,47 @@
+[
+  {
+    "mode": "failed-upload",
+    "result": "retry",
+    "objectsAtReturn": 0,
+    "objectsAfterPendingPuts": 3,
+    "events": [
+      "DELETE prefix",
+      "one PUT fails",
+      "DELETE prefix",
+      "PUT committed",
+      "PUT committed",
+      "PUT committed"
+    ]
+  },
+  {
+    "mode": "lost-during-finalize",
+    "result": "lost",
+    "objectsAtReturn": 5,
+    "objectsAfterPendingPuts": 5,
+    "events": [
+      "DELETE prefix",
+      "PUT committed",
+      "PUT committed",
+      "PUT committed",
+      "PUT committed",
+      "PUT committed",
+      "finalization entered",
+      "publication side effect"
+    ]
+  },
+  {
+    "mode": "lost-while-uploading",
+    "result": "lost",
+    "objectsAtReturn": 0,
+    "objectsAfterPendingPuts": 0,
+    "events": [
+      "DELETE prefix",
+      "PUT committed",
+      "claim reassigned; new owner writes into same version prefix",
+      "PUT committed",
+      "PUT committed",
+      "PUT committed",
+      "DELETE prefix"
+    ]
+  }
+]

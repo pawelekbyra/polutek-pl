@@ -1,0 +1,12 @@
+
+Oops! Something went wrong! :(
+
+ESLint: 9.39.4
+
+A configuration object specifies rule "react-hooks/set-state-in-effect", but could not find plugin "react-hooks".
+
+Common causes of this problem include:
+
+1. The "react-hooks" plugin is not defined in your configuration file.
+2. The "react-hooks" plugin is not defined within the same configuration object in which the "react-hooks/set-state-in-effect" rule is applied.
+

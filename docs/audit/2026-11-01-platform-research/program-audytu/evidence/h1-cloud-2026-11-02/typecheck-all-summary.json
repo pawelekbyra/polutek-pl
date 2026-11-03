@@ -1,0 +1,585 @@
+{
+  "diagnostics": 81,
+  "files": 41,
+  "codes": {
+    "TS2339": 27,
+    "TS2493": 11,
+    "TS2532": 3,
+    "TS18047": 2,
+    "TS2322": 14,
+    "TS2741": 3,
+    "TS7022": 1,
+    "TS2353": 2,
+    "TS2345": 10,
+    "TS2352": 8
+  },
+  "entries": [
+    {
+      "file": "tests/integration/launch-candidate-critical-path.test.ts",
+      "line": 417,
+      "column": 24,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/access-source-of-truth.test.ts",
+      "line": 51,
+      "column": 24,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/access-source-of-truth.test.ts",
+      "line": 83,
+      "column": 24,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/access-source-of-truth.test.ts",
+      "line": 107,
+      "column": 24,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/admin-analytics/morning-report.test.ts",
+      "line": 36,
+      "column": 33,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/admin-analytics/morning-report.test.ts",
+      "line": 37,
+      "column": 12,
+      "code": "TS2532",
+      "message": "Object is possibly 'undefined'."
+    },
+    {
+      "file": "tests/unit/admin-analytics/morning-report.test.ts",
+      "line": 37,
+      "column": 33,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/admin-analytics/use-cases.test.ts",
+      "line": 241,
+      "column": 53,
+      "code": "TS18047",
+      "message": "'a' is possibly 'null'."
+    },
+    {
+      "file": "tests/unit/admin-analytics/use-cases.test.ts",
+      "line": 242,
+      "column": 49,
+      "code": "TS18047",
+      "message": "'a' is possibly 'null'."
+    },
+    {
+      "file": "tests/unit/admin-app/community-components.test.tsx",
+      "line": 29,
+      "column": 70,
+      "code": "TS2322",
+      "message": "Type '{ id: string; text: string | null; status: CommentStatus; deletedReason: CommentDeletedReason | null; ... 11 more ...; pendingReports: { id: string; reason: CommentReportReason; note: string | null; createdAt: string; reporter: string; }[]; }' is not assignable to type 'PanelComment'."
+    },
+    {
+      "file": "tests/unit/admin-app/single-key-shortcuts.test.tsx",
+      "line": 26,
+      "column": 7,
+      "code": "TS2741",
+      "message": "Property 'isPinned' is missing in type '{ id: string; text: string; status: \"VISIBLE\"; deletedReason: null; createdAt: string; parentId: null; video: { id: string; title: string; slug: string; }; author: { id: string; name: string; isDeleted: false; isAdmin: false; commentsCount: number; mutedUntil: null; }; ... 6 more ...; pendingReports: { ...; }[]; }' but required in type 'PanelComment'."
+    },
+    {
+      "file": "tests/unit/admin-phase3/default-thumbnail.test.ts",
+      "line": 5,
+      "column": 190,
+      "code": "TS7022",
+      "message": "'isConfigured' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
+    },
+    {
+      "file": "tests/unit/admin-phase3/enroll-roles.test.ts",
+      "line": 25,
+      "column": 58,
+      "code": "TS2353",
+      "message": "Object literal may only specify known properties, and 'role' does not exist in type '{ email: string; name?: string | null | undefined; reset?: boolean | undefined; now?: Date | undefined; }'."
+    },
+    {
+      "file": "tests/unit/admin-phase3/enroll-roles.test.ts",
+      "line": 29,
+      "column": 58,
+      "code": "TS2353",
+      "message": "Object literal may only specify known properties, and 'role' does not exist in type '{ email: string; name?: string | null | undefined; reset?: boolean | undefined; now?: Date | undefined; }'."
+    },
+    {
+      "file": "tests/unit/admin-phase3/gate-audit.test.ts",
+      "line": 41,
+      "column": 119,
+      "code": "TS2322",
+      "message": "Type 'string' is not assignable to type 'never'."
+    },
+    {
+      "file": "tests/unit/api/access-route.test.ts",
+      "line": 58,
+      "column": 84,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/api/access-route.test.ts",
+      "line": 65,
+      "column": 97,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx",
+      "line": 104,
+      "column": 13,
+      "code": "TS2322",
+      "message": "Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; t: { views: string; }; language: string; showSupportBox: boolean; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx",
+      "line": 115,
+      "column": 13,
+      "code": "TS2322",
+      "message": "Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; t: { views: string; }; language: string; showSupportBox: boolean; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx",
+      "line": 126,
+      "column": 13,
+      "code": "TS2322",
+      "message": "Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; t: { views: string; }; language: string; showSupportBox: boolean; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx",
+      "line": 137,
+      "column": 8,
+      "code": "TS2322",
+      "message": "Type '{ sortedVideos: PublicVideoDTO[]; t: { views: string; }; language: string; showSupportBox: boolean; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx",
+      "line": 97,
+      "column": 8,
+      "code": "TS2322",
+      "message": "Type '{ sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx",
+      "line": 98,
+      "column": 8,
+      "code": "TS2322",
+      "message": "Type '{ sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx",
+      "line": 177,
+      "column": 10,
+      "code": "TS2322",
+      "message": "Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx",
+      "line": 178,
+      "column": 10,
+      "code": "TS2322",
+      "message": "Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx",
+      "line": 193,
+      "column": 8,
+      "code": "TS2322",
+      "message": "Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'."
+    },
+    {
+      "file": "tests/unit/components/notification-bell.test.tsx",
+      "line": 34,
+      "column": 60,
+      "code": "TS2339",
+      "message": "Property 'includes' does not exist on type 'string | URL | Request'."
+    },
+    {
+      "file": "tests/unit/components/premium-pass-seller.test.tsx",
+      "line": 70,
+      "column": 46,
+      "code": "TS2741",
+      "message": "Property 'language' is missing in type '{ tx: Tx; demo: false; }' but required in type '{ tx: Tx; demo: boolean; language: \"pl\" | \"en\" | \"de\" | \"es\" | \"fr\" | \"it\" | \"pt\" | \"zh\"; links?: boolean | undefined; }'."
+    },
+    {
+      "file": "tests/unit/components/premium-pass-seller.test.tsx",
+      "line": 78,
+      "column": 35,
+      "code": "TS2741",
+      "message": "Property 'language' is missing in type '{ tx: Tx; demo: true; }' but required in type '{ tx: Tx; demo: boolean; language: \"pl\" | \"en\" | \"de\" | \"es\" | \"fr\" | \"it\" | \"pt\" | \"zh\"; links?: boolean | undefined; }'."
+    },
+    {
+      "file": "tests/unit/components/subscriptions/EmailSubscriptionConsentModal.test.tsx",
+      "line": 14,
+      "column": 40,
+      "code": "TS2345",
+      "message": "Argument of type 'string' is not assignable to parameter of type '\"pl\" | \"en\" | \"de\" | \"es\" | \"fr\" | \"it\" | \"pt\" | \"zh\"'."
+    },
+    {
+      "file": "tests/unit/cron/stripe-reconciliation.test.ts",
+      "line": 180,
+      "column": 21,
+      "code": "TS2339",
+      "message": "Property 'refunds' does not exist on type '{ paymentIntents: { retrieve: Mock<(id: string) => Promise<any>>; cancel: Mock<(id: string) => Promise<any>>; }; }'."
+    },
+    {
+      "file": "tests/unit/cron/stripe-reconciliation.test.ts",
+      "line": 182,
+      "column": 21,
+      "code": "TS2339",
+      "message": "Property 'refunds' does not exist on type '{ paymentIntents: { retrieve: Mock<(id: string) => Promise<any>>; cancel: Mock<(id: string) => Promise<any>>; }; }'."
+    },
+    {
+      "file": "tests/unit/cron/stripe-reconciliation.test.ts",
+      "line": 186,
+      "column": 21,
+      "code": "TS2339",
+      "message": "Property 'refunds' does not exist on type '{ paymentIntents: { retrieve: Mock<(id: string) => Promise<any>>; cancel: Mock<(id: string) => Promise<any>>; }; }'."
+    },
+    {
+      "file": "tests/unit/cron/stripe-reconciliation.test.ts",
+      "line": 195,
+      "column": 15,
+      "code": "TS2339",
+      "message": "Property 'refunds' does not exist on type '{ paymentIntents: { retrieve: Mock<(id: string) => Promise<any>>; cancel: Mock<(id: string) => Promise<any>>; }; }'."
+    },
+    {
+      "file": "tests/unit/modules/access/check-video-access.use-case.test.ts",
+      "line": 135,
+      "column": 58,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/access/check-video-access.use-case.test.ts",
+      "line": 421,
+      "column": 84,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/admin-community/community.test.ts",
+      "line": 78,
+      "column": 38,
+      "code": "TS2345",
+      "message": "Argument of type '({ id: string; slug: string; title: string; tier: \"PUBLIC\"; } | { id: string; slug: string; title: string; tier: \"LOGGED_IN\"; } | { id: string; slug: string; title: string; tier: \"PATRON\"; })[]' is not assignable to parameter of type 'AccessVideo[]'."
+    },
+    {
+      "file": "tests/unit/modules/admin-community/community.test.ts",
+      "line": 87,
+      "column": 65,
+      "code": "TS2345",
+      "message": "Argument of type '({ id: string; slug: string; title: string; tier: \"PUBLIC\"; } | { id: string; slug: string; title: string; tier: \"LOGGED_IN\"; } | { id: string; slug: string; title: string; tier: \"PATRON\"; })[]' is not assignable to parameter of type 'AccessVideo[]'."
+    },
+    {
+      "file": "tests/unit/modules/authz/authorize.test.ts",
+      "line": 107,
+      "column": 21,
+      "code": "TS2352",
+      "message": "Conversion of type '{ where: { id: string; }; }' to type '{ select: { members: { where: { userId: string; }; }; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+    },
+    {
+      "file": "tests/unit/modules/channel/channel-moderation.test.ts",
+      "line": 73,
+      "column": 20,
+      "code": "TS2352",
+      "message": "Conversion of type 'undefined' to type '{ where: { status: string; }; data: Record<string, unknown>; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+    },
+    {
+      "file": "tests/unit/modules/channel/channel-moderation.test.ts",
+      "line": 73,
+      "column": 56,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/modules/channel/moderation-appeals.test.ts",
+      "line": 112,
+      "column": 12,
+      "code": "TS2532",
+      "message": "Object is possibly 'undefined'."
+    },
+    {
+      "file": "tests/unit/modules/channel/moderation-appeals.test.ts",
+      "line": 112,
+      "column": 55,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/modules/channel/moderation-appeals.test.ts",
+      "line": 120,
+      "column": 12,
+      "code": "TS2532",
+      "message": "Object is possibly 'undefined'."
+    },
+    {
+      "file": "tests/unit/modules/channel/moderation-appeals.test.ts",
+      "line": 120,
+      "column": 55,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/modules/comments/patron-grant-write-access.test.ts",
+      "line": 44,
+      "column": 22,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/payments/refund-sync.test.ts",
+      "line": 105,
+      "column": 20,
+      "code": "TS2339",
+      "message": "Property 'refundedById' does not exist on type '{ id: string; userId: string; creatorId: string; amountMinor: number; currency: string; status: string; stripeIntentId: string; refundedAmountMinor: number; requestId: null; metadata: {}; createdAt: Date; updatedAt: Date; }'."
+    },
+    {
+      "file": "tests/unit/modules/payments/refund-sync.test.ts",
+      "line": 127,
+      "column": 16,
+      "code": "TS2345",
+      "message": "Argument of type 'Request' is not assignable to parameter of type 'NextRequest'."
+    },
+    {
+      "file": "tests/unit/modules/payments/webhook-out-of-order.test.ts",
+      "line": 124,
+      "column": 16,
+      "code": "TS2345",
+      "message": "Argument of type 'Request' is not assignable to parameter of type 'NextRequest'."
+    },
+    {
+      "file": "tests/unit/modules/sales/sales-use-cases.test.ts",
+      "line": 78,
+      "column": 20,
+      "code": "TS2352",
+      "message": "Conversion of type 'undefined' to type '{ data: Record<string, string | number>; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+    },
+    {
+      "file": "tests/unit/modules/sales/sales-use-cases.test.ts",
+      "line": 78,
+      "column": 50,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/modules/sales/sales-use-cases.test.ts",
+      "line": 80,
+      "column": 13,
+      "code": "TS2352",
+      "message": "Conversion of type 'undefined' to type '{ data: { amountMinor: number; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+    },
+    {
+      "file": "tests/unit/modules/sales/sales-use-cases.test.ts",
+      "line": 80,
+      "column": 49,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/modules/sales/sales-use-cases.test.ts",
+      "line": 107,
+      "column": 13,
+      "code": "TS2352",
+      "message": "Conversion of type 'undefined' to type '{ data: { amountMinor: number; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+    },
+    {
+      "file": "tests/unit/modules/sales/sales-use-cases.test.ts",
+      "line": 107,
+      "column": 49,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/modules/subscriptions/list-subscribed-channels.test.ts",
+      "line": 11,
+      "column": 18,
+      "code": "TS2352",
+      "message": "Conversion of type 'undefined' to type '{ where: { userId: string; creator: { deletedAt: null; status: { in: string[]; }; }; }; take: number; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+    },
+    {
+      "file": "tests/unit/modules/subscriptions/list-subscribed-channels.test.ts",
+      "line": 11,
+      "column": 41,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/modules/subscriptions/list-subscribed-channels.test.ts",
+      "line": 21,
+      "column": 13,
+      "code": "TS2352",
+      "message": "Conversion of type 'undefined' to type '{ take: number; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+    },
+    {
+      "file": "tests/unit/modules/subscriptions/list-subscribed-channels.test.ts",
+      "line": 21,
+      "column": 36,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/modules/subscriptions/subscriptions-route-boundary.test.ts",
+      "line": 48,
+      "column": 73,
+      "code": "TS2345",
+      "message": "Argument of type '{ isSubscribed: true; subscribedAt: Date; subscribersCount: number; creatorId: string; creatorSlug: string; purpose: \"EMAIL_NOTIFICATIONS\"; }' is not assignable to parameter of type 'SubscriptionStatusDto'."
+    },
+    {
+      "file": "tests/unit/modules/video/get-admin-video-details.test.ts",
+      "line": 103,
+      "column": 26,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/video/get-admin-video-details.test.ts",
+      "line": 126,
+      "column": 26,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/video/public-search.service.test.ts",
+      "line": 60,
+      "column": 20,
+      "code": "TS2345",
+      "message": "Argument of type '{ q: string; category?: undefined; tag?: undefined; sort?: undefined; } | { category: string; q?: undefined; tag?: undefined; sort?: undefined; } | { tag: string; sort: string; q?: undefined; category?: undefined; }' is not assignable to parameter of type 'Record<string, string>'."
+    },
+    {
+      "file": "tests/unit/modules/video/update-admin-video.use-case.test.ts",
+      "line": 50,
+      "column": 94,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/video/video-playback-route-service.test.ts",
+      "line": 44,
+      "column": 55,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/video/video-repository-safety.test.ts",
+      "line": 84,
+      "column": 26,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/video/video.policy.test.ts",
+      "line": 76,
+      "column": 26,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/video/video.policy.test.ts",
+      "line": 98,
+      "column": 26,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/modules/watch-progress/video-progress.use-cases.test.ts",
+      "line": 187,
+      "column": 18,
+      "code": "TS2352",
+      "message": "Conversion of type 'undefined' to type '{ where: Record<string, unknown>; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first."
+    },
+    {
+      "file": "tests/unit/modules/watch-progress/video-progress.use-cases.test.ts",
+      "line": 187,
+      "column": 62,
+      "code": "TS2493",
+      "message": "Tuple type '[]' of length '0' has no element at index '0'."
+    },
+    {
+      "file": "tests/unit/ops/actions-lib.test.ts",
+      "line": 474,
+      "column": 23,
+      "code": "TS2339",
+      "message": "Property 'admini_po_zmianie' does not exist on type 'never'."
+    },
+    {
+      "file": "tests/unit/ops/actions-lib.test.ts",
+      "line": 475,
+      "column": 23,
+      "code": "TS2339",
+      "message": "Property 'admini_po_zmianie' does not exist on type 'never'."
+    },
+    {
+      "file": "tests/unit/patron-grant-truth.test.ts",
+      "line": 38,
+      "column": 22,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/patron-tier-comments-sign-in.test.ts",
+      "line": 56,
+      "column": 26,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/services/video-search-service.test.ts",
+      "line": 64,
+      "column": 61,
+      "code": "TS2339",
+      "message": "Property 'PATRON' does not exist on type '{ PUBLIC: \"PUBLIC\"; LOGGED_IN: \"LOGGED_IN\"; PAID: \"PAID\"; }'."
+    },
+    {
+      "file": "tests/unit/video-pipeline/encode-job-repository.test.ts",
+      "line": 7,
+      "column": 3,
+      "code": "TS2322",
+      "message": "Type '{ status: $Enums.VideoEncodeJobStatus; result: JsonValue | null; id: string; createdAt: Date; updatedAt: Date; ... 20 more ...; sourceInfo: JsonValue | null; }' is not assignable to type '{ status: VideoEncodeJobStatus; result: JsonValue; id: string; createdAt: Date; updatedAt: Date; videoId: string; channelId: string | null; ... 18 more ...; sourceInfo: JsonValue; }'."
+    },
+    {
+      "file": "tests/unit/video-pipeline/process-encode-job.test.ts",
+      "line": 10,
+      "column": 3,
+      "code": "TS2322",
+      "message": "Type '{ status: $Enums.VideoEncodeJobStatus; result: JsonValue | null; id: string; createdAt: Date; updatedAt: Date; ... 20 more ...; sourceInfo: JsonValue | null; }' is not assignable to type '{ status: VideoEncodeJobStatus; result: JsonValue; id: string; createdAt: Date; updatedAt: Date; videoId: string; channelId: string | null; ... 18 more ...; sourceInfo: JsonValue; }'."
+    },
+    {
+      "file": "tests/unit/video-pipeline/self-hls-publication.test.ts",
+      "line": 8,
+      "column": 57,
+      "code": "TS2345",
+      "message": "Argument of type '{ activePlaybackRoute: null; title: string; slug: string; tier: \"PATRON\"; status: \"DRAFT\"; }' is not assignable to parameter of type 'ContractVideo'."
+    },
+    {
+      "file": "tests/unit/video-pipeline/self-hls-publication.test.ts",
+      "line": 16,
+      "column": 60,
+      "code": "TS2322",
+      "message": "Type '\"PATRON\" | \"PUBLIC\" | \"LOGGED_IN\"' is not assignable to type 'AccessTier'."
+    },
+    {
+      "file": "tests/unit/video-pipeline/self-hls-publication.test.ts",
+      "line": 21,
+      "column": 57,
+      "code": "TS2345",
+      "message": "Argument of type '{ activePlaybackRoute: { asset: { provider: string; processingState: string; objectKey: string; }; }; title: string; slug: string; tier: \"PATRON\"; status: \"DRAFT\"; }' is not assignable to parameter of type 'ContractVideo'."
+    },
+    {
+      "file": "tests/unit/video-pipeline/self-hls-publication.test.ts",
+      "line": 23,
+      "column": 54,
+      "code": "TS2345",
+      "message": "Argument of type '{ activePlaybackRoute: { asset: { provider: string; processingState: string; objectKey: string; }; }; title: string; slug: string; tier: \"PATRON\"; status: \"DRAFT\"; }' is not assignable to parameter of type 'ContractVideo'."
+    }
+  ]
+}

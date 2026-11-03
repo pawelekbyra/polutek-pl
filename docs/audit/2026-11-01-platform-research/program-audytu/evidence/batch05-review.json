@@ -1,0 +1,206 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "50d614e6f7061b02a0633aeeec5208351f4580d5",
+  "script": "tools/database-integrity-experiment.py",
+  "output": "evidence/database-integrity-experiment.json",
+  "exit_code": 0,
+  "database_metadata": {
+    "database": "polutek_research_1793539467",
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "transaction_isolation": "read committed"
+  },
+  "real_database_integrity_probes": 15,
+  "expected_rejections_observed": 8,
+  "expected_acceptances_observed": 7,
+  "acceptance_interpretation": "Six accepted ownership/state cross-links identify limits of database enforcement, not six demonstrated HTTP vulnerabilities; the seventh acceptance is allowed audit anonymization.",
+  "catalog_scope": {
+    "selected_tables": 13,
+    "constraints": 30,
+    "indexes": 66,
+    "triggers": 5
+  },
+  "transaction_protocols": {
+    "quota_control_final": 100,
+    "quota_overlap_final": 101,
+    "retry_before_new": {
+      "active_version": 1,
+      "active_status": "READY"
+    },
+    "after_new": {
+      "active_version": 2,
+      "active_status": "READY"
+    },
+    "after_stale_retry": {
+      "active_version": 1,
+      "active_status": "SUPERSEDED"
+    }
+  },
+  "source_review_scope": [
+    {
+      "file": "app/api/studio/playlists/route.ts",
+      "sha256": "8e8506f30d96343120b9241f326273d9ca230c184517d9e2a17e17aac06ff808",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/videos/[id]/upload/complete/route.ts",
+      "sha256": "51423873a52b1d50ac18512329dda26ddc62c3521be1dfa96029d3814b23ad98",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/app/api/videos/[id]/original-upload/multipart/complete/route.ts",
+      "sha256": "3b3e53b73d8e312bfdb71aa6fe695bbe69e5a16143bdfce9f678ce947c348e58",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "docs/architecture/playlists.md",
+      "sha256": "b5d03b1c30ee5106b4a41d7420a8bf3cd893c75c2762f77a51a241b49a520c42",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/admin-schemas.ts",
+      "sha256": "2bd357921fae2ae911ca8f711464908331d648f440da604e92646a7569f2a6c6",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/audit/application/record-audit-event.use-case.ts",
+      "sha256": "baa7c5a45e014c73e16f0c94f5a359c68299d508ad19cf3480f079ee4e06c4dd",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/audit/infrastructure/audit.repository.ts",
+      "sha256": "cf53b9e0f0189abf83d277798f0eedf27f7f3f700324a431d908ba206843b704",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playlists/application/playlist-manage.use-cases.ts",
+      "sha256": "610d09a7f594d4f16ec246a5640473ef4110e0e77328f8cfb5a2909a843e5ac1",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playlists/application/playlist-studio-read.use-cases.ts",
+      "sha256": "2e6b730472629b5de41b9422cf7f466b7173ced63043bfc41789ca7f4c97b166",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playlists/domain/playlist-rules.ts",
+      "sha256": "e8f860f20185d05b57a65f1ad5ebcbbd3e79805b7c616e5a6d6269b2f5dbb1f1",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playlists/infrastructure/playlist.repository.ts",
+      "sha256": "7fb8c83448b641eaed6de33117df3b1c9c3f26049417272fc9e2ce119362a8b6",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-context.ts",
+      "sha256": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/encode-queue.use-cases.ts",
+      "sha256": "1c6f2f8a33679ce6851efc0fc19b8ffc87adaedb6415ca1de084df7a49e2d9c9",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/finalize-self-hls.ts",
+      "sha256": "b8258141def95e163bdc220a76ee296c7f0ad018557647de1a0c8db55a02f89e",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/original-upload.use-cases.ts",
+      "sha256": "41b659dee9b051f7191dd2bc94e4ca5ce92483698f79b34703ff03160cfd0033",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/output-cleanup.use-cases.ts",
+      "sha256": "b2cae56d237bc76b72f806c396635cb54bb360f83dd8e901ea6e15ea03712c44",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/video-guard.ts",
+      "sha256": "dd35a6607a5626ed4bdaa6695b1b82aa7ba48869846d2056fc50a5abbbc1b584",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/infrastructure/encode-job.repository.ts",
+      "sha256": "7f6aade8a70173d032f0b5d375eb57faa0be9da25a7261dcf094ea19deb90d7b",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/video-playback-route.service.ts",
+      "sha256": "77274646b92f2176964ede7d3660bd85d72dd6fcc5cb433ba102085fab8218ac",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "lib/prisma.ts",
+      "sha256": "036a65c0323a8bd563efdd33a151f25bcb22bbbad4994a481cfb3d4b3b63706c",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/migrations/20260626120000_video_assets_1n/migration.sql",
+      "sha256": "a70ac0c1d141be6019f21b2e27a03f1984a2543b90d314ac837d2c57fa169d4e",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/migrations/20260705000000_provider_neutral_video_distribution_phase1/migration.sql",
+      "sha256": "fa2917d67d2463e8601807e7c1631c7a4bb5997bc87383f484339660d2322b18",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/migrations/20261003100000_add_video_encode_job/migration.sql",
+      "sha256": "c125965502ad4cb9d804f81f48a496b17c8f634bb3c48d9eee07cd3685af6c47",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/migrations/20261005200000_admin_phase3_roles_and_audit_immutable/migration.sql",
+      "sha256": "c2b0e1faec89c5f51dbefbb6e7e5759f826dc279611694208d1084443b7ea342",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/migrations/20261013120000_multi_channel_schema/migration.sql",
+      "sha256": "d6d1424f02627f64cdbb2ac74af761ff4145b1f6449761b40eedb4c3af1220f0",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/migrations/20261013140000_sales_schema/migration.sql",
+      "sha256": "9f856274ccbf8563e6b598cd5ddcd7c67096ebae53f30caa839aeedacd6453a5",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/migrations/20261019180000_playlists/migration.sql",
+      "sha256": "72ae5156f661fcb54f1d76144ab856047fbde506d7d0cfeb768369a45898fdbd",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/migrations/20261028120000_video_ready_visibility/migration.sql",
+      "sha256": "3c973dd62a6575356cf4d4575122aee66005518f9601f81fa3d3c6f868f90bdc",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+      "scope": "TARGETED_PARTIAL: selected schema relations, constraints/triggers, transaction protocol, retry branches or wiring; not whole-file sign-off"
+    }
+  ],
+  "typescript_prisma_functions_executed": false,
+  "http_application_tests_executed": 0,
+  "vitest_repeated": false,
+  "fixtures_removed": true,
+  "schema_changes": "No persistent public-schema changes; temporary probe function rolled back. No triggers disabled.",
+  "initial_harness_adjustment": "psql JSON aggregate can span physical lines; fixed scalar parser before any fixture mutations, then reran successfully. Added expected SQLSTATE/constraint assertions and reran.",
+  "peertube_partial_source_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "files": [
+      "server/core/helpers/database-utils.ts",
+      "server/core/helpers/database-transaction.ts",
+      "server/core/controllers/api/video-playlist.ts",
+      "server/core/middlewares/validators/videos/video-playlists.ts",
+      "server/core/models/video/video-file.ts"
+    ],
+    "scope": "Transaction helper and selected playlist creation/model declarations; no full module audit",
+    "executed": false,
+    "same_quota_limit_comparison_established": false
+  },
+  "independent_review": "PENDING"
+}

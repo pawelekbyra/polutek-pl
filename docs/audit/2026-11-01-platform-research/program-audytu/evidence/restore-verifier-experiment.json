@@ -1,0 +1,1041 @@
+{
+  "date": "2026-11-02",
+  "actual_source": "scripts/verify-restored-database.ts",
+  "sha256": "d5c24a55ad1a335912722d7aabb7594e7293cbec56d10e8953b6adc16256bfbb",
+  "observations": [
+    {
+      "case": "missing_URL",
+      "script_exit": 1,
+      "verification_success_message": false,
+      "synthetic_Prismaconstructor_calls": 0,
+      "finding": null,
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "ERROR: RESTORE_DATABASE_URL is missing."
+        }
+      ]
+    },
+    {
+      "case": "missing_opt_in",
+      "script_exit": 1,
+      "verification_success_message": false,
+      "synthetic_Prismaconstructor_calls": 0,
+      "finding": null,
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "ERROR: ALLOW_RESTORE_VERIFICATION=true is required."
+        }
+      ]
+    },
+    {
+      "case": "same_URL",
+      "script_exit": 1,
+      "verification_success_message": false,
+      "synthetic_Prismaconstructor_calls": 0,
+      "finding": null,
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "ERROR: RESTORE_DATABASE_URL exactly matches DATABASE_URL. Verification refused for safety."
+        }
+      ]
+    },
+    {
+      "case": "healthy",
+      "script_exit": 0,
+      "verification_success_message": true,
+      "synthetic_Prismaconstructor_calls": 1,
+      "finding": null,
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "Target: postgresql://synthetic.invalid/research-restored"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[A] Connectivity"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Reachable. Server time: 2026-11-02T04:00:00.000Z"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[B] Migration/Schema State"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ _prisma_migrations accessible. Count: 0"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[C/D] Model Availability & Safe Aggregates"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ User: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Creator: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Video: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ VideoAsset: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Payment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ UserPaymentTotal: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ PatronGrant: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ StripeEvent: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Comment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ CommentReport: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Subscription: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ AuditLog: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[E] Logical Integrity Checks"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned PatronGrants detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No payment-linked PatronGrants referencing missing Payment."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned VideoAssets detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n🚀 VERIFICATION SUCCESSFUL: Restored database appears valid."
+        }
+      ]
+    },
+    {
+      "case": "count_failure",
+      "script_exit": 0,
+      "verification_success_message": true,
+      "synthetic_Prismaconstructor_calls": 1,
+      "finding": "R37",
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "Target: postgresql://synthetic.invalid/research-restored"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[A] Connectivity"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Reachable. Server time: 2026-11-02T04:00:00.000Z"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[B] Migration/Schema State"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ _prisma_migrations accessible. Count: 0"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[C/D] Model Availability & Safe Aggregates"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ User: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Creator: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Video: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ VideoAsset: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "❌ Payment is NOT queryable: Synthetic count failed"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ UserPaymentTotal: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ PatronGrant: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ StripeEvent: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Comment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ CommentReport: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Subscription: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ AuditLog: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[E] Logical Integrity Checks"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned PatronGrants detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No payment-linked PatronGrants referencing missing Payment."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned VideoAssets detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n🚀 VERIFICATION SUCCESSFUL: Restored database appears valid."
+        }
+      ]
+    },
+    {
+      "case": "count_failure_with_manifest",
+      "script_exit": 0,
+      "verification_success_message": true,
+      "synthetic_Prismaconstructor_calls": 1,
+      "finding": "R37",
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "Target: postgresql://synthetic.invalid/research-restored"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[A] Connectivity"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Reachable. Server time: 2026-11-02T04:00:00.000Z"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[B] Migration/Schema State"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ _prisma_migrations accessible. Count: 0"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[C/D] Model Availability & Safe Aggregates"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ User: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Creator: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Video: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ VideoAsset: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "❌ Payment is NOT queryable: Synthetic count failed"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ UserPaymentTotal: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ PatronGrant: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ StripeEvent: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Comment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ CommentReport: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Subscription: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ AuditLog: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[E] Logical Integrity Checks"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned PatronGrants detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No payment-linked PatronGrants referencing missing Payment."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned VideoAssets detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[F] Expected Manifest Comparison"
+        },
+        {
+          "kind": "log",
+          "level": "warn",
+          "text": "! Field Payment not found in restored aggregates."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n🚀 VERIFICATION SUCCESSFUL: Restored database appears valid."
+        }
+      ]
+    },
+    {
+      "case": "migration_query_failure",
+      "script_exit": 0,
+      "verification_success_message": true,
+      "synthetic_Prismaconstructor_calls": 1,
+      "finding": "R37",
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "Target: postgresql://synthetic.invalid/research-restored"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[A] Connectivity"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Reachable. Server time: 2026-11-02T04:00:00.000Z"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[B] Migration/Schema State"
+        },
+        {
+          "kind": "log",
+          "level": "warn",
+          "text": "! Unable to access _prisma_migrations: Synthetic migration table query failed"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[C/D] Model Availability & Safe Aggregates"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ User: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Creator: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Video: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ VideoAsset: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Payment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ UserPaymentTotal: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ PatronGrant: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ StripeEvent: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Comment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ CommentReport: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Subscription: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ AuditLog: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[E] Logical Integrity Checks"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned PatronGrants detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No payment-linked PatronGrants referencing missing Payment."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned VideoAssets detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n🚀 VERIFICATION SUCCESSFUL: Restored database appears valid."
+        }
+      ]
+    },
+    {
+      "case": "unfinished_migration",
+      "script_exit": 0,
+      "verification_success_message": true,
+      "synthetic_Prismaconstructor_calls": 1,
+      "finding": "R37",
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "Target: postgresql://synthetic.invalid/research-restored"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[A] Connectivity"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Reachable. Server time: 2026-11-02T04:00:00.000Z"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[B] Migration/Schema State"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ _prisma_migrations accessible. Count: 1"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[C/D] Model Availability & Safe Aggregates"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ User: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Creator: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Video: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ VideoAsset: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Payment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ UserPaymentTotal: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ PatronGrant: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ StripeEvent: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Comment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ CommentReport: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Subscription: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ AuditLog: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[E] Logical Integrity Checks"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned PatronGrants detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No payment-linked PatronGrants referencing missing Payment."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned VideoAssets detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n🚀 VERIFICATION SUCCESSFUL: Restored database appears valid."
+        }
+      ]
+    },
+    {
+      "case": "failed_migration_logs",
+      "script_exit": 1,
+      "verification_success_message": false,
+      "synthetic_Prismaconstructor_calls": 1,
+      "finding": null,
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "Target: postgresql://synthetic.invalid/research-restored"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[A] Connectivity"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Reachable. Server time: 2026-11-02T04:00:00.000Z"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[B] Migration/Schema State"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ _prisma_migrations accessible. Count: 1"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "❌ Detected 1 failed or unfinished migrations!"
+        }
+      ]
+    },
+    {
+      "case": "manifest_mismatch",
+      "script_exit": 1,
+      "verification_success_message": false,
+      "synthetic_Prismaconstructor_calls": 1,
+      "finding": null,
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "Target: postgresql://synthetic.invalid/research-restored"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[A] Connectivity"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Reachable. Server time: 2026-11-02T04:00:00.000Z"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[B] Migration/Schema State"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ _prisma_migrations accessible. Count: 0"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[C/D] Model Availability & Safe Aggregates"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ User: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Creator: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Video: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ VideoAsset: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Payment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ UserPaymentTotal: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ PatronGrant: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ StripeEvent: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Comment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ CommentReport: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Subscription: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ AuditLog: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[E] Logical Integrity Checks"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned PatronGrants detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No payment-linked PatronGrants referencing missing Payment."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned VideoAssets detected."
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[F] Expected Manifest Comparison"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "❌ Mismatch for Payment: expected 99, got 1"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "❌ Detected 1 manifest mismatch(es)!"
+        }
+      ]
+    },
+    {
+      "case": "orphan_grant",
+      "script_exit": 1,
+      "verification_success_message": false,
+      "synthetic_Prismaconstructor_calls": 1,
+      "finding": null,
+      "logs": [
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "--- RESTORED DATABASE VERIFICATION ---"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "Target: postgresql://synthetic.invalid/research-restored"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[A] Connectivity"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Reachable. Server time: 2026-11-02T04:00:00.000Z"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[B] Migration/Schema State"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ _prisma_migrations accessible. Count: 0"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[C/D] Model Availability & Safe Aggregates"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ User: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Creator: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Video: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ VideoAsset: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Payment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ UserPaymentTotal: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ PatronGrant: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ StripeEvent: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Comment: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ CommentReport: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ Subscription: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ AuditLog: 1 rows"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "\n[E] Logical Integrity Checks"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "❌ Found PatronGrant(s) referencing 1 missing User(s)!"
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "❌ Found 1 PatronGrant(s) referencing missing Payment!"
+        },
+        {
+          "kind": "log",
+          "level": "log",
+          "text": "✓ No orphaned VideoAssets detected."
+        },
+        {
+          "kind": "log",
+          "level": "error",
+          "text": "\n❌ VERIFICATION FAILED: 2 integrity issue(s) detected."
+        }
+      ]
+    }
+  ],
+  "real_network_calls": 0,
+  "real_DB_queries": 0,
+  "installed_Prismaclient_modified": false,
+  "boundaries": [
+    "Actual unchanged verification script transpiled in VM inside a real subprocess per case; process.exit truly terminates it",
+    "Explicit constructor and per-query/model fixtures, not generated client or restored schema",
+    "Count failure witnesses a rejected count followed by successful later queries, not a claimed missing whole table",
+    "Optional manual helper, NOT weekly restore-test.sh; production usage unverified"
+  ],
+  "independent_review": "PENDING"
+}

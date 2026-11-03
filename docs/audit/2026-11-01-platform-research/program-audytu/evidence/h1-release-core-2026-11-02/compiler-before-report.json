@@ -1,0 +1,162 @@
+{
+  "ok": true,
+  "head": "5838c8029b31b3fdfc23ecbd5cfc639bedd7d609",
+  "branch": "master",
+  "dirty": false,
+  "base": null,
+  "baseRef": "origin/main",
+  "node": "v22.23.4",
+  "platform": "linux 6.18.57",
+  "cpus": 4,
+  "options": {
+    "lintAll": false,
+    "unitFull": false,
+    "build": false,
+    "coverage": false,
+    "strict": false,
+    "only": [
+      "typecheck-all"
+    ],
+    "skip": [
+      "prisma"
+    ],
+    "base": "origin/main",
+    "jobs": 1,
+    "list": false,
+    "help": false
+  },
+  "changedFiles": 0,
+  "startedAt": "2026-11-02T22:11:16.196Z",
+  "durationMs": 380,
+  "failed": [],
+  "strictSkips": [],
+  "results": [
+    {
+      "id": "prisma",
+      "title": "Prisma validation/generation",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "pominieta (--skip)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "ci-parity",
+      "title": "zgodnosc z ci.yml",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "migrations",
+      "title": "migracje (UTF-8 bez BOM, addytywne, rosnace znaczniki)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "unit",
+      "title": "tests/coverage (vitest)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "typecheck",
+      "title": "typecheck (tsconfig.typecheck.json)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "typecheck-all",
+      "title": "typecheck calego repo z testami (tsconfig.json, bez .next/)",
+      "status": "PASS",
+      "durationMs": 378,
+      "reason": "0 bledow (pominieto 1 w .next/)"
+    },
+    {
+      "id": "lint",
+      "title": "lint (eslint)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "architecture",
+      "title": "architecture boundaries",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "hotspots",
+      "title": "hotspots",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "strict-escapes",
+      "title": "strict escapes",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "env",
+      "title": "environment validation",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "audit",
+      "title": "npm audit/security",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "postgres",
+      "title": "integration-postgres (tymczasowy kontener)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "encode-smoke",
+      "title": "encode-smoke (ffmpeg)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "build",
+      "title": "build (next build)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    },
+    {
+      "id": "admin-build",
+      "title": "admin build (apps/admin)",
+      "status": "SKIP",
+      "durationMs": null,
+      "reason": "nie wybrana (--only)",
+      "skipKind": "mode"
+    }
+  ]
+}

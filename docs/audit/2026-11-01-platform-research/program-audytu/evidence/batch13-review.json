@@ -1,0 +1,441 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "96b3421b8fb72ea1321ee4dc2b6e6ac122440601",
+  "source_review_scope": [
+    {
+      "file": "app/components/LanguageContext.tsx",
+      "sha256": "aacaa77339698993d77b1da11ea5f12868fd3e28623aad5638cdd90c7dd07e6c",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/LanguageSwitcher.tsx",
+      "sha256": "a3f83e00ceca9f56076e13aafd9519e302da417ff545d8ec4be1e725d2529815",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/PlayerLoadingState.tsx",
+      "sha256": "08e09e56d4cb5e526d9e126af17d44d378b5924e1d011aebf47df7d79b744087",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/VideoPlayer.tsx",
+      "sha256": "02d740139ec37715f9b280527b522f43c7acdaca70ca11c06c54c5991562fcc6",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/ZoomLock.tsx",
+      "sha256": "6b103b4d706ce2fcec578a8fc77381aaf5914740a5e84bbda03c3fb865b0dbb2",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/auth/AuthDialogTop.tsx",
+      "sha256": "bc06ba3ce8f2f1b575c7f06104f571b2a55d8aa42a25f962fcc348156481f3d1",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/comments/comment-errors.ts",
+      "sha256": "f87239b17378c9fa8578d33c7601871528f3fab24e24e335deb8f75973bc6f5a",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/comments/components/DeleteCommentDialog.tsx",
+      "sha256": "5908a0efec411cfc90f489a4bc82aebe1726f558533a308ff687e2c5a53abbf0",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/comments/components/ReportDialog.tsx",
+      "sha256": "d966cb84bdba06485a09306189710cf4ce6d0ab05fe2a67e1b0763526bc3fdf3",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/language-switcher/LanguageFlag.tsx",
+      "sha256": "06999b030db168ca936bda09cda57f95bec87ad5179bb7dcde9a180348f64492",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/language-switcher/LanguageSwitcher.module.css",
+      "sha256": "229325950f1bc75f15bda0321bfff439b5b9b1d401c16c9f6ee203485e945e4f",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/language-switcher/languages.ts",
+      "sha256": "534c7ccef87d78ec5206f36939bee4099990331adee59fcc4c117a16058697d7",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/language-switcher/useLanguagePicker.ts",
+      "sha256": "31919f4f8f076ff32ea109740eeeb461df8894c52e35b75e87cd7e02fa55a987",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/legal/LegalDocs.tsx",
+      "sha256": "a78920eac76a17bb78d76bbe3001880f4ad228d1e09a1f2bf4c96a7cc6e348c4",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/legal/LegalSheet.tsx",
+      "sha256": "3be9c73c507457bbbdf2444549daec405e31aeab1db3a53ee0dd38b5ec51e80e",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/player/PlayerSettingsMenu.tsx",
+      "sha256": "ea5d34142aeef8b2a750d61d0d2599d5ffbcb2baa5000f6213d2a167812fbc9f",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/player/PolutekControls.tsx",
+      "sha256": "b4149c4748b5d0ad7173260f7a68ff999ba85184680038b336fbfab1cab96541",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/player/chapters/chapter-keys.ts",
+      "sha256": "160b8cb167769e680dd049da292af954b95843e7693b2dd612e8b3a69ee7d71f",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/preload/PageRevealGate.tsx",
+      "sha256": "83d8d75d1473ea102ec00559446f4e22ca352e9a27bbb48f4371fe3ccd412a40",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/studio/ConfirmDialog.tsx",
+      "sha256": "83963736b965b3edb638cd2522f066c6b1dba473df1281c192b1fca447588211",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/studio/StudioPlaylists.tsx",
+      "sha256": "9b71845df83fccb5115c5ac747d2c147f4d5d754d71de3fabbdda8ab1793294a",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/studio/StudioUploadWizard.tsx",
+      "sha256": "64fd8d09e79741b8d55845785be729bab69fcfe7c8b617755b484371b3ea3708",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/studio/VideoChaptersEditor.tsx",
+      "sha256": "c7552223596a4285696db35b488d8aca579b7c09fd1b27d60c476612a49ab9f9",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/components/studio/ui.tsx",
+      "sha256": "ccef38ea6ed37247ee094a0f3b9d700a18fb094a0a20832ad36f90c6739234ab",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/globals.css",
+      "sha256": "50110a1e2c61357b16b11b8cb5a7930b2ffddb754e7b9fde60577cb2bc70a65c",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "app/layout.tsx",
+      "sha256": "ae8505c82402184a8c911534179c1a3c639de18abdcd4d8c25bcb562ed0d8b2a",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "components/ui/button.tsx",
+      "sha256": "6e91c5a02cd0798e27fb604fccda6e44e2fb2c86f10a950a965ffbd6333b3fd3",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "components/ui/dialog.tsx",
+      "sha256": "3f96c82011ad38dedb233bd82ccbf27d501aa37cfb5e55fd7ad3071665d38777",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "components/ui/label.tsx",
+      "sha256": "7f19b8476658d25ff197c84030e58cd7395059d876a54630e025951e474ebdae",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "components/ui/textarea.tsx",
+      "sha256": "58b58d84fc54ba5f4ca46937870c619349fd9eccc4d494250ac7bc73a94e05e9",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "docs/operations/I18N.md",
+      "sha256": "cbb83b70c8474bd5128d937a04a10593929e752236ca51b8878aeffac1c9b4cc",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/constants.ts",
+      "sha256": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/de.json",
+      "sha256": "a6c6e425f75d8381edea9f9a70eb50f3d5beed999bef33b92ef97bbfa60607f6",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/es.json",
+      "sha256": "6222979c9ed886241a8b2c62e2a9f345e4a159423fe314e49932d35c07ce50f7",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/fr.json",
+      "sha256": "97bc0e658fd1aa9319e8c2c053151137a7ddfef4719fb552807585890886c805",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/index.ts",
+      "sha256": "951446f192c257a6ee724c2290db8f4580de70affd1f1c2c061abd6c5e5643fa",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/it.json",
+      "sha256": "8d44c1ea4f9b510bdbd92f5bf0ed2afaf022b53587c57b4156b71d8325f53850",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/premium-pass/de.json",
+      "sha256": "d58f3c81a1ce28e39bc6039ff891acc027b6eeb4ae05615949ef6f61100e6d9f",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/premium-pass/es.json",
+      "sha256": "5df908d3f3fe12216abcbf8b31778e6f36a3404f86ceebe5534e140c6434e4e5",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/premium-pass/fr.json",
+      "sha256": "0c9dd78e4c9853eab1c53994f970745336c47cee632ad01f15c410e2799ae00c",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/premium-pass/it.json",
+      "sha256": "89ed1d78fef5fcca121c2973085e21c5662c1b545861dbc70bfbc5bcb5f8b90c",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/premium-pass/pt.json",
+      "sha256": "84f09ba3d07f25d9cd451cd54633199d9f986942ea3a36cd42249383cc01ca4a",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/premium-pass/zh.json",
+      "sha256": "3bc8f574e267f29f920bbc67b759a9ba0bae42378121a37a74025e48969e71ea",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/pt.json",
+      "sha256": "b3634d500452f023d93af8a6abf66a74cef492674b922d877322673d9cb42671",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/catalog/zh.json",
+      "sha256": "6e88350742ab529d5bb61a9b1ce81d7fa6dcfff1a2fedf14f4e4bd55c3903ad3",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/dictionary.ts",
+      "sha256": "7d846a3dcc21919fa63821b695d455054fe1565faa210e1b166505d0be1b251e",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/language-context.ts",
+      "sha256": "ae35c0b8170d1ea0e35ea15ab1679de3e251385ec14daf2497ee04cc1c34ea32",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/routing.ts",
+      "sha256": "a1d562cfac09ff6dfbc50c30dff193239b85e4512c618a75e83639c0ff812b7b",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/i18n/ui.ts",
+      "sha256": "c2f67ad27e3636117af86a80fd4a90076697856ae3a284a16e5ba0b7862735f1",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "lib/utils.ts",
+      "sha256": "41fdb079540e328d49dccd9c343028af0d05386ea378fea6c9b445139cc3587d",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tailwind.config.ts",
+      "sha256": "357873866942705b9b1c597f3eddb8b077ecc8d2de02d66d19f55ba90d8edc91",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tests/unit/a11y-audit-a07-a09-static.test.ts",
+      "sha256": "a9b24671de8141eef6ff36ca01aeb973a3846c9c1e0eafff96ad19a527fdef2f",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tests/unit/a11y-audit-a10-a21-static.test.ts",
+      "sha256": "2c5472dabe6c2f49e1f0365de8fa9301bd24c323885a6ef4331346aa358c757a",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tests/unit/a11y-audit-a15-a17-contrast.test.ts",
+      "sha256": "d540b5205569f758f61ed838b63bea5402885c852ab787c3c0481db0b648e9de",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tests/unit/components/LanguageSwitcher.test.tsx",
+      "sha256": "c7fe3ffdbf145688c04a54076ea54eeba78e5e84577ebcd304093c2763b8b2f7",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tests/unit/components/comments/comment-dialogs.test.tsx",
+      "sha256": "7f5cdb6f49315d2a7c12360de5b87b6e2dff3cd073d8a5a67b2a2a1427bd37c2",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tests/unit/i18n/catalog-parity.test.ts",
+      "sha256": "80fdbb0215438a9e42f6f9718af4d5f45eb36444cbdd68c785bc3c2854cddc5d",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tests/unit/i18n/extract-tx.ts",
+      "sha256": "d169a36e3c75538c8c21ecad3d5a1f6cc252f97696ecf022e8374fbfe97c47ab",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    },
+    {
+      "file": "tests/unit/i18n/ui.test.ts",
+      "sha256": "fc36d70bde597efe53b46b9c843db84b90bf5b61496d46c6b41bde6f9de277aa",
+      "scope": "PARTIAL targeted UI semantics/focus/keyboard/locale/motion source, actually bundled component dependency or mechanically counted catalogue. Not whole-file or linguistic sign-off."
+    }
+  ],
+  "browser_experiment": {
+    "exit_code": 0,
+    "browser": "154.0.8037.57",
+    "executable": "/usr/bin/chromium",
+    "observations": 14,
+    "actual_bundle_source_files": 35,
+    "original_CSS_compiled": true,
+    "reduced_motion_emulated": "reduce",
+    "viewport_initial": [
+      1280,
+      900
+    ],
+    "viewport_secondary": [
+      320,
+      812
+    ],
+    "real_component_DOM_keyboard": true,
+    "full_application_or_Next_executed": false,
+    "synthetic_callbacks_only": true,
+    "real_API_requests": 0,
+    "external_requests": 0,
+    "browser_page_errors": []
+  },
+  "browser_harness_history": [
+    "Initial and diagnostic starts failed because standalone bundle lacked browser process.env replacement; logs and startup JSON preserved, not app failures.",
+    "Next build failed because hash walker treated esbuild virtual define module as a real file; log preserved, skipped virtual inputs in research metadata.",
+    "Two immediate-focus checks failed around BaseUI deferred focus guards; raw fast snapshot/log preserved. No BaseUI production defect registered.",
+    "Final run samples after two animation frames, all 14 observations completed exit 0; genuine busy ConfirmDialog focus escape remains, BaseUI background check passes. No application edits."
+  ],
+  "targeted_vitest": {
+    "exit_code": 0,
+    "passed_files": 7,
+    "registered_and_passed": 62,
+    "failed_or_pending": 0,
+    "full_suite_repeated": false,
+    "files": [
+      {
+        "file": "tests/unit/a11y-audit-a07-a09-static.test.ts",
+        "status": "passed",
+        "tests": 2
+      },
+      {
+        "file": "tests/unit/a11y-audit-a10-a21-static.test.ts",
+        "status": "passed",
+        "tests": 4
+      },
+      {
+        "file": "tests/unit/a11y-audit-a15-a17-contrast.test.ts",
+        "status": "passed",
+        "tests": 10
+      },
+      {
+        "file": "tests/unit/components/LanguageSwitcher.test.tsx",
+        "status": "passed",
+        "tests": 12
+      },
+      {
+        "file": "tests/unit/i18n/catalog-parity.test.ts",
+        "status": "passed",
+        "tests": 23
+      },
+      {
+        "file": "tests/unit/i18n/ui.test.ts",
+        "status": "passed",
+        "tests": 9
+      },
+      {
+        "file": "tests/unit/components/comments/comment-dialogs.test.tsx",
+        "status": "passed",
+        "tests": 2
+      }
+    ]
+  },
+  "i18n": {
+    "call_sites": 1589,
+    "unique_English_keys": 1245,
+    "source_files_with_calls": 144,
+    "locales": 8,
+    "catalogue_locales": 6,
+    "missing_or_orphan_or_empty_or_broken_placeholders": 0,
+    "linguistic_or_layout_certification": false,
+    "multiple_PL_variants_for_English_key": 20
+  },
+  "new_distinct_findings": [
+    "R35"
+  ],
+  "existing_finding_extended": "R20",
+  "radio_observation": "APG keyboard pattern divergence, but Tab/Space completion works; not labeled full keyboard inaccessibility or a new security defect",
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "files": [
+      {
+        "file": "client/src/app/modal/confirm.component.ts",
+        "sha256": "b56b13efab1672b1609ddc5aabebd030e89180f64a0d0df39edf9c8fdfaaf6bb"
+      },
+      {
+        "file": "client/src/app/modal/confirm.component.html",
+        "sha256": "cb1c99d1686512f078f6f0c6f343a1c2fe98e0c2faa632aab6a94c56a994be4b"
+      },
+      {
+        "file": "client/src/app/core/confirm/confirm.service.ts",
+        "sha256": "516e5ba8ae3f8dd24d4b97875e041198ac0a49161079ecf61def5b1fe79e61c8"
+      },
+      {
+        "file": "client/src/app/shared/shared-moderation/report-modals/report.component.html",
+        "sha256": "4fba939c75b1fc721fd6ba79910ff6e4fe9ce50d7bb43998d468b49d87effe0e"
+      },
+      {
+        "file": "client/src/app/shared/shared-moderation/report-modals/comment-report.component.ts",
+        "sha256": "85ca15ca08e9e6840f572cd617c35e305d97f42dd798267c2eb1e17e4f812567"
+      },
+      {
+        "file": "client/src/app/shared/shared-forms/peertube-checkbox.component.html",
+        "sha256": "6890d4ff504bd6077f00967fcbf8f87c78556998c4f451480b1b7f13840c6ea3"
+      },
+      {
+        "file": "client/src/app/shared/shared-forms/select/select-languages.component.ts",
+        "sha256": "8f46690e3032d134fb63ccfffb6b3d39baaeea134f008c898073fb9b9123b0f5"
+      },
+      {
+        "file": "support/doc/translation.md",
+        "sha256": "8747a1ae5e72a50ab5c26d68d01b7170b3cf56e853abec978c5e9b4b331fce3c"
+      }
+    ],
+    "scope": "Selected NgbModal confirm/service and report lifecycle/template, native checkbox, content-language selector (not UI locale selector), Weblate/XLIFF translation workflow.",
+    "executed": false,
+    "browser_benchmark": false,
+    "limitations": [
+      "NgbModal dependency used but its installed runtime not tested",
+      "Confirm closes before emitting response, so no equivalent pending-state benchmark",
+      "Comment report opens with keyboard:false, so not automatically better Escape behavior",
+      "Checkbox supports multiple reasons, different semantics from Polutek single radio choice",
+      "Weblate workflow does not certify translation quality or full language completeness"
+    ]
+  },
+  "full_HTTP_SQL_or_generated_Prisma_client_executed": false,
+  "production_access": false,
+  "real_person_data_used": false,
+  "independent_review": "PENDING"
+}

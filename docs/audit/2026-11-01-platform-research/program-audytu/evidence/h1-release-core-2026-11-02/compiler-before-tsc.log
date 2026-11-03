@@ -1,0 +1,5 @@
+
+$ /workspace/.cloud-setup/tools/node-v22.23.4-linux-x64/bin/node /tmp/polutek-release-control-xJvftz/repo/node_modules/typescript/bin/tsc -p tsconfig.json --noEmit
+.next/invalid.ts(1,7): error TS2322: Type 'number' is not assignable to type 'string'.
+
+[exit 2]

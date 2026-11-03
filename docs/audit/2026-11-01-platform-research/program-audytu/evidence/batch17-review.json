@@ -1,0 +1,334 @@
+{
+  "date": "2026-11-02",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "90de980e45bb827da72ddfea1aca18611bacb2e8",
+  "standard": "OWASP ASVS 5.0.0",
+  "standard_source_sha256": "98c8fe911b9edb403af8ee05d3ce8201ecac2659e313b053890a62847cdcf680",
+  "requirements_read": [
+    "V1.1.1",
+    "V1.1.2",
+    "V1.2.1",
+    "V1.2.2",
+    "V1.2.3",
+    "V1.2.4",
+    "V1.2.5",
+    "V1.2.6",
+    "V1.2.7",
+    "V1.2.8",
+    "V1.2.9",
+    "V1.2.10",
+    "V1.3.1",
+    "V1.3.2",
+    "V1.3.3",
+    "V1.3.4",
+    "V1.3.5",
+    "V1.3.6",
+    "V1.3.7",
+    "V1.3.8",
+    "V1.3.9",
+    "V1.3.10",
+    "V1.3.11",
+    "V1.3.12",
+    "V1.4.1",
+    "V1.4.2",
+    "V1.4.3",
+    "V1.5.1",
+    "V1.5.2",
+    "V1.5.3",
+    "V2.1.1",
+    "V2.1.2",
+    "V2.1.3",
+    "V2.2.1",
+    "V2.2.2",
+    "V2.2.3",
+    "V2.3.1",
+    "V2.3.2",
+    "V2.3.3",
+    "V2.3.4",
+    "V2.3.5",
+    "V2.4.1",
+    "V2.4.2"
+  ],
+  "qualification_counts": {
+    "W_TRAKCIE": 38,
+    "NIE_DOTYCZY_Z_UZASADNIENIEM": 5
+  },
+  "unresolved_applicability": [
+    "V1.5.1",
+    "V2.3.5"
+  ],
+  "conditional_non_applicability": [
+    "V1.2.6",
+    "V1.2.7",
+    "V1.2.8",
+    "V1.3.8",
+    "V1.3.9"
+  ],
+  "source_review_scope": [
+    {
+      "file": "app/[locale]/(home)/page.tsx",
+      "sha256": "757e545d5298aa160e4928a024e1dc82d0d091700df5feca754fe33ca67bbd0f",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "app/api/checkout/create-intent/route.ts",
+      "sha256": "69880bc6f6d03334ca2f8b452bafdbbe97596b6dbc7a2c42edf18b74af5477e3",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "app/api/studio/analytics/export/route.ts",
+      "sha256": "3ecae7d86df5ae7ecda7d4418be389ca6ed172620d498293b9ecc40582dbd5c2",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "app/api/studio/channel/about/route.ts",
+      "sha256": "67119ba13c89f0b206c38686838a42636e2511c7663953d631f5c83585b70306",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "app/channel/[slug]/feed.xml/route.ts",
+      "sha256": "36979b99cac64d50175fe1cf73c39a7cb60ec03e075cf354d5721fac303da993",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "app/components/comments/deep-link.ts",
+      "sha256": "41636d0453d3ae54f3c772734919187baba9762b738a099d34e1392bcc14b8c2",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "app/layout.tsx",
+      "sha256": "ae8505c82402184a8c911534179c1a3c639de18abdcd4d8c25bcb562ed0d8b2a",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/api/studio-route.ts",
+      "sha256": "dbae00e12e2b5efff0858c3134e9f239b2152710a14189d3b0a3979d977541d5",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/api/studio-schemas.ts",
+      "sha256": "2d3f84ddd846e66c079afc43ae1847e9da7c47f1a30c4f7451fe9d1a05d566d2",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/auth/route-matcher.ts",
+      "sha256": "2f579410abe0b9ea69d1ac31b1a893028cc4ea33d4feec43948da7ebf9acfc7d",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/constants.ts",
+      "sha256": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/i18n/routing.ts",
+      "sha256": "a1d562cfac09ff6dfbc50c30dff193239b85e4512c618a75e83639c0ff812b7b",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/admin-community/domain/csv.ts",
+      "sha256": "18a4cf6c4f625523cd1e21d1316accb54a7a9ce39c82e61f4865468af204bd86",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/modules/channel/application/channel-about.use-cases.ts",
+      "sha256": "93a2d84a457e2a19a2a08802fbbcd429f035edd8a710997211a5b68b4542e9ed",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel-about.ts",
+      "sha256": "9564fbb6800fded5c689cfc56f87c87b6840d0bd580d27442ad174b5c4f283fb",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel-banner-limits.ts",
+      "sha256": "291894ccc2f977ca0333f70e030ae57854b0dac5d5f4e3271790c8802d117425",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/modules/creator-analytics/application/export-csv.use-case.ts",
+      "sha256": "83b924b4b9f28fd79adef05cfbc7791712ab188dd8231a41a2d5ab4f1f53fb86",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/creator-analytics/domain/period.ts",
+      "sha256": "e6e471dede8e4fbd3223d0555794bc4b3c3a190e8d4cacd7c0d99581f7de6987",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/creator-analytics/infrastructure/analytics.repository.ts",
+      "sha256": "02a7a238c4d8704206b99da3a0e8a173ed54ee61c2b6c4a0a74b07b7507a19e2",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/email/application/admin-communication.ts",
+      "sha256": "e31b98c4491b62e193742538ae6fd6271254a5777c045331c0fbadbee9f35a86",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/email/application/email-templates.use-cases.ts",
+      "sha256": "30ae3fdb3bad0e2696592cb27e5719f8f7b7e5bb28c57f81c4aa190593eceaf2",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/modules/email/domain/email-content.ts",
+      "sha256": "9eb8fffe89fb9a801281af0852e66cd49d8848742ffb583acb096d0a5aa418c1",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/modules/email/domain/email-template-registry.ts",
+      "sha256": "72fbe5f5b6bab16ce5caa00a9efe30f77133ab62fcfb6c1966f876d512a78718",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/email/domain/render-email.ts",
+      "sha256": "2c301c58519ed614b16893c072785070527b50087d6afc571c11cfd2f4f8a5a8",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/modules/payments/application/create-checkout-intent.use-case.ts",
+      "sha256": "fd06a414abd8e4b2a9b05251d1d847db49077fcd6ccdaa68349d243b1dfff7d5",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/shared/csv.ts",
+      "sha256": "340f2ec24ab9803529bd0a10383676f30f1c3ffc18f6c5b8c765da3239277c58",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/modules/syndication/domain/rss.ts",
+      "sha256": "cf1dc023c090e352f5e6b17e970ad0b4ac233243e4cc1655e41a0f5bba1f3d74",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/modules/video/application/public-search.service.ts",
+      "sha256": "5cb03334009f7970584143ba0169921a0b77576ba3ee3626fcc4df72e6c0b950",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/modules/video/domain/video-metadata.ts",
+      "sha256": "6f9ac63d2e6717661748a8ef73b01a81bc614d64b809d11478e27a250e2424a0",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/payments/checkout.schema.ts",
+      "sha256": "67bc7592588b4842a5c3fa76465559c2be5a846edf806d2a6be55c98cdc7b74c",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/payments/currency-settings.ts",
+      "sha256": "d054c6cc662d4ab2e294f50d169e6719395acf6622e8a834056b2b3106755f53",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "lib/video-chapters.ts",
+      "sha256": "764e41e779585eba8acf672e3cf6cef043c8f93682ace80ed0f0a5f04d39cff9",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/video-metadata.ts",
+      "sha256": "37d559896ea5ea4ee4993409f2d1e9455ca21d821a09911c4a3c985db0a2fb15",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "lib/video-start-time.ts",
+      "sha256": "3ab664fe6b5b7ce57ca72649caa2b6edcc53afa8f88e57cb94648e89af83c417",
+      "scope": "Actual pure module, extracted sanitizer options or exact RSS function declarations evaluated; no full app/use-case sign-off"
+    },
+    {
+      "file": "next.config.mjs",
+      "sha256": "ee9b8a7089ef7decf43d164ca90503eae5a7bd2d6504a106814bc5626285dd08",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "1dc83d8f02d849150701bfc4812c3651a25bcdea93c538f1f4d66f63cb6176d4",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "package.json",
+      "sha256": "402fa1299a550cb4ee8905c2bb5ff31f086b38396125e5dd9e7b33b54ea165b7",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "scripts/ops/actions/app-runner.ts",
+      "sha256": "f8b01713a56c83395f14b2f5eda9bf19b7055f58baab368329f3f5b9428320d6",
+      "scope": "PARTIAL targeted source/config/transport/context review; source only, not runtime"
+    },
+    {
+      "file": "tests/unit/modules/email/render-email.test.ts",
+      "sha256": "c985c057745c17e50bfbe5051cfd23cbae49517c70bc5a3df5de064293aad3e9",
+      "scope": "Existing tests executed under actual Vitest; selected assertions read, not full app verification"
+    },
+    {
+      "file": "tests/unit/video-chapters.test.ts",
+      "sha256": "6608280abff290f829f1e01474a7ea548fc78633d432be3943a0f84a600214c5",
+      "scope": "Existing tests executed under actual Vitest; selected assertions read, not full app verification"
+    }
+  ],
+  "scope_warning": "Partial/overlapping prior reviews. 1233 mechanically scanned files are not manually audited files; exact RSS/functions/sanitize options are not full routes or use cases.",
+  "mechanical_marker_corpus_files": 1233,
+  "component_experiment": {
+    "final_exit_code": 0,
+    "observations": 16,
+    "actual_source_files": 15,
+    "real_zod_version": "3.25.76",
+    "real_sanitizer_version": "2.17.7",
+    "real_network_DB_provider_messages_spreadsheet": false,
+    "initial_expectations_corrected_and_preserved": true
+  },
+  "targeted_vitest": {
+    "exit_code": 0,
+    "files": 2,
+    "passed": 46,
+    "failed": 0,
+    "pending": 0,
+    "full_suite_repeated": false
+  },
+  "new_distinct_findings": [],
+  "existing_findings_changed": false,
+  "hypotheses_not_findings": [
+    "Q17-CSV-01",
+    "Q17-URL-02",
+    "Q17-NATIVE-03",
+    "Q17-CANON-04",
+    "Q17-REGEX-05",
+    "Q17-HIGHVALUE-06",
+    "Q17-DOC-07",
+    "Q17-SURFACE-08"
+  ],
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "executed": false,
+    "files": [
+      {
+        "file": "server/core/helpers/markdown.ts",
+        "sha256": "3b99cb4ba8bf9799590b6563944d243b2a9a883a759d2242f743c15eb7c5db89",
+        "scope": "Markdown render followed by sanitizer, plain text/mail variants"
+      },
+      {
+        "file": "packages/core-utils/src/renderer/html.ts",
+        "sha256": "d903aaeb4d4ea0b03bb61ce76f901a06448f37517686c0bce456b1eb5da5a1d8",
+        "scope": "Selected default/SVG/context helpers and JSON escaping, not whole-file review"
+      },
+      {
+        "file": "server/core/helpers/image-utils.ts",
+        "sha256": "9468cc227de2b2b8a7bfa5d8b04d42b03b558ebabda443aad8c89606195603ac",
+        "scope": "Selected sharp loader block/allow and processSVG"
+      },
+      {
+        "file": "server/core/helpers/custom-validators/videos.ts",
+        "sha256": "3d89436e00f19e2a2080c858bd571c9888523210feaf53187067438f132442c2",
+        "scope": "Selected closed category/state validators"
+      },
+      {
+        "file": "server/server.ts",
+        "sha256": "ebac3f86014c5bbd1c2cc8c82e2394edd158b372ea94f72868da06452e4f312b",
+        "scope": "Selected JSON parser limit and digest verify only"
+      }
+    ]
+  },
+  "Prisma_generate_npmaudit_or_previous_SQL_browser_tests_repeated": false,
+  "production_or_person_data_used": false,
+  "independent_review": "PENDING"
+}

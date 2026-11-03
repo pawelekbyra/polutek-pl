@@ -1,0 +1,534 @@
+
+> kraufanding@0.1.0 typecheck
+> tsc -p tsconfig.typecheck.json --noEmit
+
+app/api/cron/stripe-reconciliation/route.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+app/api/user/first-sign-in/route.ts(31,39): error TS18046: 'user' is of type 'unknown'.
+app/api/user/first-sign-in/route.ts(35,29): error TS18046: 'user' is of type 'unknown'.
+app/api/user/first-sign-in/route.ts(35,62): error TS18046: 'user' is of type 'unknown'.
+app/api/user/first-sign-in/route.ts(38,64): error TS18046: 'user' is of type 'unknown'.
+app/api/user/first-sign-in/route.ts(38,86): error TS18046: 'user' is of type 'unknown'.
+app/api/user/first-sign-in/route.ts(38,107): error TS18046: 'user' is of type 'unknown'.
+app/api/user/first-sign-in/route.ts(38,133): error TS18046: 'user' is of type 'unknown'.
+app/api/user/first-sign-in/route.ts(42,53): error TS18046: 'user' is of type 'unknown'.
+app/types/video.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'AccessTier'.
+app/types/video.ts(1,22): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+apps/admin/lib/auth/accounts.ts(30,195): error TS7006: Parameter 'u' implicitly has an 'any' type.
+apps/admin/lib/auth/accounts.ts(31,38): error TS7006: Parameter 'r' implicitly has an 'any' type.
+apps/admin/lib/auth/accounts.ts(32,21): error TS7006: Parameter 'u' implicitly has an 'any' type.
+apps/admin/lib/auth/accounts.ts(40,31): error TS7006: Parameter 'p' implicitly has an 'any' type.
+apps/admin/lib/auth/accounts.ts(41,37): error TS2339: Property 'toISOString' does not exist on type '{}'.
+apps/admin/lib/auth/audit.ts(88,38): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/admin/lib/auth/roles.ts(18,20): error TS7006: Parameter 'r' implicitly has an 'any' type.
+apps/admin/lib/auth/security.ts(12,20): error TS7006: Parameter 'r' implicitly has an 'any' type.
+apps/admin/lib/auth/security.ts(55,21): error TS7006: Parameter 'r' implicitly has an 'any' type.
+apps/admin/lib/channels.ts(5,15): error TS2305: Module '"@prisma/client"' has no exported member 'AppealStatus'.
+apps/admin/lib/channels.ts(5,29): error TS2305: Module '"@prisma/client"' has no exported member 'ChannelStatus'.
+apps/admin/lib/channels.ts(5,44): error TS2305: Module '"@prisma/client"' has no exported member 'ContentReportStatus'.
+lib/auth/emails.ts(95,31): error TS7006: Parameter 'session' implicitly has an 'any' type.
+lib/auth/hooks.ts(308,30): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/auth/prune-expired.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/comments-public-author.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/data/initial-content.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'AccessTier'.
+lib/data/initial-content.ts(1,22): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/launch/content-diagnostics.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'AccessTier'.
+lib/launch/content-diagnostics.ts(1,22): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/access/application/check-video-access.use-case.ts(10,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/admin-analytics/application/deps.ts(35,5): error TS2322: Type 'PrismaAppRepository' is not assignable to type 'AppRepository'.
+  The types returned by 'tipsSince(...)' are incompatible between these types.
+    Type 'Promise<{ count: any; totalMinor: any; currency: unknown; }>' is not assignable to type 'Promise<{ count: number; totalMinor: number; currency: string | null; }>'.
+      Type '{ count: any; totalMinor: any; currency: unknown; }' is not assignable to type '{ count: number; totalMinor: number; currency: string | null; }'.
+        Types of property 'currency' are incompatible.
+          Type 'unknown' is not assignable to type 'string | null'.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(25,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(35,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(40,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(60,26): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(70,33): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(71,17): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(71,20): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(75,9): error TS2416: Property 'tipsSince' in type 'PrismaAppRepository' is not assignable to the same property in base type 'AppRepository'.
+  Type '(since: Date) => Promise<{ count: any; totalMinor: any; currency: unknown; }>' is not assignable to type '(since: Date) => Promise<{ count: number; totalMinor: number; currency: string | null; }>'.
+    Type 'Promise<{ count: any; totalMinor: any; currency: unknown; }>' is not assignable to type 'Promise<{ count: number; totalMinor: number; currency: string | null; }>'.
+      Type '{ count: any; totalMinor: any; currency: unknown; }' is not assignable to type '{ count: number; totalMinor: number; currency: string | null; }'.
+        Types of property 'currency' are incompatible.
+          Type 'unknown' is not assignable to type 'string | null'.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(81,42): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(85,55): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-analytics/infrastructure/app.repository.ts(85,58): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-community/application/export-users-csv.ts(43,28): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/admin-community/application/panel-users.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/admin-community/application/panel-users.ts(90,116): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/admin-community/application/panel-users.ts(91,38): error TS7006: Parameter 's' implicitly has an 'any' type.
+lib/modules/admin-community/application/panel-users.ts(97,23): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/admin-community/application/panel-users.ts(108,39): error TS2339: Property 'toISOString' does not exist on type '{}'.
+lib/modules/admin-community/application/person-access.ts(23,34): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/admin-community/application/person-access.ts(23,76): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/admin-community/application/person-access.ts(28,78): error TS7006: Parameter 'e' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(102,39): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(113,36): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(114,38): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(124,29): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(125,25): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(126,29): error TS7006: Parameter 's' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(127,29): error TS7006: Parameter 'c' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(128,23): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-community/application/user-profile.ts(130,24): error TS7006: Parameter 'm' implicitly has an 'any' type.
+lib/modules/admin-content/application/content.ts(6,15): error TS2305: Module '"@prisma/client"' has no exported member 'AccessTier'.
+lib/modules/admin-content/application/content.ts(6,27): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/admin-content/application/content.ts(64,39): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-content/application/storage-cleanup-job.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/admin-content/application/storage-cleanup-job.ts(1,23): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/admin-overview/application/search-objects.ts(38,20): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/admin-overview/application/search-objects.ts(39,19): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/admin-overview/application/search-objects.ts(40,22): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/admin-overview/infrastructure/overview.repository.ts(67,24): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-overview/infrastructure/overview.repository.ts(71,24): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-overview/infrastructure/overview.repository.ts(75,24): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-overview/infrastructure/overview.repository.ts(82,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-overview/infrastructure/overview.repository.ts(162,36): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/admin-overview/infrastructure/overview.repository.ts(173,25): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(5,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/admin-revenue/queries.ts(42,55): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(42,98): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(42,101): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(43,35): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(43,38): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(72,37): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(76,20): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(76,23): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(89,20): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(105,25): error TS7006: Parameter 'e' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(129,44): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(129,78): error TS7006: Parameter 't' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(131,32): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(133,28): error TS7006: Parameter 'x' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(135,39): error TS7006: Parameter 't' implicitly has an 'any' type.
+lib/modules/admin-revenue/queries.ts(165,15): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/admin-security/audit-log.ts(56,30): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(74,51): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(75,28): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(75,151): error TS7006: Parameter 't' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(84,51): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(87,15): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(105,105): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(106,21): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/admin-security/audit-log.ts(107,30): error TS7006: Parameter 'x' implicitly has an 'any' type.
+lib/modules/audit/infrastructure/audit.repository.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/channel/application/channel-about.use-cases.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/channel/application/channel-layout.service.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/channel/application/channel-layout.service.ts(129,18): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/channel-layout.service.ts(138,21): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/channel-layout.service.ts(139,20): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/channel/application/channel-layout.service.ts(139,23): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/channel/application/channel-layout.service.ts(140,52): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/channel-layout.service.ts(143,50): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/channel-layout.service.ts(144,54): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/channel-lifecycle.use-cases.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/channel/application/channel-lifecycle.use-cases.ts(247,66): error TS18046: 'error' is of type 'unknown'.
+lib/modules/channel/application/channel-lifecycle.use-cases.ts(366,66): error TS18046: 'error' is of type 'unknown'.
+lib/modules/channel/application/channel-lifecycle.use-cases.ts(449,47): error TS7006: Parameter 'm' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'ChannelStatus'.
+lib/modules/channel/application/channel-moderation.use-cases.ts(1,30): error TS2305: Module '"@prisma/client"' has no exported member 'ContentReportStatus'.
+lib/modules/channel/application/channel-moderation.use-cases.ts(1,51): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/channel/application/channel-moderation.use-cases.ts(1,59): error TS2305: Module '"@prisma/client"' has no exported member 'ReportTargetType'.
+lib/modules/channel/application/channel-moderation.use-cases.ts(71,60): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(74,36): error TS7006: Parameter 'o' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(76,46): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(135,29): error TS7006: Parameter 'm' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(310,44): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(310,71): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(311,33): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(311,70): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(316,39): error TS7006: Parameter 'c' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(317,38): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(318,45): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/channel-moderation.use-cases.ts(422,23): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/content-report.use-case.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'ReportTargetType'.
+lib/modules/channel/application/get-admin-channel-settings.use-case.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'AppealStatus'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(1,29): error TS2305: Module '"@prisma/client"' has no exported member 'ChannelStatus'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(1,44): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(98,32): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(100,48): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(100,85): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(101,39): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(101,60): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(101,95): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(106,37): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(107,45): error TS7006: Parameter 'o' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(109,52): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(241,44): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(241,71): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(242,33): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(242,79): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(243,41): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(244,32): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(244,67): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(251,43): error TS7006: Parameter 'c' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(252,39): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(253,38): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(254,43): error TS7006: Parameter 'o' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(256,45): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(262,53): error TS2339: Property 'name' does not exist on type '{}'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(262,88): error TS2339: Property 'user' does not exist on type '{}'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(266,121): error TS2339: Property 'name' does not exist on type '{}'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(269,40): error TS2339: Property 'id' does not exist on type '{}'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(269,66): error TS2339: Property 'reasonPublic' does not exist on type '{}'.
+lib/modules/channel/application/moderation-appeals.use-cases.ts(269,99): error TS2339: Property 'createdAt' does not exist on type '{}'.
+lib/modules/channel/application/resync-subscribers.use-case.ts(22,25): error TS7006: Parameter 'creator' implicitly has an 'any' type.
+lib/modules/channel/application/resync-subscribers.use-case.ts(34,79): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/channel/application/update-admin-channel-settings.use-case.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/channel/domain/channel.policy.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/channel/domain/channel.policy.ts(1,28): error TS2305: Module '"@prisma/client"' has no exported member 'ChannelStatus'.
+lib/modules/channel/domain/channel.policy.ts(1,48): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/channel/infrastructure/channel.repository.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/channel/infrastructure/creator-content.service.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/channel/infrastructure/creator-content.service.ts(166,24): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/channel/infrastructure/creator-content.service.ts(201,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/comments/application/channel-ban.use-cases.ts(57,66): error TS7006: Parameter 'm' implicitly has an 'any' type.
+lib/modules/comments/application/channel-ban.use-cases.ts(131,24): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/comments/application/comment-notifications.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/comment-notifications.ts(39,38): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/comments/application/comment-notifications.ts(112,38): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/comments/application/create-creator-reply.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/create-video-comment.use-case.ts(12,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/delete-admin-comment.use-case.ts(7,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentDeletedReason'.
+lib/modules/comments/application/delete-comment.use-case.ts(9,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentDeletedReason'.
+lib/modules/comments/application/list-admin-comments.use-case.ts(6,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/list-admin-comments.use-case.ts(44,36): error TS7006: Parameter 'c' implicitly has an 'any' type.
+lib/modules/comments/application/list-comment-replies.use-case.ts(59,26): error TS7006: Parameter 'reply' implicitly has an 'any' type.
+lib/modules/comments/application/list-comment-reports.use-case.ts(5,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportStatus'.
+lib/modules/comments/application/list-comment-reports.use-case.ts(42,31): error TS7006: Parameter 'report' implicitly has an 'any' type.
+lib/modules/comments/application/list-panel-comments.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentDeletedReason'.
+lib/modules/comments/application/list-panel-comments.use-case.ts(1,32): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportReason'.
+lib/modules/comments/application/list-panel-comments.use-case.ts(1,53): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportStatus'.
+lib/modules/comments/application/list-panel-comments.use-case.ts(1,74): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/list-panel-comments.use-case.ts(58,36): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/comments/application/list-panel-comments.use-case.ts(71,35): error TS7006: Parameter 'c' implicitly has an 'any' type.
+lib/modules/comments/application/list-panel-comments.use-case.ts(86,35): error TS7006: Parameter 'c' implicitly has an 'any' type.
+lib/modules/comments/application/list-panel-comments.use-case.ts(106,25): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/comments/application/list-video-comments.use-case.ts(101,39): error TS7006: Parameter 'c' implicitly has an 'any' type.
+lib/modules/comments/application/moderate-comment-status.ts(8,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/moderate-comments-bulk.use-case.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentDeletedReason'.
+lib/modules/comments/application/moderate-comments-bulk.use-case.ts(3,32): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportStatus'.
+lib/modules/comments/application/moderate-comments-bulk.use-case.ts(3,53): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/moderate-comments-bulk.use-case.ts(110,97): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/comments/application/moderate-comments-bulk.use-case.ts(112,85): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/comments/application/pin-comment.use-case.ts(7,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/report-comment.use-case.ts(9,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/report-comment.use-case.ts(9,25): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportReason'.
+lib/modules/comments/application/resolve-comment-report.use-case.ts(7,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportStatus'.
+lib/modules/comments/application/set-admin-comment-heart.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/set-comment-reaction.use-case.ts(9,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/toggle-admin-comment-heart.use-case.ts(7,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/undo-comment-moderation.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportStatus'.
+lib/modules/comments/application/undo-comment-moderation.use-case.ts(1,31): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/application/undo-comment-moderation.use-case.ts(57,39): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/comments/application/undo-comment-moderation.use-case.ts(59,78): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/comments/application/update-comment.use-case.ts(11,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/domain/comment.dto.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentDeletedReason'.
+lib/modules/comments/domain/comment.dto.ts(1,32): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReactionType'.
+lib/modules/comments/domain/comment.dto.ts(1,53): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/domain/comment.policy.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/domain/comment.policy.ts(1,25): error TS2305: Module '"@prisma/client"' has no exported member 'VideoCommentsMode'.
+lib/modules/comments/infrastructure/comment.repository.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReactionType'.
+lib/modules/comments/infrastructure/comment.repository.ts(2,31): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/infrastructure/comment.repository.ts(2,46): error TS2305: Module '"@prisma/client"' has no exported member 'CommentDeletedReason'.
+lib/modules/comments/infrastructure/comment.repository.ts(2,68): error TS2305: Module '"@prisma/client"' has no exported member 'Comment'.
+lib/modules/comments/infrastructure/comment.repository.ts(2,77): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportReason'.
+lib/modules/comments/infrastructure/comment.repository.ts(2,98): error TS2305: Module '"@prisma/client"' has no exported member 'CommentReportStatus'.
+lib/modules/comments/infrastructure/comment.repository.ts(2,119): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/comments/infrastructure/panel-comment.repository.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/comments/infrastructure/panel-comment.repository.ts(1,25): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(63,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(77,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(86,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(100,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(109,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(118,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(138,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/creator-analytics/infrastructure/analytics.repository.ts(174,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/email/application/admin-communication.ts(83,41): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/email/application/admin-communication.ts(85,52): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/email/application/admin-communication.ts(85,88): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/email/application/admin-communication.ts(85,91): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/email/application/admin-communication.ts(120,27): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/email/application/admin-communication.ts(121,37): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/email/application/broadcasts.use-cases.ts(230,58): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/email/application/broadcasts.use-cases.ts(236,21): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/email/application/broadcasts.use-cases.ts(245,25): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/email/application/broadcasts.use-cases.ts(245,65): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/email/application/email-templates.use-cases.ts(3,15): error TS2305: Module '"@prisma/client"' has no exported member 'EmailTemplate'.
+lib/modules/email/application/handle-resend-webhook.use-case.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'BroadcastRecipientStatus'.
+lib/modules/email/application/handle-resend-webhook.use-case.ts(1,41): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/email/infrastructure/broadcast-audience.ts(38,39): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/email/infrastructure/broadcast-audience.ts(41,47): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/email/infrastructure/broadcast-audience.ts(43,37): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/email/infrastructure/broadcast-audience.ts(47,58): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/email/infrastructure/broadcast-audience.ts(50,52): error TS7006: Parameter 's' implicitly has an 'any' type.
+lib/modules/email/infrastructure/broadcast-audience.ts(53,14): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/email/infrastructure/broadcast-audience.ts(54,11): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/email/infrastructure/broadcast-queue.repository.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/email/infrastructure/broadcast-queue.repository.ts(164,60): error TS7006: Parameter 'g' implicitly has an 'any' type.
+lib/modules/email/infrastructure/email-event-lock.service.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'WebhookEventStatus'.
+lib/modules/email/infrastructure/email.repository.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'EmailTemplate'.
+lib/modules/favorites/application/video-favorites.use-cases.ts(44,22): error TS7031: Binding element 'video' implicitly has an 'any' type.
+lib/modules/favorites/domain/favorite-rules.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/health/application/check-health.use-case.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/media/application/default-thumbnail.service.ts(19,5): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+lib/modules/media/application/default-thumbnail.service.ts(25,3): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+lib/modules/media/infrastructure/storage.service.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'StorageProvider'.
+lib/modules/notifications/application/broadcast-notification.use-case.ts(33,14): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/notifications/application/broadcast-notification.use-case.ts(34,11): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/notifications/application/broadcast-notification.use-case.ts(40,36): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/notifications/application/broadcast-notification.use-case.ts(42,32): error TS7006: Parameter 'userId' implicitly has an 'any' type.
+lib/modules/notifications/application/list-admin-notifications.use-case.ts(11,29): error TS7006: Parameter 'n' implicitly has an 'any' type.
+lib/modules/notifications/application/new-video-fan-out.use-case.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/notifications/application/new-video-fan-out.use-case.ts(1,23): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/notifications/application/new-video-fan-out.use-case.ts(161,29): error TS7006: Parameter 's' implicitly has an 'any' type.
+lib/modules/notifications/application/new-video-fan-out.use-case.ts(163,62): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/notifications/application/new-video-fan-out.use-case.ts(175,47): error TS7006: Parameter 'n' implicitly has an 'any' type.
+lib/modules/notifications/application/new-video-fan-out.use-case.ts(176,35): error TS7006: Parameter 'userId' implicitly has an 'any' type.
+lib/modules/notifications/application/new-video-fan-out.use-case.ts(179,30): error TS7006: Parameter 'userId' implicitly has an 'any' type.
+lib/modules/notifications/application/notification-templates.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'NotificationKind'.
+lib/modules/notifications/application/notification-templates.use-case.ts(22,49): error TS7006: Parameter 'o' implicitly has an 'any' type.
+lib/modules/notifications/application/notification-templates.use-case.ts(29,26): error TS2339: Property 'titlePl' does not exist on type '{}'.
+lib/modules/notifications/application/notification-templates.use-case.ts(30,26): error TS2339: Property 'titleEn' does not exist on type '{}'.
+lib/modules/notifications/application/notification-templates.use-case.ts(31,25): error TS2339: Property 'bodyPl' does not exist on type '{}'.
+lib/modules/notifications/application/notification-templates.use-case.ts(32,25): error TS2339: Property 'bodyEn' does not exist on type '{}'.
+lib/modules/notifications/application/notification-templates.use-case.ts(34,28): error TS2339: Property 'updatedAt' does not exist on type '{}'.
+lib/modules/notifications/application/notification-templates.use-case.ts(53,37): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/notifications/application/notification-templates.use-case.ts(71,36): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/notifications/application/premiere-notifications.use-case.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/notifications/application/premiere-notifications.use-case.ts(55,54): error TS7006: Parameter 'job' implicitly has an 'any' type.
+lib/modules/notifications/application/prune-notifications.use-case.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/notifications/application/send-notification.use-case.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'NotificationKind'.
+lib/modules/notifications/application/user-notifications.use-cases.ts(43,28): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/notifications/application/user-notifications.use-cases.ts(86,27): error TS7006: Parameter 'n' implicitly has an 'any' type.
+lib/modules/notifications/application/user-notifications.use-cases.ts(87,66): error TS7006: Parameter 'n' implicitly has an 'any' type.
+lib/modules/notifications/application/user-notifications.use-cases.ts(87,69): error TS7006: Parameter 'index' implicitly has an 'any' type.
+lib/modules/notifications/application/user-notifications.use-cases.ts(88,50): error TS7006: Parameter 'n' implicitly has an 'any' type.
+lib/modules/notifications/application/user-notifications.use-cases.ts(88,53): error TS7006: Parameter 'index' implicitly has an 'any' type.
+lib/modules/notifications/domain/notification.dto.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'NotificationKind'.
+lib/modules/notifications/domain/user-notifications.ts(2,15): error TS2305: Module '"@prisma/client"' has no exported member 'NotificationKind'.
+lib/modules/patron-zone/application/pass-access.ts(46,14): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/patron-zone/application/pass-access.ts(47,12): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/patron-zone/application/pass-access.ts(47,15): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/patron/application/grant-patron.use-case.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'PatronGrantSource'.
+lib/modules/patron/application/grant-patron.use-case.ts(10,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/patron/application/grant-patron.use-case.ts(122,68): error TS18046: 'error' is of type 'unknown'.
+lib/modules/patron/application/grant-patron.use-case.ts(123,27): error TS18046: 'error' is of type 'unknown'.
+lib/modules/patron/domain/patron.dto.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PatronGrantSource'.
+lib/modules/patron/infrastructure/patron.repository.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PatronGrantSource'.
+lib/modules/payments/application/admin-refund.use-case.ts(7,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/application/create-checkout-intent.use-case.ts(4,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/application/create-checkout-intent.use-case.ts(4,25): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/payments/application/create-checkout-intent.use-case.ts(113,87): error TS18046: 'error' is of type 'unknown'.
+lib/modules/payments/application/fulfill-payment.use-case.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/application/get-payment-status.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/application/handle-dispute.use-case.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/application/handle-refund.use-case.ts(4,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/application/list-admin-payments.use-case.ts(7,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/payments/application/list-admin-payments.use-case.ts(70,33): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/payments/application/list-admin-payments.use-case.ts(98,52): error TS7006: Parameter 's' implicitly has an 'any' type.
+lib/modules/payments/application/list-admin-payments.use-case.ts(99,50): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/payments/application/list-admin-payments.use-case.ts(100,58): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+lib/modules/payments/application/list-admin-payments.use-case.ts(100,63): error TS7006: Parameter 'curr' implicitly has an 'any' type.
+lib/modules/payments/application/reconcile-payment.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/application/reconcile-refunds.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/application/supporter-grant.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PatronGrantSource'.
+lib/modules/payments/domain/admin-payment.dto.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/domain/payment.dto.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/domain/stripe-event.dto.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'WebhookEventStatus'.
+lib/modules/payments/infrastructure/payment.repository.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/payments/infrastructure/payment.repository.ts(2,25): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/payments/infrastructure/payment.repository.ts(144,29): error TS7006: Parameter 'payment' implicitly has an 'any' type.
+lib/modules/payments/infrastructure/payment.repository.ts(289,32): error TS7006: Parameter 's' implicitly has an 'any' type.
+lib/modules/payments/infrastructure/payment.repository.ts(294,30): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/payments/infrastructure/payment.repository.ts(298,41): error TS7006: Parameter 'c' implicitly has an 'any' type.
+lib/modules/payments/infrastructure/stripe-event-lock.service.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'WebhookEventStatus'.
+lib/modules/payments/infrastructure/stripe-event-lock.service.ts(2,30): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/payments/infrastructure/stripe-event-lock.service.ts(26,64): error TS18046: 'e' is of type 'unknown'.
+lib/modules/playback/application/playback.service.ts(9,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/playback/application/playback.service.ts(9,28): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAsset'.
+lib/modules/playback/application/self-hls-plan.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAsset'.
+lib/modules/playback/domain/primary-playable-asset.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAssetProcessingState'.
+lib/modules/playback/domain/primary-playable-asset.ts(1,37): error TS2305: Module '"@prisma/client"' has no exported member 'StorageProvider'.
+lib/modules/playlists/application/playlist-public.use-cases.ts(45,14): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/playlists/application/playlist-public.use-cases.ts(46,11): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/playlists/application/playlist-public.use-cases.ts(74,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+lib/modules/playlists/application/playlist-studio-read.use-cases.ts(18,32): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/playlists/application/playlist-studio-read.use-cases.ts(38,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+lib/modules/playlists/infrastructure/playlist.repository.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/playlists/infrastructure/playlist.repository.ts(52,30): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/playlists/infrastructure/playlist.repository.ts(89,22): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/playlists/infrastructure/public-playlist.repository.ts(85,11): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/playlists/infrastructure/public-playlist.repository.ts(86,14): error TS7006: Parameter 'video' implicitly has an 'any' type.
+lib/modules/playlists/infrastructure/public-playlist.repository.ts(115,25): error TS7006: Parameter 'p' implicitly has an 'any' type.
+lib/modules/playlists/infrastructure/public-playlist.repository.ts(121,13): error TS7006: Parameter 'i' implicitly has an 'any' type.
+lib/modules/playlists/infrastructure/public-playlist.repository.ts(122,16): error TS7006: Parameter 'video' implicitly has an 'any' type.
+lib/modules/sales/application/sales.use-cases.ts(230,42): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/sales/application/sales.use-cases.ts(231,23): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/sales/application/sales.use-cases.ts(231,118): error TS2345: Argument of type '{}' is not assignable to parameter of type 'number'.
+lib/modules/shared/db.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/shared/db.ts(1,18): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/shared/durable-job.repository.ts(2,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/shared/durable-job.repository.ts(2,23): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/subscriptions/application/list-my-subscriptions.use-case.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/subscriptions/application/list-my-subscriptions.use-case.ts(43,36): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/subscriptions/application/list-my-subscriptions.use-case.ts(51,47): error TS7006: Parameter 's' implicitly has an 'any' type.
+lib/modules/subscriptions/application/list-my-subscriptions.use-case.ts(53,22): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/subscriptions/application/list-my-subscriptions.use-case.ts(65,28): error TS2339: Property '_count' does not exist on type '{}'.
+lib/modules/subscriptions/application/list-my-subscriptions.use-case.ts(66,28): error TS2339: Property '_max' does not exist on type '{}'.
+lib/modules/subscriptions/application/list-subscribed-channels.use-case.ts(19,20): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/subscriptions/infrastructure/email-preference.repository.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/subscriptions/infrastructure/subscription.repository.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/syndication/infrastructure/syndication.repository.ts(61,23): error TS7006: Parameter 'video' implicitly has an 'any' type.
+lib/modules/translations/application/generate-drafts.ts(40,32): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/translations/application/generate-drafts.ts(53,139): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/translations/application/generate-drafts.ts(54,139): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(49,30): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(98,152): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(99,162): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(148,20): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(179,97): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(180,29): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(184,30): error TS7006: Parameter 'r' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(190,22): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/translations/application/translations.ts(190,25): error TS7006: Parameter 'b' implicitly has an 'any' type.
+lib/modules/users/application/account-deletion-cleanup.use-case.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'BroadcastRecipientStatus'.
+lib/modules/users/application/account-deletion-cleanup.use-case.ts(2,36): error TS2305: Module '"@prisma/client"' has no exported member 'CommentDeletedReason'.
+lib/modules/users/application/account-deletion-cleanup.use-case.ts(2,58): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+lib/modules/users/application/export-admin-users.use-case.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/users/application/export-admin-users.use-case.ts(2,18): error TS2305: Module '"@prisma/client"' has no exported member 'SystemRole'.
+lib/modules/users/application/export-admin-users.use-case.ts(2,30): error TS2305: Module '"@prisma/client"' has no exported member 'PatronGrantSource'.
+lib/modules/users/application/export-admin-users.use-case.ts(85,49): error TS7006: Parameter 'user' implicitly has an 'any' type.
+lib/modules/users/application/export-admin-users.use-case.ts(101,70): error TS7006: Parameter 'pt' implicitly has an 'any' type.
+lib/modules/users/application/export-own-data.use-case.ts(74,23): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/users/application/export-own-data.use-case.ts(75,26): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/users/application/get-admin-user-details.use-case.ts(101,70): error TS7006: Parameter 'pt' implicitly has an 'any' type.
+lib/modules/users/application/get-admin-users-stats.use-case.ts(54,35): error TS7006: Parameter 'pt' implicitly has an 'any' type.
+lib/modules/users/application/get-user-access-profile.use-case.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'SystemRole'.
+lib/modules/users/application/list-admin-users.use-case.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/users/application/list-admin-users.use-case.ts(2,25): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/users/application/list-admin-users.use-case.ts(197,20): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/users/application/list-admin-users.use-case.ts(260,41): error TS7006: Parameter 'record' implicitly has an 'any' type.
+lib/modules/users/application/list-admin-users.use-case.ts(269,22): error TS7006: Parameter 'u' implicitly has an 'any' type.
+lib/modules/users/application/list-admin-users.use-case.ts(275,44): error TS7006: Parameter 't' implicitly has an 'any' type.
+lib/modules/users/domain/user.policy.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'SystemRole'.
+lib/modules/users/infrastructure/user.repository.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/video-pipeline/application/encode-queue.use-cases.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/video-pipeline/application/encode-queue.use-cases.ts(1,29): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAsset'.
+lib/modules/video-pipeline/application/encode-queue.use-cases.ts(1,41): error TS2305: Module '"@prisma/client"' has no exported member 'VideoEncodeJob'.
+lib/modules/video-pipeline/application/encode-queue.use-cases.ts(1,57): error TS2305: Module '"@prisma/client"' has no exported member 'VideoOriginal'.
+lib/modules/video-pipeline/application/encode-queue.use-cases.ts(141,49): error TS7006: Parameter 'rows' implicitly has an 'any' type.
+lib/modules/video-pipeline/application/finalize-self-hls.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/video-pipeline/application/finalize-self-hls.ts(2,24): error TS2305: Module '"@prisma/client"' has no exported member 'VideoEncodeJob'.
+lib/modules/video-pipeline/application/original-upload.use-cases.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'VideoOriginal'.
+lib/modules/video-pipeline/application/output-cleanup.use-cases.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video-pipeline/application/output-cleanup.use-cases.ts(67,35): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/video-pipeline/application/output-cleanup.use-cases.ts(114,35): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/video-pipeline/application/process-encode-job.ts(3,15): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video-pipeline/application/process-encode-job.ts(3,23): error TS2305: Module '"@prisma/client"' has no exported member 'VideoEncodeJob'.
+lib/modules/video-pipeline/application/worker-loop.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'VideoEncodeJob'.
+lib/modules/video-pipeline/infrastructure/encode-job.repository.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video-pipeline/infrastructure/encode-job.repository.ts(1,18): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/modules/video-pipeline/infrastructure/encode-job.repository.ts(1,32): error TS2305: Module '"@prisma/client"' has no exported member 'VideoEncodeJob'.
+lib/modules/video-pipeline/infrastructure/encode-job.repository.ts(212,40): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/video-pipeline/infrastructure/encode-job.repository.ts(229,90): error TS7006: Parameter 'a' implicitly has an 'any' type.
+lib/modules/video/application/admin-video-payload.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/application/create-admin-video.use-case.ts(13,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video/application/get-admin-video-diagnostics.use-case.ts(5,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/application/public-search.service.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video/application/public-search.service.ts(107,36): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/video/application/public-search.service.ts(107,72): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/video/application/public-search.service.ts(195,34): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/video/application/public-search.service.ts(202,41): error TS2339: Property 'tier' does not exist on type '{}'.
+lib/modules/video/application/public-search.service.ts(203,36): error TS2339: Property 'tags' does not exist on type '{}'.
+lib/modules/video/application/public-search.service.ts(203,48): error TS2339: Property 'tags' does not exist on type '{}'.
+lib/modules/video/application/public-search.service.ts(203,61): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+lib/modules/video/application/public-search.service.ts(209,37): error TS2339: Property 'category' does not exist on type '{}'.
+lib/modules/video/application/public-search.service.ts(209,53): error TS2339: Property 'category' does not exist on type '{}'.
+lib/modules/video/application/public-search.service.ts(225,12): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/video/application/public-search.service.ts(245,43): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/video/application/public-search.service.ts(298,44): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/video/application/public-search.service.ts(300,5): error TS2322: Type '{ key: "other" | "news" | "education" | "entertainment" | "music" | "gaming" | "science" | "sports" | "people" | "howto"; labelPl: string; labelEn: string; count: {}; }[]' is not assignable to type '{ key: "other" | "news" | "education" | "entertainment" | "music" | "gaming" | "science" | "sports" | "people" | "howto"; labelPl: string; labelEn: string; count: number; }[]'.
+  Type '{ key: "other" | "news" | "education" | "entertainment" | "music" | "gaming" | "science" | "sports" | "people" | "howto"; labelPl: string; labelEn: string; count: {}; }' is not assignable to type '{ key: "other" | "news" | "education" | "entertainment" | "music" | "gaming" | "science" | "sports" | "people" | "howto"; labelPl: string; labelEn: string; count: number; }'.
+    Types of property 'count' are incompatible.
+      Type '{}' is not assignable to type 'number'.
+lib/modules/video/application/public-search.service.ts(301,29): error TS2365: Operator '>' cannot be applied to types '{}' and 'number'.
+lib/modules/video/application/public-search.service.ts(302,23): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+lib/modules/video/application/public-search.service.ts(302,33): error TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+lib/modules/video/application/public-search.service.ts(303,24): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/video/application/publish-admin-video.use-case.ts(6,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/application/resync-admin-video-stats.use-case.ts(53,45): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+lib/modules/video/application/sync-public-thumbnail.service.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/application/unlist-admin-video.use-case.ts(6,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/application/unpublish-admin-video.use-case.ts(6,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/application/video-playback-route.service.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'StorageProvider'.
+lib/modules/video/application/video-playback-route.service.ts(1,27): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAssetProcessingState'.
+lib/modules/video/application/video-playback-route.service.ts(1,54): error TS2305: Module '"@prisma/client"' has no exported member 'VideoPlaybackRoute'.
+lib/modules/video/application/video-playback-route.service.ts(1,74): error TS2305: Module '"@prisma/client"' has no exported member 'VideoPlaybackRouteActivatedBy'.
+lib/modules/video/application/video-playback-route.service.ts(1,105): error TS2305: Module '"@prisma/client"' has no exported member 'VideoPlaybackRouteStatus'.
+lib/modules/video/application/video-search.service.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/application/video-search.service.ts(87,19): error TS7006: Parameter 'video' implicitly has an 'any' type.
+lib/modules/video/domain/video-asset-selection.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAsset'.
+lib/modules/video/domain/video-asset.constants.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAssetProcessingState'.
+lib/modules/video/domain/video-asset.constants.ts(1,37): error TS2305: Module '"@prisma/client"' has no exported member 'StorageProvider'.
+lib/modules/video/domain/video.dto.ts(1,15): error TS2305: Module '"@prisma/client"' has no exported member 'AccessTier'.
+lib/modules/video/domain/video.dto.ts(1,27): error TS2305: Module '"@prisma/client"' has no exported member 'StorageProvider'.
+lib/modules/video/domain/video.dto.ts(1,44): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAssetProcessingState'.
+lib/modules/video/domain/video.dto.ts(1,71): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/domain/video.policy.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video/domain/video.policy.ts(1,18): error TS2305: Module '"@prisma/client"' has no exported member 'AccessTier'.
+lib/modules/video/domain/video.policy.ts(1,30): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/infrastructure/fundraising-progress.service.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PaymentStatus'.
+lib/modules/video/infrastructure/fundraising-progress.service.ts(48,45): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/video/infrastructure/fundraising-progress.service.ts(49,20): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/video/infrastructure/fundraising-progress.service.ts(51,83): error TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+lib/modules/video/infrastructure/video-content.service.ts(3,10): error TS2305: Module '"@prisma/client"' has no exported member 'AccessTier'.
+lib/modules/video/infrastructure/video-content.service.ts(3,22): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/infrastructure/video-content.service.ts(3,35): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video/infrastructure/video-content.service.ts(110,23): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/video/infrastructure/video-content.service.ts(208,24): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/video/infrastructure/video-content.service.ts(244,31): error TS7006: Parameter 'v' implicitly has an 'any' type.
+lib/modules/video/infrastructure/video-playback.repository.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'VideoPlaybackSession'.
+lib/modules/video/infrastructure/video-playback.repository.ts(1,32): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video/infrastructure/video.repository.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Video'.
+lib/modules/video/infrastructure/video.repository.ts(1,17): error TS2305: Module '"@prisma/client"' has no exported member 'VideoAsset'.
+lib/modules/video/infrastructure/video.repository.ts(1,29): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+lib/modules/video/infrastructure/video.repository.ts(1,37): error TS2305: Module '"@prisma/client"' has no exported member 'AccessTier'.
+lib/modules/video/infrastructure/video.repository.ts(1,49): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+lib/modules/video/infrastructure/video.repository.ts(1,62): error TS2305: Module '"@prisma/client"' has no exported member 'VideoCommentsMode'.
+lib/modules/watch-progress/application/video-progress.use-cases.ts(151,116): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/watch-progress/application/video-progress.use-cases.ts(152,35): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/modules/watch-progress/application/video-progress.use-cases.ts(152,79): error TS7006: Parameter 'row' implicitly has an 'any' type.
+lib/prisma.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+lib/utils/db.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+scripts/db-smoke.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+scripts/diagnose-home-content.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+scripts/diagnose-home-content.ts(1,24): error TS2305: Module '"@prisma/client"' has no exported member 'VideoStatus'.
+scripts/diagnose-home-content.ts(1,42): error TS2305: Module '"@prisma/client"' has no exported member 'ChannelStatus'.
+scripts/launch-diagnose.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+scripts/migrate-captions-to-private.ts(20,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+scripts/ops/actions/app-runner.ts(26,15): error TS2305: Module '"@prisma/client"' has no exported member 'CommentStatus'.
+scripts/ops/actions/app-runner.ts(26,30): error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.
+scripts/ops/actions/app-runner.ts(74,37): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+scripts/ops/actions/app-runner.ts(91,29): error TS7006: Parameter 'a' implicitly has an 'any' type.
+scripts/ops/actions/app-runner.ts(320,22): error TS7006: Parameter 'a' implicitly has an 'any' type.
+scripts/resolve-failed-migrations.ts(2,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+scripts/verify-restored-database.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
+scripts/verify-restored-database.ts(63,50): error TS7006: Parameter 'm' implicitly has an 'any' type.
+scripts/verify-restored-database.ts(113,59): error TS7006: Parameter 'g' implicitly has an 'any' type.
+scripts/verify-restored-database.ts(118,55): error TS7006: Parameter 'u' implicitly has an 'any' type.
+scripts/verify-restored-database.ts(133,46): error TS7006: Parameter 'g' implicitly has an 'any' type.
+scripts/verify-restored-database.ts(138,61): error TS7006: Parameter 'p' implicitly has an 'any' type.
+scripts/verify-restored-database.ts(139,47): error TS7006: Parameter 'id' implicitly has an 'any' type.
+scripts/verify-restored-database.ts(151,60): error TS7006: Parameter 'a' implicitly has an 'any' type.
+scripts/verify-restored-database.ts(156,57): error TS7006: Parameter 'v' implicitly has an 'any' type.
+scripts/verify_db.ts(1,10): error TS2305: Module '"@prisma/client"' has no exported member 'PrismaClient'.
