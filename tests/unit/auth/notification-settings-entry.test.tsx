@@ -6,8 +6,6 @@ import UserMenu from '@/app/components/auth/UserMenu';
 import { txFor } from '../i18n/mock-language';
 vi.mock('@/lib/auth/react', () => ({ useUser: () => ({ user: { id: 'u1', fullName: 'Viewer' } }), useAuth: () => ({ signOut: vi.fn() }) }));
 vi.mock('@/app/components/LanguageContext', () => ({ useLanguage: () => ({ language: 'pl', tx: txFor('pl') }) }));
-vi.mock('@/app/components/useSwitchLanguage', () => ({ useSwitchLanguage: () => vi.fn() }));
-vi.mock('@/app/components/LanguageSwitcher', () => ({ default: () => null }));
 vi.mock('next/link', () => ({ default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a> }));
 vi.mock('@/app/components/auth/AccountModal', () => ({ default: ({ open, initialSection }: { open: boolean; initialSection: string }) => open ? <div data-testid="account-section">{initialSection}</div> : null }));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });

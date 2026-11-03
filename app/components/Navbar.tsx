@@ -233,13 +233,10 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 </button>
               </div>
 
-              {/* Language switcher — one pill (globe, code, chevron) that opens the language list. */}
-              {/* Signed-out visitors only: a signed-in user changes the language in the account panel (and in the footer). */}
-              {isSignedIn ? null : (
-                <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} variant="icon" />}>
-                  <NavbarLanguageSwitcher language={language} />
-                </Suspense>
-              )}
+              {/* Language switcher: the globe stays for signed-in users too (the same picker as for visitors; the account window keeps a language field as well). */}
+              <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} variant="icon" />}>
+                <NavbarLanguageSwitcher language={language} />
+              </Suspense>
 
               {isSignedIn ? null : isLoaded ? (
                 <button
