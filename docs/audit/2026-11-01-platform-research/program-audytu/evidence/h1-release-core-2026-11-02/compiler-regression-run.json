@@ -1,0 +1,38 @@
+{
+  "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+  "baseline_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+  "control_only": true,
+  "real_compiler": true,
+  "application_acceptance": false,
+  "cases": [
+    {
+      "phase": "before",
+      "exit": 0,
+      "gate": {
+        "id": "typecheck-all",
+        "title": "typecheck calego repo z testami (tsconfig.json, bez .next/)",
+        "status": "PASS",
+        "durationMs": 378,
+        "reason": "0 bledow (pominieto 1 w .next/)"
+      },
+      "runner_sha256": "938c1865d2077067e7d8754d03292d305015d9b710893265856a709e724f3cd1",
+      "actual_TS2322": true,
+      "actual_next_path": true
+    },
+    {
+      "phase": "after",
+      "exit": 1,
+      "gate": {
+        "id": "typecheck-all",
+        "title": "typecheck calego repo z testami (tsconfig.json, bez .next/)",
+        "status": "FAIL",
+        "durationMs": 329,
+        "reason": "1 bledow w .next/; sprawdz wygenerowane typy"
+      },
+      "runner_sha256": "954b7e5ace9c1112b460c9dcbedfb19402b97bb139900a430986b1f9c4cda4d6",
+      "actual_TS2322": true,
+      "actual_next_path": true
+    }
+  ],
+  "all_expectations_passed": true
+}

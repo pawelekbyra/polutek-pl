@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "date": "2026-11-02",
+  "date": "2026-11-03",
   "scope": "OWNER_APPROVED_H1",
-  "audit_parent_sha": "f532b10f0d03f76a388ba89bff2179526d45df2c",
+  "audit_parent_sha": "35466051eb27c6957854532bba231b5e13a6bca7",
   "audit_branch": "docs/polutek-platform-audit",
   "code_candidate_branch": "fix/polutek-h1-acceptance",
-  "code_candidate_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+  "code_candidate_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
   "application_audit_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
   "repair_base_main_sha": "c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3",
-  "overall": "H1_LOCAL_IMAGES_NATIVE_HTTP_HDR_AND_LOCAL_GATES_PASS_RELEASE_PROTOCOL_FULL_STACK_K05_OPEN",
+  "overall": "H1_RELEASE_CORE_AND_CI_PROVENANCE_VALIDATED_PRODUCER_ALL_CONSUMERS_FULL_STACK_K05_OPEN",
   "packages": {
     "K01": "REAL_PRISMA_PG_AND_OWN_WORKER_3_ENCODER_CASES_PASS_API_QUEUE_REDIS_STORAGE_EMAIL_INTEGRATION_OPEN",
     "K02": "THREE_LOCAL_IMAGES_LOAD_PATCHED_LIBRARIES_AND_OPTIMIZER_HTTP_PASSES_RELEASE_REVIEW_PRODUCTION_EVIDENCE_OPEN",
-    "K03": "ALL_EXECUTED_LOCAL_GATES_AND_REQUIRED_SUITE_GUARD_PASS_REAL_RESTORE_EVIDENCE_PRESERVED_FULL_E2E_OPEN",
+    "K03": "CI_SOURCE_PROVENANCE_REQUIRED_TEST_REPORTS_AND_GENERATED_TYPE_FAILURE_VERIFIED_FULL_STACK_EMAIL_OPEN",
     "K05": "CODE_PROFILE_DOCUMENTED_9_DECISIONS_AND_ACTIVE_CONFIG_OPEN",
-    "K06": "BOTH_LOCAL_APP_AND_DOCKER_BUILDS_PASS_LOCAL_IDS_RECORDED_ALL_RELEASE_PATH_ENFORCEMENT_OPEN"
+    "K06": "COMMON_PROOF_VALIDATOR_SEALER_TESTED_PRODUCER_AND_ALL_PUBLISH_ACTIVATE_PATHS_NOT_YET_CONNECTED"
   },
   "acceptance": {
     "K02_existing_tests": {
@@ -33,7 +33,7 @@
     },
     "critical_command": {
       "exit": 0,
-      "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+      "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
       "success": true,
       "files": 2,
       "total": 36,
@@ -54,10 +54,10 @@
     "full_app_builds": {
       "public_exit": 0,
       "admin_exit": 0,
-      "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
-      "scope": "Local standalone and Docker public/admin builds; release-path enforcement incomplete"
+      "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+      "scope": "Local standalone builds; no new app Docker images in this batch"
     },
-    "deployed_images": "NONE_DEPLOYED_THREE_LOCAL_IMAGES_BUILT_AND_PROBED_NOT_RELEASE_ACCEPTED",
+    "deployed_images": "NONE_DEPLOYED_PREVIOUS_APP_IMAGES_ONLY_NEW_IMAGES_ARE_SYNTHETIC_CONTROLS",
     "previous_critical_command": {
       "exit": 1,
       "process_tests_passed": 31,
@@ -96,7 +96,7 @@
     },
     "postgres": {
       "exit": 0,
-      "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+      "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
       "success": true,
       "files": 12,
       "total": 75,
@@ -121,12 +121,12 @@
     },
     "app_typecheck": {
       "exit": 0,
-      "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff"
+      "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2"
     },
     "whole_repo_typecheck": {
       "exit": 0,
       "diagnostics": 0,
-      "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff"
+      "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2"
     },
     "other_required_gates": {
       "lint_exit": 0,
@@ -137,11 +137,11 @@
     },
     "unit_ci": {
       "exit": 0,
-      "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+      "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
       "success": true,
-      "files": 542,
-      "total": 4705,
-      "passed": 4703,
+      "files": 544,
+      "total": 4781,
+      "passed": 4779,
       "failed": 0,
       "pending": 2,
       "todo": 0,
@@ -156,7 +156,8 @@
           "name": "EmailEventLockService - Real DB Idempotency allows re-acquiring failed events",
           "status": "skipped"
         }
-      ]
+      ],
+      "scope": "Actual local-CI full unit inside explicit partial selection; workflow synthetic DB values, no new client generation or audit"
     },
     "notification_suspense_regression": {
       "before_passed": 8,
@@ -166,7 +167,7 @@
     },
     "previous_restore_verifier_unchanged_in_current_sha": true,
     "critical_runner_regressions": {
-      "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+      "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
       "passed": 13,
       "failed": 0,
       "method": "Real Vitest subprocesses in small synthetic control projects; not platform E2E"
@@ -204,6 +205,54 @@
       "passed": 3,
       "failed": 0,
       "pending": 0
+    },
+    "local_ci_partial": {
+      "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+      "exit": 0,
+      "source_before": "7c4deeeef1002bc83df28d7bf3267f199543655d466f9ef4ac7eda5c4b30a133",
+      "source_after": "7c4deeeef1002bc83df28d7bf3267f199543655d466f9ef4ac7eda5c4b30a133",
+      "selected_passes": [
+        "ci-parity",
+        "unit",
+        "critical-path",
+        "typecheck-all",
+        "encode-smoke"
+      ],
+      "prisma_skipped": true,
+      "audit_unselected": true,
+      "release_eligible": false,
+      "encoder": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "files": 1,
+        "failedFiles": [],
+        "success": true
+      },
+      "critical": {
+        "total": 36,
+        "passed": 36,
+        "failed": 0,
+        "skipped": 0,
+        "files": 2,
+        "failedFiles": [],
+        "success": true
+      }
+    },
+    "release_core_controls": {
+      "code_sha": "55f3a6d8637257075d6037810eb3006977b0f790",
+      "core_unchanged_in_candidate": true,
+      "expected_results_matched": 15,
+      "synthetic_images": 6,
+      "application_acceptance": false,
+      "compiler_before_exit": 0,
+      "compiler_before_gate": "PASS",
+      "compiler_after_exit": 1,
+      "compiler_after_gate": "FAIL",
+      "actual_partial_rejected": true,
+      "producer_connected": false,
+      "consumers_connected": false
     }
   },
   "scope_by_commit": [
@@ -458,6 +507,51 @@
       "changed_files": [
         "docs/operations/LOCAL-CI.md"
       ]
+    },
+    {
+      "branch": "fix/polutek-h1-acceptance",
+      "commit": "6cd26d9003e9e3065070db90c37d7fbb66fc7ce3",
+      "parent": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+      "subject": "Add strict source and image proof validation primitives",
+      "changed_files": [
+        "scripts/ops/release-proof.mjs",
+        "scripts/ops/release/policy.mjs",
+        "scripts/ops/release/proof.mjs",
+        "scripts/ops/release/source.mjs",
+        "tests/fixtures/release-control.mjs",
+        "tests/unit/ops/release-proof.test.ts"
+      ]
+    },
+    {
+      "branch": "fix/polutek-h1-acceptance",
+      "commit": "5af98a07399215d2b6f518d85a258c7df2774b2e",
+      "parent": "6cd26d9003e9e3065070db90c37d7fbb66fc7ce3",
+      "subject": "Record stable CI sources and reject incomplete required checks",
+      "changed_files": [
+        "scripts/ops/local-ci.mjs",
+        "tests/unit/ops/release-proof-process.test.ts"
+      ]
+    },
+    {
+      "branch": "fix/polutek-h1-acceptance",
+      "commit": "55f3a6d8637257075d6037810eb3006977b0f790",
+      "parent": "5af98a07399215d2b6f518d85a258c7df2774b2e",
+      "subject": "docs(ops): define release proof contract and integration limits",
+      "changed_files": [
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/operations/LOCAL-CI.md",
+        "docs/operations/RELEASE-PROOF.md"
+      ]
+    },
+    {
+      "branch": "fix/polutek-h1-acceptance",
+      "commit": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+      "parent": "55f3a6d8637257075d6037810eb3006977b0f790",
+      "subject": "test(ops): require the actual generated-type diagnostic",
+      "changed_files": [
+        "tests/unit/ops/release-proof-process.test.ts"
+      ]
     }
   ],
   "canonical_audit_counts": {
@@ -514,16 +608,16 @@
   "deployed": false,
   "merged": false,
   "paid_external_resources_created": false,
-  "resume": "Continue H1: implement and negatively test mandatory source/input/test/image identity verification in every supported local/GHCR/manual publication and activation path; include migrator/collector and clarify required gates without silently bypassing the earlier audit upload denial. Then full owned API/queue/worker/HLS/Redis/storage and remaining two email DB cases. K05 active configuration and DP01-DP09 remain open. No merge/deploy/production/cost/generic ASVS expansion.",
-  "note": "Three commits add ephemeral Docker CA trust, declare an already-referenced public build argument, and correct the HLG test fixture to execute real HDR conversion rather than skip. Three actual images load patched native libraries; offline optimizer HTTP9/9 and worker encode3/3 pass. Local image identities/input records are evidence, not enforced release attestations. No finding/package formally closed.",
+  "resume": "Continue K06 with a trusted producer of pinned input-bound builds and all consumers: images workflow, local/existing-image deployment, GHCR immutable pulls, admin and rollback. Require externally supplied proof hash and revision, call verify before publish/migrate/activate and consume returned IDs. Negative full-path tests still needed. Retain mandatory audit requirement without retrying prior denied graph upload. Then full owned API/queue/HLS/Redis/storage and remaining email cases, K05 active profile/DP01-DP09. No merge/deploy/cost or generic ASVS expansion.",
+  "note": "Four small commits implement the shared proof contract, stable CI source snapshots and real test summaries; .next type errors now fail. Docker15 controls and real compiler before/after validated. Actual full unit and other executed local checks pass, but the partial CI report is deliberately rejected for release; no product proof or all-path enforcement claimed.",
   "previous_candidate_branch": "fix/polutek-h1-foundations",
-  "previous_candidate_sha": "03115f0fefe47baf91622b3272b966344981beaf",
+  "previous_candidate_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
   "previous_repair_base_main_sha": "5f848a9304d19a6d03860444808abbe120b57623",
   "pull_request": {
     "url": "https://github.com/pawelekbyra/polutek-pl/pull/2065",
     "draft": true,
     "merged": false,
-    "verified_head_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff"
+    "verified_head_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2"
   },
   "previous_scope_by_commit": [
     {
@@ -583,7 +677,7 @@
     }
   ],
   "packages_closed": 0,
-  "evidence_directory": "program-audytu/evidence/h1-images-2026-11-02",
+  "evidence_directory": "program-audytu/evidence/h1-release-core-2026-11-02",
   "acceptance_history": [
     {
       "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
@@ -1028,6 +1122,200 @@
         }
       },
       "evidence_directory": "program-audytu/evidence/h1-gates-2026-11-02"
+    },
+    {
+      "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+      "acceptance": {
+        "K02_existing_tests": {
+          "files": 4,
+          "passed": 46,
+          "failed": 0
+        },
+        "K03_process_tests": {
+          "passed": 31,
+          "failed": 0
+        },
+        "K06_fixture_builds": {
+          "baseline_bad_type_accepted": 2,
+          "fixed_bad_type_rejected": 2,
+          "fixed_valid_type_accepted": 2
+        },
+        "critical_command": {
+          "exit": 0,
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+          "success": true,
+          "files": 2,
+          "total": 36,
+          "passed": 36,
+          "failed": 0,
+          "pending": 0,
+          "todo": 0
+        },
+        "real_prisma_cloud": "GENERATED_BY_NORMAL_POSTINSTALL_6.19.3",
+        "fresh_db_migrations": {
+          "applied": 81,
+          "exit": 0,
+          "postgres": "17.11",
+          "schema_smoke": "PASS",
+          "status": "UP_TO_DATE"
+        },
+        "full_quality": "ALL_EXECUTED_LOCAL_CHECKS_PASS_NOT_FULL_RELEASE_ACCEPTANCE",
+        "full_app_builds": {
+          "public_exit": 0,
+          "admin_exit": 0,
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+          "scope": "Local standalone and Docker public/admin builds; release-path enforcement incomplete"
+        },
+        "deployed_images": "NONE_DEPLOYED_THREE_LOCAL_IMAGES_BUILT_AND_PROBED_NOT_RELEASE_ACCEPTED",
+        "previous_critical_command": {
+          "exit": 1,
+          "process_tests_passed": 31,
+          "integration_file_blocked_before_registration": true
+        },
+        "unit_local": {
+          "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+          "environment": "Node22, owned h1.env; ADMIN_DEV_* off; Redis URL/token variables empty so unit-only memory limiter; CI=true",
+          "exit": 0,
+          "files": 541,
+          "passed": 4686,
+          "failed": 0,
+          "pending": 3,
+          "total": 4689,
+          "supersedes_environment_failures": [
+            "unit-full.json: sample-data mode returned409",
+            "unit-final.json: fake CI Redis URL caused unmocked limiter failure"
+          ],
+          "pending_cases": [
+            {
+              "file": "/workspace/polutek-pl/tests/integration/email-event-idempotency.test.ts",
+              "name": "EmailEventLockService - Real DB Idempotency enforces atomic idempotency via unique constraint",
+              "status": "skipped"
+            },
+            {
+              "file": "/workspace/polutek-pl/tests/integration/email-event-idempotency.test.ts",
+              "name": "EmailEventLockService - Real DB Idempotency allows re-acquiring failed events",
+              "status": "skipped"
+            },
+            {
+              "file": "/workspace/polutek-pl/tests/unit/hls/encode-hls.ffmpeg.test.ts",
+              "name": "encode-hls with real ffmpeg tone-maps an HLG (HDR) source to BT.709 SDR instead of rejecting it",
+              "status": "skipped"
+            }
+          ]
+        },
+        "postgres": {
+          "exit": 0,
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+          "success": true,
+          "files": 12,
+          "total": 75,
+          "passed": 75,
+          "failed": 0,
+          "pending": 0,
+          "todo": 0
+        },
+        "real_restore": {
+          "exit": 0,
+          "passed": 11,
+          "failed": 0,
+          "code_sha": "e79ec89c7936248f1ef447f972a97cb0b9eaa26b",
+          "verifier_unchanged_in_final_sha": true,
+          "method": "Actual synthetic pg_dump/pg_restore plus read-only-role fault injection; not offsite full-product recovery"
+        },
+        "local_http": {
+          "passed": 4,
+          "failed": 0,
+          "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+          "fixture_cleaned_up": true
+        },
+        "app_typecheck": {
+          "exit": 0,
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff"
+        },
+        "whole_repo_typecheck": {
+          "exit": 0,
+          "diagnostics": 0,
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff"
+        },
+        "other_required_gates": {
+          "lint_exit": 0,
+          "hotspots_exit": 0,
+          "strict_escapes_exit": 0,
+          "env_production_exit": 0,
+          "lint_warning_count": 100
+        },
+        "unit_ci": {
+          "exit": 0,
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+          "success": true,
+          "files": 542,
+          "total": 4705,
+          "passed": 4703,
+          "failed": 0,
+          "pending": 2,
+          "todo": 0,
+          "pending_cases": [
+            {
+              "file": "tests/integration/email-event-idempotency.test.ts",
+              "name": "EmailEventLockService - Real DB Idempotency enforces atomic idempotency via unique constraint",
+              "status": "skipped"
+            },
+            {
+              "file": "tests/integration/email-event-idempotency.test.ts",
+              "name": "EmailEventLockService - Real DB Idempotency allows re-acquiring failed events",
+              "status": "skipped"
+            }
+          ]
+        },
+        "notification_suspense_regression": {
+          "before_passed": 8,
+          "before_failed": 1,
+          "after_passed": 9,
+          "after_failed": 0
+        },
+        "previous_restore_verifier_unchanged_in_current_sha": true,
+        "critical_runner_regressions": {
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+          "passed": 13,
+          "failed": 0,
+          "method": "Real Vitest subprocesses in small synthetic control projects; not platform E2E"
+        },
+        "docker_images": {
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+          "count": 3,
+          "ids": {
+            "public": "sha256:1cfc31533d5125fe4e86ec8c6f33e24b9390158b34b7fd4430ec7360e4e67f5b",
+            "admin": "sha256:9ab90db431fcbf1de90fa4aa53633cd372cddce27147020dc9d3126a937402bc",
+            "worker": "sha256:789cbdec0ad14540285cb0c32962f52c364e0da7a63f4b5a34321890423b04e3"
+          },
+          "native_probes": 15,
+          "node_base_ancestry_verified": true,
+          "registry_publication": false,
+          "manifest_digest": false,
+          "enforced_release_paths": false
+        },
+        "image_http": {
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+          "passed": 9,
+          "failed": 0,
+          "network": "none",
+          "database": false
+        },
+        "worker_ffmpeg": {
+          "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+          "image_id": "sha256:789cbdec0ad14540285cb0c32962f52c364e0da7a63f4b5a34321890423b04e3",
+          "exit": 0,
+          "cpuset": "0,1",
+          "network": "none",
+          "read_only_image": true,
+          "production_credentials": false,
+          "app_source": "Built image; unchanged test fixture mounted read-only from the matching git archive",
+          "passed": 3,
+          "failed": 0,
+          "pending": 0
+        }
+      },
+      "evidence_directory": "program-audytu/evidence/h1-images-2026-11-02"
     }
   ],
   "progress_estimates": {

@@ -1,0 +1,98 @@
+{
+  "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+  "before_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+  "changes": [
+    {
+      "sha": "6cd26d9003e9e3065070db90c37d7fbb66fc7ce3",
+      "parent": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+      "subject": "Add strict source and image proof validation primitives",
+      "files": [
+        "scripts/ops/release-proof.mjs",
+        "scripts/ops/release/policy.mjs",
+        "scripts/ops/release/proof.mjs",
+        "scripts/ops/release/source.mjs",
+        "tests/fixtures/release-control.mjs",
+        "tests/unit/ops/release-proof.test.ts"
+      ]
+    },
+    {
+      "sha": "5af98a07399215d2b6f518d85a258c7df2774b2e",
+      "parent": "6cd26d9003e9e3065070db90c37d7fbb66fc7ce3",
+      "subject": "Record stable CI sources and reject incomplete required checks",
+      "files": [
+        "scripts/ops/local-ci.mjs",
+        "tests/unit/ops/release-proof-process.test.ts"
+      ]
+    },
+    {
+      "sha": "55f3a6d8637257075d6037810eb3006977b0f790",
+      "parent": "5af98a07399215d2b6f518d85a258c7df2774b2e",
+      "subject": "docs(ops): define release proof contract and integration limits",
+      "files": [
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/operations/LOCAL-CI.md",
+        "docs/operations/RELEASE-PROOF.md"
+      ]
+    },
+    {
+      "sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+      "parent": "55f3a6d8637257075d6037810eb3006977b0f790",
+      "subject": "test(ops): require the actual generated-type diagnostic",
+      "files": [
+        "tests/unit/ops/release-proof-process.test.ts"
+      ]
+    }
+  ],
+  "pull_request": "https://github.com/pawelekbyra/polutek-pl/pull/2065",
+  "release_ready": false,
+  "actual_docker_control_sha": "55f3a6d8637257075d6037810eb3006977b0f790",
+  "core_files_unchanged_since_control_run": [
+    "scripts/ops/release-proof.mjs",
+    "scripts/ops/release/source.mjs",
+    "scripts/ops/release/policy.mjs",
+    "scripts/ops/release/proof.mjs",
+    "scripts/ops/local-ci.mjs",
+    "tests/fixtures/release-control.mjs"
+  ],
+  "attribution": {
+    "docker-control-run.json": "15 real Docker control outcomes, six tiny synthetic images and synthetic quality reports; not application acceptance. Executed at55f3a6d8; only extra compiler-test assertions changed in the final candidate. Core/runner/fixture files identical.",
+    "compiler-regression-run.json": "Real TypeScript TS2322 in tracked .next/invalid.ts: baseline9824 runner exits0/PASS; exact final runner exits1/FAIL. Prisma deliberately excluded in this isolated compiler control, no fabricated client.",
+    "final/acceptance-run.json": "Clean final SHA, full unit executed through the changed local-CI runner; selected critical/encoder/parity/typecheck-all gates. Separate real owned PG and remaining executed local gates/builds. No npm audit or new Prisma generation.",
+    "final/local-ci-partial.json": "Real successful partial report, not release eligible; source fingerprints match; unit/critical/encoder counts are actual. Explicit Prisma skip, audit and other gates unselected in this one invocation.",
+    "actual-partial-report-run.json": "Full actual source git archive matches inventory; actual partial report is rejected by release CLI for its filters. No application release proof created.",
+    "first-harness-actual-partial-report-*": "First partial-report harness verified the source archive but did not capture a rejection diagnostic; its own assertion failed. Unchanged CLI then returned the expected filter rejection in the supported subprocess context. Both captures retained; no application-source change.",
+    "h1-release-targeted*.json / h1-release-process*.json": "Dirty preliminary test iterations retained: early failures were incomplete control fixture setup (.bin and dependency selection), not app regressions. Final targeted128/128 before the final added diagnostic assertions; complete final unit includes those assertions."
+  },
+  "limits": [
+    "Shared validator/sealer exists; producer and images.yml/deploy/admin/manual/rollback consumers remain unconnected.",
+    "No full mandatory audit/Prisma execution in this partial CI invocation; those requirements are retained in release policy.",
+    "Unsigned trusted-operator evidence, no SLSA level or malicious-admin guarantee.",
+    "Copied FFmpeg provenance still requires a pinned trusted producer; native Windows sealing/verification is refused, use POSIX.",
+    "Previous app Docker/native/HTTP/HDR evidence remains at9824; no new application images or registry manifest were produced here.",
+    "No merge/deploy/production change/paid resources/new ASVS qualification."
+  ],
+  "unchanged_files": [
+    "package.json",
+    "package-lock.json",
+    "prisma/schema.prisma",
+    "prisma/migrations",
+    "next.config.mjs",
+    "apps/admin/next.config.mjs",
+    "tsconfig.json",
+    "tsconfig.typecheck.json",
+    "deploy/serwerek/Dockerfile",
+    "deploy/serwerek/Dockerfile.admin",
+    "deploy/serwerek/deploy.sh",
+    "deploy/serwerek/deploy-admin.sh",
+    ".github/workflows/images.yml",
+    "scripts/ops/mergedeploy.sh",
+    "scripts/hls/encode-hls.mjs",
+    "scripts/check-hotspots.ts",
+    "scripts/check-strict-escapes.ts",
+    "scripts/strict-escapes-baseline.jsonc"
+  ],
+  "batch_started": "2026-11-02",
+  "handoff_updated": "2026-11-03",
+  "raw_logs": "Captured bytes are preserved, including progress carriage returns, trailing whitespace and final blank lines; documentation/source whitespace checks exclude raw .log files."
+}

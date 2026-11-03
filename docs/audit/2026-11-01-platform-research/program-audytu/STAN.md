@@ -1,16 +1,16 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 2 listopada 2026. **H1 trwa: trzy rzeczywiste lokalne obrazy mają poprawione biblioteki; optimizer HTTP 9/9 i worker encode 3/3 z HDR bez pominięć. Wszystkie wykonane końcowe lokalne kontrole PASS. Protokół wydania i pełny stos nadal otwarte.**
+Aktualizacja: 3 listopada 2026 (partia rozpoczęta 2 listopada). **Rdzeń K06 działa: wspólna walidacja źródeł/kontroli/wejść/tożsamości obrazów, zewnętrzny hash dowodu, strukturalne raporty local-CI. Producent i ścieżki publikacji/aktywacji nie są jeszcze podłączone.**
 
-**Szacunkowo H1 80% / 20% pozostało; cała roadmapa 5–10% / 90–95% pozostało.** 95% dotyczy pozostałej pracy całej misji. To szacunek nakładu, nie ocena bezpieczeństwa. Zero całych pakietów/ustaleń formalnie zamkniętych.
+**Szacunkowo H1 około 80% / 20% pozostało; cała roadmapa 5–10% / 90–95% pozostało.** Ostrożny szacunek makro; zero całych pakietów/ustaleń formalnie zamkniętych. Pogłębiony audyt czasowo odłożony na rzecz H1, nie anulowany.
 
-Roadmapa v1 zatwierdzona; pogłębiony audyt czasowo odłożony na rzecz H1, nie anulowany. Nie rozpoczynać ogólnego V3+ ani nowych kwalifikacji ASVS zamiast H1.
+Czytaj [POSTEP](../POSTEP-NAPRAW.md) i [h1-status](evidence/h1-status.json). Kod `fix/polutek-h1-acceptance`, `f9edc23ae278fbd2764b39c7bcd0c71810ba78b2`; [szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065), baza c80ef652. Po zapisie checkout audytu. Bez merge/deploy/produkcji/kosztów.
 
-Czytaj [POSTEP](../POSTEP-NAPRAW.md) i [h1-status](evidence/h1-status.json). Kod `fix/polutek-h1-acceptance`, `9824bb0abba7ed3672935845dedc328ae94ad8ff`; [szkic PR #2065](https://github.com/pawelekbyra/polutek-pl/pull/2065), baza c80ef652. Po zapisie checkout audytu. Brak merge/deploy/produkcji/kosztów.
+Dokładny SHA: unit 4779/0/2 pominięte, PG 75/75,krytyczne 36/36,encoder 3/3,typy/lint/pozostałe wykonane bramki i oba lokalne buildy PASS. Aktualny unit przeszedł przez zmieniony local-CI, ale wywołanie było jawnie częściowe (Prisma skip, audit niewybrane); taki raport jest odrzucony przez walidator wydania. Źródła przed/po identyczne; archiwum rzeczywistego finalnego kodu sprawdzone. `release_ready=false`.
 
-Dokładny SHA: unit 4703/0/2 pominięte (EmailEventLockService), PG 75/75, krytyczne 36/36, typy/lint/hotspots/escapes/architektura/env i oba lokalne buildy PASS. Docker public/admin/worker zbudowane i sprawdzone: Next 16.4.1, sharp 0.35.5, vips 8.18.7, rsvg 2.63.2 — 15 prób formatów i 9 HTTP, worker 3/3. `release_ready=false`. [Atrybucja i granice](evidence/h1-images-2026-11-02/source-map.json). Początkowy 835348d7: HDR pominięty/strict wrapper exit 1; finalny fixture potwierdza HDR niezależnym ffprobe. Starych wyników nie nadpisano.
+Docker — 15 kontroli na sześciu syntetycznych obrazach/raportach: rdzeń `55f3a6d8`, niezmieniony w finalnym kandydacie. Realny kompilator: stary runner ignoruje TS2322 w .next i daje exit 0/PASS; finalny daje exit 1/FAIL. To izolowany kontrolny projekt bez generowania Prisma, nie produktowy dowód. [Atrybucja i granice](evidence/h1-release-core-2026-11-02/source-map.json).
 
-Lokalne ID obrazów i rekordy wejść nie są wymuszonym protokołem publikacji. Bazowy tag pozostaje zmienny; migrator/collector nie zbudowane. Pełne API/kolejka/HLS/Redis/storage i K05/DP01–DP09 otwarte. Środowisko działa; bez nowej publikacji konfiguracji i bez ponawiania npm audit po wcześniejszej odmowie. Poprzednie Prisma 81 / restore 11 / HTTP 4 i Windows/batch17 zachowane.
+images.yml/deploy/admin/mergedeploy pozostają niezmienione, nie wywołują nowego walidatora. Stare obrazy aplikacji/native/HTTP/HDR są na `9824`; nie przypisywać ich do nowego SHA. Dalej K06 integracja, pełny stos i K05/DP01–DP09. Nie ponawiać npm audit po wcześniejszej odmowie uploadu grafu. Środowisko działa, bez zmian/publikacji konfiguracji; kanoniczne pokrycia i Windows/batch17 zachowane.
 
 ## Odrębny przebieg na Windows — zachowane wyniki z 2 listopada 2026
 
@@ -199,10 +199,12 @@ Poniższe opisy odnoszą się do datowanych wcześniejszych prób; nie cofają o
 
 ## Następne działanie — pozostałe warunki H1
 
-1. Czytać POSTEP/h1-status, potwierdzić remote SHA, wybrać czystą gałąź kodu PR #2065 i Node 22. Nie uruchamiać aplikacji z gałęzi audytu i nie przełączać checkoutu w trakcie testów/buildów.
-2. K06: wdrożyć i negatywnie przetestować obowiązkowy protokół źródła/wejścia/wyniki/tożsamość obrazu we wszystkich wspieranych ścieżkach publikacji/aktywacji (lokalne istniejące tagi, GHCR/manual workflow, panel, pozostałe obrazy). Lokalne labels/raport nie są zamknięciem. Uzupełnić migrator/collector i zakres wejść/baz. Nie omijać niewykonanych bramek, w tym dawnej odmowy npm audit.
-3. K01/K03: pełny własny API/kolejka/worker/HLS/Redis/storage i dwa przypadki e-mail DB. HDR syntetyczny w workerze 3/3 jest potwierdzony, nie powtarzać diagnozy utraty tagów bez nowej zmiany; nadal brak oceny wizualnej rzeczywistego HDR.
-4. K05: aktywny profil i DP01–DP09 wymagają osobnych rozstrzygnięć właściciela. Bez merge/deploy/produkcji/kosztów/ogólnej kwalifikacji ASVS. Orientacyjnie H1 ~80%, całość 5–10%; po turze aktualizować i wyjaśniać zakres szacunku.
+1. Czytać POSTEP/h1-status, potwierdzić remote SHA, wybrać czystą gałąź kodu PR #2065 i Node 22. Nie przełączać checkoutu podczas testów/buildów.
+2. K06: rdzeń jest gotowy, lecz potrzebny zaufany producent archiwum/przypiętych wejść/testów i wszystkie konsumenty: images workflow, lokalne/istniejące obrazy, GHCR, admin, rollback. Wywoływać verify przed publikacją, migracjami i aktywacją i używać zwróconych niezmiennych ID. Oczekiwany hash dowodu i SHA dostarcza zaufany wywołujący. Całe ścieżki wymagają prób ujemnych i dodatniego sandboxa; uzupełnić migrator/collector. Bez pomijania niewykonanych mandatory gates.
+3. W polityce audit pozostaje obowiązkowy; w tej sesji nie ponawiać wcześniej odrzuconego uploadu. Dotychczasowy lokalny odbiór i syntetyczne raporty kontrolne nie są kompletnym dowodem wydania.
+4. K01/K03: pełny własny API/kolejka/worker/HLS/Redis/storage i dwa e-mail DB. K05 aktywny profil/DP01–DP09 nadal otwarte. Dalszy pogłębiony audyt wróci w odpowiednim harmonogramie; bez ogólnej nowej kwalifikacji ASVS zamiast H1.
+
+H1 około 80%, całość 5–10%; podawać po każdej turze. Nie scalać, nie wdrażać, nie używać produkcji ani płatnych zasobów bez osobnej zgody.
 
 ## Zapis po każdej partii H1
 

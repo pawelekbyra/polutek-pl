@@ -279,3 +279,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Początkowy HDR2/3 z jednym skip zachowany jako brak dowodu/strict exit 1; poprawiono fixture VUI i niezależne sprawdzenie tagów, kod enkodera bez zmian.
 - Końcowo unit 4703/0/2skip,PG 75/75,krytyczne 36/36,typy/lint/pozostałe wykonane bramki i oba buildy PASS. Źródła i lokalne imageID zapisane, lecz protokół publikacji nie jest jeszcze wymuszony; migrator/collector i pełny stos/K05 otwarte.
 - H1 ~80%,całość 5–10%;0 zamkniętych ustaleń/pakietów. Kanoniczne pokrycia, Windows i stare dowody zachowane. Bez ASVS PASS,merge/deploy/produkcji/kosztów.
+
+## 3 listopada 2026 — H1: wspólny rdzeń K06 i pochodzenie CI
+
+- Cztery commity, finalny `f9edc23ae278fbd2764b39c7bcd0c71810ba78b2`; walidator źródeł/17 bramek/wejść/pięciu obrazów, zewnętrzny hash dowodu, stable source snapshots i realne podsumowania testów. Publikatory/konsumenci jeszcze niepodłączone.
+- 128/128 celowanych,15 oczekiwanych kontroli z prawdziwym Dockerem i sześcioma syntetycznymi obrazami, prawdziwy TS2322: baseline exit 0/PASS → finalny exit 1/FAIL. Brak danych produktowego release-proof.
+- Końcowy unit 4779/0/2skip przez częściowy local-CI,PG 75/75,krytyczne 36/36,encoder 3/3,pozostałe wykonane lokalne bramki/budowy PASS. Rzeczywiste archiwum zgodne; częściowy raport prawidłowo odrzucony do wydania. Wymóg audit zachowany, brak retry starej odmowy.
+- Dowody h1-release-core-2026-11-02; stare obrazy na9824 i wszystkie wcześniejsze dane zachowane. H1 ~80%,całość 5–10%;0 zamkniętych ustaleń/pakietów,bez ASVS PASS/merge/deploy/produkcji/kosztów.
