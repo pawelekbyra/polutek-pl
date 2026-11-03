@@ -1,5 +1,15 @@
 # Postęp realizacji roadmapy — H1
 
+## Bieżące przejęcie — 3 listopada 2026, lokalna gałąź audytu
+
+Obowiązuje `/opt/codex/ZADANIE-AUDYT.md`: implementacja tylko w tym worktree na `docs/polutek-platform-audit`, bez PR/merge/deploy. Cztery commity rdzenia K06 przeniesiono lokalnie do `37eb1edb`; wcześniejsze wyniki H1 niżej zachowują przypisanie do historycznych SHA. Pozostałych zmian tamtego kandydata jeszcze nie przeniesiono; nie traktować tej gałęzi jako identycznej z f9edc23a.
+
+K06, część budowania: nowe `release/build.mjs` i polecenie `release-proof.mjs build` walidują kompletny raport, źródła i wejścia przed budową. Pięć obrazów kolejno, przypięte bazy, komplet publicznych argumentów i etykiet, `--iidfile` i ponowny seal; bez push. Oba Dockerfile obsługują przypięte wejścia. Wynik: **82/82 testy celowane, lint zmienionych plików PASS**. Tsc całego repo exit 2, diagnostyki w istniejących testach, brak w zmienionych ścieżkach; bez porównania czystej bazy nie ogłaszamy całej kontroli zieloną. Dowody: [k06-local-producer](program-audytu/evidence/k06-local-producer-2026-11-03/build-result.json).
+
+Testy budowania używają jawnego adaptera kontrolnego Dockera. Nie wykonano budowy rzeczywistych pięciu obrazów ani odbioru aplikacji. K06 nadal otwarte. Następny krok: zaufany producent uruchamiający pełne CI, ochrona przed starym raportem, potem wszystkie konsumujące ścieżki. Historyczny szacunek H1 ~80%, całości 5–10% bez podwyższenia i bez formalnego zamknięcia pakietu.
+
+## Poprzedni odbiór — historyczny kandydat f9edc23a
+
 Stan: 3 listopada 2026 (partia rozpoczęta 2 listopada). **Wspólny walidator źródeł/kontroli/wejść/obrazów jest zaimplementowany i sprawdzony. Runner CI zapisuje pochodzenie wyników i nie ignoruje błędów w `.next/`. Producent wydania i wszystkie ścieżki publikacji/aktywacji pozostają do podłączenia.**
 
 **Szacunkowo H1 około 80% / 20% pozostało; cała roadmapa 5–10% / 90–95% pozostało.** Szacunek makro pozostaje ostrożny: ten pakiet to rdzeń K06, nie zakończona ochrona całego procesu. Zero całych pakietów i ustaleń formalnie zamkniętych.

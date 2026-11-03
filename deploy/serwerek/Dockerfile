@@ -8,7 +8,10 @@
 # collector (pp-collector, one 108 KB bundle on node:22-alpine, ~240 MB on disk, almost all of it the node base image); all used by deploy.sh.
 # NEXT_PUBLIC_* values are PUBLIC by design (inlined into the client bundle), so passing them as build args is fine.
 # Real secrets (BETTER_AUTH_SECRET, GOOGLE_CLIENT_SECRET, STRIPE_SECRET_KEY, DATABASE_URL ...) are NEVER baked in: they come from env_file at runtime.
-FROM node:22-bookworm-slim AS deps
+ARG NODE_BASE=node:22-bookworm-slim
+ARG FFMPEG_BASE=mwader/static-ffmpeg:8.0.1
+ARG COLLECTOR_BASE=node:22-alpine
+FROM ${NODE_BASE} AS deps
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -21,6 +24,7 @@ ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 # Optional, patron-zone checkout only (PREMIUM_PASS_STRIPE_*): empty = the checkout uses NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.
 ARG NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY=
+ARG NEXT_PUBLIC_BLOB_PUBLIC_HOST=
 ARG NEXT_PUBLIC_R2_PUBLIC_HOST=
 ARG NEXT_PUBLIC_APP_NAME=
 ARG NEXT_PUBLIC_SUPPORT_EMAIL=
@@ -41,7 +45,7 @@ COPY . .
 RUN npx prisma generate && npx next build
 
 # Only the prisma CLI + schema + migrations (no app node_modules), version pinned from package-lock.json.
-FROM node:22-bookworm-slim AS migrator
+FROM ${NODE_BASE} AS migrator
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package-lock.json ./
@@ -55,9 +59,9 @@ CMD ["npx", "prisma", "migrate", "deploy"]
 # Own video pipeline worker (scripts/video-worker.ts): pulls encode jobs from Postgres, runs ffmpeg, uploads HLS to R2.
 # Static ffmpeg of the same version the encoder was validated with (8.0.1); needs the full node_modules (tsx, prisma client, aws sdk).
 # Never part of the Next.js process. Runbook: docs/operations/VIDEO-PIPELINE.md.
-FROM mwader/static-ffmpeg:8.0.1 AS ffmpeg
+FROM ${FFMPEG_BASE} AS ffmpeg
 
-FROM node:22-bookworm-slim AS worker
+FROM ${NODE_BASE} AS worker
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=ffmpeg /ffmpeg /usr/local/bin/ffmpeg
 COPY --from=ffmpeg /ffprobe /usr/local/bin/ffprobe
@@ -81,7 +85,7 @@ COPY lib/telemetry ./lib/telemetry
 COPY services/pp-collector ./services/pp-collector
 RUN npm run collector:build
 
-FROM node:22-alpine AS collector
+FROM ${COLLECTOR_BASE} AS collector
 WORKDIR /app
 ENV NODE_ENV=production PORT=3200
 COPY --from=collector-build --chown=node:node /app/dist/pp-collector/collector.cjs ./collector.cjs
@@ -90,7 +94,7 @@ EXPOSE 3200
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3   CMD node -e "fetch('http://127.0.0.1:3200/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "--max-old-space-size=48", "collector.cjs"]
 
-FROM node:22-bookworm-slim AS runner
+FROM ${NODE_BASE} AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0

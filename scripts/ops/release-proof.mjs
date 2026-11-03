@@ -5,6 +5,7 @@ import path from 'node:path';
 import { HASH, REVISION, hashJson, readJson, requireValue, verifySourceArchive } from './release/source.mjs';
 import { IMAGE_KINDS, expectedLabels, validateInputs, validateQuality } from './release/policy.mjs';
 import { createProof, verifyProof } from './release/proof.mjs';
+import { buildRelease } from './release/build.mjs';
 
 function run(argv) {
   const [command, ...flags] = argv;
@@ -12,9 +13,10 @@ function run(argv) {
     'check-ci': ['report', 'revision', 'source'],
     labels: ['report', 'revision', 'source', 'inputs', 'kind'],
     seal: ['report', 'revision', 'source', 'inputs', 'images', 'out'],
+    build: ['report', 'revision', 'source', 'inputs', 'out'],
     verify: ['proof', 'proof-sha256', 'revision', 'source', 'inputs', 'scope'],
   };
-  requireValue(Object.hasOwn(allowed, command), 'Usage: release-proof.mjs check-ci|labels|seal|verify --key=value');
+  requireValue(Object.hasOwn(allowed, command), 'Usage: release-proof.mjs check-ci|labels|build|seal|verify --key=value');
   const options = Object.create(null);
   for (const flag of flags) {
     const match = /^--([a-z][a-z0-9-]*)=(.+)$/s.exec(flag);
@@ -37,6 +39,10 @@ function run(argv) {
   requireValue(options.inputs, '--inputs is required');
   const inputs = readJson(options.inputs);
   validateInputs(inputs);
+  if (command === 'build') {
+    requireValue(options.out, '--out is required');
+    return buildRelease({ report, inputs, revision: options.revision, sourceRoot: options.source, output: options.out });
+  }
   if (command === 'labels') {
     requireValue(IMAGE_KINDS.includes(options.kind), '--kind is required');
     return expectedLabels(report, inputs, options.revision, options.kind);

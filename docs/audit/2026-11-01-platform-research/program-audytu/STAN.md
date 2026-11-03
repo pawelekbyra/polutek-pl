@@ -1,5 +1,17 @@
 # Stan badania — punkt wznowienia
 
+## Bieżące wznowienie lokalne — 3 listopada 2026
+
+Praca wyłącznie `/opt/codex/polutek-pl/.worktrees/platform-audit`, gałąź `docs/polutek-platform-audit`, według `/opt/codex/ZADANIE-AUDYT.md`. Bez przełączania na historyczną gałąź PR, publikowania PR, merge i deploy. Rdzeń K06 zaadaptowany z czterech istniejących commitów do `37eb1edb` (mapa w DECYZJE-DO-WLASCICIELA.md). Inne wcześniejsze poprawki H1 nie są automatycznie obecne w tej gałęzi.
+
+Dodano lokalne budowanie pięciu obrazów z przypiętych wejść i seal niezmiennych ID: 82/82 testy, lint PASS; tsc całego repo exit 2, bez diagnostyk zmienionych plików K06. Dowody `evidence/k06-local-producer-2026-11-03/build-result.json`. Kontrolny port Dockera nie zastępuje rzeczywistych obrazów. K06/H1 niezamknięte; szacunek historyczny H1 ~80%, całość 5–10% bez podwyższenia.
+
+**Aktualny pakiet:** K06 — producent. Następne: uruchomienie pełnego CI z unikalnym identyfikatorem, rzeczywiste archiwum Git, odmowa starego/niepełnego raportu i zmienionych źródeł, następnie integracja konsumentów. Zapisano testy `tests/unit/ops/release-produce.test.ts`; początkowy RED (brak modułu), implementacja w toku.
+
+**Komenda wznowienia:** `nice -n 10 npx vitest run tests/unit/ops/release-produce.test.ts tests/unit/ops/release-build.test.ts tests/unit/ops/release-proof.test.ts tests/unit/ops/release-proof-process.test.ts --maxWorkers=1`. Nie uruchamiać producenta pełnego wydania w tej sesji: bramka audit nadal wymaga rozstrzygnięcia wcześniejszej odmowy uploadu grafu. Nie używać produkcyjnego Dockera/DB.
+
+## Historyczny stan przekazania z poprzedniej instancji
+
 Aktualizacja: 3 listopada 2026 (partia rozpoczęta 2 listopada). **Rdzeń K06 działa: wspólna walidacja źródeł/kontroli/wejść/tożsamości obrazów, zewnętrzny hash dowodu, strukturalne raporty local-CI. Producent i ścieżki publikacji/aktywacji nie są jeszcze podłączone.**
 
 **Szacunkowo H1 około 80% / 20% pozostało; cała roadmapa 5–10% / 90–95% pozostało.** Ostrożny szacunek makro; zero całych pakietów/ustaleń formalnie zamkniętych. Pogłębiony audyt czasowo odłożony na rzecz H1, nie anulowany.

@@ -288,3 +288,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Dowody h1-release-core-2026-11-02; stare obrazy na9824 i wszystkie wcześniejsze dane zachowane. H1 ~80%,całość 5–10%;0 zamkniętych ustaleń/pakietów,bez ASVS PASS/merge/deploy/produkcji/kosztów.
 
 - Uzupełnienie weryfikacji: bezpośrednie Git/REST potwierdziły remote i draft PR; alternatywny odczyt przez pomocniczy proces/GraphQL zwracał401. Bez zmian poświadczeń i konfiguracji; działające metody zapisane w STAN.
+
+## 3 listopada 2026 — lokalne przejęcie K06: budowanie przypiętych obrazów
+
+- Rdzeń K06 przeniesiony czterema cherry-pickami do gałęzi audytu, bez nowszych zmian wyglądu. Historyczne dowody pozostają przypisane do wcześniejszych SHA.
+- Dodano `build`: kolejno pięć obrazów z przypiętych baz, pełnych argumentów i etykiet, ID z `--iidfile`, kontrola źródeł i seal. Bez publikacji.
+- 82/82 celowane, lint PASS, whole tsc exit 2 poza zmienionymi ścieżkami; bez zielonego całego repo i bez realnego Dockera w tej partii. Dowody `k06-local-producer-2026-11-03`.
+- Dalej producent pełnych kontroli i wszyscy konsumenci. H1 historycznie ~80%, całość 5–10%; bez zamknięcia K06/ustaleń/ASVS, PR, merge, deploy ani produkcji.

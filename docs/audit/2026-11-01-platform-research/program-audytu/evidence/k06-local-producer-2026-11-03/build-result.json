@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-03",
+  "package": "K06-part-build",
+  "source_parent": "37eb1edb",
+  "source_hashes": {
+    "scripts/ops/release/build.mjs": "a05a76ee1ef09d56f7fd1172fa4303982241114513f9ab1cc6b91d4950bfc9ed",
+    "scripts/ops/release-proof.mjs": "0520c696498b6fcfb78e61000e9b81213444c6e2b97ad23fb6489e28c56a31bd",
+    "deploy/serwerek/Dockerfile": "cb95f3592795d746092a89aad28e61dcfb134144bd7e682620948095e6b4418b",
+    "deploy/serwerek/Dockerfile.admin": "36e99d6f0b2490c1ca42742db5c798e96709fec7819c3278a41d575b25bae3ea",
+    "tests/unit/ops/release-build.test.ts": "a49d9b9f09dcb28c4f941dab5b2bf0370f0629b62c95ff2d0652df0b850de906"
+  },
+  "tests": {
+    "passed": 82,
+    "failed": 0,
+    "skipped": 0
+  },
+  "red": "New producer boundary suite failed to load because the build module did not exist; this is missing implementation, not a historical product exploit.",
+  "lint_exit": 0,
+  "whole_types_exit": 2,
+  "whole_types_limit": "Existing repository diagnostics, none reported in changed release build/test paths. No clean baseline comparison was run.",
+  "docker": "Controlled port only; no actual images, services, publication or deployment.",
+  "release_ready": false
+}
