@@ -26,6 +26,7 @@ export type BrandLogoVariant = "wordmark-blue-symbol" | "wordmark-blue-symbol-or
  * All five stay in the code: "przywróć okularki" -> "glasses", "przywróć nowe logo" / "przywróć logo bez symbolu" ->
  * "wordmark-blue" (lettering only), "przywróć logo z symbolem" -> "wordmark-blue-symbol" (symbol without arcs),
  * "przywróć łuki" -> "wordmark-blue-symbol-orbit".
+ * Live since 2026-11-03: "glasses" (owner: "przywróć okularki"; the symbol work was dropped, the other variants are archived here).
  * Favicon, app icons and the manifest are not affected (they stay the glasses).
  */
-export const BRAND_LOGO_VARIANT: BrandLogoVariant = "wordmark-blue-symbol";
+export const BRAND_LOGO_VARIANT: BrandLogoVariant = "glasses";
