@@ -7,3 +7,4 @@ K03-restore-critical,50b7a0c5,program-audytu/evidence/k06-local-producer-2026-11
 K06-build-types,7d5db46c,program-audytu/evidence/k06-local-producer-2026-11-03/next-typecheck/result.json,CZESCIOWO
 K02-runtime,04ca6503,program-audytu/evidence/k06-local-producer-2026-11-03/k02-runtime/result.json,CZESCIOWO
 K03-baseline,d72dc0e5,program-audytu/evidence/k06-local-producer-2026-11-03/baseline/result.json,CZESCIOWO
+K01-K03-HDR,f9e5b027,program-audytu/evidence/k06-local-producer-2026-11-03/hdr/result.json,CZESCIOWO

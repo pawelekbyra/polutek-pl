@@ -336,3 +336,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Strict gate potwierdził RED przy 2 PASS/1 skip mimo Vitest exit0. Przywrócono fixture z `a2708f00`, jawne VUI HLG i niezależne ffprobe zamiast dynamicznego skip.
 - GREEN:3/3 rzeczywistych encode, brak skip, lint i focused types PASS. Enkoder i polityka dostępu bez zmian. Pełny pipeline/obrazy K01 nadal otwarte.
 - Następne własny PG i oba e-mail DB; dostępny obraz17-alpine, bez pobierania/produkcji. H1~80%, całość5–10%, bez formalnego zamknięcia całych pakietów.
+
+## 3 listopada 2026 — realny PostgreSQL i oba przypadki e-mail DB
+
+- Nowe własne kontenery na niezmiennym ID lokalnego obrazu17-alpine; PostgreSQL17.11, autentyczny Prisma i81 migracji. RED64/75+11fail w dwóch starych fixture → GREEN77/77 w13 plikach, bez skip, z oboma e-mail DB.
+- Fixture z8dce5f94 nie zmieniają migracji/retencji. Guard wszystkich plików PG/e-mail:9RED→48/48 z istniejącymi procesowymi regresjami kompilatora. Lint i focused types PASS, oba własne kontenery po testach nie istnieją.
+- Providerzy częściowo kontrolowani, pełny produkt nadal otwarty. Nie podmieniono raw unit, trzy jego pominięcia mają osobne dowody. Dalej pozostałe H1 i konsumenci K06. Bez produkcji/publikacji/nowych ASVS PASS; szacunki bez zmiany.

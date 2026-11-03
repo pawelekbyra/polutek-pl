@@ -32,6 +32,7 @@ import {
   parseEslintSummary,
   parseTscOutput,
   parseVitestJson,
+  requiredSuitesPass,
   parseWorkflowEnv,
   parseWorkflowRuns,
   pickRunnable,
@@ -467,8 +468,15 @@ async function runPostgresGate() {
       ['vitest postgres', process.execPath, [bin('vitest'), 'run', '--config', 'vitest.postgres.config.ts', '--maxWorkers=1', '--reporter=dot', '--reporter=json', `--outputFile.json=${jsonPath}`], { env }],
     ]);
     let summary = null;
-    try { summary = parseVitestJson(JSON.parse(readFileSync(jsonPath, 'utf8'))); } catch { /* failure below */ }
-    if (result.status === STATUS.PASS && !testSummaryPasses(summary, { noSkips: true })) return fail('PostgreSQL: brak niepustego raportu bez pominiec');
+    let report = null;
+    try { report = JSON.parse(readFileSync(jsonPath, 'utf8')); summary = parseVitestJson(report); } catch { /* failure below */ }
+    const inventory = git('ls-files', '--cached', '--others', '--exclude-standard', '--', 'tests/postgres');
+    const databaseSuites = inventory.out.split('\n').filter(file => /\.pg\.test\.ts$/.test(file));
+    const requiredFiles = [...databaseSuites, 'tests/integration/email-event-idempotency.test.ts'].map(file => path.resolve(ROOT, file));
+    if (result.status === STATUS.PASS && (!inventory.ok || databaseSuites.length === 0
+      || !testSummaryPasses(summary, { noSkips: true }) || !requiredSuitesPass(report, requiredFiles))) {
+      return fail('PostgreSQL: wszystkie wymagane pliki, w tym e-mail DB, musza miec wykonane poprawne testy bez pominiec');
+    }
     return { ...result, reason: `${image}: ${result.reason}`, testSummary: summary };
   } finally {
     spawnSync('docker', ['rm', '-f', name], { windowsHide: true });

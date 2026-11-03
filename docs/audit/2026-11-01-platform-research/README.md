@@ -2,7 +2,7 @@
 
 Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-audit`** w repozytorium `pawelekbyra/polutek-pl`. Właściciel 1 listopada 2026 polecił zachowywać tutaj także poprzednie badanie i dopisywać kolejne wnioski na tej samej gałęzi.
 
-**Roadmapa v1 zatwierdzona przez właściciela 2 listopada 2026. H1: kandydaty zapisane, pełny odbiór blokuje środowisko.** [Bieżący postęp i blokady](POSTEP-NAPRAW.md). Weryfikacja obejmuje ten etap; szersze nowe ASVS pozostaje odłożone w tej instancji. Zachowano równoległe wyniki Windows i adopcję partii 17. Bez scalenia i wdrożenia.
+**Roadmapa v1 zatwierdzona; realizacja trwa lokalnie na `docs/polutek-platform-audit`.** Producent K06 i kontrola przypiętych baz są zaimplementowane; pełny unit4729/0fail/3skip, typy i lint przeszły. Trzy pominięcia mają osobne dowody: realny PostgreSQL77/77 z e-mail DB i FFmpeg3/3 z HDR. Pozostają inne bramki H1, konsumenci K06 i pełny produkt. [Bieżący postęp](POSTEP-NAPRAW.md), [punkt wznowienia](program-audytu/STAN.md). Bez PR, scalenia i wdrożenia. Szersze ASVS pozostaje odłożone; wyniki Windows i partia17 zachowane.
 
 ## Zacznij tutaj
 
@@ -10,7 +10,7 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 |---|---|
 | [ROADMAPA NAPRAW v1](ROADMAPA-NAPRAW.md) | Wszystkie R01–R37, 40 pakietów w 8 etapach, testy, zależności i braki dowodowe |
 | [Kolejność napraw — CSV](KOLEJNOSC-NAPRAW.csv) | 37/37 ustaleń, klasyfikacja, priorytety, zależności i status planu |
-| [Plan wdrożenia i dalszej weryfikacji](PLAN-WDROZENIA-NAPRAW.md) | Proponowany harmonogram do zatwierdzenia; obecnie bez rozpoczęcia prac |
+| [Plan wdrożenia i dalszej weryfikacji](PLAN-WDROZENIA-NAPRAW.md) | Historyczny harmonogram; bieżąca realizacja i ograniczenia w POSTEP-NAPRAW.md |
 | [Co już wiemy — dla właściciela](program-audytu/WNIOSEK-DLA-WLASCICIELA.md) | Mocne fundamenty, odtworzone błędy i granice gotowości bez oceny w punktach |
 | [Plan domknięcia wszystkich obszarów](program-audytu/DOMKNIECIE-DOWODOW.csv) | Brakujące dowody i warunki odbioru dla D01–D18; żaden obszar nie jest zamknięty |
 | [Bramki gotowości](program-audytu/BRAMKI-GOTOWOSCI.csv) | Osobne wymagania dla lokalnego runtime, bety, sprzedaży, otwartej platformy i 10000 widzów |

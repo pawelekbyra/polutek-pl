@@ -18,7 +18,11 @@ Przywrócono baseline K03 z pięciu wcześniejszych commitów: fixture używają
 
 Baseline zapisany w `d72dc0e5`. HDR przywrócony z `a2708f00`: strict gate najpierw odrzucił 2 PASS/1 skip, po jawnym VUI fixture i niezależnej kontroli ffprobe **3/3 rzeczywiste encody PASS bez skip**; lint i focused types PASS, źródła stabilne. Kod enkodera bez zmian. [Dowody HDR](program-audytu/evidence/k06-local-producer-2026-11-03/hdr/result.json). To hostowy FFmpeg i syntetyczne filmy, nie pełny pipeline/obraz aplikacji.
 
-Następne: własny PostgreSQL i oba e-mail DB, pozostałe bramki H1 oraz konsumenci K06. Lokalny obraz `postgres:17-alpine` dostępny; używać jego pełnego ID, własnego nowego kontenera i syntetycznych danych. [Mapa dotychczasowych commitów](program-audytu/MAPA-COMMITOW.csv). Wszystkie pełne pakiety nadal otwarte. K06 pozostaje otwarte, szacunki bez zmian.
+HDR zapisany w `f9e5b027`. Realny PostgreSQL przywrócony z fixture `8dce5f94`: RED **64 PASS / 11 FAIL** w dwóch nieprawidłowych fixture → GREEN **77/77, 13 plików, zero skip**, w tym oba e-mail DB. Rzeczywisty PostgreSQL **17.11**, autentyczny Prisma, 81 niezmienionych migracji, własne nowe kontenery i syntetyczne dane; oba kontenery sprzątnięte i sprawdzone po ID. Lint i focused types PASS. Nowy guard wymaganych plików: 9 RED → GREEN, z istniejącymi regresjami kompilatora **48/48**. [Dowody PG](program-audytu/evidence/k06-local-producer-2026-11-03/postgres/result.json).
+
+Do profilu PG dołączono oba testy e-mail; runner odrzuca brakujące/puste/pominięte pliki mimo zielonych sum. To dowód DB/Prisma, nie całego HTTP/storage/kolejki/Workera. Dwie pominięte pozycje e-mail i HDR ze starego pełnego unit mają teraz oddzielne rzeczywiste dowody; raw unit nie jest przepisywany.
+
+Następne: pozostałe bramki H1 (architektura, hotspots, strict-escapes, env, parytet/migracje i typy aplikacji), pozostali konsumenci K06 oraz pełny własny cykl produktu. [Mapa dotychczasowych commitów](program-audytu/MAPA-COMMITOW.csv). Wszystkie pełne pakiety nadal otwarte. K06 pozostaje otwarte, szacunki bez zmian.
 
 Obowiązuje `/opt/codex/ZADANIE-AUDYT.md`: implementacja tylko w tym worktree na `docs/polutek-platform-audit`, bez PR/merge/deploy. Cztery commity rdzenia K06 przeniesiono lokalnie do `37eb1edb`; wcześniejsze wyniki H1 niżej zachowują przypisanie do historycznych SHA. Pozostałych zmian tamtego kandydata jeszcze nie przeniesiono; nie traktować tej gałęzi jako identycznej z f9edc23a.
 

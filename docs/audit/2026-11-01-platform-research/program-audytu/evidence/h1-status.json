@@ -1425,6 +1425,25 @@
       "lint_exit": 0,
       "focused_types_exit": 0,
       "evidence": "k06-local-producer-2026-11-03/hdr/result.json"
-    }
+    },
+    "postgres": {
+      "summary": {
+        "total": 77,
+        "passed": 77,
+        "failed": 0,
+        "skipped": 0,
+        "files": 13,
+        "failedFiles": [],
+        "success": true
+      },
+      "postgres": "postgres (PostgreSQL) 17.11",
+      "email_real_db": true,
+      "owned_containers_cleaned": 2,
+      "receipt_unit_passed": 48,
+      "focused_types_exit": 0,
+      "lint_exit": 0,
+      "evidence": "k06-local-producer-2026-11-03/postgres/result.json"
+    },
+    "next": "OTHER_H1_GATES_THEN_K06_CONSUMERS_FULL_PRODUCT"
   }
 }

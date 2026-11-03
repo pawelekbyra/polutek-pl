@@ -353,6 +353,7 @@ nie otwieraj portów, nie osłabiaj SSH i zapory, nie usuwaj serwera ani dysku, 
 Wdrożenie (`git archive` → `deploy.sh`, panel `deploy-admin.sh`, rollback `--rollback`) opisano w SERWEREK.md rozdz. 7 i wykonuje się tylko na zgodę właściciela.
 
 **Konwencje:**
+- Profil PostgreSQL musi wykonać każdy plik `.pg.test.ts` oraz oba przypadki e-mail DB; runner odrzuca brakujące/puste/pominięte zestawy mimo zielonych sum. Używać własnej odrębnej bazy/kontenera; opis: `docs/operations/LOCAL-CI.md`.
 - Obie aplikacje Next mają `typescript.ignoreBuildErrors=false`; błąd typu zatrzymuje także budowę obrazu. Osobne CI i powiązanie obrazu z dowodem nadal obowiązują. Nie wyłączać kontroli dla zielonego buildu.
 - `npm run test:critical-path` używa `scripts/test-critical-path.mjs`; oba wymagane pliki muszą wykonać testy, bez pustych, pominiętych lub nieudanych przypadków. Raport procesu jest warunkiem sukcesu.
 - `scripts/verify-restored-database.ts` jest tylko do odczytu odrębnej odtworzonej bazy: błąd dowolnej obowiązkowej kontroli lub manifestu oznacza niezerowy wynik; historia zakończonej/wycofanej migracji nie jest awarią. Kontrakt: `docs/operations/RESTORE-VERIFICATION.md`.
