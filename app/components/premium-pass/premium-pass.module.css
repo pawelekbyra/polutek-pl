@@ -225,7 +225,9 @@
 .currencyLabel { min-width: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--pass-gray-700); text-wrap: balance; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 14px; align-items: stretch; }
 @media (max-width: 340px) { .productGrid { grid-template-columns: minmax(0, 1fr); } }
-.legalRow { display: block; }
+.legalRow { display: inline-flex; align-items: center; justify-content: center; gap: 11px; flex-wrap: nowrap; }
+.legalRow a { line-height: 16px; white-space: nowrap; }
+.legalSep { flex: 0 0 auto; display: block; width: 1px; height: 13px; background: var(--pass-sep, #9aa9bf); }
 .secureFooter a { color: var(--pass-gray-500); text-decoration: underline; text-underline-offset: 2px; }
 .secureFooter a:hover { color: var(--pass-gray-600); }
 .consent a { color: var(--chan-blue, #2563eb); text-decoration: underline; text-underline-offset: 2px; }
@@ -347,3 +349,14 @@
 }
 /* 320 px wide: the title must stay on one row even in French / Portuguese. */
 @media (max-width: 340px) { .sheetTitle { font-size: 18px; } }
+
+/* Trust signals (checkout-trust): the SSL line + payment logos under the order summary, the Stripe badge on the seller card. Green is used ONLY for security elements. */
+.trustRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 10px; }
+.trustSsl { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--pass-ok); }
+.trustSsl svg { flex: 0 0 auto; }
+.trustLogos { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+.trustLogos li { display: block; line-height: 0; }
+.trustLogos img { display: block; height: 22px; width: auto; }
+@media (max-width: 380px) { .trustLogos img { height: 20px; } }
+.sellerCardText .sellerStripe { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; font-size: 11px; line-height: 14px; font-weight: 600; color: var(--pass-ok); }
+.sellerStripe svg { flex: 0 0 auto; }

@@ -14,6 +14,7 @@ import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/patron-
 import { TIP_CURRENCY_SYMBOLS, describeTipMethod, tipCurrencyTitle } from "../support/tip-flow-config";
 import { TipSelect } from "../support/TipSelect";
 import { PassSellerCard } from "./PassSellerCard";
+import { PassTrustRow, type PassPayMode } from "./PassTrustRow";
 import { price, productName, productNote, totalLabel, vatLine, vatTermsNote } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
@@ -80,6 +81,9 @@ interface CommonProps {
   notice?: string | null;
   unavailable: boolean;
   busy: boolean;
+  /** Gateway mode and the method ids on offer for this currency: what the trust row (SSL line, logos) may claim. */
+  mode: PassPayMode;
+  methods: string[];
 }
 
 export interface PassPlanStepProps extends CommonProps {
@@ -88,7 +92,7 @@ export interface PassPlanStepProps extends CommonProps {
 }
 
 /** Step 1: currency and option, with the order summary. */
-export function PassPlanStep({ tx, language, offer, product, currency, onProduct, onCurrency, notice, unavailable, busy }: PassPlanStepProps) {
+export function PassPlanStep({ tx, language, offer, product, currency, onProduct, onCurrency, notice, unavailable, busy, mode, methods }: PassPlanStepProps) {
   const ids = useId();
   return (
     <>
@@ -131,33 +135,34 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
       {/* Seller first (a passive info row), the total last, right above the action button. */}
-      <PassSellerCard tx={tx} />
+      <PassSellerCard tx={tx} mode={mode} />
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} totalOnly />
+      <PassTrustRow tx={tx} mode={mode} methods={methods} currency={currency} />
     </>
   );
 }
 
 /** Step 3 head (both modes): the seller row first, then the label-style heading with the order summary under it (8 px, like any field). */
-export function PassPayHead({ heading, tx, ...summary }: { heading: React.ReactNode; tx: Tx; language: Locale; offer: PremiumPassOffer; product: PatronOfferProduct; currency: PatronCurrency }) {
+export function PassPayHead({ heading, tx, mode, methods, ...summary }: { heading: React.ReactNode; tx: Tx; language: Locale; offer: PremiumPassOffer; product: PatronOfferProduct; currency: PatronCurrency; mode: PassPayMode; methods: string[] }) {
   return (
     <>
-      <PassSellerCard tx={tx} compact />
+      <PassSellerCard tx={tx} compact mode={mode} />
       <div>
         {heading}
         <PassOrderSummary tx={tx} {...summary} compact />
+        <PassTrustRow tx={tx} mode={mode} methods={methods} currency={summary.currency} />
       </div>
     </>
   );
 }
 
 export interface PassMethodStepProps extends CommonProps {
-  methods: string[];
   method: string | null;
   onMethod: (method: string) => void;
 }
 
 /** Step 2: the payment method and the order summary, Terms and Privacy Policy as links. */
-export function PassMethodStep({ tx, language, offer, product, currency, methods, method, onMethod, notice, unavailable }: PassMethodStepProps) {
+export function PassMethodStep({ tx, language, offer, product, currency, methods, method, onMethod, notice, unavailable, mode }: PassMethodStepProps) {
   return (
     <>
       {unavailable && (
@@ -173,8 +178,9 @@ export function PassMethodStep({ tx, language, offer, product, currency, methods
       />
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
-      <PassSellerCard tx={tx} />
+      <PassSellerCard tx={tx} mode={mode} />
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
+      <PassTrustRow tx={tx} mode={mode} methods={methods} currency={currency} />
     </>
   );
 }

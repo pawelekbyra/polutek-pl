@@ -19,7 +19,6 @@
  "Become a patron · from {0}": "Hazte mecenas · desde {0}",
  "Become a patron · {0}": "Hazte mecenas · {0}",
  "Get Premium": "Hazte con Premium",
- "and": "y",
  "Bestseller": "Bestseller",
  "Can I withdraw from the contract?": "¿Puedo desistir del contrato?",
  "Change method": "Cambiar de método",
@@ -134,5 +133,10 @@
  "Patron zone open until {0}. Another payment extends your access.": "Zona de mecenas abierta hasta el {0}. Otro pago prolonga tu acceso.",
  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or 3-month access. No subscription.": "Apoya el proyecto y entra en la zona de mecenas: material que no encontrarás en ningún otro sitio. Elige el acceso de 30 días o de 3 meses. Sin suscripción.",
  "30-day access costs {0} and 3-month access {1} (final prices, the seller is exempt from VAT; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "El acceso de 30 días cuesta {0} y el acceso de 3 meses {1} (precios finales, el vendedor está exento de IVA; los precios en otras monedas se muestran al pagar). Cada pago adicional prolonga tu acceso 30 días o 3 meses; nada se renueva por sí solo.",
- "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "El acceso de 30 días cuesta {0} y el acceso de 3 meses {1} (precios brutos; los precios en otras monedas se muestran al pagar). Cada pago adicional prolonga tu acceso 30 días o 3 meses; nada se renueva por sí solo."
+ "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "El acceso de 30 días cuesta {0} y el acceso de 3 meses {1} (precios brutos; los precios en otras monedas se muestran al pagar). Cada pago adicional prolonga tu acceso 30 días o 3 meses; nada se renueva por sí solo.",
+ "Secure SSL payment": "Pago seguro con SSL",
+ "Secure SSL connection": "Conexión segura SSL",
+ "Accepted payment methods": "Métodos de pago aceptados",
+ "Payment processed by Stripe": "Pago procesado por Stripe",
+ "Stripe (test mode)": "Stripe (modo de prueba)"
 }

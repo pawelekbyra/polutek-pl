@@ -4,12 +4,14 @@
 // the (i) button opens a short extra paragraph (height animated with the grid-rows trick, no motion when reduced).
 import React, { useId, useState } from "react";
 import { Info, Store } from "lucide-react";
+import { ShieldCheck } from "../icons";
 import { cn } from "@/lib/utils";
 import type { Tx } from "@/lib/i18n/ui";
 import { PATRON_SELLER } from "./pass-copy";
+import type { PassPayMode } from "./PassTrustRow";
 import styles from "./premium-pass.module.css";
 
-export function PassSellerCard({ tx, compact }: { tx: Tx; compact?: boolean }) {
+export function PassSellerCard({ tx, compact, mode = "demo" }: { tx: Tx; compact?: boolean; mode?: PassPayMode }) {
   const [open, setOpen] = useState(false);
   const noteId = useId();
   const details = [PATRON_SELLER.nip ? tx("NIP: {0}", "Tax ID (NIP): {0}", PATRON_SELLER.nip) : null].filter(Boolean);
@@ -27,6 +29,13 @@ export function PassSellerCard({ tx, compact }: { tx: Tx; compact?: boolean }) {
             </>
           )}
           {details.length > 0 && <span>{details.join(", ")}</span>}
+          {/* NOT "verified seller": no independent party has verified the seller. The true statement is who processes the payment (Stripe); in test mode it says so. */}
+          {!compact && mode !== "demo" && (
+            <span className={styles.sellerStripe} data-stripe-badge="">
+              <ShieldCheck size={14} aria-hidden="true" focusable="false" />
+              {mode === "live" ? tx("Płatność przetwarza Stripe", "Payment processed by Stripe") : tx("Stripe (tryb testowy)", "Stripe (test mode)")}
+            </span>
+          )}
         </div>
         <button
           type="button"

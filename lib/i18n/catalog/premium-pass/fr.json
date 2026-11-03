@@ -19,7 +19,6 @@
  "Become a patron · from {0}": "Devenir mécène · dès {0}",
  "Become a patron · {0}": "Devenir mécène · {0}",
  "Get Premium": "Prendre Premium",
- "and": "et",
  "Bestseller": "Bestseller",
  "Can I withdraw from the contract?": "Puis-je me rétracter ?",
  "Change method": "Changer de moyen",
@@ -134,5 +133,10 @@
  "Patron zone open until {0}. Another payment extends your access.": "Espace des mécènes ouvert jusqu’au {0}. Un nouveau paiement prolonge ton accès.",
  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or 3-month access. No subscription.": "Soutiens le projet et entre dans l’espace des mécènes : du contenu introuvable ailleurs. Choisis l’accès de 30 jours ou de 3 mois. Sans abonnement.",
  "30-day access costs {0} and 3-month access {1} (final prices, the seller is exempt from VAT; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "L’accès de 30 jours coûte {0} et l’accès de 3 mois {1} (prix finaux, le vendeur est exonéré de TVA ; les prix dans d’autres devises s’affichent au paiement). Chaque paiement supplémentaire prolonge ton accès de 30 jours ou de 3 mois ; rien ne se renouvelle tout seul.",
- "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "L’accès de 30 jours coûte {0} et l’accès de 3 mois {1} (prix TTC ; les prix dans d’autres devises s’affichent au paiement). Chaque paiement supplémentaire prolonge ton accès de 30 jours ou de 3 mois ; rien ne se renouvelle tout seul."
+ "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "L’accès de 30 jours coûte {0} et l’accès de 3 mois {1} (prix TTC ; les prix dans d’autres devises s’affichent au paiement). Chaque paiement supplémentaire prolonge ton accès de 30 jours ou de 3 mois ; rien ne se renouvelle tout seul.",
+ "Secure SSL payment": "Paiement sécurisé SSL",
+ "Secure SSL connection": "Connexion sécurisée SSL",
+ "Accepted payment methods": "Moyens de paiement acceptés",
+ "Payment processed by Stripe": "Paiement traité par Stripe",
+ "Stripe (test mode)": "Stripe (mode test)"
 }
