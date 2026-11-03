@@ -277,7 +277,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
             <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center font-bold text-[var(--chan-ink)]", currencyPicker ? "h-10 w-10 rounded-full border border-[#9fc3f5] bg-white/70 text-[17px]" : "h-6 w-6 text-[15px]")}>{selectedIconStr}</span>
           ) : null}
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[15px] font-extrabold text-[var(--chan-ink)]">{selected?.title ?? "—"}</span>
+            <span className={cn("block text-[15px] font-extrabold text-[var(--chan-ink)]", currencyPicker ? "line-clamp-2 break-words leading-tight" : "truncate")}>{selected?.title ?? "—"}</span>
             {selected?.hint && <span className="block truncate text-[12px] text-[var(--chan-body)]">{selected.hint}</span>}
           </span>
           {currencyPicker ? (
