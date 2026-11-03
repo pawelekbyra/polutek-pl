@@ -6,14 +6,15 @@ import { useOptionalTx } from "@/lib/i18n/language-context";
 
 /**
  * Small pill under the author's avatar. One shared shape (size, padding, radius, weight, translucent 14% tint, no border or
- * ring) and two colour variants, so the two can never drift apart: "AUTHOR" (the video's creator) is blue, "VIP" (an active
- * paid patron-zone access) is the same pill in amber with dark amber ink. "VIP" is the same word in every language, so only
+ * ring) and three colour variants, so the two can never drift apart: "AUTHOR" (the video's creator) is blue, "VIP" (an active
+ * paid patron-zone access) is the same pill in amber with dark amber ink, "BASE" ("Normik", everyone else) in grey. "VIP" is the same word in every language, so only
  * its accessible name is translated. `size="sm"` is for replies, whose avatar is 24 px: the pill stays narrow enough not to
  * touch the text.
  */
 const TONE: Record<CommentBadgeKind, string> = {
   AUTHOR: "bg-[var(--cm-blue-14)] text-[var(--chan-blue)]",
   VIP: "bg-[var(--cm-amber-14)] text-[var(--chan-amber-ink)]",
+  BASE: "bg-[var(--cm-gray-14)] text-[var(--chan-muted-2)]",
 };
 
 export function AuthorBadge({ kind, language, size = "md" }: { kind: CommentBadgeKind; language: Locale; size?: "md" | "sm" }) {
@@ -30,6 +31,13 @@ export function AuthorBadge({ kind, language, size = "md" }: { kind: CommentBadg
     return (
       <span role="img" aria-label={label} title={label} data-badge="vip" className={className}>
         VIP
+      </span>
+    );
+  }
+  if (kind === "BASE") {
+    return (
+      <span data-badge="base" className={className}>
+        {tx("Normik", "Base")}
       </span>
     );
   }

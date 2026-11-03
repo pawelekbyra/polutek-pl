@@ -156,14 +156,41 @@ describe('comment badges under the avatar', () => {
       <>
         <AuthorBadge kind="AUTHOR" language="pl" />
         <AuthorBadge kind="VIP" language="pl" />
+        <AuthorBadge kind="BASE" language="pl" />
       </>,
     );
-    const [creator, vip] = [...container.querySelectorAll('[data-badge]')].map((el) => el.className.split(' '));
+    const [creator, vip, base] = [...container.querySelectorAll('[data-badge]')].map((el) => el.className.split(' '));
     const shape = (list: string[]) => list.filter((c) => !/^(bg-|text-\[var)/.test(c)).sort();
     expect(shape(vip)).toEqual(shape(creator));
-    for (const list of [creator, vip]) expect(list.join(' ')).not.toMatch(/border|ring|outline|shadow/);
+    expect(shape(base)).toEqual(shape(creator));
+    for (const list of [creator, vip, base]) expect(list.join(' ')).not.toMatch(/border|ring|outline|shadow/);
     expect(creator.join(' ')).toContain('bg-[var(--cm-blue-14)]');
     expect(vip.join(' ')).toContain('bg-[var(--cm-amber-14)]');
+  });
+
+  it('BASE ("Normik" / "Base"): grey pill in the same shape, grey avatar ring, one pill only', () => {
+    renderItem(commentBy(['BASE']));
+    const pill = screen.getByText('Normik');
+    expect(pill).toHaveAttribute('data-badge', 'base');
+    expect(pill.className).toContain('bg-[var(--cm-gray-14)]');
+    expect(pill.className).toContain('text-[var(--chan-muted-2)]');
+    const ring = screen.getByAltText('Jurek').closest('[class*="ring-offset-2"]') as HTMLElement;
+    expect(ring.className).toContain('ring-2');
+    expect(ring.className).toContain('ring-[var(--chan-muted)]');
+    cleanup();
+    renderItem(commentBy(['BASE']), 'en');
+    expect(screen.getByText('Base')).toBeInTheDocument();
+    cleanup();
+    renderItem(commentBy(['BASE']), 'pl', true);
+    expect(screen.getByText('Normik').className).toContain('text-[9px]');
+    cleanup();
+    renderItem(commentBy(['VIP', 'BASE']));
+    expect(document.querySelectorAll('[data-badge]')).toHaveLength(1);
+    expect(screen.getByText('VIP')).toBeInTheDocument();
+    cleanup();
+    renderItem(commentBy(['AUTHOR', 'VIP', 'BASE']));
+    expect(screen.getByText('Twórca')).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-badge]')).toHaveLength(1);
   });
 
   it('AuthorBadge works alone for both kinds', () => {
