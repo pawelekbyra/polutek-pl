@@ -15,7 +15,7 @@ vi.mock("@/app/components/LanguageContext", () => ({
   useLanguage: () => ({ tx: currentTx, language: currentTx.language }),
 }));
 
-import TopbarPremiere, { formatPremiereDate } from "@/app/components/TopbarPremiere";
+import TopbarPremiere, { TopbarPremiereSpacer, formatPremiereDate, isTopbarPremiereActive } from "@/app/components/TopbarPremiere";
 
 describe("TopbarPremiere", () => {
   afterEach(() => {
@@ -73,6 +73,33 @@ describe("TopbarPremiere", () => {
 
   it("is placed in the Navbar next to the logo, outside the logo link", () => {
     const nav = readFileSync(path.join(process.cwd(), "app/components/Navbar.tsx"), "utf8");
-    expect(nav).toMatch(/<\/BrandHomeLink>\s*<TopbarPremiere \/>/);
+    expect(nav).toMatch(/<\/BrandHomeLink>\s*<\/div>\s*<TopbarPremiere \/>/);
+  });
+
+  it("sits in a flexible, centred zone between the logo and the search box, with an empty twin after the search box", () => {
+    const nav = readFileSync(path.join(process.cwd(), "app/components/Navbar.tsx"), "utf8");
+    // order in the bar: logo, note zone, desktop search, spacer, right controls
+    const order = ["<BrandHomeLink", "<TopbarPremiere />", "{/* Desktop search */}", "<TopbarPremiereSpacer />", "{/* Right controls */}"].map((m) => nav.indexOf(m));
+    expect(order.every((i) => i > 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    // the search box keeps 548px when the note is shown from 1180px
+    expect(nav).toContain("min-[1180px]:w-[548px]");
+
+    render(<TopbarPremiere />);
+    const zone = screen.getByTestId("topbar-premiere-zone");
+    const cls = zone.className.split(/\s+/);
+    for (const c of ["flex", "flex-1", "items-center", "justify-center", "-mr-[9px]", "md:-mr-2", "max-[360px]:hidden", "md:max-[1180px]:hidden", "md:min-w-max"]) {
+      expect(cls).toContain(c);
+    }
+    expect(zone.querySelector('[data-testid="topbar-premiere"]')).not.toBeNull();
+  });
+
+  it("the spacer exists only while the note is configured", () => {
+    expect(isTopbarPremiereActive(null)).toBe(false);
+    expect(isTopbarPremiereActive({ date: "bad" })).toBe(false);
+    expect(isTopbarPremiereActive({ date: "2027-01-01" })).toBe(true);
+    expect(render(<TopbarPremiereSpacer premiere={null} />).container.innerHTML).toBe("");
+    cleanup();
+    expect(render(<TopbarPremiereSpacer />).container.querySelector('[aria-hidden="true"]')).not.toBeNull();
   });
 });
