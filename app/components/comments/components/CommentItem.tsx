@@ -9,6 +9,7 @@ import { Pin } from "lucide-react";
 import { Trash2, Heart, MoreVertical, Edit, Flag } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
+import { roleRingClass } from "@/lib/role-badge";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
 import { DeleteCommentDialog } from "./DeleteCommentDialog";
@@ -51,8 +52,6 @@ interface CommentItemProps {
   isReply?: boolean;
 }
 
-/** Ring colour per badge (all the same width and offset). Grey is --chan-muted, 5.9:1 on white. */
-const AVATAR_RING = { AUTHOR: "ring-[var(--chan-blue)]", VIP: "ring-[var(--chan-amber-bright)]", BASE: "ring-[var(--chan-muted)]" } as const;
 
 /** Avatar sizes: replies are visibly subordinate to their parent. */
 const AVATAR_SIZE = 40;
@@ -95,12 +94,8 @@ function CommentItemComponent({
   const authorBadge = getAuthorBadge(comment.author);
   // Decorative ring (a box-shadow, nothing for assistive tech): blue for the creator, amber for VIP. getAuthorBadge lets the
   // creator win over VIP, so a creator who is also VIP keeps the blue ring. Same width and offset for both, so no layout shift.
-  const avatarRing = authorBadge
-    ? cn(
-        "border-transparent ring-2 ring-offset-2 ring-offset-[var(--chan-card)]",
-        AVATAR_RING[authorBadge],
-      )
-    : undefined;
+  // Width, offset and colours are shared with the top bar (lib/role-badge.ts).
+  const avatarRing = authorBadge ? roleRingClass(authorBadge) : undefined;
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text || "");
   const [isSavingEdit, setIsSavingEdit] = useState(false);

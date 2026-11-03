@@ -18,12 +18,21 @@ import { LogIn } from "lucide-react";
 import { CloseButton } from "@/components/ui/close-button";
 import { SearchIcon } from "./icons/MarkerUiIcons";
 import { cn } from "@/lib/utils";
+import { isRoleBadgeKind, type RoleBadgeKind } from "@/lib/role-badge";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 
 type ServerAdminState = {
   userId: string;
   isAdmin: boolean;
+  role: RoleBadgeKind | null;
 };
+
+/**
+ * The viewer's public role (avatar ring) per account, for the lifetime of the page session: the profile read below
+ * fills it on every page load, and until it answers the last known role is shown, so the ring does not blink
+ * in and out while navigating. A fresh answer always replaces it (e.g. after buying the patron-zone access).
+ */
+const roleCache = new Map<string, RoleBadgeKind | null>();
 
 /**
  * The language switcher reads the current query string (to keep it when switching), which on a
@@ -84,7 +93,9 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
       .then((response) => (response.ok ? response.json() : null))
       .then((profile) => {
         if (!controller.signal.aborted) {
-          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true });
+          const role = isRoleBadgeKind(profile?.role) ? profile.role : null;
+          if (profile) roleCache.set(userId, role);
+          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true, role });
         }
       })
       .catch((error: unknown) => {
@@ -92,7 +103,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
           !controller.signal.aborted &&
           !(error instanceof DOMException && error.name === "AbortError")
         ) {
-          setServerAdminState({ userId, isAdmin: false });
+          setServerAdminState({ userId, isAdmin: false, role: roleCache.get(userId) ?? null });
         }
       });
 
@@ -103,6 +114,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
     serverAdminState?.userId === userId && serverAdminState?.isAdmin === true;
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, undefined);
+  const role = userId ? (serverAdminState?.userId === userId ? serverAdminState.role : (roleCache.get(userId) ?? null)) : null;
   const searchLabel = tx("Szukaj", "Search");
   const openSearchLabel = tx("Otwórz wyszukiwanie", "Open search");
   const closeSearchLabel = tx("Zamknij wyszukiwanie", "Close search");
@@ -250,7 +262,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
               {SHOW_NOTIFICATION_BELL && isLoaded && isSignedIn && <NotificationBell key={userId} />}
 
               {isLoaded && isSignedIn && (
-                <UserMenu isAdmin={isAdmin} />
+                <UserMenu isAdmin={isAdmin} role={role} />
               )}
             </div>
           </>

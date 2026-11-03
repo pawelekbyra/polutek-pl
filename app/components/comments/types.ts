@@ -1,9 +1,10 @@
+import { pickRoleBadge, type RoleBadgeKind } from "@/lib/role-badge";
 import type { CommentAuthorDto, CommentDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 
 /** A comment as the API returns it (the single DTO definition lives in comment-frontend.dto.ts). */
 export type CommentView = CommentDto;
 
-export type CommentBadgeKind = "AUTHOR" | "VIP" | "BASE";
+export type CommentBadgeKind = RoleBadgeKind;
 
 /**
  * The one badge shown under an author's avatar, most important first: "AUTHOR" (the video's creator) > "VIP" (an active PAID
@@ -12,7 +13,6 @@ export type CommentBadgeKind = "AUTHOR" | "VIP" | "BASE";
  */
 export function getAuthorBadge(author?: CommentAuthorDto | null): CommentBadgeKind | null {
   if (!author) return null;
-  if (author.badges.includes("AUTHOR")) return "AUTHOR";
-  if (author.badges.includes("VIP")) return "VIP";
-  return author.badges.includes("BASE") ? "BASE" : null;
+  // The precedence is shared with the top bar (lib/role-badge.ts).
+  return pickRoleBadge({ isCreator: author.badges.includes("AUTHOR"), isVip: author.badges.includes("VIP"), isBase: author.badges.includes("BASE") });
 }
