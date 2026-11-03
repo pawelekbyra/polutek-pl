@@ -88,7 +88,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     open();
     const dialog = within(await screen.findByRole('dialog'));
     expect(dialog.getByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
-    expect(dialog.queryByText(/Zostań patronem i uzyskaj/)).toBeNull(); // the lead no longer repeats the title
+    expect(dialog.queryByText(/Kup Premium i uzyskaj/)).toBeNull(); // the lead no longer repeats the title
     expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toHaveTextContent('zł · PLN'); // a small pill, not the big tile
     const group = dialog.getByRole('group', { name: 'Wybierz dostęp' });
     const cards = within(group).getAllByRole('radio') as HTMLInputElement[];
@@ -308,10 +308,10 @@ describe('patron checkout, step 3 in demo mode (simulated payment)', () => {
 
     boxes.forEach((box) => fireEvent.click(box));
     fireEvent.click(dialog.getByRole('button', { name: N('Zapłać 29,99 zł') }));
-    expect(await dialog.findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await dialog.findByRole('heading', { name: 'Masz Premium. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
     expect(jsonBody('/premium-pass/checkout')).toMatchObject({ productId: 'ACCESS_LIFETIME', currency: 'PLN', method: 'blik', consents: { terms: true, waiver: true }, simulate: 'success' });
     expect(Object.keys(jsonBody('/premium-pass/checkout'))).not.toContain('amountMinor');
-    fireEvent.click(dialog.getByRole('button', { name: 'Wejdź do strefy patrona' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Wejdź do Strefy Premium' }));
     expect(onWatch).toHaveBeenCalled();
   });
 
@@ -324,7 +324,7 @@ describe('patron checkout, step 3 in demo mode (simulated payment)', () => {
     expect(dialog.getByRole('button', { name: /Zapłać 4,49/ })).toBeInTheDocument();
     dialog.getAllByRole('checkbox').forEach((box) => fireEvent.click(box));
     fireEvent.click(dialog.getByRole('button', { name: /Zapłać 4,49/ }));
-    await dialog.findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 });
+    await dialog.findByRole('heading', { name: 'Masz Premium. Dziękuję!' }, { timeout: 4000 });
     expect(jsonBody('/premium-pass/checkout')).toMatchObject({ productId: 'ACCESS_30D', currency: 'USD' });
   });
 
@@ -461,7 +461,7 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     expect(pay).toBeEnabled();
 
     fireEvent.click(pay);
-    expect(await dialog.findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await dialog.findByRole('heading', { name: 'Masz Premium. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
     expect(jsonBody('/premium-pass/consent')).toEqual({ paymentId: 'pay_1', method: 'blik', consents: { terms: true, waiver: true } });
     expect(confirmBlikPayment).toHaveBeenCalledTimes(1);
     expect(confirmBlikPayment.mock.calls[0]![0]).toBe('pi_1_secret_x');
@@ -588,7 +588,7 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     fireEvent.click(within(dots).getByRole('button', { name: 'Wróć do kroku 1: Dostęp' }));
     expect(dialog.getByRole('heading', { name: 'Płatność' })).toBeInTheDocument(); // still on step 3
     finishBlik({ paymentIntent: { status: 'succeeded' } });
-    expect(await dialog.findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await dialog.findByRole('heading', { name: 'Masz Premium. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
     expect(dialog.queryByRole('list', { name: 'Etapy zakupu' })).toBeNull(); // after the result there is no stepper at all
   });
 

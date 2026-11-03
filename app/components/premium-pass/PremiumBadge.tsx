@@ -33,7 +33,7 @@ export function PremiumPlayerChip({ until }: { until: string }) {
   return (
     <span className={cn(styles.pass, styles.chip, styles.playerChip)} role="status">
       <CheckIcon />
-      {tx("Patron · dostęp do {0}", "Patron · access until {0}", passDate(language, until))}
+      {tx("Premium · dostęp do {0}", "Premium · access until {0}", passDate(language, until))}
     </span>
   );
 }

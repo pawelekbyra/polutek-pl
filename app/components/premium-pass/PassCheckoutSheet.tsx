@@ -196,7 +196,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       const promise = getStripeBrowser(offer.payments.mode === "stripe" && offer.payments.keySet === "premium" ? "premium" : "default");
       setStripePromise(promise);
       promise
-        .then((stripe) => stripe?.paymentRequest({ country: "PL", currency: currency.toLowerCase(), total: { label: "Patron", amount: 100 }, disableWallets: ["link", "browserCard"] }).canMakePayment())
+        .then((stripe) => stripe?.paymentRequest({ country: "PL", currency: currency.toLowerCase(), total: { label: "Premium", amount: 100 }, disableWallets: ["link", "browserCard"] }).canMakePayment())
         .then((result) => { if (!cancelledRef.current) setWallets(TIP_WALLETS.filter((wallet) => (wallet === "apple_pay" ? result?.applePay : result?.googlePay))); })
         .catch(() => undefined);
     } else {

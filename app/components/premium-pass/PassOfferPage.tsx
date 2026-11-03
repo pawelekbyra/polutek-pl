@@ -38,7 +38,7 @@ export type PassOfferPageProps = { params: Promise<{ locale: string }> };
 export async function passOfferMetadata(props: PassOfferPageProps): Promise<Metadata> {
   const { locale: raw } = await props.params;
   const tx = await getServerTx((await resolvePageLocale(raw)) ?? "pl");
-  return { title: `${tx("Zostań patronem", "Become a patron")} · ${APP_NAME}`, robots: { index: false, follow: false } };
+  return { title: `${tx("Kup Premium", "Get Premium")} · ${APP_NAME}`, robots: { index: false, follow: false } };
 }
 
 export default async function PassOfferPage({ params }: PassOfferPageProps) {
@@ -76,19 +76,19 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
           <section className={styles.heroBand} aria-labelledby="pass-title">
             <div className={styles.heroInner}>
               <div className={styles.eyebrow}>
-                {tx("Strefa patrona", "Patron zone")}
+                {tx("Strefa Premium", "Premium Zone")}
                 {demo && ` · ${tx("tryb demo", "demo mode")}`}
                 {testMode && ` · ${tx("tryb testowy", "test mode")}`}
               </div>
-              <h1 id="pass-title" className={styles.heroTitle}>{tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone")}</h1>
+              <h1 id="pass-title" className={styles.heroTitle}>{tx("Kup Premium i uzyskaj dostęp do Strefy Premium", "Get Premium and access the Premium Zone")}</h1>
               <p className={styles.heroLead}>
                 {tx(
-                  "Wesprzyj projekt i wejdź do strefy patrona: materiały, których nie ma nigdzie indziej. Wybierz dostęp na 30 dni albo na 3 miesiące. Bez subskrypcji.",
-                  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or 3-month access. No subscription.",
+                  "Wesprzyj projekt i wejdź do Strefy Premium: materiały, których nie ma nigdzie indziej. Wybierz dostęp na 30 dni albo na 3 miesiące. Bez subskrypcji.",
+                  "Support the project and enter the Premium Zone: material you won't find anywhere else. Choose 30-day or 3-month access. No subscription.",
                 )}
               </p>
               {videos.length > 0 && (
-                <ul className={styles.inside} aria-label={tx("Filmy w strefie patrona", "Videos in the patron zone")}>
+                <ul className={styles.inside} aria-label={tx("Filmy w Strefie Premium", "Videos in the Premium Zone")}>
                   {videos.map((video) => (
                     <li key={video.id}>
                       <div className={styles.art}>
@@ -109,9 +109,9 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
               {pass.state !== "none" && (
                 <p className={styles.status} role="status">
                   {pass.state === "active" && pass.expiresAt
-                    ? tx("Strefa patrona otwarta do {0}. Kolejna wpłata przedłuży dostęp.", "Patron zone open until {0}. Another payment extends your access.", passDate(locale, pass.expiresAt, true))
+                    ? tx("Strefa Premium otwarta do {0}. Kolejna wpłata przedłuży dostęp.", "Premium Zone open until {0}. Another payment extends your access.", passDate(locale, pass.expiresAt, true))
                     : pass.expiresAt
-                        ? tx("Twój dostęp do strefy patrona wygasł {0}.", "Your patron zone access expired on {0}.", passDate(locale, pass.expiresAt))
+                        ? tx("Twój dostęp do Strefy Premium wygasł {0}.", "Your Premium Zone access expired on {0}.", passDate(locale, pass.expiresAt))
                         : null}
                 </p>
               )}
@@ -126,7 +126,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
                     </div>
                     <div className={styles.muted}>{vatLine(tx)}</div>
                     <ul className={styles.perks}>
-                      <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
+                      <li>{tx("Wszystkie filmy Strefy Premium ({0})", "All Premium Zone videos ({0})", offer.premiumCount)}</li>
                       <li>{product.months !== null ? tx("Dostęp od razu, na {0} miesiące", "Instant access for {0} months", product.months) : tx("Dostęp od razu, na {0} dni", "Instant access for {0} days", product.days ?? 30)}</li>
                       <li>{tx("Kolejna wpłata przedłuża dostęp, nic nie odnawia się samo", "Another payment extends your access, nothing renews by itself")}</li>
                       <li>{tx("Na każdym urządzeniu po zalogowaniu", "On every device you sign in on")}</li>
