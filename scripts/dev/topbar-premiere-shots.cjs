@@ -46,18 +46,50 @@ const server = http.createServer((req, res) => {
       const right = nav.querySelector("div.justify-end");
       const cs = note ? getComputedStyle(note) : null;
       return {
-        header: r(header), logo: r(logo), note: note && getComputedStyle(note).display !== "none" ? r(note) : null,
+        header: r(header), logo: r(logo), note: note && note.offsetParent !== null ? r(note) : null,
         search: search && search.offsetParent ? r(search) : null, right: r(right),
         scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth,
-        font: cs && cs.display !== "none" ? cs.fontFamily.slice(0, 40) + " " + cs.fontSize : null,
+        font: cs && note.offsetParent !== null ? cs.fontFamily.slice(0, 40) + " " + cs.fontSize : null,
         fontLoaded: document.fonts.check('300 16px "Gaegu Light"'),
         text: note ? note.textContent : null,
       };
     });
+    const gaps = await page.evaluate((annotate) => {
+      const nav = document.querySelector("header nav");
+      const note = nav.querySelector('[data-testid="topbar-premiere"]');
+      if (!note || note.offsetParent === null) return null;
+      const nr = note.getBoundingClientRect(); // napis (ramka po obrocie o -2,5 st. rrozni sie od ukladu o <1 px)
+      const logo = nav.querySelector("img").getBoundingClientRect();
+      const search = nav.querySelector('form[role="search"]');
+      const desktop = search && search.offsetParent !== null;
+      let rightEdge, rightLabel;
+      if (desktop) { rightEdge = search.querySelector("div").getBoundingClientRect().left; rightLabel = "pole szukaj"; }
+      else {
+        const grp = nav.querySelector("div.justify-end");
+        const icon = grp.querySelector("svg"); // lupa (ikona 22 px w przycisku 40 px)
+        rightEdge = icon.getBoundingClientRect().left; rightLabel = "ikona lupy";
+      }
+      const left = nr.left - logo.right, right = rightEdge - nr.right;
+      if (annotate) {
+        const mid = (nr.top + nr.bottom) / 2;
+        const bar = (x1, x2, label, color) => {
+          const d = document.createElement("div");
+          d.style.cssText = `position:fixed;left:${x1}px;top:${mid}px;width:${x2 - x1}px;height:0;border-top:1.5px solid ${color};z-index:99999;pointer-events:none`;
+          const t = document.createElement("div");
+          t.textContent = label;
+          t.style.cssText = `position:absolute;left:0;right:0;top:3px;text-align:center;font:9px/1 monospace;color:${color}`;
+          d.appendChild(t); document.body.appendChild(d);
+        };
+        bar(logo.right, nr.left, Math.round(left * 10) / 10 + "px", "#d11");
+        bar(nr.right, rightEdge, Math.round(right * 10) / 10 + "px", "#07b");
+      }
+      return { left: Math.round(left * 10) / 10, right: Math.round(right * 10) / 10, diff: Math.round((left - right) * 10) / 10, rightLabel, searchLeft: desktop ? search.getBoundingClientRect().left : null, searchRight: desktop ? search.getBoundingClientRect().right : null, pageCenterOffset: desktop ? Math.round(((search.getBoundingClientRect().left + search.getBoundingClientRect().right) / 2 - innerWidth / 2) * 10) / 10 : null };
+    }, true);
+    m.gaps = gaps;
     const name = `${lang}-${signed ? "in" : "out"}-${w}`;
     await page.screenshot({ path: path.join(outDir, `${name}.png`), clip: { x: 0, y: 0, width: w, height: Math.ceil(m.header.b) + 6 } });
     rows.push({ name, ...m });
-    console.log(name, "bar", m.header.b - m.header.t, "note", JSON.stringify(m.note), "search", m.search && m.search.w, "logoR", m.logo && m.logo.r, "rightL", m.right && m.right.l, "scroll", m.scrollW + "/" + m.clientW, "font", m.font, m.fontLoaded);
+    console.log(name, "bar", m.header.b - m.header.t, "note", JSON.stringify(m.note), "search", m.search && m.search.w, "logoR", m.logo && m.logo.r, "rightL", m.right && m.right.l, "scroll", m.scrollW + "/" + m.clientW, "gaps", JSON.stringify(gaps));
     await ctx.close();
   }
   fs.writeFileSync(path.join(outDir, "pomiary.json"), JSON.stringify(rows, null, 1));

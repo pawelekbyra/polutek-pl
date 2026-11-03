@@ -10,13 +10,14 @@ import BrandHomeLink from "./BrandHomeLink";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
-import TopbarPremiere from "./TopbarPremiere";
+import TopbarPremiere, { TopbarPremiereSpacer, isTopbarPremiereActive } from "./TopbarPremiere";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useSwitchLanguage } from "./useSwitchLanguage";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { LogIn } from "lucide-react";
 import { CloseButton } from "@/components/ui/close-button";
 import { SearchIcon } from "./icons/MarkerUiIcons";
+import { cn } from "@/lib/utils";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 
 type ServerAdminState = {
@@ -107,6 +108,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
   const closeSearchLabel = tx("Zamknij wyszukiwanie", "Close search");
   const skipLabel = tx("Przejdź do treści", "Skip to content");
   const navLabel = tx("Główna nawigacja", "Main navigation");
+  const premiereActive = isTopbarPremiereActive();
 
   return (
     <header
@@ -165,11 +167,12 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 {/* The link box is 44px tall for touch but contributes 38px to the bar (-my-[3px]); ml-2 on phones lines the logo up with the 16px page gutter. */}
                 <BrandName decorative />
               </BrandHomeLink>
-              <TopbarPremiere />
             </div>
 
+            <TopbarPremiere />
+
             {/* Desktop search */}
-            <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
+            <div className={cn("flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0", premiereActive && "min-[1180px]:w-[548px] min-[1180px]:flex-none")}>
               <form onSubmit={handleSearch} role="search" className="flex w-full">
                 <div className="relative flex h-10 min-w-0 flex-1 items-center rounded-full border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
                   <input
@@ -192,6 +195,8 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 </div>
               </form>
             </div>
+
+            <TopbarPremiereSpacer />
 
             {/* Right controls */}
             <div className="flex shrink-0 items-center justify-end gap-1.5">
