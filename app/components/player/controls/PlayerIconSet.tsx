@@ -43,7 +43,21 @@ function IconSvg({ className, testId, strokeWidth = PLAYER_ICON_STROKE, children
   );
 }
 
-export function PlayIcon(props: PlayerIconProps) {
+/**
+ * Solid play triangle of the centre button (owner 2026-11-03: the shape of the shop mock-up's play mark): a filled triangle
+ * with softly rounded corners in the 24px box. Its bounding box is x 8..19.4, so its centre sits at 13.7, i.e. about 7% of
+ * the box to the right of the circle's centre: the optical shift that makes a triangle look centred in a disc.
+ */
+export const HERO_PLAY_PATH = "M8 5.2c0-.8.9-1.3 1.6-.8l9.2 6.1c.6.4.6 1.2 0 1.6l-9.2 6.1c-.7.5-1.6 0-1.6-.8z";
+
+export function PlayIcon({ solid, ...props }: PlayerIconProps & { /** Filled triangle for the centre button (no stroke). */ solid?: boolean }) {
+  if (solid) {
+    return (
+      <svg viewBox="0 0 24 24" className={props.className} data-testid={props.testId} aria-hidden="true" focusable="false" fill="currentColor">
+        <path d={HERO_PLAY_PATH} />
+      </svg>
+    );
+  }
   return (
     <IconSvg {...props}>
       <path d="M8.3 7.3C8.42 6.8 8.65 6.09 9.01 5.99C9.38 5.89 10.02 6.42 10.5 6.7C10.98 6.97 11.42 7.32 11.89 7.63C12.35 7.94 12.81 8.25 13.28 8.56C13.75 8.86 14.21 9.17 14.68 9.47C15.15 9.77 15.63 10.06 16.1 10.36C16.57 10.66 17.19 10.88 17.5 11.27C17.82 11.65 18.12 12.27 17.98 12.68C17.85 13.09 17.15 13.41 16.7 13.73C16.25 14.05 15.75 14.32 15.27 14.61C14.79 14.89 14.3 15.16 13.82 15.43C13.33 15.7 12.83 15.95 12.34 16.22C11.86 16.49 11.37 16.76 10.89 17.05C10.41 17.33 9.9 17.87 9.46 17.92C9.03 17.96 8.47 17.71 8.28 17.33C8.09 16.95 8.31 16.22 8.32 15.66C8.33 15.1 8.36 14.54 8.36 13.99C8.37 13.43 8.37 12.87 8.37 12.31C8.36 11.76 8.35 11.2 8.34 10.64C8.34 10.08 8.33 9.53 8.32 8.97C8.31 8.41 8.19 7.79 8.3 7.3Z" />

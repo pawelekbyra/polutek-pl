@@ -95,10 +95,23 @@ describe("player icon set (Marker)", () => {
     expect(PAUSE_BAR_STROKE).toBeGreaterThan(PLAYER_ICON_STROKE);
   });
 
-  it("the white glow is only on the big centre mark, not on the control-bar glyphs", () => {
-    expect(css).toMatch(/\.mc-hero-icon \{[^}]*rgba\(255,255,255/);
+  it("the centre mark is a solid disc in the progress blue with a white glyph; no glow on the control-bar glyphs", () => {
+    expect(css).toMatch(/\.mc-hero \{[^}]*--mc-hero-bg: var\(--chan-blue\);/);
+    expect(css).toMatch(/\.mc-hero \{[^}]*--mc-hero-glyph: #fff;/);
+    expect(css).toMatch(/\.mc-scrub-fill \{[^}]*background: var\(--chan-blue\)/);
+    expect(css).not.toMatch(/\.mc-hero-icon \{[^}]*drop-shadow/);
     const barRules = css.split("\n").filter((l) => /\.mc-(icon|glyph-swap|play)\b/.test(l) && /filter/.test(l));
     for (const l of barRules) expect(l).not.toMatch(/rgba\(255,\s*255,\s*255/);
+  });
+
+  it("the centre play glyph is a filled triangle (no stroke), the bar play stays the Marker outline", () => {
+    const solid = render(<PlayIcon solid />).container.querySelector("svg")!;
+    expect(solid.getAttribute("fill")).toBe("currentColor");
+    expect(solid.getAttribute("stroke")).toBeNull();
+    cleanup();
+    const line = render(<PlayIcon />).container.querySelector("svg")!;
+    expect(line.getAttribute("fill")).toBe("none");
+    expect(line.getAttribute("stroke")).toBe("currentColor");
   });
 
   it("the swap keeps both glyphs and flips only a data attribute", () => {
@@ -127,7 +140,7 @@ describe("player icon set (Marker)", () => {
 
   it("styles: sizes come from CSS, soft glass, press scale, blue focus ring, reduced motion, safe-area insets", () => {
     expect(css).toMatch(/\.mc-icon\s*\{\s*width:20px; height:20px;/);
-    expect(css).toMatch(/\.mc-hero-icon\s*\{ display:block; width:48px; height:48px;/);
+    expect(css).toMatch(/\.mc-hero-icon\s*\{ display:block; width:30px; height:30px; \}/);
     expect(css).toContain(".mc-menu-check, .mc-menu-hint-icon { width:16px; height:16px;");
     expect(css).not.toContain('content:"\\2713"');
     expect(css).toMatch(/\.mc-play \{ --mc-play-glyph: 26px; width:40px; height:40px; \}/);
