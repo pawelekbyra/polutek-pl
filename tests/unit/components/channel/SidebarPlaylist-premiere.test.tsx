@@ -80,8 +80,7 @@ const baseProps = {
   sortedVideos: [item("public-1") as unknown as PublicVideoDTO],
   t: { views: "views" },
   language: "pl",
-  showSupportBox: false,
-};
+} satisfies React.ComponentProps<typeof SidebarPlaylist>;
 
 function upcomingLock() {
   const section = screen.getByTestId("sidebar-upcoming-section");

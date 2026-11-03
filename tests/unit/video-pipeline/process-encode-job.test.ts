@@ -10,6 +10,7 @@ function makeJob(overrides: Partial<VideoEncodeJob> = {}): VideoEncodeJob {
   return {
     id: "job-1",
     videoId: "vid-1",
+    channelId: null,
     originalId: "orig-1",
     versionNumber: 2,
     idempotencyKey: "orig-1:1",

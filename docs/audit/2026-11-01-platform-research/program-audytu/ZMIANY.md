@@ -323,3 +323,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Przeniesiono patch `989682ff`, Next/eslint-config-next16.4.1, sharp0.35.5. Normalne npm ci i prawdziwe Prisma generate, bez npm audit. Nodemailer/zod major bez zmian.
 - RED wersji sharp0.35.4 → GREEN0.35.5/librsvg2.63.2/vips8.18.7, rzeczywisty loopback HTTP (PNG200, pozostałe trzy400),170/170 testów, lint PASS. Cztery dodatkowe rzeczywiste małe buildy aktualnego Next sprawdzają odmowy i legalne warianty.
 - Bez nowych obrazów aplikacji/produkcji/świeżego npm audit, K02/H1 nadal otwarte; szacunki bez zmiany.
+
+## 3 listopada 2026 — baseline K03: pełne typy, unit i lint lokalnej gałęzi
+
+- Przeniesiono pięć poprzednich poprawek fixture/typów/lint, zachowując obecny UI przy konfliktach. Bez zmiany wykonywanej autoryzacji, ról i ustawień użytkownika.
+- Typecheck całego repo 82 wcześniejsze diagnostyki → 0; full unit przez partial local-CI 4729 PASS/0 FAIL/3skip w540 plikach, sourceStable=true. Lint po trzech leksykalnych poprawkach helperów:0 błędów/100 ostrzeżeń.
+- Dwa pominięte e-mail DB i jeden HDR nadal otwarte. Jawnie częściowe CI, bez grafu audit i gotowości do wydania; źródła/dowody z atrybucją. Mapa zakończonych części w MAPA-COMMITOW.csv.
+- Następne: własny PG/e-mail i HDR, pozostałe H1 i konsumenci K06. Zero formalnych zamknięć, H1 historycznie~80%, całość5–10%.

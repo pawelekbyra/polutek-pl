@@ -19,10 +19,10 @@ for (const file of ['scripts/hls/encode-hls.mjs', 'lib/modules/video-pipeline/do
   assert.equal(actual[file], inventory.get(file), `Source changed: ${file}`);
 }
 const { run, probeSource } = await import(path.resolve('scripts/hls/encode-hls.mjs'));
-const module = { exports: {} };
+const loadedModule = { exports: {} };
 const policyCode = ts.transpileModule(await readFile('lib/modules/video-pipeline/domain/upload-policy.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-new vm.Script(`(function(module,exports){${policyCode}\n})`).runInThisContext()(module, module.exports);
-const policy = module.exports;
+new vm.Script(`(function(module,exports){${policyCode}\n})`).runInThisContext()(loadedModule, loadedModule.exports);
+const policy = loadedModule.exports;
 const observations = [];
 const directory = await mkdtemp(path.join(os.tmpdir(), 'polutek-input-audit-'));
 let server;

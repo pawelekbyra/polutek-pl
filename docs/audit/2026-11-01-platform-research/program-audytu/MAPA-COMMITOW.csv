@@ -1,0 +1,8 @@
+pakiet,commit,dowod,status
+K06-core,00ea71cb;3b7ccfff;f72bbe27;37eb1edb,historyczne rdzenie przeniesione bez nowej akceptacji,PRZENIESIONO
+K06-build,c546726a,program-audytu/evidence/k06-local-producer-2026-11-03/build-result.json,CZESCIOWO
+K06-producer,6f5d09c0,program-audytu/evidence/k06-local-producer-2026-11-03/produce-result.json,CZESCIOWO
+K06-pinned-inputs,b80527be,program-audytu/evidence/k06-local-producer-2026-11-03/pins-result.json,CZESCIOWO
+K03-restore-critical,50b7a0c5,program-audytu/evidence/k06-local-producer-2026-11-03/critical-result.json,CZESCIOWO
+K06-build-types,7d5db46c,program-audytu/evidence/k06-local-producer-2026-11-03/next-typecheck/result.json,CZESCIOWO
+K02-runtime,04ca6503,program-audytu/evidence/k06-local-producer-2026-11-03/k02-runtime/result.json,CZESCIOWO

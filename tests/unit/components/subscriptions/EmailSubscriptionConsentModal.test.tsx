@@ -4,8 +4,9 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import EmailSubscriptionConsentModal from '@/app/components/subscriptions/EmailSubscriptionConsentModal';
 import React from 'react';
 import { txFor } from "../../i18n/mock-language";
+import type { Locale } from '@/lib/i18n/routing';
 
-const lang = vi.hoisted(() => ({ language: 'pl' }));
+const lang = vi.hoisted(() => ({ language: 'pl' as Locale }));
 
 // Mock LanguageContext
 vi.mock('@/app/components/LanguageContext', () => ({

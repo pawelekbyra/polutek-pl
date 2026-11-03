@@ -64,7 +64,7 @@ describe('seller card', () => {
 describe('security footer', () => {
   it('real payments: encrypted + trusted provider, never names Stripe or claims anything about demo', () => {
     for (const lang of ['pl', 'en'] as const) {
-      const { container, unmount } = render(<PassSecurityFooter tx={txFor(lang)} demo={false} />);
+      const { container, unmount } = render(<PassSecurityFooter tx={txFor(lang)} language={lang} demo={false} />);
       expect(container.textContent).toMatch(lang === 'pl' ? /szyfrowana.*zaufany operator płatności.*Nie przechowujemy danych karty/ : /encrypted.*trusted provider.*never store your card/);
       expect(container.textContent).not.toMatch(/stripe/i);
       unmount();
@@ -72,7 +72,7 @@ describe('security footer', () => {
   });
 
   it('demo: says nothing is charged and does not claim real processing', () => {
-    const { container } = render(<PassSecurityFooter tx={txFor('pl')} demo />);
+    const { container } = render(<PassSecurityFooter tx={txFor('pl')} language="pl" demo />);
     expect(container).toHaveTextContent('Tryb demonstracyjny: nic nie zostanie pobrane.');
     expect(container.textContent).not.toMatch(/szyfrowana|operatora|stripe/i);
   });

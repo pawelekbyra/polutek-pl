@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const guard = vi.hoisted(() => ({ requireAdmin: vi.fn(async () => ({ userId: "adm1", email: "o@x", name: "O", role: "OWNER", languages: [], sessionCreatedAt: "", stepUpSecondsLeft: 0 })), hasFreshStepUp: vi.fn(async () => true) }));
+const guard = vi.hoisted(() => ({ requireAdmin: vi.fn(async () => ({ userId: "adm1", email: "o@x", name: "O", role: "OWNER", languages: [] as string[], sessionCreatedAt: "", stepUpSecondsLeft: 0 })), hasFreshStepUp: vi.fn(async () => true) }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "cf-ray": "ray9", "cf-connecting-ip": "203.0.113.7", "user-agent": "Mozilla/5.0 test" }) }));
 vi.mock("@admin/lib/auth/guard", () => guard);
 

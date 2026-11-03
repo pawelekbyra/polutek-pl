@@ -1389,6 +1389,23 @@
       "docker_images": false,
       "fresh_npm_audit": false,
       "evidence": "k06-local-producer-2026-11-03/k02-runtime/result.json"
+    },
+    "baseline": {
+      "types_exit": 0,
+      "unit": {
+        "total": 4732,
+        "passed": 4729,
+        "failed": 0,
+        "skipped": 3,
+        "files": 540,
+        "failedFiles": [],
+        "success": true
+      },
+      "lint_errors": 0,
+      "lint_warnings": 100,
+      "unit_source_stable": true,
+      "release_ready": false,
+      "evidence": "k06-local-producer-2026-11-03/baseline/result.json"
     }
   }
 }

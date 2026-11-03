@@ -109,7 +109,7 @@ describe("staff resolution", () => {
     const res = await resolveModerationAppeal(ctx(staff, prisma), { appealId: "a1", outcome: "UPHELD", reasonPublic: "Film nie narusza zasad." });
     expect(res.ok).toBe(true);
     expect(tx.video.updateMany).toHaveBeenCalledWith({ where: { id: "v1", moderationStatus: "REMOVED" }, data: { moderationStatus: "VISIBLE" } });
-    expect(tx.moderationDecision.create.mock.calls[0][0].data.action).toBe("APPEAL_UPHELD");
+    expect(tx.moderationDecision.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ action: "APPEAL_UPHELD" }) }));
   });
 
   it("rejecting leaves the content untouched", async () => {
@@ -117,7 +117,7 @@ describe("staff resolution", () => {
     const res = await resolveModerationAppeal(ctx(staff, prisma), { appealId: "a1", outcome: "REJECTED", reasonPublic: "Decyzja zostaje w mocy." });
     expect(res.ok).toBe(true);
     expect(tx.video.updateMany).not.toHaveBeenCalled();
-    expect(tx.moderationDecision.create.mock.calls[0][0].data.action).toBe("APPEAL_REJECTED");
+    expect(tx.moderationDecision.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ action: "APPEAL_REJECTED" }) }));
   });
 
   it("W03: a newer decision made between read and write is not overwritten (nothing reverted)", async () => {

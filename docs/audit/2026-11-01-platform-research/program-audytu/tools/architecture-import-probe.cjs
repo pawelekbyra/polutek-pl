@@ -13,7 +13,7 @@ function sandbox(){
     if(cache.has(relative))return cache.get(relative).exports;
     const source=fs.readFileSync(path.join(root,relative),'utf8'),hash=crypto.createHash('sha256').update(source).digest('hex');
     if(hash!==graph.source_sha256[relative])throw Error('Baseline changed '+relative);sourceHashes[relative]=hash;
-    const module={exports:{}};cache.set(relative,module);
+    const loadedModule={exports:{}};cache.set(relative,loadedModule);
     const requireLocal=name=>{
       if(name==='@prisma/client')return {PrismaClient};
       let next;
@@ -25,8 +25,8 @@ function sandbox(){
       return load(resolved);
     };
     const output=ts.transpileModule(source,{fileName:relative,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,esModuleInterop:true}}).outputText;
-    vm.runInContext('(function(require,module,exports){'+output+'\n})',context,{filename:relative})(requireLocal,module,module.exports);
-    return module.exports;
+    vm.runInContext('(function(require,module,exports){'+output+'\n})',context,{filename:relative})(requireLocal,loadedModule,loadedModule.exports);
+    return loadedModule.exports;
   }
   return {load,constructors};
 }
