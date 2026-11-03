@@ -137,6 +137,6 @@
  "Secure SSL payment": "SSL 安全支付",
  "Secure SSL connection": "SSL 安全连接",
  "Accepted payment methods": "支持的支付方式",
- "Payment processed by Stripe": "支付由 Stripe 处理",
- "Stripe (test mode)": "Stripe（测试模式）"
+ "Secure payment": "安全支付",
+ "Test mode: no real payment": "测试模式：无真实付款"
 }

@@ -17,7 +17,7 @@ const LOGO_SIZE: Record<LogoId, { w: number; h: number; name: string }> = {
   visa: { w: 750, h: 471, name: "Visa" },
   mastercard: { w: 750, h: 471, name: "Mastercard" },
 };
-const LOGO_HEIGHT = 22;
+const LOGO_HEIGHT = 15;
 
 /** Logos for the methods in the list: cards -> Visa + Mastercard; BLIK only with the BLIK method AND the zloty. */
 export function paymentLogosFor(methods: string[], currency: string): LogoId[] {

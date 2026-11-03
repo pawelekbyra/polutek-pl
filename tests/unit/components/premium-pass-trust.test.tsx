@@ -31,10 +31,13 @@ describe("PassTrustRow", () => {
 });
 
 describe("seller badge", () => {
-  it("never says verified and names Stripe only when a gateway runs", () => {
+  it("is a labelled shield that never says verified and never names Stripe in the card", () => {
     const live = renderToStaticMarkup(<PassSellerCard tx={tx} mode="live" />);
-    expect(live).toContain("Płatność przetwarza Stripe");
+    expect(live).toContain("role=\"img\"");
+    expect(live).toContain("Bezpieczna płatność");
     expect(live.toLowerCase()).not.toContain("zweryfikowan");
-    expect(renderToStaticMarkup(<PassSellerCard tx={tx} mode="demo" />)).not.toContain("Stripe");
+    expect(live).not.toContain("Stripe");
+    expect(renderToStaticMarkup(<PassSellerCard tx={tx} mode="test" />)).toContain("Tryb testowy");
+    expect(renderToStaticMarkup(<PassSellerCard tx={tx} mode="demo" />)).not.toContain("role=\"img\"");
   });
 });

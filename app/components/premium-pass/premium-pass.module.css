@@ -354,9 +354,12 @@
 .trustRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 10px; }
 .trustSsl { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--pass-ok); }
 .trustSsl svg { flex: 0 0 auto; }
-.trustLogos { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+.trustLogos { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 0 auto; padding: 0; list-style: none; }
 .trustLogos li { display: block; line-height: 0; }
-.trustLogos img { display: block; height: 22px; width: auto; }
-@media (max-width: 380px) { .trustLogos img { height: 20px; } }
-.sellerCardText .sellerStripe { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; font-size: 11px; line-height: 14px; font-weight: 600; color: var(--pass-ok); }
-.sellerStripe svg { flex: 0 0 auto; }
+.trustLogos img { display: block; height: 15px; width: auto; }
+.sellerNameRow { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.sellerCardText .sellerNameRow b { min-width: 0; }
+.sellerCardText .sellerBadge { flex: 0 0 auto; display: inline-grid; place-items: center; width: 24px; height: 24px; margin: -2px 0; color: var(--pass-ok); }
+.sellerBadge svg { width: 24px; height: 24px; display: block; }
+.sellerCardCompact .sellerBadge { width: 20px; height: 20px; margin: -1px 0; }
+.sellerCardCompact .sellerBadge svg { width: 20px; height: 20px; }
