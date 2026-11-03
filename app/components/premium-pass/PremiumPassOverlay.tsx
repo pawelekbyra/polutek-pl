@@ -82,7 +82,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
       <PlayerStateFrame fill className={cn(styles.pass, "rounded-md")}>
         <div className={styles.stage} role="img" aria-label={tx("Film w strefie patrona", "Patron zone video")}>
           {poster && <div className={styles.poster} style={{ backgroundImage: `url("${poster}")` }} aria-hidden="true" />}
-          <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PATRON</span>
+          <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PREMIUM</span>
         </div>
       </PlayerStateFrame>
     );
@@ -98,7 +98,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
     <PlayerStateFrame className="rounded-none">
       <section className={cn(styles.pass, styles.stage)} aria-labelledby={titleId} data-premium-pass-stage="">
         {poster && <div className={styles.poster} style={{ backgroundImage: `url("${poster}")` }} aria-hidden="true" />}
-        <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PATRON</span>
+        <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PREMIUM</span>
         {demo && <span className={styles.stageDemo}>{tx("TRYB DEMO", "DEMO MODE")}</span>}
         {testMode && <span className={styles.stageDemo}>{tx("TRYB TESTOWY", "TEST MODE")}</span>}
         <div className={styles.stageInner}>
