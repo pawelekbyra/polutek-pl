@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Star, Users } from "lucide-react";
 import { useAuth, useUser } from "@/lib/auth/react";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { getLocalizedHref } from "@/lib/i18n/routing";
@@ -15,6 +15,7 @@ import { useSwitchLanguage } from "../useSwitchLanguage";
 import { cn } from "@/lib/utils";
 import { roleRingClass, type RoleBadgeKind } from "@/lib/role-badge";
 import { roleLabel } from "@/lib/role-label";
+import { PatronCheckoutHost, OPEN_PATRON_EVENT } from "../premium-pass/PatronCheckoutHost";
 
 interface UserMenuProps {
   isAdmin: boolean;
@@ -37,6 +38,37 @@ const PANEL_CHANNEL_LIMIT = 8;
 const PANEL_EXIT_MS = 200;
 /** Studio access per account for the lifetime of the page session, so navigating does not ask again. */
 const studioAccessCache = new Map<string, boolean>();
+
+/**
+ * The role under the name in the account panel. Same colours as the avatar ring and the comment pills (lib/role-badge.ts):
+ * amber for VIP (an active Premium access), blue for the creator, grey for everyone else. The role is always written out
+ * (colour never carries it alone). "VIP" and "Premium" are the same words in every language, so "VIP · Premium" needs no
+ * catalog entry; the other two reuse the comment pills' texts.
+ */
+function RolePill({ role }: { role: RoleBadgeKind }) {
+  const { tx } = useLanguage();
+  const base = "mt-1.5 inline-flex h-6 max-w-full items-center gap-1 rounded-md border px-2 text-[12px] font-bold leading-none whitespace-nowrap";
+  if (role === "VIP") {
+    return (
+      <span data-role-pill="VIP" className={cn(base, "border-[var(--chan-amber-bright)] bg-[var(--cm-amber-14)] text-[var(--chan-amber-ink)]")}>
+        <Star className="h-3.5 w-3.5 shrink-0 fill-[var(--chan-amber)] text-[var(--chan-amber-strong)]" strokeWidth={1.8} aria-hidden="true" />
+        VIP · Premium
+      </span>
+    );
+  }
+  if (role === "AUTHOR") {
+    return (
+      <span data-role-pill="AUTHOR" className={cn(base, "border-transparent bg-[var(--cm-blue-14)] text-[var(--chan-blue)]")}>
+        {tx("Twórca", "Creator")}
+      </span>
+    );
+  }
+  return (
+    <span data-role-pill="BASE" className={cn(base, "border-transparent bg-[var(--cm-gray-14)] text-[var(--chan-muted-2)]")}>
+      {tx("Normik", "Base")}
+    </span>
+  );
+}
 
 /**
  * Account panel. The avatar in the top bar opens a side panel from the right: who is signed in, the main places of
@@ -77,6 +109,12 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
   const close = useCallback(() => {
     dismiss();
     triggerRef.current?.focus();
+  }, [dismiss]);
+
+  // Same entry as the gold "Kup se Premium" button in Hero: the checkout host answers this event (it is mounted below).
+  const buyPremium = useCallback(() => {
+    dismiss();
+    window.dispatchEvent(new CustomEvent(OPEN_PATRON_EVENT));
   }, [dismiss]);
 
   const openAccount = useCallback((section: "profile" | "notifications") => {
@@ -234,9 +272,22 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
               <div className="min-w-0 flex-1 pt-0.5">
                 <p className="truncate text-[15px] font-bold text-[var(--chan-ink)]">{displayName}</p>
                 {email && email !== displayName ? <p className="truncate text-[12px] text-[var(--chan-muted)]">{email}</p> : null}
+                {role ? <RolePill role={role} /> : null}
               </div>
               <CloseButton ref={closeRef} onClick={close} aria-label={tx("Zamknij menu", "Close menu")} />
             </div>
+            {role === "BASE" ? (
+              <section aria-label="Premium" className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-xl bg-[var(--chan-blue-soft)] px-3 py-2">
+                <p className="min-w-0 flex-1 text-[12px] font-semibold leading-tight text-[var(--chan-blue)]">{tx("Nie masz jeszcze Premium.", "You don't have Premium yet.")}</p>
+                <button
+                  type="button"
+                  onClick={buyPremium}
+                  className="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-[var(--chan-blue)] px-3 text-[12px] font-bold text-white transition-colors hover:bg-[var(--chan-blue)]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-focus-ring)] focus-visible:ring-offset-2"
+                >
+                  {tx("Kup Premium", "Get Premium")}
+                </button>
+              </section>
+            ) : null}
             <div className="flex justify-end px-4 pb-3">
               <Suspense fallback={null}>
                 <PanelLanguage />
@@ -327,6 +378,7 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
         </div>
       ) : null}
 
+      <PatronCheckoutHost />
       <AccountModal open={accountOpen} onOpenChange={setAccountOpen} isAdmin={isAdmin} initialSection={accountSection} />
     </>
   );
