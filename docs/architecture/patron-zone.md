@@ -7,19 +7,19 @@ Nazwy zmiennych `PREMIUM_PASS_*` i prefiks `xp.premium_pass` w tabeli `AppSettin
 
 ## Co to jest
 
-- **Dwie opcje** (karty wyboru w kroku 1; `PATRON_PRODUCTS` w `lib/modules/patron-zone/domain/config.ts`): „Dostęp na 30 dni” (`ACCESS_30D`) i „Dostęp bez limitu” (`ACCESS_LIFETIME`, etykieta „Najlepsza wartość”, domyślnie zaznaczona). Bez subskrypcji i bez odnawiania.
+- **Dwie opcje** (karty wyboru w kroku 1; `PATRON_PRODUCTS` w `lib/modules/patron-zone/domain/config.ts`): „Dostęp na 30 dni” (`ACCESS_30D`) i „Dostęp na 3 miesiące” (`ACCESS_LIFETIME`, etykieta „Najlepsza wartość”, domyślnie zaznaczona; identyfikator jest historyczny, bo od 2026-11-03 ten plan NIE jest już bezterminowy, a klucze cen, metadane Stripe i zapisane rekordy zostają). **Żadna opcja nie jest bezterminowa.** Bez subskrypcji i bez odnawiania.
 - **Cennik produkt × waluta** (`PATRON_PRICES`, ceny brutto w groszach/centach, zawierają 23% VAT; właściciel zmienia liczby w jednym miejscu). Waluty to lista bramki napiwkowej (`SUPPORTED_CURRENCIES`):
 
   | | PLN | EUR | USD | CHF | GBP |
   |---|---|---|---|---|---|
   | Dostęp na 30 dni | 14,99 | 3,99 | 4,49 | 3,99 | 3,49 |
-  | Dostęp bez limitu | 29,99 | 7,99 | 8,99 | 7,99 | 6,99 |
+  | Dostęp na 3 miesiące (`ACCESS_LIFETIME`) | 29,99 | 7,99 | 8,99 | 7,99 | 6,99 |
 
   PLN to cena właściciela; pozostałe to okrągłe ceny detaliczne z grubsza wg kursów z 2026-10, wszystkie powyżej minimalnej opłaty Stripe (do przeglądu właściciela, zob. audyt).
 - **Serwer przyjmuje tylko znany identyfikator produktu i znaną walutę i sam bierze kwotę z cennika** (przeglądarka nigdy nie podaje kwoty; trasy są `strict`). Przy rozliczeniu `fulfillPayment()` sprawdza, że kwota równa się cenie z cennika dla produktu i waluty płatności; inaczej **brak dostępu i alert**.
-- **30 dni** dodaje 30 dni (od końca trwającego dostępu, inaczej od teraz), nie dalej niż 365 dni od teraz (`PATRON_MAX_AHEAD_DAYS`; dalsza wpłata jest odrzucana przed pobraniem pieniędzy). **Bez limitu** zapisuje jawny znacznik `lifetime: true` (+ `lifetimePaymentId`), nie odległą datę; zamienia trwające 30 dni na stały dostęp, a kolejny zakup jest odrzucany (`ALREADY_LIFETIME`).
+- **Długość dostępu (model od 2026-11-03):** jedno miejsce konfiguracji, `PLAN_DURATIONS` w `domain/config.ts`: `ACCESS_30D` = **30 dni**, `ACCESS_LIFETIME` = **3 miesiące kalendarzowe**. Zasady: (1) **3 miesiące to miesiące kalendarzowe w strefie Europe/Warsaw, nie 90 dni**, bo kupujący dostał obietnicę „3 miesiące”, a 90 dni kończy się 1 do 3 dni wcześniej niż trzy miesiące; 30 dni zostaje stałą liczbą dni (etykieta mówi „30 dni”). (2) Koniec zachowuje dzień i godzinę lokalną (zmiana czasu nie przesuwa godziny); brakujący dzień jest przycinany do końca miesiąca (31.10 -> 31.01, 30.11 -> 28.02, w roku przestępnym 29.02). Obliczenie to czysta funkcja `addMonths` w `domain/pass-state.ts`, niezależna od strefy serwera. (3) **Ponowny zakup przedłuża, nigdy nie nadpisuje:** gdy dostęp trwa, nowy koniec = obecny koniec + długość planu (30 dni albo 3 miesiące), inaczej teraz + długość planu; `grantedAt` zostaje z pierwszego zakupu trwającego dostępu. Dotyczy obu planów i kombinacji (30 dni na 3 miesiące i odwrotnie). (4) Sufit: nie dalej niż 365 dni od teraz (`PATRON_MAX_AHEAD_DAYS`, ten sam dla obu planów; dalsza wpłata live jest odrzucana przed pobraniem pieniędzy kodem `MAX_AHEAD`). Kod `ALREADY_LIFETIME` już nie istnieje. (5) **Wygasanie** liczone przy każdym odczycie (`expiresAt <= teraz` = wygasł), bez crona; dostęp bez `expiresAt` nie istnieje (zawodzi zamknięciem). (6) Zmiana długości w `PLAN_DURATIONS` dotyczy tylko NOWYCH zakupów; zapisane rekordy mają swój `expiresAt`. (7) W ofercie dla przeglądarki produkt ma `days` (30 albo null) i `months` (null albo 3); `days: null` oznacza „liczony w miesiącach”, a nie „bez limitu”.
 - **Które filmy:** lista slugów w `PREMIUM_PASS_VIDEO_SLUGS` (konfiguracja, kolumna `Video.tier` się nie zmienia; domyślnie `jj`, `test-transkodowania`). Hero, nadchodząca premiera i film nieopublikowany nigdy nie są za bramką.
-- **Baza:** zero migracji. Dostęp to wiersz `AppSetting` `xp.premium_pass:<userId>` (JSON, `provider` DEMO|STRIPE, `productId`, `paymentIds`, `totalMinor`, `lifetime`, `lifetimePaymentId`, `expiresAt`, zgody; starsze wersje są czytane jako 30 dni). Licznik lejka: `xp.premium_pass.stats:<data>`.
+- **Baza:** zero migracji. Dostęp to wiersz `AppSetting` `xp.premium_pass:<userId>` (JSON, `provider` DEMO|STRIPE, `productId`, `paymentIds`, `totalMinor`, `expiresAt`, zgody; pola `lifetime`/`lifetimePaymentId` są dziedzictwem sprzed 2026-11-03 i są zawsze zapisywane jako `false`/`null`; starsze wersje są czytane jako 30 dni). **Rekordy „bez limitu” sprzed 2026-11-03** (`lifetime: true`) są przy odczycie (`normalizeLegacyLifetime`, bez przepisywania bazy) zamieniane na dostęp 3-miesięczny liczony od `grantedAt` (nie krócej niż trwające 30 dni). Na produkcji 2026-11-03: 5 takich rekordów, wszystkie testowe (4 DEMO + 1 Stripe w trybie testowym, klucz `sk_test`), zero płatności live. Licznik lejka: `xp.premium_pass.stats:<data>`.
 
 ## Przełączniki (`app.env`, czytane w trakcie działania, bez przebudowy)
 
@@ -78,7 +78,7 @@ Karta sprzedawcy (`PassSellerCard`, dane w jednym obiekcie `PATRON_SELLER` w `pa
 
 Dostępność: wskaźnik kroków (`<ol>`, `aria-current="step"`), komunikat `aria-live`, fokus na nagłówku kroku, lista rozwijana z klawiatury, błędy w `role="alert"`, `prefers-reduced-motion`, układ sprawdzony na 375 px w harnessie przeglądarki (nie na prawdziwym telefonie).
 
-Testowe płatności Stripe można ponawiać również po zakupie dostępu bez limitu lub przekroczeniu horyzontu przedłużeń. Kasa pozostaje aktywna, a serwer pomija te dwie blokady wyłącznie dla poprawnie skonfigurowanych kluczy testowych; historia zakupów i dostęp zostają zachowane. Płatności live nadal podlegają obu blokadom.
+Testowe płatności Stripe można ponawiać również po przekroczeniu horyzontu przedłużeń. Kasa pozostaje aktywna, a serwer pomija tę blokadę wyłącznie dla poprawnie skonfigurowanych kluczy testowych; historia zakupów i dostęp zostają zachowane. Płatności live nadal podlegają tej blokadzie.
 
 ## Przepływ pieniędzy i przyznawanie dostępu (nie ma równoległego stosu płatności)
 
@@ -95,9 +95,9 @@ Stripe          -> webhook payment_intent.succeeded (podpis na surowym ciele; li
 ```
 
 - **Dostęp przyznaje wyłącznie `fulfillPayment()`** po weryfikacji, że Stripe mówi `succeeded`, a kwota, waluta, intent i użytkownik zgadzają się z wierszem `Payment`. Test `premium-pass-no-money.test.ts` pilnuje, że żadna trasa ani komponent nie woła `grantPatronAccessForPayment`.
-- **Pełny zwrot** (`REFUNDED`) zdejmuje udział tej wpłaty (30 dni albo znacznik lifetime; `revokePatronAccessForPayment`). Częściowy zwrot, spór i cofnięty zwrot właściciel obsługuje ręcznie (dostęp się nie zmienia sam; zob. audyt). Kod niczego nie zwraca sam.
+- **Pełny zwrot** (`REFUNDED`) zdejmuje udział tej wpłaty z daty końca (30 dni albo 3 miesiące zależnie od produktu wpłaty, nie niżej niż „teraz”, więc zwrot jedynej wpłaty kończy dostęp od razu; `revokePatronAccessForPayment`). Częściowy zwrot, spór i cofnięty zwrot właściciel obsługuje ręcznie (dostęp się nie zmienia sam; zob. audyt). Kod niczego nie zwraca sam.
 - **Księga:** płatność idzie do tabeli `Payment` (ta sama co napiwki; widać ją w panelu „Płatności”), odróżnia ją `metadata.purpose`. Pasek zbiórki liczy tylko napiwki (`fundraising-progress.service.ts` odejmuje płatności strefy).
-- **Czego nie ma:** zapisu do `Order`/`Entitlement`/`LedgerEntry`/`PatronGrant`, maila z potwierdzeniem (art. 21 u.p.k.), faktur ani paragonów, odznaki patrona za napiwek. To są punkty audytu. Jedyna publiczna widoczność zakupu to goła plakietka „VIP” przy komentarzach (decyzja właściciela 2026-11-02): tylko za aktywny, opłacony dostęp (Stripe, nie DEMO), bez dat i typu dostępu, nigdy z napiwków; patrz `comments-and-reactions.md`.
+- **Czego nie ma:** zapisu do `Order`/`Entitlement`/`LedgerEntry`/`PatronGrant`, maila z potwierdzeniem (art. 21 u.p.k.), faktur ani paragonów, odznaki patrona za napiwek. To są punkty audytu. Jedyna publiczna widoczność zakupu to goła plakietka „VIP” przy komentarzach (decyzja właściciela 2026-11-02): tylko za aktywny, opłacony dostęp (Stripe, nie DEMO), bez dat i typu dostępu, nigdy z napiwków; plakietka znika z końcem dostępu (po 30 dniach albo 3 miesiącach, `expiresAt`), bo `isVipRecord` pyta o `isRecordActive`; patrz `comments-and-reactions.md`.
 
 ## Decyzja dostępu i plan odtwarzania
 

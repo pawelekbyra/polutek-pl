@@ -42,10 +42,17 @@ describe("isVipRecord (paid, active patron-zone access only)", () => {
     expect(isVipRecord(record({ expiresAt: NOW.toISOString() }), NOW)).toBe(false);
   });
 
-  it("an unlimited access stays VIP for good", () => {
-    const life = record({ productId: "ACCESS_LIFETIME", lifetime: true, lifetimePaymentId: "pay_1", expiresAt: null });
-    expect(isVipRecord(life, NOW)).toBe(true);
-    expect(isVipRecord(life, new Date("2099-01-01T00:00:00.000Z"))).toBe(true);
+  it("a 3-month paid access is VIP until its end and not a day longer (no access is unlimited)", () => {
+    const end = new Date("2027-02-02T12:00:00.000Z"); // 02.11.2026 13:00 (Warsaw) + 3 calendar months
+    const three = record({ productId: "ACCESS_LIFETIME", priceMinor: 2999, expiresAt: end.toISOString() });
+    expect(isVipRecord(three, NOW)).toBe(true);
+    expect(isVipRecord(three, new Date(end.getTime() - 1000))).toBe(true);
+    expect(isVipRecord(three, end)).toBe(false);
+    expect(isVipRecord(three, new Date("2099-01-01T00:00:00.000Z"))).toBe(false);
+  });
+
+  it("a record without an end date is never active, even if it still says lifetime (fails closed)", () => {
+    expect(isVipRecord(record({ productId: "ACCESS_LIFETIME", lifetime: true, lifetimePaymentId: "pay_1", expiresAt: null }), NOW)).toBe(false);
   });
 
   it("a simulated (DEMO) checkout moved no money and gives no badge", () => {
@@ -62,7 +69,7 @@ describe("listVipUserIds", () => {
     const { db, findMany } = fakeDb([
       row("active", record()),
       row("expired", record({ expiresAt: new Date(NOW.getTime() - DAY).toISOString() })),
-      row("life", record({ productId: "ACCESS_LIFETIME", lifetime: true, expiresAt: null })),
+      row("life", record({ productId: "ACCESS_LIFETIME", lifetime: true, expiresAt: null })), // legacy unlimited row: read as 3 months from its grant date
       row("demo", record({ provider: "DEMO" })),
     ]);
     const ids = Array.from({ length: 40 }, (_, i) => `user_${i}`).concat(["active", "expired", "life", "demo", "active"]);
@@ -72,6 +79,9 @@ describe("listVipUserIds", () => {
     expect(findMany).toHaveBeenCalledTimes(1);
     expect(findMany.mock.calls[0][0].where.key.in).toHaveLength(44);
     expect([...vip].sort()).toEqual(["active", "life"]);
+    // the legacy unlimited row is no longer permanent: its badge ends 3 months after the grant (grantedAt = NOW - 5 days)
+    expect([...(await listVipUserIds(db, ["life"], new Date("2027-01-01T00:00:00.000Z")))]).toEqual(["life"]);
+    expect((await listVipUserIds(db, ["life"], new Date("2027-02-01T00:00:00.000Z"))).size).toBe(0);
   });
 
   it("asks for nothing when there are no authors", async () => {

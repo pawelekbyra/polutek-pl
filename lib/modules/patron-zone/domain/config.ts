@@ -13,12 +13,14 @@ export type PremiumPassMode = "off" | "testers" | "all";
 /**
  * The patron zone: a choice of TWO FIXED OPTIONS (owner decision 2026-10-21, replaces pay-what-you-want). The server
  * knows only these product ids and derives the amount from this table: it never takes an amount from the client.
- * A 30-day option adds 30 days (from the current end when still active); the unlimited option is a lifetime grant.
- * Nothing renews by itself (no subscription).
+ * Both options are TIME-LIMITED (owner decision 2026-11-03): the 30-day option adds 30 days, the second option (id
+ * `ACCESS_LIFETIME`, a historical id kept so prices, Stripe metadata and stored records keep working) adds 3 calendar
+ * months. Another payment extends from the current end when the access is still active. Nothing renews by itself
+ * (no subscription) and no option is unlimited any more.
  */
 /** The VAT rate used while `VAT_STATUS` is `active` (lib/config/vat.ts; the amounts below are final gross prices in both modes). */
 export const PATRON_VAT_RATE_PERCENT = 23;
-/** Access can be extended by 30-day payments, but never to more than this many days ahead of now. */
+/** Access can be extended by further payments, but never to more than this many days ahead of now. */
 export const PATRON_MAX_AHEAD_DAYS = 365;
 
 /** The currencies the tip gateway supports (lib/constants.ts) are the currencies of the patron checkout. */
@@ -29,17 +31,33 @@ export const PATRON_CURRENCY: PatronCurrency = "PLN";
 
 export type PatronProductId = "ACCESS_30D" | "ACCESS_LIFETIME";
 
+/** How long one payment extends the access: a fixed number of days, or whole calendar months. */
+export type PlanDuration = { readonly days: number; readonly months?: never } | { readonly months: number; readonly days?: never };
+
+/**
+ * THE ONE PLACE where the length of each plan is configured (everything else, grant, refund, offer, limits, asks
+ * `addPlanDuration` / `subtractPlanDuration` in domain/pass-state.ts).
+ * - `ACCESS_30D`: 30 days (a fixed, short period, the label says "30 dni").
+ * - `ACCESS_LIFETIME` (historical id, now the 3-month plan): 3 CALENDAR months in Europe/Warsaw, not 90 days, because
+ *   the label promised to the buyer says "3 miesiące"; 90 days would end 1 to 3 days earlier than three months. The
+ *   end keeps the time of day of the payment/current end; a missing day is clamped (31.10 -> 31.01, 30.11 -> 28.02).
+ * Changing a duration changes only NEW grants; stored records keep their own `expiresAt`.
+ */
+export const PLAN_DURATIONS: Readonly<Record<PatronProductId, PlanDuration>> = {
+  ACCESS_30D: { days: 30 },
+  ACCESS_LIFETIME: { months: 3 },
+};
+
 export type PatronProduct = {
   id: PatronProductId;
-  /** Days of access added by one payment; null = lifetime (unlimited). */
-  days: number | null;
+  duration: PlanDuration;
   /** Shown as a plain "best value" label; never a discount claim. */
   bestValue?: true;
 };
 
 export const PATRON_PRODUCTS: readonly PatronProduct[] = [
-  { id: "ACCESS_30D", days: 30 },
-  { id: "ACCESS_LIFETIME", days: null, bestValue: true },
+  { id: "ACCESS_30D", duration: PLAN_DURATIONS.ACCESS_30D },
+  { id: "ACCESS_LIFETIME", duration: PLAN_DURATIONS.ACCESS_LIFETIME, bestValue: true },
 ] as const;
 
 /**

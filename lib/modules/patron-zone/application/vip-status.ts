@@ -11,9 +11,9 @@ import { PASS_KEY_PREFIX, passKey } from "../infrastructure/pass-store";
 const VIP_LOOKUP_CHUNK = 500;
 
 /**
- * VIP = a REAL (Stripe) payment gave an access that is running now: a 30-day access until its end, an unlimited one
- * for good. A simulated (DEMO) checkout moved no money and gives no marker; an expired or fully refunded access
- * (refund removes its days or the lifetime marker) is no longer active, so the marker disappears with it.
+ * VIP = a REAL (Stripe) payment gave an access that is running now: a 30-day or 3-month access until its end (no access
+ * is unlimited). A simulated (DEMO) checkout moved no money and gives no marker; an expired or fully refunded access
+ * (a refund takes its period back out) is no longer active, so the marker disappears with it at `expiresAt`.
  */
 export function isVipRecord(record: PassRecord | null, now: Date): boolean {
   return record !== null && record.provider === "STRIPE" && isRecordActive(record, now);

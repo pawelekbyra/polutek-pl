@@ -8,8 +8,8 @@ import { buildPremiumPassOffer, type PremiumPassOffer } from "../domain/offer";
 import { resolvePremiumPayments, toPremiumPaymentsDto } from "../domain/payments-mode";
 import { readPass } from "../infrastructure/pass-store";
 
-/** `activeUntil: null` = unlimited (lifetime) access. */
-export type PremiumPassGate = { denied: true } | { activeUntil: string | null } | null;
+/** `activeUntil`: the end of the running access (ISO); no access is unlimited. */
+export type PremiumPassGate = { denied: true } | { activeUntil: string } | null;
 
 export function passUserId(actor: Actor): string | null {
   return actor.type === "user" || actor.type === "admin" ? actor.userId : null;
@@ -29,7 +29,7 @@ export async function premiumPassGate(ctx: Pick<AppContext, "prisma" | "actor">,
   const config = premiumPassFor(ctx.actor);
   if (!config || !isPremiumPassVideo(video, config, now)) return null;
   const state = await viewerPassState(ctx, now);
-  return state.state === "active" ? { activeUntil: state.record.lifetime ? null : state.record.expiresAt } : { denied: true };
+  return state.state === "active" && state.record.expiresAt ? { activeUntil: state.record.expiresAt } : { denied: true };
 }
 
 export type PremiumPassVideoRow = { id: string; slug: string; status: string; isMainFeatured: boolean; premiereAt: Date | null };
