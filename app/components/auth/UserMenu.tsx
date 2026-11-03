@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Star, Users } from "lucide-react";
@@ -10,8 +10,6 @@ import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
 import { CloseButton } from "@/components/ui/close-button";
 import AccountModal from "./AccountModal";
-import LanguageSwitcher from "../LanguageSwitcher";
-import { useSwitchLanguage } from "../useSwitchLanguage";
 import { cn } from "@/lib/utils";
 import { roleRingClass, type RoleBadgeKind } from "@/lib/role-badge";
 import { roleLabel } from "@/lib/role-label";
@@ -20,13 +18,6 @@ interface UserMenuProps {
   isAdmin: boolean;
   /** The viewer's public role (Creator > VIP > Base), from the profile read of the top bar; null/undefined = not known yet. */
   role?: RoleBadgeKind | null;
-}
-
-/** The language button of the account panel; useSwitchLanguage reads the URL, so it sits in its own Suspense. */
-function PanelLanguage() {
-  const { language } = useLanguage();
-  const switchLanguage = useSwitchLanguage();
-  return <LanguageSwitcher language={language} onSelect={switchLanguage} variant="dropdown" />;
 }
 
 type SubscribedChannel = { id: string; slug: string; handle: string | null; name: string };
@@ -258,7 +249,7 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
             className={`absolute right-0 top-0 flex h-full w-[min(88vw,320px)] flex-col overscroll-contain bg-[var(--chan-card)] shadow-2xl duration-200 ${closing ? "animate-out slide-out-to-right fill-mode-forwards" : "animate-in slide-in-from-right"}`}
           >
             <div className="border-b border-[var(--chan-line)]">
-            <div className="flex items-start gap-3 p-4 pb-2 pr-14">
+            <div className="flex items-start gap-3 p-4 pr-14">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
                 {avatarImage(48)}
               </span>
@@ -268,11 +259,6 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
                 {role ? <RolePill role={role} /> : null}
               </div>
               <CloseButton ref={closeRef} onClick={close} aria-label={tx("Zamknij menu", "Close menu")} />
-            </div>
-            <div className="flex justify-end px-4 pb-3">
-              <Suspense fallback={null}>
-                <PanelLanguage />
-              </Suspense>
             </div>
             </div>
 

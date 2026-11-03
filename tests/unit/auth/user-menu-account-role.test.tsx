@@ -8,8 +8,6 @@ import { txFor } from '../i18n/mock-language';
 let language: 'pl' | 'en' = 'pl';
 vi.mock('@/lib/auth/react', () => ({ useUser: () => ({ user: { id: 'u1', fullName: 'Viewer', primaryEmailAddress: { emailAddress: 'v@example.com' } } }), useAuth: () => ({ signOut: vi.fn() }) }));
 vi.mock('@/app/components/LanguageContext', () => ({ useLanguage: () => ({ language, tx: txFor(language) }) }));
-vi.mock('@/app/components/useSwitchLanguage', () => ({ useSwitchLanguage: () => vi.fn() }));
-vi.mock('@/app/components/LanguageSwitcher', () => ({ default: () => null }));
 vi.mock('next/link', () => ({ default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a> }));
 vi.mock('@/app/components/auth/AccountModal', () => ({ default: () => null }));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); language = 'pl'; });
