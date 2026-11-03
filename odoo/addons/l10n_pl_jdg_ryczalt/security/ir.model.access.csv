@@ -21,3 +21,8 @@ access_jdg_alert_user,jdg.alert user,model_jdg_alert,group_jdg_user,1,1,0,0
 access_jdg_alert_manager,jdg.alert manager,model_jdg_alert,group_jdg_manager,1,1,0,1
 access_jdg_deadline_user,jdg.deadline user,model_jdg_deadline,group_jdg_user,1,1,0,0
 access_jdg_deadline_manager,jdg.deadline manager,model_jdg_deadline,group_jdg_manager,1,1,1,1
+access_jdg_invoice_user,jdg.invoice user,model_jdg_invoice,group_jdg_user,1,1,1,1
+access_jdg_invoice_manager,jdg.invoice manager,model_jdg_invoice,group_jdg_manager,1,1,1,1
+access_jdg_invoice_line_user,jdg.invoice.line user,model_jdg_invoice_line,group_jdg_user,1,1,1,1
+access_jdg_invoice_line_manager,jdg.invoice.line manager,model_jdg_invoice_line,group_jdg_manager,1,1,1,1
+access_jdg_invoice_correction_wizard_user,jdg.invoice.correction.wizard user,model_jdg_invoice_correction_wizard,group_jdg_user,1,1,1,1

@@ -44,6 +44,25 @@
                             <field name="tips_as_income"/>
                         </group>
                     </group>
+                    <div class="alert alert-warning" role="alert" invisible="seller_ok">
+                        <strong>Faktury: brakuje danych sprzedawcy</strong> (<field name="seller_missing" class="d-inline"/>).
+                        Dopóki ich nie uzupełnisz, faktura jest tylko podglądem (PDF z napisem) i nie można jej wystawić.
+                    </div>
+                    <field name="seller_ok" invisible="1"/>
+                    <group>
+                        <group string="Dane sprzedawcy na fakturze (wpisz przed pierwszą fakturą)">
+                            <field name="seller_name" placeholder="Domyślnie: Właściciel / nazwa firmy"/>
+                            <field name="seller_nip"/>
+                            <field name="seller_street"/>
+                            <label for="seller_zip" string="Kod, miejscowość"/>
+                            <div class="o_row"><field name="seller_zip" placeholder="00-000"/><field name="seller_city"/></div>
+                            <field name="seller_country_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="seller_email"/>
+                        </group>
+                        <group string="Stopka faktury">
+                            <field name="invoice_footer" nolabel="1" placeholder="Opcjonalnie, np. REGON, wpis do CEIDG"/>
+                        </group>
+                    </group>
                     <group>
                         <group string="VAT i faktury">
                             <field name="vat_status"/>

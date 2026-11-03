@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_jdg_invoice" model="report.paperformat">
+        <field name="name">Faktura A4 (JDG)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">12</field>
+        <field name="margin_bottom">14</field>
+        <field name="margin_left">14</field>
+        <field name="margin_right">14</field>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+    </record>
+
+    <record id="action_report_jdg_invoice" model="ir.actions.report">
+        <field name="name">Faktura (PDF)</field>
+        <field name="model">jdg.invoice</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_pl_jdg_ryczalt.report_jdg_invoice_document</field>
+        <field name="report_file">l10n_pl_jdg_ryczalt.report_jdg_invoice_document</field>
+        <field name="print_report_name">(object.number or 'podglad-faktury').replace('/', '-')</field>
+        <field name="paperformat_id" ref="paperformat_jdg_invoice"/>
+        <field name="binding_model_id" ref="model_jdg_invoice"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_jdg_invoice_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="correction" t-value="o.doc_type == 'correction'"/>
+                <t t-set="preview" t-value="o.state == 'draft'"/>
+                <div class="article" t-att-data-oe-model="o._name" t-att-data-oe-id="o.id"
+                     t-att-data-oe-lang="o.env.context.get(lang)">
+                <div class="page jdg-inv">
+                    <style>
+                        .jdg-inv { font-family: 'Roboto', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif; font-size: 10pt; color: #1b1b1b; position: relative; }
+                        .jdg-inv h1 { font-size: 21pt; margin: 0 0 2px 0; font-weight: 700; }
+                        .jdg-inv .sub { color: #555; font-size: 9pt; }
+                        .jdg-inv table { width: 100%; border-collapse: collapse; }
+                        .jdg-inv .head td { vertical-align: top; }
+                        .jdg-inv .head td, .jdg-inv .meta td, .jdg-inv .meta tr, .jdg-inv .layout td, .jdg-inv .layout tr { border: 0 !important; }
+                        .jdg-inv .meta td { padding: 1px 0; font-size: 9.5pt; }
+                        .jdg-inv .meta td.l { color: #555; padding-right: 10px; }
+                        .jdg-inv .party { border: 1px solid #bbb; padding: 8px 10px; }
+                        .jdg-inv .party .t { font-size: 8.5pt; text-transform: uppercase; color: #666; letter-spacing: .04em; margin-bottom: 3px; }
+                        .jdg-inv .party .n { font-weight: 700; font-size: 11pt; }
+                        .jdg-inv table.items { margin-top: 16px; }
+                        .jdg-inv table.items th { background: #efefef; border: 1px solid #bbb; padding: 5px 6px; font-size: 8.5pt; text-align: center; }
+                        .jdg-inv table.items td { border: 1px solid #bbb; padding: 6px; font-size: 9.5pt; }
+                        .jdg-inv .r { text-align: right; white-space: nowrap; }
+                        .jdg-inv .c { text-align: center; }
+                        .jdg-inv table.sum { width: 58%; margin-left: 42%; margin-top: 10px; }
+                        .jdg-inv table.sum td { padding: 3px 6px; border-bottom: 1px solid #ddd; }
+                        .jdg-inv table.sum tr.total td { font-size: 12pt; font-weight: 700; border-bottom: 2px solid #333; }
+                        .jdg-inv .box { margin-top: 14px; padding: 8px 10px; border: 1px solid #bbb; background: #fafafa; font-size: 9.5pt; }
+                        .jdg-inv .mark { position: absolute; top: 330px; left: 5%; width: 90%; text-align: center; font-size: 46pt; font-weight: 700;
+                            color: rgba(200, 30, 30, 0.16); -webkit-transform: rotate(-24deg); transform: rotate(-24deg); letter-spacing: .06em; z-index: 0; line-height: 1.05; }
+                        .jdg-inv .foot { margin-top: 26px; font-size: 8.5pt; color: #555; border-top: 1px solid #ccc; padding-top: 6px; }
+                        .jdg-inv .warn { margin-top: 10px; padding: 7px 10px; border: 1px solid #c33; color: #a11; font-size: 9.5pt; font-weight: 700; }
+                    </style>
+
+                    <t t-if="o.is_test">
+                        <div class="mark">TEST<br/>NIE JEST FAKTURĄ</div>
+                    </t>
+                    <t t-elif="preview">
+                        <div class="mark">PODGLĄD<br/>NIE JEST FAKTURĄ</div>
+                    </t>
+
+                    <table class="head">
+                        <tr>
+                            <td style="width:58%">
+                                <h1><t t-if="correction">Faktura korygująca</t><t t-else="">Faktura</t></h1>
+                                <div style="font-size:13pt; font-weight:700;">
+                                    <t t-if="o.number" t-out="o.number"/>
+                                    <t t-else=""><span style="color:#a11">numer zostanie nadany przy wystawieniu</span></t>
+                                </div>
+                                <div class="sub" t-if="o.currency_id.name != 'PLN'">Waluta: <t t-out="o.currency_id.name"/></div>
+                            </td>
+                            <td style="width:42%">
+                                <table class="meta">
+                                    <tr><td class="l">Data wystawienia</td><td><b t-out="o._fmt_date(o.issue_date)"/></td></tr>
+                                    <tr><td class="l">Data sprzedaży</td><td><b t-out="o._fmt_date(o.sale_date)"/></td></tr>
+                                    <tr t-if="correction and o.original_id"><td class="l">Dotyczy faktury</td>
+                                        <td><b t-out="o.original_id.number"/> z dnia <t t-out="o._fmt_date(o.original_id.issue_date)"/></td></tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <t t-if="preview and not o.is_test and o.seller_missing">
+                        <div class="warn">PODGLĄD: w profilu firmy brakuje danych sprzedawcy (<t t-out="o.seller_missing"/>).
+                            Dokument nie jest fakturą i nie może być przekazany nabywcy.</div>
+                    </t>
+
+                    <table class="layout" style="margin-top:14px; width:100%">
+                        <tr>
+                            <td style="width:50%; vertical-align:top; padding-right:7px;">
+                                <div class="party">
+                                    <div class="t">Sprzedawca</div>
+                                    <t t-set="sl" t-value="o._party_lines('seller')"/>
+                                    <t t-if="sl"><div class="n" t-out="sl[0]"/>
+                                        <div t-foreach="sl[1:]" t-as="line" t-out="line"/></t>
+                                    <div t-if="o.seller_nip"><t t-out="o._tax_id_label('seller')"/>: <b t-out="o.seller_nip"/></div>
+                                    <div t-else="" style="color:#a11">NIP: brak</div>
+                                    <div t-if="o.seller_email" t-out="o.seller_email"/>
+                                </div>
+                            </td>
+                            <td style="width:50%; vertical-align:top; padding-left:7px;">
+                                <div class="party">
+                                    <div class="t">Nabywca</div>
+                                    <t t-set="bl" t-value="o._party_lines('buyer')"/>
+                                    <t t-if="bl"><div class="n" t-out="bl[0]"/>
+                                        <div t-foreach="bl[1:]" t-as="line" t-out="line"/></t>
+                                    <div t-else="" style="color:#a11">dane nabywcy do uzupełnienia</div>
+                                    <div t-if="o.buyer_tax_id"><t t-out="o._tax_id_label('buyer')"/>: <b t-out="o.buyer_tax_id"/></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <t t-if="correction">
+                        <div class="box" style="margin-top:14px">
+                            <b>Przyczyna korekty:</b> <t t-out="o.reason or 'do uzupełnienia'"/><br/>
+                            <b>Faktura korygowana:</b> <t t-out="o.original_id.number"/> z dnia <t t-out="o._fmt_date(o.original_id.issue_date)"/>,
+                            data sprzedaży <t t-out="o._fmt_date(o.original_id.sale_date)"/>.
+                        </div>
+                        <table class="items">
+                            <thead>
+                                <tr>
+                                    <th></th><th>Nazwa towaru lub usługi</th><th>Ilość</th><th>Wartość netto</th><th>Stawka VAT</th>
+                                    <th>Kwota VAT</th><th>Wartość brutto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="nm" t-value="o.line_ids[:1].name"/>
+                                <t t-set="b" t-value="o._split(o.before_gross)"/>
+                                <t t-set="a" t-value="o._split(o.after_gross)"/>
+                                <tr>
+                                    <td><b>przed korektą</b></td><td t-out="nm"/><td class="c">1 szt.</td>
+                                    <td class="r" t-out="o._fmt_num(b[0])"/><td class="c" t-out="o._vat_label()"/>
+                                    <td class="r" t-out="o._fmt_num(b[1])"/><td class="r" t-out="o._fmt_num(o.before_gross)"/>
+                                </tr>
+                                <tr>
+                                    <td><b>po korekcie</b></td><td t-out="nm"/><td class="c">1 szt.</td>
+                                    <td class="r" t-out="o._fmt_num(a[0])"/><td class="c" t-out="o._vat_label()"/>
+                                    <td class="r" t-out="o._fmt_num(a[1])"/><td class="r" t-out="o._fmt_num(o.after_gross)"/>
+                                </tr>
+                                <tr style="background:#f6f6f6">
+                                    <td><b>różnica</b></td><td></td><td></td>
+                                    <td class="r"><b t-out="o._fmt_num(o.amount_net)"/></td><td class="c" t-out="o._vat_label()"/>
+                                    <td class="r"><b t-out="o._fmt_num(o.amount_vat)"/></td><td class="r"><b t-out="o._fmt_num(o.amount_gross)"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                    <t t-else="">
+                        <table class="items">
+                            <thead>
+                                <tr>
+                                    <th style="width:4%">Lp.</th><th>Nazwa towaru lub usługi</th><th style="width:7%">Ilość</th>
+                                    <th style="width:6%">Miara</th><th style="width:13%">Cena jedn. netto</th><th style="width:13%">Wartość netto</th>
+                                    <th style="width:8%">Stawka VAT</th><th style="width:11%">Kwota VAT</th><th style="width:13%">Wartość brutto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="l">
+                                    <td class="c" t-out="l_index + 1"/>
+                                    <td t-out="l.name"/>
+                                    <td class="c" t-out="o._fmt_num(l.quantity, 0 if l.quantity == int(l.quantity) else 3)"/>
+                                    <td class="c" t-out="l.unit"/>
+                                    <td class="r" t-out="o._fmt_num(l.unit_price)"/>
+                                    <td class="r" t-out="o._fmt_num(l.amount_net)"/>
+                                    <td class="c" t-out="o._vat_label()"/>
+                                    <td class="r"><t t-if="o.vat_mode == 'exempt'">–</t><t t-else="" t-out="o._fmt_num(l.amount_vat)"/></td>
+                                    <td class="r" t-out="o._fmt_num(l.amount_gross)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <table class="sum">
+                        <tr><td>Razem wartość netto</td><td class="r" t-out="o._fmt_money(o.amount_net)"/></tr>
+                        <tr><td>Razem VAT</td>
+                            <td class="r"><t t-if="o.vat_mode == 'exempt'">zwolniony</t><t t-else="" t-out="o._fmt_money(o.amount_vat)"/></td></tr>
+                        <tr class="total"><td><t t-if="correction">Różnica należności</t><t t-else="">Należność ogółem</t></td>
+                            <td class="r" t-out="o._fmt_money(o.amount_gross)"/></tr>
+                    </table>
+
+                    <div class="box" t-if="not correction">
+                        <b>Sposób zapłaty:</b> <t t-out="o.payment_note"/>.
+                        Do zapłaty: <b t-out="o._fmt_money(0)"/>.
+                    </div>
+
+                    <div class="box" t-if="o.vat_mode == 'exempt'">
+                        <b>Sprzedawca zwolniony z podatku VAT</b>
+                        <t t-if="o.exempt_basis">– podstawa zwolnienia: <t t-out="o.exempt_basis"/>.</t>
+                    </div>
+
+                    <div class="box" t-if="o.currency_id.name != 'PLN'">
+                        <b>Przeliczenie na złote.</b>
+                        Kurs średni NBP z tabeli A
+                        <t t-if="o.fx_table_no">nr <t t-out="o.fx_table_no"/></t>
+                        <t t-if="o.fx_date">z dnia <t t-out="o._fmt_date(o.fx_date)"/></t>
+                        (ostatni dzień roboczy poprzedzający dzień sprzedaży):
+                        1 <t t-out="o.currency_id.name"/> = <b t-out="o._fmt_num(o.fx_rate, 4)"/> PLN.<br/>
+                        Wartość w PLN: <b t-out="o._fmt_money(o.amount_gross_pln, o.pln_currency_id)"/>
+                        <t t-if="o.vat_mode == 'active'">
+                            (netto <t t-out="o._fmt_money(o.amount_net_pln, o.pln_currency_id)"/>,
+                            VAT <b t-out="o._fmt_money(o.amount_vat_pln, o.pln_currency_id)"/>)
+                        </t>.
+                    </div>
+
+                    <div class="foot">
+                        <div>Faktura wystawiona na żądanie nabywcy. Dokument nie wymaga podpisu.</div>
+                        <div t-if="o.footer_text" t-out="o.footer_text" style="white-space:pre-line"/>
+                        <div t-if="o.ksef_number">Numer KSeF: <t t-out="o.ksef_number"/></div>
+                    </div>
+                </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -428,6 +428,49 @@ class JdgIncomeEntry(models.Model):
             "context": {"default_entry_id": self.id},
         }
 
+    # ------------------------------------------------------------------ faktury (iteracja 4)
+
+    invoice_ids = fields.One2many("jdg.invoice", "entry_id", "Faktury", readonly=True)
+    invoice_id = fields.Many2one("jdg.invoice", "Faktura", compute="_compute_invoice_info")
+    invoice_number = fields.Char("Faktura", compute="_compute_invoice_info")
+    can_invoice = fields.Boolean(compute="_compute_invoice_info")
+    can_correct_invoice = fields.Boolean(compute="_compute_invoice_info")
+
+    @api.depends("invoice_ids.state", "invoice_ids.number", "state", "kind", "amount", "reverses_id.invoice_ids.state")
+    def _compute_invoice_info(self):
+        for entry in self:
+            invoice = entry.invoice_ids[:1]
+            entry.invoice_id = invoice
+            entry.invoice_number = invoice.number or (invoice and invoice.name) or False
+            entry.can_invoice = bool(
+                entry.state == "posted" and entry.kind == "sale" and entry.amount > 0 and not invoice)
+            original = entry.reverses_id.invoice_ids[:1]
+            entry.can_correct_invoice = bool(
+                entry.state == "posted" and entry.kind in ("refund", "dispute_lost", "adjustment") and entry.amount < 0
+                and not invoice and original.state == "issued" and original.doc_type == "invoice")
+
+    def action_create_invoice(self):
+        """„Wystaw fakturę”: tworzy szkic faktury do tego wpisu i otwiera go (nabywca uzupełnia dane, potem „Wystaw”)."""
+        self.ensure_one()
+        invoice = self.invoice_ids[:1] or self.env["jdg.invoice"]._create_from_entry(self)
+        return invoice._action_open()
+
+    def action_open_invoice(self):
+        self.ensure_one()
+        return self.invoice_ids[:1]._action_open()
+
+    def action_create_correction_invoice(self):
+        """„Wystaw fakturę korygującą” do zwrotu, który koryguje wpis z wystawioną fakturą."""
+        self.ensure_one()
+        original = self.reverses_id.invoice_ids[:1]
+        if not original or original.state != "issued":
+            raise UserError("Do wpisu korygowanego nie ma wystawionej faktury, więc korekta nie jest potrzebna.")
+        return {
+            "type": "ir.actions.act_window", "name": "Faktura korygująca", "res_model": "jdg.invoice.correction.wizard",
+            "view_mode": "form", "target": "new",
+            "context": {"default_invoice_id": original.id, "default_refund_entry_id": self.id},
+        }
+
     def init(self):
         """Trigger w bazie: druga linia obrony append-only (patrz GUARD_SQL). Wykonywany przy każdej aktualizacji modułu."""
         self.env.cr.execute(GUARD_SQL)

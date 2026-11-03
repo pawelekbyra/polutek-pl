@@ -64,6 +64,16 @@
             <field name="model_id" ref="model_jdg_alert"/>
             <field name="domain_force">[('company_id', 'in', company_ids)]</field>
         </record>
+        <record id="rule_jdg_invoice_company" model="ir.rule">
+            <field name="name">Faktury: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_invoice"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_invoice_line_company" model="ir.rule">
+            <field name="name">Pozycje faktur: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_invoice_line"/>
+            <field name="domain_force">[('invoice_id.company_id', 'in', company_ids)]</field>
+        </record>
         <record id="rule_jdg_deadline_company" model="ir.rule">
             <field name="name">Terminy: tylko własna firma</field>
             <field name="model_id" ref="model_jdg_deadline"/>

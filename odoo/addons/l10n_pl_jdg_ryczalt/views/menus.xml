@@ -6,6 +6,7 @@
 
     <menuitem id="menu_jdg_dashboard" name="Dzisiaj" parent="menu_jdg_root" action="action_jdg_dashboard" sequence="10"/>
     <menuitem id="menu_jdg_entries" name="Ewidencja przychodów" parent="menu_jdg_root" action="action_jdg_income_entry" sequence="20"/>
+    <menuitem id="menu_jdg_invoices" name="Faktury" parent="menu_jdg_root" action="action_jdg_invoice" sequence="25"/>
     <menuitem id="menu_jdg_taxes" name="Podatki i składki" parent="menu_jdg_root" action="action_jdg_taxes" sequence="30"/>
     <menuitem id="menu_jdg_payments" name="Zapłacone składki" parent="menu_jdg_root" action="action_jdg_payment" sequence="40"/>
     <menuitem id="menu_jdg_periods" name="Zamykanie okresów" parent="menu_jdg_root" action="action_jdg_period_open" sequence="35"/>

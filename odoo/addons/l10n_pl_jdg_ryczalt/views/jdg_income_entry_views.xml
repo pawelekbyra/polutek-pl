@@ -10,6 +10,7 @@
                 <field name="kind" widget="badge" decoration-success="kind == 'sale'"
                        decoration-danger="kind in ('refund', 'dispute_lost')" decoration-warning="kind == 'adjustment'" decoration-info="kind == 'donation'"/>
                 <field name="doc_ref" optional="show"/>
+                <field name="invoice_number" string="Faktura" optional="show"/>
                 <field name="description"/>
                 <field name="currency_id" optional="show"/>
                 <field name="amount" string="Kwota (waluta)"/>
@@ -35,6 +36,13 @@
                             help="Nadaje numer kolejny i zapisuje wpis na stałe."/>
                     <button name="action_open_correction" type="object" string="Korekta lub zwrot"
                             invisible="state != 'posted'"/>
+                    <button name="action_create_invoice" type="object" string="Wystaw fakturę" class="btn-secondary"
+                            invisible="not can_invoice"
+                            help="Faktura na żądanie kupującego. Przychód nadal wynika z tego wpisu, nie z faktury."/>
+                    <button name="action_open_invoice" type="object" string="Otwórz fakturę" class="btn-secondary"
+                            invisible="not invoice_id"/>
+                    <button name="action_create_correction_invoice" type="object" string="Wystaw fakturę korygującą"
+                            class="btn-secondary" invisible="not can_correct_invoice"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
                 </header>
                 <sheet>
@@ -47,6 +55,9 @@
                     <div class="oe_title"><h1><field name="name"/></h1></div>
                     <field name="is_foreign" invisible="1"/>
                     <field name="pln_currency_id" invisible="1"/>
+                    <field name="can_invoice" invisible="1"/>
+                    <field name="can_correct_invoice" invisible="1"/>
+                    <field name="invoice_id" invisible="1"/>
                     <group>
                         <group string="Przychód">
                             <field name="income_date" readonly="state == 'posted'"/>
@@ -87,6 +98,7 @@
                         </group>
                         <group>
                             <field name="reverses_id" invisible="not reverses_id"/>
+                            <field name="invoice_number" string="Faktura" invisible="not invoice_number"/>
                             <field name="posted_on" invisible="state != 'posted'"/>
                             <field name="posted_by" invisible="state != 'posted'"/>
                             <field name="seq_no" invisible="state != 'posted'"/>

@@ -9,11 +9,12 @@ Moduł dla jednoosobowej działalności gospodarczej na ryczałcie (Polska), Odo
 * Ewidencja przychodów tylko dopisywana (append-only), waluty obce z automatycznym kursem NBP (tabela A, dzień roboczy przed przychodem).
 * Zamykanie miesięcy i kwartałów z migawką liczb i zapisem zaliczek, blokada edycji zamkniętych okresów.
 * Alerty progów (zdrowotna 60/300 tys., limit VAT, OSS 10 000 EUR, darowizny) i kalendarz terminów z powiadomieniami w Discuss (7/3/1 dzień).
+* Faktury na żądanie kupującego (PDF po polsku, numeracja FV/rok/numer bez luk, korekty FK, dane stron zamrożone na dokumencie).
 * Wszystkie stawki, progi i podstawy ZUS w wersjonowanej tabeli reguł z poziomem pewności i źródłem.
 
 Wszystkie kwoty to SZACUNEK, NIE PORADA PODATKOWA. Parametry musi potwierdzić księgowy.
 """,
-    "version": "19.0.2.1.0",
+    "version": "19.0.3.0.0",
     "category": "Accounting/Localizations",
     "author": "Paweł Perfect",
     "website": "https://www.pawelperfect.com",
@@ -31,6 +32,8 @@ Wszystkie kwoty to SZACUNEK, NIE PORADA PODATKOWA. Parametry musi potwierdzić k
         "views/jdg_profile_views.xml",
         "views/jdg_income_entry_views.xml",
         "views/jdg_income_correct_wizard_views.xml",
+        "views/jdg_invoice_views.xml",
+        "views/jdg_invoice_report.xml",
         "views/jdg_contribution_payment_views.xml",
         "views/jdg_fx_rate_views.xml",
         "views/jdg_period_views.xml",

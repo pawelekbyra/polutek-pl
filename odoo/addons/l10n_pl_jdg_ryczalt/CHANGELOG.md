@@ -3,6 +3,22 @@
 Wersjonowanie: `19.0.MAJOR.MINOR.PATCH`. Zmiana wzorów = MINOR + wpis tutaj. Reguły roczne to NOWE pliki `data/jdg_tax_rules_<rok>.xml`
 z nowymi `xml_id` (nigdy nadpisanie zweryfikowanej reguły).
 
+## 19.0.3.0.0 (2026-11-03): iteracja 4, faktury
+* Faktury NA ŻĄDANIE kupującego (`jdg.invoice`): przycisk „Wystaw fakturę” na zaksięgowanym wpisie sprzedaży tworzy szkic, nabywca podaje dane
+  (B2C: imię i adres, B2B: NIP), „Wystaw fakturę” nadaje numer. Potwierdzenie zakupu e-mailem to nie faktura; darowizny (napiwki) nie mają faktur.
+* Dane sprzedawcy w Profilu firmy (nazwa, NIP z sumą kontrolną, adres, e-mail, stopka). BEZ kompletnych danych sprzedawcy faktura jest tylko
+  PODGLĄDEM: czerwone ostrzeżenie, PDF z napisem „PODGLĄD, NIE JEST FAKTURĄ”, wystawienie zablokowane (poza fakturami testowymi). Dane sprzedawcy i
+  nabywcy są zamrażane na dokumencie przy wystawieniu.
+* Numeracja `FV/rok/0001` (korekty `FK/rok/0001`, faktury testowe `TEST-FV/...`) w jednej transakcji pod blokadą wiersza profilu: bez luk i dubli;
+  numer dopiero przy wystawieniu; wystawionej faktury nie da się edytować ani usunąć (ORM + trigger SQL). Data wystawienia nie może być z przyszłości
+  ani wcześniejsza niż ostatnia faktura serii.
+* Zwolnienie z VAT (art. 113): stawka „zw.”, podstawa „art. 113 ust. 1 ustawy o VAT” z profilu (zalecana, nie obowiązkowa dla zwolnienia podmiotowego);
+  przy czynnym VAT netto/VAT wyliczone z brutto. Waluta obca: kwoty w walucie, kurs NBP z wpisu (tabela, data) i wartość w PLN.
+* Faktury korygujące (kreator „Wystaw fakturę korygującą”): przed/po/różnica, przyczyna, korekty częściowe i łańcuch; korekta do zera anuluje fakturę.
+  Źródłem jest wpis zwrotu w ewidencji (kreator dopisuje go, jeśli go nie ma). Faktura ani korekta NIE zmieniają przychodu: przychód wynika z wpisu.
+* PDF po polsku (QWeb, wkhtmltopdf z obrazu Odoo, czcionka Roboto z polskimi znakami), przycisk „Pobierz PDF”. Lista, kanban, formularz, wyszukiwanie, menu „Faktury”,
+  kolumna „Faktura” w ewidencji. Wysyłka e-mailem poza zakresem. B2B z polskim NIP: ostrzeżenie o KSeF i pole na numer KSeF (KSeF nie jest zaimplementowany).
+
 ## 19.0.2.1.0 (2026-11-02)
 * VAT „w cieniu” (decyzja właściciela): firma zwolniona z VAT, ale każdy wpis ma kwotę netto i VAT wg stawki z reguły `vat.shadow_rate_pct`
   (23%, brutto x 23 / 123) oraz flagę „VAT faktycznie należny”. Status VAT „czynny” w profilu: VAT należny, przychód ryczałtowy = netto.
