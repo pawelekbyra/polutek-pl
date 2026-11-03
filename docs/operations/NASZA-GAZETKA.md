@@ -64,6 +64,35 @@ Zmiana treści strony = nowe źródło (tarball) + `build.sh`; po przełączeniu
 Bezpieczne kolejne kroki: sprawdzić `test-gazetka` na urządzeniach (mobile), ustalić indeksację (patrz niżej), wykonać `to-tunnel`, odczekać aż Cloudflare Universal SSL pokryje apex i `www` (minuty), sprawdzić 12 adresów, `www` → apex 301, nagłówki i certyfikat, obserwować 7 dni, dopiero potem wyłączyć projekt Vercel (`nasza-gazetka.pl`, domeny `nasza-gazetka.pl`, `www`). Rekordy Vercela są zachowane w skrypcie rollbacku; rollback poza skryptem = przywrócenie NS `dns/dns2/dns3.home.pl` (rekordy w home.pl nietknięte).
 Certyfikat Vercela (Let's Encrypt) jest ważny do 2026-12-10; po przełączeniu certyfikat wystawia Cloudflare.
 
+## Redesign: serwis informacyjny (2026-11-03, tylko strona testowa)
+
+Strona główna każdego języka (`/pl`, `/en`, `/es`, `/de`, `/fr`, `/cs`) jest teraz portalem newsowym: masthead „Nasza Gazetka”, pasek z datą i przełącznikiem języka, nawigacja działów (kotwice do sekcji strony głównej, bez podstron), **artykuł przewodni**, kolumna „Wybór redakcji”, siatka „Najnowsze” i sekcje działów (Śledztwa, Prawo, Społeczeństwo, Opinie, O nas). Każdy artykuł ma adres `/<lang>/<slug>` (ten sam slug we wszystkich językach), łącznie 67 stron (`/`, 6 stron głównych, 10 artykułów x 6 języków).
+
+| Slug | Dział | Rodzaj |
+|---|---|---|
+| `eliksir-wiedzmina` (CD Projekt, dawniej `/<lang>`) | Śledztwa | prawdziwy, **przewodni** |
+| `prokuratura-rejonowa-w-walbrzychu` | Śledztwa | prawdziwy |
+| `jak-zlozyc-wniosek-o-informacje-publiczna`, `jak-czytac-wyrok-sadowy`, `czym-jest-przedawnienie-karne`, `jak-dziala-sprawa-karna` | Prawo | atrapa |
+| `jak-chronic-zrodla-dziennikarskie`, `jak-weryfikowac-informacje-w-sieci` | Społeczeństwo | atrapa |
+| `dlaczego-jawnosc-rozpraw-ma-znaczenie`, `po-co-nam-media-lokalne` | Opinie | atrapa |
+
+Przewodni jest materiał o CD Projekt: najlepiej udokumentowany (wyroki, księgi wieczyste, Onet) i ma okładkę. Zmiana przewodniego = przeniesienie `lead: true` w `app/data/articles.ts`.
+
+**Gdzie co jest w kodzie** (źródło w prywatnym repo `polutek`):
+
+* `app/data/articles.ts`: jedna lista artykułów (slug, dział, data, okładka, `placeholder`, `lead`) oraz lista „Wybór redakcji” (`sidePickSlugs`);
+* `app/data/ui.ts`: teksty interfejsu w 6 językach (działy, etykiety, daty);
+* `app/data/placeholders/<slug>.ts`: treść atrap w 6 językach (PL napisany, reszta zwięzłe tłumaczenia), rejestr w `placeholders/index.ts`;
+* `app/components/portal/*`: nagłówek, stopka, karty, szablon artykułu, okładki SVG (`CoverArt`, bez zdjęć i twarzy);
+* `app/(localized)/[lang]/page.tsx` (strona główna), `[slug]/page.tsx` (szablon atrap), `eliksir-wiedzmina/` i `prokuratura-…/` (prawdziwe artykuły, treść bez zmian, dodany nagłówek i „powiązane”);
+* `app/(localized)/[lang]/layout.tsx` ustawia `<html lang>` z adresu (wcześniej zawsze `pl`), `app/(hub)/` to strona wyboru języka `/`.
+
+**Atrapy** mają `placeholder: true` i widoczny znacznik „Materiał przykładowy” (karta, strona artykułu, nota, stopka). Nie zawierają nazwisk, instytucji ani spraw. **Zastąpienie prawdziwym artykułem:** (1) dodaj artykuł (komponent + treść, wzór: `PlaceholderArticle` lub `eliksir-wiedzmina/page.tsx`); (2) w `articles.ts` ustaw `placeholder: false` (znacznik znika) albo usuń wpis, plik `placeholders/<slug>.ts` i wpis w `placeholders/index.ts`; (3) gdy nie zostanie żadna atrapa, stopka sama przestaje pokazywać notkę. Pozycje „Wybór redakcji” zmieniasz w `sidePickSlugs`.
+
+**Odtworzenie:** patche w `apps/nasza-gazetka/patches/`: `nasza-gazetka-noindex-canonical.patch`, potem `nasza-gazetka-redesign.patch` (względem commita `91db05e` + pierwszy patch). `build.sh` stosuje wszystkie `*.patch` alfabetycznie; `SKIP_REDESIGN=1 ./build.sh` buduje starą wersję. Pełny tarball źródła: `/opt/claude/nasza-gazetka-src-redesign-2026-11-03.tar.gz`; różnica względem `91db05e` w jednym pliku: `/opt/claude/gazetka-redesign/redesign-full-vs-91db05e.patch` (do `git apply` w repo `polutek`). Kopia poprzedniej strony: `/opt/serwerek/data/nasza-gazetka/site.bak-2026-11-03` (rollback: `rsync -a --delete site.bak-2026-11-03/ site/`).
+
+**Uwagi:** `site/` serwuje zarówno test-gazetka, jak i (po cutoverze) apex, więc `cutover.sh to-tunnel` opublikuje już redesign. Adres `/<lang>` przestał być artykułem CD Projekt (jest nim `/<lang>/eliksir-wiedzmina`): stare linki do `/pl` prowadzą na portal. Daty atrap są umowne; data prokuratury (2026-06-27) to data commita źródła: do potwierdzenia. Tekst „O nas” jest ogólny, do akceptacji właściciela. Obrazek okładki CD Projekt ma w sobie polski napis.
+
 ## noindex i SEO
 
 Decyzja właściciela: wszystkie nowe strony i eksperymenty mają `noindex`. Dlatego nginx dodaje `X-Robots-Tag: noindex, nofollow, noarchive`, `robots.txt` to `Disallow: /` (plik `nginx/robots.txt`), a build zawiera `meta robots noindex`.
