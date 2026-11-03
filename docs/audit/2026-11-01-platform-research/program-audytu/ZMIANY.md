@@ -286,3 +286,5 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - 128/128 celowanych,15 oczekiwanych kontroli z prawdziwym Dockerem i sześcioma syntetycznymi obrazami, prawdziwy TS2322: baseline exit 0/PASS → finalny exit 1/FAIL. Brak danych produktowego release-proof.
 - Końcowy unit 4779/0/2skip przez częściowy local-CI,PG 75/75,krytyczne 36/36,encoder 3/3,pozostałe wykonane lokalne bramki/budowy PASS. Rzeczywiste archiwum zgodne; częściowy raport prawidłowo odrzucony do wydania. Wymóg audit zachowany, brak retry starej odmowy.
 - Dowody h1-release-core-2026-11-02; stare obrazy na9824 i wszystkie wcześniejsze dane zachowane. H1 ~80%,całość 5–10%;0 zamkniętych ustaleń/pakietów,bez ASVS PASS/merge/deploy/produkcji/kosztów.
+
+- Uzupełnienie weryfikacji: bezpośrednie Git/REST potwierdziły remote i draft PR; alternatywny odczyt przez pomocniczy proces/GraphQL zwracał401. Bez zmian poświadczeń i konfiguracji; działające metody zapisane w STAN.

@@ -94,5 +94,6 @@
   ],
   "batch_started": "2026-11-02",
   "handoff_updated": "2026-11-03",
-  "raw_logs": "Captured bytes are preserved, including progress carriage returns, trailing whitespace and final blank lines; documentation/source whitespace checks exclude raw .log files."
+  "raw_logs": "Captured bytes are preserved, including progress carriage returns, trailing whitespace and final blank lines; documentation/source whitespace checks exclude raw .log files.",
+  "remote_verification": "remote-verification.json: direct Git and REST reads matched published code/audit refs and draft PR. Nested Git/GraphQL reads failed; no credential or environment change was needed."
 }

@@ -197,6 +197,8 @@ Poniższe opisy odnoszą się do datowanych wcześniejszych prób; nie cofają o
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
+GitHub: końcowe bezpośrednie `git ls-remote` i `gh api repos/pawelekbyra/polutek-pl/pulls/2065` potwierdziły właściwe gałęzie i szkic PR. Odczyt Git przez pomocniczy Python oraz `gh pr view`/GraphQL zwróciły błąd uwierzytelnienia; używać bezpośrednich Git/REST przez narzędzie wykonawcze. Nie zmieniano poświadczeń ani konfiguracji; nie wymagało to nowego loginu/tokena. [Metody i obserwacje](evidence/h1-release-core-2026-11-02/remote-verification.json).
+
 ## Następne działanie — pozostałe warunki H1
 
 1. Czytać POSTEP/h1-status, potwierdzić remote SHA, wybrać czystą gałąź kodu PR #2065 i Node 22. Nie przełączać checkoutu podczas testów/buildów.

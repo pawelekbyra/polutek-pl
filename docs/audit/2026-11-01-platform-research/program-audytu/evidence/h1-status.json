@@ -1326,5 +1326,27 @@
     "whole_roadmap_remaining_min_percent": 90,
     "whole_roadmap_remaining_max_percent": 95,
     "method": "Owner-requested rough effort estimate, not derived from passing test percentage;40 packages and unfinished evidence/security work remain the mission scope."
+  },
+  "github_access_observation": {
+    "date": "2026-11-03",
+    "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+    "audit_sha_checked": "33fee7d038d4c81df92fb8c090fc144811282122",
+    "direct_git_remote_refs_match": true,
+    "direct_rest_pr": {
+      "number": 2065,
+      "state": "open",
+      "draft": true,
+      "head": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2"
+    },
+    "failed_read_paths": [
+      "git ls-remote through Python subprocess",
+      "gh pr view GraphQL: HTTP401"
+    ],
+    "working_read_paths": [
+      "direct git ls-remote via exec_command",
+      "direct gh api REST via exec_command"
+    ],
+    "credential_values_read_or_changed": false,
+    "environment_config_changed": false
   }
 }
