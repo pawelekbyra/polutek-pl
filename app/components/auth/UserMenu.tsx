@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Star, Users } from "lucide-react";
 import { useAuth, useUser } from "@/lib/auth/react";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { getLocalizedHref } from "@/lib/i18n/routing";
@@ -37,6 +37,37 @@ const PANEL_CHANNEL_LIMIT = 8;
 const PANEL_EXIT_MS = 200;
 /** Studio access per account for the lifetime of the page session, so navigating does not ask again. */
 const studioAccessCache = new Map<string, boolean>();
+
+/**
+ * The role under the name in the account panel. Same colours as the avatar ring and the comment pills (lib/role-badge.ts):
+ * amber for VIP (an active Premium access), blue for the creator, grey for everyone else. The role is always written out
+ * (colour never carries it alone). "VIP" and "Premium" are the same words in every language, so "VIP · Premium" needs no
+ * catalog entry; the other two reuse the comment pills' texts.
+ */
+function RolePill({ role }: { role: RoleBadgeKind }) {
+  const { tx } = useLanguage();
+  const base = "mt-1.5 inline-flex h-6 max-w-full items-center gap-1 rounded-md border px-2 text-[12px] font-bold leading-none whitespace-nowrap";
+  if (role === "VIP") {
+    return (
+      <span data-role-pill="VIP" className={cn(base, "border-[var(--chan-amber-bright)] bg-[var(--cm-amber-14)] text-[var(--chan-amber-ink)]")}>
+        <Star className="h-3.5 w-3.5 shrink-0 fill-[var(--chan-amber)] text-[var(--chan-amber-strong)]" strokeWidth={1.8} aria-hidden="true" />
+        VIP · Premium
+      </span>
+    );
+  }
+  if (role === "AUTHOR") {
+    return (
+      <span data-role-pill="AUTHOR" className={cn(base, "border-transparent bg-[var(--cm-blue-14)] text-[var(--chan-blue)]")}>
+        {tx("Twórca", "Creator")}
+      </span>
+    );
+  }
+  return (
+    <span data-role-pill="BASE" className={cn(base, "border-transparent bg-[var(--cm-gray-14)] text-[var(--chan-muted-2)]")}>
+      {tx("Normik", "Base")}
+    </span>
+  );
+}
 
 /**
  * Account panel. The avatar in the top bar opens a side panel from the right: who is signed in, the main places of
@@ -234,6 +265,7 @@ export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
               <div className="min-w-0 flex-1 pt-0.5">
                 <p className="truncate text-[15px] font-bold text-[var(--chan-ink)]">{displayName}</p>
                 {email && email !== displayName ? <p className="truncate text-[12px] text-[var(--chan-muted)]">{email}</p> : null}
+                {role ? <RolePill role={role} /> : null}
               </div>
               <CloseButton ref={closeRef} onClick={close} aria-label={tx("Zamknij menu", "Close menu")} />
             </div>
