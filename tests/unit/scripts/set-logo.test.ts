@@ -61,11 +61,12 @@ describe("scripts/brand/set-logo.mjs (npm run logo -- <variant>)", () => {
     const root = sandbox();
     made.push(root);
     const live = currentVariant(root)!;
+    const target = live === "glasses" ? "wordmark-blue" : "glasses";
 
-    const r = run("glasses", "--root", root);
+    const r = run(target, "--root", root);
     expect(r.status).toBe(0);
-    expect(currentVariant(root)).toBe("glasses");
-    expect(readFileSync(path.join(root, "tests/unit/components/brand-name.test.tsx"), "utf8")).toContain('const LIVE_LOGO = "glasses"');
+    expect(currentVariant(root)).toBe(target);
+    expect(readFileSync(path.join(root, "tests/unit/components/brand-name.test.tsx"), "utf8")).toContain(`const LIVE_LOGO = "${target}"`);
     expect(r.stdout).toContain("navbar-logo-height");
 
     expect(run(live, "--root", root).status).toBe(0);

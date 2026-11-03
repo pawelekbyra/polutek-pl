@@ -14,7 +14,7 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
   afterEach(() => cleanup());
 
   // The live logo. `npm run logo -- <variant>` (scripts/brand/set-logo.mjs) rewrites this line together with BRAND_LOGO_VARIANT.
-  const LIVE_LOGO = "wordmark-blue-symbol";
+  const LIVE_LOGO = "glasses";
   const LIVE_SELECTOR: Record<string, string> = {
     "wordmark-blue-symbol": 'svg[data-brand-logo="wordmark-blue-symbol"]',
     "wordmark-blue-symbol-orbit": 'svg[data-brand-logo="wordmark-blue-symbol-orbit"]',
