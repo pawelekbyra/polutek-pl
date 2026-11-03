@@ -307,3 +307,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Dwie rzeczywiście czerwone próby akceptacji ruchomego FROM i zewnętrznego COPY; preflight teraz odrzuca oba przed wywołaniem Dockera. Przejrzany ograniczony kontrakt, bez ogólnej deklaracji powtarzalności buildów.
 - 124/124 celowane, lint i skupione strict types PASS; aktualne oba Dockerfile akceptowane. Nie wykonano prawdziwego builda ani odbioru produktu.
 - K06/H1 otwarte, szacunki ~80% / 5–10% bez zmiany. Dalej brakujące zależności H1 i konsumenci.
+
+## 3 listopada 2026 — zależności K03 w lokalnym worktree
+
+- Weryfikator i strażnik critical przeniesione z historycznych commitów. Ponowiony rzeczywisty RED: 26/31 błędów; GREEN: 31/31. Strażnik 13/13 na prawdziwym Vitest, właściwe critical 36/36 w obu plikach, bez skip.
+- Lint i focused types PASS, DB/providerzy nadal syntetyczni; brak dowodu prawdziwego restore i dostarczenia powiadomień. K03/K06 otwarte. Bez zmian produkcji/schematu/danych/polityki.

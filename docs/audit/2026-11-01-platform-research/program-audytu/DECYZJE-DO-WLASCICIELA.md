@@ -7,6 +7,8 @@
 - Wyniki wcześniejszego H1 odnoszą się do wskazanych historycznych SHA; nie stanowią testów bieżącej gałęzi. Pełne K06 pozostaje otwarte do podłączenia i sprawdzenia wszystkich konsumentów. Nie podwyższamy szacunku H1 wyłącznie na podstawie kontrolowanych adapterów.
 - Budowanie obrazów w nowych testach zastępuje jawny port testowy. Testy nie uruchamiają współdzielonego Dockera, usług ani produkcji. Odbiór prawdziwego zestawu obrazów nadal wymagany.
 
+- Przywrócono także kod/testy weryfikatora i strażnika critical z `7b2b341b`, `e79ec89c`, `03115f0f`; testy czerwone i zielone ponowiono na lokalnej gałęzi audytu. Nie zmieniono schematu ani danych.
+
 ## Pytania wymagające decyzji właściciela
 
 Decyzje DP01–DP09 opisane w dotychczasowym materiale H1 pozostają otwarte. Ten pakiet nie zmienia polityki logowania, płatności, uprawnień, TTL, retencji ani danych użytkowników.

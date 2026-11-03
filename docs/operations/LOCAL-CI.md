@@ -94,3 +94,7 @@ Propozycje przyspieszenia bez zmiany treści testów (do zrobienia osobno, każd
 - Przerwanie (Ctrl+C) zatrzymuje bramki i usuwa kontener Postgresa.
 
 Producent `release-produce.mjs` nadaje każdemu uruchomieniu losowe `POLUTEK_CI_RUN_ID`; runner zapisuje je w polu `runId` raportu. Bez zgodnego identyfikatora producent odrzuca raport jako stary. Bezpośrednie lokalne CI bez producenta zapisuje `null`.
+
+## Obowiązkowe zestawy krytyczne
+
+`npm run test:critical-path -- --maxWorkers=1` wymaga obu plików: procesowych regresji weryfikatora odtworzonej bazy i `launch-candidate-critical-path.test.ts`. Brak pliku, zero testów, wykluczenie w konfiguracji, skip/todo lub błąd procesu/raportu oznacza porażkę. Filtry Vitest i `--passWithNoTests` nie są przyjmowane. Opcjonalne `--report-json=<plik>` zachowuje raport po sukcesie. Regresje uruchamiają prawdziwe procesy i Vitest, ale granice DB pozostają syntetyczne; nie zastępują SQL ani pełnego odtworzenia produktu.

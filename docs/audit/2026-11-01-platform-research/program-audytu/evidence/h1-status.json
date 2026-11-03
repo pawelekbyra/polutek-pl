@@ -1365,6 +1365,12 @@
     "release_ready": false,
     "evidence": "k06-local-producer-2026-11-03/pins-result.json",
     "historical_candidate_not_identical_to_current_tree": true,
-    "focused_types_exit": 0
+    "focused_types_exit": 0,
+    "prerequisite_restore_critical": {
+      "guard_tests_passed": 44,
+      "actual_critical_passed": 36,
+      "evidence": "k06-local-producer-2026-11-03/critical-result.json",
+      "actual_db": false
+    }
   }
 }

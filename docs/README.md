@@ -78,3 +78,5 @@ przeniesione do `operations/STATUS.md` znika z raportu, a pusty raport jest usuw
 
 [`audit/2026-10-12/`](audit/2026-10-12/README.md) to **badania, nie decyzje** (płatny dostęp dożywotni, VAT i narzędzia, napiwki,
 LLC/JDG/sp. z o.o., koszty skalowania, pozycjonowanie, licencje na covery): indeks, wnioski i lista otwartych decyzji właściciela.
+
+- [Weryfikacja odtworzonej bazy](operations/RESTORE-VERIFICATION.md) — obowiązkowe kontrole i granice pomocniczego narzędzia.
