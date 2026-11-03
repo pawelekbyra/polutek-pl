@@ -13,8 +13,8 @@ import { useUser } from "@/lib/auth/react";
 import { getStripeBrowser } from "@/lib/payments/stripe-browser";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
-import { defaultProduct, type PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
-import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
+import { defaultProduct } from "@/lib/modules/patron-zone/domain/offer";
+import { maskEmail, type PassMethod } from "@/lib/modules/patron-zone/domain/pass-state";
 import { useLanguage } from "../LanguageContext";
 import { LegalSheetProvider } from "../legal/LegalSheet";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
@@ -26,80 +26,11 @@ import { PassMethodStep, PassPayHead, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
-import { newRequestId, price } from "./pass-copy";
+import { price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, fetchPatronMethods, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
-
-type ActivePass = Exclude<PassStatusDto, { state: "none" }>;
-
-type Stage =
-  | { kind: "plan" }
-  | { kind: "method" }
-  | { kind: "pay" }
-  | { kind: "processing" }
-  | { kind: "success"; pass: ActivePass }
-  | { kind: "pending"; paymentId: string; timedOut: boolean }
-  | { kind: "declined" }
-  | { kind: "max-ahead"; expiresAt?: string; lifetime?: boolean };
-
-/** Query parameter of the return URL of redirect methods (Przelewy24, bank redirects). */
-export const PASS_PAYMENT_PARAM = "pass_payment";
-const RETURN_PARAMS = [PASS_PAYMENT_PARAM, "payment_intent", "payment_intent_client_secret", "redirect_status", "pass"];
-const ATTEMPT_KEY = "pp:patron-attempt-id";
-const DEMO_PROCESSING_MS = 1_200;
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** One attempt = one request id = one PaymentIntent on the server (kept for the tab, like the tip gateway's). */
-function attemptId(): string {
-  try {
-    const stored = window.sessionStorage.getItem(ATTEMPT_KEY);
-    if (stored) return stored;
-    const fresh = newRequestId();
-    window.sessionStorage.setItem(ATTEMPT_KEY, fresh);
-    return fresh;
-  } catch {
-    return newRequestId();
-  }
-}
-
-function resetAttempt() {
-  try {
-    window.sessionStorage.removeItem(ATTEMPT_KEY);
-  } catch {
-    // storage blocked: the next attempt simply gets a new id
-  }
-}
-
-/** BLIK and Przelewy24 are Polish methods: only PLN offers them; everything else starts from the card (Stripe's reply narrows it). */
-function candidateTypes(currency: string): string[] {
-  return currency === "PLN" ? ["blik", "card", "p24"] : ["card"];
-}
-
-/** Demo mode has no Stripe to ask, so the wallets are guessed from the browser (as the old method tiles did). */
-function guessWallets(): TipWallet[] {
-  const w = window as unknown as { ApplePaySession?: unknown };
-  const chromium = /Chrome|CriOS|Android/.test(navigator.userAgent) && !/Edg\//.test(navigator.userAgent);
-  return [...(w.ApplePaySession ? (["apple_pay"] as const) : []), ...(chromium ? (["google_pay"] as const) : [])];
-}
-
-function buildReturnUrl(paymentId: string): string {
-  const url = new URL(window.location.href);
-  RETURN_PARAMS.forEach((key) => url.searchParams.delete(key));
-  url.hash = "";
-  url.searchParams.set(PASS_PAYMENT_PARAM, paymentId);
-  return url.toString();
-}
-
-export interface PassCheckoutSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  offer: PremiumPassOffer;
-  /** Preselects an option (the offer page cards). */
-  initialProductId?: string;
-  /** "Enter the patron zone" after a success (refreshes the playback plan). */
-  onWatch: () => void;
-  watchLabel?: string;
-}
+import { PASS_PAYMENT_PARAM, RETURN_PARAMS, DEMO_PROCESSING_MS, wait, attemptId, resetAttempt, candidateTypes, guessWallets, buildReturnUrl, type Stage, type PassCheckoutSheetProps } from "./pass-checkout-state";
+export { PASS_PAYMENT_PARAM, type PassCheckoutSheetProps } from "./pass-checkout-state";
 
 export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId, onWatch, watchLabel }: PassCheckoutSheetProps) {
   const { tx, language } = useLanguage();

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Hero from "./Hero";
+import type { ChannelHomeProps } from "./channel/home-props";
 import { PublicVideoDTO } from "../types/video";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -10,11 +11,9 @@ import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "./LanguageContext";
 import { GO_HOME_EVENT } from "./BrandHomeLink";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
-import type { SidebarLayout } from "./channel/sidebar-layout-request";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
-import type { InitialPlaybackPlan } from "./preload/initial-playback-plan";
 import { PreloadProgressBar } from "./preload/PreloadProgressBar";
 import { RenderClockProvider } from "./RenderClock";
 import { useSearchParams } from "next/navigation";
@@ -23,11 +22,9 @@ import EmbeddedComments from "./comments/EmbeddedComments";
 import { openedWithCommentDeepLink, pendingCommentDeepLink, requestCommentDeepLink } from "./comments/deep-link";
 import { VIDEO_HISTORY_STATE_KEY, readHistoryVideoId, scrollToMediaOnMobile, type ChannelViewState } from "./channel/home-history";
 import { useNotificationVideoNavigation, NOTIFICATION_COMMENT_HISTORY_KEY } from "./notifications/useNotificationVideoNavigation";
-import type { InitialCommentsPage } from "./comments/initial-comments";
 import { pickHomeVideo } from "@/lib/home-video-selection";
 import { ViewerShelves } from "./channel/ViewerShelves";
 import type { ContinueWatchingItem } from "@/lib/modules/watch-progress/domain/continue-watching";
-import type { PlaylistQueueDto } from "@/lib/modules/playlists/domain/playlist.dto";
 import { PlaylistQueueLayer } from "./playlists/PlaylistQueuePanel";
 import { planSidebarSwitch } from "./playlists/queue-navigation";
 import { TIP_GATE_ENABLED } from "./channel/tip-gate";
@@ -36,46 +33,6 @@ import { useVideoDescription } from "./video/useVideoDescription";
 
 // Hidden since 2026-10-21, kept on purpose (see tip-gate.ts).
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
-
-interface ChannelHomeProps {
-  mainVideo: PublicVideoDTO | null;
-  allVideos: PublicVideoDTO[];
-  /**
-   * The selected video when `?v=` points outside `allVideos` (another channel or not in the sidebar), already
-   * checked for public visibility by the server. It is playable and selectable but is not added to the sidebar.
-   */
-  extraVideo?: PublicVideoDTO | null;
-  currentVideoId?: string;
-  userProfile?: {
-    id: string;
-    email: string;
-    imageUrl?: string | null;
-    totalPaid: number;
-    initialInteraction?: { liked: boolean; disliked: boolean; favorited?: boolean };
-    initialIsSubscribed?: boolean;
-    initialNotify?: boolean;
-    /** The viewer's saved position in the server-selected video (resume watching). */
-    initialProgressSeconds?: number | null;
-    role?: string;
-  } | null;
-  /** The signed-in viewer's unfinished videos ("Continue watching"), computed on the server. */
-  continueWatching?: ContinueWatchingItem[] | null;
-  /** Server-rendered sidebar layout, so the playlist is in the first HTML (see HomeExperience). */
-  initialSidebarLayout?: SidebarLayout | null;
-  /** Viewer the server-rendered layout was built for (`sidebarLayoutViewerKey`). */
-  initialSidebarViewerKey?: string;
-  /** The playlist the page was opened in (`?list=<slug>`), already filtered for this viewer (docs/architecture/playlists.md). */
-  playlistQueue?: PlaylistQueueDto | null;
-  /** First page of the selected video's comments, rendered on the server. */
-  initialComments?: InitialCommentsPage | null;
-  /** The selected video's playback plan, made on the server for this viewer. */
-  initialPlayback?: InitialPlaybackPlan | null;
-  /** Server render time (ISO): the clock for relative dates in the first render. */
-  renderedAt?: string;
-}
-
-
-
 
 export default function ChannelHome({
   mainVideo,
