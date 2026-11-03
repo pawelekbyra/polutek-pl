@@ -86,6 +86,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
         </p>
       )}
       <fieldset className={styles.products} disabled={busy || access?.lifetime === true}>
+        {/* No visible "Wybierz dostęp" row (it merged with the currency label): the group keeps its name for screen readers via this legend. */}
         <legend className="sr-only">{tx("Wybierz dostęp", "Choose your access")}</legend>
         {/* The currency is a small pill on its own slim row (the purchase cards below are the main thing). The visible label is aria-hidden: the pill's own (screen-reader) label is the same text. */}
         <div className={styles.currencyRow}>
@@ -99,7 +100,6 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
             options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
           />
         </div>
-        <div className={styles.accessTitle}>{tx("Wybierz dostęp", "Choose your access")}</div>
         <div className={styles.productGrid}>
           {offer.products.map((p) => (
             <label key={p.id} className={styles.product}>

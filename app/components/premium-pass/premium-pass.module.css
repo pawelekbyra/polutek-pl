@@ -176,7 +176,6 @@
 .products { border: 0; margin: 0; padding: 0; min-width: 0; }
 .productGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .products legend { padding: 0; }
-.accessTitle { margin: calc(var(--pass-gap) - 4px) 0 var(--field-label-gap); font-size: 13px; line-height: 1.55; font-weight: var(--field-label-weight, 400); color: var(--chan-body, #344054); }
 .products:disabled { opacity: .5; }
 .product { position: relative; display: grid; align-content: start; gap: 2px; padding: var(--pass-box-y) 12px calc(var(--pass-box-y) - 1px); border-radius: var(--pass-r-card); border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); cursor: pointer; font-size: 13px; }
 .product:has(input:checked) { border: 2px solid var(--chan-blue, #2563eb); padding: calc(var(--pass-box-y) - 1px) 11px calc(var(--pass-box-y) - 2px); background: var(--pass-blue-soft); }
@@ -192,7 +191,7 @@
 /* The only amber left on the cards: the BESTSELLER badge (ink on gold, 8:1). */
 .bestValue { padding: 0 8px; border-radius: var(--pass-r-pill); background: var(--pass-gold); color: var(--pass-gold-ink); font-size: 10px; line-height: 16px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 /* Step 1: the currency is a slim row (label left, small pill right) above the purchase cards. */
-.currencyRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.currencyRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; margin-bottom: 8px; }
 .currencyLabel { min-width: 0; font-size: 13px; line-height: 1.3; font-weight: var(--field-label-weight, 400); color: var(--chan-body, #344054); text-wrap: balance; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 14px; align-items: stretch; }
 @media (max-width: 340px) { .productGrid { grid-template-columns: minmax(0, 1fr); } }
