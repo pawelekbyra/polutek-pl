@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-01",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_APPLICATION_TESTS",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 13,
+    "NIEZBADANE": 5
+  },
+  "asvs_status_counts": {
+    "NIEZBADANE": 294,
+    "W_TRAKCIE": 51
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 70,
+    "NIEZBADANE": 210
+  },
+  "stable_finding_count": 33,
+  "new_distinct_findings": [],
+  "existing_findings_extended": [
+    "R06",
+    "R10",
+    "R11"
+  ],
+  "all_other_findings_and_baseline_priorities_preserved": true,
+  "earlier_raw_evidence_and_sources_preserved": 115,
+  "partial_baseline_source_files": 29,
+  "partial_peertube_reference_files": 13,
+  "peertube_executed": false,
+  "comparative_benchmark": false,
+  "actual_TS_modules": 6,
+  "real_local_SQL_EXPLAIN_observations": 16,
+  "temporary_tables_and_ROLLBACK_only": true,
+  "synthetic_summarizer_observations": 4,
+  "synthetic_hash_protocol_comparison": 1,
+  "cost_model_arithmetic_checks": 10,
+  "cost_model_capacity_or_invoice_proof": false,
+  "targeted_vitest_passed_files": 1,
+  "targeted_vitest_blocked_files": 1,
+  "targeted_vitest_registered_and_passed": 22,
+  "targeted_vitest_global_exit": 1,
+  "full_suite_repeated": false,
+  "full_HTTP_or_load_test": false,
+  "generated_Prisma_client_executed": false,
+  "production_or_real_person_data_used": false,
+  "local_links_checked": 268,
+  "broken_local_links": [],
+  "script_syntax": "Node --check and Python ast.parse passed",
+  "whitespace": "git diff --check passed",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "credential_scan": "No listed patterns in changed/new artifacts; bounded scan only",
+  "independent_review": "PENDING"
+}

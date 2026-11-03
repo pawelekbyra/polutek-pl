@@ -1,0 +1,15 @@
+id,case,component_status,finding,evidence,full_stack_status
+UX-001,confirm_opens_on_safe_cancel,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-002,confirm_normal_tab_wrap,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-003,confirm_escape_restores_opener,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-004,confirm_busy_tab_reaches_background,REAL_CHROMIUM_COMPONENT_OBSERVED,R35,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-005,confirm_busy_background_action_can_activate,REAL_CHROMIUM_COMPONENT_OBSERVED,R35,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-006,report_radio_arrow_does_not_move_or_select,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-007,report_failure_keeps_note_and_announces_error,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-008,report_baseui_tab_avoids_background,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-009,report_escape_closes,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-010,delete_comment_cancel_no_action,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-011,language_listbox_focus_home_end,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-012,language_typeahead_selects_de,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-013,language_escape_returns_trigger,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE
+UX-014,language_at_320_component_only,REAL_CHROMIUM_COMPONENT_OBSERVED,,evidence/ux-browser-experiment.json,NIEWYKONANE

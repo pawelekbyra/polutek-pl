@@ -1,0 +1,22 @@
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /workspace/polutek-pl
+
+stderr | tests/unit/auth/auth-rate-limit-failure.test.ts > auth rate-limit storage when Redis fails (AUTH-12) > lets the request through instead of failing sign-in
+[ERROR] [auth-rate-limit] consume failed, failing open gateway down
+
+stderr | tests/unit/auth/auth-rate-limit-failure.test.ts > auth rate-limit storage when Redis fails (AUTH-12) > reads and counts lockout counters as 0 instead of throwing
+[ERROR] [auth-rate-limit] peek failed, failing open gateway down
+
+stderr | tests/unit/auth/auth-rate-limit-failure.test.ts > auth rate-limit storage when Redis fails (AUTH-12) > reads and counts lockout counters as 0 instead of throwing
+[ERROR] [auth-rate-limit] hit failed, failing open gateway down
+
+ ✓ tests/unit/auth/auth-rate-limit-failure.test.ts (3 tests) 27ms
+ ✓ tests/unit/auth/passkey-server.test.ts (10 tests) 18ms
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  14:30:11
+   Duration  438ms (transform 143ms, setup 0ms, import 384ms, tests 45ms, environment 0ms)
+
+JSON report written to /workspace/polutek-pl/docs/audit/2026-11-01-platform-research/program-audytu/evidence/auth-failure-passkey-vitest.json

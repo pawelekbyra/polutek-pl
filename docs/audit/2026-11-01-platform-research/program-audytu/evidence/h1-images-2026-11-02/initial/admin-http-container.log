@@ -1,0 +1,6 @@
+▲ Next.js 16.4.1
+- Local:         http://localhost:3100
+- Network:       http://0.0.0.0:3100
+✓ Ready in 0ms
+✓ Running next.config took 0.9ms
+[admin-proxy] access denied: not_configured (CF_ACCESS_TEAM_DOMAIN i CF_ACCESS_AUD są wymagane) GET /api/videos

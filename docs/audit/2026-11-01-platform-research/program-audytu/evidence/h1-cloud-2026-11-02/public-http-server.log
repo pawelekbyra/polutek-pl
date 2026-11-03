@@ -1,0 +1,54 @@
+▲ Next.js 16.4.1 (Turbopack)
+- Local:         http://127.0.0.1:3811
+- Network:       http://127.0.0.1:3811
+- Environments: .env.local
+✓ Ready in 406ms
+✓ Running next.config.mjs took 18ms
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+✓ Generated AGENTS.md for AI agents. Set `agentRules: false` in next.config to disable.
+ GET /api/health 200 in 3.8s (next.js: 3.2s, proxy.ts: 145ms, application-code: 525ms)
+[WARN] [RateLimit] Using in-memory rate limit store. This is allowed only outside production.
+prisma:query BEGIN
+prisma:query SELECT set_config('statement_timeout', $1, true)
+prisma:query 
+    SELECT c."id", video_search_normalize(concat_ws(' ', c."name", c."handle")) AS n
+    FROM "Creator" c
+    WHERE c."status" IN ('ACTIVE'::"ChannelStatus", 'LIMITED'::"ChannelStatus") AND c."deletedAt" IS NULL
+      AND video_search_normalize(concat_ws(' ', c."name", c."handle")) LIKE ANY ($1::text[])
+    LIMIT 200
+prisma:query 
+    SELECT s."id", s."rel", s."pop", s."views", s."pub" FROM (
+      SELECT v."id", v."views"::int AS "views", coalesce(v."publishedAt", v."createdAt") AS "pub",
+        floor(ln(v."views" + 1))::int AS "pop", ((CASE WHEN position($1 in n."nt") > 0 THEN 10 ELSE 0 END
+      + CASE WHEN position($2 in n."ng") > 0 THEN 6 ELSE 0 END
+      + CASE WHEN v."category" = ANY ($3::text[]) THEN 5 ELSE 0 END
+      + CASE WHEN v."creatorId" = ANY ($4::text[]) THEN 4 ELSE 0 END))::int AS "rel"
+      FROM "Video" v
+      JOIN "Creator" c ON c."id" = v."creatorId"
+      CROSS JOIN LATERAL (SELECT
+        video_search_normalize(concat_ws(' ', v."title", v."titleEn")) AS "nt",
+        video_search_normalize(array_to_string(v."tags", ' ')) AS "ng") n
+      WHERE 
+    v."status" = 'PUBLISHED'::"VideoStatus"
+    AND v."moderationStatus" <> 'REMOVED'::"VideoModerationStatus"
+    AND v."moderationStatus" <> 'AGE_RESTRICTED'::"VideoModerationStatus" AND v."isAdult" = false
+    AND (v."publishedAt" IS NULL OR v."publishedAt" <= $5::timestamp)
+    AND (v."premiereAt" IS NULL OR v."premiereAt" <= $6::timestamp)
+    AND c."status" IN ('ACTIVE'::"ChannelStatus", 'LIMITED'::"ChannelStatus")
+    AND c."deletedAt" IS NULL AND (to_tsvector('simple', v."searchText") @@ to_tsquery('simple', $7) OR v."creatorId" = ANY ($8::text[]) OR v."category" = ANY ($9::text[]))
+    ) s
+    
+    ORDER BY s."rel" DESC, s."pop" DESC, s."pub" DESC, s."id" DESC
+    LIMIT $10
+prisma:query COMMIT
+prisma:query SELECT "public"."Video"."id", "public"."Video"."creatorId", "public"."Video"."title", "public"."Video"."titleEn", "public"."Video"."slug", "public"."Video"."description", "public"."Video"."descriptionEn", "public"."Video"."thumbnailUrl", "public"."Video"."thumbnailPublicUrl", "public"."Video"."subtitleUrlPl", "public"."Video"."subtitleUrlEn", "public"."Video"."duration", "public"."Video"."tier"::text, "public"."Video"."views", "public"."Video"."likesCount", "public"."Video"."dislikesCount", "public"."Video"."isMainFeatured", "public"."Video"."showInSidebar", "public"."Video"."sidebarOrder", "public"."Video"."status"::text, "public"."Video"."publishedAt", "public"."Video"."premiereAt", "public"."Video"."premiereNotifiedAt", "public"."Video"."fundraisingGoalMinor", "public"."Video"."fundraisingGoalCurrency", "public"."Video"."fundraisingStartAt", "public"."Video"."fundraisingManualPercent", "public"."Video"."publishAfterAssetReady", "public"."Video"."publishAfterAssetReadyRequestedAt", "public"."Video"."publishAfterAssetReadyCompletedAt", "public"."Video"."publishAfterAssetReadyError", "public"."Video"."publishAfterAssetReadyVisibility", "public"."Video"."tags", "public"."Video"."chapters", "public"."Video"."category", "public"."Video"."searchText", "public"."Video"."durationSeconds", "public"."Video"."commentsMode"::text, "public"."Video"."moderationStatus"::text, "public"."Video"."isAdult", "public"."Video"."moderationReason", "public"."Video"."moderationChangedAt", "public"."Video"."activeOriginalId", "public"."Video"."activePlaybackRouteId", "public"."Video"."createdAt", "public"."Video"."updatedAt" FROM "public"."Video" WHERE ("public"."Video"."id" IN ($1) AND "public"."Video"."status" = CAST($2::text AS "public"."VideoStatus")) OFFSET $3
+prisma:query SELECT "public"."Creator"."id", "public"."Creator"."userId", "public"."Creator"."slug", "public"."Creator"."name", "public"."Creator"."bio", "public"."Creator"."defaultThumbnailUrl", "public"."Creator"."subscribersCount", "public"."Creator"."displaySubscribersCount", "public"."Creator"."handle", "public"."Creator"."status"::text, "public"."Creator"."statusReason", "public"."Creator"."statusChangedAt", "public"."Creator"."statusChangedById", "public"."Creator"."avatarUrl", "public"."Creator"."bannerUpdatedAt", "public"."Creator"."links", "public"."Creator"."publicContactEmail", "public"."Creator"."country", "public"."Creator"."language", "public"."Creator"."isVerified", "public"."Creator"."deletedAt", "public"."Creator"."deleteAfter", "public"."Creator"."createdAt", "public"."Creator"."updatedAt" FROM "public"."Creator" WHERE "public"."Creator"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."User"."id", "public"."User"."imageUrl", "public"."User"."email" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
+ GET /api/search?q=httph1b49ae9bbb8 200 in 1005ms (next.js: 906ms, proxy.ts: 20ms, application-code: 78ms)
+[?25h

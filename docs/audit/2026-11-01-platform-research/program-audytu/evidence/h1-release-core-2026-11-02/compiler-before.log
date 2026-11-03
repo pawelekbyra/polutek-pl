@@ -1,0 +1,27 @@
+Lokalne CI: master @ 5838c8029b31, baza BRAK (origin/main): tryb pelny
+Zmienione pliki: 0 (+0 usunietych), sloty CPU: 1, Node v22.23.4
+Logi bramek: .claude/local-ci-logs/
+
+> typecheck-all: start (typecheck calego repo z testami (tsconfig.json, bez .next/))
++ typecheck-all: PASS 378 ms
+
+bramka          wynik  czas    przyczyna
+--------------  -----  ------  ---------
+prisma          SKIP   -       pominieta (--skip)
+ci-parity       SKIP   -       nie wybrana (--only)
+migrations      SKIP   -       nie wybrana (--only)
+unit            SKIP   -       nie wybrana (--only)
+typecheck       SKIP   -       nie wybrana (--only)
+typecheck-all   PASS   378 ms  0 bledow (pominieto 1 w .next/)
+lint            SKIP   -       nie wybrana (--only)
+architecture    SKIP   -       nie wybrana (--only)
+hotspots        SKIP   -       nie wybrana (--only)
+strict-escapes  SKIP   -       nie wybrana (--only)
+env             SKIP   -       nie wybrana (--only)
+audit           SKIP   -       nie wybrana (--only)
+postgres        SKIP   -       nie wybrana (--only)
+encode-smoke    SKIP   -       nie wybrana (--only)
+build           SKIP   -       nie wybrana (--only)
+admin-build     SKIP   -       nie wybrana (--only)
+
+WYNIK: PASS, 380 ms. Raport: .claude/local-ci-last.json

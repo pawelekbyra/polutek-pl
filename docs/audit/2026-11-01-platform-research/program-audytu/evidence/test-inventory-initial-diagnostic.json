@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-02",
+  "classification": "ENVIRONMENT_RESEARCH_DIAGNOSTIC_NOT_APPLICATION_FAILURE",
+  "command": "Node test-inventory.cjs read-only AST inventory",
+  "error": "spawnSync git EPERM",
+  "exit_code": 1,
+  "application_tests_executed": false,
+  "resolution": "Use the normal reviewed execution path for local subprocesses. Harden diagnostic text to avoid printing the whole child output. No application or sandbox configuration changed."
+}

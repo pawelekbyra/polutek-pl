@@ -1,0 +1,11 @@
+{
+  "cjs_config_loads": true,
+  "cjs_hook_override": null,
+  "tsx_hook_plugin_present": true,
+  "tsx_hook_rule": [
+    1
+  ],
+  "tsx_basic_hook_rule": [
+    2
+  ]
+}

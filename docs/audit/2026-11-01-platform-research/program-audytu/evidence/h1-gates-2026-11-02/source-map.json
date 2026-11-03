@@ -1,0 +1,87 @@
+{
+  "code_sha": "03115f0fefe47baf91622b3272b966344981beaf",
+  "before_sha": "de69f521f873be54f4d2ec30ae543331700c8397",
+  "pull_request": "https://github.com/pawelekbyra/polutek-pl/pull/2065",
+  "changes": [
+    {
+      "sha": "a3874d49b69f2f6bccc62c0150c1c7916390d5aa",
+      "parent": "de69f521f873be54f4d2ec30ae543331700c8397",
+      "subject": "Use typed transactions for video visibility changes",
+      "files": [
+        "app/components/VideoPlayer.tsx",
+        "lib/modules/video/application/unlist-admin-video.use-case.ts",
+        "lib/modules/video/application/unpublish-admin-video.use-case.ts",
+        "lib/modules/video/infrastructure/video-content.service.ts",
+        "tests/unit/modules/video/unlist-admin-video.use-case.test.ts"
+      ]
+    },
+    {
+      "sha": "3417985b65c940a88e350ec0088d4df8940660b8",
+      "parent": "a3874d49b69f2f6bccc62c0150c1c7916390d5aa",
+      "subject": "Separate channel home props from rendering",
+      "files": [
+        "app/components/ChannelHome.tsx",
+        "app/components/channel/home-props.ts"
+      ]
+    },
+    {
+      "sha": "89e8e31d135ebec25ff30890e50f123854096ed5",
+      "parent": "3417985b65c940a88e350ec0088d4df8940660b8",
+      "subject": "Extract checkout contracts and browser helpers",
+      "files": [
+        "app/components/premium-pass/PassCheckoutSheet.tsx",
+        "app/components/premium-pass/pass-checkout-state.ts"
+      ]
+    },
+    {
+      "sha": "466d75f1a4cb7ddec37db3be794bcc633484ac90",
+      "parent": "89e8e31d135ebec25ff30890e50f123854096ed5",
+      "subject": "Separate studio upload status and video preview views",
+      "files": [
+        "app/components/studio/StudioUploadFileInfo.tsx",
+        "app/components/studio/StudioUploadStatus.tsx",
+        "app/components/studio/StudioUploadWizard.tsx",
+        "app/components/studio/StudioVideoEditor.tsx",
+        "app/components/studio/StudioVideoPreview.tsx"
+      ]
+    },
+    {
+      "sha": "03115f0fefe47baf91622b3272b966344981beaf",
+      "parent": "466d75f1a4cb7ddec37db3be794bcc633484ac90",
+      "subject": "Require every critical-path suite to execute successfully",
+      "files": [
+        "CLAUDE.md",
+        "docs/operations/LOCAL-CI.md",
+        "package.json",
+        "scripts/test-critical-path.mjs",
+        "tests/unit/operations/critical-path-runner.test.ts"
+      ]
+    }
+  ],
+  "release_ready": false,
+  "attribution": {
+    "final/acceptance-run.json": "Clean committed exact-SHA run: real required-suite guard, complete unit/PG/types/lint/architecture/escapes/hotspots/env and both app builds; synthetic workflow env, owned local PostgreSQL; no real external providers.",
+    "targeted-before-final-guard-case.json": "116/116 in 10 files on an uncommitted working tree before the final additional excluded-suite guard regression. Final full unit execution includes that regression; do not attribute the targeted run to the final SHA."
+  },
+  "preserved_files": [
+    "package-lock.json",
+    "prisma/schema.prisma",
+    "prisma/migrations",
+    "tsconfig.json",
+    "tsconfig.typecheck.json",
+    "scripts/check-hotspots.ts",
+    "scripts/check-strict-escapes.ts",
+    "scripts/strict-escapes-baseline.jsonc",
+    "scripts/verify-restored-database.ts",
+    "next.config.mjs",
+    "apps/admin/next.config.mjs"
+  ],
+  "scope_limits": [
+    "Local standalone builds are not Docker release artifacts.",
+    "Three ordinary-suite skips remain; no skipped critical test is accepted.",
+    "Prior restore and HTTP evidence are historical, not rerun here.",
+    "No merge, deployment, production mutation or paid resource.",
+    "No new ASVS qualification or registry closure."
+  ],
+  "raw_logs": "Captured output is preserved byte-for-byte, including Next progress carriage returns/trailing whitespace and blank final lines. git diff --check reports these raw-log formatting details; application source passed that check."
+}

@@ -1,0 +1,67 @@
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /workspace/polutek-pl
+
+stderr | tests/integration/launch-candidate-critical-path.test.ts > LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal > Scenario A: qualifying one-time support creates one payment-linked active grant and resolves own-HLS playback only after access/readiness
+[SEND_NOTIFICATION_ERROR] TypeError: Cannot read properties of undefined (reading 'findUnique')
+    at isNotificationAllowed (/workspace/polutek-pl/lib/modules/notifications/application/send-notification.use-case.ts:47:48)
+    at sendNotification (/workspace/polutek-pl/lib/modules/notifications/application/send-notification.use-case.ts:61:52)
+    at sendSupportThanksNotification (/workspace/polutek-pl/lib/modules/patron/application/grant-patron.use-case.ts:24:9)
+    at thankPayer (/workspace/polutek-pl/lib/modules/payments/application/fulfill-payment.use-case.ts:152:11)
+    at Module.fulfillPayment (/workspace/polutek-pl/lib/modules/payments/application/fulfill-payment.use-case.ts:129:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/polutek-pl/tests/integration/launch-candidate-critical-path.test.ts:469:19
+    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/integration/launch-candidate-critical-path.test.ts > LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal > Scenario B/C/D: payments and patron signals never change access — guests are asked to sign in with zero playback side effects, signed-in users play regardless of grants
+[SEND_NOTIFICATION_ERROR] TypeError: Cannot read properties of undefined (reading 'findUnique')
+    at isNotificationAllowed (/workspace/polutek-pl/lib/modules/notifications/application/send-notification.use-case.ts:47:48)
+    at sendNotification (/workspace/polutek-pl/lib/modules/notifications/application/send-notification.use-case.ts:61:52)
+    at sendSupportThanksNotification (/workspace/polutek-pl/lib/modules/patron/application/grant-patron.use-case.ts:24:9)
+    at thankPayer (/workspace/polutek-pl/lib/modules/payments/application/fulfill-payment.use-case.ts:152:11)
+    at Module.fulfillPayment (/workspace/polutek-pl/lib/modules/payments/application/fulfill-payment.use-case.ts:129:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/polutek-pl/tests/integration/launch-candidate-critical-path.test.ts:514:19
+    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/integration/launch-candidate-critical-path.test.ts (5 tests) 40ms
+ ✓ tests/unit/operations/verify-restored-database-process.test.ts (31 tests) 12965ms
+     ✓ refuses missing target before constructing a client  470ms
+     ✓ refuses missing permission before constructing a client  426ms
+     ✓ refuses target equals source before constructing a client  433ms
+     ✓ completes checks, closes the client and exits successfully without leaking credentials  441ms
+     ✓ fails and closes the client for connection-failure  441ms
+     ✓ fails and closes the client for migration-read-failure  559ms
+     ✓ fails and closes the client for migration-unfinished  475ms
+     ✓ fails and closes the client for migration-failed  402ms
+     ✓ allows a rolled-back attempt alongside completed migration history  401ms
+     ✓ fails when mandatory User count cannot be checked without a manifest  403ms
+     ✓ fails when mandatory Creator count cannot be checked without a manifest  397ms
+     ✓ fails when mandatory Video count cannot be checked without a manifest  402ms
+     ✓ fails when mandatory VideoAsset count cannot be checked without a manifest  416ms
+     ✓ fails when mandatory Payment count cannot be checked without a manifest  423ms
+     ✓ fails when mandatory UserPaymentTotal count cannot be checked without a manifest  402ms
+     ✓ fails when mandatory PatronGrant count cannot be checked without a manifest  407ms
+     ✓ fails when mandatory StripeEvent count cannot be checked without a manifest  404ms
+     ✓ fails when mandatory Comment count cannot be checked without a manifest  406ms
+     ✓ fails when mandatory CommentReport count cannot be checked without a manifest  390ms
+     ✓ fails when mandatory Subscription count cannot be checked without a manifest  400ms
+     ✓ fails when mandatory AuditLog count cannot be checked without a manifest  401ms
+     ✓ fails when a manifest count has no observed value  400ms
+     ✓ fails for manifest unknown aggregate  390ms
+     ✓ fails for manifest different count  400ms
+     ✓ fails for manifest missing counts object  422ms
+     ✓ fails for manifest array instead of counts object  419ms
+     ✓ fails for manifest invalid JSON  415ms
+     ✓ accepts a matching manifest  399ms
+     ✓ rejects orphan-user instead of reporting success  407ms
+     ✓ rejects orphan-payment instead of reporting success  407ms
+     ✓ rejects orphan-video instead of reporting success  405ms
+
+ Test Files  2 passed (2)
+      Tests  36 passed (36)
+   Start at  21:05:00
+   Duration  13.21s (transform 1.35s, setup 0ms, import 1.95s, tests 13.00s, environment 0ms)
+
+JSON report written to /tmp/polutek-critical-path-XTS3tC/vitest.json
+Critical-path verified: 2 required suites, 36 tests passed.

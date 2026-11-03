@@ -1,0 +1,161 @@
+{
+  "date": "2026-11-01",
+  "actual_sources_sha256": {
+    "lib/modules/video/application/public-search.service.ts": "5cb03334009f7970584143ba0169921a0b77576ba3ee3626fcc4df72e6c0b950",
+    "lib/video-metadata.ts": "37d559896ea5ea4ee4993409f2d1e9455ca21d821a09911c4a3c985db0a2fb15",
+    "lib/access-tier.ts": "30b78aac04a51e067ec807f725b3e7b8f4e1729004bdb29ae1e4eef8dde8ef03",
+    "lib/modules/video/domain/search-query.ts": "5b405bcc4490d3120ed44b506c4dffbd6aaeca9dc01d31af11d3bade98aac6a2",
+    "lib/search-options.ts": "92ab4d92cfd2a1f8d78b563d43ab47d59f268c497196c422c8314e6f64f3d652",
+    "lib/modules/privacy/domain/client-hash.ts": "4d17b666012375006ed4069241ffa55c84f5c6e875b6d6920503076139206e37"
+  },
+  "boundary": "Official installed Prisma SQL template runtime only; DB/client/DTO not executed; channel token lookup excluded (empty ids); no full HTTP",
+  "cases": [
+    {
+      "id": "rare_fts",
+      "raw": {
+        "q": "uniquerare"
+      },
+      "mode": "fts",
+      "text": "\n    SELECT s.\"id\", s.\"rel\", s.\"pop\", s.\"views\", s.\"pub\" FROM (\n      SELECT v.\"id\", v.\"views\"::int AS \"views\", coalesce(v.\"publishedAt\", v.\"createdAt\") AS \"pub\",\n        floor(ln(v.\"views\" + 1))::int AS \"pop\", ((CASE WHEN position($1 in n.\"nt\") > 0 THEN 10 ELSE 0 END\n      + CASE WHEN position($2 in n.\"ng\") > 0 THEN 6 ELSE 0 END\n      + CASE WHEN v.\"category\" = ANY ($3::text[]) THEN 5 ELSE 0 END\n      + CASE WHEN v.\"creatorId\" = ANY ($4::text[]) THEN 4 ELSE 0 END))::int AS \"rel\"\n      FROM \"Video\" v\n      JOIN \"Creator\" c ON c.\"id\" = v.\"creatorId\"\n      CROSS JOIN LATERAL (SELECT\n        video_search_normalize(concat_ws(' ', v.\"title\", v.\"titleEn\")) AS \"nt\",\n        video_search_normalize(array_to_string(v.\"tags\", ' ')) AS \"ng\") n\n      WHERE \n    v.\"status\" = 'PUBLISHED'::\"VideoStatus\"\n    AND v.\"moderationStatus\" <> 'REMOVED'::\"VideoModerationStatus\"\n    AND v.\"moderationStatus\" <> 'AGE_RESTRICTED'::\"VideoModerationStatus\" AND v.\"isAdult\" = false\n    AND (v.\"publishedAt\" IS NULL OR v.\"publishedAt\" <= $5::timestamp)\n    AND (v.\"premiereAt\" IS NULL OR v.\"premiereAt\" <= $6::timestamp)\n    AND c.\"status\" IN ('ACTIVE'::\"ChannelStatus\", 'LIMITED'::\"ChannelStatus\")\n    AND c.\"deletedAt\" IS NULL AND (to_tsvector('simple', v.\"searchText\") @@ to_tsquery('simple', $7) OR v.\"creatorId\" = ANY ($8::text[]) OR v.\"category\" = ANY ($9::text[]))\n    ) s\n    \n    ORDER BY s.\"rel\" DESC, s.\"pop\" DESC, s.\"pub\" DESC, s.\"id\" DESC\n    LIMIT $10",
+      "values": [
+        "uniquerare",
+        "uniquerare",
+        [],
+        [],
+        "2026-11-01T00:00:00.000Z",
+        "2026-11-01T00:00:00.000Z",
+        "uniquerare:*",
+        [],
+        [],
+        21
+      ]
+    },
+    {
+      "id": "common_fts",
+      "raw": {
+        "q": "popular"
+      },
+      "mode": "fts",
+      "text": "\n    SELECT s.\"id\", s.\"rel\", s.\"pop\", s.\"views\", s.\"pub\" FROM (\n      SELECT v.\"id\", v.\"views\"::int AS \"views\", coalesce(v.\"publishedAt\", v.\"createdAt\") AS \"pub\",\n        floor(ln(v.\"views\" + 1))::int AS \"pop\", ((CASE WHEN position($1 in n.\"nt\") > 0 THEN 10 ELSE 0 END\n      + CASE WHEN position($2 in n.\"ng\") > 0 THEN 6 ELSE 0 END\n      + CASE WHEN v.\"category\" = ANY ($3::text[]) THEN 5 ELSE 0 END\n      + CASE WHEN v.\"creatorId\" = ANY ($4::text[]) THEN 4 ELSE 0 END))::int AS \"rel\"\n      FROM \"Video\" v\n      JOIN \"Creator\" c ON c.\"id\" = v.\"creatorId\"\n      CROSS JOIN LATERAL (SELECT\n        video_search_normalize(concat_ws(' ', v.\"title\", v.\"titleEn\")) AS \"nt\",\n        video_search_normalize(array_to_string(v.\"tags\", ' ')) AS \"ng\") n\n      WHERE \n    v.\"status\" = 'PUBLISHED'::\"VideoStatus\"\n    AND v.\"moderationStatus\" <> 'REMOVED'::\"VideoModerationStatus\"\n    AND v.\"moderationStatus\" <> 'AGE_RESTRICTED'::\"VideoModerationStatus\" AND v.\"isAdult\" = false\n    AND (v.\"publishedAt\" IS NULL OR v.\"publishedAt\" <= $5::timestamp)\n    AND (v.\"premiereAt\" IS NULL OR v.\"premiereAt\" <= $6::timestamp)\n    AND c.\"status\" IN ('ACTIVE'::\"ChannelStatus\", 'LIMITED'::\"ChannelStatus\")\n    AND c.\"deletedAt\" IS NULL AND (to_tsvector('simple', v.\"searchText\") @@ to_tsquery('simple', $7) OR v.\"creatorId\" = ANY ($8::text[]) OR v.\"category\" = ANY ($9::text[]))\n    ) s\n    \n    ORDER BY s.\"rel\" DESC, s.\"pop\" DESC, s.\"pub\" DESC, s.\"id\" DESC\n    LIMIT $10",
+      "values": [
+        "popular",
+        "popular",
+        [],
+        [],
+        "2026-11-01T00:00:00.000Z",
+        "2026-11-01T00:00:00.000Z",
+        "popular:*",
+        [],
+        [],
+        21
+      ]
+    },
+    {
+      "id": "missing_fts",
+      "raw": {
+        "q": "missingword"
+      },
+      "mode": "fts",
+      "text": "\n    SELECT s.\"id\", s.\"rel\", s.\"pop\", s.\"views\", s.\"pub\" FROM (\n      SELECT v.\"id\", v.\"views\"::int AS \"views\", coalesce(v.\"publishedAt\", v.\"createdAt\") AS \"pub\",\n        floor(ln(v.\"views\" + 1))::int AS \"pop\", ((CASE WHEN position($1 in n.\"nt\") > 0 THEN 10 ELSE 0 END\n      + CASE WHEN position($2 in n.\"ng\") > 0 THEN 6 ELSE 0 END\n      + CASE WHEN v.\"category\" = ANY ($3::text[]) THEN 5 ELSE 0 END\n      + CASE WHEN v.\"creatorId\" = ANY ($4::text[]) THEN 4 ELSE 0 END))::int AS \"rel\"\n      FROM \"Video\" v\n      JOIN \"Creator\" c ON c.\"id\" = v.\"creatorId\"\n      CROSS JOIN LATERAL (SELECT\n        video_search_normalize(concat_ws(' ', v.\"title\", v.\"titleEn\")) AS \"nt\",\n        video_search_normalize(array_to_string(v.\"tags\", ' ')) AS \"ng\") n\n      WHERE \n    v.\"status\" = 'PUBLISHED'::\"VideoStatus\"\n    AND v.\"moderationStatus\" <> 'REMOVED'::\"VideoModerationStatus\"\n    AND v.\"moderationStatus\" <> 'AGE_RESTRICTED'::\"VideoModerationStatus\" AND v.\"isAdult\" = false\n    AND (v.\"publishedAt\" IS NULL OR v.\"publishedAt\" <= $5::timestamp)\n    AND (v.\"premiereAt\" IS NULL OR v.\"premiereAt\" <= $6::timestamp)\n    AND c.\"status\" IN ('ACTIVE'::\"ChannelStatus\", 'LIMITED'::\"ChannelStatus\")\n    AND c.\"deletedAt\" IS NULL AND (to_tsvector('simple', v.\"searchText\") @@ to_tsquery('simple', $7) OR v.\"creatorId\" = ANY ($8::text[]) OR v.\"category\" = ANY ($9::text[]))\n    ) s\n    \n    ORDER BY s.\"rel\" DESC, s.\"pop\" DESC, s.\"pub\" DESC, s.\"id\" DESC\n    LIMIT $10",
+      "values": [
+        "missingword",
+        "missingword",
+        [],
+        [],
+        "2026-11-01T00:00:00.000Z",
+        "2026-11-01T00:00:00.000Z",
+        "missingword:*",
+        [],
+        [],
+        21
+      ]
+    },
+    {
+      "id": "substring_like",
+      "raw": {
+        "q": "dlewor"
+      },
+      "mode": "like",
+      "text": "\n    SELECT s.\"id\", s.\"rel\", s.\"pop\", s.\"views\", s.\"pub\" FROM (\n      SELECT v.\"id\", v.\"views\"::int AS \"views\", coalesce(v.\"publishedAt\", v.\"createdAt\") AS \"pub\",\n        floor(ln(v.\"views\" + 1))::int AS \"pop\", ((CASE WHEN position($1 in n.\"nt\") > 0 THEN 10 ELSE 0 END\n      + CASE WHEN position($2 in n.\"ng\") > 0 THEN 6 ELSE 0 END\n      + CASE WHEN v.\"category\" = ANY ($3::text[]) THEN 5 ELSE 0 END\n      + CASE WHEN v.\"creatorId\" = ANY ($4::text[]) THEN 4 ELSE 0 END))::int AS \"rel\"\n      FROM \"Video\" v\n      JOIN \"Creator\" c ON c.\"id\" = v.\"creatorId\"\n      CROSS JOIN LATERAL (SELECT\n        video_search_normalize(concat_ws(' ', v.\"title\", v.\"titleEn\")) AS \"nt\",\n        video_search_normalize(array_to_string(v.\"tags\", ' ')) AS \"ng\") n\n      WHERE \n    v.\"status\" = 'PUBLISHED'::\"VideoStatus\"\n    AND v.\"moderationStatus\" <> 'REMOVED'::\"VideoModerationStatus\"\n    AND v.\"moderationStatus\" <> 'AGE_RESTRICTED'::\"VideoModerationStatus\" AND v.\"isAdult\" = false\n    AND (v.\"publishedAt\" IS NULL OR v.\"publishedAt\" <= $5::timestamp)\n    AND (v.\"premiereAt\" IS NULL OR v.\"premiereAt\" <= $6::timestamp)\n    AND c.\"status\" IN ('ACTIVE'::\"ChannelStatus\", 'LIMITED'::\"ChannelStatus\")\n    AND c.\"deletedAt\" IS NULL AND (v.\"searchText\" LIKE $7 OR v.\"creatorId\" = ANY ($8::text[]) OR v.\"category\" = ANY ($9::text[]))\n    ) s\n    \n    ORDER BY s.\"rel\" DESC, s.\"pop\" DESC, s.\"pub\" DESC, s.\"id\" DESC\n    LIMIT $10",
+      "values": [
+        "dlewor",
+        "dlewor",
+        [],
+        [],
+        "2026-11-01T00:00:00.000Z",
+        "2026-11-01T00:00:00.000Z",
+        "%dlewor%",
+        [],
+        [],
+        21
+      ]
+    },
+    {
+      "id": "missing_like",
+      "raw": {
+        "q": "missingword"
+      },
+      "mode": "like",
+      "text": "\n    SELECT s.\"id\", s.\"rel\", s.\"pop\", s.\"views\", s.\"pub\" FROM (\n      SELECT v.\"id\", v.\"views\"::int AS \"views\", coalesce(v.\"publishedAt\", v.\"createdAt\") AS \"pub\",\n        floor(ln(v.\"views\" + 1))::int AS \"pop\", ((CASE WHEN position($1 in n.\"nt\") > 0 THEN 10 ELSE 0 END\n      + CASE WHEN position($2 in n.\"ng\") > 0 THEN 6 ELSE 0 END\n      + CASE WHEN v.\"category\" = ANY ($3::text[]) THEN 5 ELSE 0 END\n      + CASE WHEN v.\"creatorId\" = ANY ($4::text[]) THEN 4 ELSE 0 END))::int AS \"rel\"\n      FROM \"Video\" v\n      JOIN \"Creator\" c ON c.\"id\" = v.\"creatorId\"\n      CROSS JOIN LATERAL (SELECT\n        video_search_normalize(concat_ws(' ', v.\"title\", v.\"titleEn\")) AS \"nt\",\n        video_search_normalize(array_to_string(v.\"tags\", ' ')) AS \"ng\") n\n      WHERE \n    v.\"status\" = 'PUBLISHED'::\"VideoStatus\"\n    AND v.\"moderationStatus\" <> 'REMOVED'::\"VideoModerationStatus\"\n    AND v.\"moderationStatus\" <> 'AGE_RESTRICTED'::\"VideoModerationStatus\" AND v.\"isAdult\" = false\n    AND (v.\"publishedAt\" IS NULL OR v.\"publishedAt\" <= $5::timestamp)\n    AND (v.\"premiereAt\" IS NULL OR v.\"premiereAt\" <= $6::timestamp)\n    AND c.\"status\" IN ('ACTIVE'::\"ChannelStatus\", 'LIMITED'::\"ChannelStatus\")\n    AND c.\"deletedAt\" IS NULL AND (v.\"searchText\" LIKE $7 OR v.\"creatorId\" = ANY ($8::text[]) OR v.\"category\" = ANY ($9::text[]))\n    ) s\n    \n    ORDER BY s.\"rel\" DESC, s.\"pop\" DESC, s.\"pub\" DESC, s.\"id\" DESC\n    LIMIT $10",
+      "values": [
+        "missingword",
+        "missingword",
+        [],
+        [],
+        "2026-11-01T00:00:00.000Z",
+        "2026-11-01T00:00:00.000Z",
+        "%missingword%",
+        [],
+        [],
+        21
+      ]
+    },
+    {
+      "id": "browse_newest",
+      "raw": {},
+      "mode": "fts",
+      "text": "\n    SELECT s.\"id\", s.\"rel\", s.\"pop\", s.\"views\", s.\"pub\" FROM (\n      SELECT v.\"id\", v.\"views\"::int AS \"views\", coalesce(v.\"publishedAt\", v.\"createdAt\") AS \"pub\",\n        floor(ln(v.\"views\" + 1))::int AS \"pop\", (0)::int AS \"rel\"\n      FROM \"Video\" v\n      JOIN \"Creator\" c ON c.\"id\" = v.\"creatorId\"\n      CROSS JOIN LATERAL (SELECT\n        video_search_normalize(concat_ws(' ', v.\"title\", v.\"titleEn\")) AS \"nt\",\n        video_search_normalize(array_to_string(v.\"tags\", ' ')) AS \"ng\") n\n      WHERE \n    v.\"status\" = 'PUBLISHED'::\"VideoStatus\"\n    AND v.\"moderationStatus\" <> 'REMOVED'::\"VideoModerationStatus\"\n    AND v.\"moderationStatus\" <> 'AGE_RESTRICTED'::\"VideoModerationStatus\" AND v.\"isAdult\" = false\n    AND (v.\"publishedAt\" IS NULL OR v.\"publishedAt\" <= $1::timestamp)\n    AND (v.\"premiereAt\" IS NULL OR v.\"premiereAt\" <= $2::timestamp)\n    AND c.\"status\" IN ('ACTIVE'::\"ChannelStatus\", 'LIMITED'::\"ChannelStatus\")\n    AND c.\"deletedAt\" IS NULL\n    ) s\n    \n    ORDER BY s.\"pub\" DESC, s.\"id\" DESC\n    LIMIT $3",
+      "values": [
+        "2026-11-01T00:00:00.000Z",
+        "2026-11-01T00:00:00.000Z",
+        21
+      ]
+    },
+    {
+      "id": "browse_views",
+      "raw": {
+        "sort": "views"
+      },
+      "mode": "fts",
+      "text": "\n    SELECT s.\"id\", s.\"rel\", s.\"pop\", s.\"views\", s.\"pub\" FROM (\n      SELECT v.\"id\", v.\"views\"::int AS \"views\", coalesce(v.\"publishedAt\", v.\"createdAt\") AS \"pub\",\n        floor(ln(v.\"views\" + 1))::int AS \"pop\", (0)::int AS \"rel\"\n      FROM \"Video\" v\n      JOIN \"Creator\" c ON c.\"id\" = v.\"creatorId\"\n      CROSS JOIN LATERAL (SELECT\n        video_search_normalize(concat_ws(' ', v.\"title\", v.\"titleEn\")) AS \"nt\",\n        video_search_normalize(array_to_string(v.\"tags\", ' ')) AS \"ng\") n\n      WHERE \n    v.\"status\" = 'PUBLISHED'::\"VideoStatus\"\n    AND v.\"moderationStatus\" <> 'REMOVED'::\"VideoModerationStatus\"\n    AND v.\"moderationStatus\" <> 'AGE_RESTRICTED'::\"VideoModerationStatus\" AND v.\"isAdult\" = false\n    AND (v.\"publishedAt\" IS NULL OR v.\"publishedAt\" <= $1::timestamp)\n    AND (v.\"premiereAt\" IS NULL OR v.\"premiereAt\" <= $2::timestamp)\n    AND c.\"status\" IN ('ACTIVE'::\"ChannelStatus\", 'LIMITED'::\"ChannelStatus\")\n    AND c.\"deletedAt\" IS NULL\n    ) s\n    \n    ORDER BY s.\"views\" DESC, s.\"pub\" DESC, s.\"id\" DESC\n    LIMIT $3",
+      "values": [
+        "2026-11-01T00:00:00.000Z",
+        "2026-11-01T00:00:00.000Z",
+        21
+      ]
+    },
+    {
+      "id": "category_newest",
+      "raw": {
+        "category": "science",
+        "sort": "newest"
+      },
+      "mode": "fts",
+      "text": "\n    SELECT s.\"id\", s.\"rel\", s.\"pop\", s.\"views\", s.\"pub\" FROM (\n      SELECT v.\"id\", v.\"views\"::int AS \"views\", coalesce(v.\"publishedAt\", v.\"createdAt\") AS \"pub\",\n        floor(ln(v.\"views\" + 1))::int AS \"pop\", (0)::int AS \"rel\"\n      FROM \"Video\" v\n      JOIN \"Creator\" c ON c.\"id\" = v.\"creatorId\"\n      CROSS JOIN LATERAL (SELECT\n        video_search_normalize(concat_ws(' ', v.\"title\", v.\"titleEn\")) AS \"nt\",\n        video_search_normalize(array_to_string(v.\"tags\", ' ')) AS \"ng\") n\n      WHERE \n    v.\"status\" = 'PUBLISHED'::\"VideoStatus\"\n    AND v.\"moderationStatus\" <> 'REMOVED'::\"VideoModerationStatus\"\n    AND v.\"moderationStatus\" <> 'AGE_RESTRICTED'::\"VideoModerationStatus\" AND v.\"isAdult\" = false\n    AND (v.\"publishedAt\" IS NULL OR v.\"publishedAt\" <= $1::timestamp)\n    AND (v.\"premiereAt\" IS NULL OR v.\"premiereAt\" <= $2::timestamp)\n    AND c.\"status\" IN ('ACTIVE'::\"ChannelStatus\", 'LIMITED'::\"ChannelStatus\")\n    AND c.\"deletedAt\" IS NULL AND v.\"category\" = $3\n    ) s\n    \n    ORDER BY s.\"pub\" DESC, s.\"id\" DESC\n    LIMIT $4",
+      "values": [
+        "2026-11-01T00:00:00.000Z",
+        "2026-11-01T00:00:00.000Z",
+        "science",
+        21
+      ]
+    }
+  ],
+  "loadtest_cleanup_observation": {
+    "user_agent": "pp-loadtest/1",
+    "synthetic_key_only": true,
+    "cleanup_sha256": "f092468571b7cc97568af8da727c5a1b88e04063d86fbbebb6d0a216b0e2bd00",
+    "current_hmac_sha256": "191aa63bdfeb44b1db9e7006d235b9096ef122c62465323b7da6ede08d73ee7a",
+    "match": false,
+    "finding": "R11"
+  }
+}

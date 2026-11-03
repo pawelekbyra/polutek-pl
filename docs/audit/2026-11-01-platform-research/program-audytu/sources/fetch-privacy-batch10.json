@@ -1,0 +1,18 @@
+[
+  {
+    "date": "2026-11-01",
+    "file": "owasp-user-privacy-cheat-sheet.md",
+    "url": "https://raw.githubusercontent.com/OWASP/CheatSheetSeries/master/cheatsheets/User_Privacy_Protection_Cheat_Sheet.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "95ff00890c3b1f1f21cf280f3ae584f292a7fab1a750c022cb66f901e1375816"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "owasp-cheatsheets-LICENSE.md",
+    "url": "https://raw.githubusercontent.com/OWASP/CheatSheetSeries/master/LICENSE.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "2b47ecdd5078e948395bc5980226933854228ff688f10d1dd059208be4956084"
+  }
+]

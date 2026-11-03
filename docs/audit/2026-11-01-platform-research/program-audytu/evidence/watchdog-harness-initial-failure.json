@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-02",
+  "stage": "Research VM module preparation before executing scenarios",
+  "error": "SyntaxError: Unexpected token export",
+  "cause": "TypeScript preserved ESM when given the original .mjs parser filename, despite the requested CommonJS transform.",
+  "research_only_correction": "Use a virtual .ts parser filename with the exact unchanged source bytes and baseline hash, then evaluate the CommonJS output in VM.",
+  "application_changed": false,
+  "classification": "HARNESS_CONFIGURATION_NOT_APPLICATION_DEFECT"
+}

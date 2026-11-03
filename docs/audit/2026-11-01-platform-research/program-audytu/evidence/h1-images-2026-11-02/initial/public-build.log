@@ -1,0 +1,332 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 6.76kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 1.6s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e done
+#3 sha256:528c92d70d7e39dbb3dd1c6681f6750c565c7e45b70527cda47c1a61495c1b6a 1.41kB / 1.41kB done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0B / 14.28MB 0.1s
+#3 sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 9.08kB / 9.08kB done
+#3 sha256:7b32114e84ca21aeb2d6f871a0b62b3a0762193f75d9afd048ee4cbe889f3148 1.13kB / 1.13kB done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 1.05MB / 14.28MB 0.4s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 9.44MB / 14.28MB 0.6s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 11.53MB / 14.28MB 0.7s
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 14.28MB / 14.28MB 0.8s done
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0.1s done
+#3 DONE 0.9s
+
+#4 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 165B done
+#5 DONE 0.0s
+
+#6 [deps 1/6] FROM docker.io/library/node:22-bookworm-slim
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 10.73MB 0.3s done
+#7 DONE 0.3s
+
+#8 [deps 2/6] RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+#8 0.798 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#8 0.861 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#8 1.033 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#8 1.193 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#8 1.479 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#8 1.522 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [360 kB]
+#8 2.269 Fetched 9398 kB in 2s (5928 kB/s)
+#8 2.269 Reading package lists...
+#8 2.678 Reading package lists...
+#8 3.085 Building dependency tree...
+#8 3.160 Reading state information...
+#8 3.264 The following additional packages will be installed:
+#8 3.264   libssl3
+#8 3.277 The following NEW packages will be installed:
+#8 3.278   ca-certificates libssl3 openssl
+#8 3.395 0 upgraded, 3 newly installed, 0 to remove and 1 not upgraded.
+#8 3.395 Need to get 3643 kB of archives.
+#8 3.395 After this operation, 8955 kB of additional disk space will be used.
+#8 3.395 Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 libssl3 amd64 3.0.22-1~deb12u2 [2040 kB]
+#8 3.642 Get:2 http://deb.debian.org/debian-security bookworm-security/main amd64 openssl amd64 3.0.22-1~deb12u2 [1442 kB]
+#8 4.026 Get:3 http://deb.debian.org/debian-security bookworm-security/main amd64 ca-certificates all 20250419~deb12u2 [161 kB]
+#8 4.212 debconf: delaying package configuration, since apt-utils is not installed
+#8 4.226 Fetched 3643 kB in 1s (4324 kB/s)
+#8 4.240 Selecting previously unselected package libssl3:amd64.
+#8 4.240 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6096 files and directories currently installed.)
+#8 4.242 Preparing to unpack .../libssl3_3.0.22-1~deb12u2_amd64.deb ...
+#8 4.245 Unpacking libssl3:amd64 (3.0.22-1~deb12u2) ...
+#8 4.371 Selecting previously unselected package openssl.
+#8 4.371 Preparing to unpack .../openssl_3.0.22-1~deb12u2_amd64.deb ...
+#8 4.372 Unpacking openssl (3.0.22-1~deb12u2) ...
+#8 4.462 Selecting previously unselected package ca-certificates.
+#8 4.462 Preparing to unpack .../ca-certificates_20250419~deb12u2_all.deb ...
+#8 4.464 Unpacking ca-certificates (20250419~deb12u2) ...
+#8 4.495 Setting up libssl3:amd64 (3.0.22-1~deb12u2) ...
+#8 4.498 Setting up openssl (3.0.22-1~deb12u2) ...
+#8 4.504 Setting up ca-certificates (20250419~deb12u2) ...
+#8 4.563 debconf: unable to initialize frontend: Dialog
+#8 4.563 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#8 4.563 debconf: falling back to frontend: Readline
+#8 4.563 debconf: unable to initialize frontend: Readline
+#8 4.563 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+#8 4.563 debconf: falling back to frontend: Teletype
+#8 5.005 Updating certificates in /etc/ssl/certs...
+#8 5.712 148 added, 0 removed; done.
+#8 5.725 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+#8 5.733 Processing triggers for ca-certificates (20250419~deb12u2) ...
+#8 5.738 Updating certificates in /etc/ssl/certs...
+#8 6.287 0 added, 0 removed; done.
+#8 6.287 Running hooks in /etc/ca-certificates/update.d...
+#8 6.288 done.
+#8 DONE 6.3s
+
+#9 [deps 3/6] WORKDIR /app
+#9 DONE 0.3s
+
+#10 [deps 4/6] COPY package.json package-lock.json ./
+#10 DONE 0.4s
+
+#11 [deps 5/6] COPY prisma ./prisma
+#11 DONE 0.4s
+
+#12 [deps 6/6] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npm ci --no-audit --no-fund --strict-ssl=true
+#12 2.537 npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+#12 28.63 
+#12 28.63 > kraufanding@0.1.0 postinstall
+#12 28.63 > npm run prisma:generate
+#12 28.63 
+#12 28.73 
+#12 28.73 > kraufanding@0.1.0 prisma:generate
+#12 28.73 > prisma generate
+#12 28.73 
+#12 29.32 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+#12 29.32 For more information, see: https://pris.ly/prisma-config
+#12 29.32 
+#12 29.46 Prisma schema loaded from prisma/schema.prisma
+#12 30.13 
+#12 30.13 ✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 344ms
+#12 30.13 
+#12 30.13 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#12 30.13 
+#12 30.13 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#12 30.13 
+#12 30.15 
+#12 30.15 added 893 packages in 30s
+#12 30.15 npm notice
+#12 30.15 npm notice New major version of npm available! 10.9.9 -> 12.2.1
+#12 30.15 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+#12 30.15 npm notice To update run: npm install -g npm@12.2.1
+#12 30.15 npm notice
+#12 DONE 30.2s
+
+#13 [build 1/2] COPY . .
+#13 DONE 3.5s
+
+#14 [build 2/2] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npx prisma generate && npx next build
+#14 4.461 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+#14 4.461 For more information, see: https://pris.ly/prisma-config
+#14 4.461 
+#14 4.599 Prisma schema loaded from prisma/schema.prisma
+#14 5.316 
+#14 5.316 ✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 363ms
+#14 5.316 
+#14 5.316 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#14 5.316 
+#14 5.316 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#14 5.316 
+#14 5.896 ▲ Next.js 16.4.1 (Turbopack)
+#14 5.917 ✓ Running next.config.mjs took 21ms
+#14 5.932 
+#14 5.935 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+#14 5.935 
+#14 5.935   To migrate automatically, run:
+#14 5.935   npx @next/codemod@canary middleware-to-proxy .
+#14 5.935 
+#14 5.935   Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+#14 5.970   Creating an optimized production build ...
+#14 13.00 (node:74) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///app/tailwind.config.ts?id=1793640215625 is not specified and it doesn't parse as CommonJS.
+#14 13.00 Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+#14 13.00 To eliminate this warning, add "type": "module" to /app/package.json.
+#14 13.00 (Use `node --trace-warnings ...` to show where the warning was created)
+#14 28.17 ✓ Compiled successfully in 22.2s
+#14 28.17   Running TypeScript ...
+#14 54.20   Finished TypeScript in 26.0s ...
+#14 54.20   Collecting page data using 4 workers ...
+#14 56.07   Generating static pages using 4 workers (0/9) ...
+#14 56.10   Generating static pages using 4 workers (2/9) 
+#14 56.22 [WARN] [resolveInitialLanguage] auth/db lookup failed, falling back {
+#14 56.22   name: 'Error',
+#14 56.22   message: "Dynamic server usage: Route /polityka-prywatnosci couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error"
+#14 56.22 }
+#14 56.22   Generating static pages using 4 workers (4/9) 
+#14 56.23 [WARN] [resolveInitialLanguage] auth/db lookup failed, falling back {
+#14 56.23   name: 'Error',
+#14 56.23   message: "Dynamic server usage: Route /regulamin couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error"
+#14 56.23 }
+#14 56.24   Generating static pages using 4 workers (6/9) 
+#14 56.27 ✓ Generating static pages using 4 workers (9/9) in 199ms
+#14 56.28   Finalizing page optimization ...
+#14 57.05 
+#14 57.06 Route (app)
+#14 57.06 ┌ ƒ /
+#14 57.06 ├ ƒ /_not-found
+#14 57.06 ├ ƒ /[locale]
+#14 57.06 ├ ƒ /[locale]/channel/[slug]
+#14 57.06 ├ ƒ /[locale]/notifications
+#14 57.06 ├ ƒ /[locale]/playlist/[channel]/[slug]
+#14 57.06 ├ ƒ /[locale]/playlista/[channel]/[slug]
+#14 57.06 ├ ○ /[locale]/polityka-prywatnosci
+#14 57.06 ├ ƒ /[locale]/powiadomienia
+#14 57.06 ├ ƒ /[locale]/premium
+#14 57.06 ├ ƒ /[locale]/premium-terms
+#14 57.06 ├ ○ /[locale]/privacy-policy
+#14 57.06 ├ ○ /[locale]/regulamin
+#14 57.06 ├ ƒ /[locale]/regulamin-premium
+#14 57.06 ├ ƒ /[locale]/search
+#14 57.06 ├ ƒ /[locale]/studio
+#14 57.06 ├ ƒ /[locale]/subscriptions
+#14 57.06 ├ ƒ /[locale]/subskrypcje
+#14 57.06 ├ ○ /[locale]/terms
+#14 57.06 ├ ƒ /[locale]/watch/[slug]
+#14 57.06 ├ ƒ /api/access
+#14 57.06 ├ ƒ /api/auth/[...all]
+#14 57.06 ├ ƒ /api/avatars/[userId]
+#14 57.06 ├ ƒ /api/channel-banners/[channelId]
+#14 57.06 ├ ƒ /api/channel/sidebar
+#14 57.06 ├ ƒ /api/channel/videos
+#14 57.06 ├ ƒ /api/checkout/create-intent
+#14 57.06 ├ ƒ /api/comments
+#14 57.06 ├ ƒ /api/comments/[commentId]
+#14 57.06 ├ ƒ /api/comments/[commentId]/context
+#14 57.06 ├ ƒ /api/comments/[commentId]/pin
+#14 57.06 ├ ƒ /api/comments/[commentId]/reaction
+#14 57.06 ├ ƒ /api/comments/[commentId]/replies
+#14 57.06 ├ ƒ /api/comments/[commentId]/report
+#14 57.06 ├ ƒ /api/cron/abandon-stale-originals
+#14 57.06 ├ ƒ /api/cron/own-mail-events
+#14 57.06 ├ ƒ /api/cron/premiere-notifications
+#14 57.06 ├ ƒ /api/cron/prune-expired-auth
+#14 57.06 ├ ƒ /api/cron/prune-playback-sessions
+#14 57.06 ├ ƒ /api/cron/prune-unverified-accounts
+#14 57.06 ├ ƒ /api/cron/purge-deleted-comments
+#14 57.06 ├ ƒ /api/cron/retention
+#14 57.06 ├ ƒ /api/cron/send-broadcasts
+#14 57.06 ├ ƒ /api/cron/stripe-reconciliation
+#14 57.06 ├ ƒ /api/cron/subscriber-snapshots
+#14 57.06 ├ ƒ /api/cron/sync-public-thumbnails
+#14 57.06 ├ ƒ /api/health
+#14 57.06 ├ ƒ /api/media-source/[videoId]
+#14 57.06 ├ ƒ /api/oembed
+#14 57.06 ├ ƒ /api/payment-settings
+#14 57.06 ├ ƒ /api/payments/[paymentId]
+#14 57.06 ├ ƒ /api/search
+#14 57.06 ├ ƒ /api/search/categories
+#14 57.06 ├ ƒ /api/studio/analytics/export
+#14 57.06 ├ ƒ /api/studio/analytics/overview
+#14 57.06 ├ ƒ /api/studio/analytics/videos
+#14 57.06 ├ ƒ /api/studio/analytics/videos/[id]
+#14 57.06 ├ ƒ /api/studio/bans
+#14 57.06 ├ ƒ /api/studio/channel
+#14 57.06 ├ ƒ /api/studio/channel/about
+#14 57.06 ├ ƒ /api/studio/channel/banner
+#14 57.06 ├ ƒ /api/studio/channel/handle
+#14 57.06 ├ ƒ /api/studio/channel/restore
+#14 57.06 ├ ƒ /api/studio/comments
+#14 57.06 ├ ƒ /api/studio/comments/[id]
+#14 57.06 ├ ƒ /api/studio/me
+#14 57.06 ├ ƒ /api/studio/moderation
+#14 57.06 ├ ƒ /api/studio/moderation/[decisionId]/appeal
+#14 57.06 ├ ƒ /api/studio/playlists
+#14 57.06 ├ ƒ /api/studio/playlists/[id]
+#14 57.06 ├ ƒ /api/studio/playlists/[id]/items
+#14 57.06 ├ ƒ /api/studio/playlists/[id]/order
+#14 57.06 ├ ƒ /api/studio/videos
+#14 57.06 ├ ƒ /api/studio/videos/[id]
+#14 57.06 ├ ƒ /api/studio/videos/[id]/cover
+#14 57.06 ├ ƒ /api/studio/videos/[id]/pipeline
+#14 57.06 ├ ƒ /api/studio/videos/[id]/publish
+#14 57.06 ├ ƒ /api/studio/videos/[id]/upload
+#14 57.06 ├ ƒ /api/studio/videos/[id]/upload/complete
+#14 57.06 ├ ƒ /api/studio/videos/[id]/upload/parts
+#14 57.06 ├ ƒ /api/subscriptions
+#14 57.06 ├ ƒ /api/subscriptions/unsubscribe
+#14 57.06 ├ ƒ /api/t
+#14 57.06 ├ ƒ /api/user/account
+#14 57.06 ├ ƒ /api/user/avatar
+#14 57.06 ├ ƒ /api/user/export
+#14 57.06 ├ ƒ /api/user/favorites
+#14 57.06 ├ ƒ /api/user/first-sign-in
+#14 57.06 ├ ƒ /api/user/language
+#14 57.06 ├ ƒ /api/user/nickname
+#14 57.06 ├ ƒ /api/user/notification-preferences
+#14 57.06 ├ ƒ /api/user/notifications
+#14 57.06 ├ ƒ /api/user/notifications/read
+#14 57.06 ├ ƒ /api/user/notifications/unread-count
+#14 57.06 ├ ƒ /api/user/premium-pass
+#14 57.06 ├ ƒ /api/user/premium-pass/checkout
+#14 57.06 ├ ƒ /api/user/premium-pass/consent
+#14 57.06 ├ ƒ /api/user/premium-pass/demo
+#14 57.06 ├ ƒ /api/user/premium-pass/intent
+#14 57.06 ├ ƒ /api/user/premium-pass/methods
+#14 57.06 ├ ƒ /api/user/profile
+#14 57.06 ├ ƒ /api/user/reports
+#14 57.06 ├ ƒ /api/user/subscribed-channels
+#14 57.06 ├ ƒ /api/users/nickname-available
+#14 57.06 ├ ƒ /api/videos/[id]/comments
+#14 57.06 ├ ƒ /api/videos/[id]/description
+#14 57.06 ├ ƒ /api/videos/[id]/favorite
+#14 57.06 ├ ƒ /api/videos/[id]/playback-event
+#14 57.06 ├ ƒ /api/videos/[id]/progress
+#14 57.06 ├ ƒ /api/videos/[id]/reaction
+#14 57.06 ├ ƒ /api/videos/[id]/thumbnail
+#14 57.06 ├ ƒ /api/videos/[id]/viewer-state
+#14 57.06 ├ ƒ /api/webhooks/postmark
+#14 57.06 ├ ƒ /api/webhooks/resend
+#14 57.06 ├ ƒ /api/webhooks/stripe
+#14 57.06 ├ ƒ /channel/[slug]
+#14 57.06 ├ ƒ /channel/[slug]/feed.xml
+#14 57.06 ├ ƒ /embed/[slug]
+#14 57.06 ├ ƒ /polityka-prywatnosci
+#14 57.06 ├ ƒ /regulamin
+#14 57.06 ├ ƒ /reset-password
+#14 57.06 ├ ○ /robots.txt
+#14 57.06 ├ ƒ /search
+#14 57.06 ├ ƒ /sitemap.xml
+#14 57.06 ├ ƒ /sso-callback
+#14 57.06 ├ ƒ /unsubscribe
+#14 57.06 └ ƒ /watch/[slug]
+#14 57.06 
+#14 57.06 
+#14 57.06 ƒ Proxy (Middleware)
+#14 57.06 
+#14 57.06 ○  (Static)   prerendered as static content
+#14 57.06 ƒ  (Dynamic)  server-rendered on demand
+#14 57.06 
+#14 DONE 57.2s
+
+#15 [runner 4/7] COPY --from=build --chown=node:node /app/.next/standalone ./
+#15 DONE 1.0s
+
+#16 [runner 5/7] COPY --from=build --chown=node:node /app/.next/static ./.next/static
+#16 DONE 0.5s
+
+#17 [runner 6/7] COPY --from=build --chown=node:node /app/public ./public
+#17 DONE 0.5s
+
+#18 [runner 7/7] RUN mkdir -p /app/.next/cache && chown -R node:node /app/.next
+#18 DONE 0.7s
+
+#19 exporting to image
+#19 exporting layers
+#19 exporting layers 0.9s done
+#19 writing image sha256:ff78ca7cd6ca526d83d2e4a6549d1aef1265f97e69fc71f1bed19963933461e3 done
+#19 naming to docker.io/library/polutek-h1-public:835348d77cef done
+#19 DONE 0.9s

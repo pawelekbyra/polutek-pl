@@ -1,0 +1,64 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 6.76kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.7s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 165B done
+#5 DONE 0.0s
+
+#6 [deps 1/6] FROM docker.io/library/node:22-bookworm-slim
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 10.73MB 0.3s done
+#7 DONE 0.3s
+
+#8 [deps 3/6] WORKDIR /app
+#8 CACHED
+
+#9 [runner 5/7] COPY --from=build --chown=node:node /app/.next/static ./.next/static
+#9 CACHED
+
+#10 [deps 2/6] RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+#10 CACHED
+
+#11 [deps 5/6] COPY prisma ./prisma
+#11 CACHED
+
+#12 [build 1/2] COPY . .
+#12 CACHED
+
+#13 [deps 6/6] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npm ci --no-audit --no-fund --strict-ssl=true
+#13 CACHED
+
+#14 [deps 4/6] COPY package.json package-lock.json ./
+#14 CACHED
+
+#15 [runner 4/7] COPY --from=build --chown=node:node /app/.next/standalone ./
+#15 CACHED
+
+#16 [build 2/2] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npx prisma generate && npx next build
+#16 CACHED
+
+#17 [runner 6/7] COPY --from=build --chown=node:node /app/public ./public
+#17 CACHED
+
+#18 [runner 7/7] RUN mkdir -p /app/.next/cache && chown -R node:node /app/.next
+#18 CACHED
+
+#19 exporting to image
+#19 exporting layers done
+#19 writing image sha256:1cfc31533d5125fe4e86ec8c6f33e24b9390158b34b7fd4430ec7360e4e67f5b done
+#19 naming to docker.io/library/polutek-h1-public:9824bb0abba7 done
+#19 DONE 0.0s

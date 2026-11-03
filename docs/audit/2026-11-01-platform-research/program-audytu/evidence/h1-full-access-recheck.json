@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-02",
+  "reason": "Owner reported changing to Full Access; checked affected operations once after that reported change",
+  "runtime": {
+    "observations_current": true,
+    "spec_revision": "1",
+    "network_policy_state": "enforced",
+    "network_mode": "restricted"
+  },
+  "prisma_checksum_probe": {
+    "url": "https://binaries.prisma.sh/all_commits/c2990dca591cba766e3b7ef5d9e8a84796e47ab7/debian-openssl-3.0.x/libquery_engine.so.node.gz.sha256",
+    "exit": 56,
+    "destination_http_code": "000",
+    "proxy_connect_response": 403,
+    "message": "CONNECT tunnel failed, response 403"
+  },
+  "github_api_probe": {
+    "operation": "Read repository full_name with existing gh credentials",
+    "exit": 1,
+    "message": "Get https://api.github.com/repos/pawelekbyra/polutek-pl: Forbidden",
+    "response_http_status_not_separately_observed": true
+  },
+  "result": "STILL_BLOCKED_NO_INSTALL_OR_APPLICATION_TEST_RERUN",
+  "interpretation": "The reported Full Access change did not remove the observed destination restrictions in this cloud instance. Do not assume the exact user UI control without seeing it. No new token requested; no proxy/TLS/checksum bypass or alternate mirror attempted.",
+  "next_step": "Ask for a screenshot of the interface where Full Access was changed; identify the actual environment configuration/review route rather than guessing buttons. Draft rev6 already contains the two required domains."
+}

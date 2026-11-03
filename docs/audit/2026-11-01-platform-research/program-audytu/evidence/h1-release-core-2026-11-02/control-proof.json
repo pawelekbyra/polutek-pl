@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "revision": "fc639beef750ec918020fa350557054b57569618",
+  "source_fingerprint": "8c3dd0bb31cc31dab912c276143e89a816dedb5447a51188987a3e71fdd9969b",
+  "quality_sha256": "5288b80655f720357f518d8abc964281cf5421d82e9984d360ec7f11e6b7e3d5",
+  "inputs_sha256": "ed8540fd6a4e811c8d597b5dca6efc1b4e43d78c26a13e4c98e86e50634605f7",
+  "quality": {
+    "ok": true,
+    "head": "fc639beef750ec918020fa350557054b57569618",
+    "node": "v22.23.4",
+    "failed": [],
+    "strictSkips": [],
+    "dirty": false,
+    "dirtyAfter": false,
+    "sourceStable": true,
+    "sourceBefore": {
+      "revision": "fc639beef750ec918020fa350557054b57569618",
+      "files": [
+        {
+          "path": ".gitignore",
+          "mode": "100644",
+          "sha256": "a7e7370254fc919ab78ddf61e0e3763b80ea7ade18863c6650c329da44b8ec7b"
+        },
+        {
+          "path": "app.txt",
+          "mode": "100644",
+          "sha256": "831b5a632f8d749aa85e3dc8b153ac224686bdaa7a728a343d0e2200987b7bf1"
+        },
+        {
+          "path": "bin/tool.sh",
+          "mode": "100755",
+          "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb"
+        }
+      ],
+      "fingerprint": "8c3dd0bb31cc31dab912c276143e89a816dedb5447a51188987a3e71fdd9969b"
+    },
+    "sourceAfter": {
+      "revision": "fc639beef750ec918020fa350557054b57569618",
+      "files": [
+        {
+          "path": ".gitignore",
+          "mode": "100644",
+          "sha256": "a7e7370254fc919ab78ddf61e0e3763b80ea7ade18863c6650c329da44b8ec7b"
+        },
+        {
+          "path": "app.txt",
+          "mode": "100644",
+          "sha256": "831b5a632f8d749aa85e3dc8b153ac224686bdaa7a728a343d0e2200987b7bf1"
+        },
+        {
+          "path": "bin/tool.sh",
+          "mode": "100755",
+          "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb"
+        }
+      ],
+      "fingerprint": "8c3dd0bb31cc31dab912c276143e89a816dedb5447a51188987a3e71fdd9969b"
+    },
+    "options": {
+      "lintAll": true,
+      "unitFull": true,
+      "build": true,
+      "strict": true,
+      "only": [],
+      "skip": [],
+      "list": false,
+      "help": false
+    },
+    "results": [
+      {
+        "id": "prisma",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "ci-parity",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "migrations",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "unit",
+        "status": "PASS",
+        "durationMs": 1,
+        "testSummary": {
+          "success": true,
+          "total": 3,
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "files": 1,
+          "failedFiles": []
+        }
+      },
+      {
+        "id": "critical-path",
+        "status": "PASS",
+        "durationMs": 1,
+        "testSummary": {
+          "success": true,
+          "total": 3,
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "files": 2,
+          "failedFiles": []
+        }
+      },
+      {
+        "id": "typecheck",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "typecheck-all",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "lint",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "architecture",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "hotspots",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "strict-escapes",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "env",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "audit",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "postgres",
+        "status": "PASS",
+        "durationMs": 1,
+        "testSummary": {
+          "success": true,
+          "total": 3,
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "files": 1,
+          "failedFiles": []
+        }
+      },
+      {
+        "id": "encode-smoke",
+        "status": "PASS",
+        "durationMs": 1,
+        "testSummary": {
+          "success": true,
+          "total": 3,
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "files": 1,
+          "failedFiles": []
+        }
+      },
+      {
+        "id": "build",
+        "status": "PASS",
+        "durationMs": 1
+      },
+      {
+        "id": "admin-build",
+        "status": "PASS",
+        "durationMs": 1
+      }
+    ]
+  },
+  "inputs": {
+    "schema_version": 1,
+    "platform": "linux/amd64",
+    "bases": {
+      "node": "node@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da",
+      "ffmpeg": "node@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da",
+      "collector": "node@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da"
+    },
+    "public_args": {
+      "NEXT_PUBLIC_APP_URL": "https://example.invalid",
+      "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "",
+      "NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY": "",
+      "NEXT_PUBLIC_R2_PUBLIC_HOST": "",
+      "NEXT_PUBLIC_BLOB_PUBLIC_HOST": "",
+      "NEXT_PUBLIC_APP_NAME": "",
+      "NEXT_PUBLIC_SUPPORT_EMAIL": "",
+      "NEXT_PUBLIC_SITE_BETA": ""
+    }
+  },
+  "images": {
+    "app": {
+      "id": "sha256:4096002e15a99c550a85e49fa72cbae71b2d757b0f0b7815c82fd68e57c2aee9"
+    },
+    "migrator": {
+      "id": "sha256:94f85b890ed7f90c51da82ddf7fbe368dbc265a8f3100e03fbae60517dd014f7"
+    },
+    "worker": {
+      "id": "sha256:9f16a4e6bc731779933706a55ac76bd230c6f509d7663aff77d82b4dac599fc1"
+    },
+    "collector": {
+      "id": "sha256:1b7c495beb377368c42334a9b14b3be7111bff5c22e12e4f1f83a336233b5ce8"
+    },
+    "admin": {
+      "id": "sha256:12a140760161f993b1e17212b5cf43c01dd9a2b908044472e15e299f802b3d72"
+    }
+  }
+}

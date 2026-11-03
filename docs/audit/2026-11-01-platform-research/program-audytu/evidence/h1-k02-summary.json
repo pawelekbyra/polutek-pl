@@ -1,0 +1,73 @@
+{
+  "date": "2026-11-02",
+  "package": "K02",
+  "finding": "R01",
+  "status": "CANDIDATE_PARTIALLY_VERIFIED_NOT_RELEASE_READY",
+  "repair_branch": "fix/polutek-k02-security-dependencies",
+  "repair_sha": "e582ead4e1a20ec1e4080c1d1f6a899650304a09",
+  "base_main_sha": "5f848a9304d19a6d03860444808abbe120b57623",
+  "application_audit_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "changed_files": [
+    "package.json",
+    "package-lock.json"
+  ],
+  "versions": {
+    "next": "16.4.1",
+    "eslint-config-next": "16.4.1",
+    "sharp": "0.35.5",
+    "librsvg": "2.63.2",
+    "libvips": "8.18.7"
+  },
+  "before_runtime": {
+    "sharp": "0.35.4",
+    "librsvg": "2.62.91",
+    "libvips": "8.18.6",
+    "legal_image_pass": true,
+    "invalid_image_rejected": true
+  },
+  "checks": {
+    "lockfile_install": "npm ci --ignore-scripts --no-audit --no-fund exit 0; all scripts skipped, not K01 complete",
+    "existing_vitest": {
+      "files": 4,
+      "tests_passed": 46,
+      "tests_failed": 0,
+      "exit": 0
+    },
+    "architecture": {
+      "result": "PASS",
+      "exit": 0
+    },
+    "image_runtime": {
+      "result": "PASS",
+      "scope": "Native sharp plus isolated Next HTTP fixture importing public config; no full app/production image"
+    },
+    "typecheck": {
+      "exit": 2,
+      "diagnostic_lines": 515,
+      "classification": "Missing Prisma exports and cascading/other diagnostics; not all automatically attributed to Prisma"
+    },
+    "normal_install": "BLOCKED in current cloud runtime",
+    "full_quality": "NOT_EXECUTED_BLOCKED_BY_ENV",
+    "application_builds": "NOT_EXECUTED_BLOCKED_BY_ENV",
+    "deployed_image": "NOT_VERIFIED"
+  },
+  "first_fixture_correction": "Initial test used width=16, excluded by Next 16 imageSizes defaults; fixture corrected to allowed width=32, not an app fix. Final run on current main repeated successfully.",
+  "github": {
+    "branch_push": "SUCCESS",
+    "draft_pr": "NOT_CREATED",
+    "draft_pr_failure": "POST api.github.com/graphql Forbidden"
+  },
+  "environment_config": {
+    "draft_saved": true,
+    "added_custom_domain": "api.github.com",
+    "preserved_custom_domain": "binaries.prisma.sh",
+    "requires_publish": true,
+    "applied_to_runtime": false
+  },
+  "limitations": [
+    "No exploit or production incident proved",
+    "No main merge/deployment",
+    "Windows baseline on separate Node24 machine is a separate evidence source",
+    "No new npm audit graph upload attempted"
+  ]
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "date": "2026-11-01",
+    "file": "cloudflare-r2-pricing.mdx",
+    "url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/pricing.mdx",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "6b4e4b98e64b6edb38e894ee699b63ebff51d87c68571eeb0d13d4c4899113aa"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "cloudflare-workers-pricing.mdx",
+    "url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/workers/platform/pricing.mdx",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "433c1ef43e3adc53b7272a02b0ddb893f9514ac99c949635f7ff90423f819d75"
+  }
+]

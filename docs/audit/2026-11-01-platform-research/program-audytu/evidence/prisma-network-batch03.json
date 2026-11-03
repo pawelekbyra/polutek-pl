@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-01",
+  "url": "https://binaries.prisma.sh/",
+  "curl_exit": 56,
+  "curl_http_code": "000",
+  "stderr": "curl: (56) CONNECT tunnel failed, response 403",
+  "interpretation": "Proxy CONNECT refused; application HTTP request not made. Custom allowlist remains absent in observed local startup policy. No bypass or repeated engine-generation attempt.",
+  "effect": "Full application runtime/Prisma tests remain blocked; isolated library and function experiments are separately scoped."
+}

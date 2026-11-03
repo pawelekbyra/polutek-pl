@@ -1,0 +1,1393 @@
+{
+  "schema_version": 1,
+  "baseline": "../RAPORT.md",
+  "findings": [
+    {
+      "id": "R01",
+      "title": "Aktualne zależności wymagają pilnego przeglądu bezpieczeństwa",
+      "baseline_priority_and_evidence": "P0, A/C",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono dopasowanie Next 16.3.8 i sharp 0.35.4 do dwóch powiązanych advisory. Nie wykonano nowego npm audit ani exploitu; automatyczna kontrola odrzuciła wysłanie grafu zależności.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D05",
+        "D17"
+      ],
+      "impact_plain_language": "Projekt zawiera wersje bibliotek objęte ostrzeżeniami o możliwym RCE w określonych warunkach. Wymaga pilnego usunięcia ryzyka zależności, ale nie dowodzi przejęcia aplikacji.",
+      "conditions": "Możliwa ścieżka dekodera obrazu i warunki runtime opisane w advisory; Linux/glibc obserwowane lokalnie, produkcyjne wejście do podatnego parsera i PIE niezweryfikowane.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D05-WEJSCIA-PLIKI-I-ZALEZNOSCI.md",
+        "evidence/batch08-review.json",
+        "evidence/dependency-review-batch08.json",
+        "evidence/dependency-local-metadata-batch08.json",
+        "sources/GHSA-2464-fhr4-w9xw.json",
+        "sources/GHSA-wq5f-xc86-pv6w.json",
+        "evidence/npm-audit-not-executed-batch08.json"
+      ],
+      "counterarguments": [
+        "Brak exploitu i inspekcji produkcji.",
+        "Next odrzuca rozpoznany SVG przy domyślnych ustawieniach; hosty i uploady ograniczają wejścia.",
+        "Dwa powiązane komunikaty nie oznaczają dwóch niezależnych exploitów.",
+        "Historyczna liczba alertów nie jest świeżym wynikiem; nowy pełny skan nie został wykonany."
+      ],
+      "standard_refs": [
+        "v5.0.0-15.2.1",
+        "v5.0.0-15.2.5"
+      ],
+      "proposed_fix": "W osobnym etapie napraw zaktualizować Next/sharp/lockfile do wspieranych poprawionych wersji, sprawdzić faktycznie ładowane biblioteki i regresje obrazów/builda. Nie zmieniano aplikacji w tej partii.",
+      "acceptance_test": "Potwierdzić brak wskazanych podatnych kopii w lockfile i obrazie runtime, rzeczywiste wersje sharp/librsvg oraz poprawne obrazy/odmowy SVG i pełne wymagane sprawdzenia.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "kind": "RYZYKO_ZALEZNOSCI",
+      "priority": "P0_PILNY_PRZEGLAD_I_AKTUALIZACJA_NIE_DOWOD_RCE",
+      "evidence_level": "B_PINNED_LOCAL_VERSIONS_AND_C_PUBLIC_REVIEWED_ADVISORIES_NO_EXPLOIT"
+    },
+    {
+      "id": "R02",
+      "title": "Utrata zadania nie odcina wszystkich skutków starego workera",
+      "baseline_priority_and_evidence": "P1, A/B",
+      "status": "POTWIERDZONE",
+      "note": "Baseline evidence retained. Batch 06 executes actual processor/finalizer/route/audit/repository with explicit fake I/O: activation survives simulated ownership loss while guarded status rejects old worker. No real takeover or full application test.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D07",
+        "D08"
+      ],
+      "impact_plain_language": "Stary worker może zmienić aktywną wersję, mimo że jego końcowy zapis zadania jest już odrzucany; historyczny dowód obejmuje też sprzątanie współdzielonego prefiksu.",
+      "conditions": "Utrata własności po ostatnim sprawdzeniu i przed finalizacją lub w jej trakcie; finalizer nie otrzymuje tokenu próby i nie wiąże aktywacji z właścicielem zadania.",
+      "evidence_paths": [
+        "../pipeline-experiments.ts",
+        "../pipeline-experiments.json",
+        "evidence/pipeline-boundaries-experiment.json",
+        "tools/pipeline-boundaries-experiment.cjs",
+        "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md"
+      ],
+      "counterarguments": [
+        "Repozytorium poprawnie odrzuca końcowy zapis starego workerId; problem dotyczy wcześniejszych skutków.",
+        "Takeover zasymulowano na granicy DB; nie przeprowadzono realnego requeue ani dwóch procesów.",
+        "Eksperyment nie dowodzi produkcyjnego incydentu ani obejścia roli widza."
+      ],
+      "standard_refs": [
+        "v5.0.0-15.4.2"
+      ],
+      "proposed_fix": "Powiązać aktywację ze sprawdzaną transakcyjnie własnością próby; izolować prefiksy prób i ograniczyć sprzątanie do własnej próby.",
+      "acceptance_test": "Pełne dwa workery, pauza A, takeover przez B, wznowienie A: A nie aktywuje i nie usuwa wyniku B; odrzucenie statusu nie jest jedyną ochroną.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "kind": "USTERKA",
+      "priority": "P1",
+      "evidence_level": "A_ISOLATED_ACTUAL_COMPONENTS_WITH_EXPLICIT_FAKE_IO_AND_B_SOURCE"
+    },
+    {
+      "id": "R03",
+      "title": "Sprzątanie uploadu może wyprzedzać nadal trwające PUT",
+      "baseline_priority_and_evidence": "P1, A/B",
+      "status": "DO_WERYFIKACJI",
+      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D07",
+        "D08"
+      ],
+      "impact_plain_language": null,
+      "conditions": null,
+      "evidence_paths": null,
+      "counterarguments": null,
+      "standard_refs": [],
+      "proposed_fix": null,
+      "acceptance_test": null,
+      "independent_review": null,
+      "retest": null,
+      "created_at": "2026-11-01"
+    },
+    {
+      "id": "R04",
+      "title": "Częściowy błąd S3 DeleteObjects jest traktowany jako sukces",
+      "baseline_priority_and_evidence": "P1, A/B",
+      "status": "DO_WERYFIKACJI",
+      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D07",
+        "D08"
+      ],
+      "impact_plain_language": null,
+      "conditions": null,
+      "evidence_paths": null,
+      "counterarguments": null,
+      "standard_refs": [],
+      "proposed_fix": null,
+      "acceptance_test": null,
+      "independent_review": null,
+      "retest": null,
+      "created_at": "2026-11-01"
+    },
+    {
+      "id": "R05",
+      "title": "Trwała kolejka powiadomień ma lukę przed jej utworzeniem",
+      "baseline_priority_and_evidence": "P1, B",
+      "status": "DO_WERYFIKACJI",
+      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D07"
+      ],
+      "impact_plain_language": null,
+      "conditions": null,
+      "evidence_paths": null,
+      "counterarguments": null,
+      "standard_refs": [],
+      "proposed_fix": null,
+      "acceptance_test": null,
+      "independent_review": null,
+      "retest": null,
+      "created_at": "2026-11-01"
+    },
+    {
+      "id": "R06",
+      "title": "Limit magazynu nie jest limitem rzeczywistego kosztu",
+      "baseline_priority_and_evidence": "P1, B",
+      "status": "POTWIERDZONE_ZRODLOWO",
+      "note": "Ponownie przeczytano SUM tylko wybranych originals bez HLS/SUPERSEDED. Model kosztów opiera się na jawnych założeniach i oficjalnym cenniku; nie dowodzi aktualnego rachunku ani naruszenia limitu produkcji.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D08",
+        "D14"
+      ],
+      "impact_plain_language": "Limit kanału nie oznacza maksymalnego rachunku platformy; oglądanie i dodatkowe kopie mają osobne koszty.",
+      "conditions": "Własny kanał zwykłego użytkownika; HLS/stare wersje/operacje i widzowie nie są ograniczone przez sam SUM aktywnych originals.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D13-WYDAJNOSC-I-POJEMNOSC.md",
+        "obszary/D14-KOSZTY-I-LIMITY.md",
+        "evidence/batch11-review.json"
+      ],
+      "counterarguments": [
+        "Limity pliku/dnia/kolejki/długości są celowe i istnieją; główny kanał/staff mają inne zasady.",
+        "Mała liczba twórców ogranicza średni koszt kodowania w obecnym modelu; 10 tys. widzów to osobna oś.",
+        "Nie wykonano quota/Prisma ani faktury dostawcy w tej partii."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Osobno mierzyć quota produktu oraz storage fizyczny, zaległe cleanup, operacje Workera/R2 i budżet konta; ustalić alarmy i politykę limitów.",
+      "acceptance_test": "Uzgodnione metryki obejmują aktualne/stare oryginały, HLS, retry/purge i oglądanie; rachunek uzgadniany z dostawcą.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "evidence_level": "B_SOURCE_QUOTA_SUM_AND_CONDITIONAL_COST_MODEL_NOT_RUNTIME_INVOICE"
+    },
+    {
+      "id": "R07",
+      "title": "Cofnięcie dostępu ma okno zależne od tokenów i cache",
+      "baseline_priority_and_evidence": "P1/P2, B",
+      "status": "POTWIERDZONE",
+      "note": "Historical mechanism retained and reproduced in batch 07. Documentation already accepts bearer-link copying for free sign-in content. Snapshots of new denial plus old-token replay; no actual logout/mutation/Cloudflare/HTTP run.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D09"
+      ],
+      "impact_plain_language": "Odmowa nowego planu nie cofa wcześniej wydanego linku: przy badanych ustawieniach chroniony TTL to 30 min, publiczny 6 h. Zachowane kopie klienta/cache mają osobny cykl życia.",
+      "conditions": "Ważny wcześniej wydany token, obiekt w origin lub ciepłym cache. Worker sprawdza podpis/exp i zakres filmu/wersji, bez aktualnej decyzji konta/treści.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D09-ODTWARZANIE-TOKENY-I-CACHE.md",
+        "evidence/playback-access-experiment.json",
+        "tools/playback-access-experiment.cjs",
+        "evidence/batch07-review.json"
+      ],
+      "counterarguments": [
+        "Znany kompromis opisany już w dokumentacji, nie fałszowanie podpisu ani automatyczna nowa luka.",
+        "Worker odrzuca wygasły/zmieniony token przed cache; wykonano kontrole.",
+        "Zegar i migawki stanu są symulowane, nie wykonano realnego wylogowania/refundu ani produkcyjnego TTL.",
+        "Już pobrane bajty i cache klienta wymagają osobnej polityki; test nie ustala rzeczywistego czasu eviction/purge."
+      ],
+      "standard_refs": [
+        "v5.0.0-8.3.2",
+        "v5.0.0-9.2.1"
+      ],
+      "proposed_fix": "Ustalić dopuszczalny czas cofnięcia dla docelowego produktu. Przy wymaganiu szybszego cofnięcia potrzebny spójny mechanizm epoki/unieważniania i purge, z oceną kosztów/dostępności.",
+      "acceptance_test": "Pełne logout, blokada kanału, unpublish, refund i usunięcie; stary/nowy token oraz cache edge/klienta oceniane oddzielnie według ustalonego czasu egzekwowania.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "kind": "RYZYKO_ZNANY_KOMPROMIS_PROJEKTU",
+      "priority": "P2_OCENA_POLITYKI_PRZED_DUZA_PLATFORMA_I_SPRZEDAZA",
+      "evidence_level": "A_ACTUAL_ACCESS_PLAN_AND_WORKER_WITH_EXPLICIT_FAKE_IO_SIMULATED_CLOCK_AND_B_SOURCE"
+    },
+    {
+      "id": "R08",
+      "title": "Brak działających E2E mimo konfiguracji",
+      "baseline_priority_and_evidence": "P1, A/B",
+      "status": "POTWIERDZONE_W_BAZOWYM_URUCHOMIENIU_I_ZRODLACH",
+      "note": "Baseline list result retained without repeat; declared tests/e2e absent at unchanged source SHA. Batch16 adds AST test/config inventory and isolated test-oracle diagnostics; many useful component/PG/FFmpeg tests exist, no blanket claim tests are worthless.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D18"
+      ],
+      "impact_plain_language": "Zmiana może przejść testy funkcji/tekstu, a mimo tego zepsuć pełny upload, logowanie, odtwarzanie lub zadanie twórcy. Liczba testów nie potwierdza ich połączenia w produkt.",
+      "conditions": "Playwright points at absent tests/e2e; critical-path command includes one missing file; integrated use-case test uses Map/pass-through transaction. No new full app execution.",
+      "evidence_paths": [
+        "obszary/D18-TESTY-I-PROCES-JAKOSCI.md",
+        "WARSTWY-TESTOW.csv",
+        "TESTY-INWENTARZ.csv",
+        "SCENARIUSZE-JAKOSC.csv",
+        "DOMKNIECIE-DOWODOW.csv",
+        "evidence/batch16-review.json",
+        "evidence/test-inventory.json",
+        "evidence/test-oracle-probe.json",
+        "evidence/test-run-interpretation.json"
+      ],
+      "counterarguments": [
+        "547 baseline test files include 12 declared real-Postgres files, real FFmpeg/process tests and component controls; these should be preserved.",
+        "Existing health tests detect two intentional wrong-accept mutations.",
+        "Static-only selection is not the full ops behavior suite; no claim all tests accept broken deploy.",
+        "A missing critical-path file does not prove zero tests run when another target exists.",
+        "Earlier real SQL/browser component experiments provide distinct partial evidence; they do not close full product E2E."
+      ],
+      "standard_refs": [
+        "Playwright v1.61.1 Best Practices (guidance only)"
+      ],
+      "proposed_fix": "Keep cheap unit/static/real SQL/process tests, add a small isolated full app/API/worker/storage/browser suite for critical journeys and their failure/denial controls; bind required results to exact artifact.",
+      "acceptance_test": "Own video upload/resume/encode/publish/playback plus other-channel/guest denial, source replacement, cancel/delete and payment test-mode retry execute across declared real boundaries; list skipped/services/digest and demonstrate seeded regressions fail.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-02",
+      "deployment_scope": "SOURCE_AND_ISOLATED_TEST_DIAGNOSTICS;FULL_APPLICATION_E2E_UNVERIFIED"
+    },
+    {
+      "id": "R09",
+      "title": "Zielony build nie oznacza zielonych typów",
+      "baseline_priority_and_evidence": "P1, B",
+      "status": "POTWIERDZONE_W_PRZEGLADZIE_ZRODEL",
+      "note": "Baseline type-check bypass retained. Batch15 maps separate CI/image publication/local gates; no full build/typecheck repeated or actual bad deployment demonstrated.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D17",
+        "D18"
+      ],
+      "impact_plain_language": "Udana budowa obrazu nie zapewnia, że dokładnie to wydanie przeszło typy, testy i wymagane kontrole.",
+      "conditions": "Next ignoreBuildErrors in public/admin; Docker build invokes Next without quality; manually/tag-triggered image workflow has no CI dependency in inspected YAML. External required checks and operator process unknown.",
+      "evidence_paths": [
+        "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
+        "evidence/release-evidence-map.json",
+        "evidence/batch15-review.json",
+        "evidence/release-local-ci-vitest.json"
+      ],
+      "counterarguments": [
+        "CI declares dedicated typecheck/tests/lint/integration jobs; local quality also checks types/tests.",
+        "28 existing local-ci logic tests and 7 static script tests passed; that is not whole pipeline execution.",
+        "Operator/branch protection may impose additional controls; active settings not inspected.",
+        "BuildKit may provide default attestations; registry attestations were not inspected."
+      ],
+      "standard_refs": [
+        "SLSA v1.2 Build Track Basics/Build Requirements (partial reference, no level awarded)"
+      ],
+      "proposed_fix": "Bind release approval and publication to exact tested source/build inputs and artifact digest; define blocking vs explicitly accepted warning outcomes and validate provenance before activation.",
+      "acceptance_test": "Known type/test failure for a release candidate prevents publication/activation in the agreed process; an untested/mismatched digest is refused; approved exception and previous artifact remain traceable.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-02",
+      "deployment_scope": "SOURCE_ONLY_RELEASE_CHAIN;PRODUCTION_SETTINGS_UNVERIFIED"
+    },
+    {
+      "id": "R10",
+      "title": "Obecna topologia nie jest architekturą dużej platformy",
+      "baseline_priority_and_evidence": "P2, B",
+      "status": "POTWIERDZONE_ZRODLOWO",
+      "note": "Compose deklaruje wspólny host/zasoby i DB max_connections=60. claimNext globalnie dopuszcza jedno świeże RUNNING. To zamierzona ochrona małego hosta; nie dowód awarii ani potrzeby wielu encoderów przy kilkunastu twórcach.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D13"
+      ],
+      "impact_plain_language": "Wideo omija serwer aplikacji, ale wejścia, sesje i baza nadal wymagają osobnego budżetu; same repliki encodera nie zwiększą kodowania.",
+      "conditions": "Przejrzana deklaracja Compose i protokół claim; faktyczna konfiguracja produkcji nieodczytana.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D13-WYDAJNOSC-I-POJEMNOSC.md",
+        "obszary/D14-KOSZTY-I-LIMITY.md",
+        "evidence/batch11-review.json"
+      ],
+      "counterarguments": [
+        "Dostawa HLS przez Worker/R2 jest już oddzielona od aplikacji.",
+        "Jeden encode chroni 2 vCPU; przy 30 filmach miesięcznie model wymaga tylko 8 h pracy, RTF niezmierzone.",
+        "Złożoność PeerTube nie stanowi sama dowodu większej niezawodności."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Zmierzony profil aplikacji/bazy/watch heartbeat i kodowania, budżet połączeń per proces, plan separacji usług i dopiero potem kontrolowana współbieżność kodowania z fencing.",
+      "acceptance_test": "Docelowy mix 10000 szczytowych widzów przechodzi ustalone SLO lokalnego środowiska reprezentatywnego; kolejka ma zmierzony czas oczekiwania i zachowuje integralność po awariach.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "evidence_level": "B_DECLARED_TOPOLOGY_AND_GLOBAL_ENCODE_CLAIM_NO_PRODUCTION_CAPACITY_PROOF"
+    },
+    {
+      "id": "R11",
+      "title": "Historyczny load test nie uzasadnia dzisiejszej deklaracji skali",
+      "baseline_priority_and_evidence": "P2, C/D",
+      "status": "POTWIERDZONE",
+      "note": "Historyczny pomiar dotyczy wejść gości/obrazu z 4 października. Rzeczywisty summarizer zaakceptował syntetyczne 500/500 unexpected status przy server_errors=0. Cleanup SHA nie odpowiada aktualnemu HMAC. Nie wykonano nowego k6/HTTP/produkcji.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D13"
+      ],
+      "impact_plain_language": "Stary wynik nie odpowiada na pytanie o 10 tys. widzów; przed nowym pomiarem trzeba zapewnić mierzenie poprawnych odpowiedzi i sprzątanie testowych sesji.",
+      "conditions": "Szybkie nieoczekiwane statusy przy spełnionym rate/p95; nowe sesje HMAC zamiast historycznego SHA.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D13-WYDAJNOSC-I-POJEMNOSC.md",
+        "obszary/D14-KOSZTY-I-LIMITY.md",
+        "evidence/batch11-review.json",
+        "evidence/loadtest-summary-probe.json",
+        "evidence/search-sql-capture.json"
+      ],
+      "counterarguments": [
+        "K6 ma bezpieczniki i raportuje unexpected_status; operator może zauważyć błędy ręcznie.",
+        "Kontrole 5xx i powolnego p95 odrzucono kodem 11/10.",
+        "Syntetyczny JSON nie dowodzi wystąpienia takich odpowiedzi podczas starego testu."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Przed nowym testem akceptacja poprawnych statusów/treści, jawny cleanup aktualnych testowych sesji, workload otwarcia/odtwarzania/odnowienia/heartbeat i wersjonowany raport SLO.",
+      "acceptance_test": "Scenariusz sam odrzuca nieoczekiwane odpowiedzi, usuwa wyłącznie fixture i mierzy aktualny obraz/katalog/mix; brak mylenia wejść/s z liczbą odtwarzających.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "evidence_level": "A_ACTUAL_SUMMARIZER_SYNTHETIC_METRICS_AND_HASH_HELPER_B_HISTORICAL_CAPACITY_CONFIG"
+    },
+    {
+      "id": "R12",
+      "title": "Backup bazy nie oznacza możliwości odtworzenia platformy",
+      "baseline_priority_and_evidence": "P1/P2, B/C/D",
+      "status": "POTWIERDZONE_OGRANICZENIA_W_ZAKRESIE_ZRODEL",
+      "note": "Baseline full-platform recovery gap retained. Actual 81-migration synthetic local SQL dump/restore succeeded; backup failure controls work. This is not production/offsite/full product restoration.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D12",
+        "D17"
+      ],
+      "impact_plain_language": "Poprawna kopia bazy nie odzyska skasowanych filmów lub brakującego klucza i konfiguracji; odtworzenie starej bazy może wymagać uzgodnienia późniejszych płatności.",
+      "conditions": "Runbook declares daily DB snapshots, no WAL/PITR and no video original/HLS/thumbnail copies; weekly test restores local DB and optionally checks encrypted object presence. Actual cloud policies/keys/current cron outcomes not inspected.",
+      "evidence_paths": [
+        "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
+        "ODTWARZANIE-POKRYCIE.csv",
+        "SCENARIUSZE-WDROZENIA.csv",
+        "evidence/batch15-review.json",
+        "evidence/backup-boundaries-experiment.json",
+        "evidence/database-restore-drill.json",
+        "tools/database-restore-drill.py"
+      ],
+      "counterarguments": [
+        "Backup rejects missing DB, empty and partial failed dump, failed secret tar/encryption/upload check in explicit command fixtures.",
+        "Weekly test source isolates container and checks age/data/migration count; no claim it is absent.",
+        "Real local PostgreSQL restored selected synthetic account/video/asset/payment/grant values and constraint behavior after all 81 SQL migrations.",
+        "Runbook records historical successful encryption/decryption/restore; not current independently repeated production proof.",
+        "No actual media loss, compromised key, or current R2 misconfiguration demonstrated."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Define recovery resources/consistency point, safe ownership of decryption keys and independent copies for non-reconstructible media; measure isolated offsite-only product recovery including payment reconciliation.",
+      "acceptance_test": "Without original host, recover approved snapshot from offsite, roles/config/secrets/own media and safe app jobs; verify login/access/first-frame and test-mode financial reconciliation within agreed RPO/RTO. No live charges or production fault injection.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-02",
+      "deployment_scope": "SOURCE_AND_SYNTHETIC_LOCAL_SQL;PRODUCTION_OR_FULL_PLATFORM_RECOVERY_UNVERIFIED"
+    },
+    {
+      "id": "R13",
+      "title": "Ważność logowania administratora jest za słabą definicją świeżego potwierdzenia pieniędzy",
+      "baseline_priority_and_evidence": "P1 przed delegowaniem obsługi, B",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono różnicę polityki w kodzie. Nie dowiedziono obejścia logowania ani aktywnej konfiguracji produkcyjnej.",
+      "source_report": "obszary/D03-TOZSAMOSC-I-SESJE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D03"
+      ],
+      "impact_plain_language": "Po przejęciu otwartej sesji Access wrażliwe działanie może nie wymagać ponownego potwierdzenia przez dłuższy czas niż w starszym trybie panelu.",
+      "conditions": "ADMIN_AUTH_MODE=access; poprawny token; iat w ostatnich 12 h; wrażliwa operacja chroniona hasFreshStepUp.",
+      "evidence_paths": [
+        "obszary/D03-TOZSAMOSC-I-SESJE.md",
+        "evidence/identity-authz-review.json"
+      ],
+      "counterarguments": [
+        "Token nadal musi mieć prawidłowy podpis i tożsamość; nie jest to ominięcie Access.",
+        "Dłuższe okno jest jawną decyzją projektu; wymaga oceny ryzyka dużej platformy."
+      ],
+      "standard_refs": [
+        "v5.0.0-7.5.1"
+      ],
+      "proposed_fix": "Ustalić wymagania ponownego potwierdzenia dla wrażliwych operacji; dopiero potem dobrać niezależny mechanizm i okno.",
+      "acceptance_test": "HTTP dla tokenów starszych od uzgodnionego progu; refund/usunięcie/eksport/zmiana roli wymagają potwierdzenia; brak regresji po legalnym potwierdzeniu.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "reviewed_at": "2026-11-01",
+      "kind": "RYZYKO",
+      "evidence_level": "B_SOURCE_REVIEW"
+    },
+    {
+      "id": "R14",
+      "title": "Awaria Redis świadomie osłabia limity auth",
+      "baseline_priority_and_evidence": "P2, B",
+      "status": "POTWIERDZONE",
+      "note": "Trzy istniejące testy faktycznie przeszły; potwierdzają działanie fail-open i timeout helpera, nie skuteczne zgadywanie haseł.",
+      "source_report": "obszary/D03-TOZSAMOSC-I-SESJE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D03"
+      ],
+      "impact_plain_language": "Awaria Redis wyłącza limity auth i liczniki błędnych prób; logowanie pozostaje dostępne przy słabszej ochronie przed automatyzacją.",
+      "conditions": "Niedostępny lub opóźniony magazyn liczników Redis; pozostałe zabezpieczenia mają własną konfigurację i zależności.",
+      "evidence_paths": [
+        "evidence/auth-failure-passkey-vitest.json",
+        "evidence/auth-failure-passkey-vitest.log",
+        "obszary/D03-TOZSAMOSC-I-SESJE.md"
+      ],
+      "counterarguments": [
+        "Działanie celowe: utrzymuje dostępność kont; CAPTCHA i hasło nie są wyłączane przez ten kod.",
+        "Nie potwierdzono braku wszystkich niezależnych limitów infrastruktury produkcyjnej."
+      ],
+      "standard_refs": [
+        "v5.0.0-6.3.1",
+        "WSTG-v42-ATHN-03"
+      ],
+      "proposed_fix": "Zaprojektować kontrolowaną degradację, niezależne limity na brzegu i alarm awarii; zweryfikować każdy endpoint auth.",
+      "acceptance_test": "W izolowanym stosie odciąć Redis i wykonać próby z wielu IP/kont; zmierzyć limity zastępcze, alarm, czas odpowiedzi i odzyskanie normalnej ochrony.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "reviewed_at": "2026-11-01",
+      "kind": "RYZYKO",
+      "evidence_level": "A_ISOLATED_UNIT_TESTS_AND_B_SOURCE"
+    },
+    {
+      "id": "R15",
+      "title": "Limity body nie są jednolicie egzekwowane przed parsowaniem",
+      "baseline_priority_and_evidence": "P1/P2, B",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono kolejność parse-before-schema oraz zaakceptowanie małego pliku z dużym nieużywanym polem multipart. Nie wykonano HTTP/Next ani pomiaru DoS.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D05"
+      ],
+      "impact_plain_language": "Odrzucenie zbyt długiego pola następuje po wczytaniu całego JSON. Limit rozmiaru pojedynczego pliku nie ogranicza wszystkich pól formularza; duże żądania mogą zużywać zasoby przed odmową.",
+      "conditions": "Wywołanie badanych helperów po wymaganym uwierzytelnieniu; brak rzeczywistego limitu całego body przed parserem lub mniejszy limit pliku niż całej formy. Aktywna ochrona proxy niezweryfikowana.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D05-WEJSCIA-PLIKI-I-ZALEZNOSCI.md",
+        "evidence/batch08-review.json",
+        "SCENARIUSZE-WEJSCIA.csv",
+        "tools/input-boundaries-experiment.cjs",
+        "evidence/input-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Istniejący helper readRequestJsonWithLimit prawidłowo ogranicza rzeczywiste bajty.",
+        "Duży deklarowany Content-Length odrzucony przed odczytem, wybrany zbyt duży plik także odrzucony.",
+        "Synthetic fixtures <=100 KiB, bez pomiaru pamięci i odmowy usługi.",
+        "Brak realnego HTTP, sesji, Access/CSRF i konfiguracji proxy; zaniżony nagłówek to model Web Request, nie dowód akceptacji błędnego framingu."
+      ],
+      "standard_refs": [
+        "v5.0.0-5.2.1"
+      ],
+      "proposed_fix": "Ujednolicić limit sumy rzeczywistych bajtów przed parserem JSON/multipart i limity liczby pól/części, zachowując limity plików i legalnego complete upload. Uzgodnić limit warstwy proxy.",
+      "acceptance_test": "Pełne HTTP przez docelowy proxy/Next: brak długości, wiele pól/części, legalne granice, za duży plik i sumaryczne body, wczesne 413 i pomiar zasobów pod współbieżnością.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "kind": "USTERKA_OCHRONY_ZASOBOW",
+      "priority": "P1_P2_ZALEZNIE_OD_EKSPOZYCJI_I_LIMITOW_PROXY",
+      "evidence_level": "A_ACTUAL_READERS_NATIVE_WEB_REQUEST_AND_ZOD_WITH_UNUSED_AUTH_CONTEXT_STUBS_AND_B_SOURCE"
+    },
+    {
+      "id": "R16",
+      "title": "Eksport danych wymaga rozwoju razem z domeną i skalą",
+      "baseline_priority_and_evidence": "P2, B",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono wcześniej opisane pominięcie kategorii kanału/dostępu oraz dziewięć findMany bez take/cursor. Nie wykonano pomiaru OOM ani oceny prawnej kompletności. Provisional R34 folded into this existing finding before registry insertion.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D12"
+      ],
+      "impact_plain_language": "Pobierany plik nie obejmuje niektórych danych kanału i płatnego dostępu. Duże historie są pobierane i serializowane naraz w pamięci żądania.",
+      "conditions": "Konto z danymi kanału/członkostwa i AppSetting patrona; dla problemu pojemności rosnące kolekcje. Pełne HTTP i granica zasobów niezweryfikowane.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D12-PRYWATNOSC-I-CYKL-DANYCH.md",
+        "CYKL-DANYCH.csv",
+        "SCENARIUSZE-PRYWATNOSC.csv",
+        "evidence/batch10-review.json",
+        "tools/privacy-boundaries-experiment.cjs",
+        "evidence/privacy-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Allowlisty pól i scope po userId działają w modelu; istniejące testy eksportu przeszły.",
+        "Endpoint bierze ID z aktora i ma no-store/rate limit; dispatch auth nie został tu wykonany.",
+        "Pominięcia były już opisane w bazowym R16, nie nowe znalezisko.",
+        "Nie jest to opinia o wymaganym prawem zakresie ani dowód OOM/DoS. PeerTube także buforuje część danych eksportu."
+      ],
+      "standard_refs": [
+        "v5.0.0-14.1.2",
+        "v5.0.0-14.2.4"
+      ],
+      "proposed_fix": "Zdefiniować zakres per kategoria danych, wersjonować kontrakt i objąć nowe modele. Większe eksporty jako zadania z limitem zasobów, paginacją/streamingiem i wygasającym pobraniem.",
+      "acceptance_test": "Konto twórcy/płatnika: kompletność według ustalonej polityki, brak cudzych danych i sekretów, duża historia poniżej ustalonego limitu pamięci/czasu; testy pobrania i wygasania archiwum.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "kind": "NIEPELNY_ZAKRES_I_ARCHITEKTURA_EKSPORTU",
+      "priority": "P2",
+      "evidence_level": "A_ACTUAL_EXPORT_WITH_EXPLICIT_FILTER_SELECT_FAKE_DB_AND_B_SOURCE_NO_CAPACITY_BENCHMARK"
+    },
+    {
+      "id": "R17",
+      "title": "Rdzeń marketplace nie jest gotowym systemem rozliczeń",
+      "baseline_priority_and_evidence": "P1 przed uruchomieniem sprzedaży wielu twórców, B",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono ryzyko kontraktu przyszłego sales: dwa wywołania operatora przed CAS i jeden zapis lokalny. Operator jest jawnie niededuplikującą atrapą, nie aktualnym Stripe refund.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D10"
+      ],
+      "impact_plain_language": "Przyszły adapter bez trwałej tożsamości operacji może wykonać dwa zwroty, choć baza zapisze jeden i drugi handler zgłosi konflikt.",
+      "conditions": "Sales otwarte w modelu, uprawnienie przez atrapę allow, dwa żądania po tym samym odczycie i operator bez własnej deduplikacji. Nie potwierdzono takiej konfiguracji ani adaptera produkcji.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+        "SCENARIUSZE-PLATNOSCI.csv",
+        "evidence/batch09-review.json",
+        "tools/payment-boundaries-experiment.cjs",
+        "evidence/payment-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Sales jest domyślnie wyłączone i nie ma kompletnego adaptera.",
+        "Aktualny adminRefund Stripe ma osobny, pełniejszy protokół idempotencji/audytu/sync; nie wykonano go w tej próbie.",
+        "Operator-atrapa celowo nie deduplikuje, autoryzacja jest stubem, nie dowód podwójnego rzeczywistego refundu.",
+        "Zamknięta bramka nie woła operatora, odmowa operatora nie zmienia księgi."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.3"
+      ],
+      "proposed_fix": "Przed integracją marketplace wymagać trwałej tożsamości operacji, klucza idempotencji i uzgadniania wyniku operatora; oddzielić stany żądania i zaksięgowania.",
+      "acceptance_test": "Dwa równoległe żądania i awaria po sukcesie operatora: jeden rozpoznawalny refund biznesowy, jedna spójna księga, retry z tym samym kluczem i naprawa nieznanego wyniku.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "kind": "RYZYKO_PRZYSZLEGO_MODULU",
+      "priority": "P1_PRZED_URUCHOMIENIEM_SPRZEDAZY_WIELU_TWORCOW",
+      "evidence_level": "A_ACTUAL_REFUND_ORDER_WITH_NON_DEDUPLICATING_FAKE_PROVIDER_AND_DB_CAS_MODEL_AND_B_SOURCE"
+    },
+    {
+      "id": "R18",
+      "title": "Watchdog sprawdza dostępność procesu, ale nie pełną usługę wideo",
+      "baseline_priority_and_evidence": "P2, B",
+      "status": "POTWIERDZONE_W_KODZIE_I_KOMPONENTACH",
+      "note": "Baseline retained. Batch14 strengthens detection-boundary evidence, not a claim of a real production outage. External pings/status-only checks do not exercise video manifests or segments. Host health.sh does not pass x-health-token; DB container state is not a diagnostic SQL query.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D16"
+      ],
+      "impact_plain_language": "Panel i watchdog mogą wyglądać na zdrowe mimo awarii części odtwarzania; samo odpowiadanie procesu nie potwierdza, że widz obejrzy film.",
+      "conditions": "Public health without diagnostic header; root video check; status-only admin probe. Actual deployments and real failures not exercised.",
+      "evidence_paths": [
+        "obszary/D16-MONITORING-I-INCYDENTY.md",
+        "SCENARIUSZE-MONITORING.csv",
+        "MONITORING-POKRYCIE.csv",
+        "evidence/batch14-review.json",
+        "evidence/watchdog-delivery-experiment.json",
+        "evidence/monitoring-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Authorized health use case detects synthetic DB failure; host separately checks containers/resources and heartbeat.",
+        "Redis probe requires PONG and encoder stale/queue rules work in component controls.",
+        "QoE tracker and analytics exist; full delivery/aggregate/alert chain was not executed.",
+        "Zero content can be intentional; consumers may inspect detailed fields. No actual R2 outage or universal monitor failure was demonstrated."
+      ],
+      "standard_refs": [
+        "ASVS5.0:V16.1.1 (partial inventory only)",
+        "OpenTelemetry signals (conceptual reference, not conformance requirement)"
+      ],
+      "proposed_fix": "Separate liveness/readiness and owned functional-video canary; join QoE/queue/provider freshness with explicit alert routing and stale-data state, safe cost and token redaction.",
+      "acceptance_test": "Isolated DB failure, missing manifest/segment or failed first frame, old encoder heartbeat and stale telemetry: observe correct severity, routed/received alert, recovery and bounded detection time. Do not trigger production incidents.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "SOURCE_AND_SYNTHETIC_COMPONENTS;PRODUCTION_OCCURRENCE_UNVERIFIED",
+      "updated_at": "2026-11-02"
+    },
+    {
+      "id": "R19",
+      "title": "Dokumentacja ma konkurujące definicje produktu",
+      "baseline_priority_and_evidence": "P2, B",
+      "status": "POTWIERDZONE",
+      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D01"
+      ],
+      "impact_plain_language": "Sprzeczne opisy kanałów, dostępu i płatności utrudniają właścicielowi oraz nowemu wykonawcy rozpoznanie faktycznego produktu i poprawny wybór scenariuszy odbioru.",
+      "conditions": "Porównanie README i dokumentu etapów z implementacją kanałów, wyszukiwania, strefy patrona oraz macierzą ról.",
+      "evidence_paths": [
+        "obszary/D01-PRODUKT-I-ZAKRES.md",
+        "MAPA-SYSTEMU.md",
+        "README.md (repository root)",
+        "docs/architecture/multi-creator-platform.md",
+        "lib/modules/patron-zone/domain/config.ts",
+        "lib/modules/video/application/public-search.service.ts",
+        "lib/modules/authz/domain/resources.ts",
+        "lib/modules/authz/domain/matrix.ts",
+        "lib/api/studio-session.ts"
+      ],
+      "counterarguments": "Część opisów jest historyczna lub opisuje kierunek. Nie dowodzi to błędu wykonania funkcji; ustalenie dotyczy niespójności aktualnie prezentowanej specyfikacji.",
+      "standard_refs": [],
+      "proposed_fix": "Uzgodnić bieżące obietnice produktu i statusy wdrożenia, a następnie zsynchronizować dokumenty; na razie bez zmiany aplikacji.",
+      "acceptance_test": "Czytelnik potrafi odróżnić implementację, aktywną konfigurację i plan; źródła nie przeczą sobie w sprawie modeli dostępu, ról i sprzedaży.",
+      "independent_review": {
+        "status": "PENDING",
+        "note": "Ponowny przegląd źródeł wykonany w tym przebiegu; nie jest niezależnym audytem drugiego wykonawcy."
+      },
+      "retest": null,
+      "created_at": "2026-11-01",
+      "evidence_level": "B_SOURCE_REVIEW",
+      "updated_at": "2026-11-01",
+      "source_revision": "c397b9e548ca2c628e21457ac69d66e54b12ddbd"
+    },
+    {
+      "id": "R20",
+      "title": "Dostępność i wejście do aplikacji wymagają testów produktu",
+      "baseline_priority_and_evidence": "P2/P3, B/D",
+      "status": "POTWIERDZONY_ZRODLOWO_KOMPROMIS_ZOOM;PELNE_BADANIE_PRODUKTU_OTWARTE",
+      "note": "Viewport maximumScale=1/userScalable=false oraz ZoomLock blokują powiększanie gestami według jawnej decyzji właściciela. Nie zmieniono wyglądu/zoom. Wybrane komponenty zbadano w Chromium; brak pełnej przeglądarkowej próby bramki, Safari/touch/screen reader i oceny całej strony.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D15"
+      ],
+      "impact_plain_language": "Osoby potrzebujące powiększania gestami mają świadomie ograniczoną możliwość użycia strony. Istnieją zabezpieczenia fokusu i reduced motion, ale całego doświadczenia nie potwierdzono.",
+      "conditions": "Bieżąca deklaracja viewport/ZoomLock; rzeczywisty wpływ na konkretne urządzenia i grupy użytkowników do pomiaru.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D15-UX-DOSTEPNOSC-I-JEZYKI.md",
+        "SCENARIUSZE-UX.csv",
+        "ZADANIA-UZYTKOWNIKA.csv",
+        "WCAG-POKRYCIE.csv",
+        "evidence/batch13-review.json"
+      ],
+      "counterarguments": [
+        "Decyzja właściciela jest jawna i zamrożona; badanie nie upoważnia do zmiany produktu.",
+        "Skróty klawiatury, napisy, statusy, fokus i reduced motion występują w źródłach; wybrane kontrole i testy przeszły.",
+        "Nie wszystkie osiem języków dotyczy treści filmów, e-maili i dokumentów — ograniczenie opisano w dokumentacji.",
+        "Brak pełnego pomiaru WCAG/screen reader/urządzeń lub porzuceń bramki."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Najpierw test z osobami potrzebującymi powiększenia i technologiami asystującymi; pokazać wpływ właścicielowi, a zmianę decyzji o zoom/wyglądzie uzgodnić osobno. Dokończyć zadania użytkownika i przegląd języków.",
+      "acceptance_test": "Jawne wyniki krytycznych zadań klawiaturą/screen readerem/zoom/touch/reduced motion, polityka języków i świadoma decyzja produktowa na podstawie danych, bez deklarowania zgodności na podstawie samych markerów.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "evidence_level": "B_OWNER_DECISION_VIEWPORT_AND_GESTURE_HANDLERS;COMPONENT_BROWSER_OTHER_CONTROLS_ONLY"
+    },
+    {
+      "id": "R21",
+      "title": "Kontrakty API są zbyt rozproszone dla dużej liczby klientów",
+      "baseline_priority_and_evidence": "P2, B",
+      "status": "POTWIERDZONE_ZRODLOWO_I_KOMPONENTOWO",
+      "note": "Osobne typy klientów uploaderów i rzutowanie JSON as T potwierdzone. Rzeczywisty studioApi przy syntetycznym 200 zwraca zmieniony kształt/null bez błędu kontraktu; prawidłowe 200/403 kontrolne działają. Bez dowodu, że realny backend zwraca zły kontrakt.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D02"
+      ],
+      "impact_plain_language": "Zmiana odpowiedzi serwera może ujawnić się dopiero w interfejsie, bo typ generyczny klienta nie sprawdza otrzymanego JSON w trakcie działania.",
+      "conditions": "Zmiana pól lub nie-JSON przy statusie 200; w tej partii wyłącznie syntetyczny fetch/Response, nie rzeczywista rozbieżność HTTP.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D02-ARCHITEKTURA-I-UTRZYMYWALNOSC.md",
+        "ZALEZNOSCI-MODULOW.csv",
+        "SCENARIUSZE-ARCHITEKTURA.csv",
+        "evidence/batch12-review.json",
+        "evidence/api-contract-probe.json"
+      ],
+      "counterarguments": [
+        "Backend ma walidację wejść i wspólne use casey; błędny status 403 jest obsługiwany poprawnie.",
+        "Osiem zależności DTO od app/types znika po transpile; to kierunek współdzielenia typów, nie wykazany import UI/sekretów do przeglądarki.",
+        "PeerTube też używa generycznych klientów; OpenAPI link nie jest walidacją odpowiedzi.",
+        "Wznawianie uploadu to wcześniej znane osobne R22, nie nowy problem."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Wspólny kontrakt request/response uploadu/job/playback poza UI, współdzielony silnik z adapterami, kontrola odpowiedzi na granicy i testy prawdziwego HTTP zgodne z kontraktem.",
+      "acceptance_test": "Niezgodna zmiana pola/statusu/JSON zatrzymuje kontrolę kontraktu przed wdrożeniem; UI, panel i Studio uzgodnione z rzeczywistą odpowiedzią, nie wyłącznie mockiem.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "evidence_level": "A_ACTUAL_STUDIO_JSON_CLIENT_WITH_SYNTHETIC_FETCH_B_DUPLICATED_CLIENT_CONTRACTS"
+    },
+    {
+      "id": "R22",
+      "title": "Studio nie korzysta z już istniejącego wznawiania uploadu",
+      "baseline_priority_and_evidence": "P1, A/B",
+      "status": "DO_WERYFIKACJI",
+      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "source_report": "../RAPORT.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D08"
+      ],
+      "impact_plain_language": null,
+      "conditions": null,
+      "evidence_paths": null,
+      "counterarguments": null,
+      "standard_refs": [],
+      "proposed_fix": null,
+      "acceptance_test": null,
+      "independent_review": null,
+      "retest": null,
+      "created_at": "2026-11-01"
+    },
+    {
+      "id": "R23",
+      "title": "Automatyczna publikacja po kodowaniu pomija film spoza głównego kanału",
+      "kind": "USTERKA",
+      "priority": "P1_PRZED_OTWARCIEM_WIELU_TWORCOW",
+      "baseline_priority_and_evidence": "NEW: P1, A/B (isolated source execution)",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ISOLATED_ACTUAL_SOURCE_WITH_FAKE_IO_AND_B_SOURCE",
+      "note": "Potwierdzona utrata kontekstu kanału w badanej ścieżce; bez pełnego HTTP, realnego workera i DB. Nie dowiedziono wycieku danych ani awarii obecnej produkcji.",
+      "source_report": "obszary/D04-ROLE-I-IZOLACJA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D01",
+        "D04",
+        "D08"
+      ],
+      "impact_plain_language": "Twórca innego kanału wybiera publikację po kodowaniu; finalizer kończy się sukcesem, lecz nie uruchamia publikacji i nie zapisuje błędu.",
+      "conditions": "Film nie należy do skonfigurowanego main_channel_id; oczekuje na auto-publish; createSelfHlsFinalizer tworzy kontekst bez channelId.",
+      "evidence_paths": [
+        "evidence/identity-context-experiment.json",
+        "tools/identity-context-experiment.cjs",
+        "obszary/D04-ROLE-I-IZOLACJA.md"
+      ],
+      "counterarguments": [
+        "Dla kanału głównego ścieżka dociera do publikatora.",
+        "Identyczne dane innego filmu docierają do publikatora po dodaniu poprawnego kontekstu; wykluczono brak gotowości jako przyczynę eksperymentu.",
+        "Publikator i aktywacja route są atrapami; dowód dotyczy błędnego filtra i pominięcia wywołania, nie rzeczywistej publikacji.",
+        "Szersze zakładanie kanałów jest bramkowane; funkcja może nie być osiągalna dla wszystkich dziś."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Tworzyć kontekst per zadanie na podstawie zweryfikowanego powiązania filmu i kanału; jawnie raportować wynik, zachować fencing i kontrole cyklu kanału.",
+      "acceptance_test": "Rzeczywisty worker i DB: gotowe filmy dwóch kanałów, PUBLIC i UNLISTED; poprawna publikacja obu; odmowa po zawieszeniu/usunięciu, dla podmienionych identyfikatorów i starego workera; bez błędów retry.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "MULTI_CREATOR_IMPLEMENTATION;CURRENT_PRODUCTION_UNKNOWN"
+    },
+    {
+      "id": "R24",
+      "title": "Cofnięcie sesji WWW nie unieważnia od razu jej 60-sekundowego cache cookie",
+      "kind": "RYZYKO_ZNANY_KOMPROMIS_PROJEKTU",
+      "priority": "P2_OCENA_POLITYKI_COFNIECIA",
+      "baseline_priority_and_evidence": "NEW REGISTER ENTRY: P2; real isolated library HTTP + source review",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ISOLATED_REAL_LIBRARY_HTTP_WITH_MEMORY_ADAPTER_AND_B_APPLICATION_SOURCE",
+      "note": "Zachowanie znane i opisane już w kodzie operatora oraz oficjalnej dokumentacji Better Auth. Nowy wpis audytu z pomiarem, nie nowy błąd biblioteki ani dowód przejęcia konta na produkcji.",
+      "source_report": "obszary/D03-TOZSAMOSC-I-SESJE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D03",
+        "D04"
+      ],
+      "impact_plain_language": "Urządzenie z zachowanym pełnym zestawem cookie może być nadal rozpoznawane do wygaśnięcia cache po cofnięciu sesji. Oczekiwanie natychmiastowego odcięcia wymaga osobnych kontroli.",
+      "conditions": "cookieCache włączony, TTL 60 s; ważny podpisany cache i token sesji; sesja cofnięta w magazynie; odczyt bez disableCookieCache. Wpływ konkretnych tras Polutka wymaga pełnego testu.",
+      "evidence_paths": [
+        "evidence/session-revocation-experiment.json",
+        "evidence/session-revocation-experiment.log",
+        "tools/session-revocation-experiment.mjs",
+        "evidence/batch03-review.json",
+        "sources/better-auth-1.7.7-session-management.mdx"
+      ],
+      "counterarguments": [
+        "Lokalny klient po wylogowaniu i zastosowaniu Set-Cookie nie ma sesji.",
+        "Odczyt fresh i odtworzenie samego cookie tokenu odmawiają; po ponad 62 s pełny replay też odmawia.",
+        "Wymaga posiadania wcześniejszych prawidłowych cookie; nie daje wejścia osobie bez tych danych.",
+        "Aktualny odczyt User/roli/isDeleted chroni odrębnie przed democją i usunięciem konta; niektóre wrażliwe operacje wymuszają fresh.",
+        "Kod Polutka i dostawca opisują ten kompromis; 60 s jest jednym z wariantów rekomendowanych w dokumentacji dostawcy.",
+        "Eksperyment pomija Next/Prisma/hooki/aplikacyjne endpointy i nie mierzy ostatniej milisekundy ważności."
+      ],
+      "standard_refs": [
+        "v5.0.0-7.4.1",
+        "v5.0.0-8.3.2",
+        "WSTG-v42-SESS-06"
+      ],
+      "proposed_fix": "Ustalić wymagany czas cofnięcia według operacji; rozważyć fresh, wyłączenie cache lub porównanie wersji cofnięcia. Nie traktować ponownego delete sesji jako unieważnienia podpisanego cache.",
+      "acceptance_test": "Pełny Polutek z DB i dwoma klientami: logout/revoke one/other/all/reset hasła; replay kompletów i samego tokenu natychmiast oraz po TTL; faktyczne prywatne odczyty i mutacje zgodne z zatwierdzonym progiem.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "WWW_SESSION_CONFIGURATION;PRODUCTION_REPLAY_NOT_TESTED"
+    },
+    {
+      "id": "R25",
+      "title": "Stare odwołanie może cofnąć nowszą decyzję po powrocie do tego samego statusu",
+      "kind": "USTERKA",
+      "priority": "P1_PRZED_SZERSZA_MODERACJA",
+      "baseline_priority_and_evidence": "NEW: P1, actual-source reproduction with fake persistence + source review",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ISOLATED_ACTUAL_SOURCE_WITH_FAKE_IO_AND_B_SOURCE",
+      "note": "Dwa warianty jednego błędu dla kanału i filmu. Nie wymaga równoległości; nie potwierdzono zdarzenia na produkcji.",
+      "source_report": "obszary/D11-MODERACJA-I-NADUZYCIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D07",
+        "D11"
+      ],
+      "impact_plain_language": "Uwzględnienie odwołania od decyzji A może znieść aktualne ograniczenie pochodzące z innej, nowszej decyzji B.",
+      "conditions": "A nadaje SUSPENDED/REMOVED; następuje przywrócenie i nowa decyzja ponownie nadająca tę samą wartość; personel uwzględnia stare odwołanie; cofanie sprawdza status bez wersji/tożsamości aktualnej decyzji.",
+      "evidence_paths": [
+        "evidence/moderation-boundaries-experiment.json",
+        "tools/moderation-boundaries-experiment.cjs",
+        "evidence/batch04-review.json",
+        "obszary/D11-MODERACJA-I-NADUZYCIA.md"
+      ],
+      "counterarguments": [
+        "Jeżeli nowszy status ma inną wartość, kod nie cofa go; odtworzono tę kontrolę.",
+        "Legalne cofnięcie jedynej pierwotnej decyzji nadal działa; odtworzono kontrolę dodatnią.",
+        "Wymaga uwzględnienia starego odwołania przez uprawniony personel; twórca nie może samodzielnie wywołać funkcji staff.",
+        "Główny kanał nie może być zawieszony, lecz sekwencja nadal dotyczy filmu i innych kanałów.",
+        "Nie wykonano prawdziwej DB ani HTTP; dowód dotyczy rzeczywistej funkcji, dozwolonych przejść źródłowych i zgodnie filtrującej atrapy.",
+        "Istniejący test W03 podstawia count=0, nie odwzorowuje cyklu statusu."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Wiązać skutek z ID aktualnej decyzji lub wersją stanu; w tej samej spójnej operacji rozstrzygać, czy wolno cofnąć A bez cofnięcia B. Samo porównanie wartości statusu nie wystarcza.",
+      "acceptance_test": "DB i oba typy celu: pierwotny stan, nowszy inny stan, cykl z nową taką samą wartością i zapis równoległy. A nie cofa B; legalny rollback A działa; retry nie dubluje efektu; audyt/outcome są spójne.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "MODERATION_APPEAL_CODE;PRODUCTION_OCCURRENCE_NOT_VERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_REAL_POSTGRESQL_INSPECTED_SQL_PROTOCOL_AND_B_SOURCE_REVIEW",
+      "source_report": "obszary/D07-TRANSAKCJE-I-PONOWIENIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "evidence/database-integrity-experiment.json",
+        "tools/database-integrity-experiment.py",
+        "evidence/batch05-review.json",
+        "obszary/D07-TRANSAKCJE-I-PONOWIENIA.md"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R26",
+      "title": "Równoczesne tworzenie playlist może przekroczyć limit 100",
+      "priority": "P2",
+      "baseline_priority_and_evidence": "NEW: P2; real PostgreSQL COUNT/INSERT protocol + source review",
+      "note": "Rzeczywiste transakcje na lokalnym READ COMMITTED, zgodne z przejrzanym COUNT/INSERT. Nie wykonano TypeScript/Prisma/HTTP ani nie sprawdzono izolacji produkcji.",
+      "domains": [
+        "D06",
+        "D07",
+        "D14"
+      ],
+      "impact_plain_language": "Dwa legalne żądania mogą przy stanie 99 utworzyć dwie playlisty; końcowo jest 101 zamiast maksymalnie 100.",
+      "conditions": "Ten sam kanał, 99 aktywnych playlist, dwa odczyty COUNT przed zatwierdzeniem pierwszego zapisu, różne slugi, READ COMMITTED i brak dodatkowej serializacji kanału.",
+      "counterarguments": [
+        "Przy sekwencyjnych żądaniach drugi COUNT widzi 100 i limit działa; sprawdzono kontrolę.",
+        "Unique slug nadal chroni slug, ale różne slugi nie kolidują.",
+        "Odtworzono 101, nie nieograniczony wzrost ani wyciek.",
+        "Izolacji produkcyjnej nie odczytano. Protokół pomija auth/audit/generowanie sluga, które nie są widocznym mutexem per kanał."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.4"
+      ],
+      "proposed_fix": "Egzekwować limit pod wspólną blokadą kanału/licznika lub przez właściwą izolację i retry; istniejący uploader ma analogiczny advisory lock per kanał.",
+      "acceptance_test": "Dwa i więcej prawdziwych żądań przy 99 playlistach: końcowo najwyżej 100; legalna odmowa pozostałych, różne slugi/role/procesy, soft delete, retry i audyt spójne.",
+      "deployment_scope": "PLAYLIST_COUNT_INSERT_PROTOCOL_READ_COMMITTED;PRODUCTION_CONFIGURATION_UNVERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_REAL_POSTGRESQL_INSPECTED_SQL_PROTOCOL_AND_B_SOURCE_REVIEW",
+      "source_report": "obszary/D07-TRANSAKCJE-I-PONOWIENIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "evidence/database-integrity-experiment.json",
+        "tools/database-integrity-experiment.py",
+        "evidence/batch05-review.json",
+        "obszary/D07-TRANSAKCJE-I-PONOWIENIA.md"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R27",
+      "title": "Spóźnione ponowienie ukończenia uploadu cofa wskaźnik na zastąpiony oryginał",
+      "priority": "P1_PRZED_SZERSZYM_UZYCIEM_PIPELINE",
+      "baseline_priority_and_evidence": "NEW: P1; real PostgreSQL state protocol + source review",
+      "note": "Potwierdzony przeplot odczyt/ukończenie nowej wersji/naprawa wskaźnika przez SQL na dwóch połączeniach. Funkcji TypeScript/Prisma/HTTP nie wykonano; odmowa enqueue wynika z przejrzanego kodu i odczytu SUPERSEDED.",
+      "domains": [
+        "D06",
+        "D07",
+        "D08"
+      ],
+      "impact_plain_language": "Film może wskazywać stary oryginał SUPERSEDED mimo gotowej nowszej wersji; kolejne kodowanie może odmawiać, a odpowiedź błędu nie przywraca poprawnego wskaźnika.",
+      "conditions": "Retry v1 odczytuje READY; ukończenie v2 atomowo zastępuje v1 i ustawia wskaźnik na v2; retry v1 kontynuuje na starym obiekcie i przestawia activeOriginalId, bo obecny wskaźnik jest inny.",
+      "counterarguments": [
+        "Świeży odczyt v1 po ukończeniu v2 zobaczy SUPERSEDED i nie wejdzie w gałąź READY; nieaktualny wcześniejszy odczyt jest konieczny.",
+        "Zwykły retry bez nowszego ukończenia oraz samo ukończenie v2 zachowują poprawny stan; odtworzono kontrole.",
+        "Nie dowiedziono awarii bieżącego playback, utraty pliku ani wycieku; activePlaybackRouteId jest oddzielny.",
+        "Późniejsze poprawne ponowienie v2 może naprawić wskaźnik, ale nie jest gwarantowane.",
+        "Nie wywołano całej aplikacji ani R2. Source-protocol SQL zachowuje sprawdzane warunki; nie jest wygenerowanym klientem Prisma."
+      ],
+      "standard_refs": [
+        "v5.0.0-15.4.2"
+      ],
+      "proposed_fix": "Normalne ukończenie i retry muszą spójnie rozstrzygać wersję/status pod wspólnym lockiem lub CAS; stare zakończenie nie może reaktywować SUPERSEDED. Zachować odzyskiwanie kolejkowania po przerwie DB→enqueue.",
+      "acceptance_test": "Pełny stos: zatrzymać retry A po odczycie READY, ukończyć v2, wznowić A. Wskaźnik zostaje v2 READY; zwykły retry, SUPERSEDED, abandon/cancel, aktywna kolejka i crash/retry nie cofają wersji.",
+      "deployment_scope": "ORIGINAL_UPLOAD_READY_RETRY_PROTOCOL;PRODUCTION_OCCURRENCE_NOT_VERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "status": "POTWIERDZONE",
+      "priority": "P1",
+      "evidence_level": "A_ACTUAL_COMPONENTS_FAKE_IO_PLUS_SEPARATE_REAL_POSTGRES_CASCADES_AND_B_SOURCE",
+      "source_report": "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md",
+        "evidence/pipeline-boundaries-experiment.json",
+        "tools/pipeline-boundaries-experiment.cjs",
+        "evidence/playback-cascade-experiment.json",
+        "tools/playback-cascade-experiment.py",
+        "evidence/batch06-review.json"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R28",
+      "title": "Błąd audytu po COMMIT aktywacji uruchamia usuwanie wyniku HLS",
+      "baseline_priority_and_evidence": "NEW: P1; actual component chain/fake I/O and separate real PostgreSQL FK effects",
+      "note": "Dwa warianty błędu po zatwierdzeniu odtworzono na niezmienionych komponentach z atrapą DB/storage. Kaskady potwierdzono oddzielnie na PostgreSQL; realnego błędu audytu/Prisma/R2/HTTP nie wykonano.",
+      "domains": [
+        "D07",
+        "D08",
+        "D09",
+        "D16"
+      ],
+      "impact_plain_language": "Aktywowany wynik może stracić pliki lub trasę. Gdy READY+ACTIVE pozostają w bazie, późniejszy retry zgłasza sukces mimo pustego prefiksu.",
+      "conditions": "activateRoute zatwierdza nową trasę i primary, a późniejszy AuditLog.create rzuca. Finalizer/processor interpretują to jako brak finalizacji. Wariant fałszywego sukcesu wymaga assetu z wcześniejszej nieukończonej próby.",
+      "counterarguments": [
+        "Błąd przed COMMIT zachowuje starą trasę; błąd statusu po powrocie finalizera zachowuje pliki. Kontrole wykonano.",
+        "Poprzednie pliki pozostają, lecz isPrimary=false blokuje badaną kwalifikację; pełnego playback i CDN nie wykonano.",
+        "Brak dowodu wystąpienia w produkcji, utraty oryginału lub wycieku.",
+        "Częstości awarii audytu nie ustalono. Sam SQL sprawdza skutek DELETE, nie wstrzykuje awarii AuditLog.create."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.3",
+        "v5.0.0-16.5.3"
+      ],
+      "proposed_fix": "Rozróżnić błąd przed/po COMMIT; wiązać obowiązkowy audyt transakcyjnie lub dostarczać trwale. Chronić aktywowane obiekty przed cleanup i uzgadniać faktyczny wynik przed uznaniem retry za sukces.",
+      "acceptance_test": "Awaria audytu po COMMIT, nowy/istniejący asset i restart: zachowana odtwarzalna wersja, pełne obiekty, brak succeeded przy pustym prefiksie; zachować poprawne kontrole awarii przed COMMIT i po finalizerze.",
+      "deployment_scope": "WORKER_ACTIVATION_AUDIT_ERROR_PATH;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "status": "POTWIERDZONE",
+      "priority": "P1",
+      "evidence_level": "A_ACTUAL_COMPONENTS_FAKE_IO_PLUS_SEPARATE_REAL_POSTGRES_CASCADES_AND_B_SOURCE",
+      "source_report": "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md",
+        "evidence/pipeline-boundaries-experiment.json",
+        "tools/pipeline-boundaries-experiment.cjs",
+        "evidence/playback-cascade-experiment.json",
+        "tools/playback-cascade-experiment.py",
+        "evidence/batch06-review.json"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R29",
+      "title": "Równoległa aktywacja omija wcześniejsze sprawdzenie użycia kasowanej wersji HLS",
+      "baseline_priority_and_evidence": "NEW: P1 before broader concurrent content management; actual components/fake I/O plus PostgreSQL protocol",
+      "note": "Rzeczywiste deleteSelfHlsAsset i activateRoute wykonano w kontrolowanym przeplocie z atrapami. Osobne połączenia SQL potwierdzają przeplot odczyt/COMMIT/DELETE i skutki kaskad. Bez pełnego dispatchu i R2.",
+      "domains": [
+        "D06",
+        "D07",
+        "D08",
+        "D09"
+      ],
+      "impact_plain_language": "Usuwanie uznaje wersję za nieużywaną, lecz worker aktywuje ją podczas I/O; kontynuacja kasowania usuwa właśnie wybrany wynik i nie przywraca poprzedniej trasy.",
+      "conditions": "Legalna akcja personelu, PUBLISHED, znany READY asset bez ACTIVE; aktywacja dokładnie tego assetu między sprawdzeniem a końcem kasowania.",
+      "counterarguments": [
+        "Już aktywna wersja PUBLISHED/UNLISTED jest odrzucana bez kasowania; wykonano kontrole.",
+        "Sekwencyjne usunięcie nieaktywnej wersji zachowuje starą ACTIVE.",
+        "Kasowanie aktywnej wersji DRAFT jest zamierzone.",
+        "Nie dowiedziono dostępu zwykłego widza, awarii każdego kasowania ani utraty oryginału. Pełny stos i produkcja niewykonane."
+      ],
+      "standard_refs": [
+        "v5.0.0-15.4.2"
+      ],
+      "proposed_fix": "Wspólny protokół aktywacji i retirement zasobu; rezerwacja/oznaczenie pod blokadą, odmowa aktywacji wycofywanego assetu i trwałe sprzątanie. Dodatkowy SELECT sam nie zamyka okna.",
+      "acceptance_test": "Kontrolowane dwa porządki aktywacji i usuwania, wolny magazyn, restart i retry: aktywna wersja nie znika; PUBLISHED/UNLISTED chronione, DRAFT zgodny z polityką.",
+      "deployment_scope": "AUTHORIZED_ADMIN_DELETE_ASSET_VS_WORKER_ACTIVATION;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "id": "R30",
+      "kind": "USTERKA",
+      "title": "Przyszła premiera ujawnia metadane filmu pomimo centralnej odmowy NOT_FOUND",
+      "priority": "P2",
+      "baseline_priority_and_evidence": "NEW: P2; actual access→plan→sanitizer with fake DB and source wiring",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ACTUAL_COMPONENT_CHAIN_WITH_EXPLICIT_FAKE_DB_AND_B_SOURCE",
+      "note": "Trzy warianty z rzeczywistą decyzją NOT_FOUND odtwarzają tytuł/poster, a dla obcego zalogowanego termin premiery. Pełnego HTTP/Prisma i pobrania obrazka nie wykonano.",
+      "source_report": "obszary/D09-ODTWARZANIE-TOKENY-I-CACHE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D04",
+        "D09",
+        "D12"
+      ],
+      "impact_plain_language": "Znając ID ukrytego filmu z przyszłą premierą można otrzymać tytuł i adres miniatury, a obce konto także termin. Token i źródło filmu nadal są zablokowane.",
+      "conditions": "PUBLISHED, przyszłe premiereAt, centralny NOT_FOUND z powodu REMOVED albo ukrytego kanału, zwykły gość/obcy użytkownik, znany ID. Bramka premiery wyprzedza redakcję metadanych NOT_FOUND.",
+      "evidence_paths": [
+        "obszary/D09-ODTWARZANIE-TOKENY-I-CACHE.md",
+        "evidence/playback-access-experiment.json",
+        "tools/playback-access-experiment.cjs",
+        "evidence/batch07-review.json"
+      ],
+      "counterarguments": [
+        "Brak źródła, tokenu, napisów i sesji we wszystkich wariantach; nie dowiedziono odtwarzania filmu.",
+        "Bez przyszłej premiery NOT_FOUND poprawnie ukrywa tytuł/poster; nieistniejący i ARCHIVED też chronione.",
+        "Adres miniatury w fixture to proxy, nie dowód uzyskania prywatnego obrazu.",
+        "Wymagana znajomość ID; nie wykazano masowego zgadywania UUID ani realnego dispatchu HTTP."
+      ],
+      "standard_refs": [
+        "v5.0.0-8.2.3"
+      ],
+      "proposed_fix": "Obsłużyć odmowę NOT_FOUND przed budowaniem planu premiery, zachowując blokadę wydania tokenu i legalne podglądy.",
+      "acceptance_test": "HTTP dla gościa, obcego użytkownika, członka i personelu: hidden/REMOVED z przyszłą premierą bez title/poster/premiereAt, normalna premiera i dozwolony podgląd nadal działają.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "MEDIA_SOURCE_PLAN_PREMIERE_BEFORE_NOT_FOUND_REDACTION;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "baseline_priority_and_evidence": "NEW: P1_PRZED_SZERSZA_OBSLUGA_PLATNYCH_PAKIETOW_I_REFUNDOW; scoped component/source evidence, no production incident",
+      "status": "POTWIERDZONE",
+      "note": "Partia 09; jawny zakres komponentów i ograniczenia w D10, niezależny przegląd pozostaje otwarty.",
+      "source_report": "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+        "SCENARIUSZE-PLATNOSCI.csv",
+        "evidence/batch09-review.json",
+        "tools/payment-boundaries-experiment.cjs",
+        "evidence/payment-boundaries-experiment.json"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R31",
+      "title": "Zwrot jednej wpłaty patrona może odebrać dostęp kupiony inną wpłatą",
+      "priority": "P1_PRZED_SZERSZA_OBSLUGA_PLATNYCH_PAKIETOW_I_REFUNDOW",
+      "domains": [
+        "D10",
+        "D09",
+        "D06"
+      ],
+      "impact_plain_language": "Po wygaśnięciu starego pakietu i zakupie nowego zwrot starej wpłaty zeruje aktualny opłacony okres. Drugi wariant dotyczy dwóch opłaconych lifetime i zwrotu ostatniego.",
+      "conditions": "Wygasły A 30 dni, nowy B 30 dni, następnie pełny refund A; albo dwa opłacone lifetime przed refundem ostatniego. Live dwóch lifetime wymaga nakładających się prób rozpoczętych wcześniej; checkoutu nie wykonano.",
+      "counterarguments": [
+        "Dowód rzeczywistych komponentów z atrapą DB/refunds API i symulowanymi datami; bez pełnego HTTP/Prisma/Stripe.",
+        "Zwrot jednego z dwóch kolejnych aktywnych okresów poprawnie zachowuje drugi, replay jest idempotentny.",
+        "Testowe powtórzenia lifetime są dozwolone; live ma kontrolę przed stworzeniem nowej próby po posiadanym lifetime.",
+        "Polityka refundu zużytej usługi wymaga doprecyzowania, ale obecny automat odbiera także udział nadal opłaconego B."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.1",
+        "v5.0.0-2.3.2"
+      ],
+      "proposed_fix": "Ewidencja wkładu poszczególnych wpłat do okresów/lifetime i deterministyczne wyliczenie uprawnienia po refundzie; określić politykę zużytych okresów.",
+      "acceptance_test": "Realna DB/HTTP: wygasły A → nowy B → refund A zachowuje uprawnienie B według ustalonej polityki; także dwa lifetime, refund starszego/nowszego, replay i cofnięty refund.",
+      "deployment_scope": "PATRON_ZONE_GRANT_REVOKE_ALGORITHM;PRODUCTION_OCCURRENCE_UNVERIFIED",
+      "evidence_level": "A_ACTUAL_FULFILL_REFUND_PASS_CHAIN_WITH_EXPLICIT_FAKE_DB_PROVIDER_AND_SIMULATED_DATES"
+    },
+    {
+      "kind": "USTERKA",
+      "baseline_priority_and_evidence": "NEW: P2; scoped component/source evidence, no production incident",
+      "status": "POTWIERDZONE",
+      "note": "Partia 09; jawny zakres komponentów i ograniczenia w D10, niezależny przegląd pozostaje otwarty.",
+      "source_report": "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "obszary/D10-PLATNOSCI-I-ROZLICZENIA.md",
+        "SCENARIUSZE-PLATNOSCI.csv",
+        "evidence/batch09-review.json",
+        "tools/payment-boundaries-experiment.cjs",
+        "evidence/payment-boundaries-experiment.json",
+        "tools/payment-total-sql-experiment.py",
+        "evidence/payment-total-sql-experiment.json"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R32",
+      "title": "Spóźnione uzgodnienie zwrotu po przegranym sporze zaniża sumę wpłat użytkownika",
+      "priority": "P2",
+      "domains": [
+        "D10",
+        "D06"
+      ],
+      "impact_plain_language": "Dla A=1000 gr i B=500 gr suma po stracie A powinna wynosić 500 gr. Lost przed lokalnym uzgodnieniem refundu 400 gr pozostawia 100 gr; ta sama historia w odwrotnej kolejności daje 500 gr.",
+      "conditions": "Wcześniejszy częściowy zwrot u operatora jeszcze nieodzwierciedlony lokalnie, przetworzenie lost przy refunded=0, następnie sync dodatniego refund delta. Rzeczywista historia operatora nie została wykonana.",
+      "counterarguments": [
+        "Nie wykazano drugiego obciążenia karty, podwójnego refundu ani straty wypłaty twórcy; dotyczy lokalnego UserPaymentTotal.",
+        "Payment zachowuje statusy i kwoty umożliwiające wykrycie różnicy; panel ma getReconciliation, którego nie wykonano.",
+        "Osobny SQL potwierdza protokół na PostgreSQL; nie jest wykonaniem Prisma/HTTP/Stripe.",
+        "Potrzebna walidacja pełnego refund/dispute lifecycle w sandboxie operatora i niezależny przegląd."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.2"
+      ],
+      "proposed_fix": "Aktualizować agregat ze zmiany kanonicznego wkładu płatności do sumy, uwzględniając łącznie refund i chargeback; zapewnić odtwarzanie agregatu.",
+      "acceptance_test": "Permutacje refund/open/lost/won/replay i częściowych kwot, druga wpłata oraz waluty: UserPaymentTotal zgodne z kanonicznym agregatem po każdym kroku.",
+      "deployment_scope": "USER_PAYMENT_TOTAL_AGGREGATE;NO_DEMONSTRATED_EXTERNAL_MONEY_MOVEMENT;PRODUCTION_OCCURRENCE_UNVERIFIED",
+      "evidence_level": "A_ACTUAL_COMPONENTS_FAKE_DB_AND_B_REAL_LOCAL_POSTGRESQL_INSPECTED_PROTOCOL"
+    },
+    {
+      "id": "R33",
+      "kind": "NIESPOJNOSC_CYKLU_DANYCH",
+      "title": "Usunięcie konta właściciela pozostawia publiczny profil jego kanału",
+      "priority": "P1_PRZED_SZERSZYM_OTWARCIEM_KANALOW_I_USUWANIEM_KONT_TWORCOW",
+      "baseline_priority_and_evidence": "NEW: P1 readiness for creator account deletion; actual component chain with explicit fake DB",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ACTUAL_ACCOUNT_CLEANUP_TO_PUBLIC_CHANNEL_HEADER_POLICY_DTO_WITH_EXPLICIT_FAKE_DB",
+      "note": "User zostaje tombstone, Creator nadal ACTIVE; rzeczywisty publiczny nagłówek zwraca stary kontakt i bio. Bez HTTP/Prisma/cache i bez opinii prawnej o obowiązku usunięcia wszystkich opublikowanych treści.",
+      "source_report": "obszary/D12-PRYWATNOSC-I-CYKL-DANYCH.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D12",
+        "D01",
+        "D04"
+      ],
+      "impact_plain_language": "Po usunięciu konta twórcy jego stary e-mail kontaktowy, nazwa i biografia mogą nadal być publiczne w kanale. Nowe kategorie danych nie są objęte tym samym cleanup co dane konta.",
+      "conditions": "Właściciel ACTIVE niegłównego kanału z publicContactEmail/bio, wywołanie account cleanup zamiast osobnego channel deletion. Uzgodnienie transferu/retencji kanału nie jest częścią badanej ścieżki.",
+      "evidence_paths": [
+        "obszary/D12-PRYWATNOSC-I-CYKL-DANYCH.md",
+        "CYKL-DANYCH.csv",
+        "SCENARIUSZE-PRYWATNOSC.csv",
+        "evidence/batch10-review.json",
+        "tools/privacy-boundaries-experiment.cjs",
+        "evidence/privacy-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Profil mógł być wcześniej świadomie publiczny i mieć inną politykę retencji niż konto; trzeba ją określić i zakomunikować.",
+        "Metody logowania, konto User i treść własnych komentarzy są czyszczone w kontrolnej próbie; nie wykazano ponownego loginu.",
+        "DELETED/deletedAt na kanale prawidłowo ukrywa publiczny nagłówek.",
+        "Baza/aggregate/non-main resolution są jawnymi atrapami; nie wykonano HTTP/Prisma/browser/cache ani produkcji."
+      ],
+      "standard_refs": [
+        "v5.0.0-14.2.4",
+        "v5.0.0-14.2.7"
+      ],
+      "proposed_fix": "Przed cleanup konta rozliczyć posiadane kanały: transfer/ukrycie/anonimizacja/usunięcie według jawnej polityki, z osobną ochroną kanału głównego i innych członków oraz planem plików.",
+      "acceptance_test": "Widz i twórca, wiele kanałów/członków, główny kanał, publiczny profil po usunięciu, audyt/rollback/retry i pliki: wynik zgodny z ustaloną polityką, bez pozostawionych niezamierzonych danych.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "CREATOR_ACCOUNT_CLEANUP_AND_PUBLIC_PROFILE;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "id": "R34",
+      "kind": "DLUG_ARCHITEKTONICZNY_NIE_PODATNOSC_BEZPIECZENSTWA",
+      "title": "Cykliczne wejścia modułów i kontekst utrudniają izolację infrastruktury",
+      "priority": "P2_PRZED_SZERSZYM_ROZWOJEM_KONTRAKTOW_I_MODULOW",
+      "baseline_priority_and_evidence": "NEW: P2 architecture debt; source dependency graph and actual context wiring with explicit constructor probe",
+      "status": "POTWIERDZONE_JAKO_SPRZEZENIE_STRUKTURALNE",
+      "evidence_level": "A_ACTUAL_CONTEXT_IMPORT_CONSTRUCTOR_PROBE_AND_B_TRANSPILE_STATIC_DEPENDENCY_GRAPH",
+      "note": "Graf po transpile ma SCC 77 plików, a video/channel publiczne index tworzą jawny cykl. Oba mają statyczną osiągalność 269 plików i lib/prisma. Sam import AppContext inicjalizuje domyślny klient-probe przed przekazaniem własnego DB. Nie wykazano błędu produkcji, rozmiaru bundle ani kary wydajności.",
+      "source_report": "obszary/D02-ARCHITEKTURA-I-UTRZYMYWALNOSC.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D02",
+        "D18"
+      ],
+      "impact_plain_language": "Zmiana lub import małego fragmentu wideo może wymagać szerszego otoczenia modułów i utrudniać proste, izolowane sprawdzenie. Wstrzykiwanie bazy jest możliwe, ale jej domyślna inicjalizacja następuje wcześniej.",
+      "conditions": "Zaobserwowane źródła i izolowana ewaluacja CommonJS w VM; graf ESNext po elision nie jest produkcyjnym bundlerem Next/SWC.",
+      "evidence_paths": [
+        "obszary/D02-ARCHITEKTURA-I-UTRZYMYWALNOSC.md",
+        "ZALEZNOSCI-MODULOW.csv",
+        "SCENARIUSZE-ARCHITEKTURA.csv",
+        "evidence/batch12-review.json",
+        "evidence/architecture-graph.json",
+        "evidence/architecture-import-probe.json",
+        "tools/architecture-graph.cjs",
+        "tools/architecture-import-probe.cjs"
+      ],
+      "counterarguments": [
+        "Cykle nie dowodzą awarii; bundler może usunąć nieużywane eksporty, nie zmierzono cold start/bundle.",
+        "Modularny monolit jest rozsądny dla kilkunastu twórców; nie zaleca się automatycznie mikroserwisów.",
+        "Publiczny authz index i bezpośredni helper widoczności są izolowane od domyślnej bazy w kontrolach.",
+        "DurableJobStore już rozdziela port od implementacji — istnieje lokalny wzorzec do wykorzystania.",
+        "Wstrzyknięta baza w kontekście jest respektowana; problemem jest sprzężenie inicjalizacji, nie użycie cudzej bazy.",
+        "Brak niezależnego drugiego przeglądu i pełnej aplikacji."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Stopniowo wydzielić wąskie publiczne wejścia dla czystych reguł/kontraktów i operacji serwerowych; tworzenie domyślnej infrastruktury w miejscu składania aplikacji. Rozliczać cykle i importy AST, zachować jawne wyjątki zamiast masowo zakazywać wszystkich importów.",
+      "acceptance_test": "Uzgodnione czyste wejścia importują się i wykonują bez inicjalizacji DB/SDK; podanie testowego DB nie tworzy domyślnego klienta. Konkretna pętla video/channel przerwana lub jawnie ograniczona z testem, a reguły cykli/importów nie rozszerzają długu. Integracje zweryfikowane osobno.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "STRUCTURAL_ARCHITECTURE_AND_TEST_ISOLATION;PRODUCTION_FAILURE_UNVERIFIED",
+      "id_history_note": "R34 first registered in batch12. Batch10 initial export label R34 was provisional, folded into existing R16 before registry insertion; do not confuse those artifacts."
+    },
+    {
+      "id": "R35",
+      "kind": "BLAD_UX_IZOLACJI_FOKUSU_MODALNEGO;NIE_OBEJSCIE_AUTHZ",
+      "title": "Dialog potwierdzenia wypuszcza fokus do tła podczas operacji",
+      "priority": "P2_DOSTEPNOSC_I_SPOJNOSC_INTERAKCJI",
+      "baseline_priority_and_evidence": "NEW: P2; real Chromium keyboard on unchanged ConfirmDialog, synthetic pending callback",
+      "status": "POTWIERDZONE_W_PRZEGLADARCE_DLA_KOMPONENTU",
+      "evidence_level": "A_REAL_CHROMIUM_ACTUAL_REACT_COMPONENT_AND_CSS_SYNTHETIC_PENDING_ACTION",
+      "note": "Po busy=true oba przyciski są disabled; trap sprawdza tylko aktywne button i wraca przy pustej liście. Tab osiąga opener/background/link, Enter uruchamia syntetyczną akcję tła przy nadal otwartym aria-modal. Kontrole normalnego Tab/Escape/restore działają.",
+      "source_report": "obszary/D15-UX-DOSTEPNOSC-I-JEZYKI.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D15"
+      ],
+      "impact_plain_language": "Podczas oczekiwania na usunięcie playlisty użytkownik klawiatury może znaleźć się i działać za nadal otwartym oknem potwierdzenia. Zachowanie okna przestaje odpowiadać temu, co widać.",
+      "conditions": "ConfirmDialog pozostaje otwarty z busy=true, np. do zakończenia DELETE playlisty; fixture celowo utrzymuje stan pending. Brak prawdziwego usuwania/backendu w eksperymencie.",
+      "evidence_paths": [
+        "obszary/D15-UX-DOSTEPNOSC-I-JEZYKI.md",
+        "SCENARIUSZE-UX.csv",
+        "ZADANIA-UZYTKOWNIKA.csv",
+        "WCAG-POKRYCIE.csv",
+        "evidence/batch13-review.json",
+        "evidence/ux-browser-experiment.json",
+        "evidence/ux-confirm-busy.png",
+        "tools/ux-browser-harness.tsx",
+        "tools/ux-browser-experiment.cjs"
+      ],
+      "counterarguments": [
+        "Normalny stan koncentruje Cancel, zawija Tab/Shift+Tab i przywraca opener po Escape.",
+        "Wyjście do tła nie jest dowodem obejścia autoryzacji lub usunięcia danych; callback tła był syntetyczny.",
+        "Realna operacja może zakończyć się szybko i usunąć okno; problem dotyczy czasu oczekiwania.",
+        "BaseUI ReportDialog w ustalonym pomiarze utrzymywał fokus; nie uogólniono problemu na wszystkie dialogi.",
+        "Nie wykonano Safari/Firefox/screen readera ani pełnego Studia, niezależny przegląd PENDING."
+      ],
+      "standard_refs": [
+        "APG:dialog-modal (non-normative pattern)",
+        "WCAG2.2:2.4.3 (scoped candidate, not whole-page conformance verdict)"
+      ],
+      "proposed_fix": "Zachować fokus wewnątrz przy pustej liście aktywnych kontrolek, np. fokusowalny panel, oraz odizolować tło; rozważyć wspólny sprawdzony prymityw dialogu. Uzgodnić politykę Escape/cancel podczas operacji i ogłaszanie busy.",
+      "acceptance_test": "Realny Chromium plus docelowe przeglądarki: Tab/Shift+Tab przed i podczas busy nie trafia do tła, Enter nie uruchamia jego akcji; sukces/błąd/odmontowany opener prowadzi do właściwego miejsca fokusu, bez ponownego wykonania operacji.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "ISOLATED_COMPONENT_BROWSER;FULL_STUDIO_AND_PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "id": "R36",
+      "kind": "BLAD_PONOWIEN_POWIADOMIEN_OPERACYJNYCH",
+      "title": "Watchdog może utracić powiadomienie o powrocie usługi",
+      "priority": "P2_OPERACYJNY",
+      "baseline_priority_and_evidence": "NEW: P2; actual unchanged Worker.fetch with synthetic D1, clock and total provider/probe fetch stubs",
+      "status": "POTWIERDZONE_W_KOMPONENTACH_Z_ATRAPAMI",
+      "evidence_level": "B_ACTUAL_HANDLER_SYNTHETIC_D1_PROVIDER_AND_CLOCK;NO_CLOUDFLARE_OR_INBOX",
+      "note": "Recovery clears last_alert and sets healthy before send result. Non-2xx or day cap returns false; retry rollback requires last_alert===now (DOWN), so healthy state persists and recovery is not retried. A network exception aborts before persistence and does retry; not all delivery failures have this result.",
+      "source_report": "obszary/D16-MONITORING-I-INCYDENTY.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D16"
+      ],
+      "impact_plain_language": "Operator może dostać alarm o awarii, ale po błędzie dostawcy lub limicie nie dostać ponowionej informacji o jej zakończeniu.",
+      "conditions": "Previously accepted DOWN; later healthy result; recovery sendMail returns false from provider non-2xx or 20/day quota; following runs healthy. Provider acceptance is not proof of inbox delivery.",
+      "evidence_paths": [
+        "obszary/D16-MONITORING-I-INCYDENTY.md",
+        "SCENARIUSZE-MONITORING.csv",
+        "evidence/batch14-review.json",
+        "evidence/watchdog-delivery-experiment.json",
+        "tools/watchdog-delivery-experiment.cjs"
+      ],
+      "counterarguments": [
+        "Initial DOWN non-2xx/day-cap controls retry on continuing failure.",
+        "Recovery transport exception preserves previous DOWN and retries next healthy run.",
+        "Fake D1 is not a Cloudflare SQL transaction or concurrency test. No real provider messages or production incident.",
+        "R05 covers application publication notification creation; this is a different watchdog recovery lifecycle."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Persist delivery events separately from measured service state with incident id, retry/timeout/quota policy and idempotency strategy. Acknowledge acceptance explicitly and preserve recovery pending after service returns.",
+      "acceptance_test": "Accepted DOWN -> recovery 503 or quota -> next healthy run/new day retries recovery until accepted; retain network-throw controls; verify D1 write failure, concurrent scheduled/manual runs, duplicate and new incident before old recovery.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-02",
+      "deployment_scope": "ISOLATED_WORKER_HANDLER;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "id": "R37",
+      "kind": "FALSZYWY_SUKCES_NARZEDZIA_WERYFIKACJI_ODTWORZENIA",
+      "title": "Pomocniczy weryfikator odtworzonej bazy może zgłosić sukces mimo nieudanych kontroli",
+      "priority": "P2_NARZEDZIE_OPERACYJNE",
+      "baseline_priority_and_evidence": "NEW: P2; unchanged TS in VM subprocess, real process.exit, explicit synthetic query fixtures",
+      "status": "POTWIERDZONE_W_KOMPONENTACH_Z_ATRAPAMI",
+      "evidence_level": "B_ACTUAL_SCRIPT_REAL_PROCESS_STATUS_SYNTHETIC_DB_QUERIES",
+      "note": "Rejected count only logs/returns null, manifest missing actual field warns, migration query error warns, finished_at null with rolled_back_at/logs null not counted as unfinished. Corrected real-exit child controls avoid the initial harness exception-catch artifact. Batch16: four existing helper tests pass both baseline and temp source with verification body disabled; they check preflight/logging/redaction, not completed verification.",
+      "source_report": "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D17",
+        "D18"
+      ],
+      "impact_plain_language": "Operator używający tego narzędzia może uznać odtworzoną bazę za sprawdzoną, choć część obowiązkowych kontroli nie zakończyła się powodzeniem.",
+      "conditions": "Optional scripts/verify-restored-database.ts, selected rejected count or migration metadata query, or unfinished null-log row; later synthetic integrity queries succeed. Active use not proven; NOT weekly restore-test.sh.",
+      "evidence_paths": [
+        "obszary/D17-WDROZENIA-I-ODTWARZANIE.md",
+        "SCENARIUSZE-WDROZENIA.csv",
+        "evidence/batch15-review.json",
+        "evidence/restore-verifier-experiment.json",
+        "evidence/batch15-harness-diagnostics.json",
+        "tools/restore-verifier-experiment.cjs",
+        "evidence/test-oracle-probe.json",
+        "tools/test-oracle-probe.py",
+        "obszary/D18-TESTY-I-PROCES-JAKOSCI.md"
+      ],
+      "counterarguments": [
+        "Missing URL, missing opt-in and exact production URL match refuse before client construction.",
+        "Known manifest mismatch, logged migration failure and orphan grant correctly exit nonzero.",
+        "Count witness models one failed count followed by working queries, not a missing whole table.",
+        "DB/Prisma are explicit fixtures; no actual corrupt restored DB, production use or real incident proven.",
+        "R12 is the broader product recovery gap, this is a distinct false-verdict implementation in a manual helper.",
+        "Mutation probe uses a minimal temp Vitest configuration and existing test mocks; it is not a whole-project mutation score or newly corrupted production verifier."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Track all failed mandatory model/metadata checks; missing expected aggregate is failure/incomplete, verify explicit migration completion and expected identity; never emit full success with unresolved required checks.",
+      "acceptance_test": "Each four failing witness variants produces nonzero exit without success; valid restore stays successful; preserve preflight and real process termination in test harness.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-02",
+      "deployment_scope": "OPTIONAL_HELPER_COMPONENT;PRODUCTION_USE_UNVERIFIED",
+      "updated_at": "2026-11-02"
+    }
+  ]
+}

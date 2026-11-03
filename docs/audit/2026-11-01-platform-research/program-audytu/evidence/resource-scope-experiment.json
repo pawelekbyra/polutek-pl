@@ -1,0 +1,138 @@
+{
+  "kind": "ISOLATED_ACTUAL_SOURCE_WITH_FAKE_PERSISTENCE",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "actual_source_sha256": {
+    "tests/unit/modules/playlists/fake-db.ts": "8b2a1111326ce539ca5672eef2a01cb36f66ae0613fde62662c661a1c88382df",
+    "lib/modules/shared/app-context.ts": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+    "lib/modules/playlists/application/playlist-manage.use-cases.ts": "610d09a7f594d4f16ec246a5640473ef4110e0e77328f8cfb5a2909a843e5ac1",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "lib/modules/shared/result.ts": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+    "lib/modules/authz/application/authorize.ts": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
+    "lib/modules/authz/domain/policy.ts": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+    "lib/modules/authz/domain/actions.ts": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+    "lib/modules/authz/domain/matrix.ts": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+    "lib/modules/authz/domain/principal.ts": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+    "lib/modules/playlists/domain/playlist-rules.ts": "e8f860f20185d05b57a65f1ad5ebcbbd3e79805b7c616e5a6d6269b2f5dbb1f1",
+    "lib/modules/playlists/infrastructure/playlist.repository.ts": "7fb8c83448b641eaed6de33117df3b1c9c3f26049417272fc9e2ce119362a8b6",
+    "lib/modules/video-pipeline/application/encode-queue.use-cases.ts": "1c6f2f8a33679ce6851efc0fc19b8ffc87adaedb6415ca1de084df7a49e2d9c9",
+    "lib/modules/channel/application/main-channel.service.ts": "9b3d9977e8a1cbe5162260e7f28a1d60638e43f5e61b5a72b5a5ec0393bfabd3",
+    "lib/modules/channel/infrastructure/channel.repository.ts": "d315a0ea7a2dc7d4a2b733664a6064253e0c94168ada97bd5bc7222467f1c541",
+    "lib/modules/channel/domain/main-channel-setting.ts": "0c4dff7d35dd255f172351b98e221a9e519501a2d2088fc2529167f2b7218618",
+    "lib/modules/channel/domain/channel.errors.ts": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+    "lib/modules/channel/domain/channel.policy.ts": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+    "lib/modules/video-pipeline/domain/encode-job.state.ts": "c8670992e7994df56eaa0c44936823a00d3f3257917a45b9f8a4f1ea7b58a221",
+    "lib/modules/video-pipeline/infrastructure/encode-job.repository.ts": "7f6aade8a70173d032f0b5d375eb57faa0be9da25a7261dcf094ea19deb90d7b",
+    "lib/modules/video-pipeline/application/video-guard.ts": "dd35a6607a5626ed4bdaa6695b1b82aa7ba48869846d2056fc50a5abbbc1b584"
+  },
+  "stub_import_boundaries": [
+    "@/lib/modules/audit",
+    "@/lib/modules/authz",
+    "@/lib/modules/channel",
+    "@/lib/modules/video",
+    "@/lib/prisma",
+    "@prisma/client"
+  ],
+  "limits": "No HTTP, generated Prisma, real PostgreSQL isolation/locks, provider calls or Next middleware; fake playlist adapter reused from repository tests. Existing Vitest results unchanged.",
+  "observations": [
+    {
+      "scenario": "stranger changes own-channel playlist",
+      "observedStatus": 403,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "other owner targets foreign playlist via own channel",
+      "observedStatus": 404,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "other owner deletes foreign playlist via own channel",
+      "observedStatus": 404,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "other owner adds to foreign playlist",
+      "observedStatus": 404,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "other owner removes from foreign playlist",
+      "observedStatus": 404,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "other owner reorders foreign playlist",
+      "observedStatus": 404,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "owner adds foreign video to own playlist",
+      "observedStatus": 404,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "owner replaces order with foreign video",
+      "observedStatus": 409,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "moderator edits playlist",
+      "observedStatus": 403,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "guest edits playlist",
+      "observedStatus": 401,
+      "persistentStateUnchanged": true
+    },
+    {
+      "scenario": "positive control: editor reorders own playlist",
+      "accepted": true,
+      "order": [
+        "v2",
+        "v1"
+      ]
+    },
+    {
+      "scenario": "injected failure halfway through reorder",
+      "fakeTransactionRolledBack": true,
+      "limit": "Fake adapter rollback only; not PostgreSQL transaction/lock proof"
+    },
+    {
+      "scenario": "own video and foreign job ID",
+      "observedStatus": 404,
+      "jobsUnchanged": true,
+      "noNewAudit": true
+    },
+    {
+      "scenario": "foreign video and foreign job ID",
+      "observedStatus": 404,
+      "jobsUnchanged": true,
+      "noNewAudit": true
+    },
+    {
+      "scenario": "moderator cancels own-channel job",
+      "observedStatus": 403,
+      "jobsUnchanged": true,
+      "noNewAudit": true
+    },
+    {
+      "scenario": "positive control: owner cancels own job",
+      "result": "cancelled",
+      "foreignJobUnchanged": true
+    },
+    {
+      "scenario": "pipeline read x1 by owner-1",
+      "observedStatus": 404
+    },
+    {
+      "scenario": "pipeline read v1 by mod-1",
+      "observedStatus": 403
+    },
+    {
+      "scenario": "pipeline read v1 by owner-1",
+      "observedStatus": null,
+      "summary": "NO_ORIGINAL",
+      "limit": "Fixture with no original, job history or assets"
+    }
+  ]
+}

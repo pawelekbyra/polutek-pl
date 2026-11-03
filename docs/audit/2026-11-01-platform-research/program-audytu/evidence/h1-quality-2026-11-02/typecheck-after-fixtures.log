@@ -1,0 +1,2 @@
+tests/unit/admin-phase3/default-thumbnail.test.ts(5,190): error TS7022: 'isConfigured' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+tests/unit/components/subscriptions/EmailSubscriptionConsentModal.test.tsx(133,7): error TS2322: Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.

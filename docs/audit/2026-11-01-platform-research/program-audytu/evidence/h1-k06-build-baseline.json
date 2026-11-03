@@ -1,0 +1,30 @@
+{
+  "mode": "baseline",
+  "next": "16.4.1",
+  "result": "PASS",
+  "observations": [
+    {
+      "label": "baseline-public-bad-type",
+      "config": "next.config.mjs",
+      "configSha256": "ee9b8a7089ef7decf43d164ca90503eae5a7bd2d6504a106814bc5626285dd08",
+      "badType": true,
+      "code": 0,
+      "expectedCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "expectedTypeError": false
+    },
+    {
+      "label": "baseline-admin-bad-type",
+      "config": "apps/admin/next.config.mjs",
+      "configSha256": "562d722ce1a03f01f174163b54e9e2f0981926e33e2c04299c9fc96497f6c3c2",
+      "badType": true,
+      "code": 0,
+      "expectedCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "expectedTypeError": false
+    }
+  ],
+  "scope": "Isolated actual Next builds importing each real app config; resource-only cpus=1 and agentRules=false overrides. Not full application builds, test gates or exact release artifact binding."
+}

@@ -1,0 +1,29 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 152B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/2] FROM docker.io/library/node@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+#4 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 69B done
+#5 DONE 0.0s
+
+#6 [2/2] COPY app.txt /control-source.txt
+#6 DONE 1.6s
+
+#7 exporting to image
+#7 exporting layers
+#7 exporting layers 0.9s done
+#7 writing image sha256:4096002e15a99c550a85e49fa72cbae71b2d757b0f0b7815c82fd68e57c2aee9 done
+#7 naming to docker.io/library/polutek-release-control-app:fc639beef750 done
+#7 DONE 0.9s

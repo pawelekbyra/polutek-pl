@@ -1,0 +1,256 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "bf5bc2c113176cb7d485e253cfb7da4bf795b932",
+  "node_version": "22.23.4",
+  "script": "tools/moderation-boundaries-experiment.cjs",
+  "output": "evidence/moderation-boundaries-experiment.json",
+  "exit_code": 0,
+  "observations": {
+    "appeal_outcome": 6,
+    "creator_boundary": 4,
+    "comment_boundary": 2,
+    "ban_boundary": 8,
+    "language_boundary": 6
+  },
+  "total_observations": 26,
+  "reproduced_problem_cases": 2,
+  "distinct_new_findings": 1,
+  "http_application_tests_executed": 0,
+  "vitest_repeated": false,
+  "limits": "Actual functions with fake DB/audit/notifications/EN sync; no PostgreSQL isolation, HTTP, Access verification or Server Action dispatch. Gate/context source reviewed separately. No behavior inferred from blocked test execution.",
+  "source_review_scope": [
+    {
+      "file": "app/api/studio/bans/route.ts",
+      "sha256": "633301388d42b1b972baecbb6ee77c75d9f07dd27db86e222856c82531b5e15f",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/comments/[id]/route.ts",
+      "sha256": "690d49a41f0040c6ad721bb5c9034776c1629a7bd060efbddaab9903de8a6fa3",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/comments/route.ts",
+      "sha256": "2445137b1bde2cc5ee5314d709380fe810cd9fecf94b3fd71d2aeaee632e3ac4",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/moderation/[decisionId]/appeal/route.ts",
+      "sha256": "84d955891c7dffafeb65f01dd70193ad6a8b4d2438fbb90f72a5496be58882d1",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/moderation/route.ts",
+      "sha256": "7e0ac4ae3b98b096ff21c0fd17f50f45b38f85326068fb558cc0588a8a5792d8",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/app/(panel)/kanaly/actions.ts",
+      "sha256": "5bbcddf159321f119408f950ee6d6296ccb99af57a5c7dbaeb03740266d9f80f",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/app/(panel)/tlumaczenia/[slug]/page.tsx",
+      "sha256": "b3cd49439cdfb30a7929fb1f8a61a773e2f2b9db6df5235b93557d1dcc270771",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/app/(panel)/tlumaczenia/page.tsx",
+      "sha256": "14cd20f1f68d8ab6f346e15f4a20f09cdaf80ff6710b31dae00cab3e525bff75",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/app/(panel)/tresci/translation-actions.ts",
+      "sha256": "8debef11c7a119eea5875bbed3ef8ba417887380b1e65ef2fffbf37f77172ea9",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/app/api/videos/[id]/subtitles/[lang]/route.ts",
+      "sha256": "fde98df0b9563980d575d0c1304f079d89e8795550ed256241328a70b1c866e9",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/lib/actions/gate.ts",
+      "sha256": "9d014c7165ef4b0d754916bdaf17ed123a39ea9d2adb75cf87509a703d9fc038",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/lib/actions/panel.ts",
+      "sha256": "2b7a800e75649055be37414dbfb655695dbf6c78672a4ec1bfeef25dd274fda1",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/lib/api/panel-route.ts",
+      "sha256": "1cf7860c211949821a10309b7570bd1699f8c8d80b0905b2e5688503725a4965",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/lib/auth/api-guard.ts",
+      "sha256": "30c11a96e945d9f62394ac5b2c590ce388c15c1f214e6d839aa33f0ab453e234",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/lib/auth/guard.ts",
+      "sha256": "a6878789ab550822fc6182ffe7656450a6ef33688248fec5f3b64b1683628665",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "apps/admin/lib/auth/roles.ts",
+      "sha256": "f773cbb93835eb9cf28142589054c79b36d07f6304826b6c9a9c9291a2cfd04a",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/admin-content/application/media-uploads.ts",
+      "sha256": "818e8b89f1463bca91161b27316feb9f5ee3091df6338d5e02997cb91264269d",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/application/authorize.ts",
+      "sha256": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/actions.ts",
+      "sha256": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/matrix.ts",
+      "sha256": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/policy.ts",
+      "sha256": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/principal.ts",
+      "sha256": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/application/channel-moderation.use-cases.ts",
+      "sha256": "5642fc3b1bf5df26339278b970f3e7002f1b4b65fbdc1149dcdf6ba6fc623e60",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/application/main-channel.service.ts",
+      "sha256": "9b3d9977e8a1cbe5162260e7f28a1d60638e43f5e61b5a72b5a5ec0393bfabd3",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/application/moderation-appeals.use-cases.ts",
+      "sha256": "4466d4d3d88d3763db06040eb037c9d77027170d81db7a239135002e4aab4930",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.errors.ts",
+      "sha256": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.policy.ts",
+      "sha256": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/main-channel-setting.ts",
+      "sha256": "0c4dff7d35dd255f172351b98e221a9e519501a2d2088fc2529167f2b7218618",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/moderation-appeal.policy.ts",
+      "sha256": "d246cfdf04dc045146f993472d436e56fbcd35bc3d7648ac4c98efecc89f5ff6",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/infrastructure/channel.repository.ts",
+      "sha256": "d315a0ea7a2dc7d4a2b733664a6064253e0c94168ada97bd5bc7222467f1c541",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/comments/application/authorize-comments.ts",
+      "sha256": "9de6a7ca34bb353de9d7ab72605acbb0f151b9982e4e88dc0d7836c95dc6b824",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/comments/application/channel-ban.use-cases.ts",
+      "sha256": "1885ea37b355c8d2711a2c9963df0c96d4ec4725e79b808c5e92baf14e17b59d",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/comments/application/comment-write-guard.ts",
+      "sha256": "1457bf9f4bab70ed6858159d5bff45a3aa3addd3b68a39c97493e595c576ec4c",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/comments/application/create-video-comment.use-case.ts",
+      "sha256": "0c3c38b1c178f98568105ca5f42fbdf4a23b634ef0966e1ebea7639418b462dc",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/comments/application/moderate-comments-bulk.use-case.ts",
+      "sha256": "c16bcf4939d6a467a3d01344cf55b829f3ec062ea7214e0384e22a61d2640b33",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/comments/domain/comment.errors.ts",
+      "sha256": "d78c74c0f8949e85b53173a1a5dccc3a085bd295291b58ef7661bd164d919564",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/result.ts",
+      "sha256": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/translations/application/translations.ts",
+      "sha256": "770c12b6dfe2aea5297586c5dd29bf780ffb6660f51de5fdccf53b9267aafee4",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/translations/domain/languages.ts",
+      "sha256": "2461ff7ef98c0bf8d23f0279cb3676f214a7710fda8c683a3b0a5557eb04bda8",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/translations/domain/slug.ts",
+      "sha256": "9989c07ccb71ec3094960a4da05dc5100129e7b720f72d5c6b58b62e663823b5",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/modules/channel/moderation-appeals.test.ts",
+      "sha256": "8713317e4961da84a16bbe4120170d4ed8bf134f06c32766e5ef81079042509b",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/modules/comments/channel-ban.test.ts",
+      "sha256": "d9a400d8df0cd157ce3905ba86882f220bfcd6f83a1186cc2ba8bf31fdac4111",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/translations/use-cases.test.ts",
+      "sha256": "b01a4e12934019cb8e1aa6e9f41eff879f12cec7ed160311e7794a4cd2c4b32b",
+      "scope": "TARGETED_PARTIAL: access boundaries, moderation state history, translations/grants and relevant tests; not whole-file sign-off"
+    }
+  ],
+  "peertube_partial_source_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "files": [
+      "server/core/controllers/api/videos/blacklist.ts",
+      "server/core/lib/video-blacklist.ts",
+      "server/core/middlewares/validators/shared/abuses.ts",
+      "packages/tests/src/api/moderation/abuses.ts"
+    ],
+    "executed": false,
+    "comparable_appeal_history_behavior": "Not established; no superiority claim for R25"
+  },
+  "independent_review": "PENDING"
+}

@@ -1,0 +1,15 @@
+
+> kraufanding@0.1.0 quality:architecture-boundaries
+> tsx scripts/check-architecture.ts
+
+
+Route check statistics:
+- Routes importing @/lib/prisma: 0 (0 allowlisted)
+- Routes importing @/lib/services/: 0 (0 explicitly allowlisted)
+- Routes with internal module imports: 0
+- Files importing @/lib/channel/main-channel.service: 2
+- Files with UserProfileService usage: 0 (0 allowlisted)
+- Files with decommissioned legacy access surface references: 0
+- apps/admin files checked: 166
+- Authorization coverage: 34 use case files checked, 32 exempt
+✅ Architecture check passed.

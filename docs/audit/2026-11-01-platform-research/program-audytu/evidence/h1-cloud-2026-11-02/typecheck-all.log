@@ -1,0 +1,131 @@
+tests/integration/launch-candidate-critical-path.test.ts(417,24): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/access-source-of-truth.test.ts(51,24): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/access-source-of-truth.test.ts(83,24): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/access-source-of-truth.test.ts(107,24): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/admin-analytics/morning-report.test.ts(36,33): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/admin-analytics/morning-report.test.ts(37,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/admin-analytics/morning-report.test.ts(37,33): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/admin-analytics/use-cases.test.ts(241,53): error TS18047: 'a' is possibly 'null'.
+tests/unit/admin-analytics/use-cases.test.ts(242,49): error TS18047: 'a' is possibly 'null'.
+tests/unit/admin-app/community-components.test.tsx(29,70): error TS2322: Type '{ id: string; text: string | null; status: CommentStatus; deletedReason: CommentDeletedReason | null; ... 11 more ...; pendingReports: { id: string; reason: CommentReportReason; note: string | null; createdAt: string; reporter: string; }[]; }' is not assignable to type 'PanelComment'.
+  Types of property 'isPinned' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+tests/unit/admin-app/single-key-shortcuts.test.tsx(26,7): error TS2741: Property 'isPinned' is missing in type '{ id: string; text: string; status: "VISIBLE"; deletedReason: null; createdAt: string; parentId: null; video: { id: string; title: string; slug: string; }; author: { id: string; name: string; isDeleted: false; isAdmin: false; commentsCount: number; mutedUntil: null; }; ... 6 more ...; pendingReports: { ...; }[]; }' but required in type 'PanelComment'.
+tests/unit/admin-phase3/default-thumbnail.test.ts(5,190): error TS7022: 'isConfigured' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+tests/unit/admin-phase3/enroll-roles.test.ts(25,58): error TS2353: Object literal may only specify known properties, and 'role' does not exist in type '{ email: string; name?: string | null | undefined; reset?: boolean | undefined; now?: Date | undefined; }'.
+tests/unit/admin-phase3/enroll-roles.test.ts(29,58): error TS2353: Object literal may only specify known properties, and 'role' does not exist in type '{ email: string; name?: string | null | undefined; reset?: boolean | undefined; now?: Date | undefined; }'.
+tests/unit/admin-phase3/gate-audit.test.ts(41,119): error TS2322: Type 'string' is not assignable to type 'never'.
+tests/unit/api/access-route.test.ts(58,84): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/api/access-route.test.ts(65,97): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx(104,13): error TS2322: Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; t: { views: string; }; language: string; showSupportBox: boolean; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx(115,13): error TS2322: Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; t: { views: string; }; language: string; showSupportBox: boolean; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx(126,13): error TS2322: Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; t: { views: string; }; language: string; showSupportBox: boolean; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/channel/SidebarPlaylist-premiere.test.tsx(137,8): error TS2322: Type '{ sortedVideos: PublicVideoDTO[]; t: { views: string; }; language: string; showSupportBox: boolean; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx(97,8): error TS2322: Type '{ sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx(98,8): error TS2322: Type '{ sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx(177,10): error TS2322: Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx(178,10): error TS2322: Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx(193,8): error TS2322: Type '{ initialLayout: never; initialLayoutViewerKey: string; sortedVideos: PublicVideoDTO[]; selectedVideoId: string; viewerIsPatron: boolean; t: { views: string; }; language: string; }' is not assignable to type 'SidebarPlaylistProps'.
+  Types of property 'language' are incompatible.
+    Type 'string' is not assignable to type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/components/notification-bell.test.tsx(34,60): error TS2339: Property 'includes' does not exist on type 'string | URL | Request'.
+  Property 'includes' does not exist on type 'URL'.
+tests/unit/components/premium-pass-seller.test.tsx(70,46): error TS2741: Property 'language' is missing in type '{ tx: Tx; demo: false; }' but required in type '{ tx: Tx; demo: boolean; language: "pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"; links?: boolean | undefined; }'.
+tests/unit/components/premium-pass-seller.test.tsx(78,35): error TS2741: Property 'language' is missing in type '{ tx: Tx; demo: true; }' but required in type '{ tx: Tx; demo: boolean; language: "pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"; links?: boolean | undefined; }'.
+tests/unit/components/subscriptions/EmailSubscriptionConsentModal.test.tsx(14,40): error TS2345: Argument of type 'string' is not assignable to parameter of type '"pl" | "en" | "de" | "es" | "fr" | "it" | "pt" | "zh"'.
+tests/unit/cron/stripe-reconciliation.test.ts(180,21): error TS2339: Property 'refunds' does not exist on type '{ paymentIntents: { retrieve: Mock<(id: string) => Promise<any>>; cancel: Mock<(id: string) => Promise<any>>; }; }'.
+tests/unit/cron/stripe-reconciliation.test.ts(182,21): error TS2339: Property 'refunds' does not exist on type '{ paymentIntents: { retrieve: Mock<(id: string) => Promise<any>>; cancel: Mock<(id: string) => Promise<any>>; }; }'.
+tests/unit/cron/stripe-reconciliation.test.ts(186,21): error TS2339: Property 'refunds' does not exist on type '{ paymentIntents: { retrieve: Mock<(id: string) => Promise<any>>; cancel: Mock<(id: string) => Promise<any>>; }; }'.
+tests/unit/cron/stripe-reconciliation.test.ts(195,15): error TS2339: Property 'refunds' does not exist on type '{ paymentIntents: { retrieve: Mock<(id: string) => Promise<any>>; cancel: Mock<(id: string) => Promise<any>>; }; }'.
+tests/unit/modules/access/check-video-access.use-case.test.ts(135,58): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/access/check-video-access.use-case.test.ts(421,84): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/admin-community/community.test.ts(78,38): error TS2345: Argument of type '({ id: string; slug: string; title: string; tier: "PUBLIC"; } | { id: string; slug: string; title: string; tier: "LOGGED_IN"; } | { id: string; slug: string; title: string; tier: "PATRON"; })[]' is not assignable to parameter of type 'AccessVideo[]'.
+  Type '{ id: string; slug: string; title: string; tier: "PUBLIC"; } | { id: string; slug: string; title: string; tier: "LOGGED_IN"; } | { id: string; slug: string; title: string; tier: "PATRON"; }' is not assignable to type 'AccessVideo'.
+    Type '{ id: string; slug: string; title: string; tier: "PATRON"; }' is not assignable to type 'AccessVideo'.
+      Types of property 'tier' are incompatible.
+        Type '"PATRON"' is not assignable to type '"PAID" | "PUBLIC" | "LOGGED_IN"'.
+tests/unit/modules/admin-community/community.test.ts(87,65): error TS2345: Argument of type '({ id: string; slug: string; title: string; tier: "PUBLIC"; } | { id: string; slug: string; title: string; tier: "LOGGED_IN"; } | { id: string; slug: string; title: string; tier: "PATRON"; })[]' is not assignable to parameter of type 'AccessVideo[]'.
+  Type '{ id: string; slug: string; title: string; tier: "PUBLIC"; } | { id: string; slug: string; title: string; tier: "LOGGED_IN"; } | { id: string; slug: string; title: string; tier: "PATRON"; }' is not assignable to type 'AccessVideo'.
+    Type '{ id: string; slug: string; title: string; tier: "PATRON"; }' is not assignable to type 'AccessVideo'.
+      Types of property 'tier' are incompatible.
+        Type '"PATRON"' is not assignable to type '"PAID" | "PUBLIC" | "LOGGED_IN"'.
+tests/unit/modules/authz/authorize.test.ts(107,21): error TS2352: Conversion of type '{ where: { id: string; }; }' to type '{ select: { members: { where: { userId: string; }; }; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'select' is missing in type '{ where: { id: string; }; }' but required in type '{ select: { members: { where: { userId: string; }; }; }; }'.
+tests/unit/modules/channel/channel-moderation.test.ts(73,20): error TS2352: Conversion of type 'undefined' to type '{ where: { status: string; }; data: Record<string, unknown>; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/unit/modules/channel/channel-moderation.test.ts(73,56): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/modules/channel/moderation-appeals.test.ts(112,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/modules/channel/moderation-appeals.test.ts(112,55): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/modules/channel/moderation-appeals.test.ts(120,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/modules/channel/moderation-appeals.test.ts(120,55): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/modules/comments/patron-grant-write-access.test.ts(44,22): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/payments/refund-sync.test.ts(105,20): error TS2339: Property 'refundedById' does not exist on type '{ id: string; userId: string; creatorId: string; amountMinor: number; currency: string; status: string; stripeIntentId: string; refundedAmountMinor: number; requestId: null; metadata: {}; createdAt: Date; updatedAt: Date; }'.
+tests/unit/modules/payments/refund-sync.test.ts(127,16): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
+  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
+tests/unit/modules/payments/webhook-out-of-order.test.ts(124,16): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
+  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
+tests/unit/modules/sales/sales-use-cases.test.ts(78,20): error TS2352: Conversion of type 'undefined' to type '{ data: Record<string, string | number>; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/unit/modules/sales/sales-use-cases.test.ts(78,50): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/modules/sales/sales-use-cases.test.ts(80,13): error TS2352: Conversion of type 'undefined' to type '{ data: { amountMinor: number; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/unit/modules/sales/sales-use-cases.test.ts(80,49): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/modules/sales/sales-use-cases.test.ts(107,13): error TS2352: Conversion of type 'undefined' to type '{ data: { amountMinor: number; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/unit/modules/sales/sales-use-cases.test.ts(107,49): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/modules/subscriptions/list-subscribed-channels.test.ts(11,18): error TS2352: Conversion of type 'undefined' to type '{ where: { userId: string; creator: { deletedAt: null; status: { in: string[]; }; }; }; take: number; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/unit/modules/subscriptions/list-subscribed-channels.test.ts(11,41): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/modules/subscriptions/list-subscribed-channels.test.ts(21,13): error TS2352: Conversion of type 'undefined' to type '{ take: number; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/unit/modules/subscriptions/list-subscribed-channels.test.ts(21,36): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/modules/subscriptions/subscriptions-route-boundary.test.ts(48,73): error TS2345: Argument of type '{ isSubscribed: true; subscribedAt: Date; subscribersCount: number; creatorId: string; creatorSlug: string; purpose: "EMAIL_NOTIFICATIONS"; }' is not assignable to parameter of type 'SubscriptionStatusDto'.
+  Property 'notify' is missing in type '{ isSubscribed: true; subscribedAt: Date; subscribersCount: number; creatorId: string; creatorSlug: string; purpose: "EMAIL_NOTIFICATIONS"; }' but required in type 'SubscriptionStatusDto'.
+tests/unit/modules/video/get-admin-video-details.test.ts(103,26): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/video/get-admin-video-details.test.ts(126,26): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/video/public-search.service.test.ts(60,20): error TS2345: Argument of type '{ q: string; category?: undefined; tag?: undefined; sort?: undefined; } | { category: string; q?: undefined; tag?: undefined; sort?: undefined; } | { tag: string; sort: string; q?: undefined; category?: undefined; }' is not assignable to parameter of type 'Record<string, string>'.
+  Type '{ q: string; category?: undefined; tag?: undefined; sort?: undefined; }' is not assignable to type 'Record<string, string>'.
+    Property 'category' is incompatible with index signature.
+      Type 'undefined' is not assignable to type 'string'.
+tests/unit/modules/video/update-admin-video.use-case.test.ts(50,94): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/video/video-playback-route-service.test.ts(44,55): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/video/video-repository-safety.test.ts(84,26): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/video/video.policy.test.ts(76,26): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/video/video.policy.test.ts(98,26): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/modules/watch-progress/video-progress.use-cases.test.ts(187,18): error TS2352: Conversion of type 'undefined' to type '{ where: Record<string, unknown>; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/unit/modules/watch-progress/video-progress.use-cases.test.ts(187,62): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.
+tests/unit/ops/actions-lib.test.ts(474,23): error TS2339: Property 'admini_po_zmianie' does not exist on type 'never'.
+tests/unit/ops/actions-lib.test.ts(475,23): error TS2339: Property 'admini_po_zmianie' does not exist on type 'never'.
+tests/unit/patron-grant-truth.test.ts(38,22): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/patron-tier-comments-sign-in.test.ts(56,26): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/services/video-search-service.test.ts(64,61): error TS2339: Property 'PATRON' does not exist on type '{ PUBLIC: "PUBLIC"; LOGGED_IN: "LOGGED_IN"; PAID: "PAID"; }'.
+tests/unit/video-pipeline/encode-job-repository.test.ts(7,3): error TS2322: Type '{ status: $Enums.VideoEncodeJobStatus; result: JsonValue | null; id: string; createdAt: Date; updatedAt: Date; ... 20 more ...; sourceInfo: JsonValue | null; }' is not assignable to type '{ status: VideoEncodeJobStatus; result: JsonValue; id: string; createdAt: Date; updatedAt: Date; videoId: string; channelId: string | null; ... 18 more ...; sourceInfo: JsonValue; }'.
+  Types of property 'channelId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+tests/unit/video-pipeline/process-encode-job.test.ts(10,3): error TS2322: Type '{ status: $Enums.VideoEncodeJobStatus; result: JsonValue | null; id: string; createdAt: Date; updatedAt: Date; ... 20 more ...; sourceInfo: JsonValue | null; }' is not assignable to type '{ status: VideoEncodeJobStatus; result: JsonValue; id: string; createdAt: Date; updatedAt: Date; videoId: string; channelId: string | null; ... 18 more ...; sourceInfo: JsonValue; }'.
+  Types of property 'channelId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+tests/unit/video-pipeline/self-hls-publication.test.ts(8,57): error TS2345: Argument of type '{ activePlaybackRoute: null; title: string; slug: string; tier: "PATRON"; status: "DRAFT"; }' is not assignable to parameter of type 'ContractVideo'.
+  Types of property 'tier' are incompatible.
+    Type '"PATRON"' is not assignable to type 'AccessTier'.
+tests/unit/video-pipeline/self-hls-publication.test.ts(16,60): error TS2322: Type '"PATRON" | "PUBLIC" | "LOGGED_IN"' is not assignable to type 'AccessTier'.
+  Type '"PATRON"' is not assignable to type 'AccessTier'.
+tests/unit/video-pipeline/self-hls-publication.test.ts(21,57): error TS2345: Argument of type '{ activePlaybackRoute: { asset: { provider: string; processingState: string; objectKey: string; }; }; title: string; slug: string; tier: "PATRON"; status: "DRAFT"; }' is not assignable to parameter of type 'ContractVideo'.
+  Types of property 'tier' are incompatible.
+    Type '"PATRON"' is not assignable to type 'AccessTier'.
+tests/unit/video-pipeline/self-hls-publication.test.ts(23,54): error TS2345: Argument of type '{ activePlaybackRoute: { asset: { provider: string; processingState: string; objectKey: string; }; }; title: string; slug: string; tier: "PATRON"; status: "DRAFT"; }' is not assignable to parameter of type 'ContractVideo'.
+  Types of property 'tier' are incompatible.
+    Type '"PATRON"' is not assignable to type 'AccessTier'.

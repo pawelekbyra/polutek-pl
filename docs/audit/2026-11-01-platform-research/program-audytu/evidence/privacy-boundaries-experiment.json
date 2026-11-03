@@ -1,0 +1,175 @@
+{
+  "date": "2026-11-01",
+  "actual_source_sha256": {
+    "prisma/schema.prisma": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+    "lib/modules/users/application/account-deletion-cleanup.use-case.ts": "75e2c3010576858a68385481e93806279049e16f160fa59843d3469aeb37a79c",
+    "lib/modules/subscriptions/application/contact-removal.use-case.ts": "2e764634a69fdc4540af162dc1a1a6221d494cd53e32b6c41b62253ac6b70c4c",
+    "lib/modules/subscriptions/domain/email-address.ts": "d7eb0d6342d1bda29879f12c3091c7d9f5787551c6cabd82ff89d1ce70547d6e",
+    "lib/modules/payments/application/stripe-customer-anonymization.use-case.ts": "2aa0ed802534d1dced558fc3c4ad91016215b101244c8b908500caf25c94c0b6",
+    "lib/modules/users/application/export-own-data.use-case.ts": "89d872985476e0060b6bdafa2912a9d7793d8c8b81c9b1ae200fe0de21a342c7",
+    "lib/modules/privacy/application/anonymize-technical-data.use-case.ts": "48a7fbbf6847da12f700749bdae2023b7000db71f60d56ece37e4558c7f2ad2d",
+    "lib/modules/shared/result.ts": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+    "lib/modules/privacy/domain/retention.ts": "f75f3039370a60f6856e96d3571abd4b31a173ddf9fc594af952edf6bc954d88",
+    "lib/modules/channel/infrastructure/creator-content.service.ts": "fbe44d2e92911a8177a4f1ea99b2135521446ba52946ab4837f2bbe76a2b46d4",
+    "lib/modules/channel/domain/channel-avatar.ts": "ed333a1af26596b1b4912e2ac2071f3db9e33fd1a44eb27b1e1811226cd0be29",
+    "lib/modules/channel/domain/channel-about.ts": "9564fbb6800fded5c689cfc56f87c87b6840d0bd580d27442ad174b5c4f283fb",
+    "lib/modules/channel/domain/channel-banner-limits.ts": "291894ccc2f977ca0333f70e030ae57854b0dac5d5f4e3271790c8802d117425",
+    "lib/modules/channel/domain/channel.policy.ts": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+    "lib/modules/channel/domain/channel.errors.ts": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "services/pp-collector/src/handler.ts": "e4b5795b62c372cf13b7737fc4daa7dd1c166a5afefecd113805eadada1c6386",
+    "lib/telemetry/beacon-contract.ts": "643462b9d1b9c0e7b745d3cdf9aa392d538c7fc4bb543c2f025d387f6dd2d830",
+    "lib/telemetry/beacon-constants.ts": "40d3395add36598631ad3305f6d655760b192e72c9cb33f2d9fd4c9fb42ea530",
+    "services/pp-collector/src/classify.ts": "7912b7392c66781ae41d525f2d561492183c234060374329c214edf9c7d4dd0f",
+    "services/pp-collector/src/visitor.ts": "add0e0eefa0789ed0afbba2725a666b58f27080947235368c4f54685ab3f30bd"
+  },
+  "explicit_boundaries": [
+    "lib/modules/channel/domain/channel.policy.ts => @prisma/client",
+    "lib/modules/channel/infrastructure/creator-content.service.ts => @/lib/data/initial-content",
+    "lib/modules/channel/infrastructure/creator-content.service.ts => @/lib/feature-flags",
+    "lib/modules/channel/infrastructure/creator-content.service.ts => @/lib/modules/channel/application/main-channel.service",
+    "lib/modules/channel/infrastructure/creator-content.service.ts => @/lib/modules/shared/app-context",
+    "lib/modules/channel/infrastructure/creator-content.service.ts => @/lib/modules/video/infrastructure/video-content.service",
+    "lib/modules/channel/infrastructure/creator-content.service.ts => @/lib/prisma",
+    "lib/modules/channel/infrastructure/creator-content.service.ts => @prisma/client",
+    "lib/modules/payments/application/stripe-customer-anonymization.use-case.ts => ../infrastructure/stripe-client",
+    "lib/modules/payments/application/stripe-customer-anonymization.use-case.ts => @/lib/logger",
+    "lib/modules/payments/application/stripe-customer-anonymization.use-case.ts => @/lib/modules/audit",
+    "lib/modules/payments/application/stripe-customer-anonymization.use-case.ts => @/lib/observability",
+    "lib/modules/subscriptions/application/contact-removal.use-case.ts => ../infrastructure/resend-audience.gateway",
+    "lib/modules/subscriptions/application/contact-removal.use-case.ts => @/lib/logger",
+    "lib/modules/users/application/account-deletion-cleanup.use-case.ts => @/lib/logger",
+    "lib/modules/users/application/account-deletion-cleanup.use-case.ts => @/lib/modules/audit",
+    "lib/modules/users/application/account-deletion-cleanup.use-case.ts => @/lib/modules/email",
+    "lib/modules/users/application/account-deletion-cleanup.use-case.ts => @/lib/modules/payments",
+    "lib/modules/users/application/account-deletion-cleanup.use-case.ts => @/lib/modules/subscriptions",
+    "lib/modules/users/application/account-deletion-cleanup.use-case.ts => @prisma/client"
+  ],
+  "observations": [
+    {
+      "name": "own_export_filters_and_allowlists",
+      "own_comments": 1,
+      "foreign_comment_present": false,
+      "unselected_fixture_field_present": false,
+      "queries": 10
+    },
+    {
+      "name": "export_omits_channel_and_pass_records",
+      "finding": "R16",
+      "channel_in_db": true,
+      "pass_in_db": true,
+      "channel_section_present": false,
+      "pass_section_present": false,
+      "payment_consents_present": false,
+      "export_keys": [
+        "exportedAt",
+        "account",
+        "comments",
+        "videoReactions",
+        "commentReactions",
+        "subscriptions",
+        "emailPreferences",
+        "payments",
+        "videoProgress",
+        "videoFavorites"
+      ]
+    },
+    {
+      "name": "export_unbounded_find_many_queries",
+      "finding": "R16",
+      "query_count": 9,
+      "all_without_take_or_cursor": true,
+      "limit": "No memory exhaustion or large-account capacity benchmark"
+    },
+    {
+      "name": "deletion_cleans_legacy_account_data",
+      "deleted_user": true,
+      "login_rows": 0,
+      "own_comment_erased": true,
+      "foreign_reply_preserved": true,
+      "email_event_redacted": true,
+      "provider_queues_empty": true
+    },
+    {
+      "name": "deleted_owner_channel_header_still_public",
+      "finding": "R33",
+      "owner_is_deleted": true,
+      "channel_status": "ACTIVE",
+      "public_header_returned": true,
+      "old_contact_email_present": true,
+      "personal_bio_present": true,
+      "membership_rows": 1
+    },
+    {
+      "name": "additional_account_data_retained",
+      "pass_rows": 1,
+      "progress_rows": 1,
+      "favorite_rows": 1,
+      "payment_rows": 1,
+      "classification": "Lifecycle policy gaps for review, not automatically unlawful retention"
+    },
+    {
+      "name": "explicitly_deleted_channel_hidden_control",
+      "public_header_returned": false
+    },
+    {
+      "name": "deletion_audit_failure_model_rolls_back",
+      "deleted_user": false,
+      "login_preserved": true,
+      "provider_calls": 0,
+      "limit": "Rollback is an explicit model, not actual PostgreSQL/Prisma"
+    },
+    {
+      "name": "provider_failure_keeps_deletion_and_retry_queues",
+      "deleted_user": true,
+      "contact_attempts": 1,
+      "stripe_attempts": 1,
+      "queues_retained": true
+    },
+    {
+      "name": "provider_retry_success_drains_queues",
+      "remaining_queue_rows": 0
+    },
+    {
+      "name": "technical_retention_cutoff_and_replay",
+      "user_actor_denied": true,
+      "older_fields_cleared": true,
+      "recent_fields_preserved": true,
+      "rows_preserved": true,
+      "replay_updates": 0
+    },
+    {
+      "name": "collector_minimizes_request_identifiers",
+      "accepted": true,
+      "raw_ip_present": false,
+      "account_id_present": false,
+      "full_referrer_present": false,
+      "referrer_host": "source.invalid",
+      "signed_in": true
+    },
+    {
+      "name": "collector_dnt_drops",
+      "reason": "dnt",
+      "no_rows": true
+    },
+    {
+      "name": "collector_foreign_origin_drops",
+      "reason": "origin",
+      "no_rows": true
+    },
+    {
+      "name": "collector_automated_drops",
+      "reason": "automated",
+      "no_rows": true
+    }
+  ],
+  "limits": [
+    "Schema-checked in-memory scalar fields/filter/select and transaction rollback, not Prisma/SQL/FK enforcement.",
+    "Actual public channel header function executed; video aggregate and non-main-channel resolution are explicit fakes; no browser/HTTP/cache.",
+    "Synthetic identities/providers only; no production, actual Stripe/Resend or email delivery.",
+    "Retention update counts use modeled rows, not actual AuditLog trigger privileges or scheduled execution.",
+    "Collector processBeacon executed, not collector HTTP/Next proxy/PostgreSQL or real daily salt deletion.",
+    "R16 is parse/query architecture evidence, not a measured memory exhaustion result.",
+    "Export omissions describe functionality and scope, not a legal finding of GDPR violation."
+  ]
+}

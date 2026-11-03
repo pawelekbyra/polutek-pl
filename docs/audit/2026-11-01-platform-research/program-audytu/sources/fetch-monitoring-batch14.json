@@ -1,0 +1,18 @@
+[
+  {
+    "date": "2026-11-02",
+    "file": "opentelemetry-signals.md",
+    "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry.io/main/content/en/docs/concepts/signals/_index.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "bbe4edb682c77384331c7753c1e10d79f63a5c9aae9fa1c23c59a267ed2c2c3a"
+  },
+  {
+    "date": "2026-11-02",
+    "file": "opentelemetry-website-LICENSE",
+    "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry.io/main/LICENSE",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "6f9997b6f85f473f853aeef19b5f16504dd228ba99cee70e5a19211df947a2b3"
+  }
+]

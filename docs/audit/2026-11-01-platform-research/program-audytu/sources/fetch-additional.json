@@ -1,0 +1,30 @@
+[
+  {
+    "name": "asvs-5.0.0.csv",
+    "url": "https://raw.githubusercontent.com/OWASP/ASVS/v5.0.0/5.0/docs_en/OWASP_Application_Security_Verification_Standard_5.0.0_en.csv",
+    "exit": 0,
+    "bytes": 105100,
+    "error": ""
+  },
+  {
+    "name": "wstg-4.2.md",
+    "url": "https://raw.githubusercontent.com/OWASP/wstg/v4.2/document/README.md",
+    "exit": 0,
+    "bytes": 21284,
+    "error": ""
+  },
+  {
+    "name": "peertube-tests.md",
+    "url": "https://raw.githubusercontent.com/Chocobozzz/PeerTube/fa7d2b5d8a44bbec99159b11e91763f7d2308faa/support/doc/development/tests.md",
+    "exit": 0,
+    "bytes": 3972,
+    "error": ""
+  },
+  {
+    "name": "samm-model.yml",
+    "url": "https://raw.githubusercontent.com/owaspsamm/core/master/model/model.yml",
+    "exit": 22,
+    "bytes": 0,
+    "error": "curl: (22) The requested URL returned error: 404\n"
+  }
+]

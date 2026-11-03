@@ -1,0 +1,35 @@
+{
+  "result": "PASS",
+  "registry_rows": 37,
+  "packages": 40,
+  "dependency_order_valid": true,
+  "audit_counts": {
+    "ASVS-POKRYCIE.csv": {
+      "rows": 345,
+      "statuses": {
+        "W_TRAKCIE": 86,
+        "NIE_DOTYCZY_Z_UZASADNIENIEM": 5,
+        "NIEZBADANE": 254
+      }
+    },
+    "POWIERZCHNIA-WEJSC.csv": {
+      "rows": 286,
+      "statuses": {
+        "W_TRAKCIE": 84,
+        "NIEZBADANE": 202
+      }
+    },
+    "POKRYCIE.csv": {
+      "rows": 18,
+      "statuses": {
+        "W_TRAKCIE": 18
+      }
+    }
+  },
+  "json_files_valid": true,
+  "code_sha": "8dce5f94016325c12a3ae82fd1c84d144a055efe",
+  "private_values_absent": true,
+  "only_audit_documents_changed": true,
+  "registry_unchanged": true,
+  "release_ready": false
+}

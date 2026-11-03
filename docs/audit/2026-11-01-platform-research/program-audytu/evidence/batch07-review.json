@@ -1,0 +1,359 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "7f56467fe764594c78874ce442fca4d545a626ef",
+  "source_review_scope": [
+    {
+      "file": "app/api/access/route.ts",
+      "sha256": "7af895d0045630420aa4c4c34abd2a1cb527603bb86d9bc38005fa6204619495",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/media-source/[videoId]/route.ts",
+      "sha256": "67013c9915c530f0b584ecc62931ffc3d764c29674d99c1a0f98e2335bc0dfae",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/PremiumWrapper.tsx",
+      "sha256": "05ad8db71c79c3d734c9a0f7340b867dbbc54c41fa8bc113e18690350cdce73a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/VideoPlayer.tsx",
+      "sha256": "02d740139ec37715f9b280527b522f43c7acdaca70ca11c06c54c5991562fcc6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/playback-plan-state.ts",
+      "sha256": "82139c8bbbd9d707e06563e1e8636f9b32c2d4c2b0a3a81b5d7cc0264c7065f0",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/player/self-hls.ts",
+      "sha256": "183f6e6479d6089fba90f2969194644d1d38795e22f795c0e6bee36c9334b64c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/player/usePlaybackTokenRenewal.ts",
+      "sha256": "e8d6ea87b44917ed799e48a8922b015e3d6cf601a8dd2a3764ccd78ed7d7e5ff",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/preload/AppPreloadProvider.tsx",
+      "sha256": "736370bd68848d13d6dce8317887c894ec32f90ee01f2e97e519e4da23776952",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/preload/initial-playback-plan.ts",
+      "sha256": "137e34bdcbbb205cbbbe9b8d8df2d73815d75e62d329903babc9bf2d79d3beed",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/preload/media-warmup.ts",
+      "sha256": "22cc8e726a011006a585223196a4fb53155f8b577b2876a2b4d592ac211417a9",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "app/components/preload/playback-viewer-key.ts",
+      "sha256": "cfa8193a26bad755fecf977a3205fb6a0d75d57d7c97222b9fde8aa05a4caf04",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "docs/architecture/self-hosted-hls.md",
+      "sha256": "b0230f8e0aabace906fa201565ce5bdb3c8e70b4eb1df83d83a4f8742fdf8f4b",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "docs/operations/HLS-SELF-HOSTED.md",
+      "sha256": "4d63b9f71ac7f550e533234af6ba1cbf366b2cad6343ca9635341795de9164df",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/access-tier.ts",
+      "sha256": "30b78aac04a51e067ec807f725b3e7b8f4e1729004bdb29ae1e4eef8dde8ef03",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/feature-flags.ts",
+      "sha256": "7d266df700f86be2b33a190340b3ae6030ca9e824476882e61d62a03df2589f7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/access/application/check-video-access.use-case.ts",
+      "sha256": "239ed3dbe5a30a1c234c2f94adab0825b76c7b583610007b4e51d390d6d6fb53",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/actions.ts",
+      "sha256": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/matrix.ts",
+      "sha256": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/policy.ts",
+      "sha256": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/principal.ts",
+      "sha256": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.errors.ts",
+      "sha256": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.policy.ts",
+      "sha256": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/media-safety.ts",
+      "sha256": "11a9be10c3fc773b8c943a2adbd37a31ab4bcb49461ea99b7f76e2ab3854f470",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/media.errors.ts",
+      "sha256": "cfe1e3dc30d92f079a891cc1056abb18d1e0dac60ab272ca92d9fbb3ab1cfc3c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/media.policy.ts",
+      "sha256": "4d31f153475b72747a349a22fc3f0f6dda52daf0349606504d8d60feed6a1bc0",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/protected-caption.ts",
+      "sha256": "260f437a08c5235e19b786cfe21da29acbd1005befcd16aba6b264bb72074447",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/media/domain/r2-thumbnail.ts",
+      "sha256": "df0ffc1e5dfb7441e1772824f04cb49348f95afbbaae304eac3244d787b84ffb",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playback/application/playback.service.ts",
+      "sha256": "6113d9e7ba13a026d0df59132d706b0c4a56156d66d5fd5e1925b1f6bcfddd98",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playback/application/public-playback-plan.ts",
+      "sha256": "08a9d6aa8ce108c6286e14d7ad20f73a5dc1a08665f76784b2937a8d04040d51",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playback/application/self-hls-plan.ts",
+      "sha256": "066b767bc8c419c4b2c2a76870ab75695d338fb183c6f7a49244caa49e4a4d71",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playback/domain/primary-playable-asset.ts",
+      "sha256": "71f33593517b0c8da5dc317016180b83b479a427a5d2da1168d63af44b039cb5",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playback/infrastructure/self-hls-token.service.ts",
+      "sha256": "e9b53313a72560dd2765caf4622878bcf8220c12307fc9b37c4a08b6cb32ce5e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-context.ts",
+      "sha256": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/result.ts",
+      "sha256": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/asset-size.ts",
+      "sha256": "03ee14f1dcef09805e9223f00f0d2dcc47c7d7465f64a27e2c1b997c6963d855",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/premiere.ts",
+      "sha256": "1db131a2af72eee5738665bbc796baed8d7cb2647605de4b02a8e4c6b90fdfe9",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video-asset-selection.ts",
+      "sha256": "000a83ff31d906d226a25dfee97629f107fc4f9e3bda9452fd52060cf77ffb43",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video-asset.constants.ts",
+      "sha256": "22e110c56f16ab6349c05642e54214093fd50a5543c371f497c8ec51488d490e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video-visibility.ts",
+      "sha256": "f453481e0b1b4798291fa7ff07ccb375b46b62f76ba466ba041f05440d40f7e9",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video/domain/video.dto.ts",
+      "sha256": "9b50e67a22ddf003c5351f90a660d18f93ea81d4f148cbefcbd2f9f4fc63ba43",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/utils/uuid.ts",
+      "sha256": "4fb26b59b4df7c35aba3002ede4a46a7c2311ca53d2a1a3075539766e6030dc0",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/video-chapters.ts",
+      "sha256": "764e41e779585eba8acf672e3cf6cef043c8f93682ace80ed0f0a5f04d39cff9",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "lib/video-start-time.ts",
+      "sha256": "3ab664fe6b5b7ce57ca72649caa2b6edcc53afa8f88e57cb94648e89af83c417",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "middleware.ts",
+      "sha256": "4302f7278d5ed15a396c747b2331d1fa95c759e9e3133768f1fdb45567d1652f",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/components/playback-viewer-cache-safety.test.tsx",
+      "sha256": "85ba94de18363757a9164885ceba1c13241a85c7ff3c4f9e303bf1b5a9356ca0",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/hls/hls-edge-worker.test.ts",
+      "sha256": "0999a5cba4cd33beecaa03d1a0d8a1f72c77c6210c6b436d309b0ea9a06d21ee",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/playback-premiere-gate.test.ts",
+      "sha256": "3553edf08535651ed914e138e968fa00cd8adbef2781f2570342b26686dae240",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/playback-protected-captions.test.ts",
+      "sha256": "28579482fa6a9240e2a57097990951e65eb1be1fc1b9349a85ed55d50666564e",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/player/playback-token-renewal.test.tsx",
+      "sha256": "2444e4923f89b4a9267259fb941071fec2bf012a7e38eb5b14308a862d989eef",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/player/self-hls.test.ts",
+      "sha256": "09697b9fb3a86d30cc62156a39cb7f6d5e089b682b0928abf5723750c7c5e25c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "vitest.config.ts",
+      "sha256": "5785542dfed342b5aecd85cf8183bba946ff320d7449f520ef3d9b238a9bd48c",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    },
+    {
+      "file": "workers/hls-edge/worker.mjs",
+      "sha256": "40dd2da194d28a816689adf8f8d7980b66beb4bce18666a0347fd02fa836c3b8",
+      "scope": "TARGETED_PARTIAL_OR_EXECUTED_MODULE: access/plan/signer/worker, selected client/wiring/test assertions; not whole-file sign-off"
+    }
+  ],
+  "actual_typescript_modules_executed": 31,
+  "actual_worker_module_executed": true,
+  "actual_playback_service_executed": true,
+  "generated_prisma_client_executed": false,
+  "experiment_exit_code": 0,
+  "experiment_observations": 38,
+  "observation_groups": {
+    "ACTUAL_ACCESS_PLAN_SANITIZER_FAKE_DB": 15,
+    "ACTUAL_SESSION_REUSE_FAKE_DB": 5,
+    "ACTUAL_WORKER_FAKE_CACHE_R2": 14,
+    "R07_CURRENT_PLAN_DENIAL_AND_OLD_TOKEN_REPLAY": 4
+  },
+  "new_finding_witnesses": {
+    "R30": 3
+  },
+  "known_R07_properties_observed": 5,
+  "other_positive_controls": 30,
+  "new_distinct_findings": [
+    "R30"
+  ],
+  "existing_finding_extended": "R07",
+  "full_application_http_executed": 0,
+  "real_cloudflare_r2_or_browser_playback_executed": false,
+  "simulated_clock": true,
+  "auth_mutation_endpoints_executed": false,
+  "targeted_vitest": {
+    "exit_code": 0,
+    "success": true,
+    "file_count": 4,
+    "nested_suite_count": 10,
+    "registered_tests": 33,
+    "passed": 33,
+    "failed": 0,
+    "pending": 0,
+    "files": [
+      "tests/unit/components/playback-viewer-cache-safety.test.tsx",
+      "tests/unit/hls/hls-edge-worker.test.ts",
+      "tests/unit/player/playback-token-renewal.test.tsx",
+      "tests/unit/player/self-hls.test.ts"
+    ],
+    "command": "PATH=<Node 22>/bin:$PATH nice -n 10 node_modules/.bin/vitest run tests/unit/hls/hls-edge-worker.test.ts tests/unit/player/playback-token-renewal.test.tsx tests/unit/player/self-hls.test.ts tests/unit/components/playback-viewer-cache-safety.test.tsx --maxWorkers=1 --reporter=json --outputFile=<evidence>/playback-targeted-vitest.json",
+    "full_suite_repeated": false
+  },
+  "boundaries": [
+    "No generated Prisma client, actual DB, Next HTTP, auth session/logout operation, Cloudflare runtime, R2 or browser playback.",
+    "Patron gate explicitly off; paid-entitlement rows are synthetic. No billing or active production configuration assertion.",
+    "Runtime enum strings derived from pinned schema, no client installed or replaced.",
+    "Cache fake only supports tested full-body GET behavior, no real browser/CDN TTL eviction or Range semantics.",
+    "Logout/suspension/unpublish/removal states are supplied snapshots; actual mutation endpoints were not executed.",
+    "Clock advances are simulated; no wall-clock TTL measurement. No fixture tokens or secrets emitted."
+  ],
+  "tokens_and_signed_urls_redacted": true,
+  "harness_history": "First scoped run exited 0. Added a transparent observer of the actual central access decision and assertions for NOT_FOUND, then final run exited 0. No application change. Clock covers Date.now, default new Date and ctx.now; final output remains byte-identical after fixing wall-clock dependence in helper defaults.",
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "files": [
+      {
+        "file": "server/core/lib/video-tokens-manager.ts",
+        "sha256": "40d9d922ca5daebd8ccb95fa030c6f5b6b15bb8d3d75c631b4a98834aa7995c6"
+      },
+      {
+        "file": "server/core/lib/auth/tokens-cache.ts",
+        "sha256": "428ff3aa3b246eeeca651074fc6604c9c4cc184c0482bc9a21a62193f8922e15"
+      },
+      {
+        "file": "server/core/lib/redis/video-tokens.ts",
+        "sha256": "d63659eda419690802a674a5c663db7ebf8b2e2c8ae1f458dfa1b460e136cdfc"
+      },
+      {
+        "file": "server/core/middlewares/validators/shared/videos.ts",
+        "sha256": "6b405231beb86b113e28511c4b6d6a0ad7edd16042379e22351917b2b1afba5f"
+      },
+      {
+        "file": "server/core/initializers/constants.ts",
+        "sha256": "5f2a1a7e71accedb197333f236a8e7e7b37f0b6da726bc108d66bd16b52b7627"
+      }
+    ],
+    "scope": "Token/Redis/LRU/invalidation and selected rights validators/constants. VIDEO_FILE_TOKEN_LIFETIME=8h; no complete logout/replay or Redis failure test.",
+    "executed": false,
+    "every_video_token_immediately_revoked_on_logout_proven": false
+  },
+  "independent_review": "PENDING"
+}

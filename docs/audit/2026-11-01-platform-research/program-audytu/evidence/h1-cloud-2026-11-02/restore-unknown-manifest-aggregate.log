@@ -1,0 +1,31 @@
+--- RESTORED DATABASE VERIFICATION ---
+Target: postgresql://h1_ro_db630f5c63:****@127.0.0.1:5432/polutek_h1_restore_db630f5c63
+
+[A] Connectivity
+✓ Reachable. Server time: 2026-11-02T15:29:52.290Z
+
+[B] Migration/Schema State
+✓ _prisma_migrations accessible. Count: 81
+
+[C/D] Model Availability & Safe Aggregates
+✓ User: 1 rows
+✓ Creator: 1 rows
+✓ Video: 1 rows
+✓ VideoAsset: 1 rows
+✓ Payment: 1 rows
+✓ UserPaymentTotal: 1 rows
+✓ PatronGrant: 1 rows
+✓ StripeEvent: 0 rows
+✓ Comment: 0 rows
+✓ CommentReport: 0 rows
+✓ Subscription: 0 rows
+✓ AuditLog: 43 rows
+
+[E] Logical Integrity Checks
+✓ No orphaned PatronGrants detected.
+✓ No payment-linked PatronGrants referencing missing Payment.
+✓ No orphaned VideoAssets detected.
+
+[F] Expected Manifest Comparison
+❌ Field NotAModel not found in restored aggregates.
+❌ Detected 1 manifest mismatch(es)!

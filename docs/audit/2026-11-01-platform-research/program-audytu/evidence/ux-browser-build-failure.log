@@ -1,0 +1,15 @@
+(node:45319) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/polutek-pl/tailwind.config.ts?id=1793569787339 is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /workspace/polutek-pl/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Error: ENOENT: no such file or directory, open '/workspace/polutek-pl/<define:process.env>'
+    at Object.openSync (node:fs:560:18)
+    at Object.readFileSync (node:fs:444:35)
+    at sha (/workspace/polutek-pl/docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs:8:52)
+    at /workspace/polutek-pl/docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs:21:22
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/workspace/polutek-pl/<define:process.env>'
+}

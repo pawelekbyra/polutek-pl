@@ -1,0 +1,276 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "310316505808c759c157c74eba59cdb66a7168fc",
+  "node_version": "22.23.4",
+  "application_http_test_count": 0,
+  "isolated_library_http": {
+    "script": "tools/session-revocation-experiment.mjs",
+    "output": "evidence/session-revocation-experiment.json",
+    "exit_code": 0,
+    "scenarios": [
+      "sign-out and saved-cookie replay",
+      "revoke-other-sessions and revoked-device replay"
+    ],
+    "real_wait_seconds": 62,
+    "adapter": "Official Better Auth memory adapter; not Prisma/PostgreSQL",
+    "findings": [
+      "R24"
+    ],
+    "first_run": "Completed behavioral assertions but reporting failed: ERR_PACKAGE_PATH_NOT_EXPORTED reading package metadata. Log preserved; corrected metadata path and reran entire experiment."
+  },
+  "isolated_resource_functions": {
+    "script": "tools/resource-scope-experiment.cjs",
+    "output": "evidence/resource-scope-experiment.json",
+    "exit_code": 0,
+    "observations": 19,
+    "playlist_observations": 12,
+    "pipeline_observations": 7,
+    "foreign_resource_modification_observed": false,
+    "limits": "Fake persistence/audit; no true PostgreSQL locks, transaction isolation, Next HTTP or complete DTO proof. Initial harness needed the channelMember fake API; no application bug inferred."
+  },
+  "vitest": "Not repeated in batch 03; batch 02 raw results remain unchanged. Isolated observations are not counted as Vitest passes.",
+  "source_review_scope": [
+    {
+      "file": "app/api/studio/playlists/[id]/items/route.ts",
+      "sha256": "37d161df4256c5f697981f7b8e30aa5acd31a744890e3600863273ed27032bb1",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/playlists/[id]/order/route.ts",
+      "sha256": "2655f01187f9ec0bd8b78278b036a29145d643a9ea0828d88ca516a46aa60347",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/playlists/[id]/route.ts",
+      "sha256": "4f0eb621bc5d683dda2fa8256fc170ad65bd272469fa064799e51392ce482f58",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/playlists/route.ts",
+      "sha256": "8e8506f30d96343120b9241f326273d9ca230c184517d9e2a17e17aac06ff808",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/studio/videos/[id]/pipeline/route.ts",
+      "sha256": "73c4c08170abc1785ee879d0d199e4f4adb97b3b4ae5fd41e884b8095b083907",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/user/language/route.ts",
+      "sha256": "1040f546a850c8988e0d60ef1a66d1437e3f5a8b80cc810156485d475636cc3f",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/user/notifications/unread-count/route.ts",
+      "sha256": "3e220ad2c6b5f649b8dd39a95d713806c190c04a5637cf86a18f8deee7333315",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "app/api/user/profile/route.ts",
+      "sha256": "5b435b01c7bf7ab29eaab1c017a6ee847d5b560f91a874d314a8e52d2ace1040",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "docs/architecture/auth-better-auth.md",
+      "sha256": "bd86f1b7226fa996cbe8cede45659b66fc47d26300e7274e02ebf7e92b3ae05f",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/auth.ts",
+      "sha256": "518c5cb4d4965a4b253a6c674c62189a334cde5ee63059ed39eb1c383c1caaaf",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/studio-playlist-schemas.ts",
+      "sha256": "d9156442fbb391580a730e7f5c4486881a75488497e55460f909821df3f2971a",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/studio-route.ts",
+      "sha256": "dbae00e12e2b5efff0858c3134e9f239b2152710a14189d3b0a3979d977541d5",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/studio-session.ts",
+      "sha256": "53f688bf1dcd644437000e070c74582fbcd801b4eb1af954e92950e0c04b180e",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/api/viewer-notifications-route.ts",
+      "sha256": "78dc0f71405691d1ad400aa2c6205fb5edf718398e466683a8ca6af444aa676d",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/auth/auth.ts",
+      "sha256": "75d19cc8f406462b4a6ecd381626ae989b7342909293866ae571c9b90be0ce5f",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/auth/config.ts",
+      "sha256": "47313f5b7a355b2cbdd9826af83a9daebb412fd7945807f423abe329e1955e22",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/auth/server.ts",
+      "sha256": "8a61b45a58efd42b7bb8a8665d96a3e942ba2a0f0e229b73f8c97ab740b517a5",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/auth/sign-out.ts",
+      "sha256": "f6100be3bafe6feb715208f36d9a9b0ce07b5e62e8d8b3b97d1f90ec3a96be17",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/application/authorize.ts",
+      "sha256": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/actions.ts",
+      "sha256": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/matrix.ts",
+      "sha256": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/policy.ts",
+      "sha256": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/authz/domain/principal.ts",
+      "sha256": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/application/main-channel.service.ts",
+      "sha256": "9b3d9977e8a1cbe5162260e7f28a1d60638e43f5e61b5a72b5a5ec0393bfabd3",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.errors.ts",
+      "sha256": "bb4366d55484d87b16d4437f5712dc4f22b210a8c2031cf605b9353ed5a671ac",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.policy.ts",
+      "sha256": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/domain/main-channel-setting.ts",
+      "sha256": "0c4dff7d35dd255f172351b98e221a9e519501a2d2088fc2529167f2b7218618",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/channel/infrastructure/channel.repository.ts",
+      "sha256": "d315a0ea7a2dc7d4a2b733664a6064253e0c94168ada97bd5bc7222467f1c541",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playlists/application/playlist-manage.use-cases.ts",
+      "sha256": "610d09a7f594d4f16ec246a5640473ef4110e0e77328f8cfb5a2909a843e5ac1",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playlists/application/playlist-studio-read.use-cases.ts",
+      "sha256": "2e6b730472629b5de41b9422cf7f466b7173ced63043bfc41789ca7f4c97b166",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playlists/domain/playlist-rules.ts",
+      "sha256": "e8f860f20185d05b57a65f1ad5ebcbbd3e79805b7c616e5a6d6269b2f5dbb1f1",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/playlists/infrastructure/playlist.repository.ts",
+      "sha256": "7fb8c83448b641eaed6de33117df3b1c9c3f26049417272fc9e2ce119362a8b6",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-context.ts",
+      "sha256": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/shared/result.ts",
+      "sha256": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/users/application/admin-user-safety.use-case.ts",
+      "sha256": "510f38ccaa82ee96d86812959c12bce96fdc17c81b74d18fa282ad5e5d8689a8",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/encode-queue.use-cases.ts",
+      "sha256": "1c6f2f8a33679ce6851efc0fc19b8ffc87adaedb6415ca1de084df7a49e2d9c9",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/application/video-guard.ts",
+      "sha256": "dd35a6607a5626ed4bdaa6695b1b82aa7ba48869846d2056fc50a5abbbc1b584",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/domain/encode-job.state.ts",
+      "sha256": "c8670992e7994df56eaa0c44936823a00d3f3257917a45b9f8a4f1ea7b58a221",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "lib/modules/video-pipeline/infrastructure/encode-job.repository.ts",
+      "sha256": "7f6aade8a70173d032f0b5d375eb57faa0be9da25a7261dcf094ea19deb90d7b",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/auth/sign-out.test.ts",
+      "sha256": "c80619d0c49b32791e00d454d745ed69b0bd49a04791883352050ec370d156df",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/modules/playlists/fake-db.ts",
+      "sha256": "8b2a1111326ce539ca5672eef2a01cb36f66ae0613fde62662c661a1c88382df",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    },
+    {
+      "file": "tests/unit/modules/playlists/playlist-manage.test.ts",
+      "sha256": "d0fd118ce4f06acbbcedcddd4a66af4d62de454d98952c45628bebb43c2eb838",
+      "scope": "TARGETED_PARTIAL: session/cache, channel binding, playlist/pipeline writes/reads or relevant tests; not whole-file sign-off"
+    }
+  ],
+  "dependency_source_sha256": {
+    "node_modules/better-auth/package.json": "f5e6b9369bdfe9335dfc1c8e829a52aa3cc34c5d987eab35eb75e0b14baab75c",
+    "node_modules/better-auth/dist/api/routes/session.mjs": "1751e7c2a86169f89e2964a9e35475c0a761a09fa2e8efbc16176af51bdc6a01",
+    "node_modules/better-auth/dist/api/routes/sign-out.mjs": "b90732b4bd502965384f43bb8f833d78e7b0b1a33d816a94850659f76b6577ea",
+    "node_modules/better-auth/dist/context/create-context.mjs": "4b703a84f1b5c6285a74b064447afb7c041d3195212ffec7eabcb61b27f4ab33",
+    "node_modules/better-auth/dist/db/internal-adapter.mjs": "ead6bf2c1a3358d030f142623fc2876f018adb207f58522abfba325ffb16e34d",
+    "node_modules/better-auth/node_modules/@better-auth/memory-adapter/dist/index.mjs": "edd1040f94be383b71fb655320c32ab50f1f7efd7796d8234982f977f3f93dbc"
+  },
+  "peertube_partial_source_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "files": [
+      "server/core/lib/auth/oauth-token.ts",
+      "server/core/lib/auth/tokens-cache.ts",
+      "server/core/controllers/api/users/token.ts",
+      "server/core/models/oauth/oauth-token.ts",
+      "server/core/models/user/user.ts",
+      "server/core/middlewares/auth.ts"
+    ],
+    "executed": false
+  },
+  "new_unconfirmed_questions": [
+    "playlist count limit under concurrent creates",
+    "playlist lock by supplied ID before channel lookup",
+    "membership withdrawal between authorization and transaction"
+  ],
+  "independent_review": "PENDING"
+}

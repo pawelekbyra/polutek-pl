@@ -1,0 +1,12 @@
+{
+  "container": "polutek-cloud-db",
+  "database": "polutek_h1_6b21d176e3",
+  "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+  "created_new": true,
+  "application_tables": 0,
+  "prisma_migration_history_present": false,
+  "config_path": "/workspace/.cloud-setup/h1.env",
+  "config_mode": "0600",
+  "result": "EMPTY_DB_REACHABLE_NOT_MIGRATED",
+  "note": "No Prisma generation or migrations executed. Existing dev/research databases and config left unchanged."
+}

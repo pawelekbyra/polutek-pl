@@ -1,0 +1,66 @@
+{
+  "code_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+  "before_sha": "03115f0fefe47baf91622b3272b966344981beaf",
+  "changes": [
+    {
+      "sha": "835348d77cef7819a6769f3b14cc1ae0c47593c6",
+      "parent": "03115f0fefe47baf91622b3272b966344981beaf",
+      "subject": "Support ephemeral CA trust in managed Docker builds",
+      "files": [
+        "deploy/serwerek/Dockerfile",
+        "deploy/serwerek/Dockerfile.admin"
+      ]
+    },
+    {
+      "sha": "a2708f00a4cf162ef40b5455c01cbceabde798da",
+      "parent": "835348d77cef7819a6769f3b14cc1ae0c47593c6",
+      "subject": "Encode explicit HDR metadata in the HLG smoke fixture",
+      "files": [
+        "docs/operations/LOCAL-CI.md",
+        "tests/unit/hls/encode-hls.ffmpeg.test.ts"
+      ]
+    },
+    {
+      "sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
+      "parent": "a2708f00a4cf162ef40b5455c01cbceabde798da",
+      "subject": "docs(ops): document ephemeral build proxy trust",
+      "files": [
+        "docs/operations/LOCAL-CI.md"
+      ]
+    }
+  ],
+  "pull_request": "https://github.com/pawelekbyra/polutek-pl/pull/2065",
+  "release_ready": false,
+  "attribution": {
+    "initial": "835348d7: three built/probed images and nine HTTP cases. Worker encode: two pass, HDR skipped; strict wrapper exit1 retained. Initial HLG investigation output existed after session resume; recorded repeat supplies explicit process status.",
+    "initial/hlg-fixture-probe-recorded-run.json": "Recorded real worker comparison: original codec-only color options lose HLG transfer/primaries; explicit VUI and setparams retain them. Small synthetic fixtures, not visual HDR certification.",
+    "final": "Final clean committed SHA; three built/probed images, nine HTTP cases, worker encoder3/3 without skips and complete local acceptance. Raw logs preserved byte-for-byte; formatting-only whitespace/CR in raw logs is intentional."
+  },
+  "unchanged_files": [
+    "package.json",
+    "package-lock.json",
+    "prisma/schema.prisma",
+    "prisma/migrations",
+    "tsconfig.json",
+    "tsconfig.typecheck.json",
+    "next.config.mjs",
+    "apps/admin/next.config.mjs",
+    "scripts/hls/encode-hls.mjs",
+    "scripts/check-hotspots.ts",
+    "scripts/check-strict-escapes.ts",
+    "scripts/strict-escapes-baseline.jsonc",
+    "scripts/test-critical-path.mjs",
+    "scripts/verify-restored-database.ts",
+    ".github/workflows/images.yml",
+    "deploy/serwerek/deploy.sh",
+    "deploy/serwerek/deploy-admin.sh"
+  ],
+  "limits": [
+    "No enforced binding in server/GHCR/manual release paths yet. Labels here are attached by the local test builder, not attestations.",
+    "Local configuration digests are recorded; no registry image publication or manifest digest.",
+    "Declared-input hash does not cover every resolved build input; base tag remains floating, with observed base ancestry recorded separately.",
+    "Migrator and collector not built here.",
+    "Synthetic offline image/encoder checks do not cover API/queue/storage/Redis lifecycle, real provider calls, or visual fidelity of phone HDR.",
+    "No merge, deployment, production mutation, paid resource or new ASVS qualification."
+  ]
+}

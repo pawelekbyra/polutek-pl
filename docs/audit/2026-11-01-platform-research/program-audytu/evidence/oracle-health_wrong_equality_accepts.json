@@ -1,0 +1,116 @@
+{
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 3,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 6,
+  "numPassedTests": 4,
+  "numFailedTests": 2,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1793597541161,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "constantTimeEqual"
+          ],
+          "fullName": "constantTimeEqual compares equal and different strings, including different lengths",
+          "status": "failed",
+          "title": "compares equal and different strings, including different lengths",
+          "duration": 5.656366999999989,
+          "failureMessages": [
+            "AssertionError: expected true to be false // Object.is equality\n    at /tmp/audit-test-oracle-xuskc6lf/tests/unit/api/health-token.test.ts:9:45\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized accepts the x-health-token header",
+          "status": "passed",
+          "title": "accepts the x-health-token header",
+          "duration": 19.56567100000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized rejects wrong, shorter and longer tokens without throwing",
+          "status": "failed",
+          "title": "rejects wrong, shorter and longer tokens without throwing",
+          "duration": 0.9803440000000023,
+          "failureMessages": [
+            "AssertionError: expected true to be false // Object.is equality\n    at /tmp/audit-test-oracle-xuskc6lf/tests/unit/api/health-token.test.ts:23:97\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized is false when the env var is unset or empty, even if the header is empty",
+          "status": "passed",
+          "title": "is false when the env var is unset or empty, even if the header is empty",
+          "duration": 0.35035000000002015,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized ignores the legacy header names (only x-health-token is accepted)",
+          "status": "passed",
+          "title": "ignores the legacy header names (only x-health-token is accepted)",
+          "duration": 0.14857699999998886,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "isHealthTokenAuthorized"
+          ],
+          "fullName": "isHealthTokenAuthorized does not look at a query-string token",
+          "status": "passed",
+          "title": "does not look at a query-string token",
+          "duration": 0.2013469999999984,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793597541309,
+      "endTime": 1793597541336.2014,
+      "status": "failed",
+      "message": "",
+      "name": "/tmp/audit-test-oracle-xuskc6lf/tests/unit/api/health-token.test.ts"
+    }
+  ]
+}

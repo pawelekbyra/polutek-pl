@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+  "canonical_counts_unchanged": true,
+  "findings": 37,
+  "packages": 40,
+  "private_values_absent": true,
+  "actual_docker_control_outcomes": 15,
+  "compiler_before_after_verified": true,
+  "actual_partial_report_rejected": true,
+  "release_ready": false,
+  "actual_control_rejection_reasons_checked": true
+}

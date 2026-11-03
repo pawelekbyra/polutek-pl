@@ -1,0 +1,1 @@
+{"checks":[{"name":"health-process-only","status":200},{"name":"admin-fails-closed-without-access-config","status":503}]}

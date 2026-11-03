@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-02",
+  "measurement_date": "2026-11-01",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_APPLICATION_OR_WCAG_CERTIFICATION",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 15,
+    "NIEZBADANE": 3
+  },
+  "asvs_status_counts": {
+    "NIEZBADANE": 294,
+    "W_TRAKCIE": 51
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 70,
+    "NIEZBADANE": 210
+  },
+  "stable_finding_count": 35,
+  "new_distinct_findings": [
+    "R35"
+  ],
+  "existing_finding_extended": "R20",
+  "other_findings_and_baseline_priorities_preserved": true,
+  "earlier_raw_evidence_and_sources_preserved": 141,
+  "partial_source_scope_files": 59,
+  "partial_peertube_reference_files": 8,
+  "peertube_executed": false,
+  "real_Chromium_component_observations": 14,
+  "browser_page_errors": 0,
+  "application_API_requests": 0,
+  "external_browser_requests": 0,
+  "synthetic_fixture_callbacks": true,
+  "browser_harness_diagnostics_preserved_and_not_misclassified": true,
+  "frames_before_focus_snapshot": 2,
+  "catalogue_call_sites": 1589,
+  "unique_English_keys": 1245,
+  "locale_rows": 8,
+  "task_rows": 12,
+  "scoped_WCAG_rows_no_full_verdict": 15,
+  "targeted_vitest_passed_files": 7,
+  "targeted_vitest_assertions_passed": 62,
+  "targeted_vitest_exit": 0,
+  "full_suite_repeated": false,
+  "full_Next_HTTP_SQL_or_generated_Prisma_client_executed": false,
+  "Safari_Firefox_physical_touch_or_screen_reader_executed": false,
+  "full_WCAG_AA_or_native_speaker_certification": false,
+  "production_or_real_person_data_used": false,
+  "local_links_checked": 356,
+  "broken_local_links": [],
+  "script_syntax": "Node --check and TypeScript AST parse passed, not typecheck",
+  "whitespace": "git diff --check passed",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "credential_scan": "No listed patterns in changed/new text artifacts; PNG synthetic fixture screenshots hashed, bounded check only",
+  "independent_review": "PENDING"
+}

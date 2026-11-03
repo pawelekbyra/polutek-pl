@@ -1,0 +1,179 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.admin
+#1 transferring dockerfile: 2.78kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.3s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 165B done
+#5 DONE 0.0s
+
+#6 [deps 1/6] FROM docker.io/library/node:22-bookworm-slim
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 121.51kB 0.1s done
+#7 DONE 0.1s
+
+#8 [deps 5/6] COPY prisma ./prisma
+#8 CACHED
+
+#9 [deps 6/6] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npm ci --no-audit --no-fund --strict-ssl=true
+#9 CACHED
+
+#10 [deps 2/6] RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+#10 CACHED
+
+#11 [deps 3/6] WORKDIR /app
+#11 CACHED
+
+#12 [deps 4/6] COPY package.json package-lock.json ./
+#12 CACHED
+
+#13 [build 1/2] COPY . .
+#13 CACHED
+
+#14 [build 2/2] RUN --mount=type=secret,id=proxy_ca     if [ -s /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi;     npx prisma generate && npx next build apps/admin
+#14 15.21 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+#14 15.21 For more information, see: https://pris.ly/prisma-config
+#14 15.21 
+#14 15.56 Prisma schema loaded from prisma/schema.prisma
+#14 17.16 
+#14 17.16 ✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 675ms
+#14 17.16 
+#14 17.16 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#14 17.16 
+#14 17.16 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#14 17.16 
+#14 17.78 ▲ Next.js 16.4.1 (Turbopack)
+#14 17.81 ✓ Running next.config.mjs took 24ms
+#14 17.82 
+#14 17.85   Creating an optimized production build ...
+#14 32.06 ✓ Compiled successfully in 14.2s
+#14 32.07   Running TypeScript ...
+#14 53.15   Finished TypeScript in 21.1s ...
+#14 53.15   Collecting page data using 4 workers ...
+#14 54.73   Generating static pages using 4 workers (0/1) ...
+#14 54.81 ✓ Generating static pages using 4 workers (1/1) in 80ms
+#14 54.81 Turbopack build encountered 1 warning:
+#14 54.81 ./lib/modules/admin-overview/infrastructure/host-status-file.ts:75:23
+#14 54.81 Warning: Dynamic filesystem access causes tracing of the whole project
+#14 54.81   [90m73 |[0m [36mexport[0m [36masync[0m [36mfunction[0m readHostStatus(path: string = process.env.[33mADMIN_HOST_STATUS_FILE[0m || [33m...[0m
+#14 54.81   [90m74 |[0m   [36mtry[0m {
+#14 54.81 [33m[1m>[0m [90m75 |[0m     [36mconst[0m raw = [36mawait[0m readFile(path, [32m"utf8"[0m);
+#14 54.81   [90m   |[0m                       [33m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+#14 54.81   [90m76 |[0m     [36mif[0m (raw.length > [35m512[0m_000) [36mreturn[0m { ok: [36mfalse[0m, reason: [32m"Plik statusu hosta jest za duży..[0m.
+#14 54.81   [90m77 |[0m     [36mreturn[0m parseHostStatus(raw);
+#14 54.81   [90m78 |[0m   } [36mcatch[0m {
+#14 54.81 
+#14 54.81 Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+#14 54.81 This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+#14 54.81 This can slow down deployments or lead to failures when size limits are exceeded.
+#14 54.81 To resolve this, you can
+#14 54.81 - make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+#14 54.81 - only use them in development, or
+#14 54.81 - opt out by adding an ignore comment to the highlighted call: fs.readFile(/*turbopackIgnore: true*/ ...), or
+#14 54.81 - remove them.
+#14 54.81 
+#14 54.81 Import traces:
+#14 54.81   App Route:
+#14 54.81     ./lib/modules/admin-overview/infrastructure/host-status-file.ts
+#14 54.81     ./lib/modules/admin-overview/index.ts
+#14 54.81     ./apps/admin/app/api/search/route.ts
+#14 54.81 
+#14 54.81   Server Component:
+#14 54.81     ./lib/modules/admin-overview/infrastructure/host-status-file.ts
+#14 54.81     ./lib/modules/admin-overview/index.ts
+#14 54.81     ./apps/admin/app/(panel)/kanaly/page.tsx
+#14 54.81 
+#14 54.81 
+#14 54.81   Finalizing page optimization ...
+#14 55.35 
+#14 55.36 Route (app)
+#14 55.36 ┌ ƒ /
+#14 55.36 ├ ƒ /_not-found
+#14 55.36 ├ ƒ /[modul]
+#14 55.36 ├ ƒ /analityka
+#14 55.36 ├ ƒ /api/auth/[...all]
+#14 55.36 ├ ƒ /api/email/preview
+#14 55.36 ├ ƒ /api/export/audit
+#14 55.36 ├ ƒ /api/export/payments
+#14 55.36 ├ ƒ /api/health
+#14 55.36 ├ ƒ /api/jobs/morning-report
+#14 55.36 ├ ƒ /api/live
+#14 55.36 ├ ƒ /api/search
+#14 55.36 ├ ƒ /api/settings/default-thumbnail
+#14 55.36 ├ ƒ /api/spolecznosc/uzytkownicy/export
+#14 55.36 ├ ƒ /api/videos/[id]/cover
+#14 55.36 ├ ƒ /api/videos/[id]/original-upload/multipart
+#14 55.36 ├ ƒ /api/videos/[id]/original-upload/multipart/complete
+#14 55.36 ├ ƒ /api/videos/[id]/original-upload/multipart/parts
+#14 55.36 ├ ƒ /api/videos/[id]/pipeline
+#14 55.36 ├ ƒ /api/videos/[id]/subtitles/[lang]
+#14 55.36 ├ ƒ /api/videos/[id]/thumbnail
+#14 55.36 ├ ƒ /bezpieczenstwo
+#14 55.36 ├ ƒ /kanaly
+#14 55.36 ├ ƒ /kanaly/[id]
+#14 55.36 ├ ƒ /komunikacja
+#14 55.36 ├ ƒ /logowanie
+#14 55.36 ├ ƒ /potwierdz
+#14 55.36 ├ ƒ /premiera
+#14 55.36 ├ ƒ /przychody
+#14 55.36 ├ ƒ /rejestracja
+#14 55.36 ├ ƒ /spolecznosc
+#14 55.36 ├ ƒ /spolecznosc/u/[id]
+#14 55.36 ├ ƒ /system
+#14 55.36 ├ ƒ /system/r2
+#14 55.36 ├ ƒ /tlumaczenia
+#14 55.36 ├ ƒ /tlumaczenia/[slug]
+#14 55.36 ├ ƒ /tresci
+#14 55.36 ├ ƒ /tresci/[slug]
+#14 55.36 ├ ƒ /tresci/[slug]/analityka
+#14 55.36 ├ ƒ /tresci/[slug]/edycja
+#14 55.36 ├ ƒ /tresci/[slug]/jakosc
+#14 55.36 ├ ƒ /tresci/[slug]/komentarze
+#14 55.36 ├ ƒ /tresci/[slug]/tlumaczenia
+#14 55.36 ├ ƒ /tresci/nowy
+#14 55.36 ├ ƒ /tresci/uklad
+#14 55.36 └ ƒ /ustawienia
+#14 55.36 
+#14 55.36 
+#14 55.36 ƒ Proxy (Middleware)
+#14 55.36 
+#14 55.36 ƒ  (Dynamic)  server-rendered on demand
+#14 55.36 
+#14 DONE 55.4s
+
+#11 [deps 3/6] WORKDIR /app
+#11 CACHED
+
+#15 [admin 4/8] COPY --from=build --chown=node:node /app/apps/admin/.next/standalone ./
+#15 DONE 1.0s
+
+#16 [admin 5/8] COPY --from=build --chown=node:node /app/apps/admin/.next/static ./apps/admin/.next/static
+#16 DONE 0.5s
+
+#17 [admin 6/8] COPY --from=build --chown=node:node /app/apps/admin/public ./apps/admin/public
+#17 DONE 0.6s
+
+#18 [admin 7/8] COPY --from=build --chown=node:node /app/apps/admin/scripts/admin-enroll.mjs ./apps/admin/scripts/admin-enroll.mjs
+#18 DONE 0.8s
+
+#19 [admin 8/8] RUN mkdir -p /app/apps/admin/.next/cache && chown -R node:node /app/apps/admin/.next
+#19 DONE 2.9s
+
+#20 exporting to image
+#20 exporting layers
+#20 exporting layers 0.9s done
+#20 writing image sha256:9053867ad8d55ad729014efb5f59ab90c111aa978e15e613e73bfe1fa5d534e8 done
+#20 naming to docker.io/library/polutek-h1-admin:835348d77cef done
+#20 DONE 0.9s

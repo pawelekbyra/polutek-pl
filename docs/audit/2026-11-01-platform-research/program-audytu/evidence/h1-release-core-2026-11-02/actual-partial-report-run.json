@@ -1,0 +1,37 @@
+{
+  "code_sha": "f9edc23ae278fbd2764b39c7bcd0c71810ba78b2",
+  "actual_source_archive_verified": true,
+  "source_file_count": 2212,
+  "source_fingerprint": "7c4deeeef1002bc83df28d7bf3267f199543655d466f9ef4ac7eda5c4b30a133",
+  "archive_sha256": "4c8d8d8db0936c9ac22b2127d01c804b8aef54ddce47931d0c45d02256952406",
+  "quality_sha256": "6bb986b0dc34a570d2496d4e9f2287a745e2e5a8b4e3609aa37ae910259a2063",
+  "ci_selected_checks_passed": true,
+  "ci_filters": {
+    "lintAll": false,
+    "unitFull": true,
+    "build": false,
+    "coverage": false,
+    "strict": true,
+    "only": [
+      "unit",
+      "critical-path",
+      "encode-smoke",
+      "typecheck-all",
+      "ci-parity"
+    ],
+    "skip": [
+      "prisma"
+    ],
+    "base": "origin/main",
+    "jobs": 1,
+    "list": false,
+    "help": false
+  },
+  "release_check_exit": 1,
+  "signal": null,
+  "error": null,
+  "stdout_bytes": 0,
+  "stderr_bytes": 61,
+  "rejected_for_partial_selection": true,
+  "release_ready": false
+}

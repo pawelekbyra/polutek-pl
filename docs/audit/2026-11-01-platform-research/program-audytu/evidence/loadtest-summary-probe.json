@@ -1,0 +1,189 @@
+{
+  "date": "2026-11-01",
+  "source": "scripts/loadtest/summarize.py",
+  "source_sha256": "c00ce66b20e02ca2d7e91409ad69e8e627951744829bc8c0c18ce1e4a06cc856",
+  "finding": "R11",
+  "limits": "Synthetic metrics execute actual summarizer only. No k6, real HTTP statuses, CDN, workload, production or capacity test.",
+  "observations": [
+    {
+      "case": "expected_200",
+      "synthetic_metrics": {
+        "metrics": {
+          "iterations": {
+            "values": {
+              "count": 100,
+              "rate": 10
+            }
+          },
+          "dropped_iterations": {
+            "values": {
+              "count": 0
+            }
+          },
+          "http_reqs": {
+            "values": {
+              "count": 500,
+              "rate": 50
+            }
+          },
+          "server_errors": {
+            "values": {
+              "rate": 0
+            }
+          },
+          "unexpected_status": {
+            "values": {
+              "count": 0
+            }
+          },
+          "http_req_duration": {
+            "values": {
+              "med": 20,
+              "p(95)": 50,
+              "p(99)": 60,
+              "max": 70
+            }
+          }
+        }
+      },
+      "exit_code": 0,
+      "stdout": "synthetic-local-only\t10\t10.00\t50.0\t500\t0\t20\t50\t60\t70\t0.00\t0\t\n",
+      "stderr": ""
+    },
+    {
+      "case": "all_requests_unexpected_429",
+      "synthetic_metrics": {
+        "metrics": {
+          "iterations": {
+            "values": {
+              "count": 100,
+              "rate": 10
+            }
+          },
+          "dropped_iterations": {
+            "values": {
+              "count": 0
+            }
+          },
+          "http_reqs": {
+            "values": {
+              "count": 500,
+              "rate": 50
+            }
+          },
+          "server_errors": {
+            "values": {
+              "rate": 0
+            }
+          },
+          "unexpected_status": {
+            "values": {
+              "count": 500
+            }
+          },
+          "http_req_duration": {
+            "values": {
+              "med": 20,
+              "p(95)": 50,
+              "p(99)": 60,
+              "max": 70
+            }
+          }
+        }
+      },
+      "exit_code": 0,
+      "stdout": "synthetic-local-only\t10\t10.00\t50.0\t500\t0\t20\t50\t60\t70\t0.00\t500\t\n",
+      "stderr": ""
+    },
+    {
+      "case": "server_errors_control",
+      "synthetic_metrics": {
+        "metrics": {
+          "iterations": {
+            "values": {
+              "count": 100,
+              "rate": 10
+            }
+          },
+          "dropped_iterations": {
+            "values": {
+              "count": 0
+            }
+          },
+          "http_reqs": {
+            "values": {
+              "count": 500,
+              "rate": 50
+            }
+          },
+          "server_errors": {
+            "values": {
+              "rate": 0.1
+            }
+          },
+          "unexpected_status": {
+            "values": {
+              "count": 0
+            }
+          },
+          "http_req_duration": {
+            "values": {
+              "med": 20,
+              "p(95)": 50,
+              "p(99)": 60,
+              "max": 70
+            }
+          }
+        }
+      },
+      "exit_code": 11,
+      "stdout": "synthetic-local-only\t10\t10.00\t50.0\t500\t0\t20\t50\t60\t70\t10.00\t0\t\n",
+      "stderr": ""
+    },
+    {
+      "case": "slow_p95_control",
+      "synthetic_metrics": {
+        "metrics": {
+          "iterations": {
+            "values": {
+              "count": 100,
+              "rate": 10
+            }
+          },
+          "dropped_iterations": {
+            "values": {
+              "count": 0
+            }
+          },
+          "http_reqs": {
+            "values": {
+              "count": 500,
+              "rate": 50
+            }
+          },
+          "server_errors": {
+            "values": {
+              "rate": 0
+            }
+          },
+          "unexpected_status": {
+            "values": {
+              "count": 0
+            }
+          },
+          "http_req_duration": {
+            "values": {
+              "med": 20,
+              "p(95)": 2500,
+              "p(99)": 2510,
+              "max": 2520
+            }
+          }
+        }
+      },
+      "exit_code": 10,
+      "stdout": "synthetic-local-only\t10\t10.00\t50.0\t500\t0\t20\t2500\t2510\t2520\t0.00\t0\t\n",
+      "stderr": ""
+    }
+  ]
+}

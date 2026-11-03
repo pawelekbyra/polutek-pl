@@ -1,0 +1,5 @@
+{
+  "scenario": "HTTP 200 with per-object DeleteObjects error",
+  "reportedRemoved": 1,
+  "objectStillPresent": true
+}

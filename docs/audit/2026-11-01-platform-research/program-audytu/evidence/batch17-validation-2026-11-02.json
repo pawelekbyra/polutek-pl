@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-02",
+  "subject": "Frozen batch 17 (ASVS V1/V2, encoding) validated before adoption",
+  "branch_head_at_validation": "b3a19a64a8ed9c79b1e3ad1d0dc7fbabcfdd10ef",
+  "audited_app_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "app_code_drift": "git diff c397b9e..HEAD outside docs: only CLAUDE.md (+1 line)",
+  "source_hash_check": {"files": 1701, "match_as_is_on_crlf_checkout": 15, "match_after_crlf_to_lf": 1686, "unexplained": 0, "note": "Checkout with core.autocrlf=true caused false 'Baseline changed'; reran with autocrlf=false"},
+  "reruns": {
+    "encoding-validation-experiment.cjs": {"observations": 16, "differences_vs_frozen": 0, "network_calls": 0},
+    "input-sink-inventory.py": {"corpus_files": 1233, "identical_to_frozen_ignoring_timestamps": true},
+    "targeted_vitest": {"files": 3, "tests": 51, "passed": 51, "failed": 0, "pending": 0, "note": "original 2 files = 46 tests, plus video-chapters-search-migration (5) which failed under CRLF and passes on LF"}
+  },
+  "register_checks": {"ASVS_V1_V2_rows": 43, "W_TRAKCIE": 38, "NIE_DOTYCZY_Z_UZASADNIENIEM": 5, "PASS": 0, "ASVS_total": {"NIEZBADANE": 254, "partial": 86, "conditional_NA": 5}},
+  "adopted": ["ASVS-V1-V2.csv","PYTANIA-ASVS-V1-V2.csv","SCENARIUSZE-KODOWANIE.csv","obszary/ASVS-V1-V2-KWALIFIKACJA.md","evidence/batch17-review.json","ASVS-POKRYCIE.csv","POKRYCIE.csv","POWIERZCHNIA-WEJSC.csv","DOMKNIECIE-DOWODOW.csv","SOURCES.md","obszary/D05 (appendix)"],
+  "not_adopted": ["PROGRAM.md, STAN.md, README.md, ZMIANY.md, WNIOSEK-DLA-WLASCICIELA.md frozen copies (older than roadmap edits; updated by hand)"],
+  "not_validated": ["manual reading of the 43 requirement rationales was not independently repeated; only reproducibility of mechanical evidence and register consistency", "no independent human review (independent_review stays PENDING)", "no DB/HTTP/Next/provider/spreadsheet execution; Node 24 not 22"],
+  "result": "Mechanical evidence reproduces exactly; classifications remain partial (W_TRAKCIE), no requirement upgraded to PASS."
+}

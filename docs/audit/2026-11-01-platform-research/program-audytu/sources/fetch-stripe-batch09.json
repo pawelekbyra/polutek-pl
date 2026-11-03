@@ -1,0 +1,18 @@
+[
+  {
+    "date": "2026-11-01",
+    "file": "stripe-node-20.4.1-README.md",
+    "url": "https://raw.githubusercontent.com/stripe/stripe-node/v20.4.1/README.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "a784fd4e5a21798b8ad44f045788445302542fa1d10074db117157396ac8abde"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "stripe-node-20.4.1-LICENSE",
+    "url": "https://raw.githubusercontent.com/stripe/stripe-node/v20.4.1/LICENSE",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "b36d54d51ac6f20b867c24264b9433f54372c3370d4984cf1c9884c5c6de1f7a"
+  }
+]

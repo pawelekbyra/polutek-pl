@@ -1,0 +1,252 @@
+{
+  "reportTabs": [
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Zamknij",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Spam",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Nękanie",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Mowa nienawiści",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Treści nieodpowiednie",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Spoiler",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Inne",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "_r_0_-note",
+      "tag": "TEXTAREA",
+      "text": "Synthetic note retained on failure",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Anuluj",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Zgłoś",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Zamknij",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Spam",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    }
+  ],
+  "backgroundReached": false,
+  "observationsBefore": [
+    {
+      "case": "confirm_opens_on_safe_cancel",
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Cancel",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "dialogName": "confirm-dialog-title"
+    },
+    {
+      "case": "confirm_normal_tab_wrap",
+      "backward": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Delete playlist",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "forward": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Cancel",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_escape_restores_opener",
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_busy_tab_reaches_background",
+      "busyStart": {
+        "id": "",
+        "tag": "BODY",
+        "text": "Local component research — synthetic dataNo application API, account, payment or database is connected.Open research dia",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "tabSequence": [
+        {
+          "id": "opener",
+          "tag": "BUTTON",
+          "text": "Open research dialog",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "background",
+          "tag": "BUTTON",
+          "text": "Background action",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "after",
+          "tag": "A",
+          "text": "Background link",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BODY",
+          "text": "Local component research — synthetic dataNo application API, account, payment or database is connected.Open research dia",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "opener",
+          "tag": "BUTTON",
+          "text": "Open research dialog",
+          "insideDialog": false,
+          "focusGuard": false,
+          "ariaHidden": null
+        }
+      ],
+      "backgroundInert": false,
+      "finding": "R35"
+    },
+    {
+      "case": "confirm_busy_background_action_can_activate",
+      "events": [
+        {
+          "event": "close",
+          "mode": "confirm"
+        },
+        {
+          "event": "confirm"
+        },
+        {
+          "event": "background_action"
+        }
+      ],
+      "dialogStillPresent": true,
+      "finding": "R35"
+    },
+    {
+      "case": "report_radio_arrow_does_not_move_or_select",
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Spam",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "checkedLabels": [
+        "Spam"
+      ],
+      "radioTabStops": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "classification": "APG_PATTERN_DIVERGENCE;Tab/Space alternatives remain"
+    },
+    {
+      "case": "report_failure_keeps_note_and_announces_error",
+      "noteRetained": true,
+      "error": "Nie udało się wysłać zgłoszenia.",
+      "events": [
+        {
+          "event": "report",
+          "reason": "HARASSMENT",
+          "note": "Synthetic note retained on failure"
+        }
+      ]
+    }
+  ]
+}

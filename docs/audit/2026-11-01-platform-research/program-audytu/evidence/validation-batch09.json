@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-01",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_APPLICATION_TESTS",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 10,
+    "NIEZBADANE": 8
+  },
+  "asvs_status_counts": {
+    "NIEZBADANE": 298,
+    "W_TRAKCIE": 47
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 63,
+    "NIEZBADANE": 217
+  },
+  "stable_finding_count": 32,
+  "new_distinct_findings": [
+    "R31",
+    "R32"
+  ],
+  "existing_finding_extended": "R17",
+  "other_findings_preserved": true,
+  "earlier_raw_evidence_and_source_files_preserved": 92,
+  "partial_baseline_source_files_reviewed": 54,
+  "current_instruction_file_exception_separately_identified": true,
+  "baseline_source_hashes_match": true,
+  "actual_TS_modules": 24,
+  "component_observations": 18,
+  "separate_real_postgresql_protocols": 2,
+  "sql_fixtures_rolled_back": true,
+  "real_Stripe_sdk_signature_verification": true,
+  "external_Stripe_API_or_money_movement": false,
+  "targeted_vitest_files_blocked": 6,
+  "targeted_vitest_tests_registered_or_passed": 0,
+  "targeted_vitest_global_exit": 1,
+  "full_suite_repeated": false,
+  "generated_Prisma_client_executed": false,
+  "full_application_HTTP_or_full_stack_executed": 0,
+  "local_links_checked": 204,
+  "broken_local_links": [],
+  "research_script_syntax": "Node --check and Python compile passed; no execution repeat",
+  "git_diff_whitespace": "passed",
+  "credential_scan": "No listed pattern matches in changed/new files; not exhaustive secret detection",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "scope": "Artifact/source hash/result consistency; actual functions with explicit fake I/O plus separate inspected SQL protocol, not a completed financial/security/production audit."
+}

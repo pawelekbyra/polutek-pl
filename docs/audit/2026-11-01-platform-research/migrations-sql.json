@@ -1,0 +1,413 @@
+{
+  "database": "polutek_research_1793539467",
+  "applied": 81,
+  "total": 81,
+  "results": [
+    {
+      "migration": "0_init",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260603120000_add_comment_pinning",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260603130000_refactor_email_templates",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260603140000_add_video_presentation_columns",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260604120000_add_user_patron_source",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260605000000_production_sync",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260605001000_production_schema_drift_guard",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260606090000_add_payment_settings_and_subscriber_override",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260606100000_add_broadcast_email",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260607000000_fix_schema_consistency",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260607010000_extend_playback_models",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260608000000_comments_pro",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260611000000_cloudflare_stream_video_asset_foundation",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260614000000_add_email_event_idempotency",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260615000000_make_videourl_nullable",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260620000000_add_comment_is_hearted",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260620000000_payment_request_id",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260620000000_video_publish_after_asset_ready",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260625121500_add_payment_request_id",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260626120000_video_assets_1n",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260627200000_video_sources_youtube",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260628000000_add_mux_vimeo_pending_primary",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260628000000_remove_referral_system",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260628100000_add_app_settings",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260628120000_video_original_and_mirror_metadata",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260629000000_publish_after_asset_ready_provider",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260629100000_add_email_template_name",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260630000000_remove_legacy_user_patron_cache",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260701000000_add_email_suppression",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260701000001_add_subtitle_urls_and_default_thumbnail",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260702000000_add_comment_dislike_reaction",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260703000000_add_patron_threshold_and_box_min",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260705000000_provider_neutral_video_distribution_phase1",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260710000000_add_notification_model",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260710000100_add_notification_preferences_and_templates",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260913000000_add_non_patrons_broadcast_recipient_group",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260920000000_add_audit_log_target_index",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260926120000_add_missing_schema_indexes",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260926120001_reconcile_notification_fk_onupdate",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260926120002_reconcile_schema_nullable_default_drift",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260926150000_add_video_thumbnail_public_url",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260930120000_admin_audit_actor_columns",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260930180000_add_video_premiere_at",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260930210000_add_video_fundraising_goal",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20260930230000_add_video_fundraising_manual_percent",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261002100000_add_better_auth",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261002120000_better_auth_twofactor_fields",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261002140000_add_self_hls_storage_provider",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261003100000_add_video_encode_job",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261003110000_add_video_original_multipart",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261003200000_email_overrides_and_broadcast_queue",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261003200000_user_nickname_unique_active",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261004120000_privacy_terms_acceptance_contact_removal",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261004180000_add_passkey",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261004200000_add_admin_panel_auth",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261004210000_telemetry_schema",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261004230000_video_tier_patron_to_logged_in",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261005100000_add_video_translations",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261005120000_add_user_comment_mute",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261005120000_analytics_rollups",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261005200000_admin_phase3_roles_and_audit_immutable",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261005210000_cleanup_dead_schema",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261006090000_payment_refunds_checked_at",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261006091000_stripe_customer_anonymization",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261013120000_multi_channel_schema",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261013140000_sales_schema",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261013160000_video_metadata",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261014090000_main_channel_setting",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261014120000_drop_creator_legacy_flags",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261014180000_wave_schema",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261019120000_video_premiere_notified_at",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261019140000_comment_one_pinned_per_video",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261019160000_notification_template_key",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261019165000_channel_banner_about",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261019170000_video_search",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261019180000_playlists",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261020120000_video_chapters",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261020130000_video_chapters_search",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261021120000_video_favorites",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261027120000_durable_jobs",
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "migration": "20261028120000_video_ready_visibility",
+      "exit": 0,
+      "error": ""
+    }
+  ],
+  "method": "ordered SQL via psql; not Prisma migration engine"
+}
