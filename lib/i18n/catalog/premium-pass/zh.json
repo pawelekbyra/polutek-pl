@@ -19,7 +19,6 @@
  "Become a patron · from {0}": "成为赞助者 · 起 {0}",
  "Become a patron · {0}": "成为赞助者 · {0}",
  "Get Premium": "获取 Premium",
- "and": "和",
  "Bestseller": "Bestseller",
  "Can I withdraw from the contract?": "我可以撤销合同吗？",
  "Change method": "更换方式",
@@ -134,5 +133,10 @@
  "Patron zone open until {0}. Another payment extends your access.": "赞助者专区开放至 {0}。再次付款可延长你的访问权限。",
  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or 3-month access. No subscription.": "支持本项目，进入赞助者专区：这里的内容别处看不到。选择 30 天或 3 个月的访问权限。无需订阅。",
  "30-day access costs {0} and 3-month access {1} (final prices, the seller is exempt from VAT; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "30 天访问权限价格为 {0}，3 个月访问权限价格为 {1}（最终价格，卖家免征增值税；其他货币的价格在结账时显示）。每次再次付款可将访问权限延长 30 天或 3 个月；不会自动续订。",
- "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "30 天访问权限价格为 {0}，3 个月访问权限价格为 {1}（含税价；其他货币的价格在结账时显示）。每次再次付款可将访问权限延长 30 天或 3 个月；不会自动续订。"
+ "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "30 天访问权限价格为 {0}，3 个月访问权限价格为 {1}（含税价；其他货币的价格在结账时显示）。每次再次付款可将访问权限延长 30 天或 3 个月；不会自动续订。",
+ "Secure SSL payment": "SSL 安全支付",
+ "Secure SSL connection": "SSL 安全连接",
+ "Accepted payment methods": "支持的支付方式",
+ "Payment processed by Stripe": "支付由 Stripe 处理",
+ "Stripe (test mode)": "Stripe（测试模式）"
 }

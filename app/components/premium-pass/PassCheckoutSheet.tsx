@@ -20,11 +20,12 @@ import { LegalSheetProvider } from "../legal/LegalSheet";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";
 import { FIELD_LABEL_CLASS } from "../support/TipSelect";
-import { ArrowLeft } from "../icons";
+import { ArrowLeft, Lock } from "../icons";
 import { CloseButton } from "@/components/ui/close-button";
 import { PassMethodStep, PassPayHead, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
+import type { PassPayMode } from "./PassTrustRow";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
 import { newRequestId, price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, fetchPatronMethods, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
@@ -119,6 +120,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const stripeMode = offer.payments.mode === "stripe";
   const stripeReady = offer.payments.mode === "stripe" && offer.payments.available;
   const testMode = offer.payments.mode === "stripe" && offer.payments.available && offer.payments.stripeMode === "test";
+  const payMode: PassPayMode = !stripeReady ? "demo" : testMode ? "test" : "live";
 
   const [productId, setProductId] = useState<string>(initialProductId ?? defaultProduct(offer).id);
   const [currency, setCurrency] = useState<PatronCurrency>(() => detectDefaultCurrency(language) as PatronCurrency);
@@ -417,11 +419,14 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   notice={notice}
                   unavailable={stripeMode && !stripeReady}
                   busy={busy}
+                  mode={payMode}
+                  methods={methods}
                 />
               </div>
               {dots}
               <div className={styles.pay}>
                 <button type="button" className={styles.inkBtn} onClick={toMethod} disabled={stripeMode && !stripeReady}>
+                  <Lock size={16} aria-hidden="true" focusable="false" />
                   {tx("Dalej · {0}", "Next · {0}", total)}
                 </button>
               </div>
@@ -444,6 +449,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   notice={notice}
                   unavailable={stripeMode && !stripeReady}
                   busy={busy}
+                  mode={payMode}
                 />
               </div>
               {dots}
@@ -451,6 +457,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                 <div className={styles.payRow}>
                   <button type="button" className={styles.backBtn} onClick={backToPlan} disabled={busy} aria-label={tx("Wstecz", "Back")}><ArrowLeft /></button>
                   <button type="button" className={styles.inkBtn} onClick={() => void next()} disabled={busy || !method || (stripeMode && !stripeReady)} aria-busy={busy || undefined}>
+                    {!busy && <Lock size={16} aria-hidden="true" focusable="false" />}
                     {busy ? tx("Chwileczkę…", "One moment…") : tx("Dalej · {0}", "Next · {0}", total)}
                   </button>
                 </div>
@@ -461,7 +468,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {stage.kind === "pay" && method && stripeReady && intent && (
             <>
               <div className={styles.payHead}>
-                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} />
+                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} mode={payMode} methods={methods} />
               </div>
               <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back"), patron: true, disabled: payBusy, aboveBar: dots }}>
                 <PassStripePay
@@ -488,7 +495,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {stage.kind === "pay" && method && !stripeMode && (
             <>
               <div className={styles.sheetBody}>
-                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} />
+                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} mode={payMode} methods={methods} />
                 <PassDemoSummary tx={tx} language={language} amountMinor={amountMinor} currency={currency} method={method} onChangeMethod={backToMethod} />
                 <PassConsent tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} termsRef={termsRef} waiverRef={waiverRef} />
                 {email && <p className={styles.muted}>{tx("Potwierdzenie trafi na {0}", "The confirmation goes to {0}", email)}</p>}

@@ -19,7 +19,6 @@
  "Become a patron · from {0}": "Unterstützer werden · ab {0}",
  "Become a patron · {0}": "Unterstützer werden · {0}",
  "Get Premium": "Premium holen",
- "and": "und",
  "Bestseller": "Bestseller",
  "Can I withdraw from the contract?": "Kann ich vom Vertrag zurücktreten?",
  "Change method": "Zahlungsart ändern",
@@ -134,5 +133,10 @@
  "Patron zone open until {0}. Another payment extends your access.": "Bereich für Unterstützer geöffnet bis {0}. Eine weitere Zahlung verlängert deinen Zugang.",
  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or 3-month access. No subscription.": "Unterstütze das Projekt und betritt den Bereich für Unterstützer: Material, das es sonst nirgends gibt. Wähle den 30-Tage- oder den 3-Monats-Zugang. Kein Abo.",
  "30-day access costs {0} and 3-month access {1} (final prices, the seller is exempt from VAT; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "Der 30-Tage-Zugang kostet {0}, der 3-Monats-Zugang {1} (Endpreise, der Verkäufer ist von der MwSt. befreit; Preise in anderen Währungen siehst du an der Kasse). Jede weitere Zahlung verlängert deinen Zugang um 30 Tage oder 3 Monate; nichts verlängert sich von selbst.",
- "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "Der 30-Tage-Zugang kostet {0}, der 3-Monats-Zugang {1} (Bruttopreise; Preise in anderen Währungen siehst du an der Kasse). Jede weitere Zahlung verlängert deinen Zugang um 30 Tage oder 3 Monate; nichts verlängert sich von selbst."
+ "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.": "Der 30-Tage-Zugang kostet {0}, der 3-Monats-Zugang {1} (Bruttopreise; Preise in anderen Währungen siehst du an der Kasse). Jede weitere Zahlung verlängert deinen Zugang um 30 Tage oder 3 Monate; nichts verlängert sich von selbst.",
+ "Secure SSL payment": "Sichere SSL-Zahlung",
+ "Secure SSL connection": "Sichere SSL-Verbindung",
+ "Accepted payment methods": "Akzeptierte Zahlungsmethoden",
+ "Payment processed by Stripe": "Zahlung wird von Stripe verarbeitet",
+ "Stripe (test mode)": "Stripe (Testmodus)"
 }
