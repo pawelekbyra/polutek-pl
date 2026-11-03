@@ -1,5 +1,5 @@
 "use client";
-// patron zone (docs/architecture/patron-zone.md): the PATRON plate on tiles and the
+// patron zone (docs/architecture/patron-zone.md): the PREMIUM plate on tiles and the
 // "access until" chip on a playing patron-zone video. Text, not only colour; the lock is decoration next to the text.
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ export function PremiumThumbBadge({ locked }: { locked: boolean }) {
       {locked && <span aria-hidden="true" className={styles.thumbVeil} />}
       <span className={cn(styles.pass, styles.badge, styles.thumbBadge)}>
         {locked && <LockIcon />}
-        PATRON
+        PREMIUM
       </span>
     </>
   );

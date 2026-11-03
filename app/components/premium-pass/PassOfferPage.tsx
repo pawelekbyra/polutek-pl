@@ -93,7 +93,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
                     <li key={video.id}>
                       <div className={styles.art}>
                         {video.thumbnailUrl && <img src={video.thumbnailUrl} alt="" loading="lazy" />}
-                        <span className={`${styles.badge} ${styles.thumbBadge}`}><LockIcon />PATRON</span>
+                        <span className={`${styles.badge} ${styles.thumbBadge}`}><LockIcon />PREMIUM</span>
                         {video.duration && <span className={styles.dur}>{video.duration}</span>}
                       </div>
                       <div className={styles.cap}>{getVideoDisplayTitle(video, locale)}</div>
