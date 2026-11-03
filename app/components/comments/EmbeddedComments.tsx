@@ -125,6 +125,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const [sortBy, setSortBy] = useState<"newest" | "top">("newest");
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  // The thread the viewer has just answered; its number grows per reply so the same thread opens again after being closed.
+  const [openedThread, setOpenedThread] = useState<{ id: string; request: number } | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
@@ -288,6 +290,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       e.preventDefault();
       if (!newComment.trim() || !userProfile || postMutation.isPending) return;
       setComposerError(null);
+      // The reply shows up at once (optimistic): open the thread it lands in now, not when the server answers.
+      if (replyTo) setOpenedThread((current) => ({ id: replyTo, request: (current?.request ?? 0) + 1 }));
       postComment(
         { text: newComment, parentId: replyTo || undefined },
         {
@@ -570,6 +574,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 onEdit={handleEdit}
                 onReport={handleReport}
                 isReactionPending={isReactionPending}
+                openRequest={openedThread?.id === comment.id ? openedThread.request : 0}
               />
             </CommentMotionItem>
           ))}

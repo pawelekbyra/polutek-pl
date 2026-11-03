@@ -75,6 +75,23 @@ export function SearchIcon(props: MarkerIconProps) {
   );
 }
 
+/** Small hand-drawn chevrons (thin 1.2px pen) for disclosure buttons such as "Show replies". */
+export function ChevronDownIcon(props: MarkerIconProps) {
+  return (
+    <MarkerIcon {...props} strokeWidth={props.strokeWidth ?? penStrokeWidth(props.size ?? 24)}>
+      <path d="M5.6 8.9C6.5 9.9 8.3 11.7 9.2 12.7C10.2 13.7 11.2 14.8 12 15.4C12.9 14.7 14 13.6 14.9 12.7C15.8 11.8 17.6 10 18.5 9" />
+    </MarkerIcon>
+  );
+}
+
+export function ChevronUpIcon(props: MarkerIconProps) {
+  return (
+    <MarkerIcon {...props} strokeWidth={props.strokeWidth ?? penStrokeWidth(props.size ?? 24)}>
+      <path d="M5.6 15.1C6.5 14.1 8.3 12.3 9.2 11.3C10.2 10.3 11.2 9.2 12 8.6C12.9 9.3 14 10.4 14.9 11.3C15.8 12.2 17.6 14 18.5 15" />
+    </MarkerIcon>
+  );
+}
+
 export function CloseIcon(props: MarkerIconProps) {
   return (
     <MarkerIcon {...props} strokeWidth={props.strokeWidth ?? penStrokeWidth(props.size ?? 24)}>
