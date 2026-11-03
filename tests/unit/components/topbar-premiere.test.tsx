@@ -17,24 +17,31 @@ vi.mock("@/app/components/LanguageContext", () => ({
 
 import TopbarPremiere, { TopbarPremiereSpacer, formatPremiereDate, isTopbarPremiereActive } from "@/app/components/TopbarPremiere";
 
+// The note is switched off in the live bar (TOPBAR_PREMIERE = null, owner 2026-11-04); the component is kept for a quick return, so it is tested with an explicit config.
+const ON = { date: "2027-01-01" };
+
 describe("TopbarPremiere", () => {
   afterEach(() => {
     cleanup();
     currentTx = createTx("pl", null);
   });
 
-  it("is configured in one place: lib/ui-flags.ts, 2027-01-01", () => {
-    expect(TOPBAR_PREMIERE).toEqual({ date: "2027-01-01" });
+  it("is switched off in the live bar: TOPBAR_PREMIERE (lib/ui-flags.ts) is null, so nothing renders and the search box is not fixed to 548px", () => {
+    expect(TOPBAR_PREMIERE).toBeNull();
+    expect(isTopbarPremiereActive()).toBe(false);
+    expect(render(<TopbarPremiere />).container.innerHTML).toBe("");
+    cleanup();
+    expect(render(<TopbarPremiereSpacer />).container.innerHTML).toBe("");
   });
 
   it("renders the Polish text with the dd.mm.yyyy date and a final dot", () => {
-    render(<TopbarPremiere />);
+    render(<TopbarPremiere premiere={ON} />);
     expect(screen.getByTestId("topbar-premiere").textContent).toBe("PREMIERA: 01.01.2027.");
   });
 
   it("renders English text", () => {
     currentTx = createTx("en", null);
-    render(<TopbarPremiere />);
+    render(<TopbarPremiere premiere={ON} />);
     expect(screen.getByTestId("topbar-premiere").textContent).toBe("PREMIERE: 01.01.2027.");
   });
 
@@ -46,7 +53,7 @@ describe("TopbarPremiere", () => {
   });
 
   it("is plain accessible text: not a link, not focusable, not aria-hidden, no pointer events", () => {
-    render(<TopbarPremiere />);
+    render(<TopbarPremiere premiere={ON} />);
     const el = screen.getByTestId("topbar-premiere");
     expect(el.tagName).toBe("P");
     expect(el.closest("a,button")).toBeNull();
@@ -71,7 +78,7 @@ describe("TopbarPremiere", () => {
     const catalog = await loadCatalog(locale);
     expect(catalog?.["PREMIERE: {0}."]).toMatch(/\{0\}/);
     currentTx = createTx(locale, catalog);
-    render(<TopbarPremiere />);
+    render(<TopbarPremiere premiere={ON} />);
     expect(screen.getByTestId("topbar-premiere").textContent).toContain("01.01.2027");
   });
 
@@ -89,7 +96,7 @@ describe("TopbarPremiere", () => {
     // the search box keeps 548px when the note is shown from 1180px
     expect(nav).toContain("min-[1180px]:w-[548px]");
 
-    render(<TopbarPremiere />);
+    render(<TopbarPremiere premiere={ON} />);
     const zone = screen.getByTestId("topbar-premiere-zone");
     const cls = zone.className.split(/\s+/);
     for (const c of ["flex", "flex-1", "items-center", "justify-center", "-mr-[9px]", "md:-mr-2", "max-[360px]:hidden", "md:max-[1180px]:hidden", "md:min-w-max"]) {
@@ -104,6 +111,6 @@ describe("TopbarPremiere", () => {
     expect(isTopbarPremiereActive({ date: "2027-01-01" })).toBe(true);
     expect(render(<TopbarPremiereSpacer premiere={null} />).container.innerHTML).toBe("");
     cleanup();
-    expect(render(<TopbarPremiereSpacer />).container.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(render(<TopbarPremiereSpacer premiere={ON} />).container.querySelector('[aria-hidden="true"]')).not.toBeNull();
   });
 });
