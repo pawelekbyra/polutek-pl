@@ -34,7 +34,7 @@ function renderCheckout() {
   return { onOpenChange };
 }
 
-const checkout = () => screen.getByRole('dialog', { name: 'Kup se Premium' });
+const checkout = () => screen.getByRole('dialog', { name: 'Dostęp Premium' });
 const sheet = (name: string) => screen.findByRole('dialog', { name });
 
 async function toStep2() {
@@ -60,7 +60,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('step 1: the footer link keeps a real href and a plain click opens the sheet instead of a new tab', async () => {
     renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     const open = vi.spyOn(window, 'open');
     const terms = within(checkout()).getByRole('link', { name: 'Regulamin' });
     expect(terms).toHaveAttribute('href', '/regulamin'); // the site Terms page, works without JavaScript
@@ -75,7 +75,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('a modified click (Ctrl) is left to the browser: no sheet', async () => {
     renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     const terms = within(checkout()).getByRole('link', { name: 'Regulamin' });
     expect(fireEvent.click(terms, { ctrlKey: true })).toBe(true);
     expect(screen.queryByRole('dialog', { name: TERMS })).toBeNull();
@@ -83,7 +83,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('is a proper modal dialog: role, aria-modal, labelled by its title, a fixed Close button, the new-tab fallback, no test ribbon', async () => {
     renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     fireEvent.click(within(checkout()).getByRole('link', { name: 'Polityka prywatności' }));
     const dialog = await sheet(PRIVACY);
     expect(dialog).toHaveAttribute('aria-modal', 'true');
@@ -100,7 +100,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('Escape closes only the sheet, never the checkout, and focus returns to the link that opened it', async () => {
     const { onOpenChange } = renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     const link = within(checkout()).getByRole('link', { name: 'Regulamin' });
     link.focus();
     fireEvent.click(link);
@@ -108,7 +108,7 @@ describe('legal sheet in the patron checkout', () => {
     fireEvent.keyDown(document.activeElement ?? dialog, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('dialog', { name: TERMS })).toBeNull());
     expect(onOpenChange).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog', { name: 'Kup se Premium' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Dostęp Premium' })).toBeInTheDocument();
     expect(document.activeElement).toBe(link);
     // a second Escape now reaches the checkout
     fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
@@ -117,7 +117,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('the Close button closes the sheet only, and focus returns to the opener (also when the browser never focused the link)', async () => {
     const { onOpenChange } = renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     const link = within(checkout()).getByRole('link', { name: 'Polityka prywatności' });
     expect(document.activeElement).not.toBe(link); // Safari: a click does not focus a link
     fireEvent.click(link);
@@ -130,7 +130,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('a press on the dimmed area closes the sheet only', async () => {
     const { onOpenChange } = renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
     const dialog = await sheet(TERMS);
     const backdrop = document.querySelector('[class*="backdrop"]') as HTMLElement;
@@ -142,12 +142,12 @@ describe('legal sheet in the patron checkout', () => {
     fireEvent.click(backdrop);
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
     expect(onOpenChange).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog', { name: 'Kup se Premium' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Dostęp Premium' })).toBeInTheDocument();
   });
 
   it('keeps the checkout under it inert while open (so Tab and the screen reader stay in the sheet)', async () => {
     renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     const parent = checkout();
     fireEvent.click(within(parent).getByRole('link', { name: 'Regulamin' }));
     const dialog = await sheet(TERMS);
@@ -159,7 +159,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('step 2: both footer links open their documents in the sheet', async () => {
     renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     await toStep2();
     fireEvent.click(within(checkout()).getByRole('link', { name: 'Polityka prywatności' }));
     const privacy = await sheet(PRIVACY);
@@ -172,7 +172,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('step 3: the consent links open the sheet and the checkout keeps its choices (option, ticked box)', async () => {
     renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     fireEvent.click(within(checkout()).getByRole('radio', { name: /Dostęp na 30 dni/ }));
     await toStep3Cheaper();
     const terms = within(checkout()).getByRole('checkbox', { name: /Akceptuję/ }) as HTMLInputElement;
@@ -207,7 +207,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('each step has exactly one link to the Terms and none to the Patron Zone Terms draft; the seller card carries no link of its own', async () => {
     renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     for (const step of [1, 2, 3]) {
       if (step === 2) await toStep2();
       if (step === 3) {
@@ -243,7 +243,7 @@ describe('legal sheet in the patron checkout', () => {
 
   it('keeps the page scroll locked after the sheet closes (the checkout under it still owns the lock)', async () => {
     renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
+    await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     const locked = () => document.documentElement.style.overflow === 'hidden' || document.documentElement.style.overflowY === 'hidden';
     expect(locked()).toBe(true);
     fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
@@ -276,7 +276,7 @@ describe('legal sheet in the patron checkout', () => {
 
     it('a long swipe closes the sheet only; a short one springs back', async () => {
       const { onOpenChange } = renderCheckout();
-      await screen.findByRole('dialog', { name: 'Kup se Premium' });
+      await screen.findByRole('dialog', { name: 'Dostęp Premium' });
       fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
       const dialog = await sheet(TERMS);
       const head = dialog.querySelector('[class*="head"]') as HTMLElement;
@@ -286,12 +286,12 @@ describe('legal sheet in the patron checkout', () => {
       swipe(head, 100, 260);
       await waitFor(() => expect(dialog).not.toBeInTheDocument());
       expect(onOpenChange).not.toHaveBeenCalled();
-      expect(screen.getByRole('dialog', { name: 'Kup se Premium' })).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Dostęp Premium' })).toBeInTheDocument();
     });
 
     it('a mouse never starts a swipe, and the Close button is not a drag handle', async () => {
       renderCheckout();
-      await screen.findByRole('dialog', { name: 'Kup se Premium' });
+      await screen.findByRole('dialog', { name: 'Dostęp Premium' });
       fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
       const dialog = await sheet(TERMS);
       const head = dialog.querySelector('[class*="head"]') as HTMLElement;
