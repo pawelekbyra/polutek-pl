@@ -10,6 +10,7 @@ import BrandHomeLink from "./BrandHomeLink";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
+import TopbarPremiere from "./TopbarPremiere";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useSwitchLanguage } from "./useSwitchLanguage";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
@@ -164,6 +165,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 {/* The link box is 44px tall for touch but contributes 38px to the bar (-my-[3px]); ml-2 on phones lines the logo up with the 16px page gutter. */}
                 <BrandName decorative />
               </BrandHomeLink>
+              <TopbarPremiere />
             </div>
 
             {/* Desktop search */}
