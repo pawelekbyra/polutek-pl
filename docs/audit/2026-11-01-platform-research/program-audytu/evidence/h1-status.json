@@ -1350,7 +1350,7 @@
     "environment_config_changed": false
   },
   "local_resumption": {
-    "date": "2026-11-03",
+    "date": "2026-11-04",
     "branch": "docs/polutek-platform-audit",
     "core_cherry_picks": [
       "00ea71cb",
@@ -1444,6 +1444,25 @@
       "lint_exit": 0,
       "evidence": "k06-local-producer-2026-11-03/postgres/result.json"
     },
-    "next": "OTHER_H1_GATES_THEN_K06_CONSUMERS_FULL_PRODUCT"
+    "next": "READ_RELEASE_CONTRACT_AND_CONSUMERS_THEN_NEW_NEGATIVE_CONSUMER_TESTS_AFTER_RESUME",
+    "status": "STOPPED_BY_OWNER_WEEKLY_BUDGET",
+    "completed_code_sha": "2d081d7f",
+    "wip_scope": "K06 consumers, real five-image/product acceptance, K05 decisions; no registry publisher implementation started",
+    "resume_only_on_explicit_owner_request": true,
+    "no_uncommitted_code_expected": true,
+    "final_gates": {
+      "application_types": "PASS",
+      "architecture": "PASS",
+      "hotspots": "PASS",
+      "strict_escapes": "PASS",
+      "transaction_tests_passed": 61,
+      "ui_studio_i18n_tests_passed": 253,
+      "failed": 0,
+      "skipped": 0,
+      "lint_errors": 0,
+      "lint_warnings": 12,
+      "evidence": "k06-local-producer-2026-11-03/final-gates/result.json",
+      "release_ready": false
+    }
   }
 }

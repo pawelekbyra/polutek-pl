@@ -1,20 +1,40 @@
-# Stan badania — punkt wznowienia
+# Stan badania i napraw — punkt wznowienia
 
-## Bieżące wznowienie lokalne — 3 listopada 2026
+## ZATRZYMANE na polecenie właściciela — 4 listopada 2026
 
-Praca wyłącznie `/opt/codex/polutek-pl/.worktrees/platform-audit`, gałąź `docs/polutek-platform-audit`, według `/opt/codex/ZADANIE-AUDYT.md`. Bez przełączania na historyczną gałąź PR, publikowania PR, merge i deploy. Rdzeń K06 zaadaptowany z czterech istniejących commitów do `37eb1edb` (mapa w DECYZJE-DO-WLASCICIELA.md). Inne wcześniejsze poprawki H1 nie są automatycznie obecne w tej gałęzi.
+Właściciel polecił zakończyć bieżącą pracę przy pozostałym 1% limitu tygodniowego, zapisać zielone części i osobny checkpoint WIP. **Nie wznawiać automatycznie.** Nie zaczynać nowych pakietów ani ciężkich testów przed nowym poleceniem właściciela.
 
-Dodano lokalne budowanie pięciu obrazów z przypiętych wejść i seal niezmiennych ID: 82/82 testy, lint PASS; tsc całego repo exit 2, bez diagnostyk zmienionych plików K06. Dowody `evidence/k06-local-producer-2026-11-03/build-result.json`. Kontrolny port Dockera nie zastępuje rzeczywistych obrazów. K06/H1 niezamknięte; szacunek historyczny H1 ~80%, całość 5–10% bez podwyższenia.
+Jedyny katalog: `/opt/codex/polutek-pl/.worktrees/platform-audit`, gałąź `docs/polutek-platform-audit`. Prompt `/opt/codex/ZADANIE-AUDYT.md`; ostatnie polecenie zatrzymania ma pierwszeństwo. Bez push, PR, main, merge, wdrożeń i produkcji. Kod ukończonej części zapisany w **`2d081d7f`**. Ten checkpoint WIP zapisuje niedokończony zakres H1/K06; nie ma pozostawionego niesprawdzonego kodu roboczego ani działających własnych testów/kontenerów. Stan Git po zapisie ma być czysty.
 
-**Aktualny pakiet:** baseline K03 przeniesiony z `76ba1ff4`, `f3e9c323`, `58f62ddd`, `6b939d7d`, `d4a8fe2b`, konflikty rozwiązane bez zmian wyglądu. Typecheck całego repo 0 błędów (wcześniej 82), pełny unit przez częściowe local-CI: **4729 PASS / 0 FAIL / 3 pominięte, 540 plików**, źródła stabilne; pełny lint 0 błędów / 100 ostrzeżeń. Po unit tylko trzy nazwy zmiennych helperów audytu poprawione do lint i zapis dokumentacji; raw snapshot zachowany. Dowód `evidence/k06-local-producer-2026-11-03/baseline/result.json`. Trzy pominięcia: dwa e-mail DB oraz HDR. To nie jest pełne CI ani dowód wydania.
+### Ukończone części i dowody
 
-HDR zapisany w `f9e5b027`: strict RED (2pass/1skip) → **3/3 realne encody**, źródła stabilne, lint/focused types PASS. Dowód `hdr/result.json`. Baseline commit `d72dc0e5`.
+- Rdzeń K06 przeniesiony czterema commitami; nowy producent pełnych ścisłych kontroli, losowy runId, prawdziwe archiwum Git, budowanie pięciu obrazów z przypiętych wejść, kontrola rzeczywistego użycia baz przez Dockerfile. **Konsumenci nie są podłączeni.** Commity i dowody: `MAPA-COMMITOW.csv` oraz `../POSTEP-NAPRAW.md`.
+- `d72dc0e5`: pełny unit przez jawnie częściowe local-CI **4729 PASS/0 FAIL/3skip,540 plików**, sourceStable=true; całe repo TypeScript0 błędów; pełny lint0 błędów/100 ostrzeżeń. Te wyniki zachowują własny wcześniejszy snapshot i nie są przypisywane do późniejszych zmian.
+- `f9e5b027`: strict HDR RED2pass/1skip → **3/3 rzeczywiste kodowania FFmpeg**, lint/focused types PASS. Enkoder niezmieniony.
+- `1aaef191`: rzeczywisty PostgreSQL17.11/Prisma6.19.3/81 niezmienionych migracji: RED64pass/11fail w dwóch nieprawidłowych fixture → **77/77,13 plików,zero skip**, w tym oba e-mail DB. Nowy guard obowiązkowych plików:9 RED→48/48 wraz z regresjami kompilatora. Lint/focused types PASS. Dwa własne kontenery usunięte i sprawdzone po ID; produkcja nietknięta.
+- `2d081d7f`: dwie regresje istniejącej transakcji RED→GREEN; **61/61** testów modułu i powiązanych przypadków, **253/253** komponentów/Studia/i18n, bez skip. Typy aplikacji, architektura, hotspots i strict-escapes PASS. Lint14 zmienionych plików0 błędów/12 ostrzeżeń. Poprzednio zielone ci-parity/migracje/env. Widoki/kontrakty wydzielone bez zmiany tekstów, klas i budżetów. Nie wykonywano po tym pełnego unit, pełnego typecheck-all, obu buildów ani obrazu aplikacji.
 
-Realny PostgreSQL ukończony w tym zakresie: **77/77,13 plików, bez skip**, PostgreSQL17.11/Prisma6.19.3/81 niezmienionych migracji, oba e-mail DB wykonane. Przed poprawką fixture z `8dce5f94`:64pass/11fail, dwie nieprawidłowe fixture. Nowy guard każdego pliku PG i e-mail:9 RED, potem48/48 z istniejącymi regresjami kompilatora. Lint/focused types PASS. Dwa własne kontenery sprzątnięte, potwierdzone po ID. `postgres/result.json` rozdziela rzeczywiste DB od kontrolowanych providerów; to nie pełny produkt. Nie przepisywać starego raw unit: jego3skip mają teraz osobne rzeczywiste dowody.
+Dowody bieżącej sesji: `evidence/k06-local-producer-2026-11-03/` (katalog nazwany datą rozpoczęcia; ostatni pakiet ma datę4 listopada). Finalny pakiet: `final-gates/result.json`. Starsze raw wyniki, Windows, partia17, ASVS i R01–R37 zachowane. Nie zaliczono nowych ASVS ani całych pakietów roadmapy. H1 historycznie około80%, całość5–10%; bez podnoszenia szacunku na podstawie samych kontroli częściowych.
 
-**Następny krok:** pozostałe bramki H1: ci-parity/migracje/architektura/hotspots/strict-escapes/env i typy aplikacji; potem pozostali konsumenci K06 i pełny własny cykl API/kolejka/storage/Worker. Nie używać produkcji.
+### W toku / WIP i następny krok
 
-**Komenda wznowienia:** `nice -n 10 node scripts/ops/local-ci.mjs --only=ci-parity,migrations,architecture,hotspots,strict-escapes,env,typecheck --skip=prisma --jobs=1 --strict`. Zapisać czerwone wyniki przed przywróceniem pozostałych małych refaktorów H1 (`a3874d49`, `3417985b`, `89e8e31d`, `466d75f1`) bez zmian wyglądu i budżetów. Nie powtarzać pełnego unit bez potrzeby; obecny jest zielony. Bramka audit i pełny producent nadal nieuruchamiane po historycznej odmowie uploadu grafu. Brak gotowości wydania, formalnych zamknięć, PR/push/main/merge/deploy; H1 historycznie~80%, całość5–10%.
+1. **K06:** producent i walidatory istnieją; `images.yml`, `deploy.sh`, `deploy-admin.sh`, `mergedeploy.sh`, obrazy istniejące/GHCR i rollback nadal nie korzystają z protokołu. Trzeba zaprojektować testy odmowy całych ścieżek, podłączyć verify przed publikacją/migracjami/aktywacją, przekazywać zaufany SHA/hash i używać zwróconych niezmiennych ID. Publikator rejestru i jego nowe testy NIE zostały rozpoczęte; rozważania nie są implementacją.
+2. Brak kompletnego dowodu wydania pięciu rzeczywistych obrazów, w tym migratora i kolektora, oraz pełnego własnego HTTP/API/kolejka/Redis/storage/Worker/HLS. Połączenia zewnętrznych providerów w części testów pozostają kontrolowane. Brak nowego pełnego przyjęcia produktu i buildów na końcowym SHA.
+3. K05/DP01–DP09 i aktywny profil nadal otwarte. Nie zmieniać samodzielnie live płatności, prawnych dokumentów, logowania/CSRF, TTL, retencji, usuwania danych, ról/uprawnień, kluczy i DNS.
+4. `audit` nadal obowiązkowy, niewykonany po wcześniejszej automatycznej odmowie uploadu prywatnego grafu zależności. Nie obchodzić odmowy ani podstawiać PASS. Brak `release_ready`.
+5. H2 i dalsze pakiety nie rozpoczęte. Nie powtarzać zielonego pełnego unit17 minut bez zmiany uzasadniającej powtórzenie; po wznowieniu dobierać kontrole do zmienianego zakresu.
+
+### Komenda do wznowienia — wyłącznie po nowym poleceniu właściciela
+
+```bash
+cd /opt/codex/polutek-pl/.worktrees/platform-audit
+git status --short
+git log -5 --oneline
+sed -n '1,180p' docs/operations/RELEASE-PROOF.md
+rg -n 'push:|docker build|docker pull|start_app|start_admin|rollback' .github/workflows/images.yml deploy/serwerek/deploy.sh deploy/serwerek/deploy-admin.sh scripts/ops/mergedeploy.sh
+```
+
+Potem przygotować nowy mały pakiet testów konsumenta K06 (RED przed implementacją), bez uruchamiania skryptów wdrożeniowych na hoście/produkcji. Nie przełączać na historyczną gałąź PR #2065. Późniejsze historyczne polecenia pracy/push/deploy nie zastępują tego punktu zatrzymania.
 
 ## Historyczny stan przekazania z poprzedniej instancji
 

@@ -2,7 +2,7 @@
 
 Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-audit`** w repozytorium `pawelekbyra/polutek-pl`. Właściciel 1 listopada 2026 polecił zachowywać tutaj także poprzednie badanie i dopisywać kolejne wnioski na tej samej gałęzi.
 
-**Roadmapa v1 zatwierdzona; realizacja trwa lokalnie na `docs/polutek-platform-audit`.** Producent K06 i kontrola przypiętych baz są zaimplementowane; pełny unit4729/0fail/3skip, typy i lint przeszły. Trzy pominięcia mają osobne dowody: realny PostgreSQL77/77 z e-mail DB i FFmpeg3/3 z HDR. Pozostają inne bramki H1, konsumenci K06 i pełny produkt. [Bieżący postęp](POSTEP-NAPRAW.md), [punkt wznowienia](program-audytu/STAN.md). Bez PR, scalenia i wdrożenia. Szersze ASVS pozostaje odłożone; wyniki Windows i partia17 zachowane.
+**Praca zatrzymana na polecenie właściciela 4 listopada2026 (limit tygodniowy1%).** Zielony kod do `2d081d7f`, osobny checkpoint WIP, bez automatycznego wznowienia. [Bieżący stan i komenda wznowienia](program-audytu/STAN.md), [postęp i dowody](POSTEP-NAPRAW.md), [mapa commitów](program-audytu/MAPA-COMMITOW.csv). Producent K06 istnieje, konsumenci i pełny produkt pozostają do dokończenia. Bez PR/push/merge/deploy; stare wyniki zachowują przypisanie do swoich SHA.
 
 ## Zacznij tutaj
 

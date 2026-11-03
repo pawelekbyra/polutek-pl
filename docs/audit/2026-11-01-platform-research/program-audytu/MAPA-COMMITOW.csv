@@ -8,3 +8,5 @@ K06-build-types,7d5db46c,program-audytu/evidence/k06-local-producer-2026-11-03/n
 K02-runtime,04ca6503,program-audytu/evidence/k06-local-producer-2026-11-03/k02-runtime/result.json,CZESCIOWO
 K03-baseline,d72dc0e5,program-audytu/evidence/k06-local-producer-2026-11-03/baseline/result.json,CZESCIOWO
 K01-K03-HDR,f9e5b027,program-audytu/evidence/k06-local-producer-2026-11-03/hdr/result.json,CZESCIOWO
+K01-K03-real-PG-email,1aaef191,program-audytu/evidence/k06-local-producer-2026-11-03/postgres/result.json,CZESCIOWO
+K03-final-gates,2d081d7f,program-audytu/evidence/k06-local-producer-2026-11-03/final-gates/result.json,CZESCIOWO

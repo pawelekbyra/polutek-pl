@@ -1,5 +1,20 @@
 # Postęp realizacji roadmapy — H1
 
+## STOP właściciela — 4 listopada 2026
+
+Praca **zatrzymana na wyraźne polecenie właściciela** z powodu pozostałego1% limitu tygodniowego. Nie wznawiać automatycznie. Ukończone zielone części są w lokalnych commitach, ostatni kod **`2d081d7f`**; osobny commit WIP zawiera checkpoint niedokończonej integracji H1/K06. Kod roboczy nie pozostał niesprawdzony ani niezapisany. Nie uruchamiano nowych pakietów ani ciężkich testów po poleceniu zatrzymania; dokończono tylko lint aktualnych14 plików i zapis.
+
+Ostatni pakiet: **61/61** testów transakcji i powiązanych modułów, **253/253** komponentów/Studia/i18n,0fail/0skip; typy aplikacji, architektura, hotspots i strict-escapes PASS; lint0 błędów/12 ostrzeżeń. Cztery duże komponenty podzielono bez zmiany klas/tekstów i bez podnoszenia limitów. Dwa testy najpierw odtworzyły błąd `$transaction` w istniejącej transakcji, potem przeszły po użyciu standardowego adaptera. [Dowody](program-audytu/evidence/k06-local-producer-2026-11-03/final-gates/result.json).
+
+Wcześniejsze, osobno przypisane dowody: pełny unit4729/0fail/3skip i whole types/lint (`d72dc0e5`); HDR3/3 (`f9e5b027`); realny PG77/77 z oboma e-mail DB (`1aaef191`). Nie przypisujemy wcześniejszego pełnego unit/typecheck-all do ostatniego SHA. Dwa własne kontenery PG sprzątnięte; brak wdrożeń/push/PR/produkcji.
+
+**WIP:** konsumenci K06 (workflow publikacji, wszystkie deploy/admin/rollback/manualne ścieżki), pięć faktycznych obrazów i pełny własny cykl produktu oraz decyzje K05. Publikator rejestru nie został rozpoczęty. Mandatory audit wciąż niewykonany po historycznej odmowie uploadu grafu. Żaden cały pakiet/ustalenie nie jest formalnie zamknięty; `release_ready=false`, całość szacunkowo5–10%.
+
+**Następny krok i komenda:** [STAN.md](program-audytu/STAN.md), sekcja „Komenda do wznowienia” — tylko po nowym poleceniu właściciela. Najpierw odczytać kontrakt RELEASE-PROOF i obecne konsumenty, potem dodać testy odmowy jednego konsumenta. Nie uruchamiać produkcyjnego deploya ani ponownie pełnego unit bez potrzeby.
+
+## Zapis realizacji przed zatrzymaniem
+
+
 ## Bieżące przejęcie — 3 listopada 2026, lokalna gałąź audytu
 
 Producent dodany po części budowania (`c546726a`): `release-produce.mjs` uruchamia pełne ścisłe CI z jednym slotem, wymaga czystego wskazanego SHA przed/po i świeżego `runId`, tworzy rzeczywiste archiwum Git i dopiero przekazuje je do budowania. **121/121 testów**, lint zmienionych plików i skupiona ścisła kontrola typów PASS. Testy CI/Dockera kontrolowane, Git/tar rzeczywiste. Nie uruchomiono pełnego producenta aplikacji; brak kompletnego dowodu wydania. [Dowody producenta](program-audytu/evidence/k06-local-producer-2026-11-03/produce-result.json).
