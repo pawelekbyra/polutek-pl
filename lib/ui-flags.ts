@@ -34,6 +34,7 @@ export const BRAND_LOGO_VARIANT: BrandLogoVariant = "glasses";
 /**
  * The hand-written premiere note next to the logo in the top bar ("PREMIERA: 01.01.2027."; app/components/TopbarPremiere.tsx).
  * One place for the date (ISO yyyy-mm-dd, shown as dd.mm.yyyy in every language); null hides the note.
+ * Hidden since 2026-11-04 (owner): to bring it back set { date: "2027-01-01" }; component, CSS, font and tests stay.
  */
 export type TopbarPremiereConfig = { date: string };
-export const TOPBAR_PREMIERE: TopbarPremiereConfig | null = { date: "2027-01-01" };
+export const TOPBAR_PREMIERE: TopbarPremiereConfig | null = null;
