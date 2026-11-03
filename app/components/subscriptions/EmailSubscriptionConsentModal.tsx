@@ -3,7 +3,6 @@
 import React from "react";
 import { CloseButton } from "@/components/ui/close-button";
 import { useLanguage } from "../LanguageContext";
-import { LegalDocLink } from "../legal/LegalDocLink";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { txRichTidy } from "@/lib/i18n/rich";
 import { tidyWrap } from "@/lib/i18n/typography";
 import { htmlLang } from "@/lib/i18n/ui";
 
@@ -50,7 +48,7 @@ export default function EmailSubscriptionConsentModal({
           <DialogTitle className="min-w-0 break-words px-6 text-balance font-brand text-2xl font-bold leading-tight tracking-tight">
             {tidyWrap(t.confirmSubscribeTitle, language)}
           </DialogTitle>
-          <DialogDescription className="text-balance break-words hyphens-auto text-left text-sm leading-relaxed text-[var(--chan-muted)]">
+          <DialogDescription className="mx-auto max-w-[38ch] text-balance break-words hyphens-auto text-center text-sm leading-relaxed text-[var(--chan-muted)]">
             {tidyWrap(t.confirmSubscribeText, language, { widow: true })}
           </DialogDescription>
         </DialogHeader>
@@ -79,15 +77,6 @@ export default function EmailSubscriptionConsentModal({
             {t.no}
           </button>
         </div>
-          <p data-testid="email-consent-legal" className="mt-4 text-balance break-words hyphens-manual text-center text-[11px] min-[360px]:text-xs leading-relaxed text-[var(--chan-muted)]">
-            {txRichTidy(
-              tx,
-              "Zgodę wycofasz w każdej chwili. Szczegóły: {0} i {1}.",
-              "You can withdraw consent at any time. Details: {0} and {1}.",
-              <><br /><LegalDocLink doc="privacy" language={language}>{tx("Polityka prywatności", "Privacy Policy")}</LegalDocLink></>,
-              <LegalDocLink doc="terms" language={language}>{tx("Regulamin", "Terms")}</LegalDocLink>,
-            )}
-          </p>
       </DialogContent>
     </Dialog>
   );

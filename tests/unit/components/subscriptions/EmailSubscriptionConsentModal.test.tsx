@@ -109,20 +109,16 @@ describe('EmailSubscriptionConsentModal', () => {
     expect(screen.getByRole('button', { name: 'NIE' })).toHaveProperty('disabled', true);
   });
 
-  it("links the Privacy Policy and the Terms in the reader's language, in a new tab, and says how to withdraw", () => {
-    for (const [language, privacy, terms, privacyHref, termsHref, withdraw] of [
-      ['pl', 'Polityka prywatności', 'Regulamin', '/polityka-prywatnosci', '/regulamin', 'Zgodę wycofasz w każdej chwili'],
-      ['en', 'Privacy Policy', 'Terms', '/en/privacy-policy', '/en/terms', 'withdraw consent at any time'],
-    ] as const) {
+  it("ends right after the buttons: no withdrawal note and no Privacy Policy or Terms links in the modal", () => {
+    for (const language of ['pl', 'en']) {
       lang.language = language;
       render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
-      expect(screen.getByTestId('email-consent-legal').textContent!.replace(/ /g, ' ')).toContain(withdraw);
-      for (const [name, href] of [[privacy, privacyHref], [terms, termsHref]]) {
-        const link = screen.getByRole('link', { name });
-        expect(link.getAttribute('href')).toBe(href);
-        expect(link.getAttribute('target')).toBe('_blank');
-        expect(link.getAttribute('rel')).toContain('noopener');
-      }
+      expect(screen.queryByTestId('email-consent-legal')).toBeNull();
+      expect(screen.queryAllByRole('link')).toHaveLength(0);
+      const dialog = screen.getByRole('dialog');
+      expect(dialog.textContent).not.toMatch(/Zgodę wycofasz|withdraw consent/);
+      const buttons = dialog.querySelectorAll('button.min-h-11');
+      expect(dialog.lastElementChild).toBe(buttons[0].parentElement);
       cleanup();
     }
   });
@@ -140,7 +136,8 @@ describe('EmailSubscriptionConsentModal', () => {
       expect(description.className).toContain('text-balance');
       expect(description.className).toContain('hyphens-auto');
       expect(dialog.querySelector('[data-slot="dialog-title"]')!.className).toContain('text-balance');
-      expect(screen.getByTestId('email-consent-legal').className).toContain('text-balance');
+      expect(description.className).toContain('text-center');
+      expect(description.className).not.toContain('text-left');
       cleanup();
     }
   });
