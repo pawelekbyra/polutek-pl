@@ -391,6 +391,7 @@
      Tailwind 4 (the minimum browsers are in package.json "browserslist") already requires
      color-mix(), so there is no static fallback block any more. */
   :root {
+    --cm-gray-14: color-mix(in srgb, var(--chan-muted) 14%, transparent);
     --cm-amber-14: color-mix(in srgb, var(--chan-amber) 14%, transparent);
     --cm-amber-18: color-mix(in srgb, var(--chan-amber) 18%, transparent);
     --cm-amber-20: color-mix(in srgb, var(--chan-amber) 20%, transparent);

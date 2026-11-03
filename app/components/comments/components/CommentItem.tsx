@@ -51,6 +51,9 @@ interface CommentItemProps {
   isReply?: boolean;
 }
 
+/** Ring colour per badge (all the same width and offset). Grey is --chan-muted, 5.9:1 on white. */
+const AVATAR_RING = { AUTHOR: "ring-[var(--chan-blue)]", VIP: "ring-[var(--chan-amber-bright)]", BASE: "ring-[var(--chan-muted)]" } as const;
+
 /** Avatar sizes: replies are visibly subordinate to their parent. */
 const AVATAR_SIZE = 40;
 const REPLY_AVATAR_SIZE = 24;
@@ -89,7 +92,7 @@ function CommentItemComponent({
   const avatarRing = authorBadge
     ? cn(
         "border-transparent ring-2 ring-offset-2 ring-offset-[var(--chan-card)]",
-        authorBadge === "AUTHOR" ? "ring-[var(--chan-blue)]" : "ring-[var(--chan-amber-bright)]",
+        AVATAR_RING[authorBadge],
       )
     : undefined;
   const [isEditing, setIsEditing] = useState(false);

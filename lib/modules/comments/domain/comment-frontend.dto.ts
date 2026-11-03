@@ -14,8 +14,10 @@ export type CommentReactionDto = 'LIKE' | 'DISLIKE';
 /**
  * 'VIP' is a bare yes/no: the author holds an ACTIVE, PAID patron-zone access (never a tip or donation: tips buy no
  * public distinction, CLAUDE.md 4.1). It carries no date, product or price.
+ * 'BASE' is the plain counterpart ("Normik"): a real, not deleted author who is neither the video's creator nor VIP, and only
+ * when the VIP lookup actually ran (a failed lookup must not label VIPs as BASE).
  */
-export type CommentAuthorBadgeDto = 'ADMIN' | 'AUTHOR' | 'VIP';
+export type CommentAuthorBadgeDto = 'ADMIN' | 'AUTHOR' | 'VIP' | 'BASE';
 
 export type AccessTierDto = 'PUBLIC' | 'LOGGED_IN';
 

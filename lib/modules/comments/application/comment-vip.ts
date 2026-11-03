@@ -20,15 +20,15 @@ export function collectAuthorIds(rows: readonly RowWithAuthor[]): string[] {
 
 /**
  * The authors among these rows with an active PAID patron-zone access ("VIP" badge): ONE batched query for the whole
- * page, never one per comment. Purely decorative, so a failure only drops the badge and never breaks the comments.
+ * page, never one per comment. Purely decorative, so a failure only drops the badges and never breaks the comments.
  */
-export async function loadVipAuthorIds(ctx: Pick<AppContext, "prisma" | "now">, rows: readonly RowWithAuthor[]): Promise<ReadonlySet<string>> {
+export async function loadVipAuthorIds(ctx: Pick<AppContext, "prisma" | "now">, rows: readonly RowWithAuthor[]): Promise<ReadonlySet<string> | undefined> {
   const ids = collectAuthorIds(rows);
   if (ids.length === 0) return new Set();
   try {
     return await listVipUserIds(ctx.prisma, ids, ctx.now());
   } catch (error) {
     console.warn("[comments] VIP badges skipped", error instanceof Error ? error.message : "unknown");
-    return new Set();
+    return undefined; // unknown: no VIP and no BASE badges (never call a VIP "Normik")
   }
 }

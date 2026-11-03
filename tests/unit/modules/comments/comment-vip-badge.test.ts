@@ -68,9 +68,27 @@ describe("comment DTO: VIP badge", () => {
     const vip = mapCommentToDto(row("c1", "vip-1"), { ...baseContext, vipAuthorIds: new Set(["vip-1"]) });
     const plain = mapCommentToDto(row("c2", "plain"), { ...baseContext, vipAuthorIds: new Set(["vip-1"]) });
     expect(vip.author?.badges).toEqual(["VIP"]);
-    expect(plain.author?.badges).toEqual([]);
+    expect(plain.author?.badges).toEqual(["BASE"]);
     expect(Object.keys(vip.author!).sort()).toEqual(["badges", "displayName", "id", "imageUrl", "username"]);
     expect(JSON.stringify(vip)).not.toMatch(/expires|grantedAt|ACCESS_|priceMinor|premium|patron/i);
+  });
+
+  it("BASE ('Normik'): everyone with an account who is neither creator nor VIP; hierarchy creator > VIP > BASE", () => {
+    const ctx = { ...baseContext, vipAuthorIds: new Set(["vip-1", "creator-1"]) };
+    expect(mapCommentToDto(row("a", "plain"), ctx).author?.badges).toEqual(["BASE"]);
+    expect(mapCommentToDto(row("b", "vip-1"), ctx).author?.badges).toEqual(["VIP"]);
+    expect(mapCommentToDto(row("c", "creator-1"), ctx).author?.badges).toEqual(["AUTHOR", "VIP"]);
+    expect(mapCommentToDto(row("d", "creator-1"), { ...baseContext, vipAuthorIds: new Set() }).author?.badges).toEqual(["AUTHOR"]);
+    expect(getAuthorBadge({ id: "x", displayName: "x", username: null, imageUrl: null, badges: ["BASE"] })).toBe("BASE");
+    expect(getAuthorBadge({ id: "x", displayName: "x", username: null, imageUrl: null, badges: ["VIP", "BASE"] })).toBe("VIP");
+    expect(getAuthorBadge({ id: "x", displayName: "x", username: null, imageUrl: null, badges: ["AUTHOR", "VIP", "BASE"] })).toBe("AUTHOR");
+  });
+
+  it("no BASE without a VIP lookup (admin panel, failed lookup) and none for deleted accounts or hidden content", () => {
+    expect(mapCommentToDto(row("a", "plain"), baseContext).author?.badges).toEqual([]);
+    const set = new Set<string>();
+    expect(mapCommentToDto(row("d", "gone", { author: author("gone", { isDeleted: true }) }), { ...baseContext, vipAuthorIds: set }).author?.badges).toEqual([]);
+    expect(mapCommentToDto(row("h", "plain", { status: CommentStatus.HIDDEN }), { ...baseContext, vipAuthorIds: set }).author).toBeNull();
   });
 
   it("nobody is marked when the context carries no VIP set", () => {
@@ -79,7 +97,7 @@ describe("comment DTO: VIP badge", () => {
 
   it("the creator who is also VIP gets both flags in the DTO, and the UI shows only 'Twórca' (one pill, no growth)", () => {
     const dto = mapCommentToDto(row("c1", "creator-1", { author: author("creator-1", { role: "ADMIN" }) }), { ...baseContext, vipAuthorIds: new Set(["creator-1"]) });
-    expect(dto.author?.badges).toEqual(["ADMIN", "AUTHOR", "VIP"]);
+    expect(dto.author?.badges).toEqual(["ADMIN", "AUTHOR", "VIP"]); // no BASE next to AUTHOR/VIP
     expect(getAuthorBadge(dto.author)).toBe("AUTHOR");
     expect(getAuthorBadge({ ...dto.author!, badges: ["VIP"] })).toBe("VIP");
     expect(getAuthorBadge({ ...dto.author!, badges: ["ADMIN"] })).toBeNull();
@@ -114,7 +132,7 @@ describe("loadVipAuthorIds", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const prisma = { appSetting: { findMany: vi.fn().mockRejectedValue(new Error("db down")) } };
     const result = await loadVipAuthorIds({ prisma: prisma as never, now: () => NOW }, [row("a", "u1")]);
-    expect(result.size).toBe(0);
+    expect(result).toBeUndefined(); // unknown: so neither VIP nor BASE badges are shown
     warn.mockRestore();
   });
 });
@@ -160,9 +178,9 @@ describe("comment list use cases: one batched lookup for the whole page (no N+1)
     expect(findMany).toHaveBeenCalledTimes(1);
     const byId = Object.fromEntries(result.data.comments.map((c) => [c.id, c.author?.badges]));
     expect(byId["c20"]).toEqual(["VIP"]);
-    expect(byId["c21"]).toEqual([]);
+    expect(byId["c21"]).toEqual(["BASE"]);
     expect(byId["c22"]).toEqual(["VIP"]);
-    expect(byId["c0"]).toEqual([]);
+    expect(byId["c0"]).toEqual(["BASE"]);
     expect(result.data.comments.find((c) => c.id === "c-with-replies")?.repliesPreview[0].author?.badges).toEqual(["VIP"]);
     expect(JSON.stringify(result.data)).not.toMatch(/ACCESS_|expiresAt|grantedAt|priceMinor/);
   });
@@ -176,6 +194,6 @@ describe("comment list use cases: one batched lookup for the whole page (no N+1)
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(findMany).toHaveBeenCalledTimes(1);
-    expect(result.data.replies.map((r) => r.author?.badges)).toEqual([["VIP"], [], ["VIP"], []]);
+    expect(result.data.replies.map((r) => r.author?.badges)).toEqual([["VIP"], ["BASE"], ["VIP"], ["BASE"]]);
   });
 });
