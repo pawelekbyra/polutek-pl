@@ -5,7 +5,6 @@
 // and the Terms / Privacy Policy as plain LINKS: nothing to tick before step 3. The browser only names a product and a
 // currency; the server owns the price table.
 import React, { useId } from "react";
-import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/routing";
 import { getLocalizedHref } from "@/lib/i18n/routing";
@@ -37,6 +36,20 @@ export function PassOrderSummary({ tx, language, offer, product, currency, compa
   }
   return (
     <div role="group" aria-label={tx("Podsumowanie zamówienia", "Order summary")}>
+      {totalOnly ? (
+        <div className={cn(styles.order, styles.orderSolo)}>
+          <div className={styles.orderSoloRow}>
+            <div>
+              <span className={styles.orderSoloLabel}>{totalLabel(tx)}</span>
+              <span className={styles.orderSoloNote}>{productNote(tx, product)}</span>
+            </div>
+            <div>
+              <b className={styles.orderSoloPrice}>{total}</b>
+              <small className={styles.orderSoloVat}>{vatLine(tx)}</small>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className={styles.order}>
         {!totalOnly && (
           <div className={styles.orderLine}>
@@ -47,12 +60,13 @@ export function PassOrderSummary({ tx, language, offer, product, currency, compa
             <b>{total}</b>
           </div>
         )}
-        <div className={cn(styles.orderTotal, totalOnly && styles.orderTotalSolo)}>
+        <div className={styles.orderTotal}>
           <span>{totalLabel(tx)}</span>
           <b>{total}</b>
           <small>{vatLine(tx)}</small>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -104,11 +118,13 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
           {offer.products.map((p) => (
             <label key={p.id} className={styles.product}>
               <input type="radio" name={`${ids}-product`} value={p.id} checked={p.id === product.id} onChange={() => onProduct(p.id)} />
-              <span className={styles.productCheck} aria-hidden="true"><Check size={14} strokeWidth={3} focusable="false" /></span>
-              {p.bestValue ? <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span> : <span className={styles.badgeSlot} aria-hidden="true" />}
+              <span className={styles.productCheck} aria-hidden="true" />
+              {p.bestValue && <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span>}
               <span className={styles.productName}>{productName(tx, p.id)}</span>
-              <span className={styles.productPrice}>{price(language, p.prices[currency], currency)}</span>
-              <span className={styles.productNote}>{productNote(tx, p)}</span>
+              <span className={styles.productFoot}>
+                <span className={styles.productPrice}>{price(language, p.prices[currency], currency)}</span>
+                <span className={styles.productNote}>{productNote(tx, p)}</span>
+              </span>
             </label>
           ))}
         </div>
