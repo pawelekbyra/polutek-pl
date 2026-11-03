@@ -312,3 +312,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Weryfikator i strażnik critical przeniesione z historycznych commitów. Ponowiony rzeczywisty RED: 26/31 błędów; GREEN: 31/31. Strażnik 13/13 na prawdziwym Vitest, właściwe critical 36/36 w obu plikach, bez skip.
 - Lint i focused types PASS, DB/providerzy nadal syntetyczni; brak dowodu prawdziwego restore i dostarczenia powiadomień. K03/K06 otwarte. Bez zmian produkcji/schematu/danych/polityki.
+
+## 3 listopada 2026 — K06: rzeczywiste bramkowanie typów przy budowie
+
+- Przywrócono `ignoreBuildErrors=false` obu aplikacji z wcześniejszego H1. Sześć nowych izolowanych buildów rzeczywistego Next 16.3.8: baseline akceptował dwa celowe błędy, poprawka oba odrzuca i oba legalne warianty przyjmuje. Dokładny komunikat TypeScript sprawdzony, lint PASS.
+- To nie są buildy całego produktu ani dowód patched runtime K02. H1/K06 otwarte, ~80% / 5–10% bez zmiany, bez produkcji/publikacji.

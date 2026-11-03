@@ -98,3 +98,5 @@ Producent `release-produce.mjs` nadaje każdemu uruchomieniu losowe `POLUTEK_CI_
 ## Obowiązkowe zestawy krytyczne
 
 `npm run test:critical-path -- --maxWorkers=1` wymaga obu plików: procesowych regresji weryfikatora odtworzonej bazy i `launch-candidate-critical-path.test.ts`. Brak pliku, zero testów, wykluczenie w konfiguracji, skip/todo lub błąd procesu/raportu oznacza porażkę. Filtry Vitest i `--passWithNoTests` nie są przyjmowane. Opcjonalne `--report-json=<plik>` zachowuje raport po sukcesie. Regresje uruchamiają prawdziwe procesy i Vitest, ale granice DB pozostają syntetyczne; nie zastępują SQL ani pełnego odtworzenia produktu.
+
+Obie konfiguracje Next (`next.config.mjs`, `apps/admin/next.config.mjs`) sprawdzają typy także przy budowaniu (`ignoreBuildErrors=false`). Dowód z małych buildów sprawdza działanie konfiguracji, nie zaliczenie całej aplikacji. Nie wyłączać tej kontroli w Dockerze ani ręcznej ścieżce.

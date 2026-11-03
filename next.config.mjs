@@ -32,7 +32,7 @@ const nextConfig = {
   // No `X-Powered-By: Next.js` on every response.
   poweredByHeader: false,
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     // Only hosts the app really renders through the image optimizer (audit SEC-08): every allowed host is

@@ -8,7 +8,9 @@ Domknięto kontrolę konsumowania baz w Dockerfile: dwa testy rzeczywiście czer
 
 Przeniesiono zależności K03 z `7b2b341b`, `e79ec89c` i `03115f0f`: poprawny weryfikator odtworzenia oraz strażnik obu zestawów krytycznych. Na tej gałęzi **26 RED + 5 PASS → 31 PASS** weryfikatora; razem z regresjami strażnika **44/44 PASS**, właściwe `npm run test:critical-path -- --maxWorkers=1` **36/36**, oba pliki bez skip. Lint i skupione strict types PASS. DB/providerzy syntetyczni; w integracji widoczne błędy brakujących fixture powiadomień, których asercje nie sprawdzają. Nie jest to dowód dostarczenia powiadomień ani prawdziwego restore. [Dowody](program-audytu/evidence/k06-local-producer-2026-11-03/critical-result.json).
 
-Następne: pozostałe zależności H1 (m.in. build typecheck obu aplikacji, patche K02 i baseline typów), potem konsumenci K06. Wszystkie pełne pakiety nadal otwarte. K06 pozostaje otwarte, szacunki bez zmian.
+Przywrócono build typecheck obu aplikacji (pochodzenie `f7ff10b5`), zweryfikowany od nowa na tej gałęzi i Next 16.3.8: dwa rzeczywiste buildy akceptowały celowy błąd; po zmianie oba odrzucają dokładnie ten błąd i oba przyjmują poprawny kod. Sześć małych buildów, jeden CPU, lint konfiguracji PASS. [Dowody](program-audytu/evidence/k06-local-producer-2026-11-03/next-typecheck/result.json). Nie są to buildy całej aplikacji ani poprawione wersje K02.
+
+Następne: patche K02 i baseline typów, potem konsumenci K06. Wszystkie pełne pakiety nadal otwarte. K06 pozostaje otwarte, szacunki bez zmian.
 
 Obowiązuje `/opt/codex/ZADANIE-AUDYT.md`: implementacja tylko w tym worktree na `docs/polutek-platform-audit`, bez PR/merge/deploy. Cztery commity rdzenia K06 przeniesiono lokalnie do `37eb1edb`; wcześniejsze wyniki H1 niżej zachowują przypisanie do historycznych SHA. Pozostałych zmian tamtego kandydata jeszcze nie przeniesiono; nie traktować tej gałęzi jako identycznej z f9edc23a.
 

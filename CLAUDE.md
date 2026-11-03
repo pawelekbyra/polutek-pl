@@ -353,6 +353,7 @@ nie otwieraj portów, nie osłabiaj SSH i zapory, nie usuwaj serwera ani dysku, 
 Wdrożenie (`git archive` → `deploy.sh`, panel `deploy-admin.sh`, rollback `--rollback`) opisano w SERWEREK.md rozdz. 7 i wykonuje się tylko na zgodę właściciela.
 
 **Konwencje:**
+- Obie aplikacje Next mają `typescript.ignoreBuildErrors=false`; błąd typu zatrzymuje także budowę obrazu. Osobne CI i powiązanie obrazu z dowodem nadal obowiązują. Nie wyłączać kontroli dla zielonego buildu.
 - `npm run test:critical-path` używa `scripts/test-critical-path.mjs`; oba wymagane pliki muszą wykonać testy, bez pustych, pominiętych lub nieudanych przypadków. Raport procesu jest warunkiem sukcesu.
 - `scripts/verify-restored-database.ts` jest tylko do odczytu odrębnej odtworzonej bazy: błąd dowolnej obowiązkowej kontroli lub manifestu oznacza niezerowy wynik; historia zakończonej/wycofanej migracji nie jest awarią. Kontrakt: `docs/operations/RESTORE-VERIFICATION.md`.
 - Rdzeń K06 (`scripts/ops/release-proof.mjs`, `release/build.mjs`) ma lokalne budowanie pięciu obrazów z przypiętych baz i zapisem ID; przyjmuje tylko pełny ścisły raport na niezmienionych czystych źródłach, komplet wejść i zgodne tożsamości obrazów. Oczekiwany hash dowodu musi pochodzić spoza weryfikowanego pliku. `scripts/ops/release-produce.mjs` sam uruchamia pełne ścisłe CI i wiąże raport unikalnym `runId`; podłączenie wszystkich ścieżek wydania pozostaje otwarte; nie uznawać samego walidatora za ochronę publikacji. Kontrakt i granice zaufania: `docs/operations/RELEASE-PROOF.md`.

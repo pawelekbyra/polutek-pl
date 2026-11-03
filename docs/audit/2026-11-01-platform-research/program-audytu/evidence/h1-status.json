@@ -1371,6 +1371,14 @@
       "actual_critical_passed": 36,
       "evidence": "k06-local-producer-2026-11-03/critical-result.json",
       "actual_db": false
+    },
+    "next_build_typecheck": {
+      "next": "16.3.8",
+      "actual_isolated_builds": 6,
+      "bad_type_baseline_accepted": 2,
+      "bad_type_fixed_rejected": 2,
+      "valid_fixed_accepted": 2,
+      "evidence": "k06-local-producer-2026-11-03/next-typecheck/result.json"
     }
   }
 }
