@@ -388,7 +388,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           <LegalSheetProvider tx={tx} language={language} demo={!stripeMode}>
           <div className={styles.sheetHead}>
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
-              {tx("Kup se Premium", "Get Premium")}
+              {tx("Dostęp Premium", "Premium access")}
             </DialogPrimitive.Title>
             <DialogPrimitive.Close disabled={locked} aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
           </div>

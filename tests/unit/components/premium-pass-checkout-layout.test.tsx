@@ -44,13 +44,13 @@ describe('patron checkout layout', () => {
     vi.unstubAllGlobals();
   });
 
-  it('the modal title is "Kup se Premium" (capital P), also the accessible name of the dialog', async () => {
+  it('the modal title is "Dostęp Premium" (capital P), also the accessible name of the dialog', async () => {
     openCheckout();
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByRole('heading', { level: 2, name: 'Kup se Premium' })).toBeInTheDocument();
-    expect(dialog).toHaveAccessibleName('Kup se Premium');
+    expect(within(dialog).getByRole('heading', { level: 2, name: 'Dostęp Premium' })).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleName('Dostęp Premium');
     expect(dialog).not.toHaveTextContent('Zostań patronem');
-    expect(dialog).not.toHaveTextContent('Kup se premium');
+    expect(dialog).not.toHaveTextContent('Dostęp premium');
   });
 
   it('step 2 has ONE visible "Metoda płatności" (the dropdown label); the heading for focus and screen readers is visually hidden', async () => {
