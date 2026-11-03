@@ -62,3 +62,14 @@ Odczyt/zmiana strefy: token Cloudflare w `/root/.ai-secrets/secrets.env` (`CLOUD
 ## Powiązane dokumenty
 
 [`NASZA-GAZETKA.md`](NASZA-GAZETKA.md) (analogiczne przejście domeny z home.pl na Cloudflare) · [`EMAIL_SETUP.md`](EMAIL_SETUP.md) · [`SERWEREK.md`](SERWEREK.md) · [`ACCOUNTS.md`](ACCOUNTS.md) · [`AGENT_ACCESS.md`](AGENT_ACCESS.md).
+
+
+## Aktualizacja 2026-11-03: strefa aktywna, konfiguracja wdrozona
+
+* Strefa Cloudflare `pawelperfect.pl`: **active** (NS home.pl ustawione na `magdalena.ns.cloudflare.com` i `robert.ns.cloudflare.com`; aktywacja po `PUT /zones/{id}/activation_check`, ok. 3 min).
+* DNS (poza rekordami z wczesniejszej sekcji): `A @` i `A www` -> `192.0.2.1` (proxied, tylko po to, by ruch przechodzil przez Cloudflare i dzialal redirect); SPF scalony w jeden rekord: `v=spf1 include:_spf.mx.cloudflare.net include:amazonses.com ~all`; DMARC `v=DMARC1; p=none; rua=mailto:<skrzynka wlasciciela>; fo=1` (bez zmian, tryb obserwacji).
+* Redirect Rule (`http_request_dynamic_redirect`): `pawelperfect.pl` i `www.pawelperfect.pl` -> 301 `https://www.pawelperfect.com` + sciezka + query. Test: `http://pawelperfect.pl/abc?x=1` -> `301 Location: https://www.pawelperfect.com/abc?x=1`; to samo dla `https://www.pawelperfect.pl/a/b?y=2`.
+* Transform Rule (`http_response_headers_transform`): `X-Robots-Tag: noindex, nofollow` na calej strefie `.pl`.
+* Email Routing: wlaczony (`status: ready`), rekordy MX `route{1,2,3}.mx.cloudflare.net`; reguly `pawel@`, `kontakt@` i catch-all -> skrzynka wlasciciela.
+* Resend (region `eu-west-1`, domena `pawelperfect.pl`): do strefy dopisano (DNS only) `TXT resend._domainkey` (DKIM), `MX send` -> `feedback-smtp.eu-west-1.amazonses.com` (prio 10), `TXT send` (`v=spf1 include:amazonses.com ~all`), `CNAME rsend` -> `send.forge.rmta.net`. SPF/return-path Resend lezy na subdomenie `send`, wiec nie koliduje z SPF na apeksie. Stan weryfikacji po ok. 30 min: DKIM i CNAME `verified`, MX/TXT `send` `pending` (status domeny `partially_verified`; DNS publiczne poprawne na 1.1.1.1, 8.8.8.8 i serwerach CF). Dopoki Resend nie da `verified`, API odrzuca wysylke z `.pl` (403 `domain is not verified`). Ponawiac `POST /domains/{id}/verify`; walidacja MAIL FROM po stronie SES bywa wolna.
+* Test wysylki: nie wykonano (zablokowany jak wyzej), wyslano 0 maili.
