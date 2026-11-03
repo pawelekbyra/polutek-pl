@@ -29,8 +29,9 @@
   width: min-content;
   white-space: normal;
   text-wrap: balance;
-  color: var(--chan-muted);
-  opacity: 0.85;
+  /* black (owner, 2026-11-04): #0a0a0a on the bar's near-white is ~18:1; --chan-ink (#111827) reads navy-grey next to it */
+  color: #0a0a0a;
+  opacity: 1;
   transform: rotate(-2.5deg);
   transform-origin: center;
   flex: none;

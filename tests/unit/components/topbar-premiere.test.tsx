@@ -55,6 +55,10 @@ describe("TopbarPremiere", () => {
     const css = readFileSync(path.join(process.cwd(), "app/components/TopbarPremiere.module.css"), "utf8");
     expect(css).toContain("pointer-events: none");
     expect(css).toContain("font-display: swap");
+    // black, fully opaque (owner request), AA on the near-white bar: #0a0a0a on #f7f9fc is ~18:1
+    expect(css).toMatch(/color:\s*#0a0a0a;/);
+    expect(css).toMatch(/opacity:\s*1;/);
+    expect(css).not.toContain("--chan-muted");
   });
 
   it("formats ISO dates as dd.mm.yyyy", () => {
