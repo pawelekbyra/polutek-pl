@@ -13,7 +13,7 @@ import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/patron-
 import { TIP_CURRENCY_SYMBOLS, describeTipMethod, tipCurrencyTitle } from "../support/tip-flow-config";
 import { TipSelect } from "../support/TipSelect";
 import { PassSellerCard } from "./PassSellerCard";
-import { price, productName, productNote, vatLine } from "./pass-copy";
+import { price, productName, productNote, totalLabel, vatLine } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
 /** The order summary (name, note, total, VAT line), shown in every step; `compact` is one line for the payment step. */
@@ -38,7 +38,7 @@ export function PassOrderSummary({ tx, language, offer, product, currency, compa
           <b>{total}</b>
         </div>
         <div className={styles.orderTotal}>
-          <span>{tx("Razem do zapłaty (brutto)", "Total to pay (incl. VAT)")}</span>
+          <span>{totalLabel(tx)}</span>
           <b>{total}</b>
           <small>{vatLine(tx)}</small>
         </div>

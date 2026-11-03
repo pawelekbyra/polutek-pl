@@ -122,7 +122,7 @@ describe("the two options, the offer and the access record", () => {
 
   it("offer: PLN, VAT, both products, default, payments info; a malformed offer is dropped", () => {
     const offer = buildPremiumPassOffer({ signedIn: true, premiumCount: 2, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
-    expect(offer).toMatchObject({ currencies: ["PLN", "EUR", "USD", "CHF", "GBP"], vatRatePercent: 23, defaultProductId: "ACCESS_LIFETIME", premiumCount: 2, signedIn: true, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
+    expect(offer).toMatchObject({ currencies: ["PLN", "EUR", "USD", "CHF", "GBP"], vatRatePercent: 0, defaultProductId: "ACCESS_LIFETIME", premiumCount: 2, signedIn: true, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
     expect(offer.products.map((p) => [p.id, p.prices.PLN, p.days])).toEqual([["ACCESS_30D", 1499, 30], ["ACCESS_LIFETIME", 2999, null]]);
     expect(offer.products[0]!.prices).toEqual({ PLN: 1499, EUR: 399, USD: 449, CHF: 399, GBP: 349 });
     expect(cheapestProduct(offer).id).toBe("ACCESS_30D");

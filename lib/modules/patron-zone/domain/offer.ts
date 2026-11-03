@@ -7,11 +7,11 @@ import {
   PATRON_DEFAULT_PRODUCT_ID,
   PATRON_PRICES,
   PATRON_PRODUCTS,
-  PATRON_VAT_RATE_PERCENT,
   patronProduct,
   type PatronCurrency,
   type PatronProductId,
 } from "./config";
+import { vatRatePercentFor } from "@/lib/config/vat";
 import { readPremiumPaymentsDto, type PremiumPaymentsDto } from "./payments-mode";
 
 export type PatronOfferProduct = { id: PatronProductId; days: number | null; prices: Record<PatronCurrency, number>; bestValue?: true };
@@ -40,7 +40,7 @@ export function buildPremiumPassOffer(args: {
 }): PremiumPassOffer {
   return {
     currencies: [...PATRON_CURRENCIES],
-    vatRatePercent: PATRON_VAT_RATE_PERCENT,
+    vatRatePercent: vatRatePercentFor(), // 0 while the seller is VAT-exempt (lib/config/vat.ts); informational, never part of a charge
     products: PATRON_PRODUCTS.map((p) => ({ id: p.id, days: p.days, prices: { ...PATRON_PRICES[p.id] }, ...(p.bestValue ? { bestValue: true as const } : {}) })),
     defaultProductId: PATRON_DEFAULT_PRODUCT_ID,
     premiumCount: args.premiumCount,

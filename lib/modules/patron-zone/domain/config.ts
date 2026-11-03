@@ -16,6 +16,7 @@ export type PremiumPassMode = "off" | "testers" | "all";
  * A 30-day option adds 30 days (from the current end when still active); the unlimited option is a lifetime grant.
  * Nothing renews by itself (no subscription).
  */
+/** The VAT rate used while `VAT_STATUS` is `active` (lib/config/vat.ts; the amounts below are final gross prices in both modes). */
 export const PATRON_VAT_RATE_PERCENT = 23;
 /** Access can be extended by 30-day payments, but never to more than this many days ahead of now. */
 export const PATRON_MAX_AHEAD_DAYS = 365;
@@ -42,7 +43,7 @@ export const PATRON_PRODUCTS: readonly PatronProduct[] = [
 ] as const;
 
 /**
- * THE price table: product x currency, gross amounts in minor units (VAT 23% included), one honest price each (no
+ * THE price table: product x currency, final amounts in minor units (the same in both VAT modes: with `VAT_STATUS=active` VAT 23% is included in them, with `exempt` there is no VAT), one honest price each (no
  * strikethrough, no "was" price). PLN is the owner's price; the other currencies are round-ish retail prices at roughly
  * the PLN price at 2026-10 rates (1 PLN ~ 0.24 EUR / 0.27 USD / 0.20 GBP / 0.22 CHF), all above Stripe's minimum charge.
  * The owner edits the numbers here; the server derives every amount from this table and the fulfilment verifies
