@@ -57,6 +57,12 @@ const AVATAR_RING = { AUTHOR: "ring-[var(--chan-blue)]", VIP: "ring-[var(--chan-
 /** Avatar sizes: replies are visibly subordinate to their parent. */
 const AVATAR_SIZE = 40;
 const REPLY_AVATAR_SIZE = 24;
+/**
+ * The avatar column starts lower than the row: the visible top of the avatar (its 2 px ring + 2 px offset reach 4 px above
+ * the image) lines up with the top of the nick's capital letters. The 18 px name line puts the cap height 4.5 px below
+ * its top (13 px bold, 9 px caps), so the column moves down by 7.5 (cap offset 4.5 + ring 4, less the 1 px the avatar box already sits below the row top). The badge under the avatar goes with it.
+ */
+const AVATAR_COLUMN_NUDGE = 7.5;
 
 function formatCommentAge(date: Date, language: Locale, now: Date) {
   const formatted = formatDistance(date, now, {
@@ -228,7 +234,7 @@ function CommentItemComponent({
       {/* Badges live under the avatar (never next to the name). The column is exactly as wide as the avatar and the pill
           hangs centred from a zero-width slot, so it never changes the column width or the text alignment; the slot only
           reserves its own height under the avatar. */}
-      <div className="relative z-[5] shrink-0" style={{ width: avatarSize }}>
+      <div className="relative z-[5] shrink-0" style={{ width: avatarSize, marginTop: AVATAR_COLUMN_NUDGE }}>
         <div className="relative" style={{ width: avatarSize, height: avatarSize }}>
         {canOpenProfile ? (
           <button
