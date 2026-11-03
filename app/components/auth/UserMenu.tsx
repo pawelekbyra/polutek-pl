@@ -12,9 +12,14 @@ import { CloseButton } from "@/components/ui/close-button";
 import AccountModal from "./AccountModal";
 import LanguageSwitcher from "../LanguageSwitcher";
 import { useSwitchLanguage } from "../useSwitchLanguage";
+import { cn } from "@/lib/utils";
+import { roleRingClass, type RoleBadgeKind } from "@/lib/role-badge";
+import { roleLabel } from "@/lib/role-label";
 
 interface UserMenuProps {
   isAdmin: boolean;
+  /** The viewer's public role (Creator > VIP > Base), from the profile read of the top bar; null/undefined = not known yet. */
+  role?: RoleBadgeKind | null;
 }
 
 /** The language button of the account panel; useSwitchLanguage reads the URL, so it sits in its own Suspense. */
@@ -40,7 +45,7 @@ const studioAccessCache = new Map<string, boolean>();
  * duplicated each other. A modal dialog on every screen size: focus moves in, Esc and the backdrop close it, focus
  * returns to the avatar. Better Auth is the identity backend; the application owns all visible account UI.
  */
-export default function UserMenu({ isAdmin }: UserMenuProps) {
+export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { language, tx } = useLanguage();
@@ -186,14 +191,22 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={tx("Menu konta", "Account menu")}
+        aria-label={role ? `${tx("Menu konta", "Account menu")}: ${roleLabel(role, tx)}` : tx("Menu konta", "Account menu")}
+        data-role={role ?? undefined}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={panelId}
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transform-none motion-reduce:transition-none"
       >
-        <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
-          {avatarImage(36)}
+        {/* Role ring: the same 2 px ring and 2 px gap as the comment avatars (lib/role-badge.ts), a box-shadow, so no
+            layout shift. The avatar is 34 px so the ring (outer 42 px) stays inside the 47 px bar. */}
+        <span
+          className={cn(
+            "flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full border transition-shadow motion-reduce:transition-none",
+            role ? roleRingClass(role) : "border-[var(--chan-line)]",
+          )}
+        >
+          {avatarImage(34)}
         </span>
       </button>
 
