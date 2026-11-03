@@ -1,0 +1,40 @@
+{
+  "next": "16.4.1",
+  "result": "PASS",
+  "observations": [
+    {
+      "test": "native-runtime",
+      "sharp": "0.35.5",
+      "librsvg": "2.63.2",
+      "vips": "8.18.7",
+      "invalidImageRejected": true,
+      "width": 16,
+      "height": 12
+    },
+    {
+      "test": "legal-png",
+      "status": 200,
+      "expected": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "test": "svg-denied",
+      "status": 400,
+      "expected": 400,
+      "contentType": null
+    },
+    {
+      "test": "invalid-image-denied",
+      "status": 400,
+      "expected": 400,
+      "contentType": null
+    },
+    {
+      "test": "foreign-host-denied",
+      "status": 400,
+      "expected": 400,
+      "contentType": null
+    }
+  ],
+  "scope": "Isolated Next fixture using the real public Next config and installed native libraries; not the full application, production build or deployed image."
+}

@@ -10,7 +10,9 @@ Przeniesiono zależności K03 z `7b2b341b`, `e79ec89c` i `03115f0f`: poprawny we
 
 Przywrócono build typecheck obu aplikacji (pochodzenie `f7ff10b5`), zweryfikowany od nowa na tej gałęzi i Next 16.3.8: dwa rzeczywiste buildy akceptowały celowy błąd; po zmianie oba odrzucają dokładnie ten błąd i oba przyjmują poprawny kod. Sześć małych buildów, jeden CPU, lint konfiguracji PASS. [Dowody](program-audytu/evidence/k06-local-producer-2026-11-03/next-typecheck/result.json). Nie są to buildy całej aplikacji ani poprawione wersje K02.
 
-Następne: patche K02 i baseline typów, potem konsumenci K06. Wszystkie pełne pakiety nadal otwarte. K06 pozostaje otwarte, szacunki bez zmian.
+K02 przywrócony z `989682ff`: Next/eslint-config-next 16.4.1 i sharp 0.35.5, zwykłe `npm ci` z prawdziwym generowaniem Prisma PASS. Próba RED ładowała sharp 0.35.4; GREEN ładuje 0.35.5/librsvg 2.63.2/vips 8.18.7. Rzeczywisty loopback HTTP: PNG 200, SVG/błędny plik/obcy host 400. **170/170 testów** (46 obrazów/nagłówków i 124 rdzenia), lint helpera PASS. Na aktualnym Next dodatkowo cztery prawdziwe małe buildy: dwa błędy odrzucone, dwa legalne przyjęte. [Dowody K02](program-audytu/evidence/k06-local-producer-2026-11-03/k02-runtime/result.json). Nie ma nowych obrazów aplikacji ani świeżego npm audit; K02 niezamknięte.
+
+Następne: baseline typów/testów i pozostali konsumenci K06. Wszystkie pełne pakiety nadal otwarte. K06 pozostaje otwarte, szacunki bez zmian.
 
 Obowiązuje `/opt/codex/ZADANIE-AUDYT.md`: implementacja tylko w tym worktree na `docs/polutek-platform-audit`, bez PR/merge/deploy. Cztery commity rdzenia K06 przeniesiono lokalnie do `37eb1edb`; wcześniejsze wyniki H1 niżej zachowują przypisanie do historycznych SHA. Pozostałych zmian tamtego kandydata jeszcze nie przeniesiono; nie traktować tej gałęzi jako identycznej z f9edc23a.
 

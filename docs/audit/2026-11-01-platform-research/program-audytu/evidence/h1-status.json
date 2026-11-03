@@ -1379,6 +1379,16 @@
       "bad_type_fixed_rejected": 2,
       "valid_fixed_accepted": 2,
       "evidence": "k06-local-producer-2026-11-03/next-typecheck/result.json"
+    },
+    "K02_runtime": {
+      "next": "16.4.1",
+      "sharp": "0.35.5",
+      "native_http_pass": true,
+      "tests_passed": 170,
+      "fixed_next_builds": 4,
+      "docker_images": false,
+      "fresh_npm_audit": false,
+      "evidence": "k06-local-producer-2026-11-03/k02-runtime/result.json"
     }
   }
 }

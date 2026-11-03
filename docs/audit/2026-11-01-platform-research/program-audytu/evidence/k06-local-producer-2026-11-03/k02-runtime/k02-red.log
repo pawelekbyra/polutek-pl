@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'0.35.4' !== '0.35.5'
+
+    at file:///opt/codex/polutek-pl/.worktrees/platform-audit/docs/audit/2026-11-01-platform-research/program-audytu/tools/k02-image-runtime-check.mjs:24:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '0.35.4',
+  expected: '0.35.5',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

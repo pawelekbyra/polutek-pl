@@ -317,3 +317,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Przywrócono `ignoreBuildErrors=false` obu aplikacji z wcześniejszego H1. Sześć nowych izolowanych buildów rzeczywistego Next 16.3.8: baseline akceptował dwa celowe błędy, poprawka oba odrzuca i oba legalne warianty przyjmuje. Dokładny komunikat TypeScript sprawdzony, lint PASS.
 - To nie są buildy całego produktu ani dowód patched runtime K02. H1/K06 otwarte, ~80% / 5–10% bez zmiany, bez produkcji/publikacji.
+
+## 3 listopada 2026 — K02: patched runtime na lokalnej gałęzi
+
+- Przeniesiono patch `989682ff`, Next/eslint-config-next16.4.1, sharp0.35.5. Normalne npm ci i prawdziwe Prisma generate, bez npm audit. Nodemailer/zod major bez zmian.
+- RED wersji sharp0.35.4 → GREEN0.35.5/librsvg2.63.2/vips8.18.7, rzeczywisty loopback HTTP (PNG200, pozostałe trzy400),170/170 testów, lint PASS. Cztery dodatkowe rzeczywiste małe buildy aktualnego Next sprawdzają odmowy i legalne warianty.
+- Bez nowych obrazów aplikacji/produkcji/świeżego npm audit, K02/H1 nadal otwarte; szacunki bez zmiany.
