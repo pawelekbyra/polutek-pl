@@ -330,3 +330,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Typecheck całego repo 82 wcześniejsze diagnostyki → 0; full unit przez partial local-CI 4729 PASS/0 FAIL/3skip w540 plikach, sourceStable=true. Lint po trzech leksykalnych poprawkach helperów:0 błędów/100 ostrzeżeń.
 - Dwa pominięte e-mail DB i jeden HDR nadal otwarte. Jawnie częściowe CI, bez grafu audit i gotowości do wydania; źródła/dowody z atrybucją. Mapa zakończonych części w MAPA-COMMITOW.csv.
 - Następne: własny PG/e-mail i HDR, pozostałe H1 i konsumenci K06. Zero formalnych zamknięć, H1 historycznie~80%, całość5–10%.
+
+## 3 listopada 2026 — HDR: brak pominięć w obowiązkowym encoder smoke
+
+- Strict gate potwierdził RED przy 2 PASS/1 skip mimo Vitest exit0. Przywrócono fixture z `a2708f00`, jawne VUI HLG i niezależne ffprobe zamiast dynamicznego skip.
+- GREEN:3/3 rzeczywistych encode, brak skip, lint i focused types PASS. Enkoder i polityka dostępu bez zmian. Pełny pipeline/obrazy K01 nadal otwarte.
+- Następne własny PG i oba e-mail DB; dostępny obraz17-alpine, bez pobierania/produkcji. H1~80%, całość5–10%, bez formalnego zamknięcia całych pakietów.

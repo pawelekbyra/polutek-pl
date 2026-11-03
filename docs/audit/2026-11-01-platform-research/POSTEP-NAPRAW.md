@@ -16,7 +16,9 @@ Przywrócono baseline K03 z pięciu wcześniejszych commitów: fixture używają
 
 **Typecheck całego repo: 82 wcześniejsze diagnostyki → 0. Pełny unit przez local-CI: 4729 PASS, 0 FAIL, 3 pominięte, 540 plików; źródła stabilne. Pełny lint: 0 błędów / 100 ostrzeżeń.** [Dowody baseline](program-audytu/evidence/k06-local-producer-2026-11-03/baseline/result.json). To jawnie częściowe CI na brudnym checkoutcie, nie dowód wydania. Po unit zmieniono tylko nazwy trzech zmiennych w helperach audytu i dokumentację; raw snapshot zachowany. Pominięcia: dwa testy EmailEventLockService z prawdziwą bazą oraz HLG/HDR.
 
-Następne: rzeczywisty PostgreSQL/oba e-mail DB i HDR, pozostałe bramki H1 oraz konsumenci K06. [Mapa dotychczasowych commitów](program-audytu/MAPA-COMMITOW.csv). Wszystkie pełne pakiety nadal otwarte. K06 pozostaje otwarte, szacunki bez zmian.
+Baseline zapisany w `d72dc0e5`. HDR przywrócony z `a2708f00`: strict gate najpierw odrzucił 2 PASS/1 skip, po jawnym VUI fixture i niezależnej kontroli ffprobe **3/3 rzeczywiste encody PASS bez skip**; lint i focused types PASS, źródła stabilne. Kod enkodera bez zmian. [Dowody HDR](program-audytu/evidence/k06-local-producer-2026-11-03/hdr/result.json). To hostowy FFmpeg i syntetyczne filmy, nie pełny pipeline/obraz aplikacji.
+
+Następne: własny PostgreSQL i oba e-mail DB, pozostałe bramki H1 oraz konsumenci K06. Lokalny obraz `postgres:17-alpine` dostępny; używać jego pełnego ID, własnego nowego kontenera i syntetycznych danych. [Mapa dotychczasowych commitów](program-audytu/MAPA-COMMITOW.csv). Wszystkie pełne pakiety nadal otwarte. K06 pozostaje otwarte, szacunki bez zmian.
 
 Obowiązuje `/opt/codex/ZADANIE-AUDYT.md`: implementacja tylko w tym worktree na `docs/polutek-platform-audit`, bez PR/merge/deploy. Cztery commity rdzenia K06 przeniesiono lokalnie do `37eb1edb`; wcześniejsze wyniki H1 niżej zachowują przypisanie do historycznych SHA. Pozostałych zmian tamtego kandydata jeszcze nie przeniesiono; nie traktować tej gałęzi jako identycznej z f9edc23a.
 

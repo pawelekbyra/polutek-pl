@@ -1406,6 +1406,25 @@
       "unit_source_stable": true,
       "release_ready": false,
       "evidence": "k06-local-producer-2026-11-03/baseline/result.json"
+    },
+    "hdr": {
+      "strict_red": {
+        "passed": 2,
+        "skipped": 1,
+        "exit": 1
+      },
+      "strict_green": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "files": 1,
+        "failedFiles": [],
+        "success": true
+      },
+      "lint_exit": 0,
+      "focused_types_exit": 0,
+      "evidence": "k06-local-producer-2026-11-03/hdr/result.json"
     }
   }
 }
