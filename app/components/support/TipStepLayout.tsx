@@ -37,7 +37,7 @@ export function TipStepLayout({
                 aria-label={back.label}
                 className={cn(
                   "flex w-[52px] shrink-0 items-center justify-center rounded-[14px] border-2 text-[var(--chan-ink)] transition-colors hover:border-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:cursor-not-allowed disabled:opacity-55",
-                  back.patron ? "h-[50px] border-[var(--chan-line)] bg-[var(--chan-card)]" : "h-[52px] border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] hover:bg-[var(--cm-amber-28)]",
+                  back.patron ? "h-[48px] !rounded-[12px] border-[var(--pass-gray-200,var(--chan-line))] bg-[var(--chan-card)]" : "h-[52px] border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] hover:bg-[var(--cm-amber-28)]",
                 )}
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -73,7 +73,7 @@ export function TipPrimaryButton({
       onClick={onClick}
       disabled={disabled}
       aria-busy={busy || undefined}
-      className={cn("font-sans flex w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-ink)] text-[16px] font-extrabold tracking-[-0.02em] text-white shadow-[0_10px_22px_-12px_rgba(17,24,39,0.55)] transition-[background-color,transform] duration-200 hover:bg-black active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none", patron ? "h-[50px]" : "h-[52px]")}
+      className={cn("font-sans flex w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-ink)] text-[16px] font-extrabold tracking-[-0.02em] text-white shadow-[0_10px_22px_-12px_rgba(17,24,39,0.55)] transition-[background-color,transform] duration-200 hover:bg-black active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none", patron ? "h-[48px] !rounded-[12px] !text-[14px] !font-semibold" : "h-[52px]")}
     >
       {children}
     </button>

@@ -61,7 +61,7 @@ describe('PremiumPassOverlay (patron zone)', () => {
     renderOverlay(true);
     expect(screen.getAllByRole('button', { name: /Zostań patronem · od 14,99\s*zł/ }).length).toBeGreaterThan(0);
     expect(screen.getByText(/dostęp na 30 dni od 14,99\s*zł/)).toBeInTheDocument();
-    expect(screen.getByText(/albo dostęp bez limitu, bez subskrypcji/)).toBeInTheDocument();
+    expect(screen.getByText(/albo dostęp na 3 miesiące, bez subskrypcji/)).toBeInTheDocument();
     expect(screen.getByText('Zostań patronem i uzyskaj dostęp do strefy premium')).toBeInTheDocument();
     expect(screen.queryByText(/ile chcesz/)).toBeNull();
     expect(screen.queryByText(/20\s*zł/)).toBeNull();

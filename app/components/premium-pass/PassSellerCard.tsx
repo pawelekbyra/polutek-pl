@@ -3,7 +3,7 @@
 // legal links (steps 1 and 2) and as a one-line variant in step 3. The seller data lives in PATRON_SELLER (pass-copy.ts);
 // the (i) button opens a short extra paragraph (height animated with the grid-rows trick, no motion when reduced).
 import React, { useId, useState } from "react";
-import { Building2, Info } from "lucide-react";
+import { Info, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tx } from "@/lib/i18n/ui";
 import { PATRON_SELLER } from "./pass-copy";
@@ -16,7 +16,7 @@ export function PassSellerCard({ tx, compact }: { tx: Tx; compact?: boolean }) {
   return (
     <section className={cn(styles.sellerCard, compact && styles.sellerCardCompact)} aria-label={tx("Sprzedawca", "Seller")} data-seller-card="">
       <div className={styles.sellerCardRow}>
-        <Building2 className={styles.sellerCardIcon} strokeWidth={1.6} aria-hidden="true" focusable="false" />
+        <span className={styles.sellerCardIconBox} aria-hidden="true"><Store size={compact ? 15 : 17} strokeWidth={1.8} focusable="false" /></span>
         <div className={styles.sellerCardText}>
           {compact ? (
             <b>{tx("Sprzedawca: {0}", "Seller: {0}", PATRON_SELLER.name)}</b>
@@ -36,7 +36,7 @@ export function PassSellerCard({ tx, compact }: { tx: Tx; compact?: boolean }) {
           aria-controls={noteId}
           onClick={() => setOpen((value) => !value)}
         >
-          <Info size={20} strokeWidth={1.8} aria-hidden="true" focusable="false" />
+          <Info size={18} strokeWidth={1.8} aria-hidden="true" focusable="false" />
         </button>
       </div>
       <div className={cn(styles.sellerCardNote, open && styles.sellerCardNoteOpen)} id={noteId}>

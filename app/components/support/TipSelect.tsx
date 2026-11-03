@@ -29,7 +29,7 @@ interface TipSelectProps {
   onChange: (value: string) => void;
   /** Greyed out and not openable (e.g. while the choice is locked). */
   disabled?: boolean;
-  /** A small blue pill (32 px, hit area 44 px: 6 px above and below) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
+  /** A small neutral select (34 px, hit area 44 px: 5 px above and below) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
   compact?: boolean;
   /** Checkout currency field: a prominent blue field with a currency badge and rounded chevron. */
   currencyPicker?: boolean;
@@ -205,7 +205,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
-          className="relative inline-flex h-8 items-center gap-1.5 rounded-full bg-[var(--pass-blue-soft,var(--chan-blue-soft))] ring-1 ring-inset ring-[var(--pass-field-edge,var(--chan-line))] px-3 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-inset-y-[6px] before:inset-x-0 before:content-[''] hover:bg-[var(--pass-blue-fill,var(--chan-blue-soft))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
+          className="relative inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] ring-1 ring-inset ring-[var(--pass-gray-300,var(--chan-line))] px-3 text-[14px] font-medium text-[var(--pass-gray-800,var(--chan-ink))] before:absolute before:-inset-y-[5px] before:inset-x-0 before:content-[''] hover:bg-[var(--pass-gray-50,var(--chan-surface))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
         >
           <span>{selected?.short ?? selected?.title ?? "—"}</span>
           <SelectChevron className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />

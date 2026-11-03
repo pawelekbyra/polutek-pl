@@ -69,11 +69,12 @@ export function price(language: Locale, minor: number, currency: string = "PLN")
 }
 
 export function productName(tx: Tx, id: string): string {
-  return id === "ACCESS_LIFETIME" ? tx("Dostęp bez limitu", "Unlimited access") : tx("Dostęp na 30 dni", "30-day access");
+  // ACCESS_LIFETIME is the historical id of the second plan; since 2026-11-03 it is a 3-calendar-month access (PLAN_DURATIONS), not an unlimited one.
+  return id === "ACCESS_LIFETIME" ? tx("Dostęp na 3 miesiące", "3 months access") : tx("Dostęp na 30 dni", "30-day access");
 }
 
-export function productNote(tx: Tx, product: { days: number | null }): string {
-  return product.days === null ? tx("jednorazowo, bez końca", "one-time, no end date") : tx("jednorazowo, {0} dni", "one-time, {0} days", product.days);
+export function productNote(tx: Tx, product: { days: number | null; months: number | null }): string {
+  return product.months !== null ? tx("jednorazowo, {0} miesiące", "one-time, {0} months", product.months) : tx("jednorazowo, {0} dni", "one-time, {0} days", product.days ?? 30);
 }
 
 /** Dates in the site's time zone, so the server and the browser print the same text. */

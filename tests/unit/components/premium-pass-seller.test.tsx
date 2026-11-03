@@ -19,11 +19,11 @@ describe('seller card', () => {
     render(<PassSellerCard tx={txFor('pl')} />);
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
     // The label is on its own row and the company name (bold) on the next one, so the name never breaks away from it.
-    expect(card.querySelector('span')?.textContent).toBe('Sprzedawca:');
+    expect(card.querySelector('[class*="sellerLabel"]')?.textContent).toBe('Sprzedawca:');
     expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('Paweł Perfect');
     expect(card.textContent).not.toContain('sp. z o.o.');
     expect(card).not.toHaveTextContent('Spółka zarejestrowana');
-    expect(card.querySelectorAll('span')).toHaveLength(1);
+    expect(card.querySelectorAll('[class*="sellerCardText"] span')).toHaveLength(1);
     expect(card).not.toHaveTextContent('NIP');
   });
 

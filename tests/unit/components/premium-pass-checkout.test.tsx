@@ -84,7 +84,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('offers only the currency and the two option cards (unlimited preselected, best value) and the order summary', async () => {
+  it('offers only the currency and the two option cards (3 months preselected, best value) and the order summary', async () => {
     open();
     const dialog = within(await screen.findByRole('dialog'));
     expect(dialog.getByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
@@ -95,12 +95,12 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(cards.map((r) => [r.value, r.checked])).toEqual([['ACCESS_30D', false], ['ACCESS_LIFETIME', true]]);
     expect(within(group).getAllByText('Bestseller')).toHaveLength(1);
     // step 1 shows ONE row, the total (the chosen card is already visible above, so the option is not repeated in the box)
-    expect(summaryOf(dialog)).not.toHaveTextContent('Dostęp bez limitu');
+    expect(summaryOf(dialog)).not.toHaveTextContent('Dostęp na 3 miesiące');
     expect(summaryOf(dialog)).toHaveTextContent('29,99');
     // VAT status exempt (the default, lib/config/vat.ts): final price, no VAT amount; the note sits inside the total bar, not as a line under the box (the active mode is covered by premium-pass-vat.test.tsx)
     expect(summaryOf(dialog)).toHaveTextContent('sprzedawca zwolniony z VAT');
     expect(summaryOf(dialog)).not.toHaveTextContent('zawiera VAT');
-    expect(dialog.getByText('sprzedawca zwolniony z VAT').closest('[class*="orderTotal"]')).toHaveTextContent('Razem do zapłaty');
+    expect(dialog.getByText('sprzedawca zwolniony z VAT').closest('[class*="orderSoloRow"]')).toHaveTextContent('Razem do zapłaty');
     expect(summaryOf(dialog)).not.toHaveTextContent('brutto');
     // payment method and legal links belong to step 2; nothing to tick, no text field
     expect(dialog.queryByRole('combobox', { name: 'Metoda płatności' })).toBeNull();
@@ -110,7 +110,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(screen.getByRole('dialog').querySelector('[data-demo-ribbon]')).toBeNull();
   });
 
-  it('the seller is a passive row BEFORE the total in steps 1 and 2 (the total is the last block above the action); only the (i) button is clickable', async () => {
+  it('the seller is a passive grey row BEFORE the total in steps 1 and 2 (the total is the last block above the action); only the (i) button is clickable', async () => {
     open();
     const dialog = within(await screen.findByRole('dialog'));
     const before = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -120,8 +120,8 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(within(seller1 as HTMLElement).getAllByRole('button')).toHaveLength(1);
     const css = readFileSync(resolve(process.cwd(), 'app/components/premium-pass/premium-pass.module.css'), 'utf8');
     const rule = css.match(/\.sellerCard \{([^}]*)\}/)?.[1] ?? '';
-    expect(rule).toContain('border: 0');
-    expect(rule).toContain('background: transparent');
+    expect(rule).toContain('border: 1px solid var(--pass-gray-200)');
+    expect(rule).toContain('background: var(--pass-gray-100)');
     expect(rule).toContain('cursor: default');
     clickNext(dialog, 'Dalej · 29,99 zł');
     await dialog.findByRole('heading', { name: 'Metoda płatności' });
@@ -142,15 +142,15 @@ describe('patron checkout, step 1 (currency and option)', () => {
   it('the chosen card is blue (tick, blue edge), not cream; only the BESTSELLER badge keeps the amber', async () => {
     open();
     const dialog = within(await screen.findByRole('dialog'));
-    const chosen = dialog.getByRole('radio', { name: /Dostęp bez limitu/ }).closest('label') as HTMLElement;
+    const chosen = dialog.getByRole('radio', { name: /Dostęp na 3 miesiące/ }).closest('label') as HTMLElement;
     expect(chosen.querySelector('[class*="productCheck"]')).not.toBeNull();
     expect(chosen.querySelector('[class*="bestValue"]')).toHaveTextContent('Bestseller');
     const css = readFileSync(resolve(process.cwd(), 'app/components/premium-pass/premium-pass.module.css'), 'utf8');
     const rule = css.match(/\.product:has\(input:checked\) \{([^}]*)\}/)?.[1] ?? '';
-    expect(rule).toContain('border: 2px solid var(--chan-blue');
-    expect(rule).toContain('background: var(--pass-blue-soft)');
+    expect(rule).toContain('border-color: var(--pass-blue-600)');
+    expect(rule).toContain('background: var(--pass-blue-50-50)');
     expect(rule).not.toContain('amber');
-    expect(css.match(/\.bestValue \{([^}]*)\}/)?.[1]).toContain('background: var(--pass-gold)');
+    expect(css.match(/\.bestValue \{([^}]*)\}/)?.[1]).toContain('background: var(--pass-amber-400)');
   });
 
   it('lists the tip gateway\'s currencies and the prices follow the chosen currency', async () => {
@@ -165,7 +165,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     fireEvent.click(await screen.findByRole('option', { name: /Euro/ }));
     expect(combo).toHaveTextContent('€ · EUR');
     expect(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }).closest('label')).toHaveTextContent('3,99');
-    expect(dialog.getByRole('radio', { name: /Dostęp bez limitu/ }).closest('label')).toHaveTextContent('7,99');
+    expect(dialog.getByRole('radio', { name: /Dostęp na 3 miesiące/ }).closest('label')).toHaveTextContent('7,99');
     expect(dialog.getByRole('button', { name: N('Dalej · 7,99 €') })).toBeInTheDocument();
     expect(summaryOf(dialog)).toHaveTextContent('7,99');
     await pickCurrency(dialog, 'Dolar');
@@ -184,18 +184,8 @@ describe('patron checkout, step 1 (currency and option)', () => {
     fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
     expect(dialog.getByRole('button', { name: N('Dalej · 14,99 zł') })).toBeInTheDocument();
     expect(summaryOf(dialog)).toHaveTextContent('14,99');
-    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp bez limitu/ }));
+    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 3 miesiące/ }));
     expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
-  });
-
-  it('with unlimited access already held: no "you already have access" message, and nothing to buy', async () => {
-    route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: { ...activePass('STRIPE'), lifetime: true, expiresAt: null } }), { status: 200 }) });
-    open();
-    const dialog = within(await screen.findByRole('dialog'));
-    await waitFor(() => expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled());
-    expect(dialog.queryByText(/Masz już dostęp/)).toBeNull();
-    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toBeDisabled();
-    for (const radio of dialog.getAllByRole('radio')) expect(radio).toBeDisabled();
   });
 
   it('a running 30-day access can be extended, without any notice about the current access', async () => {
@@ -305,7 +295,7 @@ describe('patron checkout, step 3 in demo mode (simulated payment)', () => {
     const dialog = within(await screen.findByRole('dialog'));
     await toStep3(dialog);
     expect(dialog.getByText('Krok 3 z 3')).toBeInTheDocument();
-    expect(summaryOf(dialog)).toHaveTextContent('Dostęp bez limitu');
+    expect(summaryOf(dialog)).toHaveTextContent('Dostęp na 3 miesiące');
     expect(summaryOf(dialog)).toHaveTextContent('29,99');
     const pay = dialog.getByRole('button', { name: N('Zapłać 29,99 zł') });
     const boxes = dialog.getAllByRole('checkbox');
@@ -427,23 +417,6 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     expect(jsonBody('/premium-pass/intent')).toMatchObject({ productId: 'ACCESS_30D', currency: 'EUR' });
     expect(jsonBody('/premium-pass/intent').requestId).toMatch(/^[0-9a-f-]{36}$/);
     expect(Object.keys(jsonBody('/premium-pass/intent')).sort()).toEqual(['currency', 'productId', 'requestId']);
-  });
-
-  it('test purchases remain enabled after lifetime access, including both plans and currency selection', async () => {
-    route({
-      '/premium-pass/intent': () => new Response(JSON.stringify(READY), { status: 200 }),
-      '/api/user/premium-pass': () => new Response(JSON.stringify({ offer: {}, pass: { ...activePass('STRIPE'), lifetime: true, expiresAt: null } }), { status: 200 }),
-    });
-    open(TEST);
-    const dialog = within(await screen.findByRole('dialog'));
-    await waitFor(() => expect(calls('/api/user/premium-pass')).toHaveLength(1));
-    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toBeEnabled();
-    for (const radio of dialog.getAllByRole('radio')) expect(radio).toBeEnabled();
-    clickNext(dialog, 'Dalej · 29,99 zł');
-    await dialog.findByRole('heading', { name: 'Metoda płatności' });
-    clickNext(dialog, 'Dalej · 29,99 zł');
-    await screen.findAllByTestId('stripe-elements');
-    expect(calls('/intent')).toHaveLength(1);
   });
 
   it('live mode shows no test label', async () => {
@@ -619,14 +592,4 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     expect(dialog.queryByRole('list', { name: 'Etapy zakupu' })).toBeNull(); // after the result there is no stepper at all
   });
 
-  it('a refusal from the server (unlimited already held) ends in "Masz już dostęp bez limitu", no payment form', async () => {
-    route({ '/premium-pass/intent': () => new Response(JSON.stringify({ code: 'ALREADY_LIFETIME' }), { status: 409 }) });
-    open(TEST);
-    const dialog = within(await screen.findByRole('dialog'));
-    clickNext(dialog, 'Dalej · 29,99 zł');
-    await dialog.findByRole('heading', { name: 'Metoda płatności' });
-    clickNext(dialog, 'Dalej · 29,99 zł');
-    expect(await dialog.findByRole('heading', { name: 'Masz już dostęp bez limitu' })).toBeInTheDocument();
-    expect(dialog.queryByRole('textbox', { name: 'Kod BLIK' })).toBeNull();
-  });
 });

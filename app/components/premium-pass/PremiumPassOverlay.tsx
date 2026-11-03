@@ -116,7 +116,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
               <ul className={styles.offerPerks}>
                 <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
                 <li>{tx("dostęp na 30 dni od {0}", "30-day access from {0}", from)}</li>
-                <li>{tx("albo dostęp bez limitu, bez subskrypcji", "or unlimited access, no subscription")}</li>
+                <li>{tx("albo dostęp na 3 miesiące, bez subskrypcji", "or 3-month access, no subscription")}</li>
               </ul>
             </div>
             <button type="button" className={styles.goldBtn} onClick={start}>
@@ -130,7 +130,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
           </button>
           <span className={styles.tiny}>
             {signedIn
-              ? tx("Dostęp na 30 dni albo bez limitu, bez subskrypcji", "30-day or unlimited access, no subscription")
+              ? tx("Dostęp na 30 dni albo na 3 miesiące, bez subskrypcji", "30-day or 3-month access, no subscription")
               : tx("Konto jest darmowe. Po zalogowaniu wrócisz do zakupu.", "The account is free. After signing in you come back to the purchase.")}
             {" · "}
             <a className={styles.stageLink} href={getLocalizedHref(language, "pass")}>{tx("Co jest w środku?", "What's inside?")}</a>
