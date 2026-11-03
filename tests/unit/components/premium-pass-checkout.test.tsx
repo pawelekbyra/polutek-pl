@@ -4,6 +4,8 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { txFor } from '../i18n/mock-language';
 import { buildPremiumPassOffer } from '@/lib/modules/patron-zone/domain/offer';
 import type { PremiumPaymentsDto } from '@/lib/modules/patron-zone/domain/payments-mode';
@@ -87,12 +89,13 @@ describe('patron checkout, step 1 (currency and option)', () => {
     const dialog = within(await screen.findByRole('dialog'));
     expect(dialog.getByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
     expect(dialog.queryByText(/Zostań patronem i uzyskaj/)).toBeNull(); // the lead no longer repeats the title
-    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toHaveTextContent('Złoty (PLN)');
+    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toHaveTextContent('zł · PLN'); // a small pill, not the big tile
     const group = dialog.getByRole('group', { name: 'Wybierz dostęp' });
     const cards = within(group).getAllByRole('radio') as HTMLInputElement[];
     expect(cards.map((r) => [r.value, r.checked])).toEqual([['ACCESS_30D', false], ['ACCESS_LIFETIME', true]]);
     expect(within(group).getAllByText('Bestseller')).toHaveLength(1);
-    expect(summaryOf(dialog)).toHaveTextContent('Dostęp bez limitu');
+    // step 1 shows ONE row, the total (the chosen card is already visible above, so the option is not repeated in the box)
+    expect(summaryOf(dialog)).not.toHaveTextContent('Dostęp bez limitu');
     expect(summaryOf(dialog)).toHaveTextContent('29,99');
     // VAT status exempt (the default, lib/config/vat.ts): final price, no VAT amount; the note sits inside the total bar, not as a line under the box (the active mode is covered by premium-pass-vat.test.tsx)
     expect(summaryOf(dialog)).toHaveTextContent('sprzedawca zwolniony z VAT');
@@ -117,6 +120,20 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(dialog.getByText('Krok 1 z 3')).toHaveAttribute('aria-live', 'polite');
   });
 
+  it('the chosen card is blue (tick, blue edge), not cream; only the BESTSELLER badge keeps the amber', async () => {
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    const chosen = dialog.getByRole('radio', { name: /Dostęp bez limitu/ }).closest('label') as HTMLElement;
+    expect(chosen.querySelector('[class*="productCheck"]')).not.toBeNull();
+    expect(chosen.querySelector('[class*="bestValue"]')).toHaveTextContent('Bestseller');
+    const css = readFileSync(resolve(process.cwd(), 'app/components/premium-pass/premium-pass.module.css'), 'utf8');
+    const rule = css.match(/\.product:has\(input:checked\) \{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toContain('border: 2px solid var(--chan-blue');
+    expect(rule).toContain('background: var(--pass-blue-soft)');
+    expect(rule).not.toContain('amber');
+    expect(css.match(/\.bestValue \{([^}]*)\}/)?.[1]).toContain('background: var(--pass-gold)');
+  });
+
   it('lists the tip gateway\'s currencies and the prices follow the chosen currency', async () => {
     open();
     const dialog = within(await screen.findByRole('dialog'));
@@ -127,7 +144,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
       expect.stringContaining('Złoty'), expect.stringContaining('Euro'), expect.stringContaining('Dolar'), expect.stringContaining('Frank'), expect.stringContaining('Funt'),
     ]);
     fireEvent.click(await screen.findByRole('option', { name: /Euro/ }));
-    expect(combo).toHaveTextContent('Euro (EUR)');
+    expect(combo).toHaveTextContent('€ · EUR');
     expect(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }).closest('label')).toHaveTextContent('3,99');
     expect(dialog.getByRole('radio', { name: /Dostęp bez limitu/ }).closest('label')).toHaveTextContent('7,99');
     expect(dialog.getByRole('button', { name: N('Dalej · 7,99 €') })).toBeInTheDocument();
@@ -147,7 +164,6 @@ describe('patron checkout, step 1 (currency and option)', () => {
     const dialog = within(await screen.findByRole('dialog'));
     fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
     expect(dialog.getByRole('button', { name: N('Dalej · 14,99 zł') })).toBeInTheDocument();
-    expect(summaryOf(dialog)).toHaveTextContent('Dostęp na 30 dni');
     expect(summaryOf(dialog)).toHaveTextContent('14,99');
     fireEvent.click(dialog.getByRole('radio', { name: /Dostęp bez limitu/ }));
     expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
@@ -240,7 +256,7 @@ describe('patron checkout, step 2 (payment method)', () => {
     await dialog.findByRole('heading', { name: 'Metoda płatności' });
     fireEvent.click(dialog.getByRole('button', { name: 'Wstecz' }));
     expect(await dialog.findByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
-    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toHaveTextContent('Euro (EUR)');
+    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toHaveTextContent('€ · EUR');
     expect((dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }) as HTMLInputElement).checked).toBe(true);
   });
 });
@@ -378,8 +394,8 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
   it('test mode: encourages Premium without a framed label; Stripe.js only now; the payment is created at the step 2 -> 3 move', async () => {
     open(TEST);
     const dialog = within(await screen.findByRole('dialog'));
-    expect(dialog.getByText(/Wybierz dostęp Premium i odkrywaj materiały przygotowane dla patronów\./)).toBeInTheDocument();
-    expect(dialog.getByText(/bez prawdziwej płatności\./)).toBeInTheDocument();
+    expect(dialog.getByText('Wersja testowa: bez prawdziwej płatności.')).toBeInTheDocument(); // one sentence
+    expect(dialog.queryByText(/Karta testowa/)).toBeNull(); // the test card only where a card is typed (step 3)
     expect(dialog.queryByText('Tryb testowy')).toBeNull();
     await waitFor(() => expect(getStripeBrowser).toHaveBeenCalledTimes(1));
     await pickCurrency(dialog, 'Euro');
@@ -500,6 +516,88 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     expect(getStripeBrowser).not.toHaveBeenCalled();
     expect(calls('/intent')).toHaveLength(0);
     expect(calls('/checkout')).toHaveLength(0);
+  });
+
+  it('step 3 states the VAT note under the summary (exempt seller: final price), and the test card only for the card', async () => {
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('textbox', { name: 'Kod BLIK' });
+    expect(summaryOf(dialog)).toHaveTextContent('Cena końcowa; sprzedawca jest zwolniony z VAT');
+    expect(dialog.getByText('Wersja testowa: bez prawdziwej płatności.')).toBeInTheDocument();
+    expect(dialog.queryByText(/Karta testowa/)).toBeNull(); // BLIK: no card to type
+    // BLIK box: the blue family with AA colours, not the amber of the tip gate
+    const box = dialog.getByRole('textbox', { name: 'Kod BLIK' });
+    expect(box.className).toContain('--pass-field-edge');
+    expect(box.className).toContain('--pass-blue-ink');
+    expect(box.className).not.toContain('cm-amber');
+  });
+
+  it('step 3 with the card shows the test card in one compact line', async () => {
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    await pickCurrency(dialog, 'Euro'); // only the card outside PLN
+    clickNext(dialog, 'Dalej · 7,99 €');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, 'Dalej · 7,99 €');
+    await dialog.findByRole('heading', { name: 'Płatność' });
+    expect(dialog.getByText('Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.')).toBeInTheDocument();
+    expect(dialog.getByText('Wersja testowa: bez prawdziwej płatności.')).toBeInTheDocument();
+  });
+
+  it('the step dots are a back-only stepper: no button on step 1, buttons for the finished steps, state kept, focus to the heading', async () => {
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    const dots = () => dialog.getByRole('list', { name: 'Etapy zakupu' });
+    expect(within(dots()).queryAllByRole('button')).toHaveLength(0); // step 1: nothing to go back to
+    await pickCurrency(dialog, 'Euro');
+    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    clickNext(dialog, 'Dalej · 3,99 €');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    expect(within(dots()).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Wróć do kroku 1: Dostęp']); // only back
+    clickNext(dialog, 'Dalej · 3,99 €');
+    await dialog.findByRole('heading', { name: 'Płatność' });
+    expect(within(dots()).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Wróć do kroku 1: Dostęp', 'Wróć do kroku 2: Metoda']);
+    // tick a box, jump from step 3 straight to step 1: currency, option kept
+    fireEvent.click(dialog.getAllByRole('checkbox')[0]!);
+    fireEvent.click(within(dots()).getByRole('button', { name: 'Wróć do kroku 1: Dostęp' }));
+    const heading = await dialog.findByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' });
+    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toHaveTextContent('€ · EUR');
+    expect((dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }) as HTMLInputElement).checked).toBe(true);
+    expect(dialog.getByText('Krok 1 z 3')).toBeInTheDocument();
+    await waitFor(() => expect(heading).toHaveFocus());
+    // forward again, then back: no forward jumps exist
+    clickNext(dialog, 'Dalej · 3,99 €');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    fireEvent.click(within(dots()).getByRole('button', { name: 'Wróć do kroku 1: Dostęp' }));
+    await dialog.findByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' });
+    expect(within(dots()).queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('the step dots and the back arrow are locked while a payment is being confirmed (BLIK waits for the bank)', async () => {
+    let finishBlik: (value: unknown) => void = () => undefined;
+    confirmBlikPayment.mockReturnValue(new Promise((resolve) => { finishBlik = resolve; }));
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    const code = await dialog.findByRole('textbox', { name: 'Kod BLIK' });
+    fireEvent.change(code, { target: { value: '123456' } });
+    dialog.getAllByRole('checkbox').forEach((box) => fireEvent.click(box));
+    const dots = dialog.getByRole('list', { name: 'Etapy zakupu' });
+    expect(within(dots).getByRole('button', { name: 'Wróć do kroku 1: Dostęp' })).toBeEnabled();
+    fireEvent.click(dialog.getByRole('button', { name: N('Zapłać 29,99 zł') }));
+    await waitFor(() => expect(confirmBlikPayment).toHaveBeenCalled());
+    for (const b of within(dots).getAllByRole('button')) expect(b).toBeDisabled();
+    expect(dialog.getByRole('button', { name: 'Wstecz' })).toBeDisabled();
+    fireEvent.click(within(dots).getByRole('button', { name: 'Wróć do kroku 1: Dostęp' }));
+    expect(dialog.getByRole('heading', { name: 'Płatność' })).toBeInTheDocument(); // still on step 3
+    finishBlik({ paymentIntent: { status: 'succeeded' } });
+    expect(await dialog.findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(dialog.queryByRole('list', { name: 'Etapy zakupu' })).toBeNull(); // after the result there is no stepper at all
   });
 
   it('a refusal from the server (unlimited already held) ends in "Masz już dostęp bez limitu", no payment form', async () => {

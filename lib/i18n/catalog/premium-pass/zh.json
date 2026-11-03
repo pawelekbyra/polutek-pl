@@ -134,6 +134,8 @@
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "你正在向上述卖家购买。发票信息和联系方式见条款。",
  "Demo mode: nothing will be charged.": "演示模式：不会扣款。",
  "Payments are encrypted and handled by a trusted provider. We never store your card details.": "付款经过加密，由值得信赖的服务商处理。我们绝不会保存你的银行卡信息。",
- "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.": "选择 Premium 访问权限，探索为支持者准备的内容。这是测试结账流程，你可以完整体验而不会产生真实付款。",
- "Payment currency": "支付货币"
+ "Payment currency": "支付货币",
+ "Test version: no real payment.": "测试版：不会产生真实付款。",
+ "Test card: 4242 4242 4242 4242, any date and CVC.": "测试卡：4242 4242 4242 4242，任意日期和 CVC。",
+ "Back to step {0}: {1}": "返回第 {0} 步：{1}"
 }

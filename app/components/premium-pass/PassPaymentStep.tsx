@@ -104,6 +104,7 @@ export interface PassStripePayProps {
   consent: React.ReactNode;
   accepted: boolean;
   beforeConfirm: () => Promise<boolean>;
+  onBusyChange?: (busy: boolean) => void;
   onChangeMethod: () => void;
   onConfirmed: (outcome: TipConfirmOutcome) => void;
 }
@@ -128,7 +129,7 @@ export function PassStripePay(props: PassStripePayProps) {
           stripePromise={props.stripePromise}
           onChangeMethod={props.onChangeMethod}
           onConfirmed={props.onConfirmed}
-          patron={{ returnUrl: props.returnUrl, consent: props.consent, accepted: props.accepted, beforeConfirm: props.beforeConfirm }}
+          patron={{ returnUrl: props.returnUrl, consent: props.consent, accepted: props.accepted, beforeConfirm: props.beforeConfirm, onBusyChange: props.onBusyChange }}
         />
       </Elements>
     </div>

@@ -134,6 +134,8 @@
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "Estás a comprar ao vendedor indicado acima. Os dados de faturação e o contacto estão nos Termos.",
  "Demo mode: nothing will be charged.": "Modo demo: nada será cobrado.",
  "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Os pagamentos são cifrados e tratados por um prestador de confiança. Nunca guardamos os dados do teu cartão.",
- "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.": "Escolhe o acesso Premium e descobre conteúdos para apoiantes. Este é um checkout de teste que podes concluir sem fazer um pagamento real.",
- "Payment currency": "Moeda de pagamento"
+ "Payment currency": "Moeda de pagamento",
+ "Test version: no real payment.": "Versão de teste: sem pagamento real.",
+ "Test card: 4242 4242 4242 4242, any date and CVC.": "Cartão de teste: 4242 4242 4242 4242, qualquer data e CVC.",
+ "Back to step {0}: {1}": "Voltar ao passo {0}: {1}"
 }

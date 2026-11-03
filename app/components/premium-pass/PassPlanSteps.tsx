@@ -5,6 +5,8 @@
 // and the Terms / Privacy Policy as plain LINKS: nothing to tick before step 3. The browser only names a product and a
 // currency; the server owns the price table.
 import React, { useId } from "react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/routing";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
@@ -13,31 +15,39 @@ import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/patron-
 import { TIP_CURRENCY_SYMBOLS, describeTipMethod, tipCurrencyTitle } from "../support/tip-flow-config";
 import { TipSelect } from "../support/TipSelect";
 import { PassSellerCard } from "./PassSellerCard";
-import { price, productName, productNote, totalLabel, vatLine } from "./pass-copy";
+import { price, productName, productNote, totalLabel, vatLine, vatTermsNote } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
-/** The order summary (name, note, total, VAT line), shown in every step; `compact` is one line for the payment step. */
-export function PassOrderSummary({ tx, language, offer, product, currency, compact }: { tx: Tx; language: Locale; offer: PremiumPassOffer; product: PatronOfferProduct; currency: PatronCurrency; compact?: boolean }) {
+/**
+ * The order summary, in every step. Step 1 (`totalOnly`): ONE row, "Razem do zapłaty" + price + the VAT note (the chosen card
+ * is already visible above, so it is not repeated). Step 2: name, note, total and VAT line. Step 3 (`compact`): one row with the
+ * option name and the price, and under it the VAT note (`vatTermsNote`).
+ */
+export function PassOrderSummary({ tx, language, offer, product, currency, compact, totalOnly }: { tx: Tx; language: Locale; offer: PremiumPassOffer; product: PatronOfferProduct; currency: PatronCurrency; compact?: boolean; totalOnly?: boolean }) {
   const total = price(language, product.prices[currency], currency);
   if (compact) {
     return (
       <div className={styles.summaryRow} role="group" aria-label={tx("Podsumowanie zamówienia", "Order summary")}>
         <span>{productName(tx, product.id)}</span>
         <b>{total}</b>
+        {/* DO UZGODNIENIA z właścicielem/księgowym: ta sama nota VAT co w regulaminie (vatTermsNote), zależna od VAT_STATUS; treści nie zmieniamy. */}
+        <small>{vatTermsNote(tx)}</small>
       </div>
     );
   }
   return (
     <div role="group" aria-label={tx("Podsumowanie zamówienia", "Order summary")}>
       <div className={styles.order}>
-        <div className={styles.orderLine}>
-          <div>
-            <b>{productName(tx, product.id)}</b>
-            <div className={styles.muted}>{productNote(tx, product)}, {tx("nie odnawia się", "does not renew")}</div>
+        {!totalOnly && (
+          <div className={styles.orderLine}>
+            <div>
+              <b>{productName(tx, product.id)}</b>
+              <div className={styles.muted}>{productNote(tx, product)}, {tx("nie odnawia się", "does not renew")}</div>
+            </div>
+            <b>{total}</b>
           </div>
-          <b>{total}</b>
-        </div>
-        <div className={styles.orderTotal}>
+        )}
+        <div className={cn(styles.orderTotal, totalOnly && styles.orderTotalSolo)}>
           <span>{totalLabel(tx)}</span>
           <b>{total}</b>
           <small>{vatLine(tx)}</small>
@@ -77,19 +87,24 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
       )}
       <fieldset className={styles.products} disabled={busy || access?.lifetime === true}>
         <legend className="sr-only">{tx("Wybierz dostęp", "Choose your access")}</legend>
-        <TipSelect
-          label={tx("Waluta płatności", "Payment currency")}
-          value={currency}
-          onChange={(code) => onCurrency(code as PatronCurrency)}
-          disabled={busy || access?.lifetime === true}
-          currencyPicker
-          options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
-        />
+        {/* The currency is a small pill on its own slim row (the purchase cards below are the main thing). The visible label is aria-hidden: the pill's own (screen-reader) label is the same text. */}
+        <div className={styles.currencyRow}>
+          <span className={styles.currencyLabel} aria-hidden="true">{tx("Waluta płatności", "Payment currency")}</span>
+          <TipSelect
+            compact
+            label={tx("Waluta płatności", "Payment currency")}
+            value={currency}
+            onChange={(code) => onCurrency(code as PatronCurrency)}
+            disabled={busy || access?.lifetime === true}
+            options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
+          />
+        </div>
         <div className={styles.accessTitle}>{tx("Wybierz dostęp", "Choose your access")}</div>
         <div className={styles.productGrid}>
           {offer.products.map((p) => (
             <label key={p.id} className={styles.product}>
               <input type="radio" name={`${ids}-product`} value={p.id} checked={p.id === product.id} onChange={() => onProduct(p.id)} />
+              <span className={styles.productCheck} aria-hidden="true"><Check size={14} strokeWidth={3} focusable="false" /></span>
               {p.bestValue ? <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span> : <span className={styles.badgeSlot} aria-hidden="true" />}
               <span className={styles.productName}>{productName(tx, p.id)}</span>
               <span className={styles.productPrice}>{price(language, p.prices[currency], currency)}</span>
@@ -101,7 +116,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
 
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
-      <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
+      <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} totalOnly />
       <PassSellerCard tx={tx} />
     </>
   );

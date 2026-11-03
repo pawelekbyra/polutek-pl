@@ -34,6 +34,8 @@ export interface TipPayStepProps {
     accepted: boolean;
     /** Runs right before every confirmation (records the consent on the server); false aborts it. */
     beforeConfirm: () => Promise<boolean>;
+    /** Told when a confirmation starts and ends (the checkout locks its step dots and back button meanwhile). */
+    onBusyChange?: (busy: boolean) => void;
   };
 }
 

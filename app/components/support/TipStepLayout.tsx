@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft } from "../icons";
 
 /** The gate's "back" action, or null on the first/last step; drawn next to the footer button. */
-export const TipBackContext = createContext<{ onBack: () => void; label: string; /** The patron checkout: its 18 px gutters, neutral back button and 50 px buttons. */ patron?: boolean; /** Rendered between the scrolling body and the footer's top line (the patron checkout's step dots). */ aboveBar?: React.ReactNode } | null>(null);
+export const TipBackContext = createContext<{ onBack: () => void; label: string; /** The patron checkout: its 18 px gutters, neutral back button and 50 px buttons. */ patron?: boolean; /** The back arrow is inactive (a payment is being confirmed). */ disabled?: boolean; /** Rendered between the scrolling body and the footer's top line (the patron checkout's step dots). */ aboveBar?: React.ReactNode } | null>(null);
 
 /**
  * One step of the tip gate: a scrollable body and a footer pinned to the bottom of the
@@ -33,9 +33,10 @@ export function TipStepLayout({
               <button
                 type="button"
                 onClick={back.onBack}
+                disabled={back.disabled}
                 aria-label={back.label}
                 className={cn(
-                  "flex w-[52px] shrink-0 items-center justify-center rounded-[14px] border-2 text-[var(--chan-ink)] transition-colors hover:border-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)]",
+                  "flex w-[52px] shrink-0 items-center justify-center rounded-[14px] border-2 text-[var(--chan-ink)] transition-colors hover:border-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:cursor-not-allowed disabled:opacity-55",
                   back.patron ? "h-[50px] border-[var(--chan-line)] bg-[var(--chan-card)]" : "h-[52px] border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] hover:bg-[var(--cm-amber-28)]",
                 )}
               >
