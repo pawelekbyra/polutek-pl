@@ -13,7 +13,7 @@ export function commentErrorText(error: unknown, tx: Tx, fallback: string): stri
     case "ONBOARDING_REQUIRED":
       return tx("Najpierw wybierz pseudonim w oknie powitalnym, potem możesz komentować.", "Choose a nickname in the welcome window first, then you can comment.");
     case "PASS_REQUIRED":
-      return tx("Zostań patronem, aby komentować ten film.", "Become a patron to comment on this video."); // patron zone
+      return tx("Kup Premium, aby komentować ten film.", "Get Premium to comment on this video."); // patron zone
     case "COMMENT_FORBIDDEN":
       return tx("Nie masz uprawnień do komentowania tego filmu.", "You don't have permission to comment on this video.");
     case "CHANNEL_BANNED":

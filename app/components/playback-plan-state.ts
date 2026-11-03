@@ -65,10 +65,10 @@ export function playbackPlanStateMessages(
     },
     // patron zone: rendered as PremiumPassOverlay; this copy is only the fallback text.
     PASS_REQUIRED: {
-      title: tx("Ten film jest w strefie patrona.", "This video is in the patron zone."),
+      title: tx("Ten film jest w Strefie Premium.", "This video is in the Premium Zone."),
       description: tx(
-        "Zostań patronem projektu, aby go obejrzeć.",
-        "Become a patron of the project to watch it.",
+        "Kup Premium, aby go obejrzeć.",
+        "Get Premium to watch it.",
       ),
       action: "retry",
       actionLabel: tx("Sprawdź ponownie", "Check again"),

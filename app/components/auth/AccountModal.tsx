@@ -47,7 +47,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
     { id: "connections", label: tx("Konta", "Connections"), icon: Link2 },
     { id: "security", label: tx("Hasło", "Security"), icon: Shield },
     { id: "passkeys", label: tx("Klucze dostępu", "Passkeys"), icon: KeyRound },
-    ...(pass.status ? [{ id: "pass" as const, label: tx("Strefa patrona", "Patron zone"), icon: HeartHandshake }] : []),
+    ...(pass.status ? [{ id: "pass" as const, label: tx("Strefa Premium", "Premium Zone"), icon: HeartHandshake }] : []),
     { id: "danger", label: tx("Usuń konto", "Delete account"), icon: Trash2, danger: true },
   ];
 

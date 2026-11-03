@@ -41,22 +41,22 @@ export const PassSuccess = forwardRef<HTMLHeadingElement, { tx: Tx; language: Lo
     return (
       <div className={styles.result} role="status" aria-live="polite">
         <div className={cn(styles.check, styles.checkAnim)}><CheckIcon animated /></div>
-        <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{tx("Jesteś patronem. Dziękuję!", "You are a patron. Thank you!")}</h3>
+        <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{tx("Masz Premium. Dziękuję!", "You have Premium. Thank you!")}</h3>
         <p className={styles.resultText}>
-          {pass.expiresAt ? tx("Strefa patrona jest otwarta do {0}.", "The patron zone is open until {0}.", passDate(language, pass.expiresAt, true)) : null}
+          {pass.expiresAt ? tx("Strefa Premium jest otwarta do {0}.", "The Premium Zone is open until {0}.", passDate(language, pass.expiresAt, true)) : null}
         </p>
         <button type="button" className={cn(styles.goldBtn, styles.wide)} onClick={onWatch} data-autofocus="">
           <PlayIcon />
-          {watchLabel ?? tx("Wejdź do strefy patrona", "Enter the patron zone")}
+          {watchLabel ?? tx("Wejdź do Strefy Premium", "Enter the Premium Zone")}
         </button>
         <PassReceipt tx={tx} language={language} pass={pass} />
         <p className={styles.fine}>
           {pass.provider === "DEMO"
             ? tx(
-                "W prawdziwej sprzedaży to potwierdzenie przyszłoby e-mailem (trwały nośnik). Znajdziesz je też w „Moje konto → Strefa patrona”.",
-                "In a real sale this confirmation would arrive by e-mail (durable medium). You can also find it in “My account → Patron zone”.",
+                "W prawdziwej sprzedaży to potwierdzenie przyszłoby e-mailem (trwały nośnik). Znajdziesz je też w „Moje konto → Strefa Premium”.",
+                "In a real sale this confirmation would arrive by e-mail (durable medium). You can also find it in “My account → Premium Zone”.",
               )
-            : tx("Potwierdzenie znajdziesz też w „Moje konto → Strefa patrona”.", "You can also find this confirmation in “My account → Patron zone”.")}
+            : tx("Potwierdzenie znajdziesz też w „Moje konto → Strefa Premium”.", "You can also find this confirmation in “My account → Premium Zone”.")}
         </p>
       </div>
     );
@@ -113,10 +113,10 @@ export const PassMaxAhead = forwardRef<HTMLHeadingElement, { tx: Tx; language: L
       <div className={styles.result} role="status" aria-live="polite">
         <div className={styles.check}><CheckIcon /></div>
         <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{tx("Masz już dostęp na długo", "You already have long-term access")}</h3>
-        {expiresAt && <p className={styles.resultText}>{tx("Strefa patrona jest otwarta do {0}. Możesz wpłacić ponownie bliżej tej daty.", "The patron zone is open until {0}. You can pay again closer to that date.", passDate(language, expiresAt, true))}</p>}
+        {expiresAt && <p className={styles.resultText}>{tx("Strefa Premium jest otwarta do {0}. Możesz wpłacić ponownie bliżej tej daty.", "The Premium Zone is open until {0}. You can pay again closer to that date.", passDate(language, expiresAt, true))}</p>}
         <button type="button" className={cn(styles.goldBtn, styles.wide)} onClick={onWatch} data-autofocus="">
           <PlayIcon />
-          {tx("Wejdź do strefy patrona", "Enter the patron zone")}
+          {tx("Wejdź do Strefy Premium", "Enter the Premium Zone")}
         </button>
       </div>
     );

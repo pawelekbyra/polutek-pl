@@ -49,8 +49,8 @@ describe('PremiumPassOverlay (patron zone)', () => {
 
   it('guest: sign-in CTA marks the return to checkout and opens the sign-in window', () => {
     renderOverlay(false);
-    expect(screen.getByRole('heading', { name: 'Strefa patrona' })).toBeInTheDocument();
-    const cta = screen.getAllByRole('button', { name: /Zaloguj się i zostań patronem/ })[0]!;
+    expect(screen.getByRole('heading', { name: 'Strefa Premium' })).toBeInTheDocument();
+    const cta = screen.getAllByRole('button', { name: /Zaloguj się i kup Premium/ })[0]!;
     fireEvent.click(cta);
     expect(openAuthModal).toHaveBeenCalledWith('sign-in');
     expect(window.location.search).toContain('pass=checkout');
@@ -59,10 +59,10 @@ describe('PremiumPassOverlay (patron zone)', () => {
 
   it('shows the two-option offer: the cheapest price, unlimited access, no pay-what-you-want', () => {
     renderOverlay(true);
-    expect(screen.getAllByRole('button', { name: /Zostań patronem · od 14,99\s*zł/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /Kup Premium · od 14,99\s*zł/ }).length).toBeGreaterThan(0);
     expect(screen.getByText(/dostęp na 30 dni od 14,99\s*zł/)).toBeInTheDocument();
     expect(screen.getByText(/albo dostęp na 3 miesiące, bez subskrypcji/)).toBeInTheDocument();
-    expect(screen.getByText('Zostań patronem i uzyskaj dostęp do strefy premium')).toBeInTheDocument();
+    expect(screen.getByText('Kup Premium i uzyskaj dostęp do Strefy Premium')).toBeInTheDocument();
     expect(screen.queryByText(/ile chcesz/)).toBeNull();
     expect(screen.queryByText(/20\s*zł/)).toBeNull();
   });
@@ -94,7 +94,7 @@ describe('PremiumPassOverlay (patron zone)', () => {
 
   it('signed in: the CTA opens the three-step checkout on step 1, without a DEMO bar inside it', async () => {
     renderOverlay(true);
-    fireEvent.click(screen.getAllByRole('button', { name: /Zostań patronem · od 14,99\s*zł/ })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: /Kup Premium · od 14,99\s*zł/ })[0]!);
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent('Dostęp Premium');
     expect(dialog).toHaveTextContent('Uzyskaj dostęp do strefy premium');
@@ -108,7 +108,7 @@ describe('PremiumPassOverlay (patron zone)', () => {
 
   it('expired access: banner and "support again"', () => {
     renderOverlay(true, '2026-11-20T10:00:00.000Z');
-    expect(screen.getByRole('status')).toHaveTextContent('Twój dostęp do strefy patrona wygasł 20.11.2026.');
+    expect(screen.getByRole('status')).toHaveTextContent('Twój dostęp do Strefy Premium wygasł 20.11.2026.');
     expect(screen.getAllByRole('button', { name: /Wesprzyj ponownie/ }).length).toBeGreaterThan(0);
   });
 });

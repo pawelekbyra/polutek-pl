@@ -80,7 +80,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
   if (variant !== "default") {
     return (
       <PlayerStateFrame fill className={cn(styles.pass, "rounded-md")}>
-        <div className={styles.stage} role="img" aria-label={tx("Film w strefie patrona", "Patron zone video")}>
+        <div className={styles.stage} role="img" aria-label={tx("Film w Strefie Premium", "Premium Zone video")}>
           {poster && <div className={styles.poster} style={{ backgroundImage: `url("${poster}")` }} aria-hidden="true" />}
           <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PREMIUM</span>
         </div>
@@ -89,10 +89,10 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
   }
 
   const ctaLabel = !signedIn
-    ? tx("Zaloguj się i zostań patronem", "Sign in to become a patron")
+    ? tx("Zaloguj się i kup Premium", "Sign in and get Premium")
     : offer.expiredAt
       ? tx("Wesprzyj ponownie · od {0}", "Support again · from {0}", from)
-      : tx("Zostań patronem · od {0}", "Become a patron · from {0}", from);
+      : tx("Kup Premium · od {0}", "Get Premium · from {0}", from);
 
   return (
     <PlayerStateFrame className="rounded-none">
@@ -104,17 +104,17 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
         <div className={styles.stageInner}>
           {offer.expiredAt && (
             <span className={styles.expired} role="status">
-              {tx("Twój dostęp do strefy patrona wygasł {0}.", "Your patron zone access expired on {0}.", passDate(language, offer.expiredAt))}
+              {tx("Twój dostęp do Strefy Premium wygasł {0}.", "Your Premium Zone access expired on {0}.", passDate(language, offer.expiredAt))}
             </span>
           )}
           <div className={styles.lockRing} aria-hidden="true"><LockIcon /></div>
-          <h2 id={titleId} className={styles.stageTitle}>{tx("Strefa patrona", "Patron zone")}</h2>
-          <p className={styles.stageSub}>{title ? `${title} · ` : ""}{tx("tylko dla patronów projektu", "for the project's patrons only")}</p>
+          <h2 id={titleId} className={styles.stageTitle}>{tx("Strefa Premium", "Premium Zone")}</h2>
+          <p className={styles.stageSub}>{title ? `${title} · ` : ""}{tx("tylko dla posiadaczy Premium", "for Premium holders only")}</p>
           <div className={styles.offer}>
             <div>
-              <div className={styles.offerName}>{tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone")}</div>
+              <div className={styles.offerName}>{tx("Kup Premium i uzyskaj dostęp do Strefy Premium", "Get Premium and access the Premium Zone")}</div>
               <ul className={styles.offerPerks}>
-                <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
+                <li>{tx("Wszystkie filmy Strefy Premium ({0})", "All Premium Zone videos ({0})", offer.premiumCount)}</li>
                 <li>{tx("dostęp na 30 dni od {0}", "30-day access from {0}", from)}</li>
                 <li>{tx("albo dostęp na 3 miesiące, bez subskrypcji", "or 3-month access, no subscription")}</li>
               </ul>

@@ -49,7 +49,7 @@ describe('patron checkout layout', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('heading', { level: 2, name: 'Dostęp Premium' })).toBeInTheDocument();
     expect(dialog).toHaveAccessibleName('Dostęp Premium');
-    expect(dialog).not.toHaveTextContent('Zostań patronem');
+    expect(dialog).not.toHaveTextContent('Kup Premium');
     expect(dialog).not.toHaveTextContent('Dostęp premium');
   });
 
