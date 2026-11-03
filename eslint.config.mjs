@@ -10,6 +10,9 @@ const eslintConfig = [
     // that predate this upgrade. Downgraded to warn so `npm run lint` reflects the
     // real pre-upgrade baseline instead of failing CI on unrelated legacy code;
     // see docs/tickets for the follow-up to actually fix these call sites.
+    // Same file set as the "next" config object that registers the react-hooks plugin: without it ESLint
+    // also applies these rules to .cjs files (scripts/dev) where the plugin is not loaded and aborts.
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/globals": "warn",
