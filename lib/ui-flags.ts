@@ -30,3 +30,10 @@ export type BrandLogoVariant = "wordmark-blue-symbol" | "wordmark-blue-symbol-or
  * Favicon, app icons and the manifest are not affected (they stay the glasses).
  */
 export const BRAND_LOGO_VARIANT: BrandLogoVariant = "glasses";
+
+/**
+ * The hand-written premiere note next to the logo in the top bar ("PREMIERA: 01.01.2027."; app/components/TopbarPremiere.tsx).
+ * One place for the date (ISO yyyy-mm-dd, shown as dd.mm.yyyy in every language); null hides the note.
+ */
+export type TopbarPremiereConfig = { date: string };
+export const TOPBAR_PREMIERE: TopbarPremiereConfig | null = { date: "2027-01-01" };
