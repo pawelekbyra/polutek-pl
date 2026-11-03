@@ -1,6 +1,6 @@
 # Dowód źródeł, kontroli i tożsamości obrazów — rdzeń K06
 
-`scripts/ops/release-proof.mjs` zawiera wspólny walidator i zapis dowodu. **Budowanie pięciu obrazów z przypiętych wejść jest dostępne przez `build`. Uruchamianie kontroli przez zaufanego producenta oraz podłączenie do `images.yml`, `deploy.sh`, `deploy-admin.sh` i ręcznych ścieżek nie są jeszcze gotowe.** Samo dodanie tego narzędzia nie zabezpiecza obecnych ścieżek publikacji i nie upoważnia do wydania platformy.
+`scripts/ops/release-proof.mjs` zawiera wspólny walidator i zapis dowodu. **Budowanie pięciu obrazów z przypiętych wejść jest dostępne przez `build`. Producent uruchamia pełne kontrole i archiwizuje sprawdzone źródła; podłączenie do `images.yml`, `deploy.sh`, `deploy-admin.sh` i ręcznych ścieżek nie są jeszcze gotowe.** Samo dodanie tego narzędzia nie zabezpiecza obecnych ścieżek publikacji i nie upoważnia do wydania platformy.
 
 ## Kontrakt
 
@@ -35,3 +35,11 @@ Jest to niesygnowany lokalny zapis zaufanego operatora. Nie dowodzi, że lokalny
 W obecnej sesji nie wykonano pełnej bramki `audit`: wcześniejsza automatyczna kontrola odrzuciła upload grafu zależności. Wymaganie pozostaje w polityce; nie wstawiać fikcyjnego PASS i nie uznawać dotychczasowego lokalnego odbioru za kompletny dowód wydania. Raporty kontrolne i małe obrazy użyte w testach walidatora są syntetyczne, nie są dowodami zaliczenia aplikacji.
 
 Dockerfile strony i panelu przyjmują globalne `NODE_BASE`, `FFMPEG_BASE`, `COLLECTOR_BASE`; polecenie `build` zawsze podaje pełne digesty. Dotychczasowe bezpośrednie wywołania Dockerfile zachowują domyślne tagi i wymagają osobnego podłączenia do protokołu. Nie stanowią chronionej ścieżki wydania.
+
+## Producent lokalny
+
+`node scripts/ops/release-produce.mjs --revision=<pełny SHA> --inputs=<inputs.json> --out=<nowy katalog>` uruchamia pełne `local-ci --full --strict --jobs=1` na czystym checkoutcie wskazanego SHA. Katalog nadrzędny wyników musi istnieć; dla pracy lokalnej przewidziano ignorowany `.claude/releases/`. Nie przyjmuje raportu, listy testów, pominięć ani dodatkowych opcji Dockera. Błąd procesu, niepełny raport lub zmiana źródeł blokują budowanie. Losowe `POLUTEK_CI_RUN_ID`, zapisane przez runner w `runId`, wiąże raport z bieżącym uruchomieniem i uniemożliwia przypadkowe ponowne użycie starego pliku po awarii.
+
+Po zaliczeniu kontroli producent zachowuje `quality.json`, `inputs.json`, rzeczywiste archiwum Git i rozpakowany, ponownie sprawdzony kontekst. Buduje pięć obrazów i zwraca hash dowodu. Jest to nadal dowód zaufanego lokalnego operatora, bez podpisu/SLSA. Testy producenta używają prawdziwego Git/tar oraz jawnych portów kontrolnych CI i Dockera; nie dowodzą zaliczenia pełnego produktu.
+
+W tej partii nie uruchamiano pełnego producenta: obowiązkowe `audit` nadal wymaga rozstrzygnięcia historycznej odmowy uploadu, a gałąź audytu nie zawiera jeszcze wszystkich poprawek historycznego H1. Nie obchodzić tych warunków filtrami ani syntetycznym raportem. Publikacja i aktywacja nadal wymagają osobnego podłączenia.

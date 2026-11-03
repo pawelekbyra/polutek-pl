@@ -31,3 +31,7 @@ thumbnail-r2-migration-*.json
 /.claude/local-ci-logs/
 /.claude/local-ci-cache/
 .vercel
+
+# Local audit repair verification and unpublished release artifacts
+.claude/audit-k06/
+.claude/releases/

@@ -6,7 +6,7 @@ Praca wyłącznie `/opt/codex/polutek-pl/.worktrees/platform-audit`, gałąź `d
 
 Dodano lokalne budowanie pięciu obrazów z przypiętych wejść i seal niezmiennych ID: 82/82 testy, lint PASS; tsc całego repo exit 2, bez diagnostyk zmienionych plików K06. Dowody `evidence/k06-local-producer-2026-11-03/build-result.json`. Kontrolny port Dockera nie zastępuje rzeczywistych obrazów. K06/H1 niezamknięte; szacunek historyczny H1 ~80%, całość 5–10% bez podwyższenia.
 
-**Aktualny pakiet:** K06 — producent. Następne: uruchomienie pełnego CI z unikalnym identyfikatorem, rzeczywiste archiwum Git, odmowa starego/niepełnego raportu i zmienionych źródeł, następnie integracja konsumentów. Zapisano testy `tests/unit/ops/release-produce.test.ts`; początkowy RED (brak modułu), implementacja w toku.
+**Aktualny pakiet:** K06 — producent zaimplementowany: sam uruchamia pełne ścisłe CI, wymaga losowego `runId`, czystych źródeł przed/po, archiwizuje Git i wywołuje budowanie. 121/121 testów, lint i skupione strict types PASS; CI/Docker kontrolowane, Git/tar rzeczywiste. Dowód `evidence/k06-local-producer-2026-11-03/produce-result.json`. **Następny krok:** negatywna próba Dockerfile ignorującego przypięty ARG i zabezpieczenie tej granicy; potem brakujące zależności H1 i integracja konsumentów. Całość K06 nadal otwarta, bez pełnego produktu/obrazów.
 
 **Komenda wznowienia:** `nice -n 10 npx vitest run tests/unit/ops/release-produce.test.ts tests/unit/ops/release-build.test.ts tests/unit/ops/release-proof.test.ts tests/unit/ops/release-proof-process.test.ts --maxWorkers=1`. Nie uruchamiać producenta pełnego wydania w tej sesji: bramka audit nadal wymaga rozstrzygnięcia wcześniejszej odmowy uploadu grafu. Nie używać produkcyjnego Dockera/DB.
 

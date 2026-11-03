@@ -1,0 +1,25 @@
+{
+  "package": "K06-part-producer",
+  "source_parent": "c546726a",
+  "source_hashes": {
+    "scripts/ops/release-produce.mjs": "a6a9f5ffb0f79d20c1edde3b9f608881b09c6ee9aa15f6d31eb10987a52d79d6",
+    "scripts/ops/release/produce.mjs": "7b04b1ce5f251d371e81238adc2b69a388c27c783287417d0f4b30611ccb5031",
+    "scripts/ops/local-ci.mjs": "9c3eba56ea6ea32311b126fcc1ce66fabbd5df3ea855170197815648448cc10b",
+    "tests/unit/ops/release-produce.test.ts": "0fb1f05a4c47c799d82eaacf2df33810ce17cd9933664b7bd78f390ade991d5a"
+  },
+  "tests": {
+    "passed": 121,
+    "failed": 0,
+    "skipped": 0
+  },
+  "lint_exit": 0,
+  "focused_strict_types_exit": 0,
+  "red": "Missing producer module; suite could not load.",
+  "coverage": "Actual Git repositories, git archive and tar, real compiler process in core regressions, controlled CI/build ports. No actual full release controls, Docker images, database or production.",
+  "open": [
+    "all consumers",
+    "actual full producer run",
+    "historical H1 prerequisite fixes absent from this branch"
+  ],
+  "release_ready": false
+}

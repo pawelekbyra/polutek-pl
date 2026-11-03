@@ -588,6 +588,7 @@ const verdict = summarize(ordered, { strict: opts.strict });
 const sourceAfter = snapshot();
 const sourceStable = Boolean(sourceBefore && sourceAfter && sourceBefore.fingerprint === sourceAfter.fingerprint);
 const report = {
+  runId: process.env.POLUTEK_CI_RUN_ID ?? null,
   ok: verdict.ok && sourceStable,
   head,
   branch,

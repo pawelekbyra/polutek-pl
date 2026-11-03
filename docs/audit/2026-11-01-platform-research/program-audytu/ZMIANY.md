@@ -295,3 +295,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Dodano `build`: kolejno pięć obrazów z przypiętych baz, pełnych argumentów i etykiet, ID z `--iidfile`, kontrola źródeł i seal. Bez publikacji.
 - 82/82 celowane, lint PASS, whole tsc exit 2 poza zmienionymi ścieżkami; bez zielonego całego repo i bez realnego Dockera w tej partii. Dowody `k06-local-producer-2026-11-03`.
 - Dalej producent pełnych kontroli i wszyscy konsumenci. H1 historycznie ~80%, całość 5–10%; bez zamknięcia K06/ustaleń/ASVS, PR, merge, deploy ani produkcji.
+
+## 3 listopada 2026 — K06: producent pełnych kontroli
+
+- Nowy producent wymaga czystego dokładnego SHA, sam uruchamia pełne ścisłe CI z jednym slotem, odrzuca stary raport przez losowy runId, archiwizuje Git i sprawdza źródła przed budową.
+- 121/121 testów (w tym local-ci-lib), lint i skupione strict types PASS; rzeczywisty Git/tar i jawne porty CI/Dockera. Nie uruchomiono pełnej bramki audit ani produktu. H1 nadal ~80%, całość 5–10%, K06 otwarte.
+- Następne: granica faktycznego użycia przypiętych baz w Dockerfile, brakujące zależności H1 i wszyscy konsumenci. Bez publikacji i produkcji.

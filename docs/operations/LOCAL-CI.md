@@ -92,3 +92,5 @@ Propozycje przyspieszenia bez zmiany treści testów (do zrobienia osobno, każd
 - Po zmianie opcji w `tsconfig.json` tsc w trybie przyrostowym potrafi oddać stare błędy: usuń `tsconfig.tsbuildinfo`.
 - `Brak node_modules`: `npm ci`. Skrypt nie instaluje zależności sam (poza worktree w `mergedeploy.sh`).
 - Przerwanie (Ctrl+C) zatrzymuje bramki i usuwa kontener Postgresa.
+
+Producent `release-produce.mjs` nadaje każdemu uruchomieniu losowe `POLUTEK_CI_RUN_ID`; runner zapisuje je w polu `runId` raportu. Bez zgodnego identyfikatora producent odrzuca raport jako stary. Bezpośrednie lokalne CI bez producenta zapisuje `null`.

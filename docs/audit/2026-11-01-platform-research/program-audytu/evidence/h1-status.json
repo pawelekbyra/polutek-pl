@@ -1358,12 +1358,13 @@
       "f72bbe27",
       "37eb1edb"
     ],
-    "package": "K06_PART_BUILD_VALIDATED_PRODUCER_IN_PROGRESS",
-    "tests_passed": 82,
+    "package": "K06_LOCAL_PRODUCER_IMPLEMENTED_ALL_CONSUMERS_AND_REAL_PRODUCT_OPEN",
+    "tests_passed": 121,
     "lint_exit": 0,
     "whole_types_exit": 2,
     "release_ready": false,
-    "evidence": "k06-local-producer-2026-11-03/build-result.json",
-    "historical_candidate_not_identical_to_current_tree": true
+    "evidence": "k06-local-producer-2026-11-03/produce-result.json",
+    "historical_candidate_not_identical_to_current_tree": true,
+    "focused_types_exit": 0
   }
 }
