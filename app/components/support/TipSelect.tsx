@@ -251,7 +251,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           "rounded-[16px] border-2 bg-[#d4e7ff] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
           open
             ? "border-[var(--chan-ink)] shadow-[0_10px_24px_-14px_rgba(70,140,230,0.55)]"
-            : "border-[#9fc3f5] hover:border-[var(--chan-ink)]",
+            : "border-[var(--pass-blue-edge,#9fc3f5)] hover:border-[var(--chan-ink)]",
           disabled && "pointer-events-none opacity-50 hover:border-[#9fc3f5]",
         )}
       >

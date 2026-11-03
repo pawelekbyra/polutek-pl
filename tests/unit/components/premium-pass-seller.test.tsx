@@ -2,7 +2,7 @@
 // patron zone: the seller card (steps 1-3) and the provider-neutral security footer of the checkout.
 import '@testing-library/jest-dom/vitest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import React from 'react';
 import { txFor } from '../i18n/mock-language';
 import { PATRON_SELLER } from '@/app/components/premium-pass/pass-copy';
@@ -23,8 +23,8 @@ describe('seller card', () => {
     expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('Paweł Perfect');
     expect(card.textContent).not.toContain('sp. z o.o.');
     expect(card).not.toHaveTextContent('Spółka zarejestrowana');
-    // Only the label span and the name row (no NIP line under them).
-    expect(card.querySelectorAll('[class*="sellerCardText"] > span')).toHaveLength(2);
+    // Only the label span (no NIP line under the name).
+    expect(card.querySelectorAll('[class*="sellerCardText"] > span')).toHaveLength(1);
     expect(card).not.toHaveTextContent('NIP');
   });
 
@@ -34,27 +34,19 @@ describe('seller card', () => {
     expect(screen.getByRole('region', { name: 'Sprzedawca' })).toHaveTextContent('NIP: 1234567890');
   });
 
-  it('the info button toggles the extra paragraph with aria-expanded / aria-controls', () => {
-    render(<PassSellerCard tx={txFor('pl')} />);
-    const button = screen.getByRole('button', { name: 'Informacje o sprzedawcy' });
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    const note = document.getElementById(button.getAttribute('aria-controls')!)!;
-    expect(note).toHaveTextContent('Zakupu dokonujesz od sprzedawcy wskazanego powyżej.');
-    expect(note.className).not.toMatch(/Open/);
-    fireEvent.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(note.className).toMatch(/Open/);
-    fireEvent.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'false');
+  it('is a passive card: no button, no extra paragraph', () => {
+    render(<PassSellerCard tx={txFor('pl')} mode="live" />);
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByRole('region', { name: 'Sprzedawca' })).not.toHaveTextContent('Zakupu dokonujesz');
   });
 
-  it('the compact variant (step 3) is one line and keeps the info button', () => {
+  it('the compact variant (step 3) is one line, without a button', () => {
     PATRON_SELLER.nip = '1234567890';
     render(<PassSellerCard tx={txFor('pl')} compact />);
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
     expect(card).toHaveTextContent('Sprzedawca: Paweł Perfect');
     expect(card).not.toHaveTextContent('sp. z o.o.');
-    expect(screen.getByRole('button', { name: 'Informacje o sprzedawcy' })).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('speaks English too', () => {

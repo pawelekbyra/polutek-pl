@@ -88,7 +88,8 @@ export function PassDemoSummary({ tx, language, amountMinor, currency, method, o
 
 const APPEARANCE: StripeElementsOptions["appearance"] = {
   theme: "flat",
-  variables: { colorPrimary: "#2563eb", colorBackground: "#ffffff", colorText: "#1a1a1a", borderRadius: "12px", fontFamily: "var(--font-geist-sans)" },
+  // Palette A of the checkout (premium-pass.module.css, `.sheet`): accent #1d4ed8, text #0b1b3d, secondary text/placeholder #56627a, error #b91c1c.
+  variables: { colorPrimary: "#1d4ed8", colorBackground: "#ffffff", colorText: "#0b1b3d", colorTextSecondary: "#56627a", colorTextPlaceholder: "#56627a", colorDanger: "#b91c1c", borderRadius: "12px", fontFamily: "var(--font-geist-sans)" },
 };
 
 export interface PassStripePayProps {

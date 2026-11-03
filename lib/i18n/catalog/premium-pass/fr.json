@@ -114,8 +114,6 @@
  "one-time, {0} days": "paiement unique, {0} jours",
  "test mode": "mode test",
  "Tax ID (NIP): {0}": "NIP (n° fiscal) : {0}",
- "Seller information": "Informations sur le vendeur",
- "You are buying from the seller named above. Invoice details and contact are in the Terms.": "Tu achètes auprès du vendeur indiqué ci-dessus. Les données de facturation et le contact figurent dans les Conditions.",
  "Demo mode: nothing will be charged.": "Mode démo : rien ne sera débité.",
  "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Les paiements sont chiffrés et gérés par un prestataire de confiance. Nous ne conservons jamais les données de ta carte.",
  "Payment currency": "Devise de paiement",

@@ -34,6 +34,7 @@ describe("seller badge", () => {
   it("is a labelled shield that never says verified and never names Stripe in the card", () => {
     const live = renderToStaticMarkup(<PassSellerCard tx={tx} mode="live" />);
     expect(live).toContain("role=\"img\"");
+    expect(live).not.toContain("<button");
     expect(live).toContain("Bezpieczna płatność");
     expect(live.toLowerCase()).not.toContain("zweryfikowan");
     expect(live).not.toContain("Stripe");
