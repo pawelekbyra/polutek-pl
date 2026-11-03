@@ -14,16 +14,17 @@ import {
   PipToggleButton,
   VolumeControl,
 } from "./controls/ControlButtons";
+import { InstantTapToggle } from "./controls/InstantTapToggle";
 import { PlayIcon, ReplayIcon } from "./controls/PlayerIconSet";
 import { ScrubBar } from "./controls/ScrubBar";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
 /**
- * Rendered size of the centre glyph (`.mc-hero-icon`, 30px on desktop) and the replay arrow's pen on screen. The set's thin
+ * Rendered size of the centre glyph (`.mc-hero-icon`, 27px on desktop) and the replay arrow's pen on screen. The set's thin
  * pen (ICON_PEN_PX 1.2px) looked frail next to the solid play triangle in the preview sheet, so the arrow uses 1.8px,
  * the weight at which it balances the filled triangle (still round caps, Marker path).
  */
-const HERO_GLYPH_PX = 30;
+const HERO_GLYPH_PX = 27;
 const HERO_REPLAY_PEN_PX = 1.8;
 const HERO_REPLAY_STROKE = Math.round(((HERO_REPLAY_PEN_PX * 24) / HERO_GLYPH_PX) * 1000) / 1000;
 
@@ -71,7 +72,7 @@ export default function PolutekControls({ className }: { className?: string }) {
 
   return (
     <ChaptersMenuProvider>
-      <Gesture className="mc-gesture" event="pointerup" action="toggle:paused" />
+      <InstantTapToggle />
       <Gesture className="mc-gesture" event="dblpointerup" action="toggle:fullscreen" />
       <CaptionsSync />
       <CaptionsLayer className="vds-captions" />

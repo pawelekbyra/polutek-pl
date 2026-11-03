@@ -989,24 +989,22 @@
   /* Centre button (owner 2026-11-03, the shop mock-up's play mark in the brand blue): a solid disc in the same blue as the
      progress fill (--chan-blue), the play triangle (solid, rounded corners, optically shifted right) or the replay arrow
      (Marker pen, ICON_PEN_PX) inside in --mc-hero-glyph. A hairline dark rim and a soft shadow lift the disc off both
-     bright and dark frames; hover and press darken the blue a step. 72px (60px on phones), always a touch target >= 44px. */
+     bright and dark frames; hover and press darken the blue a step. 64px (54px on phones), always a touch target >= 44px. */
   .mc-hero {
     --mc-hero-bg: var(--chan-blue);
     --mc-hero-glyph: #fff;
     --mc-hero-shadow: 0 0 0 1px rgba(0,0,0,.2), 0 6px 22px rgba(0,0,0,.42);
     display:grid; place-items:center;
-    width:72px; height:72px; padding:0;
+    width:64px; height:64px; padding:0;
     border:0; border-radius:999px;
     background: var(--mc-hero-bg);
     color: var(--mc-hero-glyph);
     box-shadow: var(--mc-hero-shadow);
     pointer-events:auto;
     transition: background-color .16s var(--mc-ease), transform .16s var(--mc-ease);
-    animation: mc-hero-in .24s var(--mc-ease-out);
     cursor:pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  @keyframes mc-hero-in { from { opacity:0; transform: scale(.9); } }
   @media (hover:hover) { .mc-hero:hover { transform: scale(1.06); background: color-mix(in srgb, var(--mc-hero-bg) 86%, #000); } }
   .mc-hero:active { transform: scale(.96); background: color-mix(in srgb, var(--mc-hero-bg) 74%, #000); }
   .mc-hero:focus-visible {
@@ -1014,8 +1012,8 @@
     box-shadow: var(--mc-hero-shadow), 0 0 0 2px #fff, 0 0 0 4px var(--chan-blue);
   }
 
-  /* The glyph: 30px in the 72px disc (the mock-up's 30 in 76). No glow: the disc carries the contrast. */
-  .mc-hero-icon { display:block; width:30px; height:30px; }
+  /* The glyph: 27px in the 64px disc (the mock-up's ratio, 30 in 76). No glow: the disc carries the contrast. */
+  .mc-hero-icon { display:block; width:27px; height:27px; }
 
   /* Buffering mark: one arc drawn with the same Marker stroke as the icons (SpinnerArcIcon, 2.4 in the 24 box = 4.8px at
      48px, round ends), white, no disc and no border behind it. The glow is the big play mark's: a drop-shadow on the WRAPPER
@@ -1090,8 +1088,8 @@
       border-width:1px 0 0;
       background: rgba(14,15,18,.98);
     }
-    .mc-hero { width:60px; height:60px; }
-    .mc-hero > svg { width:26px; height:26px; }
+    .mc-hero { width:54px; height:54px; }
+    .mc-hero > svg { width:23px; height:23px; }
   }
   /* A phone's rest chip says only the time, like the reference; the chapter is in the drag preview and in the
      settings menu's "Chapters" entry. */
@@ -1102,7 +1100,6 @@
   @media (prefers-reduced-motion:reduce) {
     .mc-scrim, .mc-bottom, .mc-btn, .mc-hero, .mc-chip, .mc-glyph-swap > svg,
     .mc-vol-slider, .mc-scrub-track, .mc-scrub-thumb { transition:none; }
-    .mc-hero { animation:none; }
     /* Reduced motion: a slow turn, still clearly alive (a frozen arc would look like a broken icon). */
     .mc-spinner-arc { animation-duration:3.2s; }
     .mc-menu { animation:none; }
