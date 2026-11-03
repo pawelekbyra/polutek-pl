@@ -24,16 +24,22 @@ export function TipWalletForm(props: TipPayStepProps) {
   const confirm = async () => {
     if (!stripe || !elements) return;
     setError(null);
-    if (patron && !(await patron.beforeConfirm())) {
-      setError(tx("Nie udało się zapisać Twojej zgody. Spróbuj ponownie.", "We could not save your consent. Please try again."));
-      return;
+    patron?.onBusyChange?.(true);
+    let read: ReturnType<typeof readConfirmResult>;
+    try {
+      if (patron && !(await patron.beforeConfirm())) {
+        setError(tx("Nie udało się zapisać Twojej zgody. Spróbuj ponownie.", "We could not save your consent. Please try again."));
+        return;
+      }
+      const result = await stripe.confirmPayment({
+        elements,
+        confirmParams: { return_url: patron?.returnUrl ?? buildTipReturnUrl(paymentId) },
+        redirect: "if_required",
+      });
+      read = readConfirmResult(result, tx, Boolean(patron));
+    } finally {
+      patron?.onBusyChange?.(false);
     }
-    const result = await stripe.confirmPayment({
-      elements,
-      confirmParams: { return_url: patron?.returnUrl ?? buildTipReturnUrl(paymentId) },
-      redirect: "if_required",
-    });
-    const read = readConfirmResult(result, tx, Boolean(patron));
     if ("outcome" in read) onConfirmed(read.outcome);
     else setError(read.error);
   };

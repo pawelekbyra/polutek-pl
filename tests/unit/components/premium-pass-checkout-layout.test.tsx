@@ -65,22 +65,23 @@ describe('patron checkout layout', () => {
     expect(dialog.getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
   });
 
-  it('step 1: the currency is a full-width blue field before the access cards; field labels share one typography class', async () => {
+  it('step 1: the currency is a small pill on a slim row above the access cards (label visible, 44 px touch area); field labels share one typography class', async () => {
     openCheckout();
     const dialog = within(await screen.findByRole('dialog'));
     const legend = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'LEGEND')!;
     expect(legend.className).toContain('sr-only');
     const visible = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'DIV')!;
     expect(visible).toBeInTheDocument();
-    const currencyLabel = dialog.getByText('Waluta płatności');
     const field = dialog.getByRole('combobox', { name: 'Waluta płatności' });
-    expect(currencyLabel.className).toBe(FIELD_LABEL_CLASS);
-    expect(field.className).toContain('min-h-[52px]');
-    expect(field.className).toContain('w-full');
-    expect(field.querySelector('span[aria-hidden="true"]')?.className).toContain('h-10 w-10 rounded-full');
-    expect(field.querySelectorAll('span[aria-hidden="true"]')[1]?.className).toContain('h-9 w-9');
-    expect(field.querySelectorAll('span[aria-hidden="true"]')[1]?.className).toContain('rounded-full');
-    expect(field.parentElement?.parentElement?.nextElementSibling).toBe(visible); // access cards follow the currency field
+    const row = field.closest('[class*="currencyRow"]') as HTMLElement;
+    const visibleLabel = row.querySelector('[class*="currencyLabel"]') as HTMLElement;
+    expect(visibleLabel).toHaveTextContent('Waluta płatności'); // readable label next to the pill (aria-hidden: the pill carries the same name)
+    expect(visibleLabel).toHaveAttribute('aria-hidden', 'true');
+    expect(field).toHaveTextContent('zł · PLN');
+    expect(field.className).toContain('h-8 '); // 32 px pill, not the 52 px tile
+    expect(field.className).not.toContain('w-full');
+    expect(field.className).toContain('before:-inset-y-[6px]'); // 6 + 32 + 6 = 44 px touch height
+    expect(row.nextElementSibling).toBe(visible); // access cards follow the currency row
     expect(FIELD_LABEL_CLASS).toMatch(/text-\[13px\].*text-\[var\(--chan-body\)\]|text-\[var\(--chan-body\)\].*text-\[13px\]/);
     expect(FIELD_LABEL_CLASS).toContain('font-[weight:var(--field-label-weight,400)]'); // regular in the gate, bold in the checkout via the one variable
     expect(FIELD_LABEL_CLASS).toContain('mb-[var(--field-label-gap,8px)]'); // label to field: one variable (8 px in the gate, 0 in the checkout, like step 3)
@@ -111,6 +112,28 @@ describe('patron checkout layout', () => {
     expect(rule).toContain('flex: 0 0 auto');
     expect(rule).toContain('padding: 0 0 9px');
     expect(rule).not.toMatch(/--pass-title-gap/);
+  });
+
+  it('the dots are a stepper: 8 px dots 44 px apart, a 44 px touch area from a pseudo-element, a focus ring, no motion when reduced', () => {
+    const dots = css.match(/\.stepDots \{([^}]*)\}/)?.[1] ?? '';
+    expect(dots).toContain('gap: 36px'); // 8 + 36 = 44 px between centres: the touch areas never overlap
+    expect(dots).toContain('z-index: 1'); // above the sticky action bar the touch area reaches into
+    expect(css).toMatch(/\.stepPip \{[^}]*width: 8px; height: 8px;/);
+    expect(css).toMatch(/\.stepBtn::before \{[^}]*inset: -18px;/); // 8 + 18 + 18 = 44
+    expect(css).toMatch(/\.stepBtn:focus-visible \{ outline: 3px solid/);
+    expect(css).toMatch(/\.stepBtn:disabled \{/);
+  });
+
+  it('the payment boxes use the blue family: tokens for the edge (3.6:1) and the placeholder (6.1:1), both AA on white', () => {
+    expect(css).toMatch(/--pass-field-edge: #5f87c9;/);
+    expect(css).toMatch(/--pass-blue-ink: #4b6384;/);
+    const lum = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+    };
+    const ratio = (a: string) => 1.05 / (lum(a) + 0.05);
+    expect(ratio('#5f87c9')).toBeGreaterThanOrEqual(3); // WCAG 1.4.11 (the edge of the field)
+    expect(ratio('#4b6384')).toBeGreaterThanOrEqual(4.5); // WCAG 1.4.3 (the placeholder)
   });
 
   it('one variable, --pass-title-gap, sets the distance from the title row to the first label in every step (no per-step hacks)', () => {

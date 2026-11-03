@@ -146,6 +146,6 @@ describe("premium-pass: where money can move", () => {
     expect(offer).toContain("{demo && <DemoRibbon />}");
     expect(stage).toContain('{demo && <span className={styles.stageDemo}>{tx("TRYB DEMO", "DEMO MODE")}</span>}');
     expect(stage).toContain('tx("TRYB TESTOWY", "TEST MODE")');
-    expect(sheet).toContain('tx("Wybierz dostęp Premium i odkrywaj materiały przygotowane dla patronów. To wersja testowa kasy, więc możesz przejść cały proces bez prawdziwej płatności.", "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.")');
+    expect(sheet).toContain('tx("Wersja testowa: bez prawdziwej płatności.", "Test version: no real payment.")');
   });
 });

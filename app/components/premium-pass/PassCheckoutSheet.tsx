@@ -135,6 +135,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const [notice, setNotice] = useState<string | null>(null);
   const [consent, setConsent] = useState<PassConsentState>({ terms: false, waiver: false });
   const [consentErrors, setConsentErrors] = useState<PassConsentErrors>({});
+  // True while the payment form of step 3 is confirming (BLIK waits up to 60 s, a wallet sheet is open): no way back meanwhile.
+  const [payBusy, setPayBusy] = useState(false);
   const [access, setAccess] = useState<{ lifetime: boolean; expiresAt: string | null } | null>(null);
 
   const typesKey = `${product.id}:${currency}`;
@@ -364,8 +366,17 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const stepNumber = stage.kind === "plan" ? 1 : stage.kind === "method" ? 2 : stage.kind === "pay" ? 3 : null;
   const showSteps = stepNumber !== null;
   // The dots sit at the bottom, directly above the action bar's top line (outside the scrolling body, so they never scroll or add scroll).
-  const dots = stepNumber !== null ? <PassStepDots tx={tx} step={stepNumber} /> : null;
+  // Back only (the step dots of earlier steps are buttons); nothing while a payment is being created or confirmed, never after it (no dots then).
+  const stepsLocked = locked || payBusy;
+  const goToStep = (target: number) => {
+    if (stepsLocked || stepNumber === null || target >= stepNumber) return;
+    setNotice(null);
+    setStage({ kind: target === 1 ? "plan" : "method" });
+  };
+  const dots = stepNumber !== null ? <PassStepDots tx={tx} step={stepNumber} onStep={goToStep} disabled={stepsLocked} /> : null;
   const retry = () => { resetAttempt(); setIntent(null); setStage({ kind: "plan" }); };
+  // Leaving step 3 (back button, the dots, a finished payment) can never leave the lock on.
+  useEffect(() => { if (stage.kind !== "pay") setPayBusy(false); }, [stage.kind]);
 
   // `hidden`: the heading stays for screen readers and for the focus of the step, it is just not drawn (step 1 has no subtitle).
   const heading = (text: string, hidden = false) => (
@@ -389,7 +400,13 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
 
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}
           {testMode && stage.kind !== "success" && (
-            <p className={styles.testNote}>{tx("Wybierz dostęp Premium i odkrywaj materiały przygotowane dla patronów. To wersja testowa kasy, więc możesz przejść cały proces bez prawdziwej płatności.", "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.")}</p>
+            <p className={styles.testNote}>
+              <span>{tx("Wersja testowa: bez prawdziwej płatności.", "Test version: no real payment.")}</span>
+              {/* Stripe's published test card, shown only where a card is typed in (step 3, card). */}
+              {stage.kind === "pay" && method === "card" && (
+                <span className={styles.testCard}>{tx("Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Test card: 4242 4242 4242 4242, any date and CVC.")}</span>
+              )}
+            </p>
           )}
 
           {stage.kind === "plan" && (
@@ -454,7 +471,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
               <div className={styles.payHead}>
                 <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} />
               </div>
-              <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back"), patron: true, aboveBar: dots }}>
+              <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back"), patron: true, disabled: payBusy, aboveBar: dots }}>
                 <PassStripePay
                   language={language}
                   amountMinor={amountMinor}
@@ -467,6 +484,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   returnUrl={buildReturnUrl(intent.paymentId)}
                   accepted={consent.terms && consent.waiver}
                   beforeConfirm={beforeConfirm}
+                  onBusyChange={setPayBusy}
                   onChangeMethod={backToMethod}
                   onConfirmed={(outcome) => void finish(intent.paymentId, outcome === "succeeded" ? 6 : 10)}
                   consent={<PassConsent spaced tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} />}
