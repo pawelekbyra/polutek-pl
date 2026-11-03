@@ -23,7 +23,8 @@ describe('seller card', () => {
     expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('Paweł Perfect');
     expect(card.textContent).not.toContain('sp. z o.o.');
     expect(card).not.toHaveTextContent('Spółka zarejestrowana');
-    expect(card.querySelectorAll('[class*="sellerCardText"] span')).toHaveLength(1);
+    // Only the label span and the name row (no NIP line under them).
+    expect(card.querySelectorAll('[class*="sellerCardText"] > span')).toHaveLength(2);
     expect(card).not.toHaveTextContent('NIP');
   });
 
