@@ -67,6 +67,11 @@ albo znika w tym samym PR. Historia jest w git.
 | PP Support: przewodnik dla właściciela i obsługi | [`operations/PP-SUPPORT-GUIDE.md`](operations/PP-SUPPORT-GUIDE.md) |
 | Dostępy agentów do usług (bez sekretów) | [`operations/AGENT_ACCESS.md`](operations/AGENT_ACCESS.md) |
 | Google Workspace (do czasu anulowania) | [`operations/GOOGLE_ACCESS.md`](operations/GOOGLE_ACCESS.md), [`operations/DNS_BACKUP_mail_2026-10-02.md`](operations/DNS_BACKUP_mail_2026-10-02.md) |
+| Odoo (`firma.pawelperfect.com`): uruchomienie, kopie, moduły, aktualizacja, zabezpieczenia | [`operations/ODOO.md`](operations/ODOO.md) |
+| Eksperyment SIKUBENZA i makieta bramki (`:8088`, `publish.sh`) | [`operations/STATIC-DEMO.md`](operations/STATIC-DEMO.md) |
+| Eksperyment dziennikarski (`:8089`, wyłączone API, noindex) | [`operations/DZIENNIKARSKI-EKSPERYMENT.md`](operations/DZIENNIKARSKI-EKSPERYMENT.md) |
+| Domena `pawelperfect.pl`: strefa Cloudflare, przekierowanie na `.com`, poczta, Resend | [`operations/DOMENA-PAWELPERFECT-PL.md`](operations/DOMENA-PAWELPERFECT-PL.md) |
+| `nasza-gazetka.pl`: migracja z Vercela, stan, przełączenie i rollback | [`operations/NASZA-GAZETKA.md`](operations/NASZA-GAZETKA.md) |
 | Licencje oprogramowania obcego | [`operations/THIRD_PARTY_NOTICES.md`](operations/THIRD_PARTY_NOTICES.md) |
 
 ## Audyty (`audit/`)

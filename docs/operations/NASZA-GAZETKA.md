@@ -1,0 +1,85 @@
+# nasza-gazetka.pl: migracja z Vercela na serwer
+
+Stan zweryfikowany (serwer, Cloudflare API tylko do odczytu, publiczny DNS): **2026-11-03, ok. 17:45 CET**. Dokument odtworzony tego dnia (poprzednia wersja zginęła przy synchronizacji docs przez `deploy.sh`).
+**Skrót: strona jest zbudowana i serwowana na serwerze (test działa), strefa Cloudflare jest `active`, ale produkcyjne rekordy `nasza-gazetka.pl` nadal wskazują na Vercel. Przełączenie na nasz tunel (`cutover.sh to-tunnel`) NIE zostało wykonane i czeka na zgodę właściciela.**
+
+## Co to jest
+
+Statyczna strona (eksport Next.js 14.2.3, `output: 'export'`, 12 adresów: `/{pl,en,es,de,fr,cs}` i `/{lang}/prokuratura-rejonowa-w-walbrzychu`), obecnie na Vercelu. Żadnej bazy, logowania, płatności, API ani zmiennych środowiskowych. Źródło: prywatne repo GitHub `pawelekbyra/polutek`, commit **`91db05e`** (2026-06-27; nazwa repo to tylko źródło, strona nie ma związku z platformą pawelperfect). To **nie** jest repo `dziennikarski` (patrz [`DZIENNIKARSKI-EKSPERYMENT.md`](DZIENNIKARSKI-EKSPERYMENT.md)).
+
+## Stan faktyczny
+
+| Element | Stan |
+|---|---|
+| Domena | `nasza-gazetka.pl`, rejestrator home.pl (rejestracja 2026-03-09, odnowienie 2027-03-09; sprawdzić autoodnawianie) |
+| Nameservery | **zmienione na Cloudflare**: `alfred.ns.cloudflare.com`, `arya.ns.cloudflare.com` (publiczne resolvery 8.8.8.8 i 1.1.1.1 już je zwracają) |
+| Strefa Cloudflare | `nasza-gazetka.pl`, id `fad41f39…`, status **`active`** od 2026-11-03 16:42 UTC (po zmianie NS w home.pl) |
+| Rekordy w strefie | 1:1 jak w home.pl, **DNS-only (bez proxy)**: `A @ 216.198.79.1` (Vercel), `CNAME www → b94284e245ccde39.vercel-dns-017.com` (Vercel), `TXT @ google-site-verification=…` (zachować). Dodane przez nas: `MX @ 0 .` (null MX: domena bez poczty), `TXT @ v=spf1 -all`, `TXT _dmarc v=DMARC1; p=reject; adkim=s; aspf=s` |
+| Co widzi świat | `nasza-gazetka.pl` → `216.198.79.1` → **nadal Vercel**; zmiana NS nie zmieniła treści ani certyfikatu |
+| Tunel `serwerek` | hostnames już dodane: `nasza-gazetka.pl`, `www.nasza-gazetka.pl`, `test-gazetka.pawelperfect.com` → `http://127.0.0.1:3300` (przed regułą 404). Kopia konfiguracji sprzed zmiany: `/opt/serwerek/apps/cloudflared/tunnel-config-pre-nasza-gazetka-20261103-173340.json` |
+| Ustawienia strefy | SSL `full`, „Always use HTTPS” włączone, min. TLS 1.2, HSTS wyłączone, **brak** reguły przekierowania www → apex (powstanie w `cutover.sh to-tunnel`) |
+| Wersja testowa | `https://test-gazetka.pawelperfect.com/` → 200 (tunel + CNAME w strefie `pawelperfect.com`), `noindex` |
+| Kontener | `nasza-gazetka-web` healthy, `127.0.0.1:3300` |
+| Strona | zbudowana: 124 pliki, 58 MB w `/opt/serwerek/data/nasza-gazetka/site` |
+| Poczta | domena **bez poczty** (null MX), choć strona wyświetla adresy `marlow@` i `kontakt@nasza-gazetka.pl`: wiadomości na nie nie dotrą (ryzyko zgłoszone właścicielowi) |
+
+Czego nie ustalono z serwera: czy porównanie 12 adresów z produkcją Vercel (statusy, rozmiary, zrzuty, obrazy z R2, nagłówki) zostało w pełni wykonane i zaakceptowane; decyzji właściciela o terminie przełączenia i o indeksacji po przełączeniu.
+
+## Jak to działa na serwerze
+
+| Rzecz | Wartość |
+|---|---|
+| Katalog | `/opt/serwerek/apps/nasza-gazetka/`: `docker-compose.yml`, `nginx/` (`nginx.conf`, `common-headers.conf`, `robots.txt`), `build.sh`, `cutover.sh` (600), `patches/nasza-gazetka-noindex-canonical.patch` |
+| Dane | `/opt/serwerek/data/nasza-gazetka/site/` (zbudowana strona, montowana tylko do odczytu), `…/nasza-gazetka-src-91db05e.tar.gz` (źródło) |
+| Kopie źródła | `/opt/claude/research-migration/nasza-gazetka-src-91db05e.tar.gz` (+ `.sha256`) i `/opt/serwerek/data/nasza-gazetka/…`; zrzut DNS z home.pl: `/opt/claude/research-migration/dns-snapshot-nasza-gazetka.pl-*/` oraz `DNS-HOME-PL-nasza-gazetka.pl-panel-2026-11-03.md` (zrzut z panelu: dokładnie 3 rekordy) |
+| Kontener | `nasza-gazetka-web` (`nginx:1.27-alpine`, użytkownik 101, `read_only`, `cap_drop: ALL`, `no-new-privileges`, 64 MB, 0,25 CPU, `pids_limit 64`), sieć `nasza-gazetka-net`, `127.0.0.1:3300 → 8080` |
+| nginx | tylko GET/HEAD (405), `www.nasza-gazetka.pl` → 301 na apex, adresy z końcowym `/` → 308 bez ukośnika (jak na Vercelu), `/_next/static/` z `immutable` na rok, obrazy i media na dobę, gzip (brotli robi Cloudflare), `limit_req` 30/s i `limit_conn` 40 na IP z `CF-Connecting-IP`, `/healthz`, ukryte pliki 404, własna `404.html` |
+| Nagłówki (`common-headers.conf`) | `X-Robots-Tag: noindex, nofollow, noarchive`, `nosniff`, `Referrer-Policy`, `X-Frame-Options: SAMEORIGIN`, `Permissions-Policy`, COOP, CSP (dozwolone: `self`, inline, `cdn.jsdelivr.net`, `https:` dla obrazów/mediów/połączeń) |
+| Sekrety | brak (strona statyczna); tokeny Cloudflare dla `cutover.sh` w `/root/.ai-secrets/secrets.env` przez `/root/cf-helper.sh` |
+
+### Budowa strony
+
+    cd /opt/serwerek/apps/nasza-gazetka && ./build.sh
+
+`build.sh`: odmawia pracy, gdy trwa wdrożenie produkcji (`flock` na `/opt/serwerek/apps/polutek/.deploy.lock`) lub dostępne jest mniej niż 2500 MB RAM; rozpakowuje źródło do `/opt/claude/nasza-gazetka-build/src` (katalog roboczy, można kasować), nakłada patch, buduje w `node:22-alpine` (2 GB, `nice`, `yarn install --ignore-scripts`, `yarn build`) i **dopiero po sukcesie** podmienia zawartość `site/` w miejscu (nie przenosi katalogu, bo jest zamontowany w kontenerze). Restart nginx niepotrzebny. Czas ok. 1–2 min po zbudowaniu zależności.
+Patch (`nasza-gazetka-noindex-canonical.patch`): apex jako baza adresów, poprawny `canonical` (zamiast `…/undefined/`), `meta robots noindex`, usunięte `robots.ts`, `sitemap.ts` i Vercel Analytics.
+Zmiana treści strony = nowe źródło (tarball) + `build.sh`; po przełączeniu domeny nie ma już Vercela, który budowałby ją z GitHuba.
+
+### Uruchomienie / zatrzymanie
+
+    cd /opt/serwerek/apps/nasza-gazetka
+    docker compose up -d      # start
+    docker compose ps         # healthy
+    docker compose restart    # po zmianie nginx/*
+    docker compose down       # stop (site/ i dane zostają)
+
+## Przełączenie domeny (cutover) i rollback
+
+`cutover.sh` (tylko po zgodzie właściciela; wymaga strefy `active` i działającego `:3300`):
+
+    ./cutover.sh status       # lista rekordów strefy
+    ./cutover.sh to-tunnel    # usuwa A/CNAME Vercela; tworzy CNAME apex i www → tunel (proxied, TTL auto); reguła 301 www → apex
+    ./cutover.sh to-vercel    # ROLLBACK: przywraca A 216.198.79.1 i CNAME Vercela (DNS-only, TTL 300), usuwa regułę przekierowania
+
+Bezpieczne kolejne kroki: sprawdzić `test-gazetka` na urządzeniach (mobile), ustalić indeksację (patrz niżej), wykonać `to-tunnel`, odczekać aż Cloudflare Universal SSL pokryje apex i `www` (minuty), sprawdzić 12 adresów, `www` → apex 301, nagłówki i certyfikat, obserwować 7 dni, dopiero potem wyłączyć projekt Vercel (`nasza-gazetka.pl`, domeny `nasza-gazetka.pl`, `www`). Rekordy Vercela są zachowane w skrypcie rollbacku; rollback poza skryptem = przywrócenie NS `dns/dns2/dns3.home.pl` (rekordy w home.pl nietknięte).
+Certyfikat Vercela (Let's Encrypt) jest ważny do 2026-12-10; po przełączeniu certyfikat wystawia Cloudflare.
+
+## noindex i SEO
+
+Decyzja właściciela: wszystkie nowe strony i eksperymenty mają `noindex`. Dlatego nginx dodaje `X-Robots-Tag: noindex, nofollow, noarchive`, `robots.txt` to `Disallow: /` (plik `nginx/robots.txt`), a build zawiera `meta robots noindex`.
+**Konsekwencja przy przełączeniu produkcyjnej domeny:** dziś produkcja na Vercelu jest indeksowana (`robots: index, follow`); po cutoverze z `noindex` strona zniknie z wyszukiwarek. Jeśli ma być indeksowana, trzeba świadomie zmienić trzy miejsca naraz: `nginx/common-headers.conf` (usunąć `X-Robots-Tag`), `nginx/robots.txt` (np. `Allow: /` + mapa strony) i patch/build (`meta robots`, przywrócić sitemapę), potem `docker compose restart` i `build.sh`. To decyzja właściciela (nie podejmowana w dokumentacji).
+
+## Znane ograniczenia i ryzyka
+
+* **Kopie**: `site/` i tarball źródła leżą w `/opt/serwerek/data/…` oraz `/opt/claude/…`, które **nie są objęte** nocnym backupem (`configs-*.tar.gz` obejmuje tylko `apps/`, `docs`, `scripts`). Strona jest odtwarzalna z tarballa (sha256 w `…/research-migration/`), ale sam tarball nie ma kopii poza serwerem (prywatne repo `polutek` jest źródłem prawdy). Rozważ dopisanie `data/nasza-gazetka` do `backup.sh`.
+* Wspólny serwer: budowa potrzebuje do 2 GB RAM i ok. 1–2 GB dysku (dysk ok. 82%); nie buduj w trakcie wdrożenia produkcji.
+* Media z publicznego bucketu R2 (`naszagazetka`, w naszym koncie Cloudflare) i jedno odwołanie do Pinata (zewnętrzne); `public/` w repo ma ok. 55 MB. Duże pliki (np. `sim_mirrored.png` 8 MB) nie zostały zoptymalizowane.
+* `@vercel/analytics` usunięty: po migracji nie ma analityki (opcja: Cloudflare Web Analytics).
+* `middleware.ts` z oryginału nie działa w eksporcie statycznym; zachowanie adresów odtwarzają reguły nginx. `/` pokazuje wybór języka jak na Vercelu.
+* Zmiany NS już zostały wykonane; `dns-only` rekordy do Vercela działają tak jak wcześniej, ale DNS jest teraz w Cloudflare (zmiany rekordów robimy tam, nie w home.pl). Domena jest nadal zarejestrowana w home.pl: niezapłacone odnowienie (2027-03-09) wyłączyłoby także DNS, więc pilnuj odnowienia.
+* Domena bez poczty: strona wyświetla adresy e-mail w domenie bez skrzynek (jeśli kontakt ma działać, trzeba Email Routing albo zmienić adresy na stronie).
+
+## Powiązane dokumenty
+
+[`DOMENA-PAWELPERFECT-PL.md`](DOMENA-PAWELPERFECT-PL.md) (ta sama ścieżka: home.pl → Cloudflare) · [`DZIENNIKARSKI-EKSPERYMENT.md`](DZIENNIKARSKI-EKSPERYMENT.md) · [`STATIC-DEMO.md`](STATIC-DEMO.md) · [`SERWEREK.md`](SERWEREK.md) (tunel, backup) · [`ACCOUNTS.md`](ACCOUNTS.md).
+Notatki robocze agentów (na serwerze, poza repozytorium): `/opt/claude/research-migration/NASZA-GAZETKA-STAN.md` (nieaktualny: z 15:20, sprzed budowy i zmiany NS), `DZIENNIKARSKI-MIGRACJA.md` (pełna analiza wariantów A/B).

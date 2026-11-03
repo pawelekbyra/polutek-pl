@@ -360,6 +360,8 @@ Jedno ciężkie polecenie naraz (4 vCPU współdzielone z innymi agentami), `nic
 nie otwieraj portów, nie osłabiaj SSH i zapory, nie usuwaj serwera ani dysku, nie dotykaj panelu Hetznera, nic za pieniądze bez zgody; przed ryzykowną zmianą bazy `/opt/serwerek/scripts/backup.sh`; długie operacje w `tmux`/`nohup` z logiem.
 Wdrożenie (`git archive` → `deploy.sh`, panel `deploy-admin.sh`, rollback `--rollback`) opisano w SERWEREK.md rozdz. 7 i wykonuje się tylko na zgodę właściciela.
 
+Dokumentację projektów na serwerze zapisuj w repozytorium (`docs/operations/`), a nie tylko w `/opt/serwerek/docs`: `deploy.sh` synchronizuje ten katalog z repo i usuwa pliki spoza repo.
+
 **Konwencje:**
 - Tekst interfejsu: polski i angielski obok siebie przez `tx("polski", "english")`, inne języki z katalogów (§4.11). Strona i panel nie ładują niczego z zewnętrznych CDN (czcionki lokalne, `hls.js` z bundla).
 - Kod, identyfikatory, komentarze i commity po angielsku; dokumentacja po polsku, krótka, opisująca stan obecny. Jeden temat, jeden plik.
