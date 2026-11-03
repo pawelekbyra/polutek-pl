@@ -332,3 +332,34 @@ def threshold_level(value, limit):
     if pct >= 70:
         return pct, "warn"
     return pct, "ok"
+
+
+# ---------------------------------------------------------------------------------------------
+# Faktury: NIP i podział brutto na netto + VAT
+# ---------------------------------------------------------------------------------------------
+
+def nip_normalize(value):
+    """NIP bez prefiksu PL, spacji i myślników (same cyfry). Pusty tekst zostaje pusty."""
+    text = (value or "").strip().upper().replace(" ", "").replace("-", "")
+    if text.startswith("PL"):
+        text = text[2:]
+    return text
+
+
+def nip_is_valid(value):
+    """Polski NIP: 10 cyfr, suma kontrolna wagami 6,5,7,2,3,4,5,6,7 modulo 11 (reszta 10 = błędny)."""
+    digits = nip_normalize(value)
+    if len(digits) != 10 or not digits.isdigit():
+        return False
+    check = sum(int(d) * w for d, w in zip(digits, (6, 5, 7, 2, 3, 4, 5, 6, 7))) % 11
+    return check != 10 and check == int(digits[9])
+
+
+def split_gross(gross, vat_rate_pct=ZERO):
+    """Brutto -> (netto, VAT). Stawka 0 (zwolnienie): netto = brutto, VAT = 0. VAT zaokrąglony do grosza, netto = brutto - VAT."""
+    gross = jdg_round(gross)
+    rate = dec(vat_rate_pct)
+    if rate <= 0:
+        return gross, ZERO
+    vat = jdg_round(gross * rate / (100 + rate))
+    return gross - vat, vat

@@ -4,7 +4,7 @@ Moduł Odoo 19 Community dla jednoosobowej działalności gospodarczej na rycza�
 Właściciel jest własnym księgowym wspieranym przez AI, więc moduł ma być czytelny, testowalny i uczciwy:
 **każda kwota to szacunek, nie porada podatkowa**, a każda liczba ma podpowiedź „skąd ta liczba”.
 
-Wersja: 19.0.1.0.0 (iteracje 0 i 1). Licencja LGPL-3. Zależności: `base, mail, account, contacts, l10n_pl` (tylko Community).
+Wersja: 19.0.3.0.0 (iteracje 0-4). Licencja LGPL-3. Zależności: `base, mail, account, contacts, l10n_pl` (tylko Community).
 
 ## Co działa (iteracje 0–1)
 
@@ -28,7 +28,7 @@ Wersja: 19.0.1.0.0 (iteracje 0 i 1). Licencja LGPL-3. Zależności: `base, mail,
 | Data startu działalności (domyślnie 2027-01-01) liczy ulgę na start (6 mies.) i preferencyjny ZUS (24 mies.) | Firma > Ustawienia > Profil firmy > Data rozpoczęcia |
 | Stawka ryczałtu jako parametr: 8,5% (domyślnie, „do potwierdzenia”), 12%, 15% | Profil firmy > Stawka ryczałtu; wartości: Reguły i parametry (`ryczalt.rate.*`) |
 | Zaliczki kwartalnie (domyślnie) albo miesięcznie; ZUS i zdrowotna zawsze miesięcznie | Profil firmy > Rytm zaliczek |
-| Faktury tylko na żądanie (B2B z NIP); potwierdzenie e-mailem to nie faktura | Profil firmy > Faktury (faktury: iteracja 4) |
+| Faktury tylko na żądanie kupującego (B2B z NIP); potwierdzenie e-mailem to nie faktura | Profil firmy > Faktury; dane sprzedawcy: Profil firmy > Dane sprzedawcy na fakturze |
 | Napiwki to darowizny, nie przychód (wyrok NSA, sygnatura do weryfikacji) | Profil firmy > Traktuj napiwki jako przychód |
 
 ## Jak to jest zbudowane (dla dewelopera i AI)
@@ -44,7 +44,7 @@ models/jdg_period.py, jdg_tax_advance.py  Zamykanie okresów z migawką, zaliczk
 models/jdg_alert.py, jdg_deadline.py, jdg_notify.py  Alerty progów, kalendarz terminów, powiadomienia w Discuss.
 static/src/js/        OWL: dashboard.*, taxes.*, format.js (formatowanie 1 234,56 zł). scss: jdg.scss.
 data/                 Reguły (noupdate=1: Twoje edycje przetrwają aktualizację), profil startowy, waluty.
-tests/                test_engine.py (bez bazy), test_models.py (na bazie).
+tests/                test_engine.py (bez bazy), test_models.py, test_iter23.py, test_iter4.py (faktury).
 ```
 
 Zasady:
@@ -81,3 +81,10 @@ Stawka ryczałtu (8,5/12/15%) [N], moment zmiany progu zdrowotnej [N], definicja
 roboczy przed przychodem) [PR], odliczanie Funduszu Pracy [N], zwroty i spory (miesiąc pomniejszenia) [N], różnice kursowe z wypłat
 Stripe [N], darowizny a przychód i SD-Z2 [N], VAT/OSS dla zwolnionego [N], W na 2027 (do komunikatu GUS) [N].
 Pełna lista: `SPEC.md` sekcja 8 (poza repozytorium) i tabela reguł (pole „Źródło i uwagi”).
+
+## Faktury (iteracja 4)
+
+Faktura powstaje z zaksięgowanego wpisu sprzedaży (przycisk „Wystaw fakturę”). Zanim wystawisz pierwszą: wpisz NIP i adres sprzedawcy w Profilu firmy
+(bez nich dokument jest tylko podglądem). Numeracja FV/rok/numer, korekty FK/rok/numer, anulowanie = korekta do zera. Faktura nie zmienia przychodu.
+B2B z polskim NIP wymaga w praktyce KSeF (poza zakresem modułu). Podstawa „art. 113 ust. 1 ustawy o VAT” na fakturze jest zalecana, nie obowiązkowa
+(źródła wtórne: potwierdź z księgowym).

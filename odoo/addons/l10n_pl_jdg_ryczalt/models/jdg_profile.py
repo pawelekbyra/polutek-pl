@@ -1,6 +1,7 @@
 import datetime as dt
 
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 from . import engine
 
@@ -150,6 +151,67 @@ class JdgProfile(models.Model):
                 pref_from = engine.add_months(profile.start_date, ulga_months)
                 profile.ulga_end_date = pref_from - dt.timedelta(days=1)
             profile.pref_end_date = engine.add_months(pref_from, pref_months) - dt.timedelta(days=1)
+
+    # ----- dane sprzedawcy na fakturze (iteracja 4) -----
+    seller_name = fields.Char(
+        "Nazwa sprzedawcy na fakturze",
+        help="Imię, nazwisko i firma przedsiębiorcy dokładnie tak, jak w CEIDG. Puste = użyjemy pola „Właściciel”, a gdy i ono "
+             "jest puste, nazwy firmy w Odoo. Potwierdź brzmienie z księgowym.")
+    seller_nip = fields.Char("NIP sprzedawcy", help="10 cyfr; sprawdzamy sumę kontrolną. Bez NIP faktura jest tylko podglądem.")
+    seller_street = fields.Char("Ulica i numer")
+    seller_zip = fields.Char("Kod pocztowy")
+    seller_city = fields.Char("Miejscowość")
+    seller_country_id = fields.Many2one("res.country", "Kraj", default=lambda self: self.env.ref("base.pl", raise_if_not_found=False))
+    seller_email = fields.Char("E-mail na fakturze", help="Opcjonalnie: kontakt widoczny na fakturze.")
+    invoice_footer = fields.Text(
+        "Stopka faktury", help="Opcjonalny tekst pod fakturą, np. numer w CEIDG/REGON. Nie jest wymagany przepisami.")
+    seller_missing = fields.Char("Czego brakuje do wystawiania faktur", compute="_compute_seller_missing")
+    seller_ok = fields.Boolean("Dane sprzedawcy kompletne", compute="_compute_seller_missing")
+
+    @api.depends("seller_name", "owner_name", "seller_nip", "seller_street", "seller_zip", "seller_city", "company_id")
+    def _compute_seller_missing(self):
+        for profile in self:
+            missing = profile._seller_missing()
+            profile.seller_missing = ", ".join(missing)
+            profile.seller_ok = not missing
+
+    def _seller_missing(self):
+        """Lista (po polsku) brakujących danych sprzedawcy, bez których nie wolno wystawić faktury (art. 106e ust. 1 pkt 3 i 4)."""
+        self.ensure_one()
+        missing = []
+        if not self._seller_display_name():
+            missing.append("nazwa sprzedawcy")
+        if not engine.nip_is_valid(self.seller_nip):
+            missing.append("NIP sprzedawcy" if not self.seller_nip else "poprawny NIP sprzedawcy")
+        if not (self.seller_street or "").strip():
+            missing.append("ulica i numer")
+        if not (self.seller_zip or "").strip():
+            missing.append("kod pocztowy")
+        if not (self.seller_city or "").strip():
+            missing.append("miejscowość")
+        return missing
+
+    def _seller_display_name(self):
+        self.ensure_one()
+        return (self.seller_name or self.owner_name or self.company_id.name or "").strip()
+
+    @api.constrains("seller_nip")
+    def _check_seller_nip(self):
+        for profile in self:
+            if profile.seller_nip and not engine.nip_is_valid(profile.seller_nip):
+                raise ValidationError("NIP sprzedawcy jest nieprawidłowy (10 cyfr, suma kontrolna). Popraw go albo zostaw puste.")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("seller_nip"):
+                vals["seller_nip"] = engine.nip_normalize(vals["seller_nip"])
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if vals.get("seller_nip"):
+            vals["seller_nip"] = engine.nip_normalize(vals["seller_nip"])
+        return super().write(vals)
 
     @api.model
     def _get(self, company=None):

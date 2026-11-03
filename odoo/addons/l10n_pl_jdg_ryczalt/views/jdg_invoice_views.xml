@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jdg_invoice_list" model="ir.ui.view">
+        <field name="name">jdg.invoice.list</field>
+        <field name="model">jdg.invoice</field>
+        <field name="arch" type="xml">
+            <list create="0" decoration-muted="is_test" decoration-info="state == 'draft'" decoration-warning="doc_type == 'correction'"
+                  default_order="issue_date desc, id desc">
+                <field name="name"/>
+                <field name="doc_type" widget="badge" decoration-success="doc_type == 'invoice'" decoration-warning="doc_type == 'correction'"/>
+                <field name="issue_date"/>
+                <field name="sale_date" optional="show"/>
+                <field name="buyer_name"/>
+                <field name="buyer_type" optional="show"/>
+                <field name="buyer_tax_id" optional="show"/>
+                <field name="currency_id" optional="show"/>
+                <field name="amount_gross" sum="Razem (waluty bez przeliczenia)"/>
+                <field name="amount_gross_pln" sum="Razem PLN"/>
+                <field name="vat_mode" optional="hide"/>
+                <field name="correction_state" widget="badge" optional="show" decoration-danger="correction_state == 'full'"
+                       decoration-warning="correction_state == 'partial'"/>
+                <field name="is_test" string="Test" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'issued'" decoration-info="state == 'draft'"/>
+                <field name="pln_currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_invoice_kanban" model="ir.ui.view">
+        <field name="name">jdg.invoice.kanban</field>
+        <field name="model">jdg.invoice</field>
+        <field name="arch" type="xml">
+            <kanban create="0" quick_create="0" default_group_by="state" class="o_kanban_mobile" group_create="0" group_delete="0" group_edit="0"
+                    records_draggable="0">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="doc_type"/>
+                <field name="currency_id"/>
+                <field name="is_test"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between">
+                            <strong class="fs-5"><field name="name"/></strong>
+                            <field name="amount_gross" widget="monetary" class="fw-bold"/>
+                        </div>
+                        <div class="text-muted"><field name="buyer_name"/></div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span><field name="issue_date"/></span>
+                            <span>
+                                <field name="doc_type" widget="badge" decoration-warning="doc_type == 'correction'"
+                                       decoration-success="doc_type == 'invoice'"/>
+                                <span t-if="record.is_test.raw_value" class="badge rounded-pill text-bg-secondary">Test</span>
+                            </span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_jdg_invoice_form" model="ir.ui.view">
+        <field name="name">jdg.invoice.form</field>
+        <field name="model">jdg.invoice</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <header>
+                    <button name="action_issue" type="object" string="Wystaw fakturę" class="btn-primary"
+                            invisible="state != 'draft' or is_preview"
+                            confirm="Po wystawieniu faktura dostaje numer i nie można jej zmienić ani usunąć (tylko skorygować). Wystawić?"/>
+                    <button name="action_print_pdf" type="object" string="Pobierz PDF" class="btn-secondary"/>
+                    <button name="action_open_correction_wizard" type="object" string="Wystaw fakturę korygującą"
+                            invisible="state != 'issued' or doc_type != 'invoice' or correction_state == 'full'"/>
+                    <button name="action_refresh_seller" type="object" string="Odśwież dane sprzedawcy z profilu"
+                            invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,issued"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="not is_preview">
+                        <strong>To tylko podgląd, nie można jej wystawić.</strong>
+                        W profilu firmy brakuje danych sprzedawcy: <field name="seller_missing" class="d-inline fw-bold"/>.
+                        Uzupełnij je w Firma &gt; Ustawienia &gt; Profil firmy (sekcja „Dane sprzedawcy na fakturze”),
+                        potem kliknij „Odśwież dane sprzedawcy z profilu”.
+                        <button name="action_open_profile" type="object" class="btn btn-link p-0 ms-2">Otwórz profil firmy</button>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not ksef_warning or state != 'draft'">
+                        <strong>Nabywca z polskim NIP (B2B).</strong> Takie faktury od 2027 trzeba wystawiać w KSeF (bez limitu
+                        kwoty). Ten PDF to dokument pomocniczy / wizualizacja; po wystawieniu w KSeF wpisz numer KSeF poniżej.
+                        Zasady KSeF potwierdź z księgowym.
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not is_test">
+                        Faktura testowa (z wpisu testowego): ma własną numerację TEST-FV i nie jest prawdziwą fakturą.
+                    </div>
+                    <div class="alert alert-info" role="alert" invisible="state != 'issued'">
+                        Wystawiona faktura jest zapisana na stałe. Błąd? Wystaw fakturę korygującą. Anulowanie = korekta do zera.
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_entry" type="object" class="oe_stat_button" icon="fa-book">
+                            <div class="o_stat_info"><span class="o_stat_text">Wpis ewidencji</span></div>
+                        </button>
+                        <button name="action_open_original" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="doc_type != 'correction'">
+                            <div class="o_stat_info"><span class="o_stat_text">Faktura korygowana</span></div>
+                        </button>
+                        <button name="action_open_corrections" type="object" class="oe_stat_button" icon="fa-pencil-square-o"
+                                invisible="correction_count == 0">
+                            <field name="correction_count" widget="statinfo" string="Korekty"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                        <h4 invisible="correction_state == 'none'" class="text-danger">
+                            <field name="correction_state"/>
+                        </h4>
+                    </div>
+                    <field name="pln_currency_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="is_foreign" invisible="1"/>
+                    <field name="doc_type" invisible="1"/>
+                    <field name="ksef_warning" invisible="1"/>
+                    <field name="is_preview" invisible="1"/>
+                    <group>
+                        <group string="Daty">
+                            <field name="issue_date" readonly="state == 'issued'"/>
+                            <field name="sale_date" readonly="1"/>
+                            <field name="payment_note" readonly="state == 'issued'"/>
+                            <field name="original_id" invisible="doc_type != 'correction'"/>
+                            <field name="reason" invisible="doc_type != 'correction'" readonly="state == 'issued'"/>
+                        </group>
+                        <group string="Sprzedawca (z profilu firmy; zamrażane przy wystawieniu)">
+                            <field name="seller_name" readonly="1"/>
+                            <field name="seller_nip" readonly="1"/>
+                            <field name="seller_street" readonly="1"/>
+                            <label for="seller_zip" string="Kod, miejscowość"/>
+                            <div class="o_row"><field name="seller_zip" readonly="1"/><field name="seller_city" readonly="1"/></div>
+                            <field name="exempt_basis" readonly="1" invisible="vat_mode != 'exempt'"/>
+                        </group>
+                    </group>
+                    <group string="Nabywca (zamrażany przy wystawieniu)">
+                        <group>
+                            <field name="buyer_type" readonly="state == 'issued'"/>
+                            <field name="buyer_name" readonly="state == 'issued'"/>
+                            <field name="buyer_tax_id" readonly="state == 'issued'"/>
+                            <field name="buyer_email" readonly="state == 'issued'"/>
+                        </group>
+                        <group>
+                            <field name="buyer_street" readonly="state == 'issued'"/>
+                            <label for="buyer_zip" string="Kod, miejscowość"/>
+                            <div class="o_row"><field name="buyer_zip" readonly="state == 'issued'"/><field name="buyer_city" readonly="state == 'issued'"/></div>
+                            <field name="buyer_country_id" readonly="state == 'issued'" options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Pozycje i kwoty" name="lines">
+                            <field name="line_ids" readonly="state == 'issued'">
+                                <list editable="bottom" create="0" delete="0">
+                                    <field name="name"/>
+                                    <field name="quantity" readonly="1"/>
+                                    <field name="unit"/>
+                                    <field name="unit_price" readonly="1"/>
+                                    <field name="amount_net" readonly="1"/>
+                                    <field name="amount_vat" readonly="1"/>
+                                    <field name="amount_gross" readonly="1"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                            <group>
+                                <group>
+                                    <field name="vat_mode" readonly="1"/>
+                                    <field name="vat_rate_pct" readonly="1" invisible="vat_mode != 'active'"/>
+                                    <field name="before_gross" readonly="1" invisible="doc_type != 'correction'"/>
+                                    <field name="after_gross" readonly="1" invisible="doc_type != 'correction'"/>
+                                </group>
+                                <group>
+                                    <field name="amount_net" readonly="1"/>
+                                    <field name="amount_vat" readonly="1"/>
+                                    <field name="amount_gross" readonly="1" class="fw-bold"/>
+                                </group>
+                            </group>
+                            <group string="Waluta obca: przeliczenie na PLN (kurs NBP z wpisu ewidencji)" invisible="not is_foreign">
+                                <group>
+                                    <field name="fx_rate" readonly="1"/>
+                                    <field name="fx_table_no" readonly="1"/>
+                                    <field name="fx_date" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="amount_net_pln" readonly="1"/>
+                                    <field name="amount_vat_pln" readonly="1"/>
+                                    <field name="amount_gross_pln" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notatki i KSeF" name="notes">
+                            <group>
+                                <field name="ksef_number"/>
+                                <field name="note" placeholder="Notatka wewnętrzna (nie drukuje się na fakturze)"/>
+                                <field name="footer_text" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_jdg_invoice_search" model="ir.ui.view">
+        <field name="name">jdg.invoice.search</field>
+        <field name="model">jdg.invoice</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="number"/>
+                <field name="buyer_name"/>
+                <field name="buyer_tax_id"/>
+                <filter name="invoices" string="Faktury" domain="[('doc_type', '=', 'invoice')]"/>
+                <filter name="corrections" string="Korekty" domain="[('doc_type', '=', 'correction')]"/>
+                <separator/>
+                <filter name="issued" string="Wystawione" domain="[('state', '=', 'issued')]"/>
+                <filter name="draft" string="Szkice" domain="[('state', '=', 'draft')]"/>
+                <separator/>
+                <filter name="live" string="Prawdziwe (bez testowych)" domain="[('is_test', '=', False)]"/>
+                <filter name="test" string="Testowe" domain="[('is_test', '=', True)]"/>
+                <filter name="b2b" string="Firmy (B2B)" domain="[('buyer_type', '=', 'b2b')]"/>
+                <filter name="foreign" string="Waluty obce" domain="[('currency_id.name', '!=', 'PLN')]"/>
+                <group>
+                    <filter name="group_month" string="Miesiąc" context="{'group_by': 'issue_date:month'}"/>
+                    <filter name="group_state" string="Stan" context="{'group_by': 'state'}"/>
+                    <filter name="group_type" string="Rodzaj" context="{'group_by': 'doc_type'}"/>
+                    <filter name="group_buyer" string="Typ nabywcy" context="{'group_by': 'buyer_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_jdg_invoice" model="ir.actions.act_window">
+        <field name="name">Faktury</field>
+        <field name="res_model">jdg.invoice</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="context">{'search_default_live': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Brak faktur</p>
+            <p>Faktury wystawiamy tylko na żądanie kupującego. Otwórz zaksięgowany wpis w ewidencji przychodów i kliknij
+                „Wystaw fakturę”. Potwierdzenie zakupu e-mailem nie jest fakturą.</p>
+        </field>
+    </record>
+
+    <!-- Kreator faktury korygującej -->
+    <record id="view_jdg_invoice_correction_wizard_form" model="ir.ui.view">
+        <field name="name">jdg.invoice.correction.wizard.form</field>
+        <field name="model">jdg.invoice.correction.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <div class="alert alert-info" role="alert">
+                    Faktura korygująca (art. 106j) zmniejsza wartość faktury. Zwrot musi być też w ewidencji przychodów:
+                    wybierz istniejący wpis zwrotu albo zostaw puste, a dopiszemy nowy ujemny wpis. Korekta sama nie zmienia
+                    przychodu. Pełna korekta (cała kwota) anuluje fakturę.
+                </div>
+                <group>
+                    <field name="invoice_id"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="invoice_entry_id" invisible="1"/>
+                    <field name="remaining"/>
+                    <field name="refund_entry_id"/>
+                    <field name="amount" invisible="refund_entry_id" required="not refund_entry_id"/>
+                    <field name="kind" invisible="refund_entry_id"/>
+                    <field name="income_date" invisible="refund_entry_id"/>
+                    <field name="reason"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Utwórz szkic korekty" class="btn-primary"/>
+                    <button special="cancel" string="Anuluj"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
