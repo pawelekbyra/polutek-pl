@@ -28,7 +28,7 @@ const siteIsBeta = !['false', '0', 'no', 'off'].includes((process.env.NEXT_PUBLI
 const nextConfig = {
   // VAT status of the seller (lib/config/vat.ts): `PLATFORM_VAT_STATUS` (or the NEXT_PUBLIC_ alias) is inlined at build time for the server and the browser alike.
   env: {
-    NEXT_PUBLIC_PLATFORM_VAT_STATUS: process.env.NEXT_PUBLIC_PLATFORM_VAT_STATUS || process.env.PLATFORM_VAT_STATUS || ,
+    NEXT_PUBLIC_PLATFORM_VAT_STATUS: process.env.NEXT_PUBLIC_PLATFORM_VAT_STATUS || process.env.PLATFORM_VAT_STATUS || '',
   },
   // Self-hosted container build (deploy/serwerek/Dockerfile) sets NEXT_OUTPUT=standalone.
   ...(process.env.NEXT_OUTPUT === 'standalone' ? { output: 'standalone' } : {}),
