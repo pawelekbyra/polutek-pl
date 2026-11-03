@@ -116,21 +116,22 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
 
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
-      <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} totalOnly />
+      {/* Seller first (a passive info row), the total last, right above the action button. */}
       <PassSellerCard tx={tx} />
+      <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} totalOnly />
     </>
   );
 }
 
-/** Step 3 head (both modes): the label-style heading with the order summary under it (8 px, like any field), then the seller card. */
+/** Step 3 head (both modes): the seller row first, then the label-style heading with the order summary under it (8 px, like any field). */
 export function PassPayHead({ heading, tx, ...summary }: { heading: React.ReactNode; tx: Tx; language: Locale; offer: PremiumPassOffer; product: PatronOfferProduct; currency: PatronCurrency }) {
   return (
     <>
+      <PassSellerCard tx={tx} compact />
       <div>
         {heading}
         <PassOrderSummary tx={tx} {...summary} compact />
       </div>
-      <PassSellerCard tx={tx} compact />
     </>
   );
 }
@@ -158,8 +159,8 @@ export function PassMethodStep({ tx, language, offer, product, currency, methods
       />
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
-      <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
       <PassSellerCard tx={tx} />
+      <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
     </>
   );
 }

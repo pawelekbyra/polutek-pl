@@ -110,6 +110,25 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(screen.getByRole('dialog').querySelector('[data-demo-ribbon]')).toBeNull();
   });
 
+  it('the seller is a passive row BEFORE the total in steps 1 and 2 (the total is the last block above the action); only the (i) button is clickable', async () => {
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    const before = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const seller1 = screen.getByRole('dialog').querySelector('[data-seller-card]')!;
+    expect(before(seller1, summaryOf(dialog))).toBe(true);
+    expect(summaryOf(dialog).nextElementSibling).toBeNull();
+    expect(within(seller1 as HTMLElement).getAllByRole('button')).toHaveLength(1);
+    const css = readFileSync(resolve(process.cwd(), 'app/components/premium-pass/premium-pass.module.css'), 'utf8');
+    const rule = css.match(/\.sellerCard \{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toContain('border: 0');
+    expect(rule).toContain('background: transparent');
+    expect(rule).toContain('cursor: default');
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    const seller2 = screen.getByRole('dialog').querySelector('[data-seller-card]')!;
+    expect(before(seller2, summaryOf(dialog))).toBe(true);
+  });
+
   it('has three step dots, marks the current one and announces "Krok 1 z 3"', async () => {
     open();
     const dialog = within(await screen.findByRole('dialog'));
