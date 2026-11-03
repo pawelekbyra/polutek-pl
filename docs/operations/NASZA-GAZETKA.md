@@ -1,7 +1,7 @@
 # nasza-gazetka.pl: migracja z Vercela na serwer
 
-Stan zweryfikowany (serwer, Cloudflare API tylko do odczytu, publiczny DNS): **2026-11-03, ok. 17:45 CET**. Dokument odtworzony tego dnia (poprzednia wersja zginęła przy synchronizacji docs przez `deploy.sh`).
-**Skrót: strona jest zbudowana i serwowana na serwerze (test działa), strefa Cloudflare jest `active`, ale produkcyjne rekordy `nasza-gazetka.pl` nadal wskazują na Vercel. Przełączenie na nasz tunel (`cutover.sh to-tunnel`) NIE zostało wykonane i czeka na zgodę właściciela.**
+Stan zweryfikowany (serwer, Cloudflare API, publiczny DNS): **2026-11-03, ok. 23:00 CET** (cutover wykonany ok. 22:58 CET = 21:58 UTC).
+**Skrót: PRZEŁĄCZONE. `nasza-gazetka.pl` (apex) obsługuje nasz serwer przez tunel Cloudflare (CNAME proxied na tunel `serwerek`), `www` → apex 301, noindex wszędzie. Vercel jest tylko zapasem (projekt i domeny w nim zostają 7 dni, do ok. 2026-11-10; nic tam nie usuwano). Wersja serwowana to nowy portal newsowy (ten sam build co `test-gazetka`).**
 
 ## Co to jest
 
@@ -14,10 +14,10 @@ Statyczna strona (eksport Next.js 14.2.3, `output: 'export'`, 12 adresów: `/{pl
 | Domena | `nasza-gazetka.pl`, rejestrator home.pl (rejestracja 2026-03-09, odnowienie 2027-03-09; sprawdzić autoodnawianie) |
 | Nameservery | **zmienione na Cloudflare**: `alfred.ns.cloudflare.com`, `arya.ns.cloudflare.com` (publiczne resolvery 8.8.8.8 i 1.1.1.1 już je zwracają) |
 | Strefa Cloudflare | `nasza-gazetka.pl`, id `fad41f39…`, status **`active`** od 2026-11-03 16:42 UTC (po zmianie NS w home.pl) |
-| Rekordy w strefie | 1:1 jak w home.pl, **DNS-only (bez proxy)**: `A @ 216.198.79.1` (Vercel), `CNAME www → b94284e245ccde39.vercel-dns-017.com` (Vercel), `TXT @ google-site-verification=…` (zachować). Dodane przez nas: `MX @ 0 .` (null MX: domena bez poczty), `TXT @ v=spf1 -all`, `TXT _dmarc v=DMARC1; p=reject; adkim=s; aspf=s` |
-| Co widzi świat | `nasza-gazetka.pl` → `216.198.79.1` → **nadal Vercel**; zmiana NS nie zmieniła treści ani certyfikatu |
+| Rekordy w strefie | **po cutoverze**: `CNAME @` i `CNAME www` → tunel (proxied), `MX @ 0 .` (null MX), `TXT @ v=spf1 -all`, `TXT _dmarc v=DMARC1; p=reject; adkim=s; aspf=s`, `TXT @ google-site-verification=…` (zachować). Poprzednie rekordy Vercela (`A 216.198.79.1`, `CNAME www b94284e245ccde39.vercel-dns-017.com`) są w skrypcie rollbacku |
+| Co widzi świat | `nasza-gazetka.pl` → adresy Cloudflare (104.21.x / 172.67.x) → tunel → nasz serwer (`server: cloudflare`, brak `x-vercel-id`) |
 | Tunel `serwerek` | hostnames już dodane: `nasza-gazetka.pl`, `www.nasza-gazetka.pl`, `test-gazetka.pawelperfect.com` → `http://127.0.0.1:3300` (przed regułą 404). Kopia konfiguracji sprzed zmiany: `/opt/serwerek/apps/cloudflared/tunnel-config-pre-nasza-gazetka-20261103-173340.json` |
-| Ustawienia strefy | SSL `full`, „Always use HTTPS” włączone, min. TLS 1.2, HSTS wyłączone, **brak** reguły przekierowania www → apex (powstanie w `cutover.sh to-tunnel`) |
+| Ustawienia strefy | SSL `full`, „Always use HTTPS” włączone, min. TLS 1.2, HSTS wyłączone, reguła 301 www → apex (utworzona przez `cutover.sh to-tunnel`) |
 | Wersja testowa | `https://test-gazetka.pawelperfect.com/` → 200 (tunel + CNAME w strefie `pawelperfect.com`), `noindex` |
 | Kontener | `nasza-gazetka-web` healthy, `127.0.0.1:3300` |
 | Strona | zbudowana: 124 pliki, 58 MB w `/opt/serwerek/data/nasza-gazetka/site` |
@@ -54,6 +54,10 @@ Zmiana treści strony = nowe źródło (tarball) + `build.sh`; po przełączeniu
     docker compose down       # stop (site/ i dane zostają)
 
 ## Przełączenie domeny (cutover) i rollback
+
+**Stan: PRZEŁĄCZONE 2026-11-03 ok. 21:58 UTC** (`cutover.sh to-tunnel`, zgoda właściciela w czacie). Rekordy: `CNAME @` i `CNAME www` → `a61ae173-0747-492e-9fa5-47692e43c1a7.cfargotunnel.com` (proxied); reguła 301 www → apex w rulesecie `http_request_dynamic_redirect`; MX null, SPF `-all`, DMARC reject i TXT google-site-verification zachowane. Certyfikat: Let's Encrypt (CN YE1) z Cloudflare Universal SSL, ważny 2026-11-03 – 2027-02-01. Kopia rekordów sprzed zmiany: `/opt/claude/research-migration/dns-backup-nasza-gazetka.pl-przed-cutover.json` (wcześniej brak reguły przekierowań w strefie).
+
+**Jak wrócić na Vercel (rollback, ok. 1–5 min):** na serwerze `cd /opt/serwerek/apps/nasza-gazetka && ./cutover.sh to-vercel` (kasuje CNAME-y na tunel, odtwarza `A @ 216.198.79.1` i `CNAME www b94284e245ccde39.vercel-dns-017.com`, DNS-only, TTL 300, czyści regułę 301). Weryfikacja: `./cutover.sh status`, `curl -sI https://nasza-gazetka.pl/` (ma być `x-vercel-id`). Do końca okresu zapasowego (ok. 2026-11-10) domeny muszą zostać w projekcie Vercel; po tym terminie rollback wymagałby ich ponownego dodania. Awaryjnie, gdyby Cloudflare był niedostępny: NS w home.pl z powrotem na `dns/dns2/dns3.home.pl`.
 
 `cutover.sh` (tylko po zgodzie właściciela; wymaga strefy `active` i działającego `:3300`):
 
