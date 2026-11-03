@@ -29,7 +29,7 @@ export function PassReceipt({ tx, language, pass }: { tx: Tx; language: Locale; 
         <dd>{price(language, pass.priceMinor, pass.currency)}{receiptPriceSuffix(tx) ? ` ${receiptPriceSuffix(tx)}` : ""} {demo && <span className={styles.muted}>{tx("(demo: nic nie pobrano)", "(demo: nothing charged)")}</span>}</dd>
       </div>
       <div><dt>{tx("Metoda", "Method")}</dt><dd>{methodLabel(tx, pass.method)}{demo ? ` ${tx("(symulacja)", "(simulated)")}` : ""}</dd></div>
-      <div><dt>{tx("Ważny do", "Valid until")}</dt><dd>{pass.lifetime || !pass.expiresAt ? tx("Dostęp bez limitu", "Unlimited access") : passDate(language, pass.expiresAt, true)}</dd></div>
+      <div><dt>{tx("Ważny do", "Valid until")}</dt><dd>{pass.expiresAt ? passDate(language, pass.expiresAt, true) : "-"}</dd></div>
       <div><dt>{tx("Zgoda na dostęp od razu", "Consent to immediate access")}</dt><dd>{passDate(language, pass.waiverAt, true)}</dd></div>
       <div><dt>{tx("Sprzedawca", "Seller")}</dt><dd>{sellerName(tx)}</dd></div>
     </dl>
@@ -43,9 +43,7 @@ export const PassSuccess = forwardRef<HTMLHeadingElement, { tx: Tx; language: Lo
         <div className={cn(styles.check, styles.checkAnim)}><CheckIcon animated /></div>
         <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{tx("Jesteś patronem. Dziękuję!", "You are a patron. Thank you!")}</h3>
         <p className={styles.resultText}>
-          {pass.lifetime || !pass.expiresAt
-            ? tx("Masz dostęp bez limitu.", "You have unlimited access.")
-            : tx("Strefa patrona jest otwarta do {0}.", "The patron zone is open until {0}.", passDate(language, pass.expiresAt, true))}
+          {pass.expiresAt ? tx("Strefa patrona jest otwarta do {0}.", "The patron zone is open until {0}.", passDate(language, pass.expiresAt, true)) : null}
         </p>
         <button type="button" className={cn(styles.goldBtn, styles.wide)} onClick={onWatch} data-autofocus="">
           <PlayIcon />
@@ -109,12 +107,12 @@ export const PassDeclined = forwardRef<HTMLHeadingElement, { tx: Tx; onRetry: ()
 );
 
 /** Access is already booked for the longest allowed period: no further payment is taken. */
-export const PassMaxAhead = forwardRef<HTMLHeadingElement, { tx: Tx; language: Locale; expiresAt?: string; lifetime?: boolean; onWatch: () => void }>(
-  function PassMaxAhead({ tx, language, expiresAt, lifetime, onWatch }, headingRef) {
+export const PassMaxAhead = forwardRef<HTMLHeadingElement, { tx: Tx; language: Locale; expiresAt?: string; onWatch: () => void }>(
+  function PassMaxAhead({ tx, language, expiresAt, onWatch }, headingRef) {
     return (
       <div className={styles.result} role="status" aria-live="polite">
         <div className={styles.check}><CheckIcon /></div>
-        <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{lifetime ? tx("Masz już dostęp bez limitu", "You already have unlimited access") : tx("Masz już dostęp na długo", "You already have long-term access")}</h3>
+        <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{tx("Masz już dostęp na długo", "You already have long-term access")}</h3>
         {expiresAt && <p className={styles.resultText}>{tx("Strefa patrona jest otwarta do {0}. Możesz wpłacić ponownie bliżej tej daty.", "The patron zone is open until {0}. You can pay again closer to that date.", passDate(language, expiresAt, true))}</p>}
         <button type="button" className={cn(styles.goldBtn, styles.wide)} onClick={onWatch} data-autofocus="">
           <PlayIcon />

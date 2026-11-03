@@ -40,7 +40,7 @@ type Stage =
   | { kind: "success"; pass: ActivePass }
   | { kind: "pending"; paymentId: string; timedOut: boolean }
   | { kind: "declined" }
-  | { kind: "max-ahead"; expiresAt?: string; lifetime?: boolean };
+  | { kind: "max-ahead"; expiresAt?: string };
 
 /** Query parameter of the return URL of redirect methods (Przelewy24, bank redirects). */
 export const PASS_PAYMENT_PARAM = "pass_payment";
@@ -137,7 +137,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const [consentErrors, setConsentErrors] = useState<PassConsentErrors>({});
   // True while the payment form of step 3 is confirming (BLIK waits up to 60 s, a wallet sheet is open): no way back meanwhile.
   const [payBusy, setPayBusy] = useState(false);
-  const [access, setAccess] = useState<{ lifetime: boolean; expiresAt: string | null } | null>(null);
 
   const typesKey = `${product.id}:${currency}`;
   const stripeList = stripeReady && stripeTypes?.key === typesKey ? stripeTypes.types : null;
@@ -190,7 +189,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     setConsentErrors({});
     setIntent(null);
     setStripeTypes(null);
-    setAccess(null);
     if (stripeReady) {
       // The first and only place that asks for Stripe.js: the checkout was opened.
       const promise = getStripeBrowser(offer.payments.mode === "stripe" && offer.payments.keySet === "premium" ? "premium" : "default");
@@ -214,10 +212,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       return () => { cancelledRef.current = true; };
     }
     setStage({ kind: "plan" });
-    void fetchPassStatus("checkout").then((status) => {
-      if (cancelledRef.current) return;
-      if (!testMode && status?.pass.state === "active") setAccess({ lifetime: status.pass.lifetime, expiresAt: status.pass.expiresAt });
-    });
     return () => { cancelledRef.current = true; };
     // Only on opening: a re-render of the parent (new offer object) must not reset an attempt in progress.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -274,13 +268,12 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   // ---- step 1 -> 2 -> 3
   const toMethod = () => {
     setNotice(null);
-    if (access?.lifetime) return;
     setStage({ kind: "method" });
   };
 
   const next = async () => {
     setNotice(null);
-    if (!method || access?.lifetime) return;
+    if (!method) return;
     if (stripeMode && !stripeReady) {
       // Never falls back to the simulated payment: that would hand out access for no money.
       setNotice(tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later."));
@@ -310,7 +303,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       rememberTipMethod(method);
       setStage({ kind: "pay" });
     } else if (outcome.kind === "max-ahead") {
-      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt, lifetime: outcome.lifetime });
+      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt });
     } else if (outcome.kind === "in-progress") {
       setNotice(tx("Ta płatność jest właśnie opłacana (np. czeka na potwierdzenie w banku). Dokończ ją albo spróbuj za kilka minut.", "This payment is being paid right now (e.g. waiting for your bank). Finish it or try again in a few minutes."));
     } else if (outcome.kind === "unavailable") {
@@ -346,7 +339,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       resetAttempt();
       setStage({ kind: "declined" });
     } else if (outcome.kind === "max-ahead") {
-      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt, lifetime: outcome.lifetime });
+      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt });
     } else {
       setStage({ kind: "declined" });
     }
@@ -421,7 +414,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   currency={currency}
                   onProduct={(id) => { setProductId(id); setNotice(null); }}
                   onCurrency={(code) => { setCurrency(code); setStripeTypes(null); setNotice(null); }}
-                  access={access}
                   notice={notice}
                   unavailable={stripeMode && !stripeReady}
                   busy={busy}
@@ -429,7 +421,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
               </div>
               {dots}
               <div className={styles.pay}>
-                <button type="button" className={styles.inkBtn} onClick={toMethod} disabled={access?.lifetime === true || (stripeMode && !stripeReady)}>
+                <button type="button" className={styles.inkBtn} onClick={toMethod} disabled={stripeMode && !stripeReady}>
                   {tx("Dalej · {0}", "Next · {0}", total)}
                 </button>
               </div>
@@ -523,7 +515,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                 <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, 4)} onClose={() => changeOpen(false)} />
               )}
               {stage.kind === "declined" && <PassDeclined ref={headingRef} tx={tx} onRetry={retry} onChangeMethod={retry} />}
-              {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} lifetime={stage.lifetime} onWatch={watch} />}
+              {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} onWatch={watch} />}
             </div>
           )}
 

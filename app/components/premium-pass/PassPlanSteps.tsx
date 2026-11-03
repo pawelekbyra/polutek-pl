@@ -85,12 +85,10 @@ interface CommonProps {
 export interface PassPlanStepProps extends CommonProps {
   onProduct: (id: string) => void;
   onCurrency: (currency: PatronCurrency) => void;
-  /** The viewer's own running access: unlimited blocks a new purchase, a 30-day one is extended or converted. */
-  access: { lifetime: boolean; expiresAt: string | null } | null;
 }
 
 /** Step 1: currency and option, with the order summary. */
-export function PassPlanStep({ tx, language, offer, product, currency, onProduct, onCurrency, access, notice, unavailable, busy }: PassPlanStepProps) {
+export function PassPlanStep({ tx, language, offer, product, currency, onProduct, onCurrency, notice, unavailable, busy }: PassPlanStepProps) {
   const ids = useId();
   return (
     <>
@@ -99,7 +97,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
           {tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later.")}
         </p>
       )}
-      <fieldset className={styles.products} disabled={busy || access?.lifetime === true}>
+      <fieldset className={styles.products} disabled={busy}>
         {/* No visible "Wybierz dostęp" row (it merged with the currency label): the group keeps its name for screen readers via this legend. */}
         <legend className="sr-only">{tx("Wybierz dostęp", "Choose your access")}</legend>
         {/* The currency is a small pill on its own slim row (the purchase cards below are the main thing). The visible label is aria-hidden: the pill's own (screen-reader) label is the same text. */}
@@ -110,7 +108,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
             label={tx("Waluta płatności", "Payment currency")}
             value={currency}
             onChange={(code) => onCurrency(code as PatronCurrency)}
-            disabled={busy || access?.lifetime === true}
+            disabled={busy}
             options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
           />
         </div>

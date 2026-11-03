@@ -9,7 +9,7 @@ export type PremiumPassStatus = { offer: PremiumPassOffer; pass: PassStatusDto }
 export type CheckoutOutcome =
   | { kind: "success"; pass: PassStatusDto }
   | { kind: "declined" }
-  | { kind: "max-ahead"; expiresAt?: string; lifetime?: boolean }
+  | { kind: "max-ahead"; expiresAt?: string }
   | { kind: "consent" }
   | { kind: "error" };
 
@@ -43,7 +43,6 @@ export async function postDemoCheckout(input: {
     if (res.ok && data?.pass) return { kind: "success", pass: data.pass };
     if (data?.code === "DEMO_DECLINED") return { kind: "declined" };
     if (data?.code === "MAX_AHEAD") return { kind: "max-ahead", expiresAt: data.expiresAt };
-    if (data?.code === "ALREADY_LIFETIME") return { kind: "max-ahead", lifetime: true };
     if (data?.code === "CONSENT_REQUIRED") return { kind: "consent" };
     return { kind: "error" };
   } catch {
@@ -55,7 +54,7 @@ export type IntentOutcome =
   | { kind: "ready"; paymentId: string; clientSecret: string; paymentMethodTypes: string[] }
   | { kind: "terminal" }
   | { kind: "in-progress" }
-  | { kind: "max-ahead"; expiresAt?: string; lifetime?: boolean }
+  | { kind: "max-ahead"; expiresAt?: string }
   | { kind: "unavailable" }
   | { kind: "error" };
 
@@ -77,7 +76,6 @@ export async function postPatronIntent(input: { requestId: string; productId: st
     }
     if (data?.code === "PAYMENT_IN_PROGRESS") return { kind: "in-progress" };
     if (data?.code === "MAX_AHEAD") return { kind: "max-ahead", expiresAt: data.expiresAt };
-    if (data?.code === "ALREADY_LIFETIME") return { kind: "max-ahead", lifetime: true };
     if (data?.code === "PAYMENTS_UNAVAILABLE" || data?.code === "WRONG_MODE") return { kind: "unavailable" };
     return { kind: "error" };
   } catch {

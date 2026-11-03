@@ -83,8 +83,8 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
               <h1 id="pass-title" className={styles.heroTitle}>{tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone")}</h1>
               <p className={styles.heroLead}>
                 {tx(
-                  "Wesprzyj projekt i wejdź do strefy patrona: materiały, których nie ma nigdzie indziej. Wybierz dostęp na 30 dni albo bez limitu. Bez subskrypcji.",
-                  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or unlimited access. No subscription.",
+                  "Wesprzyj projekt i wejdź do strefy patrona: materiały, których nie ma nigdzie indziej. Wybierz dostęp na 30 dni albo na 3 miesiące. Bez subskrypcji.",
+                  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or 3-month access. No subscription.",
                 )}
               </p>
               {videos.length > 0 && (
@@ -108,11 +108,9 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
             <div>
               {pass.state !== "none" && (
                 <p className={styles.status} role="status">
-                  {pass.state === "active" && pass.lifetime
-                    ? tx("Masz dostęp bez limitu.", "You have unlimited access.")
-                    : pass.state === "active" && pass.expiresAt
-                      ? tx("Strefa patrona otwarta do {0}. Kolejna wpłata przedłuży dostęp o 30 dni, dostęp bez limitu zamieni go na stały.", "Patron zone open until {0}. Another payment extends your access by 30 days, unlimited access makes it permanent.", passDate(locale, pass.expiresAt, true))
-                      : pass.expiresAt
+                  {pass.state === "active" && pass.expiresAt
+                    ? tx("Strefa patrona otwarta do {0}. Kolejna wpłata przedłuży dostęp.", "Patron zone open until {0}. Another payment extends your access.", passDate(locale, pass.expiresAt, true))
+                    : pass.expiresAt
                         ? tx("Twój dostęp do strefy patrona wygasł {0}.", "Your patron zone access expired on {0}.", passDate(locale, pass.expiresAt))
                         : null}
                 </p>
@@ -129,8 +127,8 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
                     <div className={styles.muted}>{vatLine(tx)}</div>
                     <ul className={styles.perks}>
                       <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
-                      <li>{product.days === null ? tx("Dostęp od razu i bez końca", "Instant access with no end date") : tx("Dostęp od razu, na {0} dni", "Instant access for {0} days", product.days)}</li>
-                      <li>{product.days === null ? tx("Płacisz raz, bez subskrypcji", "Pay once, no subscription") : tx("Kolejna wpłata przedłuża dostęp, nic nie odnawia się samo", "Another payment extends your access, nothing renews by itself")}</li>
+                      <li>{product.months !== null ? tx("Dostęp od razu, na {0} miesiące", "Instant access for {0} months", product.months) : tx("Dostęp od razu, na {0} dni", "Instant access for {0} days", product.days ?? 30)}</li>
+                      <li>{tx("Kolejna wpłata przedłuża dostęp, nic nie odnawia się samo", "Another payment extends your access, nothing renews by itself")}</li>
                       <li>{tx("Na każdym urządzeniu po zalogowaniu", "On every device you sign in on")}</li>
                     </ul>
                     <PassOfferActions offer={offer} productId={product.id} firstSlug={firstSlug} />
@@ -149,11 +147,11 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
               <h2 id="pass-faq">{tx("Najczęstsze pytania", "Frequently asked questions")}</h2>
               <details open>
                 <summary>{tx("Czy to subskrypcja?", "Is this a subscription?")}</summary>
-                <p>{tx("Nie. Każda wpłata to jednorazowa opłata: dostęp na 30 dni kończy się po 30 dniach, a dostęp bez limitu nie ma końca. Nic nie pobierzemy ponownie i nie ma czego anulować.", "No. Every payment is a one-time payment: 30-day access ends after 30 days, unlimited access has no end. Nothing is charged again and there is nothing to cancel.")}</p>
+                <p>{tx("Nie. Każda wpłata to jednorazowa opłata: dostęp na 30 dni kończy się po 30 dniach, a dostęp na 3 miesiące po 3 miesiącach. Nic nie pobierzemy ponownie i nie ma czego anulować.", "No. Every payment is a one-time payment: 30-day access ends after 30 days, 3-month access after 3 months. Nothing is charged again and there is nothing to cancel.")}</p>
               </details>
               <details>
                 <summary>{tx("Czym różnią się dwa dostępy?", "What is the difference between the two options?")}</summary>
-                <p>{tx("Dostęp na 30 dni możesz przedłużać kolejnymi wpłatami. Dostęp bez limitu płacisz raz i zostaje na stałe; jeśli masz już dostęp na 30 dni, zamieni go na stały.", "You can extend 30-day access with further payments. Unlimited access is paid once and stays for good; if you already have 30-day access, it turns it into permanent access.")}</p>
+                <p>{tx("Oba dostępy możesz przedłużać kolejnymi wpłatami: każda wpłata dodaje 30 dni albo 3 miesiące do końca trwającego dostępu.", "You can extend either access with further payments: each payment adds 30 days or 3 months to the end of your current access.")}</p>
               </details>
               <details>
                 <summary>{tx("Od kiedy liczy się czas?", "When does the time start?")}</summary>
