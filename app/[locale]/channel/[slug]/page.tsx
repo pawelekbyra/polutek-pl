@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth/server";
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { SafeAvatar } from '@/app/components/SafeAvatar';
+import { CREATOR_AVATAR_RING } from '@/lib/role-badge';
 import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { getChannelHeaderCached } from '@/lib/modules/channel/application/channel-page.loader';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
@@ -141,7 +142,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
           </div>
         )}
         <header className="channel-profile flex flex-col items-center gap-5 text-center md:flex-row md:items-center md:gap-8 md:text-left">
-          <div className="channel-profile-avatar w-28 h-28 md:w-40 md:h-40 rounded-full border border-[var(--chan-line)] shrink-0">
+          <div className={`channel-profile-avatar w-28 h-28 md:w-40 md:h-40 rounded-full border border-[var(--chan-line)] shrink-0 ${CREATOR_AVATAR_RING}`}>
              <SafeAvatar
                src={channelAvatar}
                alt={displayName}

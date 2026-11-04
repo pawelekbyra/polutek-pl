@@ -38,6 +38,17 @@ describe('MySubscriptionsList', () => {
     expect(screen.getByText(/channel unavailable/)).toBeTruthy();
   });
 
+  it('draws the Creator ring around every channel avatar and keeps the channel name as its alt text', () => {
+    render(<MySubscriptionsList initialRows={rows} />);
+
+    for (const name of ['Channel One', 'Channel Two']) {
+      const img = screen.getByAltText(name);
+      const frame = img.parentElement as HTMLElement;
+      expect(frame.className).toContain('ring-2 ring-offset-2');
+      expect(frame.className).toContain('ring-[var(--chan-blue)]');
+    }
+  });
+
   it('toggles the bell of one channel with PATCH and keeps the new state', async () => {
     fetchMock.mockResolvedValue({ ok: true });
     render(<MySubscriptionsList initialRows={rows} />);

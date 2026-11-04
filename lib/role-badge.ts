@@ -26,8 +26,17 @@ export const ROLE_RING_COLOR: Record<RoleBadgeKind, string> = {
   VIP: "ring-[var(--chan-amber-bright)]",
   BASE: "ring-[var(--chan-muted)]",
 };
-export const ROLE_RING_BASE = "border-transparent ring-2 ring-offset-2 ring-offset-[var(--chan-card)]";
+export const ROLE_RING_SPACING = "ring-2 ring-offset-2 ring-offset-[var(--chan-card)]";
+export const ROLE_RING_BASE = `border-transparent ${ROLE_RING_SPACING}`;
 
 export function roleRingClass(kind: RoleBadgeKind): string {
   return `${ROLE_RING_BASE} ${ROLE_RING_COLOR[kind]}`;
 }
+
+/**
+ * Ring of a CHANNEL / CREATOR avatar (not a viewer's): always the Creator blue, same width and offset as the Creator
+ * ring in comments and the top bar. Used where the avatar is the channel's (row under the player, channel header,
+ * subscription list), so the creator looks the same everywhere. Keeps the element's own border (no border-transparent),
+ * because those avatars already sit in a bordered frame; the ring is a box-shadow, so it never moves the layout.
+ */
+export const CREATOR_AVATAR_RING = `${ROLE_RING_SPACING} ${ROLE_RING_COLOR.AUTHOR}`;
