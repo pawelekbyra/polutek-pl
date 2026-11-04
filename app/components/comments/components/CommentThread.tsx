@@ -52,9 +52,8 @@ function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, 
   const tx = useOptionalTx(shared.language);
   const [expanded, setExpanded] = useState(false);
   const [open, setOpen] = useState(false);
-  // The replies mount on the first opening and stay mounted, so closing can animate (and reopening is instant).
+  // The replies mount on the first opening and stay mounted (hidden while closed), so reopening is instant.
   const [mounted, setMounted] = useState(false);
-  const [entered, setEntered] = useState(false);
   const panelId = useId();
   const deepLinkRevision = useCommentDeepLinkRevision();
   const repliesQuery = useCommentReplies(videoId, comment.id, expanded);
@@ -71,6 +70,8 @@ function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, 
     setMounted(true);
     setOpen(true);
   }, []);
+
+  const prepare = useCallback(() => setMounted(true), []);
 
   // A link to one of the replies (the address, or a notification) opens the thread that holds it. The pending link
   // lives outside React (deep-link.ts), so this is a sync from that store.
@@ -91,20 +92,6 @@ function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, 
     }
   }
 
-  // Two frames after the first opening: the collapsed state is painted first, so opening is a transition, not a jump.
-  // (Afterwards the replies stay mounted and `open` alone drives the transition.)
-  useEffect(() => {
-    if (!open) return;
-    let inner = 0;
-    const outer = requestAnimationFrame(() => {
-      inner = requestAnimationFrame(() => setEntered(true));
-    });
-    return () => {
-      cancelAnimationFrame(outer);
-      cancelAnimationFrame(inner);
-    };
-  }, [open]);
-
   const totalReplies = Math.max(comment.repliesCount, replies.length);
   const hasReplies = totalReplies > 0;
   const remaining = Math.max(0, comment.repliesCount - replies.length);
@@ -116,8 +103,6 @@ function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, 
     else if (repliesQuery.isError) void repliesQuery.refetch();
     else void repliesQuery.fetchNextPage();
   };
-
-  const visible = open && entered;
 
   return (
     <div>
@@ -134,6 +119,10 @@ function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, 
           <button
             type="button"
             onClick={() => (open ? setOpen(false) : openThread())}
+            // Mount the (hidden) replies while the pointer approaches, so the click itself only flips visibility.
+            onPointerEnter={prepare}
+            onPointerDown={prepare}
+            onFocus={prepare}
             aria-expanded={open}
             aria-controls={panelId}
             className="-ml-2 inline-flex h-8 items-center gap-1 rounded-full px-2 text-[13px] font-semibold text-[var(--chan-blue)] transition-colors hover:bg-[var(--chan-blue-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none"
@@ -146,14 +135,10 @@ function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, 
         </div>
       )}
 
-      <div
-        id={panelId}
-        inert={!open}
-        className="grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none"
-        style={{ gridTemplateRows: visible ? "1fr" : "0fr", opacity: visible ? 1 : 0 }}
-      >
+      {/* No animation: replies appear and disappear in the same frame as the click (owner decision 2026-11-04). */}
+      <div id={panelId} inert={!open} hidden={!open}>
         {/* -mx-2/px-2: room for the highlight of a linked reply, which reaches 8 px past the column. */}
-        <div className="-mx-2 min-h-0 overflow-hidden px-2">
+        <div className="-mx-2 px-2">
           {mounted && (replies.length > 0 || canShowMore) && (
             <div className="flex flex-col gap-3 pb-0.5 pl-[52px] pt-2">
               {replies.map((reply) => (
