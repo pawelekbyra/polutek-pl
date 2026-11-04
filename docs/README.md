@@ -11,6 +11,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Opis serwera i sekretów dla agenta (praca bez GitHuba wycofana 2026-10-07) | [`operations/HANDOFF-SERVER-AGENT.md`](operations/HANDOFF-SERVER-AGENT.md) |
 | Otwarte prace, decyzje do podjęcia, kolejność | [`operations/STATUS.md`](operations/STATUS.md) |
 | Badanie platformy z 2026-11-01, roadmapa i postęp napraw (pakiety K01–K40) | [`audit/2026-11-01-platform-research/README.md`](audit/2026-11-01-platform-research/README.md) |
+| Research decyzyjny: wspólna pamięć i nawigacja po repo dla agentów AI | [`research/AI-REPO-INTELLIGENCE.md`](research/AI-REPO-INTELLIGENCE.md) |
 
 ## Jak to jest zbudowane (`architecture/`)
 
