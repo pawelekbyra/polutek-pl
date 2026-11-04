@@ -14,15 +14,25 @@
   --pass-radius-btn: 14px;
   --pass-shadow: 0 24px 54px -28px rgba(15, 23, 42, 0.34);
   /* Checkout rhythm (one place, no per-step hacks): title row -> first label; field -> next label; gutters; radii; the blue family. */
-  --pass-title-gap: 24px;
-  --pass-gap: 16px;
+  /* Vertical responsiveness (checkout-fit): --pass-ramp runs from 0 (view <= 560 px high) to 200 px (view >= 760 px high); every vertical
+     token below is "tightest + k * ramp", so the checkout shrinks smoothly with the window and fits one screen on a laptop (no scrolling
+     from ~640 px up). Without dvh support the full-size values apply. */
+  --pass-ramp: 200px;
+  --pass-title-gap: calc(12px + 0.06 * var(--pass-ramp));   /* 12 -> 24 */
+  --pass-gap: calc(8px + 0.04 * var(--pass-ramp));           /* 8 -> 16 */
+  --pass-gap-lg: calc(10px + 0.05 * var(--pass-ramp));     /* 10 -> 20 (step 3 strip -> form) */
+  --pass-head-top: calc(8px + 0.02 * var(--pass-ramp));     /* 8 -> 12 */
+  --pass-body-pb: calc(6px + 0.02 * var(--pass-ramp));      /* 6 -> 10 */
+  --pass-card-pad: calc(12px + 0.02 * var(--pass-ramp));    /* 12 -> 16 */
+  --pass-btn-h: calc(44px + 0.02 * var(--pass-ramp));       /* 44 -> 48 */
+  --pass-input-h: calc(48px + 0.06 * var(--pass-ramp));     /* 52 -> 64 (BLIK code) */
   /* Label text -> the field under it, in every step (1: "Wybierz dostęp" -> cards, 2: "Metoda płatności" -> field, 3: "Płatność" -> summary): just the label's own line box. The gate's default is 8 px (FIELD_LABEL_CLASS). */
   --field-label-gap: 0px;
   /* Section / field labels ("Wybierz dostęp", "Metoda płatności", "Płatność", "Kod BLIK…"): bold in the checkout only; hints and notes stay regular. */
   --field-label-weight: 600;
   --pass-gutter: 18px;
-  --pass-box-y: 12px;
-  --pass-bar-y: 10px;
+  --pass-box-y: calc(8px + 0.02 * var(--pass-ramp));        /* 8 -> 12 */
+  --pass-bar-y: calc(8px + 0.01 * var(--pass-ramp));       /* 8 -> 10 */
   --pass-r-field: 16px;
   --pass-r-card: 14px;
   --pass-r-pill: 999px;
@@ -54,6 +64,9 @@
   --pass-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, .05);
   --pass-field-ring: rgba(37, 99, 235, .2);
   font-variant-numeric: tabular-nums;
+}
+@supports (height: 100dvh) {
+  .pass { --pass-ramp: clamp(0px, calc(100dvh - 560px), 200px); }
 }
 
 /* ---------- demo ribbon ---------- */
@@ -117,7 +130,7 @@
 .expired { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 10px; background: color-mix(in srgb, #ef4444 20%, transparent); color: #fee2e2; font-size: 12px; font-weight: 600; border: 1px solid color-mix(in srgb, #ef4444 45%, transparent); }
 
 /* ---------- light buttons ---------- */
-.inkBtn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 16px; border: 0; border-radius: 12px; cursor: pointer; background: var(--pass-gray-900); color: #fff; font-weight: 600; font-size: 14px; line-height: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .1), 0 4px 6px -4px rgba(0, 0, 0, .1); transition: background-color 150ms ease; }
+.inkBtn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--pass-btn-h); padding: 0 16px; border: 0; border-radius: 12px; cursor: pointer; background: var(--pass-gray-900); color: #fff; font-weight: 600; font-size: 14px; line-height: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .1), 0 4px 6px -4px rgba(0, 0, 0, .1); transition: background-color 150ms ease; }
 .inkBtn:hover:not(:disabled) { background: #000; }
 .inkBtn:disabled { opacity: .6; cursor: progress; }
 .inkBtn svg { width: 18px; height: 18px; }
@@ -131,10 +144,10 @@
 .overlay[data-starting-style], .overlay[data-ending-style] { opacity: 0; }
 @media (min-width: 900px) { .overlay { background: rgba(5, 7, 13, .2); touch-action: none; } }
 /* Title and close button on one row (the close button keeps its corner). Every step starts --pass-title-gap below this row. */
-.sheetHead { position: relative; display: flex; align-items: flex-start; gap: 12px; padding: calc(12px + env(safe-area-inset-top)) var(--pass-gutter) 0; }
+.sheetHead { position: relative; display: flex; align-items: flex-start; gap: 12px; padding: calc(var(--pass-head-top) + env(safe-area-inset-top)) var(--pass-gutter) 0; }
 .sheetTitle { margin: 0; font-size: 20px; line-height: 28px; font-weight: 700; color: var(--pass-gray-900); letter-spacing: 0; outline: none; }
 /* The close button stays in its corner and no longer sets the height of the row: the title's top edge lines up with the button's top edge and everything below rises. */
-.sheetBody { padding: var(--pass-title-gap) var(--pass-gutter) 10px; display: flex; flex-direction: column; gap: var(--pass-gap); flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.sheetBody { padding: var(--pass-title-gap) var(--pass-gutter) var(--pass-body-pb); display: flex; flex-direction: column; gap: var(--pass-gap); flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .sheetBody > * { flex-shrink: 0; }
 /* A short screen scrolls the body: a soft shadow on the cut edge shows there is more (only while content is hidden there). */
 .sheetBody {
@@ -152,11 +165,11 @@
 .orderTotal b { font-size: 20px; letter-spacing: -.01em; }
 /* Step 1: the total is the whole box (no product line above it), so no divider and the box keeps the blue fill. */
 .orderSolo { border-color: var(--pass-blue-100); border-radius: 12px; background: var(--pass-blue-50-80); }
-.orderSoloRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: 16px; }
+.orderSoloRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: calc(10px + 0.03 * var(--pass-ramp)) 16px; }
 .orderSoloLabel { display: block; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--pass-gray-600); }
-.orderSoloNote { display: block; font-size: 11px; line-height: 16.5px; color: var(--pass-gray-500); text-wrap: balance; }
+.orderSoloNote { display: block; font-size: 12px; line-height: 16px; color: var(--pass-gray-500); text-wrap: balance; }
 .orderSoloPrice { display: block; text-align: right; font-size: 20px; line-height: 28px; font-weight: 800; color: var(--pass-gray-900); letter-spacing: 0; }
-.orderSoloVat { display: block; text-align: right; font-size: 10px; line-height: 15px; color: var(--pass-gray-500); text-wrap: balance; }
+.orderSoloVat { display: block; text-align: right; font-size: 12px; line-height: 16px; color: var(--pass-gray-500); text-wrap: balance; }
 
 /* The VAT note takes no part in the layout (the bar keeps its height and the price its place): bottom right, under the price. */
 .orderTotal small { position: absolute; right: 14px; bottom: 2px; font-size: 11px; line-height: 1; color: var(--chan-body, #344054); }
@@ -166,7 +179,7 @@
 .consentError input { outline: 2px solid var(--pass-err); outline-offset: 2px; }
 .error { grid-column: 2; margin: -4px 0 0; color: var(--pass-err); font-size: 13px; font-weight: 600; }
 .pay { position: sticky; bottom: 0; display: grid; gap: 6px; text-align: center; padding: var(--pass-bar-y) var(--pass-gutter) calc(var(--pass-bar-y) + env(safe-area-inset-bottom)); background: var(--chan-card, #fff); border-top: 1px solid var(--chan-line, #e1e6ef); }
-.secureFooter { margin: 0; border-top: 1px solid var(--chan-line, #e1e6ef); padding: calc(var(--pass-bar-y) - 2px) var(--pass-gutter) calc(var(--pass-bar-y) - 2px + env(safe-area-inset-bottom)); display: flex; gap: 6px; align-items: flex-start; justify-content: center; text-align: center; color: var(--chan-muted, #5d6679); font-size: 12px; line-height: 1.4; }
+.secureFooter { margin: 0; border-top: 1px solid var(--chan-line, #e1e6ef); padding: calc(var(--pass-bar-y) - 2px) var(--pass-gutter) calc(var(--pass-bar-y) - 2px + env(safe-area-inset-bottom)); display: flex; gap: 6px; align-items: flex-start; justify-content: center; text-align: center; color: var(--chan-muted, #5d6679); font-size: 12px; line-height: 1.3; }
 .secureFooter svg { flex: 0 0 auto; margin-top: 1.5px; }
 .progress { position: relative; overflow: hidden; display: grid; place-items: center; min-height: 52px; border-radius: var(--pass-r-card); background: var(--chan-surface, #f0f3f8); border: 1px solid var(--chan-line, #e1e6ef); font-size: 14px; font-weight: 700; }
 .progress::before { content: ""; position: absolute; inset: 0 40% 0 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--chan-amber, #f59e0b) 35%, transparent)); animation: sweep 1.2s ease-in-out infinite; }
@@ -176,7 +189,7 @@
 
 /* ---------- patron checkout: steps, amount, notices ---------- */
 /* Centred at the bottom, between the scrolling body and the action bar: 9px above the bar's top line, outside the scroll area (they never scroll). */
-.stepDots { flex: 0 0 auto; position: relative; z-index: 1; display: flex; justify-content: center; gap: 36px; margin: 0; padding: 0 0 9px; list-style: none; }
+.stepDots { flex: 0 0 auto; position: relative; z-index: 1; display: flex; justify-content: center; gap: 36px; margin: 0; padding: 0 0 calc(4px + 0.025 * var(--pass-ramp)); list-style: none; }
 /* A stepper: dots 8 px, 44 px apart centre to centre (so each button's 44 px touch area, .stepBtn::before, has its own space), a thin line between them. */
 .stepItem { position: relative; width: 8px; height: 8px; }
 .stepItem:not(:last-child)::after { content: ""; position: absolute; left: 8px; top: 3px; width: 36px; height: 2px; background: var(--pass-gray-200); }
@@ -190,19 +203,19 @@
 .stepBtn:disabled { cursor: default; opacity: .45; }
 .stepBtn:focus-visible { outline: 3px solid var(--chan-focus-ring, #2563eb); outline-offset: 3px; }
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.stepTitle { margin: 0 0 var(--field-label-gap); outline: none; }
+.stepTitle { margin: 0 0 var(--field-label-gap); outline: none; line-height: calc(16px + 0.02 * var(--pass-ramp)); }
 .resultTitle:focus-visible { outline: 3px solid var(--chan-blue, #2563eb); outline-offset: 3px; border-radius: 6px; }
 .payHost { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-.testNote { flex: 0 0 auto; display: grid; gap: 2px; margin: 0 var(--pass-gutter) 8px; padding: 8px 0; text-align: left; line-height: 1.45; font-size: 13px; color: var(--chan-body, #344054); }
+.testNote { flex: 0 0 auto; display: grid; gap: 2px; margin: 0 var(--pass-gutter) calc(0.04 * var(--pass-ramp)); padding: calc(2px + 0.03 * var(--pass-ramp)) 0; text-align: left; line-height: 1.45; font-size: 13px; color: var(--chan-body, #344054); }
 .testNote > span:first-child { font-size: 12px; font-weight: 400; color: var(--pass-gray-500); }
 .testCard { font-size: 12px; color: var(--pass-gray-600); font-variant-numeric: tabular-nums; }
 .notice, .noticeWarn { margin: 0; padding: 10px 12px; border-radius: var(--pass-r-card); font-size: 13px; line-height: 1.4; border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-surface, #f0f3f8); }
 .noticeWarn { border-color: color-mix(in srgb, var(--pass-err) 40%, transparent); background: color-mix(in srgb, var(--pass-err) 8%, transparent); color: var(--chan-ink, #111827); font-weight: 600; }
-.products { border: 0; margin: 0 0 4px; padding: 0; min-width: 0; }
-.productGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: 10px; }
+.products { border: 0; margin: 0 0 calc(0.02 * var(--pass-ramp)); padding: 0; min-width: 0; }
+.productGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: calc(8px + 0.01 * var(--pass-ramp)); }
 .products legend { padding: 0; }
 .products:disabled { opacity: .5; }
-.product { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; padding: 16px; border: 2px solid var(--pass-gray-200); border-radius: 16px; background: #fff; cursor: pointer; font-size: 13px; transition: border-color 150ms ease; }
+.product { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: calc(6px + 0.05 * var(--pass-ramp)); padding: var(--pass-card-pad); border: 2px solid var(--pass-gray-200); border-radius: 16px; background: #fff; cursor: pointer; font-size: 13px; transition: border-color 150ms ease; }
 .product:hover { border-color: var(--pass-blue-400); }
 .product:has(input:checked) { border-color: var(--pass-blue-600); background: var(--pass-blue-50-50); box-shadow: var(--pass-shadow-sm); }
 /* A radio mark top right, like the reference: ring 20 px (grey), the chosen card gets a blue ring and a blue dot. */
@@ -214,14 +227,14 @@
 .product input { position: absolute; opacity: 0; pointer-events: none; }
 .productName { padding-right: 26px; font-weight: 700; font-size: 14px; line-height: 20px; color: var(--pass-gray-900); text-wrap: balance; }
 .productFoot { display: grid; gap: 2px; }
-.productPrice { font-weight: 800; font-size: 18px; line-height: 28px; color: var(--pass-gray-900); }
-.productNote { color: var(--pass-gray-500); font-size: 11px; line-height: 16.5px; text-wrap: balance; }
+.productPrice { font-weight: 800; font-size: 18px; line-height: calc(24px + 0.02 * var(--pass-ramp)); color: var(--pass-gray-900); }
+.productNote { color: var(--pass-gray-500); font-size: 12px; line-height: 16px; text-wrap: balance; }
 
 /* The only amber left on the cards: the BESTSELLER badge (ink on gold, 8:1). */
 /* The BESTSELLER badge sits on the top edge of its card (amber-400 / amber-950, 10 px bold), as in the reference. */
-.bestValue { position: absolute; top: -10px; left: 16px; z-index: 1; padding: 2px 10px; border-radius: var(--pass-r-pill); background: var(--pass-amber-400); color: var(--pass-amber-950); font-size: 10px; line-height: 15px; font-weight: 700; letter-spacing: .25px; text-transform: uppercase; box-shadow: var(--pass-shadow-sm); }
+.bestValue { position: absolute; top: -9px; left: var(--pass-card-pad); z-index: 1; padding: 1px 10px; border-radius: var(--pass-r-pill); background: var(--pass-amber-400); color: var(--pass-amber-950); font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: .25px; text-transform: uppercase; box-shadow: var(--pass-shadow-sm); }
 /* Step 1: the currency is a slim row (label left, small pill right) above the purchase cards. */
-.currencyRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; margin-bottom: 16px; border: 1px solid var(--pass-gray-100); border-radius: 12px; background: var(--pass-gray-50); }
+.currencyRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: var(--pass-box-y) 12px; margin-bottom: calc(2px + 0.07 * var(--pass-ramp)); border: 1px solid var(--pass-gray-100); border-radius: 12px; background: var(--pass-gray-50); }
 .currencyLabel { min-width: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--pass-gray-700); text-wrap: balance; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 14px; align-items: stretch; }
 @media (max-width: 340px) { .productGrid { grid-template-columns: minmax(0, 1fr); } }
@@ -231,7 +244,7 @@
 .secureFooter a { color: var(--pass-gray-500); text-decoration: underline; text-underline-offset: 2px; }
 .secureFooter a:hover { color: var(--pass-gray-600); }
 .consent a { color: var(--chan-blue, #2563eb); text-decoration: underline; text-underline-offset: 2px; }
-.consents { display: grid; gap: 8px; }
+.consents { display: grid; gap: calc(5px + 0.015 * var(--pass-ramp)); }
 .consentsSpaced { margin-top: var(--pass-gap); }
 .strip .ghostBtn { min-height: 24px; padding: 0; color: var(--chan-ink, #111827); font-size: 13px; font-weight: 700; text-decoration: none; }
 .strip .ghostBtn:hover { text-decoration: underline; }
@@ -311,39 +324,35 @@
 }
 .payRow { display: flex; gap: 10px; align-items: stretch; }
 .payRow .inkBtn { flex: 1; width: auto; }
-.backBtn { flex: 0 0 52px; min-height: 48px; display: grid; place-items: center; border-radius: 12px; border: 2px solid var(--pass-gray-200); background: var(--chan-card, #fff); color: var(--pass-gray-900); cursor: pointer; }
+.backBtn { flex: 0 0 52px; min-height: var(--pass-btn-h); display: grid; place-items: center; border-radius: 12px; border: 2px solid var(--pass-gray-200); background: var(--chan-card, #fff); color: var(--pass-gray-900); cursor: pointer; }
 .backBtn:focus-visible { outline: 3px solid var(--chan-blue, #2563eb); outline-offset: 2px; }
 .backBtn svg { width: 20px; height: 20px; }
-.summaryRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--pass-blue-100); background: var(--pass-blue-50-80); font-size: 15px; }
-.summaryRow b { font-size: 20px; letter-spacing: -.01em; }
+.summaryRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; padding: calc(6px + 0.02 * var(--pass-ramp)) 14px; border-radius: 12px; border: 1px solid var(--pass-blue-100); background: var(--pass-blue-50-80); font-size: 15px; }
+.summaryRow b { font-size: 20px; line-height: 26px; letter-spacing: -.01em; }
 /* The VAT note (vatTermsNote) under the price, small, on its own line. */
-.summaryRow small { grid-column: 1 / -1; justify-self: end; margin-top: 2px; text-align: right; font-size: 11.5px; line-height: 1.3; color: var(--chan-body, #344054); text-wrap: balance; }
+.summaryRow small { grid-column: 1 / -1; justify-self: end; margin-top: 2px; text-align: right; font-size: 12px; line-height: 1.3; color: var(--chan-body, #344054); text-wrap: balance; }
 .payHead { display: flex; flex-direction: column; gap: var(--pass-gap); padding: var(--pass-title-gap) var(--pass-gutter) var(--pass-gap); }
 /* The seller card is light blue, in the family of the order summary (--pass-blue-fill) and the currency field. */
 /* Passive info row, NOT a card: no fill, no edge, no shadow, default cursor; only the (i) button is clickable. */
-.sellerCard { border: 1px solid var(--pass-gray-200); border-radius: 12px; background: var(--pass-gray-100); box-shadow: none; cursor: default; padding: 14px; }
+.sellerCard { border: 1px solid var(--pass-gray-200); border-radius: 12px; background: var(--pass-gray-100); box-shadow: none; cursor: default; padding: calc(10px + 0.02 * var(--pass-ramp)) 14px; }
 /* Icon, label + name and the trust shield all sit on ONE vertical centre line of the card (equal top and bottom padding); the shield's right margin equals the icon's left padding (14 px). */
-.sellerCardRow { display: flex; align-items: center; gap: 12px; min-height: 36px; }
-.sellerCardIconBox { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 8px; background: var(--pass-gray-200); color: var(--pass-gray-500); }
-.sellerCardText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.sellerCardRow { display: flex; align-items: center; gap: 12px; min-height: calc(32px + 0.02 * var(--pass-ramp)); }
+.sellerCardIconBox { width: calc(32px + 0.02 * var(--pass-ramp)); height: calc(32px + 0.02 * var(--pass-ramp)); flex: 0 0 auto; display: grid; place-items: center; border-radius: 8px; background: var(--pass-gray-200); color: var(--pass-gray-500); }
+.sellerCardText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 0; }
 .sellerCardText b { font-size: 14px; line-height: 20px; font-weight: 700; color: var(--pass-gray-700); text-wrap: balance; overflow-wrap: anywhere; }
-.sellerCardText span { font-size: 11px; line-height: 14px; color: var(--pass-gray-500); }
-.sellerCardText .sellerLabel { font-size: 11px; line-height: 14px; font-weight: 500; color: var(--pass-gray-500); }
+.sellerCardText span { font-size: 12px; line-height: 16px; color: var(--pass-gray-500); }
+.sellerCardText .sellerLabel { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--pass-gray-500); }
 .sellerCardCompact { padding-top: 6px; padding-bottom: 6px; }
-.sellerCardCompact .sellerCardRow { gap: 10px; }
+.sellerCardCompact .sellerCardRow { gap: 10px; min-height: 28px; }
+.sellerCardCompact .sellerBadge, .sellerCardCompact .sellerBadge svg { width: 28px; height: 28px; }
 .sellerCardCompact .sellerCardIconBox { width: 28px; height: 28px; }
 .sellerCardCompact .sellerCardText b { font-size: 13.5px; }
 @media (min-width: 350px) { .sellerCardCompact .sellerCardText b { white-space: nowrap; } }
-/* Short phones (360x640 and below): the same rhythm, just tighter, so steps 1 and 2 fit without scrolling. */
-@media (max-height: 700px) { .pass { --pass-title-gap: 14px; --pass-gap: 10px; --pass-box-y: 7px; --pass-bar-y: 8px; }
-  .testNote { margin-bottom: 0; padding: 2px 0; font-size: 12px; line-height: 1.35; }
-  .sheetBody { padding-bottom: 6px; }
-}
 /* 320 px wide: the title must stay on one row even in French / Portuguese. */
 @media (max-width: 340px) { .sheetTitle { font-size: 18px; } }
 
 /* Trust signals (checkout-trust): the SSL line + payment logos under the order summary, the Stripe badge on the seller card. Green is used ONLY for security elements. */
-.trustRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 10px; }
+.trustRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: calc(4px + 0.03 * var(--pass-ramp)); }
 .trustSsl { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--pass-ok); }
 .trustSsl svg { flex: 0 0 auto; }
 .trustLogos { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 0 auto; padding: 0; list-style: none; }

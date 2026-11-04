@@ -165,7 +165,7 @@ function BlikForm(props: TipPayStepProps) {
           autoComplete="one-time-code"
           placeholder="000000"
           aria-label={tx("Kod BLIK", "BLIK code")}
-          className={`h-16 w-full rounded-[14px] border-2 bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none transition-[border-color,box-shadow] placeholder:font-semibold ${FIELD_BLUE_PLACEHOLDER} ${FIELD_BLUE_BOX}`}
+          className={`h-[var(--pass-input-h,64px)] w-full rounded-[14px] border-2 bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none transition-[border-color,box-shadow] placeholder:font-semibold ${FIELD_BLUE_PLACEHOLDER} ${FIELD_BLUE_BOX}`}
         />
       </label>
       <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
