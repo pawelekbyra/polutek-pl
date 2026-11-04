@@ -1,6 +1,6 @@
 "use client";
 
-import { scrollToWatchTabsWhenSettled } from "./scroll-to-watch-tabs";
+import { scrollToPageTop, scrollToWatchTabsWhenSettled } from "./scroll-to-watch-tabs";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -192,14 +192,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const scrollBehavior = (): ScrollBehavior =>
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
-  const scrollToCommentsTop = useCallback(() => {
-    commentsTopRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+  // The round "back up" button: scrolls the whole page to the very top (player and navbar visible).
+  const handleBackToTop = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    scrollToPageTop(scrollBehavior(), event.currentTarget);
   }, []);
-
-  // The round "back up" button: on a phone it goes where a new comment goes (the KOMENTARZE/FILMY tab row on top).
-  const handleBackToTop = useCallback(() => {
-    if (!scrollToWatchTabsWhenSettled(scrollBehavior())) scrollToCommentsTop();
-  }, [scrollToCommentsTop]);
 
   const { mutate: postComment } = postMutation;
 
@@ -360,7 +356,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           <button
             type="button"
             onClick={handleBackToTop}
-            aria-label={tx("Wróć do początku komentarzy", "Back to the top of comments")}
+            aria-label={tx("Wróć na górę strony", "Back to the top of the page")}
             className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_var(--cm-blue-35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[var(--cm-blue-86-black)] hover:shadow-[0_14px_36px_var(--cm-blue-42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95 motion-reduce:transition-none"
           >
             <svg

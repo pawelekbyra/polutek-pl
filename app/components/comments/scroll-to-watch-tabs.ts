@@ -55,3 +55,15 @@ export function scrollToWatchTabsWhenSettled(behavior: ScrollBehavior): boolean 
   settle();
   return true;
 }
+
+/**
+ * Scrolls the whole page to the very top (player and navbar in view). The page scrolls on the window (no inner
+ * scroll container). Keyboard focus is handed to the first control in the navbar, because the round button that
+ * calls this disappears once the page is at the top and focus would otherwise fall to <body>.
+ */
+export function scrollToPageTop(behavior: ScrollBehavior, from?: Element | null): void {
+  window.scrollTo({ top: 0, behavior });
+  if (from && document.activeElement === from) {
+    document.querySelector<HTMLElement>("header a[href], header button")?.focus({ preventScroll: true });
+  }
+}
