@@ -18,6 +18,27 @@ Potencjalny produkt nie miałby zastępować Codexa ani Claude Code, uczyć nowe
 
 **Implikacja:** wartość nie może polegać wyłącznie na tym, że dołożymy agentowi jeszcze jedno wyszukiwanie. Musi poprawiać jego pamięć między sesjami, pokazywać istotne relacje, obniżać koszt eksploracji albo pomagać przy zmianach przekrojowych lepiej, niż potrafią jego obecne narzędzia.
 
+## Istniejące systemy, które pokrywają część wizji
+
+Research ujawnia ważną rzecz: wiele elementów pomysłu już istnieje jako lokalne, agentowo-agnostyczne narzędzia. Przed projektowaniem własnego rozwiązania trzeba porównać ich zakres i złożenie kilku prostych warstw.
+
+| System | Co już daje | Czego nie rozstrzyga / na co uważać |
+|---|---|---|
+| **Codebase-Memory** | Lokalny graf Tree-sitter/SQLite, 66 języków, MCP, śledzenie wywołań i wpływu zmian ([artykuł](https://arxiv.org/abs/2603.27277)). | W ocenie autorów z Claude Opus 4.6 odpowiedzi z grafu uzyskały 0,83 jakości wobec 0,92 agenta eksplorującego pliki, ale zużyły ok. 10× mniej tokenów i 2,1× mniej wywołań narzędzi. Graf wygrał w zapytaniach strukturalnych, agent przy pełnym kontekście źródła i wyczerpującym grep. To benchmark autorów na 31 repozytoriach, ze scoringiem pierwszego autora — nie niezależna replikacja ani test Codexa z dostępem do MCP. |
+| **GitNexus** | Lokalne indeksowanie Tree-sitter + graf wywołań, klastrów, procesów i hybrydowe BM25/semantyczne wyszukiwanie; MCP oferuje m.in. symbol context, analizę wpływu i wykrywanie skutków diffu ([README](https://github.com/MatrixForgeLabs/gitnexus/blob/main/gitnexus/README.md)). | Dokumentacja deklaruje integracje z częścią agentów i ogólną zgodność MCP; trzeba sprawdzić aktualne wsparcie klienta, jakość na naszym stosie, utrzymanie indeksu i bezpieczeństwo pakietu. Marketingowe „full codebase awareness” nie jest dowodem kompletności grafu. |
+| **codegraph** | Lokalny TypeScript CLI/library/MCP oparty na Tree-sitter; mapa plików, symboli, referencji i zależności, kandydaci na testy dla zmian; deklaruje wsparcie m.in. TypeScript/JavaScript, Python, Go, Rust i SQL ([repozytorium](https://github.com/lzehrung/codegraph)). | Autor jawnie zaznacza, że refleksja, kod generowany, makra i dynamiczne wywołania mogą zostać pominięte, a narzędzie nie zastępuje kompilatora. Repozytorium jest młode i deklaracje wymagają niezależnego sprawdzenia. |
+| **Serena** | Serwer MCP oparty o LSP: znajdowanie symboli, definicji i referencji oraz operacje na poziomie symbolu; 30+ języków wg dokumentacji integracji GitHub ([opis](https://github.github.com/gh-aw/reference/serena/)). | Mocna nawigacja językowa, lecz inny problem niż wieloletnia pamięć decyzji, historii prób i uzasadnień projektu. Wynik LSP zależy od poprawnie działającego serwera języka. |
+| **Sourcegraph MCP** | Wyszukiwanie kodu, plików, historii commitów, rewizji, definicji i Deep Search; opis integracji zawiera instrukcje dla Codexa i Claude Code ([dokumentacja](https://sourcegraph.com/docs/api/mcp)). | Serwer MCP jest dostępny dla planów Enterprise; koszt i sposób hostowania mogą nie pasować do właścicielskiego ograniczenia braku dodatkowych wydatków. |
+| **Aider RepoMap** | Zwięzła mapa symboli całego repo, wybierana rankingiem grafowym i dopasowywana do budżetu kontekstu ([dokumentacja](https://aider.chat/docs/repomap.html)). | Działa jako część Aidera; sama w sobie nie daje wspólnej, trwałej pamięci MCP dla Codexa i Claude Code. |
+| **ProjectMem** | Lokalny, zdarzeniowy dziennik prób, poprawek i decyzji, z deterministycznym podsumowaniem i serwerem MCP — bez grafowej bazy ani wektorów ([artykuł](https://arxiv.org/abs/2606.12329)). | Ewaluacja jest samoobserwacją autora przez dwa miesiące na 10 projektach, nie kontrolowanym porównaniem skuteczności. Jest przykładem, że pamięć o „czego próbowaliśmy i dlaczego” może być inną, tańszą warstwą niż code graph. |
+| **Cloudflare AI Search / Vectorize** | Zarządzane indeksowanie tekstu/kodu lub własne wektory; szybki RAG nad treścią. | Nie rozwiązuje samodzielnie relacji AST/LSP, zmian między symbolami ani pamięci decyzji; code-aware parser i MCP nadal trzeba dostarczyć. |
+
+### Co to zmienia w decyzji
+
+Własny system od zera **nie jest uzasadniony samą wizją** — istnieją projekty o bardzo zbliżonym zakresie. Najpierw należy sprawdzić trzy drogi: (1) użyć gotowego lokalnego code graph MCP, (2) połączyć narzędzie nawigacji ze zwykłą, wersjonowaną pamięcią decyzji, (3) dopiero po wykazaniu konkretnej luki budować własny komponent. Przewaga mogłaby wynikać z lepszej jakości relacji, aktualności, bezpiecznej pamięci historii, pracy na kilku repo lub jednego niezawodnego interfejsu dla obu agentów — tych przewag nie da się wywnioskować z listy funkcji.
+
+Serwery MCP uruchamiają kod na maszynie agenta i mogą otrzymać szeroki dostęp do repozytorium. Przed użyciem jakiegokolwiek kandydata trzeba osobno sprawdzić licencję, zależności, zakres odczytu/zapisu, wysyłanie danych, sposób instalacji i aktualizacje; sam fakt, że projekt jest publiczny albo lokalny, nie czyni go automatycznie bezpiecznym. Codebase-Memory opisuje supply-chain risk serwerów MCP jako istotne, słabo ustandaryzowane zagrożenie ([dyskusja bezpieczeństwa w artykule](https://arxiv.org/abs/2603.27277)).
+
 ## Co mówią badania
 
 | Badanie | Zakres i wynik istotny dla decyzji | Ograniczenie wnioskowania |
