@@ -107,10 +107,10 @@ describe('patron checkout layout', () => {
     expect(dots.previousElementSibling?.contains(dots)).toBe(false);
   });
 
-  it('the dots take no part in the scroll: a plain flex item with ~9px under it, no pull-up margin', () => {
+  it('the dots take no part in the scroll: a plain flex item with 4-9px under it (scaled with the window height), no pull-up margin', () => {
     const rule = css.match(/\.stepDots \{([^}]*)\}/)?.[1] ?? '';
     expect(rule).toContain('flex: 0 0 auto');
-    expect(rule).toContain('padding: 0 0 9px');
+    expect(rule).toMatch(/padding: 0 0 calc\(4px \+ [\d.]+ \* var\(--pass-ramp\)\)/);
     expect(rule).not.toMatch(/--pass-title-gap/);
   });
 
@@ -137,12 +137,12 @@ describe('patron checkout layout', () => {
   });
 
   it('one variable, --pass-title-gap, sets the distance from the title row to the first label in every step (no per-step hacks)', () => {
-    expect(css).toMatch(/\.pass \{[^}]*--pass-title-gap: \d+px;/);
+    expect(css).toMatch(/\.pass \{[^}]*--pass-title-gap: calc\(12px \+ [\d.]+ \* var\(--pass-ramp\)\);/);
     expect(css).toMatch(/\.sheetBody \{[^}]*padding: var\(--pass-title-gap\)/);
     expect(css).toMatch(/\.payHead \{[^}]*padding: var\(--pass-title-gap\)/);
     expect(css).not.toMatch(/\.sheetHead \+ \.sheetBody/);
-    // defined twice (default + short-phone override) and consumed by exactly two containers: no per-step values
-    expect((css.match(/--pass-title-gap:/g) ?? []).length).toBe(2);
+    // defined once (12 -> 24 px, scaled by the window height through --pass-ramp) and consumed by exactly two containers: no per-step values
+    expect((css.match(/--pass-title-gap:/g) ?? []).length).toBe(1);
     expect((css.match(/var\(--pass-title-gap\)/g) ?? []).length).toBe(2);
   });
 

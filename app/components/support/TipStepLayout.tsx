@@ -24,10 +24,10 @@ export function TipStepLayout({
   const back = useContext(TipBackContext);
   return (
     <>
-      <div className={cn("tip-select-scroll min-h-0 flex-1 overflow-y-auto pt-0", back?.patron ? "px-[18px] pb-2.5" : "px-5 pb-4 md:px-7", bodyClassName)}>{children}</div>
+      <div className={cn("tip-select-scroll min-h-0 flex-1 overflow-y-auto pt-0", back?.patron ? "px-[18px] pb-[var(--pass-body-pb,10px)]" : "px-5 pb-4 md:px-7", bodyClassName)}>{children}</div>
       {footer && back?.aboveBar}
       {footer && (
-        <div className={cn("shrink-0 border-t border-[var(--chan-line)]", back?.patron ? "px-[18px] pb-[calc(10px+env(safe-area-inset-bottom))] pt-2.5" : "px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5")}>
+        <div className={cn("shrink-0 border-t border-[var(--chan-line)]", back?.patron ? "px-[18px] pb-[calc(var(--pass-bar-y,10px)+env(safe-area-inset-bottom))] pt-[var(--pass-bar-y,10px)]" : "px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5")}>
           {back ? (
             <div className="flex items-end gap-2.5">
               <button
@@ -37,7 +37,7 @@ export function TipStepLayout({
                 aria-label={back.label}
                 className={cn(
                   "flex w-[52px] shrink-0 items-center justify-center rounded-[14px] border-2 text-[var(--chan-ink)] transition-colors hover:border-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:cursor-not-allowed disabled:opacity-55",
-                  back.patron ? "h-[48px] !rounded-[12px] border-[var(--pass-edge,var(--pass-gray-200,var(--chan-line)))] bg-[var(--chan-card)]" : "h-[52px] border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] hover:bg-[var(--cm-amber-28)]",
+                  back.patron ? "h-[var(--pass-btn-h,48px)] !rounded-[12px] border-[var(--pass-edge,var(--pass-gray-200,var(--chan-line)))] bg-[var(--chan-card)]" : "h-[52px] border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] hover:bg-[var(--cm-amber-28)]",
                 )}
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -73,7 +73,7 @@ export function TipPrimaryButton({
       onClick={onClick}
       disabled={disabled}
       aria-busy={busy || undefined}
-      className={cn("font-sans flex w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-ink)] text-[16px] font-extrabold tracking-[-0.02em] text-white shadow-[0_10px_22px_-12px_rgba(17,24,39,0.55)] transition-[background-color,transform] duration-200 hover:bg-black active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none", patron ? "h-[48px] !rounded-[12px] !text-[14px] !font-semibold bg-[var(--pass-cta,var(--chan-ink))] hover:bg-[var(--pass-cta-hover,#000)] shadow-[0_10px_18px_-8px_rgba(1,40,106,0.55),0_3px_6px_-2px_rgba(1,40,106,0.3)]" : "h-[52px]")}
+      className={cn("font-sans flex w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-ink)] text-[16px] font-extrabold tracking-[-0.02em] text-white shadow-[0_10px_22px_-12px_rgba(17,24,39,0.55)] transition-[background-color,transform] duration-200 hover:bg-black active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none", patron ? "h-[var(--pass-btn-h,48px)] !rounded-[12px] !text-[14px] !font-semibold bg-[var(--pass-cta,var(--chan-ink))] hover:bg-[var(--pass-cta-hover,#000)] shadow-[0_10px_18px_-8px_rgba(1,40,106,0.55),0_3px_6px_-2px_rgba(1,40,106,0.3)]" : "h-[52px]")}
     >
       {children}
     </button>
