@@ -140,7 +140,7 @@ describe("player icon set (Marker)", () => {
 
   it("styles: sizes come from CSS, soft glass, press scale, blue focus ring, reduced motion, safe-area insets", () => {
     expect(css).toMatch(/\.mc-icon\s*\{\s*width:20px; height:20px;/);
-    expect(css).toMatch(/\.mc-hero-icon\s*\{ display:block; width:27px; height:27px; \}/);
+    expect(css).toMatch(/\.mc-hero-icon\s*\{ display:block; width:calc\(var\(--mc-hero-size\) \* \.42\); height:calc\(var\(--mc-hero-size\) \* \.42\); \}/);
     expect(css).toContain(".mc-menu-check, .mc-menu-hint-icon { width:16px; height:16px;");
     expect(css).not.toContain('content:"\\2713"');
     expect(css).toMatch(/\.mc-play \{ --mc-play-glyph: 26px; width:40px; height:40px; \}/);

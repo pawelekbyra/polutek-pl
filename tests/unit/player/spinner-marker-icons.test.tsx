@@ -45,9 +45,10 @@ describe("buffering spinner (set B, Marker)", () => {
     expect(reduced).not.toMatch(/\.mc-spinner-arc\s*\{\s*animation:none/);
   });
 
-  it("keeps its own 48px size, inside the 64px disc of the centre play button (the glyph in that disc is 27px)", () => {
-    expect(rule(".mc-hero")).toMatch(/width:64px; height:64px/);
-    expect(rule(".mc-hero-icon")).toMatch(/width:27px; height:27px/);
+  it("keeps its own 48px size, inside the centre play button disc (44-64px, 20% of the frame height; the glyph is 42% of it)", () => {
+    expect(rule(".mc-hero")).toMatch(/--mc-hero-size: clamp\(44px, calc\(var\(--media-height, 220px\) \* \.2\), 64px\)/);
+    expect(rule(".mc-hero")).toMatch(/width:var\(--mc-hero-size\); height:var\(--mc-hero-size\)/);
+    expect(rule(".mc-hero-icon")).toMatch(/width:calc\(var\(--mc-hero-size\) \* \.42\)/);
     expect(rule(".mc-spinner-arc")).toMatch(/width:48px; height:48px/);
   });
 

@@ -989,13 +989,17 @@
   /* Centre button (owner 2026-11-03, the shop mock-up's play mark in the brand blue): a solid disc in the same blue as the
      progress fill (--chan-blue), the play triangle (solid, rounded corners, optically shifted right) or the replay arrow
      (Marker pen, ICON_PEN_PX) inside in --mc-hero-glyph. A hairline dark rim and a soft shadow lift the disc off both
-     bright and dark frames; hover and press darken the blue a step. 64px (54px on phones), always a touch target >= 44px. */
+     bright and dark frames; hover and press darken the blue a step. The size follows the frame (owner 2026-11-04, "pick the
+     ideal size" on phones): 20% of the player height, never below 44px (the touch target; 44px is 20% of a 390px phone's
+     219px frame) and never above 64px (reached from a 320px tall frame up: tablets and desktop). --media-height is
+     Vidstack's live player height, so landscape and fullscreen scale too. */
   .mc-hero {
+    --mc-hero-size: clamp(44px, calc(var(--media-height, 220px) * .2), 64px);
     --mc-hero-bg: var(--chan-blue);
     --mc-hero-glyph: #fff;
     --mc-hero-shadow: 0 0 0 1px rgba(0,0,0,.2), 0 6px 22px rgba(0,0,0,.42);
     display:grid; place-items:center;
-    width:64px; height:64px; padding:0;
+    width:var(--mc-hero-size); height:var(--mc-hero-size); padding:0;
     border:0; border-radius:999px;
     background: var(--mc-hero-bg);
     color: var(--mc-hero-glyph);
@@ -1012,8 +1016,8 @@
     box-shadow: var(--mc-hero-shadow), 0 0 0 2px #fff, 0 0 0 4px var(--chan-blue);
   }
 
-  /* The glyph: 27px in the 64px disc (the mock-up's ratio, 30 in 76). No glow: the disc carries the contrast. */
-  .mc-hero-icon { display:block; width:27px; height:27px; }
+  /* The glyph: 42% of the disc (27px in 64px, the mock-up's ratio, 30 in 76; 18.5px in 44px). No glow: the disc carries the contrast. */
+  .mc-hero-icon { display:block; width:calc(var(--mc-hero-size) * .42); height:calc(var(--mc-hero-size) * .42); }
 
   /* Buffering mark: one arc drawn with the same Marker stroke as the icons (SpinnerArcIcon, 2.4 in the 24 box = 4.8px at
      48px, round ends), white, no disc and no border behind it. The glow is the big play mark's: a drop-shadow on the WRAPPER
@@ -1088,8 +1092,6 @@
       border-width:1px 0 0;
       background: rgba(14,15,18,.98);
     }
-    .mc-hero { width:54px; height:54px; }
-    .mc-hero > svg { width:23px; height:23px; }
   }
   /* A phone's rest chip says only the time, like the reference; the chapter is in the drag preview and in the
      settings menu's "Chapters" entry. */

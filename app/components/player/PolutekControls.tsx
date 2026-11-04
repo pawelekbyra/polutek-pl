@@ -20,7 +20,7 @@ import { ScrubBar } from "./controls/ScrubBar";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
 /**
- * Rendered size of the centre glyph (`.mc-hero-icon`, 27px on desktop) and the replay arrow's pen on screen. The set's thin
+ * Rendered size of the centre glyph (`.mc-hero-icon`, 42% of the disc: 27px at the 64px desktop size) and the replay arrow's pen on screen. The set's thin
  * pen (ICON_PEN_PX 1.2px) looked frail next to the solid play triangle in the preview sheet, so the arrow uses 1.8px,
  * the weight at which it balances the filled triangle (still round caps, Marker path).
  */
