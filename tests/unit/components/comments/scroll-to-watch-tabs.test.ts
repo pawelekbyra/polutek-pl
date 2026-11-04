@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { scrollToWatchTabs, scrollToWatchTabsWhenSettled } from '@/app/components/comments/scroll-to-watch-tabs';
+import { scrollToPageTop, scrollToWatchTabs, scrollToWatchTabsWhenSettled } from '@/app/components/comments/scroll-to-watch-tabs';
 
 afterEach(() => { document.body.innerHTML = ''; vi.restoreAllMocks(); });
 
@@ -61,5 +61,21 @@ describe('scrollToWatchTabsWhenSettled', () => {
     vi.advanceTimersByTime(900);
     expect(spy).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
+  });
+});
+
+describe('scrollToPageTop', () => {
+  it('scrolls the window to 0 and moves focus to the navbar only when the button had focus', () => {
+    document.body.innerHTML = '<header><a href="/">logo</a></header><button id="b">up</button>';
+    const spy = vi.fn();
+    window.scrollTo = spy as unknown as typeof window.scrollTo;
+    const btn = document.getElementById('b') as HTMLButtonElement;
+    scrollToPageTop('smooth', btn);
+    expect(spy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+    expect(document.activeElement).toBe(document.body);
+    btn.focus();
+    scrollToPageTop('auto', btn);
+    expect(spy).toHaveBeenLastCalledWith({ top: 0, behavior: 'auto' });
+    expect(document.activeElement).toBe(document.querySelector('header a'));
   });
 });
