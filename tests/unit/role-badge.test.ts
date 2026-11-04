@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getAuthorBadge } from "@/app/components/comments/types";
-import { isRoleBadgeKind, pickRoleBadge, roleRingClass, ROLE_RING_COLOR } from "@/lib/role-badge";
+import { CREATOR_AVATAR_RING, isRoleBadgeKind, pickRoleBadge, roleRingClass, ROLE_RING_COLOR } from "@/lib/role-badge";
 import { roleLabel } from "@/lib/role-label";
 import { txFor } from "./i18n/mock-language";
 
@@ -29,6 +29,13 @@ describe("shared role rule (comments and top bar)", () => {
     for (const kind of ["AUTHOR", "VIP", "BASE"] as const) {
       expect(roleRingClass(kind)).toContain("ring-2 ring-offset-2 ring-offset-[var(--chan-card)]");
     }
+  });
+
+  it("a channel avatar gets the Creator ring: same width, offset and blue as the Creator role ring, border kept", () => {
+    expect(CREATOR_AVATAR_RING).toContain("ring-2 ring-offset-2 ring-offset-[var(--chan-card)]");
+    expect(CREATOR_AVATAR_RING).toContain(ROLE_RING_COLOR.AUTHOR);
+    expect(CREATOR_AVATAR_RING).not.toContain("border-transparent");
+    expect(roleRingClass("AUTHOR")).toContain(CREATOR_AVATAR_RING);
   });
 
   it("validates a role coming from the network", () => {
