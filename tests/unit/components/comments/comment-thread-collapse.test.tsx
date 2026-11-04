@@ -104,14 +104,41 @@ describe('collapsible replies', () => {
 
     fireEvent.click(show);
     expect(await screen.findByText('Text r1')).toBeInTheDocument();
+    // Open in the same render as the click: not hidden, not inert, no opacity / height transition on the panel.
+    const openPanel = document.getElementById(panelId!)!;
+    expect(openPanel).not.toHaveAttribute('hidden');
+    expect(openPanel).not.toHaveAttribute('inert');
+    expect(openPanel.className).not.toMatch(/transition|duration/);
     const hide = screen.getByRole('button', { name: 'Ukryj odpowiedzi' });
     expect(hide).toHaveAttribute('aria-expanded', 'true');
     expect(hide).toHaveAttribute('aria-controls', panelId);
 
     fireEvent.click(hide);
     expect(screen.getByRole('button', { name: 'Pokaż 2 odpowiedzi' })).toHaveAttribute('aria-expanded', 'false');
-    // Closed content is inert (no focus, no assistive tech) while it animates shut.
-    expect(document.getElementById(panelId!)).toHaveAttribute('inert');
+    // Closed content is inert and hidden (no focus, no assistive tech) in the very same render: nothing animates shut.
+    const panel = document.getElementById(panelId!)!;
+    expect(panel).toHaveAttribute('inert');
+    expect(panel).toHaveAttribute('hidden');
+    expect(panel.className).not.toMatch(/transition|duration/);
+    expect(panel.style.opacity).toBe('');
+    expect(panel.style.gridTemplateRows).toBe('');
+  });
+
+  it('prepares the hidden replies while the pointer approaches, so the click only flips visibility', async () => {
+    mockThread(2);
+    renderComments();
+
+    const show = await screen.findByRole('button', { name: 'Pokaż 2 odpowiedzi' });
+    expect(screen.queryByText('Text r1')).not.toBeInTheDocument();
+    fireEvent.pointerEnter(show);
+    // Mounted but still closed: hidden and inert.
+    const panel = document.getElementById(show.getAttribute('aria-controls')!)!;
+    expect(panel).toHaveAttribute('hidden');
+    expect(panel).toHaveAttribute('inert');
+    expect(panel.textContent).toContain("Text r1");
+    fireEvent.click(show);
+    expect(panel).not.toHaveAttribute('hidden');
+    expect(screen.getByText('Text r1')).toBeVisible();
   });
 
   it('opens by itself when the address points at one of the replies', async () => {
