@@ -72,6 +72,8 @@ Cloudflare AI Search obsługuje indeksowanie plików tekstowych i kodu z magazyn
 
 **Wniosek technologiczny:** Cloudflare może być jednym z magazynów lub usług wyszukiwania. Sam nie dostarcza kompletnego, świadomego składni grafu repo ani gotowej pamięci z historią decyzji. Przy lokalnym/tańszym systemie parsowanie i graf można oddzielić od dostawcy wektorów; decyzja o hostingu powinna nastąpić po porównaniu kosztu, prywatności i utrzymania. Nie zakładamy wydatków ani Workers Paid.
 
+**Koszt według cennika sprawdzonego 2026-11-04:** rozliczanie AI Search ma ruszyć 2026-12-01. Każde konto ma otrzymywać miesięcznie 5 mln tokenów indeksowania, 10 GB-miesiąc przechowywania oraz 1 000 zapytań semantycznych i 1 000 pełnotekstowych. Nadwyżki: $0,75 za dodatkowy milion tokenów indeksowania, $2/GB-miesiąc przechowywania i $0,75/$0,10 za 1 000 zapytań semantycznych/pełnotekstowych ([cennik AI Search](https://developers.cloudflare.com/ai-search/platform/limits-pricing/)). Vectorize na planie darmowym obejmuje 5 mln przechowywanych i 30 mln odpytanych wymiarów wektorów miesięcznie ([cennik Vectorize](https://developers.cloudflare.com/vectorize/platform/pricing/)). To wystarcza do małego eksperymentu RAG, ale nie jest powodem, by wysyłać kod repo na zewnętrzny indeks; lokalny MCP nie potrzebuje Cloudflare.
+
 ## Jak rozstrzygnąć „czy budować” bez polegania na wrażeniach
 
 Research deskowy już pokazuje sensowną hipotezę i istniejące alternatywy. **Nie może sam dowieść zysku na naszym rzeczywistym kodzie.** Przed implementacją należy zatwierdzić krótką, kontrolowaną ewaluację na zadaniach historycznych/odtwarzalnych, gdy właściciel zdecyduje o wznowieniu tego kierunku:
