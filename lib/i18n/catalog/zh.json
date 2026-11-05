@@ -1136,5 +1136,8 @@
   "New": "新通知",
   "Earlier": "更早",
   "See all": "查看全部",
-  "PREMIERE: {0}.": "首映： {0}."
+  "PREMIERE: {0}.": "首映： {0}.",
+  "Bramka Napiwkowa": "小费支付页面",
+  "Tip The Guy": "给创作者打赏",
+  "Payment processed by Stripe": "由 Stripe 处理付款"
 }

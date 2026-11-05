@@ -1136,5 +1136,8 @@
   "New": "Nouvelles",
   "Earlier": "Plus tôt",
   "See all": "Tout afficher",
-  "PREMIERE: {0}.": "PREMIERE: {0}."
+  "PREMIERE: {0}.": "PREMIERE: {0}.",
+  "Bramka Napiwkowa": "Caisse de pourboire",
+  "Tip The Guy": "Offrir un pourboire",
+  "Payment processed by Stripe": "Paiement traité par Stripe"
 }

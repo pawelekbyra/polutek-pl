@@ -1136,5 +1136,8 @@
   "New": "Nuevas",
   "Earlier": "Anteriores",
   "See all": "Ver todas",
-  "PREMIERE: {0}.": "ESTRENO: {0}."
+  "PREMIERE: {0}.": "ESTRENO: {0}.",
+  "Bramka Napiwkowa": "Pasarela de propinas",
+  "Tip The Guy": "Dale una propina",
+  "Payment processed by Stripe": "Pago procesado por Stripe"
 }

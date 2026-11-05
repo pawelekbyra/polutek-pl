@@ -1136,5 +1136,8 @@
   "New": "Neu",
   "Earlier": "Früher",
   "See all": "Alle anzeigen",
-  "PREMIERE: {0}.": "PREMIERE: {0}."
+  "PREMIERE: {0}.": "PREMIERE: {0}.",
+  "Bramka Napiwkowa": "Trinkgeldkasse",
+  "Tip The Guy": "Dem Typen Trinkgeld geben",
+  "Payment processed by Stripe": "Zahlung über Stripe"
 }

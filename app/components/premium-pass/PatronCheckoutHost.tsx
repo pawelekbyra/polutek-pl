@@ -1,8 +1,7 @@
 "use client";
 // patron zone (docs/architecture/patron-zone.md): the gold "Kup se Premium" button in Hero opens the patron checkout
-// (the three-step Stripe one) through the "polutek:open-patron" event. When the patron zone is not visible to the
-// viewer (PREMIUM_PASS_EXPERIMENT=off, the offer route answers 404) nothing opens: the old tip gate is hidden and
-// is no longer a fallback (app/components/channel/tip-gate.ts).
+// (the three-step Stripe one) through the "polutek:open-patron" event. Hero offers this checkout to viewers without
+// an active pass; viewers who already have one get the separate voluntary tip checkout.
 import React, { useEffect, useState } from "react";
 import type { PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { PassCheckoutSheet } from "./PassCheckoutSheet";

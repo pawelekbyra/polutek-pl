@@ -1136,5 +1136,8 @@
   "New": "Nuove",
   "Earlier": "Precedenti",
   "See all": "Mostra tutte",
-  "PREMIERE: {0}.": "PRIMA: {0}."
+  "PREMIERE: {0}.": "PRIMA: {0}.",
+  "Bramka Napiwkowa": "Pagamento della mancia",
+  "Tip The Guy": "Fai una mancia",
+  "Payment processed by Stripe": "Pagamento elaborato da Stripe"
 }

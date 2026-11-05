@@ -1136,5 +1136,8 @@
   "New": "Novas",
   "Earlier": "Anteriores",
   "See all": "Ver todas",
-  "PREMIERE: {0}.": "ESTREIA: {0}."
+  "PREMIERE: {0}.": "ESTREIA: {0}.",
+  "Bramka Napiwkowa": "Pagamento de gorjeta",
+  "Tip The Guy": "Dar uma gorjeta",
+  "Payment processed by Stripe": "Pagamento processado pela Stripe"
 }
