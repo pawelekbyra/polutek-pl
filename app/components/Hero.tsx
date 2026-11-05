@@ -25,7 +25,8 @@ import VideoTaxonomyChips from './search/VideoTaxonomyChips';
 import { LinkedDescription } from './video/LinkedDescription';
 import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
+import { Heart, ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
+import { fetchPassStatus } from './premium-pass/usePremiumPass';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -38,6 +39,8 @@ interface HeroProps {
   startWithSound?: boolean;
   /** The signed-in viewer's saved position in this video (server-rendered; resume watching). */
   initialProgressSeconds?: number | null;
+  initialPremiumPassUserId?: string | null;
+  initialHasActivePremiumPass?: boolean;
 }
 
 // Fixed locale and time zone: the server and the browser format these the same way, so the first
@@ -88,12 +91,13 @@ async function sendVideoReaction(videoId: string, target: ReactionTarget): Promi
   return last;
 }
 
-const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed, initialNotify, startWithSound = false, initialProgressSeconds }) => {
+const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed, initialNotify, startWithSound = false, initialProgressSeconds, initialPremiumPassUserId, initialHasActivePremiumPass = false }) => {
   const { t, language, tx } = useLanguage();
   const toast = useToast();
   const { userId } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [mounted, setMounted] = useState(false);
+  const [premiumPassViewer, setPremiumPassViewer] = useState({ userId: initialPremiumPassUserId ?? null, active: initialHasActivePremiumPass });
   const [isExpanded, setIsExpanded] = useState(false);
   const displayTitle = getVideoDisplayTitle(video, language);
   const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
@@ -104,6 +108,25 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!userId) {
+      setPremiumPassViewer({ userId: null, active: false });
+      return;
+    }
+    if (userId === initialPremiumPassUserId) {
+      setPremiumPassViewer({ userId, active: initialHasActivePremiumPass });
+      return;
+    }
+    let current = true;
+    void fetchPassStatus().then((status) => {
+      if (current) setPremiumPassViewer({ userId, active: status?.pass.state === "active" });
+    });
+    return () => { current = false; };
+  }, [userId, initialPremiumPassUserId, initialHasActivePremiumPass]);
+
+  const hasActivePremiumPass = Boolean(userId && premiumPassViewer.userId === userId && premiumPassViewer.active);
+  const supportLabel = hasActivePremiumPass ? tx("Napiwkuj", "Tip The Guy") : tx("Kup se Premium", "Get Premium");
 
   useEffect(() => {
     setLocalViewsCount(video.views || 0);
@@ -348,11 +371,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             </div>
 
             <div className={cn("flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap", styles.actionRail)}>
-               {/* The gold patron button: PatronCheckoutHost (mounted below) opens the patron checkout on the
-                   "polutek:open-patron" event. It deliberately does not touch the URL: a router navigation
-                   re-renders the whole page on the server. Signed-out click opens sign-in first, since buying
-                   needs an account. The row's last item, so it fills the remaining space (flex-1 below lg:,
-                   fixed above it). The old tip gate is hidden (app/components/channel/tip-gate.ts). */}
+               {/* Viewers with an active pass are offered a voluntary tip; everyone else keeps the Premium offer. */}
                <button
                  type="button"
                  onClick={() => {
@@ -360,17 +379,19 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      openAuthModal("sign-in");
                      return;
                    }
-                   window.dispatchEvent(new CustomEvent("polutek:open-patron"));
+                   window.dispatchEvent(new CustomEvent(hasActivePremiumPass ? "polutek:open-support" : "polutek:open-patron"));
                  }}
                  className={cn(
                    "relative flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-[12px] bg-[var(--chan-surface)] px-3 font-sans text-sm font-bold text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 lg:flex-none",
                    styles.supportAction,
                  )}
-                 aria-label={tx("Kup se Premium", "Get Premium")}
-                 title={tx("Kup se Premium", "Get Premium")}
+                 aria-label={supportLabel}
+                 title={supportLabel}
                >
-                 <Sparkles aria-hidden="true" className={styles.supportSpark} strokeWidth={2.2} />
-                 <span className={styles.supportLabel}>{tx("Kup se Premium", "Get Premium")}</span>
+                 {hasActivePremiumPass
+                   ? <Heart aria-hidden="true" className={styles.supportSpark} strokeWidth={2.2} />
+                   : <Sparkles aria-hidden="true" className={styles.supportSpark} strokeWidth={2.2} />}
+                 <span className={styles.supportLabel}>{supportLabel}</span>
                </button>
                <div className={cn("relative flex h-[36px] shrink-0 items-center rounded-[12px] bg-[var(--chan-surface)]", styles.actionCluster)}>
                   <button

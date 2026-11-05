@@ -24,6 +24,8 @@ export interface ChannelHomeProps {
     initialNotify?: boolean;
     /** The viewer's saved position in the server-selected video (resume watching). */
     initialProgressSeconds?: number | null;
+    /** The viewer's own active Premium pass; used to select the Hero support action. */
+    hasActivePremiumPass?: boolean;
     role?: string;
   } | null;
   /** The signed-in viewer's unfinished videos ("Continue watching"), computed on the server. */

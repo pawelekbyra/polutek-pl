@@ -27,6 +27,7 @@ import { getVideoProgressSeconds, listContinueWatching } from '@/lib/modules/wat
 import { isVideoFavorited } from '@/lib/modules/favorites';
 import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 import { getPlaylistQueue, parseListParam, parseQueueIndex, PLAYLIST_INDEX_PARAM, PLAYLIST_LIST_PARAM } from '@/lib/modules/playlists';
+import { viewerPassState } from '@/lib/modules/patron-zone';
 
 interface HomeExperienceProps {
   locale: Locale;
@@ -148,6 +149,7 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
   let initialIsSubscribed = false;
   let initialNotify = true;
   let initialProgressSeconds: number | null = null;
+  let hasActivePremiumPass = false;
   let continueWatching: Awaited<ReturnType<typeof listContinueWatching>> = [];
   let viewerPieces: Awaited<ReturnType<typeof loadViewerPieces>>;
 
@@ -156,7 +158,7 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
 
     // Loads (never creates) the viewer's row; fails closed for a missing or deleted account.
     const userCtx = createAppContext();
-    const [, dbResult, like, dislike, favorited, sub, pieces, progressSeconds, shelf] = await Promise.all([
+    const [, dbResult, like, dislike, favorited, sub, pieces, progressSeconds, shelf, passState] = await Promise.all([
       getOrCreateCurrentUser(userCtx, userId).catch((e) => {
         logger.error("[HOME_USER_FETCH_ERROR]", e);
       }),
@@ -182,10 +184,15 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
         logger.error("[HOME_CONTINUE_WATCHING_ERROR]", e);
         return [];
       }),
+      getHomeViewerActor().then((actor) => actor ? viewerPassState(createAppContext({ actor }), new Date()) : null).catch((e) => {
+        logger.warn("[HOME_PREMIUM_PASS_STATUS_ERROR]", e instanceof Error ? e.message : String(e));
+        return null;
+      }),
     ]);
 
     userDb = dbResult;
     initialProgressSeconds = progressSeconds ?? null;
+    hasActivePremiumPass = passState?.state === 'active';
     continueWatching = shelf;
     initialInteraction = { liked: !!like, disliked: !!dislike, favorited };
     initialIsSubscribed = !!sub;
@@ -217,6 +224,7 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
     initialIsSubscribed,
     initialNotify,
     initialProgressSeconds,
+    hasActivePremiumPass,
   } : null;
 
   if (content.status === 'error' || content.status === 'empty') {

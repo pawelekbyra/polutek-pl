@@ -28,10 +28,10 @@ import type { ContinueWatchingItem } from "@/lib/modules/watch-progress/domain/c
 import { PlaylistQueueLayer } from "./playlists/PlaylistQueuePanel";
 import { planSidebarSwitch } from "./playlists/queue-navigation";
 import { TIP_GATE_ENABLED } from "./channel/tip-gate";
+import { fetchPassStatus } from "./premium-pass/usePremiumPass";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { useVideoDescription } from "./video/useVideoDescription";
 
-// Hidden since 2026-10-21, kept on purpose (see tip-gate.ts).
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
 
 export default function ChannelHome({
@@ -207,11 +207,12 @@ function ChannelHomeContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
-  // Hidden since 2026-10-21, kept on purpose: the tip gate (SupportModal) is switched off by TIP_GATE_ENABLED, so
-  // nothing opens it (the "polutek:open-support" event has no dispatcher, the URL triggers below are inert). It is
-  // mounted only while open, so Stripe.js would be loaded only by viewers who actually open it.
+  // The tip checkout is mounted only while open, so Stripe.js is loaded only for eligible viewers who open it.
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-  const openSupport = useCallback(() => setIsSupportModalOpen(true), []);
+  const openSupport = useCallback(async () => {
+    const status = await fetchPassStatus();
+    if (status?.pass.state === "active") setIsSupportModalOpen(true);
+  }, []);
 
   useEffect(() => {
     if (!TIP_GATE_ENABLED) return;
@@ -219,14 +220,14 @@ function ChannelHomeContent({
     return () => window.removeEventListener("polutek:open-support", openSupport);
   }, [openSupport]);
 
-  // It also opens for signed-in viewers from a URL: an external `?support=1` deep link (stripped
-  // at once, so a refresh doesn't reopen it) and a Stripe redirect return
+  // It also opens for active-pass viewers from a URL: an external `?support=1` deep link (stripped
+  // after opening, so a refresh does not reopen it) and a Stripe redirect return
   // (`?success=true&payment_id=…`), which lands on the thank-you step.
   const searchParams = useSearchParams();
   const wantsSupport = searchParams.get("support") === "1";
   const isStripeReturn = searchParams.get("success") === "true" && Boolean(searchParams.get("payment_id"));
   useEffect(() => {
-    if (!TIP_GATE_ENABLED || !userProfile || !(wantsSupport || isStripeReturn)) return;
+    if (!TIP_GATE_ENABLED || !userProfile?.hasActivePremiumPass || !(wantsSupport || isStripeReturn)) return;
     setIsSupportModalOpen(true);
     if (wantsSupport) {
       try {
@@ -364,6 +365,8 @@ function ChannelHomeContent({
                 initialProgressSeconds={
                   selectedVideo.id === serverInteractionVideoId ? userProfile?.initialProgressSeconds : undefined
                 }
+                initialPremiumPassUserId={userProfile?.id ?? null}
+                initialHasActivePremiumPass={userProfile?.hasActivePremiumPass ?? false}
               />
             </div>
 

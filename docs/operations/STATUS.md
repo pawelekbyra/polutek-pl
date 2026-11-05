@@ -109,6 +109,7 @@ Pomysł pracy agenta bezpośrednio na serwerku bez GitHuba (bundle, własne repo
 
 ## Decyzje właściciela, które obowiązują
 
+- **2026-11-05 — napiwki dla posiadaczy Premium:** widz z aktywnym własnym karnetem dostaje w Hero przycisk „Napiwkuj” i może otworzyć dobrowolną bramkę napiwkową; pozostali widzą zakup Premium. Napiwek nie odblokowuje treści.
 - Serwis jest niekomercyjny: napiwek nic nie odblokowuje. `Payment` i `PatronGrant` zostają wyłącznie jako prywatna ewidencja właściciela; bez
   publicznej odznaki. Każda udana wpłata oznacza osobę jako wspierającego (widoczne tylko w panelu).
 - Dwa poziomy dostępu: publiczny i po zalogowaniu (`PATRON` wygaszone w kodzie; wartość enuma do usunięcia migracją czyszczącą).
