@@ -427,7 +427,6 @@
  "This video is temporarily unavailable.": "Dieses Video ist vorübergehend nicht verfügbar.",
  "Tip": "Trinkgeld",
  "Tip amount": "Trinkgeldbetrag",
- "Tip gate": "Trinkgeld-Dialog",
  "Tip method": "Zahlungsmethode",
  "Tip recipient": "Trinkgeld-Empfänger",
  "Too many attempts. Please try again later.": "Zu viele Versuche. Bitte versuchen Sie es später erneut.",
@@ -1136,5 +1135,7 @@
   "New": "Neu",
   "Earlier": "Früher",
   "See all": "Alle anzeigen",
-  "PREMIERE: {0}.": "PREMIERE: {0}."
+  "PREMIERE: {0}.": "PREMIERE: {0}.",
+  "Tip The Guy": "Dem Typen Trinkgeld geben",
+  "Payment processed by Stripe": "Zahlung über Stripe"
 }

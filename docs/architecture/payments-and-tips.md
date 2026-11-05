@@ -41,12 +41,12 @@ potwierdzenie w Stripe.js -> płatność udana w Stripe
   `pending`/`processing` neutralny ekran przetwarzania. Pętla uzgadniania tylko **podnosi** ekran przetwarzania do sukcesu, nigdy nie cofa pokazanego sukcesu; do UI nie trafia surowy enum ani żargon „webhook”.
   Zamknięcie ekranu sukcesu robi pełne `window.location` do czystego adresu (nie `router.replace`), żeby wszystkie powierzchnie renderowane na serwerze wróciły świeże.
 
-## Okno napiwku (ukryte od 2026-10-21, kod zostaje celowo)
+## Bramka napiwkowa (aktywna od 2026-11-05 dla posiadaczy Premium)
 
-Okno jest nieosiągalne z interfejsu: `TIP_GATE_ENABLED = false` (`app/components/channel/tip-gate.ts`), nic nie wysyła `polutek:open-support`, a `?support=1` i powrót ze Stripe nie otwierają go. Złoty przycisk „Kup se Premium” w Hero otwiera kasę strefy patrona (`patron-zone.md`). Część `app/components/support/*` (`TipPayStep`, `TipPayFrame`, `TipSelect`) jest współdzielona z tą kasą i działa. Poniżej opis okna, gdy jest włączone.
+Widz z aktywnym własnym karnetem Premium widzi w Hero „Napiwkuj” („Tip The Guy”) i może otworzyć bramkę przez `polutek:open-support`; pozostali widzą „Kup se Premium” i kasę strefy patrona (`patron-zone.md`). Stan jest renderowany po stronie serwera, a `ChannelHome` ponownie sprawdza go przed otwarciem. `?support=1` i powrót ze Stripe otwierają okno tylko dla aktywnego posiadacza. Napiwek jest dobrowolny i niczego nie odblokowuje. `SupportModal` pokazuje, że płatność obsługuje Stripe; Stripe.js ładuje się leniwie.
 
-`app/components/channel/SupportModal.tsx` (+ `app/components/support/*`), otwierane zdarzeniem `polutek:open-support`, obsługiwane w `ChannelHome` (po włączeniu `TIP_GATE_ENABLED`).
-Niezalogowany najpierw dostaje okno logowania. `ChannelHome` otwiera je też przy wejściu na `?support=1` (parametr jest od razu usuwany) i po powrocie ze Stripe (`?success=true&payment_id=...`, krok podziękowania; `UrlMask` zachowuje te parametry do tego czasu).
+`app/components/channel/SupportModal.tsx` (+ `app/components/support/*`), otwierane zdarzeniem `polutek:open-support`, obsługiwane w `ChannelHome` (`TIP_GATE_ENABLED = true`); dostęp jest ponownie sprawdzany po stronie serwera.
+Niezalogowany najpierw dostaje okno logowania. `ChannelHome` otwiera je posiadaczowi aktywnego karnetu także przy wejściu na `?support=1` (parametr jest usuwany po otwarciu) i po powrocie ze Stripe (`?success=true&payment_id=...`, krok podziękowania; `UrlMask` zachowuje te parametry do tego czasu).
 Montowane tylko, gdy otwarte; Stripe.js ładuje się leniwie stamtąd (`lib/payments/stripe-browser.ts`, `@stripe/stripe-js/pure`). **Nigdy nie dodawaj `loadStripe()` na poziomie modułu.**
 
 Kroki (`STEPS`): adresat (pole zgody na Regulamin/Politykę; zgoda trafia na serwer przy `create-intent`: `recordTermsAcceptance`) → zastrzeżenie („napiwek niczego nie odblokowuje”) → kwota (waluta z `detectDefaultCurrency`,

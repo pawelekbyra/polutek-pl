@@ -1,11 +1,11 @@
 "use client";
-// Hidden since 2026-10-21, kept on purpose: nothing opens this modal (app/components/channel/tip-gate.ts). Several
-// app/components/support/* parts (TipPayStep, TipPayFrame, TipSelect, ...) are shared with the patron checkout and live.
+// Voluntary tip checkout for viewers who already hold an active Premium pass.
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import type { StripeElementsOptions } from "@stripe/stripe-js";
 import { CloseButton } from "@/components/ui/close-button";
+import { CreditCard, LockKeyhole } from "lucide-react";
 import { Dialog, DialogOverlay, DialogPopup, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
 import { useAuthModal } from "../auth/AuthModalProvider";
@@ -252,11 +252,11 @@ export default function SupportModal({ onClose }: SupportModalProps) {
           data-testid="support-modal"
           className="fixed inset-0 z-[9991] flex h-[100dvh] w-screen tip-gate-surface flex-col overflow-hidden outline-none md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(640px,90dvh)] md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:border md:border-[var(--chan-line)] md:shadow-[0_30px_80px_-30px_rgba(17,24,39,0.14)]"
         >
-          <DialogTitle className="sr-only">{tx("Bramka napiwkowa", "Tip gate")}</DialogTitle>
+          <DialogTitle className="sr-only">{tx("Bramka Napiwkowa", "Tip The Guy")}</DialogTitle>
 
           <header className="flex pr-14 shrink-0 items-center gap-2 px-5 pb-2 pt-[max(12px,env(safe-area-inset-top))] md:px-7 md:pr-14 md:pt-4">
             <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--chan-ink)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white">
-              {tx("Bramka napiwkowa", "Tip gate")}
+              {tx("Bramka Napiwkowa", "Tip The Guy")}
             </span>
             <div className="ml-auto flex items-center gap-1.5" aria-hidden="true">
               {STEPS.map((key, index) => (
@@ -272,6 +272,12 @@ export default function SupportModal({ onClose }: SupportModalProps) {
             </div>
             <CloseButton onClick={handleClose} aria-label={tx("Zamknij", "Close")} />
           </header>
+
+          <div className="mx-5 mb-3 flex shrink-0 items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/70 px-3 py-2 text-[11px] font-medium text-emerald-900 md:mx-7" role="note">
+            <LockKeyhole aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+            <span>{tx("Płatność obsługiwana przez Stripe", "Payment processed by Stripe")}</span>
+            <CreditCard aria-hidden="true" className="ml-auto h-4 w-4 shrink-0 opacity-75" />
+          </div>
 
           <div
             key={showThanks ? "thanks" : step}

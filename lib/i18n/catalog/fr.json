@@ -427,7 +427,6 @@
  "This video is temporarily unavailable.": "Cette vidéo est temporairement indisponible.",
  "Tip": "Pourboire",
  "Tip amount": "Montant du pourboire",
- "Tip gate": "Passerelle de pourboire",
  "Tip method": "Moyen de paiement",
  "Tip recipient": "Bénéficiaire du pourboire",
  "Too many attempts. Please try again later.": "Trop de tentatives. Veuillez réessayer plus tard.",
@@ -1136,5 +1135,7 @@
   "New": "Nouvelles",
   "Earlier": "Plus tôt",
   "See all": "Tout afficher",
-  "PREMIERE: {0}.": "PREMIERE: {0}."
+  "PREMIERE: {0}.": "PREMIERE: {0}.",
+  "Tip The Guy": "Offrir un pourboire",
+  "Payment processed by Stripe": "Paiement traité par Stripe"
 }

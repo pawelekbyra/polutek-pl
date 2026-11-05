@@ -1,7 +1,6 @@
 # Strefa patrona: płatny dostęp do wybranych filmów
 
-Stan: **produkt końcowy** (decyzja właściciela 2026-10-21: „tak ma działać i wyglądać”; to nie eksperyment, wycofania nie będzie). Złoty przycisk „Kup se Premium” w Hero otwiera kasę strefy patrona i zastępuje
-bramkę napiwkową, która zostaje w kodzie, ale jest ukryta (`CLAUDE.md` §4.10, `payments-and-tips.md`). Braki przed przyjęciem prawdziwych pieniędzy: [`patron-zone-audit.md`](patron-zone-audit.md).
+Stan: **produkt końcowy** (decyzja właściciela 2026-10-21: „tak ma działać i wyglądać”; to nie eksperyment, wycofania nie będzie). Przycisk Hero otwiera kasę strefy patrona widzom bez aktywnego karnetu. Posiadacze aktywnego karnetu widzą dobrowolne „Napiwkuj”; napiwek niczego nie odblokowuje. Szczegóły bramki: `CLAUDE.md` §4.10 i `payments-and-tips.md`. Braki przed przyjęciem prawdziwych pieniędzy: [`patron-zone-audit.md`](patron-zone-audit.md).
 
 Nazwy zmiennych `PREMIUM_PASS_*` i prefiks `xp.premium_pass` w tabeli `AppSetting` zostały po pilotażu **celowo**: ich zmiana wymagałaby edycji `app.env` na serwerze albo osierociłaby istniejące dostępy.
 

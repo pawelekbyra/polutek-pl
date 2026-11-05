@@ -110,14 +110,14 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(screen.getByRole('dialog').querySelector('[data-demo-ribbon]')).toBeNull();
   });
 
-  it('the seller is a passive grey row BEFORE the total in steps 1 and 2 (the total is the last block above the action); only the (i) button is clickable', async () => {
+  it('the seller is passive and the SSL trust row follows the order total', async () => {
     open();
     const dialog = within(await screen.findByRole('dialog'));
     const before = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
     const seller1 = screen.getByRole('dialog').querySelector('[data-seller-card]')!;
     expect(before(seller1, summaryOf(dialog))).toBe(true);
-    expect(summaryOf(dialog).nextElementSibling).toBeNull();
-    expect(within(seller1 as HTMLElement).getAllByRole('button')).toHaveLength(1);
+    expect(summaryOf(dialog).nextElementSibling).toHaveAttribute('data-trust-row');
+    expect(within(seller1 as HTMLElement).queryByRole('button')).toBeNull();
     const css = readFileSync(resolve(process.cwd(), 'app/components/premium-pass/premium-pass.module.css'), 'utf8');
     const rule = css.match(/\.sellerCard \{([^}]*)\}/)?.[1] ?? '';
     expect(rule).toContain('border: 1px solid var(--pass-gray-200)');
@@ -369,7 +369,9 @@ describe('patron checkout, step 3 in demo mode (simulated payment)', () => {
     const dialog = await screen.findByRole('dialog');
     expect(dialog.querySelectorAll('[data-seller-card]')).toHaveLength(1);
     // Steps 1 and 2 carry the two documents in the footer (no 'read the documents' box); the notice returns in step 3.
-    expect(dialog.querySelector('[data-legal-footer]')).toHaveTextContent('Regulamin i Polityka prywatności');
+    const legalFooter = dialog.querySelector('[data-legal-footer]')!;
+    expect(legalFooter.querySelectorAll('a')).toHaveLength(2);
+    expect(legalFooter.querySelector('[class*="legalSep"]')).toBeInTheDocument();
     expect(dialog).not.toHaveTextContent('Przed zapłatą zapoznaj się');
     expect(dialog).not.toHaveTextContent('@polutek.com');
     expect(dialog).not.toHaveTextContent('pawelperfect.com');
@@ -430,7 +432,9 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     const dialog = within(await screen.findByRole('dialog'));
     const root = screen.getByRole('dialog');
     expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Paweł Perfect');
-    expect(root.querySelector('[data-legal-footer]')).toHaveTextContent('Regulamin i Polityka prywatności');
+    const legalFooter = root.querySelector('[data-legal-footer]')!;
+    expect(legalFooter.querySelectorAll('a')).toHaveLength(2);
+    expect(legalFooter.querySelector('[class*="legalSep"]')).toBeInTheDocument();
     clickNext(dialog, 'Dalej · 29,99 zł');
     await dialog.findByRole('heading', { name: 'Metoda płatności' });
     expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Paweł Perfect');
