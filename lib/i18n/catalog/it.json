@@ -427,7 +427,6 @@
  "This video is temporarily unavailable.": "Questo video è temporaneamente non disponibile.",
  "Tip": "Mancia",
  "Tip amount": "Importo della mancia",
- "Tip gate": "Finestra mancia",
  "Tip method": "Metodo mancia",
  "Tip recipient": "Destinatario della mancia",
  "Too many attempts. Please try again later.": "Troppi tentativi. Riprova più tardi.",
@@ -1137,7 +1136,6 @@
   "Earlier": "Precedenti",
   "See all": "Mostra tutte",
   "PREMIERE: {0}.": "PRIMA: {0}.",
-  "Bramka Napiwkowa": "Pagamento della mancia",
   "Tip The Guy": "Fai una mancia",
   "Payment processed by Stripe": "Pagamento elaborato da Stripe"
 }

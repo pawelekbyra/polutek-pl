@@ -427,7 +427,6 @@
  "This video is temporarily unavailable.": "Este vídeo no está disponible temporalmente.",
  "Tip": "Propina",
  "Tip amount": "Importe de la propina",
- "Tip gate": "Acceso a propinas",
  "Tip method": "Método de propina",
  "Tip recipient": "Destinatario de la propina",
  "Too many attempts. Please try again later.": "Demasiados intentos. Inténtalo de nuevo más tarde.",
@@ -1137,7 +1136,6 @@
   "Earlier": "Anteriores",
   "See all": "Ver todas",
   "PREMIERE: {0}.": "ESTRENO: {0}.",
-  "Bramka Napiwkowa": "Pasarela de propinas",
   "Tip The Guy": "Dale una propina",
   "Payment processed by Stripe": "Pago procesado por Stripe"
 }

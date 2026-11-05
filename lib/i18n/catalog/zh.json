@@ -427,7 +427,6 @@
  "This video is temporarily unavailable.": "该视频暂时不可用。",
  "Tip": "打赏",
  "Tip amount": "打赏金额",
- "Tip gate": "打赏入口",
  "Tip method": "打赏方式",
  "Tip recipient": "打赏对象",
  "Too many attempts. Please try again later.": "尝试次数过多，请稍后再试。",
@@ -1137,7 +1136,6 @@
   "Earlier": "更早",
   "See all": "查看全部",
   "PREMIERE: {0}.": "首映： {0}.",
-  "Bramka Napiwkowa": "小费支付页面",
   "Tip The Guy": "给创作者打赏",
   "Payment processed by Stripe": "由 Stripe 处理付款"
 }

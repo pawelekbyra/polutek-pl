@@ -7,13 +7,16 @@ import ChannelHome from '@/app/components/ChannelHome';
 import type { PublicVideoDTO } from '@/app/types/video';
 import { txFor } from "../i18n/mock-language";
 
-const mocks = vi.hoisted(() => ({ search: '', tipGate: true }));
+const mocks = vi.hoisted(() => ({ search: '', tipGate: true, passState: 'active' as 'active' | 'none' }));
 
-// The tip gate is hidden in production (TIP_GATE_ENABLED = false); these tests switch it back on to keep its code covered.
+// Keep the feature flag on and control the server re-check of the viewer's own pass.
 vi.mock('@/app/components/channel/tip-gate', () => ({
   get TIP_GATE_ENABLED() {
     return mocks.tipGate;
   },
+}));
+vi.mock('@/app/components/premium-pass/usePremiumPass', () => ({
+  fetchPassStatus: async () => ({ offer: {}, pass: { state: mocks.passState } }),
 }));
 
 vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams(mocks.search) }));
@@ -51,23 +54,25 @@ vi.mock('@/app/components/LanguageContext', () => ({
 vi.mock('@/app/hooks/useClientEnvironment', () => ({ useClientReady: () => true }));
 
 const video = { id: 'video_1', slug: 'first', title: 'Video', tier: 'PUBLIC', status: 'PUBLISHED', views: 0 } as unknown as PublicVideoDTO;
-const signedIn = { id: 'u', email: '', totalPaid: 0 };
+const signedIn = { id: 'u', email: '', totalPaid: 0, hasActivePremiumPass: true };
 
 describe('ChannelHome tip gate (SupportModal)', () => {
   beforeEach(() => {
     mocks.search = '';
     mocks.tipGate = true;
+    mocks.passState = 'active';
     window.scrollTo = vi.fn() as never;
     window.matchMedia = vi.fn().mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })) as never;
   });
   afterEach(() => cleanup());
 
-  it('opens the full-page support modal on polutek:open-support instead of switching tabs, and closes it', () => {
+  it('opens the full-page support modal on polutek:open-support instead of switching tabs, and closes it', async () => {
     render(<ChannelHome mainVideo={video} allVideos={[video]} userProfile={signedIn} />);
     expect(screen.queryByTestId('support-modal')).toBeNull();
 
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new CustomEvent('polutek:open-support'));
+      await Promise.resolve();
     });
     expect(screen.getByTestId('support-modal')).toBeInTheDocument();
     // The comments tab stays active: the gate is a modal, not a sidebar box to scroll to.
@@ -83,7 +88,7 @@ describe('ChannelHome tip gate (SupportModal)', () => {
     expect(screen.getByTestId('support-modal')).toBeInTheDocument();
   });
 
-  it('opens the modal on load for an external ?support=1 deep link, only for signed-in viewers', () => {
+  it('opens the modal on load for an external ?support=1 deep link, only for active-pass viewers', () => {
     mocks.search = 'support=1';
     const guest = render(<ChannelHome mainVideo={video} allVideos={[video]} />);
     expect(screen.queryByTestId('support-modal')).toBeNull();
@@ -94,6 +99,15 @@ describe('ChannelHome tip gate (SupportModal)', () => {
     expect(screen.getByTestId('support-modal')).toBeInTheDocument();
     // Stripped at once, so a refresh doesn't open the gate again; the open video stays.
     expect(window.location.search).toBe('?v=first');
+  });
+
+  it('does not open the tip checkout for a signed-in viewer without an active pass', async () => {
+    mocks.passState = 'none';
+    render(<ChannelHome mainVideo={video} allVideos={[video]} userProfile={{ ...signedIn, hasActivePremiumPass: false }} />);
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('polutek:open-support'));
+    });
+    expect(screen.queryByTestId('support-modal')).toBeNull();
   });
 
   it('is unreachable while hidden: no event, no Stripe return and no ?support=1 link opens it', () => {

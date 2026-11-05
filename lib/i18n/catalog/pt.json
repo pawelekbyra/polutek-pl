@@ -427,7 +427,6 @@
  "This video is temporarily unavailable.": "Este vídeo está temporariamente indisponível.",
  "Tip": "Gorjeta",
  "Tip amount": "Valor da gorjeta",
- "Tip gate": "Janela de gorjeta",
  "Tip method": "Forma da gorjeta",
  "Tip recipient": "Destinatário da gorjeta",
  "Too many attempts. Please try again later.": "Muitas tentativas. Tente novamente mais tarde.",
@@ -1137,7 +1136,6 @@
   "Earlier": "Anteriores",
   "See all": "Ver todas",
   "PREMIERE: {0}.": "ESTREIA: {0}.",
-  "Bramka Napiwkowa": "Pagamento de gorjeta",
   "Tip The Guy": "Dar uma gorjeta",
   "Payment processed by Stripe": "Pagamento processado pela Stripe"
 }
