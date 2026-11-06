@@ -12,7 +12,7 @@ import { createTx, htmlLang, type Catalog } from '@/lib/i18n/ui';
 import { translations } from '@/lib/i18n/dictionary';
 import type { Locale } from '@/lib/i18n/routing';
 
-declare global { interface Window { researchEvents: Array<Record<string, unknown>>; researchReady: boolean; } }
+declare global { interface Window { researchEvents: Array<Record<string, unknown>>; researchReady: boolean; recoverConfirm?: () => void; removeResearchOpener?: () => void; } }
 window.researchEvents = [];
 function Harness() {
   const params = new URLSearchParams(location.search);
@@ -22,6 +22,14 @@ function Harness() {
   const [language, setLanguage] = useState<Locale>('pl');
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   useEffect(() => {
+    window.recoverConfirm = () => {
+      window.researchEvents.push({ event: 'synthetic_operation_failed_retry_available' });
+      setBusy(false);
+    };
+    window.removeResearchOpener = () => document.querySelector('#opener')?.remove();
+    return () => { delete window.recoverConfirm; delete window.removeResearchOpener; };
+  }, []);
+  useEffect(() => {
     let alive = true;
     loadCatalog(language).then(c => { if (alive) { setCatalog(c); document.documentElement.lang=htmlLang(language); window.researchReady=true; } });
     return () => { alive=false; };
@@ -30,8 +38,8 @@ function Harness() {
   const value = useMemo(() => ({ language, setLanguage, choice:null, isInitialized:true, t:translations[language], tx }),[language,tx]);
   const close = () => { window.researchEvents.push({event:'close',mode});setOpen(false);setBusy(false); };
   return <LanguageContext.Provider value={value}>
-    <main style={{padding:'24px',maxWidth:'900px'}}>
-      <h1>Local component research — synthetic data</h1>
+    <main id="research-main" tabIndex={-1} style={{padding:'24px',maxWidth:'900px'}}>
+      <h1 id="research-title" tabIndex={-1}>Local component research — synthetic data</h1>
       <p id="boundary">No application API, account, payment or database is connected.</p>
       {mode==='language' ? <>
         <LanguageSwitcher language={language} variant="pill" onSelect={locale => {window.researchEvents.push({event:'language',locale});setLanguage(locale);}} />

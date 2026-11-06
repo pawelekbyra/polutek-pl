@@ -38,6 +38,12 @@ Demonstracja nie wymagała programowego fokusowania przycisku tła: po przejści
 
 **Ocena:** P2 dostępności i spójności interakcji, potwierdzone dla komponentu, niezależny przegląd PENDING. To nie luka autoryzacji. **Poprawa:** zachować fokus w panelu również bez aktywnych przycisków, odizolować tło i ogłaszać oczekiwanie; można wykorzystać wspólny prymityw dialogu już obecny w repo. Uzgodnić, czy wolno anulować podczas operacji. **Odbiór:** Tab/Shift+Tab nie wychodzi do tła w normalnym i busy, Enter nie wywołuje tła; sukces, błąd i usunięty opener kończą w logicznym miejscu. Dopiero osobna próba pełnego Studia rozliczy integrację z DELETE.
 
+### K34 — implementacja i lokalny odbiór komponentu (częściowo, 2026-11-06)
+
+`ConfirmDialog` korzysta teraz z istniejącego modalnego prymitywu Base UI. W Chromium 149 sprawdzono prawdziwy komponent React i skompilowane style projektu: fokus początkowy i zawijanie Tab, stan busy bez aktywnych kontrolek, odcięcie tła od drzewa dostępności, ogłoszenie `aria-busy`/statusu PL+EN, zablokowane Escape/Enter podczas operacji, retry po syntetycznym błędzie, przywrócenie fokusu do openera oraz fallback do `main` po usunięciu openera. Całe badanie przeszło **16/16 obserwacji**, zero błędów strony i zero zewnętrznych żądań. [Dowód](../evidence/k34-confirm-dialog-focus-2026-11-06/result.json), [pełny wynik Chromium](../evidence/ux-browser-experiment.json).
+
+To nadal fixture komponentu: nie uruchamiano Next/Studia, prawdziwego DELETE, Safari/Firefox ani czytnika ekranu; niezależny review oczekuje. K34 pozostaje częściowe do pełnego odbioru serwerowego i niezależnego przeglądu. Escape i kliknięcie tła podczas busy są celowo ignorowane; po zakończeniu lub błędzie użytkownik może zamknąć okno albo ponowić operację.
+
 ## Dialog zgłoszenia: działające kontrole i ograniczenie wzorca radio
 
 ReportDialog używa wspólnego [Dialog/Base UI](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/components/ui/dialog.tsx). W finalnym pomiarze, po ustaleniu fokusu przez dwie klatki przeglądarki, 12 kolejnych Tab nie dotarło do kontrolek tła. Escape zamknął okno i przywrócił opener. Nie uogólniamy R35 na każdy dialog projektu.

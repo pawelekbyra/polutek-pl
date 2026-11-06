@@ -1,6 +1,6 @@
 /* Real Chromium on loopback with actual unchanged UI components + original compiled CSS.
  * All callbacks/state/page shell are research fixtures. No Next/Prisma/auth/production. */
-const fs=require('fs'),path=require('path'),os=require('os'),http=require('http'),crypto=require('crypto');
+const fs=require('fs'),path=require('path'),os=require('os'),http=require('http'),crypto=require('crypto'),cp=require('child_process');
 const esbuild=require('esbuild'),postcss=require('postcss'),tailwind=require('@tailwindcss/postcss');
 const {chromium}=require('playwright');
 const root=process.cwd(),base=path.join(root,'docs/audit/2026-11-01-platform-research/program-audytu');
@@ -20,7 +20,11 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
    const p=path.isAbsolute(input)?input:path.join(root,input),rel=path.relative(root,p).split(path.sep).join('/');
    if(rel.startsWith('node_modules/')||rel.startsWith('docs/audit/'))continue;
    sourceHashes[rel]=sha(p);
-   if(inventory[rel])assert(sourceHashes[rel]===inventory[rel],'Baseline changed '+rel);
+   if(inventory[rel]){
+    const changedSinceResearch=cp.spawnSync('git',['diff','--quiet','c397b9e548ca2c628e21457ac69d66e54b12ddbd','HEAD','--',rel]).status!==0;
+    const changedInWorktree=cp.spawnSync('git',['diff','--quiet','--',rel]).status!==0;
+    if(!changedSinceResearch&&!changedInWorktree)assert(sourceHashes[rel]===inventory[rel],'Unexpected baseline change '+rel);
+   }
   }
   for(const rel of ['app/globals.css','tailwind.config.ts'])sourceHashes[rel]=sha(path.join(root,rel));
   const html='<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Local component research</title><link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script src="/bundle.js"></script></body></html>';
@@ -35,7 +39,7 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const origin='http://127.0.0.1:'+server.address().port;
-  browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--disable-dev-shm-usage']});
+  browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
   const context=await browser.newContext({viewport:{width:1280,height:900},reducedMotion:'reduce'});
   const blocked=[],errors=[];
   await context.route('**/*',route=>route.request().url().startsWith(origin+'/')?route.continue():(blocked.push(route.request().url()),route.abort()));
@@ -64,17 +68,36 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
   observations.push({case:'confirm_escape_restores_opener',active:await active()});
   await page.locator('#opener').click();await page.getByRole('button',{name:'Delete playlist',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('[data-testid="busy"]')?.textContent==='true');
+  await page.waitForFunction(()=>document.activeElement?.closest('[role="alertdialog"]'));
   const busyStart=await active();const tabs=[];
   for(let i=0;i<5;i++){await page.keyboard.press('Tab');tabs.push(await active());}
-  const escaped=tabs.some(r=>!r.insideDialog&&r.id==='background');
-  assert(escaped,'Busy dialog focus escape observation changed');
-  observations.push({case:'confirm_busy_tab_reaches_background',busyStart,tabSequence:tabs,backgroundInert:await page.locator('#background').evaluate(el=>el.inert||!!el.closest('[inert]')),finding:'R35'});
-  for(let i=0;i<6&&(await active()).id!=='background';i++)await page.keyboard.press('Tab');
-  assert((await active()).id==='background','Keyboard Tab reaches background for activation');
+  const escaped=tabs.some(r=>!r.insideDialog);
+  assert(!escaped,'Busy dialog allowed focus to leave the modal');
+  assert(await page.locator('[role="alertdialog"]').getAttribute('aria-busy')==='true','Busy state missing from alertdialog');
+  assert((await page.getByRole('status').textContent()).includes('Operacja w toku'),'Busy status was not announced');
+  const backgroundIsolation=await page.locator('#background').evaluate(el=>{const chain=[];for(let node=el;node;node=node.parentElement)chain.push({tag:node.tagName,id:node.id,inert:node.inert,ariaHidden:node.getAttribute('aria-hidden')});return chain;});
+  const backgroundRoleCount=await page.getByRole('button',{name:'Background action'}).count();
+  assert(backgroundRoleCount===0,'Background control remained in the accessible role tree');
+  observations.push({case:'confirm_busy_tab_stays_in_modal',busyStart,tabSequence:tabs,backgroundIsolation,backgroundRoleCount,ariaBusy:await page.getByRole('alertdialog').getAttribute('aria-busy')});
+  await page.keyboard.press('Escape');
+  assert(await page.getByRole('alertdialog').count()===1,'Escape closed the confirmation while busy');
   await page.keyboard.press('Enter');
-  assert((await page.evaluate(()=>window.researchEvents)).some(e=>e.event==='background_action'),'Background control activated');
-  observations.push({case:'confirm_busy_background_action_can_activate',events:await page.evaluate(()=>window.researchEvents),dialogStillPresent:await page.getByRole('alertdialog').count()===1,finding:'R35'});
-  await page.screenshot({path:path.join(base,'evidence/ux-confirm-busy.png')});
+  assert(await page.getByRole('alertdialog').count()===1,'Enter closed or confirmed the alertdialog while focus was on the busy panel');
+  assert(!(await page.evaluate(()=>window.researchEvents)).some(e=>e.event==='background_action'),'Background action ran while modal was open');
+  await page.evaluate(()=>window.recoverConfirm?.());
+  await page.waitForFunction(()=>document.querySelector('[data-testid="busy"]')?.textContent==='false');
+  assert(await page.getByRole('button',{name:'Delete playlist',exact:true}).isEnabled(),'Retry action was not re-enabled after failure');
+  observations.push({case:'confirm_busy_escape_blocked_and_retry_enabled',events:await page.evaluate(()=>window.researchEvents),active:await active()});
+  await page.getByRole('button',{name:'Cancel',exact:true}).focus();await page.keyboard.press('Escape');
+  await page.getByRole('alertdialog').waitFor({state:'detached'});
+  assert((await active()).id==='opener','Confirm did not restore focus to opener');
+  observations.push({case:'confirm_escape_restores_opener_after_retry',active:await active()});
+  await page.locator('#opener').click();
+  await page.evaluate(()=>window.removeResearchOpener?.());
+  await page.keyboard.press('Escape');
+  await page.getByRole('alertdialog').waitFor({state:'detached'});
+  const removedOpenerFocus=await active();assert(removedOpenerFocus.tag==='MAIN','Confirm did not return focus to the main region after its opener was removed: '+JSON.stringify(removedOpenerFocus));
+  observations.push({case:'confirm_removed_opener_focuses_main_region',active:await active()});
   await visit('report');await page.locator('#opener').click();await page.getByRole('dialog').waitFor();
   await page.getByRole('radio',{name:'Spam',exact:true}).focus();await page.keyboard.press('ArrowDown');
   observations.push({case:'report_radio_arrow_does_not_move_or_select',active:await active(),checkedLabels:await page.locator('[role="radio"][aria-checked="true"]').allTextContents(),radioTabStops:await page.locator('[role="radio"]').evaluateAll(els=>els.map(e=>e.tabIndex)),classification:'APG_PATTERN_DIVERGENCE;Tab/Space alternatives remain'});
@@ -111,7 +134,8 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
   observations.push({case:'language_at_320_component_only',...geometry,full_page_reflow_proof:false});
   await page.screenshot({path:path.join(base,'evidence/ux-language-320.png')});
   assert(errors.length===0,'Browser page error: '+errors.join(';'));
-  const result={date:'2026-11-01',application_baseline_sha:'c397b9e548ca2c628e21457ac69d66e54b12ddbd',browser:await browser.version(),browser_executable:'/usr/bin/chromium',viewport_initial:{width:1280,height:900},reduced_motion:'reduce',actual_bundle_source_sha256:sourceHashes,observations,
+  const changedSinceResearch=Object.keys(sourceHashes).filter(rel=>inventory[rel]&&cp.spawnSync('git',['diff','--quiet','c397b9e548ca2c628e21457ac69d66e54b12ddbd','HEAD','--',rel]).status!==0);
+  const result={date:'2026-11-06',repository_head_sha:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sources_changed_since_research_baseline:changedSinceResearch,working_tree_changes:['app/components/studio/ConfirmDialog.tsx'],browser:await browser.version(),browser_executable:chromium.executablePath(),viewport_initial:{width:1280,height:900},reduced_motion:'reduce',actual_bundle_source_sha256:sourceHashes,observations,
    original_CSS_compiled:true,synthetic_callbacks_only:true,real_API_requests:0,blocked_external_requests:blocked,browser_page_errors:errors,
    limitations:['Isolated real React components plus original compiled global/CSS module styles, not Next/full application','Harness provider/local state replaces page shell and navigation; callbacks never perform real delete/report','Fonts/media/production auth/Prisma/payment and mobile hardware not reproduced','Chromium desktop only; no Safari/Firefox/screen reader/actual touch or WCAG certification','Radio behavior compared with APG pattern; keyboard completion by Tab/Space still possible'],cleanup:'Browser/context/server closed and temporary bundle directory removed in finally'};
   fs.writeFileSync(path.join(base,'evidence/ux-browser-experiment.json'),JSON.stringify(result,null,2)+'\n');
