@@ -1,0 +1,39 @@
+{
+  "package": "K24/R25",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "status": "PARTIAL",
+  "scope": "Fence moderation appeal reversals to the exact moderation decision they reference, including repeated status transitions (ABA).",
+  "implementation": [
+    "Creator.statusDecisionId and Video.moderationDecisionId identify the latest moderation decision responsible for the current moderated status.",
+    "The migration backfills decision identity from the newest applicable moderation audit only when its resulting status still matches the current row.",
+    "Channel and video moderation writes use compare-and-set against the previous status and persist the new decision identity atomically.",
+    "Appeal reversal requires both the expected status and exact decision identity, then clears the pointer atomically; owner lifecycle changes clear the channel pointer."
+  ],
+  "checks": [
+    { "name": "focused-unit", "command": "npx vitest run tests/unit/modules/channel/channel-moderation.test.ts tests/unit/modules/channel/moderation-appeals.test.ts", "exitCode": 0, "files": 2, "tests": 21, "passed": 21, "failed": 0 },
+    {
+      "name": "postgres-aba-and-concurrent-appeal-resolution",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx prisma migrate deploy && npx vitest run --config vitest.postgres.config.ts tests/postgres/moderation-appeal-decision-identity.pg.test.ts",
+      "migrationsApplied": 84,
+      "exitCode": 0,
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "covers": [
+        "channel SUSPENDED→ACTIVE→SUSPENDED: an appeal of the first decision cannot reverse the later decision",
+        "video REMOVED→VISIBLE→REMOVED: an appeal of the first decision cannot reverse the later decision",
+        "the current decision can be reverted and its identity pointer is cleared",
+        "two concurrent resolutions of the same current appeal produce only one successful resolution per target type"
+      ]
+    },
+    { "name": "typecheck", "command": "npm run typecheck", "exitCode": 0 },
+    { "name": "eslint-diff-and-prisma-validation", "command": "npx eslint <6 touched TypeScript files> && git diff --check && DATABASE_URL=<dummy> DATABASE_URL_UNPOOLED=<dummy> npx prisma validate", "exitCode": 0, "eslintErrors": 0, "schemaValid": true }
+  ],
+  "limits": [
+    "PostgreSQL was a fresh disposable local PostgreSQL 17 container; no application server, production database, or real moderation operator flow was exercised.",
+    "Legacy decisions without an unambiguous matching audit backfill have no identity pointer and are conservatively not reversible by an old appeal.",
+    "No independent review or server acceptance has been completed; K24 remains partial."
+  ],
+  "handoff": "Claude: on non-production, apply the migration after checking the current schema and legacy moderation audit shape. Exercise channel and video moderation through the server with concurrent status changes and resolve the same appeal from two requests; verify only one resolution wins, an old appeal cannot reverse a later decision with the same status, and a current appeal can. Inspect representative legacy rows where audit history is incomplete; do not infer identity where the migration intentionally leaves the pointer null."
+}
