@@ -124,12 +124,16 @@ describe('bounded request body readers', () => {
     await expect(readRequestFormDataWithLimit(input.request, 256, 1)).rejects.toBeInstanceOf(TooManyFormEntriesError);
   });
 
-  it('keeps the legal complete upload list of 10,000 parts within its explicit body budget', async () => {
+  it('keeps 10,000 parts with worst-case visible ETag escaping within the proxy-safe body budget', async () => {
+    expect(ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES).toBeLessThan(10 * 1024 * 1024);
     const body = JSON.stringify({
-      originalId: 'original-1',
-      parts: Array.from({ length: 10_000 }, (_, index) => ({ partNumber: index + 1, etag: 'e'.repeat(200) })),
+      originalId: 'o'.repeat(64),
+      parts: Array.from({ length: 10_000 }, (_, index) => ({ partNumber: index + 1, etag: '\\'.repeat(200) })),
+      publishAfterReady: true,
     });
-    expect(new TextEncoder().encode(body).byteLength).toBeLessThan(ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES);
+    const bodyBytes = new TextEncoder().encode(body).byteLength;
+    expect(bodyBytes).toBeGreaterThan(4 * 1024 * 1024);
+    expect(bodyBytes).toBeLessThan(ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES);
     const request = new Request('http://fixture.invalid/complete', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

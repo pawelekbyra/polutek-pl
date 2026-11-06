@@ -8,8 +8,8 @@
  */
 import { z } from "zod";
 
-/** Supports the complete list for the largest allowed multipart upload (10,000 parts). */
-export const ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES = 13 * 1024 * 1024;
+/** Allows 10,000 parts with worst-case visible-character JSON escaping, below Next's 10 MiB proxy buffer. */
+export const ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES = 6 * 1024 * 1024;
 
 export const adminMultipartStartSchema = z.object({
   fileName: z.string().min(1).max(300),
