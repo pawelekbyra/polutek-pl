@@ -778,6 +778,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K31-T1** — Po zaakceptowanym DOWN zdrowa kontrola + recovery HTTP 503 lub osiągnięty limit pozostawiają pending; po powrocie dostawcy/limitu recovery zostaje wysłane i odnotowane.
 - **K31-T2** — Network throw recovery, początkowy DOWN 503, restart i równoległe uruchomienia nie gubią zdarzenia ani nie zalewają wiadomościami. Próba w D1 sandbox/własnym mail sink, bez rzeczywistych adresatów.
 
+**Postęp lokalny 6 listopada 2026 (częściowy):** dodano D1 outbox, retry/backoff, lease współbieżnego claimu i stabilny klucz idempotencji. Testy z atrapą D1 pokrywają recovery HTTP 503, wyjątek sieciowy, wyczerpanie limitu dziennego oraz dwa równoległe runy; 6/6 testów, typecheck i architektura PASS, ESLint bez błędów. Dodatkowy probe uruchomił rzeczywisty kod Workera na lokalnym SQLite 3.51.3 i potwierdził DDL, `UPDATE ... RETURNING` i pojedynczy claim podczas dwóch równoległych runów. Brak rzeczywistego Cloudflare D1/Resend/sandboxu, restartu i sprawdzenia kolejności awarii między dostawcą a zapisem SENT; K31 nie jest zamknięte. Szczegóły i ograniczenia: D16, sekcja K31.
+
 <a id="k32"></a>
 
 #### K32. Odtworzenie całego produktu wyłącznie z kopii poza hostem

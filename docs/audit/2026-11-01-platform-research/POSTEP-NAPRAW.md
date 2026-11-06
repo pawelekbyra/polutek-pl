@@ -1,5 +1,11 @@
 # Postęp realizacji roadmapy — H1
 
+## K31/R36 — częściowa realizacja, 6 listopada 2026
+
+Dodano D1 outbox `alert_delivery` dla zdarzeń DOWN/recovery. Niezależny worker ponowień zachowuje zdrowy status, a wiadomość pozostaje pending po HTTP non-2xx, błędzie sieciowym lub wyczerpaniu dziennego limitu. Retry ma backoff do 6 godzin, limit dzienny przesuwa próbę do następnej północy UTC, warunkowy lease zapobiega jednoczesnej obsłudze przez overlapping runs, Resend dostaje stabilny klucz idempotencji zdarzenia. Weryfikacja: 2 pliki testów 5/5, kontrola granic architektury, typecheck i ESLint PASS.
+
+Lokalne SQLite 3.51.3 zweryfikowało rzeczywisty kod Workera, DDL, `UPDATE ... RETURNING` oraz współbieżne claim; nadal brak Cloudflare D1/Resend, restartu Workera i skrzynki. Do sprawdzenia pozostaje akceptacja wiadomości przez Resend, po której Worker nie zdąży zapisać SENT; idempotencja dostawcy ogranicza duplikat, nie gwarantuje dokładnie jednego e-maila. K31 pozostaje częściowy do przeglądu i sandboxowego odbioru. Wynik: `program-audytu/evidence/k31-watchdog-outbox-2026-11-06/result.json`; odtwarzalny helper: `program-audytu/tools/k31-watchdog-sqlite-check.mjs`; szczegóły i ryzyka: `program-audytu/obszary/D16-MONITORING-I-INCYDENTY.md`, sekcja K31.
+
 ## K04/R34 — częściowa realizacja, 6 listopada 2026
 
 Wydzielono `lib/modules/video/pure.ts` dla helpera sortowania sidebaru, usuwając wskazaną zależność layoutu kanału od szerokiego video barrel. `lib/prisma.ts` używa leniwego facade: import i wstrzyknięty DB nie tworzą domyślnego klienta, pierwsza domyślna transakcja go inicjalizuje. Probe: 5 obserwacji, 13 rzeczywistych plików źródłowych, 0 konstrukcji przy injected DB i 1 przy domyślnej transakcji. Kontrola architektury PASS, 5 celowanych testów PASS (43/43), typecheck i ESLint PASS. Pełne ograniczenia są w D02 i `program-audytu/evidence/architecture-import-probe.json`.
