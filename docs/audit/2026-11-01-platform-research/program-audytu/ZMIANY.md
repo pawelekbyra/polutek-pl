@@ -379,3 +379,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - `6aacd4b5`: dwa testy integracyjne atrapowego deployera potwierdzają, że poprawny proof pozwala uruchomić wyłącznie panel admina, a błąd weryfikacji odmawia przed wywołaniem Dockera.
 - Pięć skupionych zestawów przeszło **100/100**; same skrypty serwera **43/43**. ESLint, `bash -n` i `git diff --check` PASS. Pełny zestaw: komenda z `POSTEP-NAPRAW.md`; bez ciężkiego quality.
 - To dowód ścieżki w sandboxie, nie wdrożenie ani odbiór na serwerze. K06 pozostaje otwarte.
+
+## 6 listopada 2026 — pozytywna ścieżka włączenia telemetrii
+
+- `c58586d8`: test atrapowego `telemetry-enable.sh` przechodzi przez aktywną weryfikację proofu, symuluje istniejącą rolę telemetryczną i potwierdza ograniczone uruchomienie collectora oraz app, a także zmianę konfiguracji dopiero w tej ścieżce.
+- Pięć skupionych zestawów przeszło **101/101**; skrypty serwera **44/44**. ESLint, `bash -n` i `git diff --check` PASS.
+- Odmowę złego hash i odmowę aktywnego proofu obejmują istniejące testy. Dowody pozostają sandboxowe; bez GHCR, prawdziwego serwera i produkcji.
