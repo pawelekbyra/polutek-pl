@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 import { PlaybackService } from '@/lib/modules/playback';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { rateLimit } from '@/lib/rate-limit';
+import { PlaybackPlanResponseSchema } from '@/lib/video-api-contracts/contracts';
 
 vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
@@ -55,7 +56,7 @@ describe('Media-Source Route Access', () => {
     expect(JSON.stringify(data)).not.toContain('amazonaws');
   });
 
-  it('does not redact the signed own-HLS delivery URL of a playable plan', async () => {
+  it('does not redact the signed own-HLS delivery URL and returns the playback contract', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
@@ -66,18 +67,22 @@ describe('Media-Source Route Access', () => {
         provider: 'SELF_HLS',
         kind: 'self_hls',
         playbackUrl: 'https://video.pawelperfect.com/h/1790000000.sig/v1/v1/master.m3u8',
+        isSignedUrl: true,
         asset: {
           provider: 'SELF_HLS',
           processingState: 'READY',
+          isPrimary: true,
         }
       },
-      diagnostics: { warnings: [] },
-      tracking: { playbackSessionId: 's-cf-1' }
+      player: { autoplayAllowed: false, mutedAutoplay: false, controls: true, poster: '', title: 'Film' },
+      diagnostics: { warnings: [], sourceConfidence: 'HIGH', providerResolutionAllowed: false, providerResolutionAttempted: true },
+      tracking: { playbackSessionId: 's-cf-1', heartbeatIntervalSeconds: 15 }
     });
 
     const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     expect(res.status).toBe(200);
     const data = await res.json();
+    expect(PlaybackPlanResponseSchema.safeParse(data).success).toBe(true);
     expect(data.access.allowed).toBe(true);
     expect(data.canPlay).toBe(true);
     expect(data.source.provider).toBe('SELF_HLS');
