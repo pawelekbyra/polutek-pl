@@ -16,6 +16,16 @@
       "covers": ["valid pipeline and playback DTOs", "invalid response structure and enum", "null/wrong/invalid JSON 200 in Studio client", "malformed multipart success does not continue to upload"]
     },
     {
+      "name": "server-route-contracts",
+      "command": "npx vitest run tests/unit/api/studio-routes.test.ts tests/unit/api/media-source-route.test.ts tests/unit/video-api-contracts.test.ts tests/unit/video-pipeline/multipart-uploader.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "files": 4,
+      "tests": 53,
+      "passed": 53,
+      "failed": 0,
+      "covers": ["actual Studio upload and pipeline route serializers", "actual media-source route sanitizer and playback response", "controlled use-case doubles; not a live process or real server-backed API"]
+    },
+    {
       "name": "typecheck",
       "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
       "exitCode": 0
@@ -40,7 +50,7 @@
     "compatibility": "Existing endpoints and URLs are unchanged; response schemas accept additive DTO fields."
   },
   "limits": [
-    "No live server or route-level integration test was available; K21-T1 is open.",
+    "Route handlers were exercised in-process with controlled use-case doubles; no live server or real server-backed API endpoint was run, so K21-T1 remains open.",
     "No acceptance of a legal older supported client was run; K21-T1 is open.",
     "Focused tests cover the changed client boundary, not every response from the running server; K21-T2 remains partial.",
     "No independent review; R21 is not marked closed."
