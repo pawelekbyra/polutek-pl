@@ -42,7 +42,6 @@ export type PassErrorCode =
   | "WRONG_MODE"
   | "PAYMENTS_UNAVAILABLE"
   | "PRODUCT_INVALID"
-  | "ALREADY_LIFETIME"
   | "MAX_AHEAD"
   | "DEMO_DECLINED"
   | "NO_PASS"
@@ -99,7 +98,6 @@ export async function checkoutDemoPass(ctx: Pick<AppContext, "prisma" | "actor" 
     return { ok: true, data: toPassStatusDto(passStateOf(current, now)) };
   }
   const block = purchaseBlock(current, product, now);
-  if (block === "ALREADY_LIFETIME") return { ok: false, code: "ALREADY_LIFETIME" };
   if (block === "MAX_AHEAD") {
     await countFunnelEvent(ctx, "max_ahead");
     return { ok: false, code: "MAX_AHEAD", expiresAt: current?.expiresAt ?? undefined };
@@ -122,7 +120,7 @@ export async function checkoutDemoPass(ctx: Pick<AppContext, "prisma" | "actor" 
     method: input.method,
     requestId: input.requestId,
     paymentIds: [],
-    lifetime: next.lifetime,
+    lifetime: false,
     lifetimePaymentId: null,
     grantedAt: next.grantedAt,
     expiresAt: next.expiresAt,

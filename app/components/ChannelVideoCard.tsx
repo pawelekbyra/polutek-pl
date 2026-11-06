@@ -45,7 +45,7 @@ export default function ChannelVideoCard({
 
   const getAccessBadge = () => {
     if (!mounted) return null;
-    if (video.premiumPass) return { text: tx("Patron", "Patron"), variant: "locked" }; // patron zone
+    if (video.premiumPass) return { text: tx("Premium", "Premium"), variant: "locked" }; // patron zone
     if (tier === "PUBLIC") return { text: tx("Publiczne", "Public"), variant: "public" };
     if (!hasAccess) return { text: tx("Logowanie", "Login"), variant: "locked" };
     return { text: tx("Odblok.", "Unlocked"), variant: "unlocked" };

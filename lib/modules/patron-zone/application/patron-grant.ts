@@ -8,7 +8,7 @@
 import { recordAlert } from "@/lib/observability";
 import type { WriteTx } from "@/lib/modules/shared/db";
 import { isPatronCurrency, patronPrice, patronProduct } from "../domain/config";
-import { addDays, applyProduct, type PassRecord } from "../domain/pass-state";
+import { applyProduct, subtractPlanDuration, type PassRecord } from "../domain/pass-state";
 import { lockPass, readPass, writePass } from "../infrastructure/pass-store";
 
 export type PatronPaymentConsents = { termsVersion: string; waiverAt: string };
@@ -65,8 +65,8 @@ export async function grantPatronAccessForPayment(tx: WriteTx, input: GrantInput
     currency,
     method: input.method?.trim() || "stripe",
     paymentIds: [...(keepsStripeHistory ? current.paymentIds : []), input.paymentId],
-    lifetime: next.lifetime,
-    lifetimePaymentId: product.days === null ? input.paymentId : keepsStripeHistory ? current.lifetimePaymentId : null,
+    lifetime: false, // legacy field: no access is unlimited since 2026-11-03
+    lifetimePaymentId: null,
     grantedAt: next.grantedAt,
     expiresAt: next.expiresAt,
     consents: input.consents ?? { termsVersion: "none", waiverAt: input.now.toISOString() },
@@ -76,9 +76,9 @@ export async function grantPatronAccessForPayment(tx: WriteTx, input: GrantInput
 }
 
 /**
- * A payment was refunded in full: that payment's grant leaves the record (the lifetime marker when it came from this
- * payment, otherwise its 30 days). A partial refund, a dispute and a refund that failed later are handled by the owner
- * by hand (docs/architecture/patron-zone.md); only the full refund is automatic.
+ * A payment was refunded in full: that payment's period (30 days or 3 months, by its product) leaves the end date, never
+ * below "now" (so a refund of the only payment ends the access at once). A partial refund, a dispute and a refund that
+ * failed later are handled by the owner by hand (docs/architecture/patron-zone.md); only the full refund is automatic.
  */
 export async function revokePatronAccessForPayment(
   tx: WriteTx,
@@ -89,25 +89,20 @@ export async function revokePatronAccessForPayment(
   if (!current || !current.paymentIds.includes(input.paymentId)) return { revoked: false };
 
   const product = patronProduct(input.productId);
-  let lifetime = current.lifetime;
-  let lifetimePaymentId = current.lifetimePaymentId;
-  let expiresAt = current.expiresAt;
-  if (current.lifetimePaymentId === input.paymentId) {
-    lifetime = false;
-    lifetimePaymentId = null;
-  } else if (product?.days && expiresAt) {
-    const shortened = addDays(new Date(expiresAt), -product.days);
+  let expiresAt = current.expiresAt ?? input.now.toISOString();
+  if (product) {
+    const shortened = subtractPlanDuration(new Date(expiresAt), product.duration);
     expiresAt = (shortened.getTime() > input.now.getTime() ? shortened : input.now).toISOString();
+  } else {
+    expiresAt = input.now.toISOString(); // an unknown product cannot be measured: fail closed
   }
-  // a record that is no longer lifetime always has an end date: if none is left, access ends now
-  if (!lifetime && expiresAt === null) expiresAt = input.now.toISOString();
 
   const revoked: PassRecord = {
     ...current,
     paymentIds: current.paymentIds.filter((id) => id !== input.paymentId),
     totalMinor: Math.max(0, current.totalMinor - input.amountMinor),
-    lifetime,
-    lifetimePaymentId,
+    lifetime: false,
+    lifetimePaymentId: null,
     expiresAt,
   };
   await writePass(tx, input.userId, revoked);

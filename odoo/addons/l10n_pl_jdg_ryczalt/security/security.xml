@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record model="res.groups.privilege" id="res_groups_privilege_jdg">
+        <field name="name">Firma (JDG na ryczałcie)</field>
+        <field name="sequence">40</field>
+        <field name="category_id" ref="base.module_category_accounting_accounting"/>
+    </record>
+
+    <record id="group_jdg_user" model="res.groups">
+        <field name="name">Użytkownik (wpisy i podgląd)</field>
+        <field name="sequence">10</field>
+        <field name="comment">Widzi pulpit i ewidencję, dodaje wpisy przychodów i zapłacone składki.</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_jdg"/>
+    </record>
+
+    <record id="group_jdg_manager" model="res.groups">
+        <field name="name">Właściciel (ustawienia i reguły)</field>
+        <field name="sequence">20</field>
+        <field name="comment">Zmienia ustawienia firmy i tabelę reguł podatkowych, usuwa wpisy testowe.</field>
+        <field name="implied_ids" eval="[(4, ref('group_jdg_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_jdg"/>
+        <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+
+    <data noupdate="1">
+        <record id="rule_jdg_profile_company" model="ir.rule">
+            <field name="name">Profil JDG: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_profile"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_entry_company" model="ir.rule">
+            <field name="name">Wpisy przychodów: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_income_entry"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_payment_company" model="ir.rule">
+            <field name="name">Zapłacone składki: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_contribution_payment"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_rule_company" model="ir.rule">
+            <field name="name">Reguły podatkowe: globalne albo własnej firmy</field>
+            <field name="model_id" ref="model_jdg_tax_rule"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_fx_company" model="ir.rule">
+            <field name="name">Kursy NBP: globalne albo własnej firmy</field>
+            <field name="model_id" ref="model_jdg_fx_rate"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_period_company" model="ir.rule">
+            <field name="name">Okresy: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_period"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_advance_company" model="ir.rule">
+            <field name="name">Zaliczki: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_tax_advance"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_alert_company" model="ir.rule">
+            <field name="name">Alerty: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_alert"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_invoice_company" model="ir.rule">
+            <field name="name">Faktury: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_invoice"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_invoice_line_company" model="ir.rule">
+            <field name="name">Pozycje faktur: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_invoice_line"/>
+            <field name="domain_force">[('invoice_id.company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_jdg_deadline_company" model="ir.rule">
+            <field name="name">Terminy: tylko własna firma</field>
+            <field name="model_id" ref="model_jdg_deadline"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

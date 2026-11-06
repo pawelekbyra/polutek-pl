@@ -2,7 +2,7 @@ import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 
 const eslintConfig = [
   // Build output of the admin panel (apps/admin, a second Next.js app in this repo).
-  { ignores: ["apps/admin/.next/**", "apps/admin/next-env.d.ts"] },
+  { ignores: ["apps/admin/.next/**", "apps/admin/next-env.d.ts", "odoo/**", "docs/audit/**"] },
   ...nextCoreWebVitals,
   {
     // Keep hook overrides in the same file scope that Next uses to register react-hooks.
@@ -13,6 +13,9 @@ const eslintConfig = [
     // that predate this upgrade. Downgraded to warn so `npm run lint` reflects the
     // real pre-upgrade baseline instead of failing CI on unrelated legacy code;
     // see docs/tickets for the follow-up to actually fix these call sites.
+    // Same file set as the "next" config object that registers the react-hooks plugin: without it ESLint
+    // also applies these rules to .cjs files (scripts/dev) where the plugin is not loaded and aborts.
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/globals": "warn",

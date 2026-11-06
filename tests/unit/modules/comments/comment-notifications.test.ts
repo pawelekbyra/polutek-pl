@@ -12,6 +12,7 @@ vi.mock('@/lib/prisma', () => ({
     comment: { findUnique: m.commentFindUnique },
     user: { findUnique: m.userFindUnique },
     notification: { findFirst: m.notificationFindFirst },
+    $transaction: async (fn: (tx: unknown) => unknown) => fn({ notification: { findFirst: m.notificationFindFirst }, $executeRaw: vi.fn().mockResolvedValue(0) }),
   },
 }));
 vi.mock('@/lib/modules/notifications', async () => {
@@ -27,7 +28,7 @@ describe('notifyCommentReply', () => {
   it('tells the author of the answered comment, with the replier name and the start of the reply', async () => {
     m.commentFindUnique.mockResolvedValue({ id: 'c1', authorId: 'author', author: { isDeleted: false }, video: { slug: 'film' } });
     m.userFindUnique.mockResolvedValue({ name: 'Ala' });
-    await notifyCommentReply({ answeredCommentId: 'c1', replierId: 'ala-id', replyText: '  Świetny   film!  ' });
+    await notifyCommentReply({ answeredCommentId: 'c1', replyCommentId: 'reply-new', replierId: 'ala-id', replyText: '  Świetny   film!  ' });
     expect(m.sendNotification).toHaveBeenCalledTimes(1);
     const sent = (m.sendNotification.mock.calls[0] as unknown as [Record<string, unknown>])[0];
     expect(sent).toMatchObject({
@@ -35,7 +36,7 @@ describe('notifyCommentReply', () => {
       kind: 'COMMENT',
       titlePl: 'Nowa odpowiedź na Twój komentarz',
       bodyPl: 'Ala: Świetny film!',
-      href: '/watch/film#comment-c1',
+      href: '/watch/film#comment-reply-new',
       skipTemplate: true,
     });
   });

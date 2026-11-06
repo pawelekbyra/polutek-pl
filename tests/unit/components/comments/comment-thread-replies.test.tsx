@@ -97,6 +97,8 @@ describe('comment threads show every reply', () => {
       </QueryClientProvider>,
     );
 
+    // Collapsed by default; one click on "Pokaż 25 odpowiedzi" opens the thread.
+    fireEvent.click(await screen.findByRole('button', { name: 'Pokaż 25 odpowiedzi' }));
     expect(await screen.findByText('Text r3')).toBeInTheDocument();
     expect(screen.queryByText('Text r4')).not.toBeInTheDocument();
 
@@ -129,6 +131,7 @@ describe('comment threads show every reply', () => {
       </QueryClientProvider>,
     );
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Pokaż 2 odpowiedzi' }));
     expect(await screen.findByText('Text r2')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Pokaż jeszcze/ })).not.toBeInTheDocument();
   });

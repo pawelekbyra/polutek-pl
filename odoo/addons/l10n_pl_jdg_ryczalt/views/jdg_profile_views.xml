@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jdg_profile_form" model="ir.ui.view">
+        <field name="name">jdg.profile.form</field>
+        <field name="model">jdg.profile</field>
+        <field name="arch" type="xml">
+            <form create="0" delete="0">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Profil firmy JDG</h1>
+                        <p class="text-muted">Ustawienia zmieniasz tutaj, bez zmiany kodu. Wszystkie wyliczenia to
+                            szacunek, nie porada podatkowa.</p>
+                    </div>
+                    <group>
+                        <group string="Działalność">
+                            <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                            <field name="owner_name"/>
+                            <field name="start_date"/>
+                            <field name="tax_form"/>
+                            <field name="advance_rhythm"/>
+                        </group>
+                        <group string="Stawka ryczałtu (do potwierdzenia z księgowym)">
+                            <field name="ryczalt_rate_key"/>
+                            <field name="ryczalt_rate_pct"/>
+                            <field name="ryczalt_rate_confidence"/>
+                            <field name="ryczalt_rate_note"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="ZUS">
+                            <field name="uses_ulga_na_start"/>
+                            <field name="ulga_end_date" invisible="not uses_ulga_na_start"/>
+                            <field name="pref_end_date"/>
+                            <field name="zus_after_variant"/>
+                            <field name="sickness_insurance"/>
+                            <field name="accident_rate_pct"/>
+                            <field name="has_employees"/>
+                            <field name="deduct_fp"/>
+                        </group>
+                        <group string="Składka zdrowotna i pulpit">
+                            <field name="health_threshold_mode"/>
+                            <field name="set_aside_pct"/>
+                            <field name="refund_reserve_pct"/>
+                            <field name="tips_as_income"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-warning" role="alert" invisible="seller_ok">
+                        <strong>Faktury: brakuje danych sprzedawcy</strong> (<field name="seller_missing" class="d-inline"/>).
+                        Dopóki ich nie uzupełnisz, faktura jest tylko podglądem (PDF z napisem) i nie można jej wystawić.
+                    </div>
+                    <field name="seller_ok" invisible="1"/>
+                    <group>
+                        <group string="Dane sprzedawcy na fakturze (wpisz przed pierwszą fakturą)">
+                            <field name="seller_name" placeholder="Domyślnie: Właściciel / nazwa firmy"/>
+                            <field name="seller_nip"/>
+                            <field name="seller_street"/>
+                            <label for="seller_zip" string="Kod, miejscowość"/>
+                            <div class="o_row"><field name="seller_zip" placeholder="00-000"/><field name="seller_city"/></div>
+                            <field name="seller_country_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="seller_email"/>
+                        </group>
+                        <group string="Stopka faktury">
+                            <field name="invoice_footer" nolabel="1" placeholder="Opcjonalnie, np. REGON, wpis do CEIDG"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="VAT i faktury">
+                            <field name="vat_status"/>
+                            <field name="vat_exempt_basis"/>
+                            <field name="invoice_policy"/>
+                            <field name="oss_registered"/>
+                        </group>
+                        <group string="Notatki">
+                            <field name="note" nolabel="1" placeholder="Np. ustalenia z księgowym"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_jdg_profile_open" model="ir.actions.server">
+        <field name="name">Profil firmy</field>
+        <field name="model_id" ref="model_jdg_profile"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_my_profile()</field>
+    </record>
+</odoo>

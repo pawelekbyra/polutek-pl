@@ -13,7 +13,7 @@ export const publicCommentAuthorSelect = Prisma.validator<Prisma.UserSelect>()({
 
 export type PublicCommentAuthor = Prisma.UserGetPayload<{ select: typeof publicCommentAuthorSelect }>;
 
-export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, videoCreatorId?: string | null) {
+export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, videoCreatorId?: string | null, options: { isVip?: boolean; isBase?: boolean } = {}) {
   if (!author) return null;
 
   if (author.isDeleted) {
@@ -26,10 +26,14 @@ export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, video
     };
   }
 
-  // No supporter ("patron") badge: a voluntary tip never buys any public distinction.
-  const badges: Array<"ADMIN" | "AUTHOR"> = [];
+  // No supporter ("patron") badge: a voluntary tip never buys any public distinction. "VIP" comes only from an active
+  // PAID patron-zone access, decided by the caller (`isVip`, from `listVipUserIds`), never from a tip or PatronGrant.
+  const badges: Array<"ADMIN" | "AUTHOR" | "VIP" | "BASE"> = [];
   if (author.role === 'ADMIN') badges.push("ADMIN");
   if (videoCreatorId && author.id === videoCreatorId) badges.push("AUTHOR");
+  if (options.isVip === true) badges.push("VIP");
+  // "BASE" only for an author who is neither the creator nor VIP, and only when the caller knows who is VIP.
+  if (options.isBase === true && !badges.includes("AUTHOR") && !badges.includes("VIP")) badges.push("BASE");
 
   const rawName = author.name?.trim();
   const name = rawName && !isGeneratedLegacyUsername(rawName) ? rawName : null;

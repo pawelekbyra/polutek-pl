@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Reguły podatkowe: PROJEKT 2027 (stan draft, pulpit pokazuje ostrzeżenie "parametry niezweryfikowane"). -->
+    <data noupdate="1">
+        <record id="rule_min_wage_2027_v1" model="jdg.tax.rule">
+            <field name="key">min_wage</field>
+            <field name="label">Płaca minimalna 2027</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2027-01-01</field>
+            <field name="valid_to">2027-12-31</field>
+            <field name="value_num">4950</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">PR</field>
+            <field name="state">draft</field>
+            <field name="source_url">https://www.pit.pl/?p=56161</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Projekt / prognoza: wartość z projektu aktu lub prognozy, do potwierdzenia po publikacji. Rozporządzenie RM (Dz.U. 2026 poz. 1213), stawka godzinowa 32,30 zł.</field>
+        </record>
+
+        <record id="rule_forecast_wage_2027_v1" model="jdg.tax.rule">
+            <field name="key">forecast_avg_wage</field>
+            <field name="label">Prognozowane przeciętne wynagrodzenie 2027 (projekt budżetu)</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2027-01-01</field>
+            <field name="valid_to">2027-12-31</field>
+            <field name="value_num">10033</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">PR</field>
+            <field name="state">draft</field>
+            <field name="source_url">https://bezprawnik.pl/przecietne-wynagrodzenie-w-2027-roku-ma-przekroczyc-10-tys-zl/</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Projekt / prognoza: wartość z projektu aktu lub prognozy, do potwierdzenia po publikacji. Projekt ustawy budżetowej z 28.08.2026 (wcześniej 9 971 zł).</field>
+        </record>
+
+        <record id="rule_zus_full_base_2027_v1" model="jdg.tax.rule">
+            <field name="key">zus.full.base</field>
+            <field name="label">Podstawa pełnego ZUS (60% prognozy) 2027</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2027-01-01</field>
+            <field name="valid_to">2027-12-31</field>
+            <field name="value_num">6019.8</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">PR</field>
+            <field name="state">draft</field>
+            <field name="source_url">https://www.infakt.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Projekt / prognoza: wartość z projektu aktu lub prognozy, do potwierdzenia po publikacji. Pełny ZUS 2027 z chorobową i FP: 2 052,15 zł.</field>
+        </record>
+
+        <record id="rule_zus_pref_base_2027_v1" model="jdg.tax.rule">
+            <field name="key">zus.pref.base</field>
+            <field name="label">Podstawa preferencyjnego ZUS (30% płacy min.) 2027</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2027-01-01</field>
+            <field name="valid_to">2027-12-31</field>
+            <field name="value_num">1485.0</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">PR</field>
+            <field name="state">draft</field>
+            <field name="source_url">https://www.infakt.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Projekt / prognoza: wartość z projektu aktu lub prognozy, do potwierdzenia po publikacji. Preferencyjny ZUS 2027 z chorobową: 469,85 zł, bez chorobowej 433,47 zł.</field>
+        </record>
+
+        <record id="rule_gus_wage_q4_2026_v1" model="jdg.tax.rule">
+            <field name="key">gus_avg_wage_q4</field>
+            <field name="label">Przeciętne wynagrodzenie z IV kw. 2026 (W; OSZACOWANIE do czasu komunikatu GUS)</field>
+            <field name="group">zdrowotna</field>
+            <field name="valid_from">2027-02-01</field>
+            <field name="valid_to">2028-01-31</field>
+            <field name="value_num">9800.0</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">N</field>
+            <field name="state">draft</field>
+            <field name="source_url">https://stat.gov.pl</field>
+            <field name="source_note">OSZACOWANIE WŁASNE (IV kw. 2025: 9 228,64 zł, wzrost ok. 6,2%). Prawdziwa wartość: komunikat Prezesa GUS (Monitor Polski), zwykle styczeń/luty 2027. PO KOMUNIKACIE: wpisz wartość, ustaw stan &quot;Obowiązuje&quot; i oznacz jako zweryfikowaną. Do tego czasu składka zdrowotna od lutego 2027 jest przybliżona.</field>
+            <field name="description">Baza składki zdrowotnej od lutego 2027 do stycznia 2028.</field>
+        </record>
+
+        <record id="rule_vat_limit_2027_v1" model="jdg.tax.rule">
+            <field name="key">vat.exempt_limit</field>
+            <field name="label">Limit zwolnienia podmiotowego z VAT 2027</field>
+            <field name="group">vat</field>
+            <field name="valid_from">2027-01-01</field>
+            <field name="valid_to">2027-12-31</field>
+            <field name="value_num">240000</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">PR</field>
+            <field name="state">draft</field>
+            <field name="source_url">https://www.podatki.biz</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Projekt / prognoza: wartość z projektu aktu lub prognozy, do potwierdzenia po publikacji. Brak informacji o zmianie limitu na 2027.</field>
+        </record>
+    </data>
+</odoo>

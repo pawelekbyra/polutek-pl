@@ -52,8 +52,8 @@ export function extractTxCalls(): { calls: TxCall[]; problems: TxProblem[] } {
     const visit = (node: ts.Node) => {
       if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
         const name = node.expression.text;
-        if (name === "tx" || name === "txRich") {
-          const offset = name === "txRich" ? 1 : 0;
+        if (name === "tx" || name === "txRich" || name === "txRichTidy") {
+          const offset = name === "tx" ? 0 : 1;
           const pl = literalText(node.arguments[offset]);
           const en = literalText(node.arguments[offset + 1]);
           const line = sf.getLineAndCharacterOfPosition(node.getStart()).line + 1;

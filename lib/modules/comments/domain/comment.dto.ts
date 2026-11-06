@@ -52,6 +52,11 @@ export interface CommentDtoContext {
   videoCreatorId: string | null;
   hasVideoAccess?: boolean;
   /**
+   * Ids of the authors on this page who hold an active PAID patron-zone access (one batched lookup per page, see
+   * `loadVipAuthorIds`). Absent (admin panel, or the lookup failed) = nobody is marked VIP and nobody BASE. Never filled from tips.
+   */
+  vipAuthorIds?: ReadonlySet<string>;
+  /**
    * Admin panel only: show the content of comments deleted by moderation (kept as evidence).
    * Content a user deleted themselves is never shown again, not even to admins.
    */
@@ -88,7 +93,7 @@ export function mapCommentToDto(comment: CommentRow, context: CommentDtoContext)
     parentId: comment.parentId,
     text: showContent ? comment.text : null,
     status: comment.status,
-    author: showContent || canModerate ? toPublicCommentAuthor(comment.author, videoCreatorId) : null,
+    author: showContent || canModerate ? toPublicCommentAuthor(comment.author, videoCreatorId, { isVip: context.vipAuthorIds?.has(comment.authorId) === true, isBase: context.vipAuthorIds !== undefined && !context.vipAuthorIds.has(comment.authorId) }) : null,
     createdAt: comment.createdAt.toISOString(),
     updatedAt: comment.updatedAt.toISOString(),
     editedAt: comment.editedAt?.toISOString() || null,

@@ -45,8 +45,10 @@ describe("buffering spinner (set B, Marker)", () => {
     expect(reduced).not.toMatch(/\.mc-spinner-arc\s*\{\s*animation:none/);
   });
 
-  it("is the same size as the big play mark", () => {
-    expect(rule(".mc-hero-icon")).toMatch(/width:48px; height:48px/);
+  it("keeps its own 48px size, inside the centre play button disc (44-64px, 20% of the frame height; the glyph is 42% of it)", () => {
+    expect(rule(".mc-hero")).toMatch(/--mc-hero-size: clamp\(44px, calc\(var\(--media-height, 220px\) \* \.2\), 64px\)/);
+    expect(rule(".mc-hero")).toMatch(/width:var\(--mc-hero-size\); height:var\(--mc-hero-size\)/);
+    expect(rule(".mc-hero-icon")).toMatch(/width:calc\(var\(--mc-hero-size\) \* \.42\)/);
     expect(rule(".mc-spinner-arc")).toMatch(/width:48px; height:48px/);
   });
 
@@ -94,7 +96,7 @@ describe("error, refresh, lens and close icons (set B, Marker)", () => {
     }
   });
 
-  it("the lens and the close X use the thin Szeruj/Lajk pen: 1.2px on screen at any size", () => {
+  it("the lens and the close X use the 1.2px marker pen at any size", () => {
     for (const [name, Icon] of Object.entries({ SearchIcon, CloseIcon })) {
       for (const size of [16, 20, 22, 24]) {
         const view = render(<Icon size={size} />);
@@ -129,7 +131,7 @@ describe("error, refresh, lens and close icons (set B, Marker)", () => {
 
     const navbar = read("app/components/Navbar.tsx");
     expect(navbar.match(/<SearchIcon size=\{22\}/g)).toHaveLength(3);
-    expect(navbar.match(/<CloseIcon size=\{22\}/g)).toHaveLength(1);
+    expect(navbar).toContain("<CloseButton onClick={closeMobileSearch}");
     expect(navbar).not.toMatch(/import \{[^}]*\b(Search|X)\b[^}]*\} from "lucide-react"/);
     expect(navbar).not.toContain("<Search ");
   });

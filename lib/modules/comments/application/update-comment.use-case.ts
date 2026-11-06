@@ -3,6 +3,7 @@ import { canModerateVideoComments } from "./authorize-comments";
 import { channelBanError, commentMuteError } from "./comment-write-guard";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
+import { loadVipAuthorIds } from "./comment-vip";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
@@ -84,7 +85,8 @@ export async function updateComment(
     const fullComment = await repo.findCommentForDto(commentId, userId, canModerate);
     if (!fullComment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
 
-    return ok(mapCommentToDto(fullComment, { userId, canModerate, videoCreatorId, hasVideoAccess: true }));
+    const vipAuthorIds = await loadVipAuthorIds(ctx, [fullComment]);
+    return ok(mapCommentToDto(fullComment, { userId, canModerate, videoCreatorId, hasVideoAccess: true, vipAuthorIds }));
   } catch (error) {
     return fail(commentDatabaseError("COMMENT_UPDATE_ERROR", error));
   }

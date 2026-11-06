@@ -8,7 +8,7 @@ import type { Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import type { PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
 import { CheckIcon, CrossIcon, PlayIcon } from "./PassIcons";
-import { methodLabel, passDate, price, productName, sellerName } from "./pass-copy";
+import { methodLabel, passDate, price, productName, receiptPriceSuffix, sellerName } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
 type ActivePass = Exclude<PassStatusDto, { state: "none" }>;
@@ -26,10 +26,10 @@ export function PassReceipt({ tx, language, pass }: { tx: Tx; language: Locale; 
       <div><dt>{tx("Produkt", "Product")}</dt><dd>{productName(tx, pass.productId)}</dd></div>
       <div>
         <dt>{tx("Kwota", "Amount")}</dt>
-        <dd>{price(language, pass.priceMinor, pass.currency)} {tx("brutto", "gross")} {demo && <span className={styles.muted}>{tx("(demo: nic nie pobrano)", "(demo: nothing charged)")}</span>}</dd>
+        <dd>{price(language, pass.priceMinor, pass.currency)}{receiptPriceSuffix(tx) ? ` ${receiptPriceSuffix(tx)}` : ""} {demo && <span className={styles.muted}>{tx("(demo: nic nie pobrano)", "(demo: nothing charged)")}</span>}</dd>
       </div>
       <div><dt>{tx("Metoda", "Method")}</dt><dd>{methodLabel(tx, pass.method)}{demo ? ` ${tx("(symulacja)", "(simulated)")}` : ""}</dd></div>
-      <div><dt>{tx("Ważny do", "Valid until")}</dt><dd>{pass.lifetime || !pass.expiresAt ? tx("Dostęp bez limitu", "Unlimited access") : passDate(language, pass.expiresAt, true)}</dd></div>
+      <div><dt>{tx("Ważny do", "Valid until")}</dt><dd>{pass.expiresAt ? passDate(language, pass.expiresAt, true) : "-"}</dd></div>
       <div><dt>{tx("Zgoda na dostęp od razu", "Consent to immediate access")}</dt><dd>{passDate(language, pass.waiverAt, true)}</dd></div>
       <div><dt>{tx("Sprzedawca", "Seller")}</dt><dd>{sellerName(tx)}</dd></div>
     </dl>
@@ -41,24 +41,22 @@ export const PassSuccess = forwardRef<HTMLHeadingElement, { tx: Tx; language: Lo
     return (
       <div className={styles.result} role="status" aria-live="polite">
         <div className={cn(styles.check, styles.checkAnim)}><CheckIcon animated /></div>
-        <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{tx("Jesteś patronem. Dziękuję!", "You are a patron. Thank you!")}</h3>
+        <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{tx("Masz Premium. Dziękuję!", "You have Premium. Thank you!")}</h3>
         <p className={styles.resultText}>
-          {pass.lifetime || !pass.expiresAt
-            ? tx("Masz dostęp bez limitu.", "You have unlimited access.")
-            : tx("Strefa patrona jest otwarta do {0}.", "The patron zone is open until {0}.", passDate(language, pass.expiresAt, true))}
+          {pass.expiresAt ? tx("Strefa Premium jest otwarta do {0}.", "The Premium Zone is open until {0}.", passDate(language, pass.expiresAt, true)) : null}
         </p>
         <button type="button" className={cn(styles.goldBtn, styles.wide)} onClick={onWatch} data-autofocus="">
           <PlayIcon />
-          {watchLabel ?? tx("Wejdź do strefy patrona", "Enter the patron zone")}
+          {watchLabel ?? tx("Wejdź do Strefy Premium", "Enter the Premium Zone")}
         </button>
         <PassReceipt tx={tx} language={language} pass={pass} />
         <p className={styles.fine}>
           {pass.provider === "DEMO"
             ? tx(
-                "W prawdziwej sprzedaży to potwierdzenie przyszłoby e-mailem (trwały nośnik). Znajdziesz je też w „Moje konto → Strefa patrona”.",
-                "In a real sale this confirmation would arrive by e-mail (durable medium). You can also find it in “My account → Patron zone”.",
+                "W prawdziwej sprzedaży to potwierdzenie przyszłoby e-mailem (trwały nośnik). Znajdziesz je też w „Moje konto → Strefa Premium”.",
+                "In a real sale this confirmation would arrive by e-mail (durable medium). You can also find it in “My account → Premium Zone”.",
               )
-            : tx("Potwierdzenie znajdziesz też w „Moje konto → Strefa patrona”.", "You can also find this confirmation in “My account → Patron zone”.")}
+            : tx("Potwierdzenie znajdziesz też w „Moje konto → Strefa Premium”.", "You can also find this confirmation in “My account → Premium Zone”.")}
         </p>
       </div>
     );
@@ -109,16 +107,16 @@ export const PassDeclined = forwardRef<HTMLHeadingElement, { tx: Tx; onRetry: ()
 );
 
 /** Access is already booked for the longest allowed period: no further payment is taken. */
-export const PassMaxAhead = forwardRef<HTMLHeadingElement, { tx: Tx; language: Locale; expiresAt?: string; lifetime?: boolean; onWatch: () => void }>(
-  function PassMaxAhead({ tx, language, expiresAt, lifetime, onWatch }, headingRef) {
+export const PassMaxAhead = forwardRef<HTMLHeadingElement, { tx: Tx; language: Locale; expiresAt?: string; onWatch: () => void }>(
+  function PassMaxAhead({ tx, language, expiresAt, onWatch }, headingRef) {
     return (
       <div className={styles.result} role="status" aria-live="polite">
         <div className={styles.check}><CheckIcon /></div>
-        <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{lifetime ? tx("Masz już dostęp bez limitu", "You already have unlimited access") : tx("Masz już dostęp na długo", "You already have long-term access")}</h3>
-        {expiresAt && <p className={styles.resultText}>{tx("Strefa patrona jest otwarta do {0}. Możesz wpłacić ponownie bliżej tej daty.", "The patron zone is open until {0}. You can pay again closer to that date.", passDate(language, expiresAt, true))}</p>}
+        <h3 ref={headingRef} tabIndex={-1} className={styles.resultTitle}>{tx("Masz już dostęp na długo", "You already have long-term access")}</h3>
+        {expiresAt && <p className={styles.resultText}>{tx("Strefa Premium jest otwarta do {0}. Możesz wpłacić ponownie bliżej tej daty.", "The Premium Zone is open until {0}. You can pay again closer to that date.", passDate(language, expiresAt, true))}</p>}
         <button type="button" className={cn(styles.goldBtn, styles.wide)} onClick={onWatch} data-autofocus="">
           <PlayIcon />
-          {tx("Wejdź do strefy patrona", "Enter the patron zone")}
+          {tx("Wejdź do Strefy Premium", "Enter the Premium Zone")}
         </button>
       </div>
     );

@@ -1,20 +1,154 @@
 /** @vitest-environment jsdom */
 
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import BrandName from "@/app/components/BrandName";
 import PolutekWordmark from "@/app/components/brand/PolutekWordmark";
+import { WORDMARK_BLUE_INK, WORDMARK_BLUE_PATH, WORDMARK_BLUE_VIEWBOX } from "@/app/components/brand/polutek-wordmark-blue-paths";
 import { BRAND_LOGO_VARIANT } from "@/lib/ui-flags";
 
 describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
   afterEach(() => cleanup());
 
-  it("ships the glasses as the site logo (the finished wordmark is kept, one switch away)", () => {
-    expect(BRAND_LOGO_VARIANT).toBe("glasses");
+  // The live logo. `npm run logo -- <variant>` (scripts/brand/set-logo.mjs) rewrites this line together with BRAND_LOGO_VARIANT.
+  const LIVE_LOGO = "glasses";
+  const LIVE_SELECTOR: Record<string, string> = {
+    "wordmark-blue-symbol": 'svg[data-brand-logo="wordmark-blue-symbol"]',
+    "wordmark-blue-symbol-orbit": 'svg[data-brand-logo="wordmark-blue-symbol-orbit"]',
+    "wordmark-blue": 'svg[data-brand-logo="wordmark-blue"]',
+    wordmark: 'svg[data-brand-logo="wordmark"]',
+    glasses: 'img[src="/logo-glasses.svg"]',
+  };
+
+  it("ships LIVE_LOGO as the site logo (the other variants are kept, one command away: npm run logo -- <variant>)", () => {
+    expect(BRAND_LOGO_VARIANT).toBe(LIVE_LOGO);
     const { container } = render(<BrandName />);
-    expect(container.querySelector("img")).not.toBeNull();
-    expect(container.querySelector('svg[data-brand-logo="wordmark"]')).toBeNull();
+    expect(container.querySelector(LIVE_SELECTOR[LIVE_LOGO])).not.toBeNull();
+    if (LIVE_LOGO !== "glasses") expect(container.querySelector("img")).toBeNull();
+  });
+
+  describe("wordmark-blue-symbol variant (orange play symbol in front of the blue wordmark, owner's variant A)", () => {
+    it("is one inline svg named POLUTEK: navy rim + swooshes, orange play with gradient, the wordmark path; no <text>, no raster, no request", () => {
+      const { container } = render(<BrandName variant="wordmark-blue-symbol" />);
+      const svg = screen.getByRole("img", { name: "POLUTEK" });
+
+      expect(svg.getAttribute("data-brand-logo")).toBe("wordmark-blue-symbol");
+      expect(container.querySelector("text, image, img, use")).toBeNull();
+      const paths = [...container.querySelectorAll("svg > path")];
+      expect(paths[0].getAttribute("style")).toContain("var(--brand-ink, #01286a)");
+      expect(paths.at(-1)!.getAttribute("d")).toBe(WORDMARK_BLUE_PATH);
+      expect(paths.at(-1)!.getAttribute("style")).toContain("var(--brand-ink, #01286a)");
+      const play = container.querySelector("[data-symbol-play]")!;
+      const gradId = play.getAttribute("fill")!.match(/^url\(#(.+)\)$/)![1];
+      const stops = [...container.querySelectorAll(`#${gradId} stop`)].map((s) => s.getAttribute("stop-color"));
+      expect(stops).toEqual(["#ffb340", "#ff9419", "#ff7a00"]);
+    });
+
+    it("decorative inside the home link (aria-hidden), and two instances never share gradient ids", () => {
+      const { container } = render(<><BrandName variant="wordmark-blue-symbol" decorative /><BrandName variant="wordmark-blue-symbol" decorative /></>);
+      const svgs = [...container.querySelectorAll("svg")];
+
+      expect(svgs).toHaveLength(2);
+      expect(svgs[0].getAttribute("aria-hidden")).toBe("true");
+      expect(svgs[0].getAttribute("role")).toBeNull();
+      const ids = [...container.querySelectorAll("[id]")].map((e) => e.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it("has no orbit arcs (owner 2026-11-02): the navy path is the rim only (outline + opening); the -orbit variant has 2 more", () => {
+      const { container } = render(<BrandName variant="wordmark-blue-symbol" decorative />);
+      const rim = container.querySelector("[data-symbol-rim]")!.getAttribute("d")!;
+      const { container: c2 } = render(<BrandName variant="wordmark-blue-symbol-orbit" decorative />);
+      const rimOrbit = c2.querySelector("[data-symbol-rim]")!.getAttribute("d")!;
+
+      expect(rim.match(/M/g)).toHaveLength(2);
+      expect(rimOrbit.match(/M/g)).toHaveLength(4);
+      expect(rimOrbit.startsWith(rim.slice(0, 20))).toBe(false); // the plain body is drawn bigger (BODY_SCALE), not just cut
+    });
+
+    it("the standalone files match the generator (variant A, ink #01286a; plain = no arcs, -orbit = with arcs)", async () => {
+      const gen = await import("../../../scripts/brand/generate-symbol.mjs");
+      const { SYMBOL, SYMBOL_ORBIT, SYMBOL_VARIANT } = await import("@/app/components/brand/polutek-symbol-paths");
+      const read = (f: string) => readFileSync(path.join(process.cwd(), "public/brand", f), "utf8");
+      const lockup = read("polutek-wordmark-blue-symbol.svg");
+      const lockupOrbit = read("polutek-wordmark-blue-symbol-orbit.svg");
+
+      expect(gen.CHOSEN).toBe("A");
+      expect(gen.ARCS).toBe(false);
+      expect(SYMBOL_VARIANT).toBe("A");
+      expect(lockup).toContain(`viewBox="${SYMBOL.viewBox}"`);
+      expect(lockupOrbit).toContain(`viewBox="${SYMBOL_ORBIT.viewBox}"`);
+      expect(lockup).toContain('aria-label="POLUTEK"');
+      expect(lockup).toContain("#01286a");
+      expect(gen.lockupSvg(gen.buildSymbol(gen.liveParams(false)), { id: "pws", gapRatio: gen.liveGapRatio(false) })).toBe(lockup);
+      expect(gen.lockupSvg(gen.buildSymbol(gen.liveParams(true)), { id: "pwo", gapRatio: gen.liveGapRatio(true) })).toBe(lockupOrbit);
+      // vertically centred on the letters: the body box is symmetric about the cap-height middle (52 units)
+      const [, top, , h] = SYMBOL.viewBox.split(" ").map(Number);
+      expect(Math.abs(top + h / 2 - 52)).toBeLessThan(0.01);
+      for (const f of ["polutek-symbol.svg", "polutek-symbol-orbit.svg", "polutek-symbol-small.svg"]) {
+        expect(readFileSync(path.join(process.cwd(), "public/brand", f), "utf8")).toContain("<svg");
+      }
+    });
+  });
+
+  describe("wordmark-blue variant (the owner's POLUTEK image redrawn as SVG)", () => {
+    it("is an accessible image named POLUTEK, one filled path, no <text>, no raster", () => {
+      const { container } = render(<BrandName variant="wordmark-blue" />);
+      const svg = screen.getByRole("img", { name: "POLUTEK" });
+
+      expect(svg.tagName.toLowerCase()).toBe("svg");
+      expect(container.querySelector("text")).toBeNull();
+      expect(container.querySelector("image")).toBeNull();
+      expect(container.querySelectorAll("path")).toHaveLength(1);
+    });
+
+    it("uses the --brand-ink token with the exact navy of the image (#01286a) as fallback, and a tight viewBox", () => {
+      const { container } = render(<BrandName variant="wordmark-blue" />);
+      const path = container.querySelector("path")!;
+
+      expect(path.getAttribute("style")).toContain("var(--brand-ink, #01286a)");
+      expect(path.getAttribute("d")?.startsWith("M")).toBe(true);
+      expect(container.querySelector("svg")?.getAttribute("viewBox")).toBe(WORDMARK_BLUE_VIEWBOX);
+      expect(WORDMARK_BLUE_VIEWBOX.startsWith("0 0 ")).toBe(true);
+    });
+
+    it("is hidden from assistive tech when decorative", () => {
+      const { container } = render(<BrandName variant="wordmark-blue" decorative />);
+      const svg = container.firstElementChild;
+
+      expect(svg?.getAttribute("aria-hidden")).toBe("true");
+      expect(svg?.getAttribute("role")).toBeNull();
+      expect(svg?.getAttribute("aria-label")).toBeNull();
+    });
+
+    it("is height-driven: the caller's class wins over the default height", () => {
+      const { container } = render(<BrandName variant="wordmark-blue" className="h-[30px]" />);
+      const cls = container.firstElementChild?.getAttribute("class") ?? "";
+
+      expect(cls).toContain("h-[30px]");
+      expect(cls).toContain("w-auto");
+    });
+
+    it("the standalone files match the component path and carry role, label and title", () => {
+      for (const file of ["polutek-wordmark-blue.svg", "polutek-wordmark-blue-mono.svg"]) {
+        const svg = readFileSync(path.join(process.cwd(), "public/brand", file), "utf8");
+        expect(svg).toContain('role="img"');
+        expect(svg).toContain('aria-label="POLUTEK"');
+        expect(svg).toContain("<title>POLUTEK</title>");
+        expect(svg).toContain(`d="${WORDMARK_BLUE_PATH}"`);
+        expect(svg).not.toMatch(/<image|<text|data:image/);
+      }
+      expect(readFileSync(path.join(process.cwd(), "public/brand/polutek-wordmark-blue.svg"), "utf8")).toContain(`fill="${WORDMARK_BLUE_INK}"`);
+      expect(readFileSync(path.join(process.cwd(), "public/brand/polutek-wordmark-blue-mono.svg"), "utf8")).toContain('fill="currentColor"');
+    });
+
+    it("the colour token exists in globals.css with the same value", () => {
+      const css = readFileSync(path.join(process.cwd(), "app/globals.css"), "utf8");
+      expect(css).toContain(`--brand-ink: ${WORDMARK_BLUE_INK};`);
+    });
   });
 
   describe("wordmark variant", () => {
@@ -92,6 +226,65 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
       const { container } = render(<BrandName variant="glasses" className="h-[40px]" />);
 
       expect(container.firstElementChild?.className).toContain("h-[40px]");
+    });
+  });
+
+  describe("the three variants and the one-line switch (glasses <-> wordmark-blue <-> wordmark)", () => {
+    afterEach(() => {
+      vi.doUnmock("@/lib/ui-flags");
+      vi.resetModules();
+    });
+
+    it.each([
+      ["wordmark-blue-symbol", 'svg[data-brand-logo="wordmark-blue-symbol"]'],
+      ["wordmark-blue-symbol-orbit", 'svg[data-brand-logo="wordmark-blue-symbol-orbit"]'],
+      ["wordmark-blue", 'svg[data-brand-logo="wordmark-blue"]'],
+      ["glasses", 'img[src="/logo-glasses.svg"]'],
+      ["wordmark", 'svg[data-brand-logo="wordmark"]'],
+    ] as const)("flipping BRAND_LOGO_VARIANT to %s renders that logo by default", async (variant, selector) => {
+      vi.resetModules();
+      vi.doMock("@/lib/ui-flags", async () => ({ ...(await vi.importActual<object>("@/lib/ui-flags")), BRAND_LOGO_VARIANT: variant }));
+      const { default: Fresh } = await import("@/app/components/BrandName");
+      const { container } = render(<Fresh decorative />);
+
+      expect(container.querySelector(selector)).not.toBeNull();
+    });
+
+    it("the glasses assets stay in the repo, complete, and the archive copy is byte-identical", () => {
+      const files = [
+        "logo-glasses.svg", "icon-glasses.svg", "icon-glasses-32.png", "icon-glasses-180.png", "icon-glasses-192.png",
+        "icon-glasses-512.png", "icon-glasses-maskable-512.png", "icon-glasses.ico",
+      ];
+      for (const f of files) {
+        const live = readFileSync(path.join(process.cwd(), "public", f));
+        const archived = readFileSync(path.join(process.cwd(), "public/brand/archive/glasses", f));
+        expect(live.length).toBeGreaterThan(100);
+        expect(archived.equals(live)).toBe(true);
+      }
+      expect(readFileSync(path.join(process.cwd(), "public/logo-glasses.svg"), "utf8")).toContain('viewBox="0 0 2048 506"');
+    });
+
+    it("the agent passphrase is documented where agents read (CLAUDE.md, AGENTS.md, architecture doc)", () => {
+      for (const f of ["CLAUDE.md", "AGENTS.md", "docs/architecture/public-shell-and-player.md"]) {
+        const text = readFileSync(path.join(process.cwd(), f), "utf8");
+        expect(text).toContain("przywróć okularki");
+        expect(text).toContain("BRAND_LOGO_VARIANT");
+        expect(text).toContain("public/brand/archive/glasses");
+      }
+    });
+  });
+
+  describe("blue wordmark spacing (generator: EXTRA_GAP, optical, in source px; cap height 297.8 px)", () => {
+    it("adds a moderate extra gap (at most 6% of the cap height each) and the viewBox follows the generator", async () => {
+      const gen = await import("../../../scripts/brand/generate-wordmark-blue.mjs");
+
+      for (const extra of Object.values(gen.EXTRA_GAP) as number[]) {
+        expect(extra).toBeGreaterThan(0);
+        expect(extra / 297.8).toBeLessThanOrEqual(0.06);
+      }
+      // L|U is the tightest pair in the original (foot of the L next to the U stem), so it gets the most
+      expect(gen.EXTRA_GAP.U).toBe(Math.max(...(Object.values(gen.EXTRA_GAP) as number[])));
+      expect(WORDMARK_BLUE_VIEWBOX).toBe(gen.VIEWBOX);
     });
   });
 });

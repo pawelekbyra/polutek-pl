@@ -4,9 +4,8 @@ import type { SVGProps } from "react";
  * Hand-drawn "Marker" icons (24 grid, round caps and joins, no fills, very light hand wobble) for the notification bell
  * and the Subscribe button. Plain JSX paths, inheriting currentColor.
  *
- * Pen weight: the line is the same as the "Szeruj" and "Lajk/Dislajk" icons under the video (lucide at 16px, strokeWidth
- * 1.8, i.e. 1.2px on screen), whatever the icon size: `strokeWidth` defaults to `ICON_PEN_PX * 24 / size`, so the
- * rendered line is 1.2px at 16px, 22px, 24px alike (the old 2.4 default drew 2px at 20px and looked far too heavy).
+ * Pen weight: 1.2px on screen at every size: `strokeWidth` defaults to `ICON_PEN_PX * 24 / size`, so the rendered
+ * line is consistent at 16px, 22px, 24px and other sizes. The top-bar bell overrides it to match the globe's weight.
  * The shapes use the lucide bell's proportions (dome r6, flared skirt, x 3..21) so the icon fills its box.
  * Generated from icongen/gen_bell.py (path data is not edited by hand).
  */
@@ -72,6 +71,15 @@ export function SubscribeCheckIcon(props: MarkerIconProps) {
   return (
     <MarkerIcon {...props}>
       <path d="M4.73 12.36C4.92 12.58 5.51 13.23 5.92 13.65C6.32 14.08 6.73 14.5 7.14 14.91C7.55 15.33 7.93 15.83 8.4 16.14C8.86 16.45 9.46 16.83 9.95 16.76C10.43 16.68 10.88 16.08 11.31 15.69C11.74 15.31 12.12 14.85 12.53 14.43C12.94 14.01 13.35 13.6 13.76 13.18C14.17 12.76 14.58 12.34 14.98 11.91C15.38 11.48 15.77 11.05 16.16 10.61C16.54 10.17 16.92 9.72 17.29 9.27C17.67 8.82 18.03 8.36 18.4 7.91C18.78 7.46 19.34 6.79 19.53 6.56" />
+    </MarkerIcon>
+  );
+}
+
+export function SettingsIcon(props: MarkerIconProps) {
+  return (
+    <MarkerIcon {...props}>
+      <path d="M20.16 12.23C20.5 12.61 21 12.97 21.06 13.43C21.11 13.9 20.88 14.71 20.51 15.01C20.15 15.3 19.34 14.99 18.87 15.2C18.4 15.42 17.88 15.84 17.69 16.28C17.49 16.72 17.72 17.33 17.68 17.84C17.64 18.35 17.72 18.96 17.43 19.34C17.15 19.73 16.44 20.17 15.97 20.15C15.51 20.13 15.12 19.37 14.63 19.21C14.14 19.06 13.47 19.01 13.03 19.2C12.59 19.39 12.36 20.03 11.98 20.36C11.6 20.7 11.21 21.15 10.74 21.2C10.27 21.25 9.48 21.02 9.18 20.66C8.88 20.3 9.18 19.49 8.95 19.02C8.72 18.55 8.27 18.07 7.82 17.86C7.38 17.65 6.78 17.81 6.26 17.78C5.74 17.74 5.13 17.89 4.73 17.62C4.33 17.36 3.85 16.66 3.85 16.2C3.86 15.74 4.57 15.35 4.75 14.87C4.94 14.39 5.1 13.75 4.96 13.3C4.81 12.86 4.17 12.61 3.86 12.22C3.56 11.82 3.16 11.39 3.13 10.91C3.09 10.43 3.3 9.66 3.66 9.34C4.02 9.03 4.84 9.28 5.28 9.02C5.72 8.75 6.15 8.22 6.29 7.74C6.43 7.27 6.08 6.68 6.1 6.17C6.12 5.67 6.11 5.06 6.41 4.71C6.72 4.36 7.46 4 7.93 4.06C8.4 4.13 8.75 4.88 9.23 5.08C9.71 5.28 10.36 5.39 10.83 5.26C11.3 5.13 11.67 4.65 12.06 4.31C12.45 3.98 12.73 3.37 13.19 3.24C13.65 3.12 14.5 3.26 14.82 3.58C15.14 3.91 14.87 4.71 15.09 5.17C15.32 5.63 15.73 6.16 16.18 6.34C16.62 6.51 17.24 6.18 17.74 6.24C18.25 6.29 18.82 6.35 19.19 6.66C19.56 6.98 19.98 7.67 19.96 8.14C19.94 8.62 19.22 9.02 19.07 9.52C18.92 10.02 18.88 10.68 19.06 11.13C19.25 11.58 19.83 11.84 20.16 12.23Z" />
+      <path d="M14.9 12.07C14.91 12.61 14.74 13.24 14.46 13.69C14.18 14.14 13.69 14.56 13.2 14.78C12.71 14.99 12.07 15.06 11.54 14.97C11.01 14.88 10.44 14.61 10.02 14.26C9.61 13.92 9.23 13.4 9.06 12.9C8.89 12.39 8.86 11.74 9 11.23C9.14 10.72 9.51 10.18 9.92 9.84C10.33 9.5 10.92 9.25 11.46 9.18C11.99 9.11 12.62 9.19 13.11 9.41C13.6 9.62 14.09 10.04 14.39 10.48C14.69 10.92 14.89 11.54 14.9 12.07Z" />
     </MarkerIcon>
   );
 }

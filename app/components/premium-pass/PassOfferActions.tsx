@@ -61,7 +61,7 @@ export function PassOfferActions({ offer, productId, firstSlug }: { offer: Premi
     <>
       <button type="button" className={styles.inkBtn} onClick={buy}>
         <TicketIcon />
-        {userId ? tx("Zostań patronem · {0}", "Become a patron · {0}", price(language, product.prices[currency], currency)) : tx("Zaloguj się i zostań patronem", "Sign in to become a patron")}
+        {userId ? tx("Kup Premium · {0}", "Get Premium · {0}", price(language, product.prices[currency], currency)) : tx("Zaloguj się i kup Premium", "Sign in and get Premium")}
       </button>
       {userId && <PassCheckoutSheet open={open} onOpenChange={setOpen} offer={{ ...offer, signedIn: true }} initialProductId={productId} onWatch={watch} />}
     </>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Harmonogramy modułu. noupdate: zmiana godziny w Ustawienia > Techniczne > Zaplanowane akcje przetrwa aktualizację. -->
+    <data noupdate="1">
+        <!-- Co godzinę: pobiera brakujące tabele A z api.nbp.pl. Bramka czasu w kodzie: rano dnia roboczego nie pyta o
+             dzisiejszą tabelę (NBP publikuje około południa), po pobraniu kompletu nie robi nic. -->
+        <record id="cron_jdg_nbp" model="ir.cron">
+            <field name="name">Firma: pobierz kursy NBP (tabela A)</field>
+            <field name="model_id" ref="model_jdg_fx_rate"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_fetch()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="True"/>
+        </record>
+        <!-- Codziennie 07:30 czasu polskiego (06:30 UTC zimą): okresy, terminy, alerty progów, powiadomienia 7/3/1 dzień. -->
+        <record id="cron_jdg_daily" model="ir.cron">
+            <field name="name">Firma: terminy, alerty progów i powiadomienia</field>
+            <field name="model_id" ref="model_jdg_deadline"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_daily()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 06:30:00')"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

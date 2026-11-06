@@ -34,6 +34,8 @@ export interface TipPayStepProps {
     accepted: boolean;
     /** Runs right before every confirmation (records the consent on the server); false aborts it. */
     beforeConfirm: () => Promise<boolean>;
+    /** Told when a confirmation starts and ends (the checkout locks its step dots and back button meanwhile). */
+    onBusyChange?: (busy: boolean) => void;
   };
 }
 
@@ -53,7 +55,7 @@ export function PayStepFrame({
   return (
     <TipStepLayout footer={footer}>
       {!props.patron && <TipStepHeading title={copy.title} />}
-      <div className={cn("mb-5 flex items-center justify-between gap-3 rounded-[14px] border px-4 py-3", props.patron ? "border-[var(--chan-line)] bg-[var(--chan-card)]" : "border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)]")}>
+      <div className={cn("mb-[var(--pass-gap-lg,20px)] flex items-center justify-between gap-3 rounded-[14px] border px-4 py-[var(--pass-box-y,12px)]", props.patron ? "border-[var(--chan-line)] bg-[var(--chan-card)]" : "border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)]")}>
         <p className="m-0 text-[14px] font-bold text-[var(--chan-ink)]">
           <span className="tabular-nums">{formatTipAmount(amount, currency, language)}</span>
           <span className="mx-1.5 text-[var(--chan-muted)]">·</span>

@@ -19,3 +19,4 @@ export * from "./application/get-user-avatar.use-case";
 export * from "./application/record-terms-acceptance.use-case";
 export * from "./application/admin-user-safety.use-case";
 export * from "./application/export-own-data.use-case";
+export * from "./application/get-own-role-badge";

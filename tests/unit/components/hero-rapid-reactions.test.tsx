@@ -10,6 +10,7 @@ import { txFor } from "../i18n/mock-language";
 
 const toast = vi.fn();
 const openAuth = vi.fn();
+const passStatusMocks = vi.hoisted(() => ({ fetchPassStatus: vi.fn() }));
 
 vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'user_123' as string | null }),
@@ -33,6 +34,7 @@ vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: 
 vi.mock('@/app/components/PremiumWrapper', () => ({ default: () => <div>player-stub</div> }));
 vi.mock('@/app/components/SubscribeButton', () => ({ default: () => <button type="button">subscribe-stub</button> }));
 vi.mock('@/app/components/ShareButton', () => ({ default: () => <button type="button">share-stub</button> }));
+vi.mock('@/app/components/premium-pass/usePremiumPass', () => passStatusMocks);
 
 const video = {
   id: 'video_1',
@@ -60,6 +62,7 @@ describe('Hero video reactions: rapid clicking', () => {
   beforeEach(() => {
     toast.mockClear();
     openAuth.mockClear();
+    passStatusMocks.fetchPassStatus.mockResolvedValue(null);
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
   });

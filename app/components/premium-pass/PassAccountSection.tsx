@@ -17,20 +17,20 @@ export function PassAccountSection({ tx, status }: { tx: Tx; status: PremiumPass
     <div className="space-y-3 font-sans text-[14px] text-[var(--chan-ink)]">
       {offer.payments.mode === "demo" && <DemoRibbon />}
       <p className="font-bold">
-        {pass.state === "none" && tx("Nie jesteś jeszcze patronem.", "You are not a patron yet.")}
-        {pass.state === "active" && pass.lifetime && tx("Masz dostęp bez limitu.", "You have unlimited access.")}
-        {pass.state === "active" && !pass.lifetime && pass.expiresAt && tx("Strefa patrona otwarta do {0}.", "Patron zone open until {0}.", passDate(language, pass.expiresAt, true))}
-        {pass.state === "expired" && pass.expiresAt && tx("Twój dostęp do strefy patrona wygasł {0}.", "Your patron zone access expired on {0}.", passDate(language, pass.expiresAt))}
+        {pass.state === "none" && tx("Nie masz jeszcze Premium.", "You don't have Premium yet.")}
+        {pass.state === "active" && pass.expiresAt && tx("Strefa Premium otwarta do {0}.", "Premium Zone open until {0}.", passDate(language, pass.expiresAt, true))}
+        {pass.state === "expired" && pass.expiresAt && tx("Twój dostęp do Strefy Premium wygasł {0}.", "Your Premium Zone access expired on {0}.", passDate(language, pass.expiresAt))}
       </p>
       {pass.state !== "none" && <PassReceipt tx={tx} language={language} pass={pass} />}
-      {!(pass.state === "active" && pass.lifetime) && (
+      {(
+
         <>
-          <p className="text-[13px] text-[var(--chan-muted)]">{tx("Dostęp na 30 dni nie odnawia się sam: kolejna wpłata przedłuży go o 30 dni, a dostęp bez limitu zamieni go na stały.", "30-day access does not renew by itself: another payment extends it by 30 days, and unlimited access makes it permanent.")}</p>
+          <p className="text-[13px] text-[var(--chan-muted)]">{tx("Dostęp nie odnawia się sam: kolejna wpłata przedłuży go o 30 dni albo 3 miesiące.", "Access does not renew by itself: another payment extends it by 30 days or 3 months.")}</p>
           <a
             href={getLocalizedHref(language, "pass")}
             className="inline-flex min-h-11 items-center rounded-[12px] bg-[var(--chan-ink)] px-4 text-[13px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2"
           >
-            {pass.state === "none" ? tx("Zostań patronem", "Become a patron") : tx("Przedłuż dostęp", "Extend access")}
+            {pass.state === "none" ? tx("Kup Premium", "Get Premium") : tx("Przedłuż dostęp", "Extend access")}
           </a>
         </>
       )}

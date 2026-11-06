@@ -10,13 +10,14 @@ albo znika w tym samym PR. Historia jest w git.
 | Zasady dla agentów AI, mapa repo, niezmienniki | [`../CLAUDE.md`](../CLAUDE.md) |
 | Opis serwera i sekretów dla agenta (praca bez GitHuba wycofana 2026-10-07) | [`operations/HANDOFF-SERVER-AGENT.md`](operations/HANDOFF-SERVER-AGENT.md) |
 | Otwarte prace, decyzje do podjęcia, kolejność | [`operations/STATUS.md`](operations/STATUS.md) |
-| Trwałe badanie platformy, porównanie z PeerTube i program pełnego audytu (gałąź `docs/polutek-platform-audit`) | [`audit/2026-11-01-platform-research/README.md`](audit/2026-11-01-platform-research/README.md) |
+| Badanie platformy z 2026-11-01, roadmapa i postęp napraw (pakiety K01–K40) | [`audit/2026-11-01-platform-research/README.md`](audit/2026-11-01-platform-research/README.md) |
 
 ## Jak to jest zbudowane (`architecture/`)
 
 | Temat | Plik |
 |---|---|
 | Logowanie i konta (Better Auth) | [`architecture/auth-better-auth.md`](architecture/auth-better-auth.md) |
+| Panel widza „Moje konto”: nawigacja i ustawienia profilu | [`architecture/account-settings.md`](architecture/account-settings.md) |
 | Własny HLS: decyzje i budowa | [`architecture/self-hosted-hls.md`](architecture/self-hosted-hls.md) |
 | PP Support: architektura i projekt agenta AI | [`architecture/support-center.md`](architecture/support-center.md) |
 | Własna wysyłka poczty (plan na później) | [`architecture/self-hosted-mail-plan.md`](architecture/self-hosted-mail-plan.md) |
@@ -54,7 +55,6 @@ albo znika w tym samym PR. Historia jest w git.
 | Konta i usługi zewnętrzne (bez sekretów), kalendarz odnowień i wygasania, co monitorować | [`operations/ACCOUNTS.md`](operations/ACCOUNTS.md) |
 | Języki interfejsu (osiem języków): jak działa `tx()`, jak dodać tekst lub język, decyzje, słownik | [`operations/I18N.md`](operations/I18N.md) |
 | Lokalne CI przed scaleniem (zamiast GitHub Actions) | [`operations/LOCAL-CI.md`](operations/LOCAL-CI.md) |
-| Rdzeń dowodu źródeł/testów/obrazów; integracja publikacji pozostaje otwarta | [`operations/RELEASE-PROOF.md`](operations/RELEASE-PROOF.md) |
 | Dzienna odprawa „co słychać?” (raport tylko do odczytu, skill `odprawa`) | [`operations/DAILY-BRIEFING.md`](operations/DAILY-BRIEFING.md) |
 | Dźwięk w odtwarzaczu i przycisk logo | [`operations/PLAYER-SOUND.md`](operations/PLAYER-SOUND.md) |
 | Wydajność: pomiary CPX22 z 2026-10-01 (aplikacja, ffmpeg) | [`operations/BENCHMARK-2026-10-01.md`](operations/BENCHMARK-2026-10-01.md) |
@@ -67,6 +67,11 @@ albo znika w tym samym PR. Historia jest w git.
 | PP Support: przewodnik dla właściciela i obsługi | [`operations/PP-SUPPORT-GUIDE.md`](operations/PP-SUPPORT-GUIDE.md) |
 | Dostępy agentów do usług (bez sekretów) | [`operations/AGENT_ACCESS.md`](operations/AGENT_ACCESS.md) |
 | Google Workspace (do czasu anulowania) | [`operations/GOOGLE_ACCESS.md`](operations/GOOGLE_ACCESS.md), [`operations/DNS_BACKUP_mail_2026-10-02.md`](operations/DNS_BACKUP_mail_2026-10-02.md) |
+| Odoo (`firma.pawelperfect.com`): uruchomienie, kopie, moduły, aktualizacja, zabezpieczenia | [`operations/ODOO.md`](operations/ODOO.md) |
+| Eksperyment SIKUBENZA i makieta bramki (`:8088`, `publish.sh`) | [`operations/STATIC-DEMO.md`](operations/STATIC-DEMO.md) |
+| Eksperyment dziennikarski (`:8089`, wyłączone API, noindex) | [`operations/DZIENNIKARSKI-EKSPERYMENT.md`](operations/DZIENNIKARSKI-EKSPERYMENT.md) |
+| Domena `pawelperfect.pl`: strefa Cloudflare, przekierowanie na `.com`, poczta, Resend | [`operations/DOMENA-PAWELPERFECT-PL.md`](operations/DOMENA-PAWELPERFECT-PL.md) |
+| `nasza-gazetka.pl`: migracja z Vercela, stan, przełączenie i rollback | [`operations/NASZA-GAZETKA.md`](operations/NASZA-GAZETKA.md) |
 | Licencje oprogramowania obcego | [`operations/THIRD_PARTY_NOTICES.md`](operations/THIRD_PARTY_NOTICES.md) |
 
 ## Audyty (`audit/`)
@@ -78,5 +83,3 @@ przeniesione do `operations/STATUS.md` znika z raportu, a pusty raport jest usuw
 
 [`audit/2026-10-12/`](audit/2026-10-12/README.md) to **badania, nie decyzje** (płatny dostęp dożywotni, VAT i narzędzia, napiwki,
 LLC/JDG/sp. z o.o., koszty skalowania, pozycjonowanie, licencje na covery): indeks, wnioski i lista otwartych decyzji właściciela.
-
-- [Weryfikacja odtworzonej bazy](operations/RESTORE-VERIFICATION.md) — obowiązkowe kontrole i granice pomocniczego narzędzia.

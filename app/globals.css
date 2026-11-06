@@ -362,6 +362,8 @@
     --chan-blue: #2563eb;
     /* Very dark indigo of the POLUTEK wordmark in the header logo: hue 244 deg, L* 7 (a touch darker than the #111827 ink, with a blue-violet cast); contrast 17.14:1 on --chan-nav, 18.07:1 on white. */
     --brand-ink-blue: #0d084e;
+    /* Navy of the blue POLUTEK wordmark (header logo, variant "wordmark-blue"): the mean colour of the letter interiors in the owner's image (rgb 1,40,106). Contrast 13.9:1 on white. */
+    --brand-ink: #01286a;
     /* Top bar height (phones, and desktop with the wordmark): 3px + 40px controls + 3px + the 1px bottom line. It follows the logo
        (Navbar: link min-h-10 + py-1 around the logo), so with the glasses variant the desktop bar grows by itself; this value is
        used where something hangs under the phone bar (the language list). navbar-logo-height.test.tsx keeps both in step. */
@@ -389,6 +391,8 @@
      Tailwind 4 (the minimum browsers are in package.json "browserslist") already requires
      color-mix(), so there is no static fallback block any more. */
   :root {
+    --cm-gray-14: color-mix(in srgb, var(--chan-muted) 14%, transparent);
+    --cm-amber-14: color-mix(in srgb, var(--chan-amber) 14%, transparent);
     --cm-amber-18: color-mix(in srgb, var(--chan-amber) 18%, transparent);
     --cm-amber-20: color-mix(in srgb, var(--chan-amber) 20%, transparent);
     --cm-amber-28: color-mix(in srgb, var(--chan-amber) 28%, transparent);
@@ -704,7 +708,10 @@
     flex:1 1 auto; min-width:0;
     display:flex; align-items:center;
     height:100%;
-    margin: 0 12px;
+    /* The glyph boxes carry empty space (play box 40px around a 26px glyph, which has its own viewBox padding),
+       so the track pulls in over the box edge to sit ~10px from the visible ink on both sides (before: ~27px
+       left of the track, 14px right of it). Left -4px, right 8px (+2px bar gap) next to the duration. */
+    margin: 0 8px 0 -4px;
   }
   .mc-group { display:flex; align-items:center; gap:2px; flex-shrink:0; }
 
@@ -979,31 +986,38 @@
     background:linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.52));
   }
 
-  /* Centre button: a 56px soft glass circle (not a heavy disc), the same recipe as the pill, entering with the
-     bar's easing. */
+  /* Centre button (owner 2026-11-03, the shop mock-up's play mark in the brand blue): a solid disc in the same blue as the
+     progress fill (--chan-blue), the play triangle (solid, rounded corners, optically shifted right) or the replay arrow
+     (Marker pen, ICON_PEN_PX) inside in --mc-hero-glyph. A hairline dark rim and a soft shadow lift the disc off both
+     bright and dark frames; hover and press darken the blue a step. The size follows the frame (owner 2026-11-04, "pick the
+     ideal size" on phones): 20% of the player height, never below 44px (the touch target; 44px is 20% of a 390px phone's
+     219px frame) and never above 64px (reached from a 320px tall frame up: tablets and desktop). --media-height is
+     Vidstack's live player height, so landscape and fullscreen scale too. */
   .mc-hero {
+    --mc-hero-size: clamp(44px, calc(var(--media-height, 220px) * .2), 64px);
+    --mc-hero-bg: var(--chan-blue);
+    --mc-hero-glyph: #fff;
+    --mc-hero-shadow: 0 0 0 1px rgba(0,0,0,.2), 0 6px 22px rgba(0,0,0,.42);
     display:grid; place-items:center;
-    width:72px; height:72px; padding:0;
+    width:var(--mc-hero-size); height:var(--mc-hero-size); padding:0;
     border:0; border-radius:999px;
-    background: transparent;
-    color:#fff;
+    background: var(--mc-hero-bg);
+    color: var(--mc-hero-glyph);
+    box-shadow: var(--mc-hero-shadow);
     pointer-events:auto;
     transition: background-color .16s var(--mc-ease), transform .16s var(--mc-ease);
-    animation: mc-hero-in .24s var(--mc-ease-out);
     cursor:pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  @keyframes mc-hero-in { from { opacity:0; transform: scale(.9); } }
-  @media (hover:hover) { .mc-hero:hover { transform: scale(1.06); } }
-  .mc-hero:active { transform: scale(.96); }
+  @media (hover:hover) { .mc-hero:hover { transform: scale(1.06); background: color-mix(in srgb, var(--mc-hero-bg) 86%, #000); } }
+  .mc-hero:active { transform: scale(.96); background: color-mix(in srgb, var(--mc-hero-bg) 74%, #000); }
   .mc-hero:focus-visible {
     outline:none;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
+    box-shadow: var(--mc-hero-shadow), 0 0 0 2px #fff, 0 0 0 4px var(--chan-blue);
   }
 
-  /* A very light white glow that follows the SHAPE of the mark (a blurred contour of the icon, no disc behind it), plus a barely
-     there shadow so it still reads on bright frames (owner 2026-10-28: subtle, not a halo). */
-  .mc-hero-icon { display:block; width:48px; height:48px; filter: drop-shadow(0 0 3px rgba(255,255,255,.38)) drop-shadow(0 0 9px rgba(255,255,255,.2)) drop-shadow(0 1px 4px rgba(0,0,0,.22)); }
+  /* The glyph: 42% of the disc (27px in 64px, the mock-up's ratio, 30 in 76; 18.5px in 44px). No glow: the disc carries the contrast. */
+  .mc-hero-icon { display:block; width:calc(var(--mc-hero-size) * .42); height:calc(var(--mc-hero-size) * .42); }
 
   /* Buffering mark: one arc drawn with the same Marker stroke as the icons (SpinnerArcIcon, 2.4 in the 24 box = 4.8px at
      48px, round ends), white, no disc and no border behind it. The glow is the big play mark's: a drop-shadow on the WRAPPER
@@ -1064,7 +1078,7 @@
     .mc-play { --mc-play-glyph: 24px; width:40px; height:var(--mc-row); }
     .mc-play::before { content:""; position:absolute; inset:-4px -2px; }
     .mc-btn--badge { padding:0 4px; }
-    .mc-track-area { margin:0 6px; }
+    .mc-track-area { margin:0 0 0 -4px; }
     .mc-duration, .mc-pip, .mc-chapters > .mc-btn { display:none; }
     .mc-menu-item--narrow { display:flex; }
     .mc-menu-sep.mc-menu-item--narrow { display:block; }
@@ -1078,7 +1092,6 @@
       border-width:1px 0 0;
       background: rgba(14,15,18,.98);
     }
-    .mc-hero { width:56px; height:56px; }
   }
   /* A phone's rest chip says only the time, like the reference; the chapter is in the drag preview and in the
      settings menu's "Chapters" entry. */
@@ -1089,7 +1102,6 @@
   @media (prefers-reduced-motion:reduce) {
     .mc-scrim, .mc-bottom, .mc-btn, .mc-hero, .mc-chip, .mc-glyph-swap > svg,
     .mc-vol-slider, .mc-scrub-track, .mc-scrub-thumb { transition:none; }
-    .mc-hero { animation:none; }
     /* Reduced motion: a slow turn, still clearly alive (a frozen arc would look like a broken icon). */
     .mc-spinner-arc { animation-duration:3.2s; }
     .mc-menu { animation:none; }

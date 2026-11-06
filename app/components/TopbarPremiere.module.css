@@ -1,0 +1,47 @@
+/* Hand-written "PREMIERA: dd.mm.yyyy." note in the top bar, next to the glasses.
+   Gaegu Light (SIL OFL 1.1, app/fonts/OFL-gaegu.txt): thin pen, printed capitals, one weight, latin subset only
+   (the font has no latin-ext; of all the languages only the French "È" falls back to the system cursive).
+   "Gaegu Light Fallback" is Arial scaled to the width of the real font, so the swap does not move the neighbours. */
+@font-face {
+  font-family: "Gaegu Light";
+  src: url("../fonts/gaegu-latin-300.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Gaegu Light Fallback";
+  src: local("Arial"), local("Helvetica"), local("Liberation Sans");
+  font-weight: 300;
+  size-adjust: 100%;
+}
+
+.premiere {
+  font-family: "Gaegu Light", "Gaegu Light Fallback", cursive;
+  font-weight: 300;
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  /* phones: two lines ("PREMIERA:" over the date), the bar has only ~70px free next to the icons */
+  width: min-content;
+  white-space: normal;
+  text-wrap: balance;
+  /* black (owner, 2026-11-04): #0a0a0a on the bar's near-white is ~18:1; --chan-ink (#111827) reads navy-grey next to it */
+  color: #0a0a0a;
+  opacity: 1;
+  transform: rotate(-2.5deg);
+  transform-origin: center;
+  flex: none;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .premiere {
+    width: auto;
+    white-space: nowrap;
+    font-size: 16px;
+  }
+}

@@ -10,6 +10,7 @@ import { PatronCheckoutHost } from './premium-pass/PatronCheckoutHost';
 import Link from 'next/link';
 import VideoPlayer from './VideoPlayer';
 import { SafeAvatar } from './SafeAvatar';
+import { CREATOR_AVATAR_RING } from '@/lib/role-badge';
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 import { intlLocale } from "@/lib/i18n/ui";
 import { countedNoun } from "@/lib/i18n/plurals";
@@ -334,7 +335,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     src={video.creator?.imageUrl}
                     alt={video.creator?.name || 'Creator'}
                     size={46}
-                    className="bg-[var(--chan-avatar-gradient)] transition-[transform,opacity] duration-200 hover:opacity-90 hover:scale-[1.04]"
+                    className={cn("bg-[var(--chan-avatar-gradient)] transition-[transform,opacity] duration-200 hover:opacity-90 hover:scale-[1.04]", CREATOR_AVATAR_RING)}
                   />
                </Link>
                <div className="min-w-0 flex flex-col">

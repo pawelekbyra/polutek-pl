@@ -12,6 +12,7 @@ import {
   USER_NOTIFICATIONS_MAX_LIMIT,
 } from "../domain/user-notifications";
 import { notificationViewerLanguage, renderNotification } from "../domain/notification-render";
+import { notificationTypeHasVideo, notificationVideoPreview, type NotificationVideoRow } from "../domain/notification-video";
 
 /** The signed-in viewer's notification feed. Only ever the caller's own rows (the user id comes from the actor). */
 
@@ -25,14 +26,32 @@ export async function countUnreadNotifications(ctx: AppContext): Promise<number>
   return ctx.prisma.notification.count({ where: { userId: ownerId(ctx), read: false } });
 }
 
+/**
+ * One batched read for the whole page (at most 50 ids, none when the page has no video notification): small
+ * columns only, no per-row queries. A missing row (video deleted) simply has no preview.
+ */
+async function loadNotificationVideos(ctx: AppContext, ids: string[]): Promise<Map<string, NotificationVideoRow>> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+  const rows = await ctx.prisma.video.findMany({
+    where: { id: { in: unique } },
+    select: {
+      id: true, slug: true, status: true, publishedAt: true, moderationStatus: true, thumbnailUrl: true, thumbnailPublicUrl: true,
+      creator: { select: { status: true, deletedAt: true } },
+    },
+  });
+  return new Map(rows.map((row) => [row.id, { ...row, moderationStatus: row.moderationStatus as string | null }]));
+}
+
 export async function listUserNotifications(
   ctx: AppContext,
-  query: { limit: number; cursor?: string; unreadOnly?: boolean },
+  query: { limit: number; cursor?: string; unreadOnly?: boolean; language?: string; ids?: string[] },
 ): Promise<UserNotificationPage> {
   const userId = ownerId(ctx);
   if (!Number.isInteger(query.limit) || query.limit < 1 || query.limit > USER_NOTIFICATIONS_MAX_LIMIT) {
     throw new AppError("Invalid notification page size.", 400, "INVALID_REQUEST");
   }
+  if (query.ids && (!query.ids.length || query.ids.length > 50 || query.ids.some((id) => id.length > 64))) throw new AppError("Invalid notification ids.", 400, "INVALID_REQUEST");
   const snapshotTime = ctx.now();
   const snapshotAt = snapshotTime.toISOString();
   let boundary = query.cursor ? decodeUserNotificationCursor(query.cursor) : null;
@@ -49,36 +68,43 @@ export async function listUserNotifications(
     ctx.prisma.notification.findMany({
       where: {
         userId,
+        ...(query.ids ? { id: { in: query.ids } } : {}),
         createdAt: { lte: snapshotTime },
-        ...(query.unreadOnly ? { read: false } : {}),
+        ...(!query.ids && query.unreadOnly ? { read: false } : {}),
         ...(boundary ? { OR: [{ createdAt: { lt: boundary.createdAt } }, { createdAt: boundary.createdAt, id: { lt: boundary.id } }] } : {}),
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      take: query.limit + 1,
-      select: { id: true, kind: true, titlePl: true, titleEn: true, bodyPl: true, bodyEn: true, templateKey: true, params: true, href: true, read: true, createdAt: true },
+      take: query.ids ? 50 : query.limit + 1,
+      select: { id: true, kind: true, titlePl: true, titleEn: true, bodyPl: true, bodyEn: true, templateKey: true, params: true, href: true, videoId: true, read: true, createdAt: true },
     }),
     ctx.prisma.notification.count({ where: { userId, read: false } }),
   ]);
 
-  const pl = notificationLanguage(user?.language) === "pl";
-  const language = notificationViewerLanguage(user?.language);
-  const page = rows.slice(0, query.limit);
-  const items: UserNotificationDTO[] = page.map((n) => {
+  const language = notificationViewerLanguage(query.language ?? user?.language);
+  const pl = notificationLanguage(language) === "pl";
+  const page = query.ids ? rows : rows.slice(0, query.limit);
+  const types = page.map((n) => userNotificationType(n.kind, n.templateKey, n.params));
+  const videos = await loadNotificationVideos(ctx, page.flatMap((n, index) => (n.videoId && notificationTypeHasVideo(types[index]) ? [n.videoId] : [])));
+  const items: UserNotificationDTO[] = page.map((n, index) => {
+    const preview = n.videoId && notificationTypeHasVideo(types[index]) ? notificationVideoPreview(videos.get(n.videoId), snapshotTime, process.env) : null;
     // Polish and English always read the stored text (as before); other languages use the keyed template when the
     // row has one, and fall back to the stored English text otherwise (old rows, unknown keys, statements of reasons).
     const rendered = pl || language === "en" ? null : renderNotification(n.templateKey, n.params, language);
     return {
       id: n.id,
       kind: n.kind,
-      type: userNotificationType(n.kind, n.templateKey),
+      type: types[index],
       title: rendered ? rendered.title : pl ? n.titlePl : n.titleEn,
       body: rendered ? rendered.body : pl ? n.bodyPl : n.bodyEn,
       href: safeNotificationHref(n.href),
       read: n.read,
       createdAt: n.createdAt.toISOString(),
+      videoId: preview?.videoId ?? null,
+      videoSlug: preview?.videoSlug ?? null,
+      thumbnailUrl: preview?.thumbnailUrl ?? null,
     };
   });
-  return { items, nextCursor: rows.length > query.limit ? encodeUserNotificationCursor(page[page.length - 1]) : null, unreadCount, snapshotAt };
+  return { items, nextCursor: !query.ids && rows.length > query.limit ? encodeUserNotificationCursor(page[page.length - 1]) : null, unreadCount, snapshotAt };
 }
 
 /** Marks one (`id`, which must be the caller's) or all unread notifications as read; idempotent. */
@@ -90,8 +116,9 @@ export async function markNotificationsRead(
   // A delayed mark-all request must not consume notifications that arrived after the displayed snapshot.
   const now = ctx.now();
   const before = "all" in input && input.before ? new Date(Math.min(Date.parse(input.before), now.getTime())) : now;
-  const where = "all" in input ? { userId, read: false, createdAt: { lte: before } } : { id: input.id, userId, read: false };
-  const { count } = await ctx.prisma.notification.updateMany({ where, data: { read: true } });
+  const read = "all" in input || input.read !== false;
+  const where = "all" in input ? { userId, read: false, createdAt: { lte: before } } : { id: input.id, userId, read: !read };
+  const { count } = await ctx.prisma.notification.updateMany({ where, data: { read } });
   const unreadCount = await ctx.prisma.notification.count({ where: { userId, read: false } });
   return { updated: count, unreadCount };
 }

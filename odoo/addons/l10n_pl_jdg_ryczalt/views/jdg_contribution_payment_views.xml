@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_jdg_payment_list" model="ir.ui.view">
+        <field name="name">jdg.contribution.payment.list</field>
+        <field name="model">jdg.contribution.payment</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="paid_on"/>
+                <field name="kind"/>
+                <field name="for_month"/>
+                <field name="amount" sum="Razem"/>
+                <field name="due_amount" optional="show"/>
+                <field name="reference" optional="show"/>
+                <field name="currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_jdg_payment_form" model="ir.ui.view">
+        <field name="name">jdg.contribution.payment.form</field>
+        <field name="model">jdg.contribution.payment</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Od przychodu odliczamy tylko składki ZAPŁACONE. Zapisz tu każdą zapłaconą składkę z datą zapłaty;
+                        kwota należna podpowiada się sama (szacunek, nie porada podatkowa).
+                    </div>
+                    <group>
+                        <group>
+                            <field name="kind"/>
+                            <field name="for_month"/>
+                            <field name="paid_on"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="due_amount"/>
+                            <field name="reference"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group><field name="note"/></group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_jdg_payment" model="ir.actions.act_window">
+        <field name="name">Zapłacone składki</field>
+        <field name="res_model">jdg.contribution.payment</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Jeszcze nic nie zapłaciłeś</p>
+            <p>Gdy zapłacisz ZUS, składkę zdrowotną albo zaliczkę, zapisz to tutaj. Zapłacone składki obniżają podstawę ryczałtu.</p>
+        </field>
+    </record>
+</odoo>

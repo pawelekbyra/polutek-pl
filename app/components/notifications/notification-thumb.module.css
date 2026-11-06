@@ -1,0 +1,9 @@
+/* Video cover at the right of a new-video / premiere row: fixed 56 x 32 box (no layout shift), surface colour as the skeleton. */
+.thumb { position: relative; display: block; flex: none; width: 56px; height: 32px; margin-top: 2px; overflow: hidden; border-radius: 6px; background: var(--chan-surface); box-shadow: inset 0 0 0 1px var(--chan-line); text-decoration: none; }
+.loading { animation: pulse 1.4s ease-in-out infinite; }
+.image { display: block; width: 56px; height: 32px; object-fit: cover; opacity: 0; transition: opacity 0.18s ease-out; }
+.loaded { opacity: 1; }
+.failed { animation: none; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .loading { animation: none; } .image { transition: none; } }
+@media (max-width: 359px) { .thumb { width: 48px; } .image { width: 48px; } }

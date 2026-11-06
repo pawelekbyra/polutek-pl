@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import type { Actor } from "@/lib/modules/shared/actor";
+import { addMonths } from "@/lib/modules/patron-zone/domain/pass-state";
 
 let actor: Actor = { type: "user", userId: "u1" };
 vi.mock("@/lib/api/auth", () => ({ getActorFromAuth: vi.fn(async () => actor) }));
@@ -166,25 +167,39 @@ describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
     expect(extended).toMatchObject({ totalMinor: 2998, grantedAt: saved.grantedAt });
   });
 
-  it("unlimited: a lifetime marker, no end date, the product's price; then nothing more can be bought", async () => {
+  it("3 months: ends 3 CALENDAR months after the purchase (no lifetime marker, never unlimited); another payment of either plan extends from the end", async () => {
     const res = await post(checkout, "/api/user/premium-pass/checkout", body({ productId: "ACCESS_LIFETIME" }));
     expect(res.status).toBe(200);
     const receipt = (await res.json()).pass;
-    expect(receipt).toMatchObject({ state: "active", lifetime: true, expiresAt: null, productId: "ACCESS_LIFETIME", priceMinor: 2999 });
-    expect(JSON.parse(store.get("xp.premium_pass:u1")!)).toMatchObject({ lifetime: true, expiresAt: null });
-    for (const productId of ["ACCESS_30D", "ACCESS_LIFETIME"]) {
-      const more = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: crypto.randomUUID(), productId }));
-      expect(more.status).toBe(409);
-      expect((await more.json()).code).toBe("ALREADY_LIFETIME");
-    }
-    expect(JSON.parse(store.get("xp.premium_pass:u1")!).totalMinor).toBe(2999);
+    const saved = JSON.parse(store.get("xp.premium_pass:u1")!);
+    expect(receipt).toMatchObject({ state: "active", lifetime: false, productId: "ACCESS_LIFETIME", priceMinor: 2999 });
+    expect(saved).toMatchObject({ lifetime: false, lifetimePaymentId: null, productId: "ACCESS_LIFETIME", priceMinor: 2999 });
+    expect(saved.expiresAt).toBe(addMonths(new Date(saved.grantedAt), 3).toISOString());
+    expect(receipt.expiresAt).toBe(saved.expiresAt);
+    const length = (new Date(saved.expiresAt).getTime() - new Date(saved.grantedAt).getTime()) / DAY;
+    expect(length).toBeGreaterThanOrEqual(89 - 1 / 24); // 3 calendar months, DST hour aside
+    expect(length).toBeLessThanOrEqual(92 + 1 / 24);
+
+    // buying again is an extension, not an overwrite and not blocked: 30 days, then 3 months more, from the running end
+    const thirty = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: crypto.randomUUID(), productId: "ACCESS_30D" }));
+    expect(thirty.status).toBe(200);
+    const afterThirty = JSON.parse(store.get("xp.premium_pass:u1")!);
+    expect(new Date(afterThirty.expiresAt).getTime() - new Date(saved.expiresAt).getTime()).toBe(30 * DAY);
+    const three = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: crypto.randomUUID(), productId: "ACCESS_LIFETIME" }));
+    expect(three.status).toBe(200);
+    const afterThree = JSON.parse(store.get("xp.premium_pass:u1")!);
+    expect(afterThree.expiresAt).toBe(addMonths(new Date(afterThirty.expiresAt), 3).toISOString());
+    expect(afterThree).toMatchObject({ lifetime: false, totalMinor: 2999 + 1499 + 2999, grantedAt: saved.grantedAt });
   });
 
-  it("unlimited while a 30-day access runs converts it to lifetime", async () => {
+  it("the 3-month plan bought while a 30-day access runs extends it from its end", async () => {
     await post(checkout, "/api/user/premium-pass/checkout", body());
+    const first = JSON.parse(store.get("xp.premium_pass:u1")!);
     const res = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: crypto.randomUUID(), productId: "ACCESS_LIFETIME" }));
     expect(res.status).toBe(200);
-    expect(JSON.parse(store.get("xp.premium_pass:u1")!)).toMatchObject({ lifetime: true, totalMinor: 4498 });
+    const saved = JSON.parse(store.get("xp.premium_pass:u1")!);
+    expect(saved).toMatchObject({ lifetime: false, totalMinor: 4498 });
+    expect(saved.expiresAt).toBe(addMonths(new Date(first.expiresAt), 3).toISOString());
   });
 
   it("the price follows the chosen currency (server table), the receipt shows the paid currency", async () => {
@@ -204,12 +219,16 @@ describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
     expect(JSON.parse(store.get("xp.premium_pass:u1")!)).toMatchObject({ currency: "EUR", priceMinor: 399, totalMinor: 399 });
   });
 
-  it("refuses 30 more days beyond the 365-day horizon, but unlimited is still allowed", async () => {
+  it("refuses 30 days and 3 months beyond the 365-day horizon alike; inside it the 3-month plan is allowed", async () => {
     store.set("xp.premium_pass:u1", row({ provider: "DEMO", expiresAt: new Date(Date.now() + 340 * DAY).toISOString(), paymentIds: [] }));
     const res = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "3b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d" }));
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe("MAX_AHEAD");
-    expect((await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "4b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d", productId: "ACCESS_LIFETIME" }))).status).toBe(200);
+    const threeMonths = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "4b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d", productId: "ACCESS_LIFETIME" }));
+    expect(threeMonths.status).toBe(409);
+    expect((await threeMonths.json()).code).toBe("MAX_AHEAD");
+    store.set("xp.premium_pass:u1", row({ provider: "DEMO", expiresAt: new Date(Date.now() + 200 * DAY).toISOString(), paymentIds: [] }));
+    expect((await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "5b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d", productId: "ACCESS_LIFETIME" }))).status).toBe(200);
   });
 
   it("ADMIN on the public site can use the demo checkout too", async () => {
@@ -321,28 +340,32 @@ describe("POST /api/user/premium-pass/intent (stripe mode: the real payment star
     }
   });
 
-  it("refuses live payments before they exist when unlimited access is already held", async () => {
+  it("no plan is unlimited: a live purchase is allowed on top of a running access, and a legacy unlimited row does not block it", async () => {
     setStripe("live", "on");
-    store.set("xp.premium_pass:u1", row({ lifetime: true, lifetimePaymentId: "pay_0" }));
+    for (const existing of [{}, { lifetime: true, lifetimePaymentId: "pay_0" }]) {
+      store.set("xp.premium_pass:u1", row(existing));
+      for (const productId of ["ACCESS_30D", "ACCESS_LIFETIME"]) {
+        createCheckoutIntent.mockClear();
+        expect((await post(intent, "/api/user/premium-pass/intent", input({ productId }))).status).toBe(200);
+        expect(createCheckoutIntent).toHaveBeenCalledTimes(1);
+      }
+    }
+  });
+
+  it("refuses live purchases beyond the horizon, the 3-month plan like the 30-day one", async () => {
+    setStripe("live", "on");
+    store.set("xp.premium_pass:u1", row({ expiresAt: new Date(Date.now() + 340 * DAY).toISOString() }));
     for (const productId of ["ACCESS_30D", "ACCESS_LIFETIME"]) {
       const res = await post(intent, "/api/user/premium-pass/intent", input({ productId }));
       expect(res.status).toBe(409);
-      expect((await res.json()).code).toBe("ALREADY_LIFETIME");
+      expect((await res.json()).code).toBe("MAX_AHEAD");
     }
     expect(createCheckoutIntent).not.toHaveBeenCalled();
-  });
-
-  it("refuses live purchases beyond the horizon, but allows unlimited (it converts)", async () => {
-    setStripe("live", "on");
-    store.set("xp.premium_pass:u1", row({ expiresAt: new Date(Date.now() + 340 * DAY).toISOString() }));
-    const res = await post(intent, "/api/user/premium-pass/intent", input({ productId: "ACCESS_30D" }));
-    expect(res.status).toBe(409);
-    expect((await res.json()).code).toBe("MAX_AHEAD");
-    expect(createCheckoutIntent).not.toHaveBeenCalled();
+    store.set("xp.premium_pass:u1", row({ expiresAt: new Date(Date.now() + 200 * DAY).toISOString() })); // + 3 months is still inside 365 days
     expect((await post(intent, "/api/user/premium-pass/intent", input({ productId: "ACCESS_LIFETIME" }))).status).toBe(200);
   });
 
-  it("allows repeated test payments after lifetime access and beyond the renewal horizon without removing access", async () => {
+  it("allows repeated test payments after a legacy unlimited row and beyond the renewal horizon without removing access", async () => {
     setStripe("test");
     for (const existing of [{ lifetime: true, lifetimePaymentId: "pay_0" }, { expiresAt: new Date(Date.now() + 400 * DAY).toISOString() }]) {
       const saved = row(existing);
@@ -424,7 +447,7 @@ describe("POST /api/user/premium-pass/demo (own access only, demo mode only)", (
     expect(store.has("xp.premium_pass:u1")).toBe(false);
   });
 
-  it("expire also ends an unlimited access (the panel is for looking at the expired state)", async () => {
+  it("expire also ends a 3-month access (the panel is for looking at the expired state)", async () => {
     await post(checkout, "/api/user/premium-pass/checkout", body({ productId: "ACCESS_LIFETIME" }));
     const res = await post(demo, "/api/user/premium-pass/demo", { action: "expire" });
     expect((await res.json()).pass).toMatchObject({ state: "expired", lifetime: false });

@@ -10,17 +10,29 @@ import BrandHomeLink from "./BrandHomeLink";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
+import TopbarPremiere, { TopbarPremiereSpacer, isTopbarPremiereActive } from "./TopbarPremiere";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useSwitchLanguage } from "./useSwitchLanguage";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { LogIn } from "lucide-react";
-import { CloseIcon, SearchIcon } from "./icons/MarkerUiIcons";
+import { CloseButton } from "@/components/ui/close-button";
+import { SearchIcon } from "./icons/MarkerUiIcons";
+import { cn } from "@/lib/utils";
+import { isRoleBadgeKind, type RoleBadgeKind } from "@/lib/role-badge";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 
 type ServerAdminState = {
   userId: string;
   isAdmin: boolean;
+  role: RoleBadgeKind | null;
 };
+
+/**
+ * The viewer's public role (avatar ring) per account, for the lifetime of the page session: the profile read below
+ * fills it on every page load, and until it answers the last known role is shown, so the ring does not blink
+ * in and out while navigating. A fresh answer always replaces it (e.g. after buying the patron-zone access).
+ */
+const roleCache = new Map<string, RoleBadgeKind | null>();
 
 /**
  * The language switcher reads the current query string (to keep it when switching), which on a
@@ -81,7 +93,9 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
       .then((response) => (response.ok ? response.json() : null))
       .then((profile) => {
         if (!controller.signal.aborted) {
-          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true });
+          const role = isRoleBadgeKind(profile?.role) ? profile.role : null;
+          if (profile) roleCache.set(userId, role);
+          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true, role });
         }
       })
       .catch((error: unknown) => {
@@ -89,7 +103,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
           !controller.signal.aborted &&
           !(error instanceof DOMException && error.name === "AbortError")
         ) {
-          setServerAdminState({ userId, isAdmin: false });
+          setServerAdminState({ userId, isAdmin: false, role: roleCache.get(userId) ?? null });
         }
       });
 
@@ -100,11 +114,13 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
     serverAdminState?.userId === userId && serverAdminState?.isAdmin === true;
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, undefined);
+  const role = userId ? (serverAdminState?.userId === userId ? serverAdminState.role : (roleCache.get(userId) ?? null)) : null;
   const searchLabel = tx("Szukaj", "Search");
   const openSearchLabel = tx("Otwórz wyszukiwanie", "Open search");
   const closeSearchLabel = tx("Zamknij wyszukiwanie", "Close search");
   const skipLabel = tx("Przejdź do treści", "Skip to content");
   const navLabel = tx("Główna nawigacja", "Main navigation");
+  const premiereActive = isTopbarPremiereActive();
 
   return (
     <header
@@ -125,14 +141,9 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
               if (event.key === "Escape") closeMobileSearch();
             }}
           >
-            <button
-              type="button"
-              onClick={closeMobileSearch}
-              aria-label={closeSearchLabel}
-              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)]"
-            >
-              <CloseIcon size={22} className="shrink-0" />
-            </button>
+            <span className="relative h-10 w-10 shrink-0">
+              <CloseButton onClick={closeMobileSearch} aria-label={closeSearchLabel} className="-left-0.5 -top-0.5 right-auto" />
+            </span>
             <form onSubmit={handleSearch} role="search" className="flex-1 flex min-w-0">
               <div className="relative flex h-10 min-w-0 flex-1 items-center rounded-full border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
                 <input
@@ -151,7 +162,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-3.5 text-[var(--chan-ink)]"
                   aria-label={searchLabel}
                 >
-                  <SearchIcon size={22} className="shrink-0" />
+                  <SearchIcon size={22} strokeWidth={1.636} className="shrink-0 text-[var(--chan-ink)]" />
                 </button>
               </div>
             </form>
@@ -170,8 +181,10 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
               </BrandHomeLink>
             </div>
 
+            <TopbarPremiere />
+
             {/* Desktop search */}
-            <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
+            <div className={cn("flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0", premiereActive && "min-[1180px]:w-[548px] min-[1180px]:flex-none")}>
               <form onSubmit={handleSearch} role="search" className="flex w-full">
                 <div className="relative flex h-10 min-w-0 flex-1 items-center rounded-full border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
                   <input
@@ -189,11 +202,13 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-3.5 text-[var(--chan-ink)]"
                     aria-label={searchLabel}
                   >
-                    <SearchIcon size={22} className="shrink-0" />
+                    <SearchIcon size={22} strokeWidth={1.636} className="shrink-0 text-[var(--chan-ink)]" />
                   </button>
                 </div>
               </form>
             </div>
+
+            <TopbarPremiereSpacer />
 
             {/* Right controls */}
             <div className="flex shrink-0 items-center justify-end gap-1.5">
@@ -214,17 +229,14 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   aria-expanded={isMobileSearchOpen}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
                 >
-                  <SearchIcon size={22} className="shrink-0" />
+                  <SearchIcon size={22} strokeWidth={1.636} className="shrink-0 text-[var(--chan-ink)]" />
                 </button>
               </div>
 
-              {/* Language switcher — one pill (globe, code, chevron) that opens the language list. */}
-              {/* Signed-out visitors only: a signed-in user changes the language in the account panel (and in the footer). */}
-              {isSignedIn ? null : (
-                <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} variant="icon" />}>
-                  <NavbarLanguageSwitcher language={language} />
-                </Suspense>
-              )}
+              {/* Language switcher: the globe stays for signed-in users too (the same picker as for visitors; the account window keeps a language field as well). */}
+              <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} variant="icon" />}>
+                <NavbarLanguageSwitcher language={language} />
+              </Suspense>
 
               {isSignedIn ? null : isLoaded ? (
                 <button
@@ -247,7 +259,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
               {SHOW_NOTIFICATION_BELL && isLoaded && isSignedIn && <NotificationBell key={userId} />}
 
               {isLoaded && isSignedIn && (
-                <UserMenu isAdmin={isAdmin} />
+                <UserMenu isAdmin={isAdmin} role={role} />
               )}
             </div>
           </>

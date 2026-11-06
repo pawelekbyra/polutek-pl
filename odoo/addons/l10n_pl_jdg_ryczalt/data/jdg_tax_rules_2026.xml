@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Reguły podatkowe: dane 2026 oraz parametry stałe. noupdate=1: Twoje edycje przetrwają aktualizację modułu. Nowe wersje reguł dodawaj nowym plikiem z nowymi xml_id. -->
+    <data noupdate="1">
+        <record id="rule_min_wage_2026_v1" model="jdg.tax.rule">
+            <field name="key">min_wage</field>
+            <field name="label">Płaca minimalna 2026</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="valid_to">2026-12-31</field>
+            <field name="value_num">4806</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://isap.sejm.gov.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Rozporządzenie Rady Ministrów (Dz.U. 2026 poz. 1213).</field>
+            <field name="description">Podstawa minimalnej składki zdrowotnej (9% płacy minimalnej) oraz progu Funduszu Pracy.</field>
+        </record>
+
+        <record id="rule_forecast_wage_2026_v1" model="jdg.tax.rule">
+            <field name="key">forecast_avg_wage</field>
+            <field name="label">Prognozowane przeciętne wynagrodzenie 2026</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="valid_to">2026-12-31</field>
+            <field name="value_num">9420</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.infakt.pl/blog/?p=84147</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Ustawa budżetowa na 2026.</field>
+            <field name="description">60% tej kwoty to podstawa pełnego ZUS.</field>
+        </record>
+
+        <record id="rule_zus_full_base_2026_v1" model="jdg.tax.rule">
+            <field name="key">zus.full.base</field>
+            <field name="label">Podstawa pełnego ZUS (60% prognozy) 2026</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="valid_to">2026-12-31</field>
+            <field name="value_num">5652.0</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.podatnik.info/publikacje/wysokosc-skladek-zus-w-2026-roku-aktualne-stawki-i-podstawy-wymiaru,628973</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+            <field name="description">60% prognozowanego przeciętnego wynagrodzenia.</field>
+        </record>
+
+        <record id="rule_zus_pref_base_2026_v1" model="jdg.tax.rule">
+            <field name="key">zus.pref.base</field>
+            <field name="label">Podstawa preferencyjnego ZUS (30% płacy min.) 2026</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="valid_to">2026-12-31</field>
+            <field name="value_num">1441.8</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.podatnik.info/publikacje/wysokosc-skladek-zus-w-2026-roku-aktualne-stawki-i-podstawy-wymiaru,628973</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+            <field name="description">30% płacy minimalnej; obowiązuje przez 24 miesiące po uldze na start.</field>
+        </record>
+
+        <record id="rule_gus_wage_q4_2025_v1" model="jdg.tax.rule">
+            <field name="key">gus_avg_wage_q4</field>
+            <field name="label">Przeciętne wynagrodzenie z IV kw. 2025 (W; składka zdrowotna luty 2026 - styczeń 2027)</field>
+            <field name="group">zdrowotna</field>
+            <field name="valid_from">2026-02-01</field>
+            <field name="valid_to">2027-01-31</field>
+            <field name="value_num">9228.64</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://poradnikprzedsiebiorcy.pl/-wyliczenie-skladki-zdrowotnej-u-ryczaltowca</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Komunikat Prezesa GUS (Monitor Polski). Rok składkowy zdrowotnej trwa od lutego do stycznia, więc styczeń 2027 liczy się jeszcze z tej wartości.</field>
+            <field name="description">Baza składki zdrowotnej ryczałtowca: 9% x próg (60/100/180%) x W. Kontrola: 498,35 / 830,58 / 1 495,04 zł.</field>
+        </record>
+
+        <record id="rule_vat_limit_2026_v1" model="jdg.tax.rule">
+            <field name="key">vat.exempt_limit</field>
+            <field name="label">Limit zwolnienia podmiotowego z VAT 2026</field>
+            <field name="group">vat</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="valid_to">2026-12-31</field>
+            <field name="value_num">240000</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.podatki.biz/artykuly/nowy-limit-zwolnienia-podmiotowego-z-vat-w-2026-r-mf-o-przepisach-przejsciowych_4_60302.htm</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Art. 113 ustawy o VAT; w roku startu limit proporcjonalnie do liczby dni.</field>
+            <field name="description">Sprzedaż bez VAT, narastająco od 1 stycznia.</field>
+        </record>
+
+        <record id="rule_zus_rate_pension_v1" model="jdg.tax.rule">
+            <field name="key">zus.rate.pension</field>
+            <field name="label">Stawka składki emerytalnej</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">19.52</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+        </record>
+
+        <record id="rule_zus_rate_disability_v1" model="jdg.tax.rule">
+            <field name="key">zus.rate.disability</field>
+            <field name="label">Stawka składki rentowej</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">8.0</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+        </record>
+
+        <record id="rule_zus_rate_sickness_v1" model="jdg.tax.rule">
+            <field name="key">zus.rate.sickness</field>
+            <field name="label">Stawka składki chorobowej (dobrowolna)</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">2.45</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+        </record>
+
+        <record id="rule_zus_rate_fp_v1" model="jdg.tax.rule">
+            <field name="key">zus.rate.fp</field>
+            <field name="label">Stawka Funduszu Pracy</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">2.45</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Tylko dla podstawy &gt;= płaca minimalna (pełny ZUS). Stawka wypadkowej leży w profilu firmy (zależy od płatnika, domyślnie 1,67%).</field>
+        </record>
+
+        <record id="rule_health_rate_v1" model="jdg.tax.rule">
+            <field name="key">health.rate_pct</field>
+            <field name="label">Stawka składki zdrowotnej</field>
+            <field name="group">zdrowotna</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">9.0</field>
+            <field name="unit">%</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl/firmy/przedsiebiorco-przeczytaj-wazne/kalkulator-skladki-zdrowotnej</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+        </record>
+
+        <record id="rule_health_tiers_v1" model="jdg.tax.rule">
+            <field name="key">health.tier_pct</field>
+            <field name="label">Progi składki zdrowotnej ryczałtowca (% przeciętnego wynagrodzenia)</field>
+            <field name="group">zdrowotna</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_json" eval="[60, 100, 180]"/>
+            <field name="unit">%</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.pit.pl/?p=45259</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+            <field name="description">Podstawa składki: 60%, 100% albo 180% W zależnie od przychodu narastająco.</field>
+        </record>
+
+        <record id="rule_health_limits_v1" model="jdg.tax.rule">
+            <field name="key">health.tier_limits</field>
+            <field name="label">Granice progów składki zdrowotnej (przychód narastająco)</field>
+            <field name="group">zdrowotna</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_json" eval="[60000, 300000]"/>
+            <field name="unit">PLN</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.pit.pl/?p=45259</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Do 60 000 zł włącznie: pierwszy próg.</field>
+        </record>
+
+        <record id="rule_health_min_pct_v1" model="jdg.tax.rule">
+            <field name="key">health.min_pct_of_min_wage</field>
+            <field name="label">Minimalna składka zdrowotna (% płacy minimalnej)</field>
+            <field name="group">zdrowotna</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">9.0</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.podatnik.info</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). 2026: 432,54 zł; 2027: 445,50 zł.</field>
+        </record>
+
+        <record id="rule_ulga_months_v1" model="jdg.tax.rule">
+            <field name="key">ulga.months</field>
+            <field name="label">Ulga na start: liczba miesięcy</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">6</field>
+            <field name="unit">miesięcy</field>
+            <field name="confidence">P</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Warunek: brak działalności w ostatnich 60 miesiącach. Właściciel potwierdził korzystanie z ulgi.</field>
+        </record>
+
+        <record id="rule_pref_months_v1" model="jdg.tax.rule">
+            <field name="key">pref.months</field>
+            <field name="label">Preferencyjny ZUS: liczba miesięcy</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">24</field>
+            <field name="unit">miesięcy</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+        </record>
+
+        <record id="rule_deadline_zus_day_v1" model="jdg.tax.rule">
+            <field name="key">deadline.zus_day</field>
+            <field name="label">Termin ZUS i składki zdrowotnej (dzień miesiąca)</field>
+            <field name="group">terminy</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">20</field>
+            <field name="unit">dzień</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). JDG bez pracowników: do 20. następnego miesiąca.</field>
+        </record>
+
+        <record id="rule_deadline_zus_day_emp_v1" model="jdg.tax.rule">
+            <field name="key">deadline.zus_day_employer</field>
+            <field name="label">Termin ZUS przy zatrudnianiu pracowników (dzień miesiąca)</field>
+            <field name="group">terminy</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">15</field>
+            <field name="unit">dzień</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). </field>
+        </record>
+
+        <record id="rule_deadline_advance_day_v1" model="jdg.tax.rule">
+            <field name="key">deadline.advance_day</field>
+            <field name="label">Termin zaliczki na ryczałt (dzień miesiąca)</field>
+            <field name="group">terminy</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">20</field>
+            <field name="unit">dzień</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://isap.sejm.gov.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Miesięcznie: 20. następnego miesiąca. Kwartalnie: 20.04, 20.07, 20.10, 20.01.</field>
+        </record>
+
+        <record id="rule_deadline_pit28_v1" model="jdg.tax.rule">
+            <field name="key">deadline.pit28</field>
+            <field name="label">Termin PIT-28 (miesiąc-dzień)</field>
+            <field name="group">terminy</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_char">04-30</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.podatki.gov.pl/e-urzad-skarbowy/</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). PIT-28 za rok poprzedni do 30 kwietnia.</field>
+        </record>
+
+        <record id="rule_holidays_pl_v1" model="jdg.tax.rule">
+            <field name="key">holidays.PL</field>
+            <field name="label">Dni ustawowo wolne (stałe, MM-DD)</field>
+            <field name="group">terminy</field>
+            <field name="valid_from">2025-01-01</field>
+            <field name="value_json" eval="[&quot;01-01&quot;, &quot;01-06&quot;, &quot;05-01&quot;, &quot;05-03&quot;, &quot;08-15&quot;, &quot;11-01&quot;, &quot;11-11&quot;, &quot;12-24&quot;, &quot;12-25&quot;, &quot;12-26&quot;]"/>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://isap.sejm.gov.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Wigilia (24.12) jest dniem wolnym od 2025 roku. Święta ruchome (Wielkanoc, Boże Ciało) liczy algorytm w kodzie.</field>
+            <field name="description">Wyznaczają przesunięcie terminów płatności na dzień roboczy.</field>
+        </record>
+
+        <record id="rule_oss_threshold_v1" model="jdg.tax.rule">
+            <field name="key">oss.threshold_eur</field>
+            <field name="label">Próg OSS: sprzedaż usług elektronicznych do konsumentów UE</field>
+            <field name="group">vat</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">10000</field>
+            <field name="unit">EUR</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.podatki.gov.pl/media/6886/oss-informacje-dla-sprzedawcow.pdf</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Jeszcze niewykorzystywany przez pulpit (alert w iteracji 3/6).</field>
+        </record>
+
+        <record id="rule_ryczalt_limit_v1" model="jdg.tax.rule">
+            <field name="key">ryczalt.revenue_limit_eur</field>
+            <field name="label">Limit przychodu dla ryczałtu</field>
+            <field name="group">podatek</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">2000000</field>
+            <field name="unit">EUR</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://isap.sejm.gov.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Art. 6 ust. 4 ustawy o ryczałcie; przeliczenie kursem z 1 października roku poprzedniego.</field>
+        </record>
+
+        <record id="rule_mzp_limit_v1" model="jdg.tax.rule">
+            <field name="key">mzp.revenue_limit</field>
+            <field name="label">Mały ZUS Plus: limit przychodu z roku poprzedniego</field>
+            <field name="group">zus</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">120000</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.zus.pl</field>
+            <field name="source_note">Źródło: raport PRAWO.md (2026-11-02). Definicja &quot;dochodu&quot; dla ryczałtu niepotwierdzona [N].</field>
+        </record>
+
+        <record id="rule_donation_limit_v1" model="jdg.tax.rule">
+            <field name="key">donation.limit_pln</field>
+            <field name="label">Limit darowizn od jednej osoby (okno kilku lat)</field>
+            <field name="group">podatek</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">5733</field>
+            <field name="unit">PLN</field>
+            <field name="confidence">N</field>
+            <field name="state">active</field>
+            <field name="source_url">https://isap.sejm.gov.pl</field>
+            <field name="source_note">Decyzja właściciela: napiwki i wsparcie bez świadczenia zwrotnego to darowizny, nie przychód ryczałtowy (wyrok NSA z 7.07.2026, III FSK 113/26: SYGNATURA DO WERYFIKACJI). Limit kwoty wolnej od podatku od spadków i darowizn dla grupy zerowej 5 733 zł (suma od jednej osoby w oknie 5 lat) oraz obowiązek zgłoszenia SD-Z2: do potwierdzenia z księgowym (raport ODPOWIEDZI.md).</field>
+            <field name="description">Alert na pulpicie, gdy suma darowizn od jednego darczyńcy zbliża się do limitu.</field>
+        </record>
+
+        <record id="rule_donation_window_v1" model="jdg.tax.rule">
+            <field name="key">donation.window_years</field>
+            <field name="label">Okno sumowania darowizn od jednej osoby</field>
+            <field name="group">podatek</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">5</field>
+            <field name="unit">lat</field>
+            <field name="confidence">N</field>
+            <field name="state">active</field>
+            <field name="source_url">https://isap.sejm.gov.pl</field>
+            <field name="source_note">Okno 5 lat wg decyzji właściciela, do potwierdzenia z księgowym.</field>
+        </record>
+
+        <record id="rule_rate_vod_85_v1" model="jdg.tax.rule">
+            <field name="key">ryczalt.rate.vod_85</field>
+            <field name="label">Stawka ryczałtu 8,5% (robocza, do potwierdzenia)</field>
+            <field name="group">podatek</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">8.5</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://poradnikprzedsiebiorcy.pl/-streaming-a-ryczalt</field>
+            <field name="source_note">STAWKA NIEPOTWIERDZONA WIĄŻĄCĄ INTERPRETACJĄ: zależy od klasyfikacji PKWiU usługi (nie od PKD). Przyjęte 8,5% (decyzja właściciela), ale RYZYKO 15% (PKWiU 59.11.25.0 przesyłanie strumieni wideo: u nas własny streaming HLS). Interpretacje KIS z 2026 dla płatnego dostępu do własnych filmów (PKWiU 59.11.x): 0112-KDSL1-2.4011.245.2026.2.AP z 13.05.2026 oraz 0115-KDST2-1.4011.625.2025.2.JPO z 16.02.2026 (SYGNATURY DO POTWIERDZENIA W ORYGINALE). Zabezpieczenie: własna interpretacja indywidualna KIS albo opinia klasyfikacyjna GUS. 8,5%: PKWiU 63.11.19.0 (streaming audio/wideo) wg źródła wtórnego.</field>
+            <field name="description">Domyślna stawka w profilu firmy.</field>
+        </record>
+
+        <record id="rule_rate_vod_12_v1" model="jdg.tax.rule">
+            <field name="key">ryczalt.rate.vod_12</field>
+            <field name="label">Stawka ryczałtu 12% (alternatywa)</field>
+            <field name="group">podatek</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">12</field>
+            <field name="unit">%</field>
+            <field name="confidence">N</field>
+            <field name="state">active</field>
+            <field name="source_url">https://www.pit.pl/?p=16501</field>
+            <field name="source_note">STAWKA NIEPOTWIERDZONA WIĄŻĄCĄ INTERPRETACJĄ: zależy od klasyfikacji PKWiU usługi (nie od PKD). Przyjęte 8,5% (decyzja właściciela), ale RYZYKO 15% (PKWiU 59.11.25.0 przesyłanie strumieni wideo: u nas własny streaming HLS). Interpretacje KIS z 2026 dla płatnego dostępu do własnych filmów (PKWiU 59.11.x): 0112-KDSL1-2.4011.245.2026.2.AP z 13.05.2026 oraz 0115-KDST2-1.4011.625.2025.2.JPO z 16.02.2026 (SYGNATURY DO POTWIERDZENIA W ORYGINALE). Zabezpieczenie: własna interpretacja indywidualna KIS albo opinia klasyfikacyjna GUS. 12%: oprogramowanie i usługi IT, art. 12 ust. 1 pkt 2b.</field>
+            <field name="description">Dostępna do przełączenia w profilu firmy.</field>
+        </record>
+
+        <record id="rule_rate_vod_15_v1" model="jdg.tax.rule">
+            <field name="key">ryczalt.rate.vod_15</field>
+            <field name="label">Stawka ryczałtu 15% (alternatywa)</field>
+            <field name="group">podatek</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">15</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_url">https://poradnikprzedsiebiorcy.pl/-streaming-a-ryczalt</field>
+            <field name="source_note">STAWKA NIEPOTWIERDZONA WIĄŻĄCĄ INTERPRETACJĄ: zależy od klasyfikacji PKWiU usługi (nie od PKD). Przyjęte 8,5% (decyzja właściciela), ale RYZYKO 15% (PKWiU 59.11.25.0 przesyłanie strumieni wideo: u nas własny streaming HLS). Interpretacje KIS z 2026 dla płatnego dostępu do własnych filmów (PKWiU 59.11.x): 0112-KDSL1-2.4011.245.2026.2.AP z 13.05.2026 oraz 0115-KDST2-1.4011.625.2025.2.JPO z 16.02.2026 (SYGNATURY DO POTWIERDZENIA W ORYGINALE). Zabezpieczenie: własna interpretacja indywidualna KIS albo opinia klasyfikacyjna GUS. 15%: PKWiU 59.11.25.0 / 59.20.36.0 wg źródła wtórnego.</field>
+            <field name="description">Dostępna do przełączenia w profilu firmy.</field>
+        </record>
+
+        <record id="rule_vat_shadow_rate_v1" model="jdg.tax.rule">
+            <field name="key">vat.shadow_rate_pct</field>
+            <field name="label">Stawka VAT liczona „w cieniu” (gdyby firma była czynnym podatnikiem)</field>
+            <field name="group">vat</field>
+            <field name="valid_from">2026-01-01</field>
+            <field name="value_num">23</field>
+            <field name="unit">%</field>
+            <field name="confidence">PR</field>
+            <field name="state">active</field>
+            <field name="source_note">Stawka podstawowa 23% (usługi elektroniczne w Polsce). Służy tylko do wyliczenia VAT „w cieniu” (brutto x 23 / 123) na wypadek przekroczenia limitu zwolnienia z VAT. Stawkę właściwą dla usługi potwierdź z księgowym.</field>
+        </record>
+    </data>
+</odoo>

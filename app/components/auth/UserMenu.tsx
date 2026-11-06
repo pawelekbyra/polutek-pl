@@ -1,26 +1,23 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Users, X } from "lucide-react";
+import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Star, Users } from "lucide-react";
 import { useAuth, useUser } from "@/lib/auth/react";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
+import { CloseButton } from "@/components/ui/close-button";
 import AccountModal from "./AccountModal";
-import LanguageSwitcher from "../LanguageSwitcher";
-import { useSwitchLanguage } from "../useSwitchLanguage";
+import { cn } from "@/lib/utils";
+import { roleRingClass, type RoleBadgeKind } from "@/lib/role-badge";
+import { roleLabel } from "@/lib/role-label";
 
 interface UserMenuProps {
   isAdmin: boolean;
-}
-
-/** The language button of the account panel; useSwitchLanguage reads the URL, so it sits in its own Suspense. */
-function PanelLanguage() {
-  const { language } = useLanguage();
-  const switchLanguage = useSwitchLanguage();
-  return <LanguageSwitcher language={language} onSelect={switchLanguage} variant="dropdown" />;
+  /** The viewer's public role (Creator > VIP > Base), from the profile read of the top bar; null/undefined = not known yet. */
+  role?: RoleBadgeKind | null;
 }
 
 type SubscribedChannel = { id: string; slug: string; handle: string | null; name: string };
@@ -33,13 +30,44 @@ const PANEL_EXIT_MS = 200;
 const studioAccessCache = new Map<string, boolean>();
 
 /**
+ * The role under the name in the account panel. Same colours as the avatar ring and the comment pills (lib/role-badge.ts):
+ * amber for VIP (an active Premium access), blue for the creator, grey for everyone else. The role is always written out
+ * (colour never carries it alone). "VIP" and "Premium" are the same words in every language, so "VIP · Premium" needs no
+ * catalog entry; the other two reuse the comment pills' texts.
+ */
+function RolePill({ role }: { role: RoleBadgeKind }) {
+  const { tx } = useLanguage();
+  const base = "mt-1.5 inline-flex h-6 max-w-full items-center gap-1 rounded-md border px-2 text-[12px] font-bold leading-none whitespace-nowrap";
+  if (role === "VIP") {
+    return (
+      <span data-role-pill="VIP" className={cn(base, "border-[var(--chan-amber-bright)] bg-[var(--cm-amber-14)] text-[var(--chan-amber-ink)]")}>
+        <Star className="h-3.5 w-3.5 shrink-0 fill-[var(--chan-amber)] text-[var(--chan-amber-strong)]" strokeWidth={1.8} aria-hidden="true" />
+        VIP · Premium
+      </span>
+    );
+  }
+  if (role === "AUTHOR") {
+    return (
+      <span data-role-pill="AUTHOR" className={cn(base, "border-transparent bg-[var(--cm-blue-14)] text-[var(--chan-blue)]")}>
+        {tx("Twórca", "Creator")}
+      </span>
+    );
+  }
+  return (
+    <span data-role-pill="BASE" className={cn(base, "border-transparent bg-[var(--cm-gray-14)] text-[var(--chan-muted-2)]")}>
+      {tx("Normik", "Base")}
+    </span>
+  );
+}
+
+/**
  * Account panel. The avatar in the top bar opens a side panel from the right: who is signed in, the main places of
  * the site (home, Studio, account, the administrator panel), the channels the viewer follows, the legal documents and
  * the sign-out button pinned at the bottom. It replaces both the old dropdown and the left "hamburger" menu, which
  * duplicated each other. A modal dialog on every screen size: focus moves in, Esc and the backdrop close it, focus
  * returns to the avatar. Better Auth is the identity backend; the application owns all visible account UI.
  */
-export default function UserMenu({ isAdmin }: UserMenuProps) {
+export default function UserMenu({ isAdmin, role = null }: UserMenuProps) {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { language, tx } = useLanguage();
@@ -47,6 +75,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
   // The panel slides out before it unmounts: `closing` plays the exit animation, then `open` goes false.
   const [closing, setClosing] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [accountSection, setAccountSection] = useState<"profile" | "notifications">("profile");
   const [channels, setChannels] = useState<SubscribedChannel[] | null>(null);
   const [failed, setFailed] = useState(false);
   // Studio is only offered to accounts that have a channel or may create one (the creation gate is closed for most).
@@ -72,6 +101,21 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
     triggerRef.current?.focus();
   }, [dismiss]);
 
+  const openAccount = useCallback((section: "profile" | "notifications") => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+    setOpen(false);
+    setClosing(false);
+    setAccountSection(section);
+    setAccountOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const openSettings = () => openAccount("notifications");
+    window.addEventListener("polutek:open-notification-settings", openSettings);
+    return () => window.removeEventListener("polutek:open-notification-settings", openSettings);
+  }, [openAccount]);
+
   useEffect(
     () => () => {
       if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -85,23 +129,25 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
       if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
-    // The page behind must not scroll: lock both the root and the body (either may be the scroller). `html` has
-    // `scrollbar-gutter: stable` (globals.css), so the scrollbar's space stays reserved while it is hidden and the
-    // layout does not move. Padding the body as well would shift the page by the scrollbar's width a second time, so
-    // it is added only in a browser without scrollbar-gutter support (where the gutter is NOT kept).
+    // The page behind must not scroll: lock the ROOT only (the viewport is the scroller). An inline overflow on the body must NOT
+    // be set: with `html` already non-visible it stops propagating to the viewport and makes the body a scroll
+    // container of its own, so the sticky top bar loses its viewport anchor and rises by `scrollY` (and the page can
+    // scroll sideways when the focus moves into the sliding panel). `html` has `scrollbar-gutter: stable`
+    // (globals.css), so the scrollbar's space normally stays reserved while it is hidden and the layout does not move.
+    // Padding the body as well would shift the page by the scrollbar's width a second time, so it is added only when
+    // the MEASURED width of the page actually grew (a browser that does not keep the gutter), by exactly that growth.
     const root = document.documentElement;
     const body = document.body;
-    const previous = { rootOverflow: root.style.overflow, bodyOverflow: body.style.overflow, bodyPaddingRight: body.style.paddingRight };
-    const gutterKept = typeof CSS !== "undefined" && CSS.supports("scrollbar-gutter", "stable");
-    const scrollbar = window.innerWidth - root.clientWidth;
+    const previous = { rootOverflow: root.style.overflow, bodyPaddingRight: body.style.paddingRight };
+    const widthBefore = body.getBoundingClientRect().width;
     root.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-    if (!gutterKept && scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
-    closeRef.current?.focus();
+    const grew = body.getBoundingClientRect().width - widthBefore;
+    if (grew > 0.5) body.style.paddingRight = `${grew}px`;
+    // preventScroll: the panel is still translated off-screen while it slides in; never scroll anything to reach it.
+    closeRef.current?.focus({ preventScroll: true });
     return () => {
       document.removeEventListener("keydown", onKey);
       root.style.overflow = previous.rootOverflow;
-      body.style.overflow = previous.bodyOverflow;
       body.style.paddingRight = previous.bodyPaddingRight;
     };
   }, [open, close]);
@@ -167,14 +213,22 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={tx("Menu konta", "Account menu")}
+        aria-label={role ? `${tx("Menu konta", "Account menu")}: ${roleLabel(role, tx)}` : tx("Menu konta", "Account menu")}
+        data-role={role ?? undefined}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={panelId}
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transform-none motion-reduce:transition-none"
       >
-        <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
-          {avatarImage(36)}
+        {/* Role ring: the same 2 px ring and 2 px gap as the comment avatars (lib/role-badge.ts), a box-shadow, so no
+            layout shift. The avatar is 34 px so the ring (outer 42 px) stays inside the 47 px bar. */}
+        <span
+          className={cn(
+            "flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full border transition-shadow motion-reduce:transition-none",
+            role ? roleRingClass(role) : "border-[var(--chan-line)]",
+          )}
+        >
+          {avatarImage(34)}
         </span>
       </button>
 
@@ -195,28 +249,16 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
             className={`absolute right-0 top-0 flex h-full w-[min(88vw,320px)] flex-col overscroll-contain bg-[var(--chan-card)] shadow-2xl duration-200 ${closing ? "animate-out slide-out-to-right fill-mode-forwards" : "animate-in slide-in-from-right"}`}
           >
             <div className="border-b border-[var(--chan-line)]">
-            <div className="flex items-start gap-3 p-4 pb-2">
+            <div className="flex items-start gap-3 p-4 pr-14">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
                 {avatarImage(48)}
               </span>
               <div className="min-w-0 flex-1 pt-0.5">
                 <p className="truncate text-[15px] font-bold text-[var(--chan-ink)]">{displayName}</p>
                 {email && email !== displayName ? <p className="truncate text-[12px] text-[var(--chan-muted)]">{email}</p> : null}
+                {role ? <RolePill role={role} /> : null}
               </div>
-              <button
-                ref={closeRef}
-                type="button"
-                onClick={close}
-                aria-label={tx("Zamknij menu", "Close menu")}
-                className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
-              >
-                <X className={iconClass} strokeWidth={1.8} aria-hidden="true" />
-              </button>
-            </div>
-            <div className="flex justify-end px-4 pb-3">
-              <Suspense fallback={null}>
-                <PanelLanguage />
-              </Suspense>
+              <CloseButton ref={closeRef} onClick={close} aria-label={tx("Zamknij menu", "Close menu")} />
             </div>
             </div>
 
@@ -235,10 +277,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                 <button
                   type="button"
                   className={itemClass}
-                  onClick={() => {
-                    dismiss();
-                    setAccountOpen(true);
-                  }}
+                  onClick={() => openAccount("profile")}
                 >
                   <Settings className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Moje konto", "My account")}
@@ -306,7 +345,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
         </div>
       ) : null}
 
-      <AccountModal open={accountOpen} onOpenChange={setAccountOpen} isAdmin={isAdmin} />
+      <AccountModal open={accountOpen} onOpenChange={setAccountOpen} isAdmin={isAdmin} initialSection={accountSection} />
     </>
   );
 }

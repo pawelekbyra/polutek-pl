@@ -61,7 +61,6 @@ export async function startPatronPayment(ctx: AppContext, input: PatronIntentInp
   const now = ctx.now();
   const current = await readPass(ctx.prisma, userId);
   const block = payments.stripeMode === "test" ? null : purchaseBlock(current, product, now);
-  if (block === "ALREADY_LIFETIME") return { ok: false, code: "ALREADY_LIFETIME" };
   if (block === "MAX_AHEAD") {
     await countFunnelEvent(ctx, "max_ahead");
     return { ok: false, code: "MAX_AHEAD", expiresAt: current?.expiresAt ?? undefined };

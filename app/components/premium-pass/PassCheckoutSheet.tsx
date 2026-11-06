@@ -13,24 +13,94 @@ import { useUser } from "@/lib/auth/react";
 import { getStripeBrowser } from "@/lib/payments/stripe-browser";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
-import { defaultProduct } from "@/lib/modules/patron-zone/domain/offer";
-import { maskEmail, type PassMethod } from "@/lib/modules/patron-zone/domain/pass-state";
+import { defaultProduct, type PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
+import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
 import { useLanguage } from "../LanguageContext";
 import { LegalSheetProvider } from "../legal/LegalSheet";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";
 import { FIELD_LABEL_CLASS } from "../support/TipSelect";
-import { ArrowLeft } from "../icons";
-import { CrossIcon } from "./PassIcons";
+import { ArrowLeft, Lock } from "../icons";
+import { CloseButton } from "@/components/ui/close-button";
 import { PassMethodStep, PassPayHead, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
+import type { PassPayMode } from "./PassTrustRow";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
-import { price } from "./pass-copy";
+import { newRequestId, price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, fetchPatronMethods, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
-import { PASS_PAYMENT_PARAM, RETURN_PARAMS, DEMO_PROCESSING_MS, wait, attemptId, resetAttempt, candidateTypes, guessWallets, buildReturnUrl, type Stage, type PassCheckoutSheetProps } from "./pass-checkout-state";
-export { PASS_PAYMENT_PARAM, type PassCheckoutSheetProps } from "./pass-checkout-state";
+
+type ActivePass = Exclude<PassStatusDto, { state: "none" }>;
+
+type Stage =
+  | { kind: "plan" }
+  | { kind: "method" }
+  | { kind: "pay" }
+  | { kind: "processing" }
+  | { kind: "success"; pass: ActivePass }
+  | { kind: "pending"; paymentId: string; timedOut: boolean }
+  | { kind: "declined" }
+  | { kind: "max-ahead"; expiresAt?: string };
+
+/** Query parameter of the return URL of redirect methods (Przelewy24, bank redirects). */
+export const PASS_PAYMENT_PARAM = "pass_payment";
+const RETURN_PARAMS = [PASS_PAYMENT_PARAM, "payment_intent", "payment_intent_client_secret", "redirect_status", "pass"];
+const ATTEMPT_KEY = "pp:patron-attempt-id";
+const DEMO_PROCESSING_MS = 1_200;
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** One attempt = one request id = one PaymentIntent on the server (kept for the tab, like the tip gateway's). */
+function attemptId(): string {
+  try {
+    const stored = window.sessionStorage.getItem(ATTEMPT_KEY);
+    if (stored) return stored;
+    const fresh = newRequestId();
+    window.sessionStorage.setItem(ATTEMPT_KEY, fresh);
+    return fresh;
+  } catch {
+    return newRequestId();
+  }
+}
+
+function resetAttempt() {
+  try {
+    window.sessionStorage.removeItem(ATTEMPT_KEY);
+  } catch {
+    // storage blocked: the next attempt simply gets a new id
+  }
+}
+
+/** BLIK and Przelewy24 are Polish methods: only PLN offers them; everything else starts from the card (Stripe's reply narrows it). */
+function candidateTypes(currency: string): string[] {
+  return currency === "PLN" ? ["blik", "card", "p24"] : ["card"];
+}
+
+/** Demo mode has no Stripe to ask, so the wallets are guessed from the browser (as the old method tiles did). */
+function guessWallets(): TipWallet[] {
+  const w = window as unknown as { ApplePaySession?: unknown };
+  const chromium = /Chrome|CriOS|Android/.test(navigator.userAgent) && !/Edg\//.test(navigator.userAgent);
+  return [...(w.ApplePaySession ? (["apple_pay"] as const) : []), ...(chromium ? (["google_pay"] as const) : [])];
+}
+
+function buildReturnUrl(paymentId: string): string {
+  const url = new URL(window.location.href);
+  RETURN_PARAMS.forEach((key) => url.searchParams.delete(key));
+  url.hash = "";
+  url.searchParams.set(PASS_PAYMENT_PARAM, paymentId);
+  return url.toString();
+}
+
+export interface PassCheckoutSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  offer: PremiumPassOffer;
+  /** Preselects an option (the offer page cards). */
+  initialProductId?: string;
+  /** "Enter the patron zone" after a success (refreshes the playback plan). */
+  onWatch: () => void;
+  watchLabel?: string;
+}
 
 export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId, onWatch, watchLabel }: PassCheckoutSheetProps) {
   const { tx, language } = useLanguage();
@@ -50,6 +120,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const stripeMode = offer.payments.mode === "stripe";
   const stripeReady = offer.payments.mode === "stripe" && offer.payments.available;
   const testMode = offer.payments.mode === "stripe" && offer.payments.available && offer.payments.stripeMode === "test";
+  const payMode: PassPayMode = !stripeReady ? "demo" : testMode ? "test" : "live";
 
   const [productId, setProductId] = useState<string>(initialProductId ?? defaultProduct(offer).id);
   const [currency, setCurrency] = useState<PatronCurrency>(() => detectDefaultCurrency(language) as PatronCurrency);
@@ -66,7 +137,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const [notice, setNotice] = useState<string | null>(null);
   const [consent, setConsent] = useState<PassConsentState>({ terms: false, waiver: false });
   const [consentErrors, setConsentErrors] = useState<PassConsentErrors>({});
-  const [access, setAccess] = useState<{ lifetime: boolean; expiresAt: string | null } | null>(null);
+  // True while the payment form of step 3 is confirming (BLIK waits up to 60 s, a wallet sheet is open): no way back meanwhile.
+  const [payBusy, setPayBusy] = useState(false);
 
   const typesKey = `${product.id}:${currency}`;
   const stripeList = stripeReady && stripeTypes?.key === typesKey ? stripeTypes.types : null;
@@ -82,6 +154,10 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const total = price(language, amountMinor, currency);
   const processing = stage.kind === "processing";
   const locked = busy || processing;
+  const changeOpen = (next: boolean) => {
+    if (locked || next === open) return;
+    onOpenChange(next);
+  };
   const email = maskEmail(user?.primaryEmailAddress?.emailAddress);
 
   // ---- opening: a fresh attempt (or the return from a redirect method), Stripe.js only from here
@@ -115,13 +191,12 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     setConsentErrors({});
     setIntent(null);
     setStripeTypes(null);
-    setAccess(null);
     if (stripeReady) {
       // The first and only place that asks for Stripe.js: the checkout was opened.
       const promise = getStripeBrowser(offer.payments.mode === "stripe" && offer.payments.keySet === "premium" ? "premium" : "default");
       setStripePromise(promise);
       promise
-        .then((stripe) => stripe?.paymentRequest({ country: "PL", currency: currency.toLowerCase(), total: { label: "Patron", amount: 100 }, disableWallets: ["link", "browserCard"] }).canMakePayment())
+        .then((stripe) => stripe?.paymentRequest({ country: "PL", currency: currency.toLowerCase(), total: { label: "Premium", amount: 100 }, disableWallets: ["link", "browserCard"] }).canMakePayment())
         .then((result) => { if (!cancelledRef.current) setWallets(TIP_WALLETS.filter((wallet) => (wallet === "apple_pay" ? result?.applePay : result?.googlePay))); })
         .catch(() => undefined);
     } else {
@@ -139,10 +214,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       return () => { cancelledRef.current = true; };
     }
     setStage({ kind: "plan" });
-    void fetchPassStatus("checkout").then((status) => {
-      if (cancelledRef.current) return;
-      if (!testMode && status?.pass.state === "active") setAccess({ lifetime: status.pass.lifetime, expiresAt: status.pass.expiresAt });
-    });
     return () => { cancelledRef.current = true; };
     // Only on opening: a re-render of the parent (new offer object) must not reset an attempt in progress.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,13 +270,12 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   // ---- step 1 -> 2 -> 3
   const toMethod = () => {
     setNotice(null);
-    if (access?.lifetime) return;
     setStage({ kind: "method" });
   };
 
   const next = async () => {
     setNotice(null);
-    if (!method || access?.lifetime) return;
+    if (!method) return;
     if (stripeMode && !stripeReady) {
       // Never falls back to the simulated payment: that would hand out access for no money.
       setNotice(tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later."));
@@ -235,7 +305,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       rememberTipMethod(method);
       setStage({ kind: "pay" });
     } else if (outcome.kind === "max-ahead") {
-      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt, lifetime: outcome.lifetime });
+      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt });
     } else if (outcome.kind === "in-progress") {
       setNotice(tx("Ta płatność jest właśnie opłacana (np. czeka na potwierdzenie w banku). Dokończ ją albo spróbuj za kilka minut.", "This payment is being paid right now (e.g. waiting for your bank). Finish it or try again in a few minutes."));
     } else if (outcome.kind === "unavailable") {
@@ -271,7 +341,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       resetAttempt();
       setStage({ kind: "declined" });
     } else if (outcome.kind === "max-ahead") {
-      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt, lifetime: outcome.lifetime });
+      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt });
     } else {
       setStage({ kind: "declined" });
     }
@@ -284,15 +354,24 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   );
 
   const watch = () => {
-    onOpenChange(false);
+    changeOpen(false);
     onWatch();
   };
 
   const stepNumber = stage.kind === "plan" ? 1 : stage.kind === "method" ? 2 : stage.kind === "pay" ? 3 : null;
   const showSteps = stepNumber !== null;
   // The dots sit at the bottom, directly above the action bar's top line (outside the scrolling body, so they never scroll or add scroll).
-  const dots = stepNumber !== null ? <PassStepDots tx={tx} step={stepNumber} /> : null;
+  // Back only (the step dots of earlier steps are buttons); nothing while a payment is being created or confirmed, never after it (no dots then).
+  const stepsLocked = locked || payBusy;
+  const goToStep = (target: number) => {
+    if (stepsLocked || stepNumber === null || target >= stepNumber) return;
+    setNotice(null);
+    setStage({ kind: target === 1 ? "plan" : "method" });
+  };
+  const dots = stepNumber !== null ? <PassStepDots tx={tx} step={stepNumber} onStep={goToStep} disabled={stepsLocked} /> : null;
   const retry = () => { resetAttempt(); setIntent(null); setStage({ kind: "plan" }); };
+  // Leaving step 3 (back button, the dots, a finished payment) can never leave the lock on.
+  useEffect(() => { if (stage.kind !== "pay") setPayBusy(false); }, [stage.kind]);
 
   // `hidden`: the heading stays for screen readers and for the focus of the step, it is just not drawn (step 1 has no subtitle).
   const heading = (text: string, hidden = false) => (
@@ -300,25 +379,29 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   );
 
   return (
-    <DialogPrimitive.Root open={open && dialogReady} onOpenChange={(next) => { if (!locked) onOpenChange(next); }} disablePointerDismissal>
+    <DialogPrimitive.Root open={open && dialogReady} onOpenChange={changeOpen} disablePointerDismissal>
       <DialogPrimitive.Portal>
         {/* A tap on the dimmed area closes the checkout. Done on the backdrop itself (not base-ui's outside press, which stays disabled): Stripe's 3DS / wallet / BLIK layers are appended to <body> and must never count as an outside press. */}
-        <DialogPrimitive.Backdrop className={styles.overlay} onClick={() => { if (!locked) onOpenChange(false); }} />
+        <DialogPrimitive.Backdrop className={styles.overlay} onClick={() => changeOpen(false)} />
         <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-modal="true" aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>
           {/* Legal documents open in a sheet ON TOP of this dialog (nested), so nothing here is unmounted or reset. */}
           <LegalSheetProvider tx={tx} language={language} demo={!stripeMode}>
           <div className={styles.sheetHead}>
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
-              {tx("Kup se Premium", "Get Premium")}
+              {tx("Dostęp Premium", "Premium access")}
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close className={styles.close} disabled={locked} aria-label={tx("Zamknij", "Close")}>
-              <CrossIcon className="h-4 w-4" />
-            </DialogPrimitive.Close>
+            <DialogPrimitive.Close disabled={locked} aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
           </div>
 
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}
           {testMode && stage.kind !== "success" && (
-            <p className={styles.testNote}><span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span> {tx("Nic nie zostanie pobrane naprawdę. Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.")}</p>
+            <p className={styles.testNote}>
+              <span>{tx("Wersja testowa: bez prawdziwej płatności.", "Test version: no real payment.")}</span>
+              {/* Stripe's published test card, shown only where a card is typed in (step 3, card). */}
+              {stage.kind === "pay" && method === "card" && (
+                <span className={styles.testCard}>{tx("Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Test card: 4242 4242 4242 4242, any date and CVC.")}</span>
+              )}
+            </p>
           )}
 
           {stage.kind === "plan" && (
@@ -333,15 +416,17 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   currency={currency}
                   onProduct={(id) => { setProductId(id); setNotice(null); }}
                   onCurrency={(code) => { setCurrency(code); setStripeTypes(null); setNotice(null); }}
-                  access={access}
                   notice={notice}
                   unavailable={stripeMode && !stripeReady}
                   busy={busy}
+                  mode={payMode}
+                  methods={methods}
                 />
               </div>
               {dots}
               <div className={styles.pay}>
-                <button type="button" className={styles.inkBtn} onClick={toMethod} disabled={access?.lifetime === true || (stripeMode && !stripeReady)}>
+                <button type="button" className={styles.inkBtn} onClick={toMethod} disabled={stripeMode && !stripeReady}>
+                  <Lock size={16} aria-hidden="true" focusable="false" />
                   {tx("Dalej · {0}", "Next · {0}", total)}
                 </button>
               </div>
@@ -364,6 +449,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   notice={notice}
                   unavailable={stripeMode && !stripeReady}
                   busy={busy}
+                  mode={payMode}
                 />
               </div>
               {dots}
@@ -371,6 +457,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                 <div className={styles.payRow}>
                   <button type="button" className={styles.backBtn} onClick={backToPlan} disabled={busy} aria-label={tx("Wstecz", "Back")}><ArrowLeft /></button>
                   <button type="button" className={styles.inkBtn} onClick={() => void next()} disabled={busy || !method || (stripeMode && !stripeReady)} aria-busy={busy || undefined}>
+                    {!busy && <Lock size={16} aria-hidden="true" focusable="false" />}
                     {busy ? tx("Chwileczkę…", "One moment…") : tx("Dalej · {0}", "Next · {0}", total)}
                   </button>
                 </div>
@@ -381,9 +468,9 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {stage.kind === "pay" && method && stripeReady && intent && (
             <>
               <div className={styles.payHead}>
-                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} />
+                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} mode={payMode} methods={methods} />
               </div>
-              <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back"), patron: true, aboveBar: dots }}>
+              <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back"), patron: true, disabled: payBusy, aboveBar: dots }}>
                 <PassStripePay
                   language={language}
                   amountMinor={amountMinor}
@@ -396,6 +483,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   returnUrl={buildReturnUrl(intent.paymentId)}
                   accepted={consent.terms && consent.waiver}
                   beforeConfirm={beforeConfirm}
+                  onBusyChange={setPayBusy}
                   onChangeMethod={backToMethod}
                   onConfirmed={(outcome) => void finish(intent.paymentId, outcome === "succeeded" ? 6 : 10)}
                   consent={<PassConsent spaced tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} />}
@@ -407,7 +495,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {stage.kind === "pay" && method && !stripeMode && (
             <>
               <div className={styles.sheetBody}>
-                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} />
+                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} mode={payMode} methods={methods} />
                 <PassDemoSummary tx={tx} language={language} amountMinor={amountMinor} currency={currency} method={method} onChangeMethod={backToMethod} />
                 <PassConsent tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} termsRef={termsRef} waiverRef={waiverRef} />
                 {email && <p className={styles.muted}>{tx("Potwierdzenie trafi na {0}", "The confirmation goes to {0}", email)}</p>}
@@ -427,14 +515,14 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {(stage.kind === "processing" || stage.kind === "success" || stage.kind === "pending" || stage.kind === "declined" || stage.kind === "max-ahead") && (
             <div className={styles.sheetBody}>
               {stage.kind === "processing" && (
-                <PassPending ref={headingRef} tx={tx} timedOut={false} onCheck={() => undefined} onClose={() => onOpenChange(false)} />
+                <PassPending ref={headingRef} tx={tx} timedOut={false} onCheck={() => undefined} onClose={() => changeOpen(false)} />
               )}
               {stage.kind === "success" && <PassSuccess ref={headingRef} tx={tx} language={language} pass={stage.pass} onWatch={watch} watchLabel={watchLabel} />}
               {stage.kind === "pending" && (
-                <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, 4)} onClose={() => onOpenChange(false)} />
+                <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, 4)} onClose={() => changeOpen(false)} />
               )}
               {stage.kind === "declined" && <PassDeclined ref={headingRef} tx={tx} onRetry={retry} onChangeMethod={retry} />}
-              {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} lifetime={stage.lifetime} onWatch={watch} />}
+              {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} onWatch={watch} />}
             </div>
           )}
 

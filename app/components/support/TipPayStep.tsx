@@ -35,6 +35,16 @@ export function TipPayStep(props: TipPayStepProps) {
   return <SingleMethodForm {...props} />;
 }
 
+/**
+ * The BLIK code box and the card box: the blue family of the checkout (owner decision 2026-11-03, replaces the amber frame
+ * and the pale amber placeholder). The edge is 3.6:1 and the placeholder 6.1:1 on white (AA, WCAG 1.4.11 / 1.4.3); the
+ * variables are set on the checkout (.pass), the literals are the same values for any other host of these forms.
+ */
+const FIELD_BLUE_EDGE = "border-[var(--pass-field-edge,#5f87c9)]";
+const FIELD_BLUE_PLACEHOLDER = "placeholder:text-[var(--pass-blue-ink,#4b6384)]";
+const FIELD_BLUE_BOX = `${FIELD_BLUE_EDGE} focus:border-[var(--chan-ink)] focus:shadow-[0_0_0_4px_var(--pass-field-ring,rgba(37,99,235,0.2))]`;
+const FIELD_BLUE_BOX_WITHIN = `${FIELD_BLUE_EDGE} focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--pass-field-ring,rgba(37,99,235,0.2))]`;
+
 /** Shared submit state + result handling for the per-method forms. */
 function useTipConfirm(tx: Tx, onConfirmed: (outcome: TipConfirmOutcome) => void, patron?: TipPayStepProps["patron"]) {
   const [busy, setBusy] = useState(false);
@@ -47,6 +57,7 @@ function useTipConfirm(tx: Tx, onConfirmed: (outcome: TipConfirmOutcome) => void
     if (inFlight.current) return false;
     inFlight.current = true;
     setBusy(true);
+    patron?.onBusyChange?.(true);
     setError(null);
     let read: ReturnType<typeof readConfirmResult>;
     try {
@@ -58,6 +69,7 @@ function useTipConfirm(tx: Tx, onConfirmed: (outcome: TipConfirmOutcome) => void
     } finally {
       inFlight.current = false;
       setBusy(false);
+      patron?.onBusyChange?.(false);
     }
     if ("outcome" in read) {
       onConfirmed(read.outcome);
@@ -153,7 +165,7 @@ function BlikForm(props: TipPayStepProps) {
           autoComplete="one-time-code"
           placeholder="000000"
           aria-label={tx("Kod BLIK", "BLIK code")}
-          className="h-16 w-full rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none transition-[border-color,box-shadow] placeholder:text-[var(--cm-amber-46)] focus:border-[var(--chan-ink)] focus:shadow-[0_0_0_4px_var(--cm-amber-18)]"
+          className={`h-[var(--pass-input-h,64px)] w-full rounded-[14px] border-2 bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none transition-[border-color,box-shadow] placeholder:font-semibold ${FIELD_BLUE_PLACEHOLDER} ${FIELD_BLUE_BOX}`}
         />
       </label>
       <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
@@ -244,7 +256,7 @@ function CardFormInner(props: TipPayStepProps) {
         <SendButton busy={busy} disabled={!complete || !stripe || (props.patron ? !props.patron.accepted : false)} tx={tx} label={sendLabel(tx, amount, currency, language, Boolean(props.patron))} onClick={send} />
       }
     >
-      <div className="rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 py-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
+      <div className={`rounded-[14px] border-2 bg-white px-4 py-4 transition-[border-color,box-shadow] ${FIELD_BLUE_BOX_WITHIN}`}>
         <CardElement
           onChange={(event) => setComplete(event.complete)}
           options={{

@@ -7,14 +7,18 @@ import {
   PATRON_DEFAULT_PRODUCT_ID,
   PATRON_PRICES,
   PATRON_PRODUCTS,
-  PATRON_VAT_RATE_PERCENT,
   patronProduct,
   type PatronCurrency,
   type PatronProductId,
 } from "./config";
+import { vatRatePercentFor } from "@/lib/config/vat";
 import { readPremiumPaymentsDto, type PremiumPaymentsDto } from "./payments-mode";
 
-export type PatronOfferProduct = { id: PatronProductId; days: number | null; prices: Record<PatronCurrency, number>; bestValue?: true };
+/**
+ * `days`: a plan of a fixed number of days (30); `months`: a plan of calendar months (3). Exactly one is set. `days: null`
+ * NO LONGER means "unlimited" (no plan is unlimited since 2026-11-03): it means "not counted in days, see `months`".
+ */
+export type PatronOfferProduct = { id: PatronProductId; days: number | null; months: number | null; prices: Record<PatronCurrency, number>; bestValue?: true };
 
 export type PremiumPassOffer = {
   /** The currencies of the checkout (the tip gateway's list) and their price per product. */
@@ -40,8 +44,8 @@ export function buildPremiumPassOffer(args: {
 }): PremiumPassOffer {
   return {
     currencies: [...PATRON_CURRENCIES],
-    vatRatePercent: PATRON_VAT_RATE_PERCENT,
-    products: PATRON_PRODUCTS.map((p) => ({ id: p.id, days: p.days, prices: { ...PATRON_PRICES[p.id] }, ...(p.bestValue ? { bestValue: true as const } : {}) })),
+    vatRatePercent: vatRatePercentFor(), // 0 while the seller is VAT-exempt (lib/config/vat.ts); informational, never part of a charge
+    products: PATRON_PRODUCTS.map((p) => ({ id: p.id, days: p.duration.days ?? null, months: p.duration.months ?? null, prices: { ...PATRON_PRICES[p.id] }, ...(p.bestValue ? { bestValue: true as const } : {}) })),
     defaultProductId: PATRON_DEFAULT_PRODUCT_ID,
     premiumCount: args.premiumCount,
     signedIn: args.signedIn,
@@ -57,7 +61,7 @@ export function readPremiumPassOffer(value: unknown): PremiumPassOffer | null {
   if (!offer.payments || typeof offer.payments !== "object" || !Array.isArray(offer.products)) return null;
   const products = offer.products.filter(
     (p): p is PatronOfferProduct =>
-      !!p && patronProduct(p.id) !== null && !!p.prices && PATRON_CURRENCIES.every((c) => Number.isInteger(p.prices[c])) && (p.days === null || Number.isInteger(p.days)),
+      !!p && patronProduct(p.id) !== null && !!p.prices && PATRON_CURRENCIES.every((c) => Number.isInteger(p.prices[c])) && (p.days === null || Number.isInteger(p.days)) && (p.months === null || Number.isInteger(p.months)),
   );
   if (products.length === 0) return null;
   const base = buildPremiumPassOffer({ signedIn: offer.signedIn === true, premiumCount: typeof offer.premiumCount === "number" ? offer.premiumCount : 0 });

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Waluty potrzebne do przychodów: PLN i najczęstsze obce. Aktywacja także w post_init_hook. -->
+    <record id="base.PLN" model="res.currency"><field name="active" eval="True"/></record>
+    <record id="base.EUR" model="res.currency"><field name="active" eval="True"/></record>
+    <record id="base.USD" model="res.currency"><field name="active" eval="True"/></record>
+    <record id="base.GBP" model="res.currency"><field name="active" eval="True"/></record>
+    <record id="base.CHF" model="res.currency"><field name="active" eval="True"/></record>
+</odoo>

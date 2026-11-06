@@ -29,8 +29,10 @@ interface TipSelectProps {
   onChange: (value: string) => void;
   /** Greyed out and not openable (e.g. while the choice is locked). */
   disabled?: boolean;
-  /** A small blue pill (28 px, hit area 44 px) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
+  /** A small neutral select (34 px, hit area 44 px: 5 px above and below) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
   compact?: boolean;
+  /** Checkout currency field: a prominent blue field with a currency badge and rounded chevron. */
+  currencyPicker?: boolean;
 }
 
 interface ListPosition {
@@ -80,10 +82,10 @@ function measureList(trigger: HTMLElement, compact = false): ListPosition {
 }
 
 /**
- * The gate's own dropdown (instead of the browser's system list): a warm field whose list
+ * The gate's own dropdown (instead of the browser's system list): a themed field whose list
  * floats on top of the step, so nothing below it moves.
  */
-export function TipSelect({ label, value, options, onChange, disabled = false, compact }: TipSelectProps) {
+export function TipSelect({ label, value, options, onChange, disabled = false, compact, currencyPicker = false }: TipSelectProps) {
   const [position, setPosition] = useState<ListPosition | null>(null);
   const open = position !== null;
   const [active, setActive] = useState(0);
@@ -203,7 +205,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
-          className="relative inline-flex -mt-2 h-7 -translate-y-[3px] items-center gap-1.5 rounded-full bg-[var(--pass-blue-soft,var(--chan-blue-soft))] ring-1 ring-inset ring-[var(--pass-blue-line,var(--chan-line))] px-3 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-bottom-1.5 before:-top-2.5 before:inset-x-0 before:content-[''] hover:bg-[var(--pass-blue-fill,var(--chan-blue-soft))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
+          className="relative inline-flex h-[34px] items-center gap-1.5 rounded-lg bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] ring-1 ring-inset ring-[var(--pass-gray-300,var(--chan-line))] px-3 text-[14px] font-medium text-[var(--pass-gray-800,var(--chan-ink))] before:absolute before:-inset-y-[5px] before:inset-x-0 before:content-[''] hover:bg-[var(--pass-gray-50,var(--chan-surface))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
         >
           <span>{selected?.short ?? selected?.title ?? "—"}</span>
           <SelectChevron className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />
@@ -249,7 +251,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           "rounded-[16px] border-2 bg-[#d4e7ff] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
           open
             ? "border-[var(--chan-ink)] shadow-[0_10px_24px_-14px_rgba(70,140,230,0.55)]"
-            : "border-[#9fc3f5] hover:border-[var(--chan-ink)]",
+            : "border-[var(--pass-blue-edge,#9fc3f5)] hover:border-[var(--chan-ink)]",
           disabled && "pointer-events-none opacity-50 hover:border-[#9fc3f5]",
         )}
       >
@@ -272,18 +274,24 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
               <SelectedIcon className="h-6 w-6" />
             </span>
           ) : selectedIconStr ? (
-            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center text-[15px] font-bold text-[var(--chan-ink)]">{selectedIconStr}</span>
+            <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center font-bold text-[var(--chan-ink)]", currencyPicker ? "h-10 w-10 rounded-full border border-[#9fc3f5] bg-white/70 text-[17px]" : "h-6 w-6 text-[15px]")}>{selectedIconStr}</span>
           ) : null}
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[15px] font-extrabold text-[var(--chan-ink)]">{selected?.title ?? "—"}</span>
+            <span className={cn("block text-[15px] font-extrabold text-[var(--chan-ink)]", currencyPicker ? "line-clamp-2 break-words leading-tight" : "truncate")}>{selected?.title ?? "—"}</span>
             {selected?.hint && <span className="block truncate text-[12px] text-[var(--chan-body)]">{selected.hint}</span>}
           </span>
-          <SelectChevron
-            className={cn(
-              "h-5 w-5 shrink-0 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none",
-              open && "rotate-180",
-            )}
-          />
+          {currencyPicker ? (
+            <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#9fc3f5] bg-white/70">
+              <SelectChevron className={cn("h-5 w-5 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />
+            </span>
+          ) : (
+            <SelectChevron
+              className={cn(
+                "h-5 w-5 shrink-0 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none",
+                open && "rotate-180",
+              )}
+            />
+          )}
         </button>
       </div>
       {position &&

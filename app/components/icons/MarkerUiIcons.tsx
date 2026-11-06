@@ -5,8 +5,8 @@ import type { SVGProps } from "react";
  * spinner, the player's error screen, the top bar's search (lens, close) and anything else that needs the same hand.
  * Same drawing method and wrapper as the player set (`player/controls/PlayerIconSet.tsx`) and the bell: plain JSX paths
  * inheriting `currentColor`, no icon library, no raw HTML injection. The player-style icons draw a 2.4 line (2px at 20px);
- * the top bar's lens and close (`SearchIcon`, `CloseIcon`) use the thin pen of the Szeruj/Lajk icons instead: `strokeWidth`
- * defaults to `ICON_PEN_PX * 24 / size`, i.e. 1.2px on screen at any size.
+ * the top bar's lens and close (`SearchIcon`, `CloseIcon`) use the thin 1.2px pen of Szeruj/Lajk;
+ * `strokeWidth` defaults to `ICON_PEN_PX * 24 / size` so it stays consistent at any rendered size.
  *
  * Generated from icongen/gen_ui.py (path data is not edited by hand). The spinner arc has no offset so that it
  * turns around the centre of the box.
@@ -31,7 +31,7 @@ function MarkerIcon({ size = 24, strokeWidth = 2.4, ...rest }: MarkerIconProps &
   );
 }
 
-/** Rendered pen width in CSS px for the top bar's lens and close: equal to Szeruj/Lajk (16px icon, strokeWidth 1.8). */
+/** Rendered pen width in CSS px for the top bar's lens and close: equal to Szeruj/Lajk (16px, strokeWidth 1.8). */
 export const ICON_PEN_PX = 1.2;
 
 function penStrokeWidth(size: number | string): number {
@@ -71,6 +71,23 @@ export function SearchIcon(props: MarkerIconProps) {
     <MarkerIcon {...props} strokeWidth={props.strokeWidth ?? penStrokeWidth(props.size ?? 24)}>
       <path d="M17.76 10.66C17.77 11.21 17.71 11.78 17.6 12.32C17.48 12.86 17.32 13.41 17.09 13.92C16.86 14.42 16.58 14.92 16.23 15.35C15.89 15.78 15.48 16.18 15.04 16.52C14.6 16.85 14.1 17.13 13.59 17.34C13.08 17.56 12.53 17.72 11.98 17.82C11.44 17.92 10.87 17.97 10.32 17.95C9.76 17.93 9.2 17.86 8.66 17.72C8.13 17.57 7.6 17.35 7.13 17.07C6.65 16.78 6.21 16.41 5.83 16.02C5.44 15.62 5.11 15.16 4.81 14.69C4.52 14.22 4.28 13.7 4.08 13.18C3.88 12.67 3.71 12.12 3.62 11.58C3.52 11.03 3.47 10.46 3.51 9.91C3.54 9.36 3.66 8.79 3.84 8.27C4.03 7.76 4.31 7.25 4.62 6.79C4.93 6.34 5.31 5.91 5.71 5.53C6.11 5.15 6.56 4.79 7.03 4.49C7.5 4.2 8 3.94 8.53 3.75C9.05 3.57 9.61 3.43 10.16 3.39C10.7 3.34 11.28 3.38 11.82 3.48C12.36 3.59 12.91 3.78 13.41 4.01C13.91 4.25 14.39 4.56 14.83 4.89C15.27 5.23 15.68 5.62 16.04 6.05C16.4 6.47 16.72 6.94 16.97 7.43C17.23 7.92 17.43 8.46 17.56 9C17.69 9.53 17.76 10.1 17.76 10.66Z" />
       <path d="M16.19 16.05C16.39 16.25 16.98 16.83 17.37 17.23C17.76 17.62 18.15 18.01 18.54 18.4C18.94 18.79 19.33 19.18 19.72 19.58C20.11 19.97 20.7 20.55 20.89 20.75" />
+    </MarkerIcon>
+  );
+}
+
+/** Small hand-drawn chevrons (thin 1.2px pen) for disclosure buttons such as "Show replies". */
+export function ChevronDownIcon(props: MarkerIconProps) {
+  return (
+    <MarkerIcon {...props} strokeWidth={props.strokeWidth ?? penStrokeWidth(props.size ?? 24)}>
+      <path d="M5.6 8.9C6.5 9.9 8.3 11.7 9.2 12.7C10.2 13.7 11.2 14.8 12 15.4C12.9 14.7 14 13.6 14.9 12.7C15.8 11.8 17.6 10 18.5 9" />
+    </MarkerIcon>
+  );
+}
+
+export function ChevronUpIcon(props: MarkerIconProps) {
+  return (
+    <MarkerIcon {...props} strokeWidth={props.strokeWidth ?? penStrokeWidth(props.size ?? 24)}>
+      <path d="M5.6 15.1C6.5 14.1 8.3 12.3 9.2 11.3C10.2 10.3 11.2 9.2 12 8.6C12.9 9.3 14 10.4 14.9 11.3C15.8 12.2 17.6 14 18.5 15" />
     </MarkerIcon>
   );
 }

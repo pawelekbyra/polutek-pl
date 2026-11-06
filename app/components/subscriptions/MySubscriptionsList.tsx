@@ -11,6 +11,7 @@ import { countedNoun } from "@/lib/i18n/plurals";
 import { intlLocale } from "@/lib/i18n/ui";
 import { formatCount } from "@/lib/utils";
 import { logger } from "@/lib/logger";
+import { CREATOR_AVATAR_RING } from "@/lib/role-badge";
 
 /** One subscription as the server page serializes it (dates are ISO strings). */
 export interface MySubscriptionRow {
@@ -116,7 +117,7 @@ export default function MySubscriptionsList({ initialRows }: { initialRows: MySu
               : null;
           return (
             <li key={row.creatorId} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap">
-              <SafeAvatar src={row.imageUrl} alt={row.name} size={48} />
+              <SafeAvatar src={row.imageUrl} alt={row.name} size={48} className={CREATOR_AVATAR_RING} />
               <div className="min-w-0 flex-1">
                 {row.available ? (
                   <Link href={href} prefetch={false} className="block truncate font-brand text-[16px] font-bold text-[var(--chan-ink)] hover:text-[var(--chan-blue)]">

@@ -44,7 +44,7 @@ function open(payments?: PremiumPaymentsDto) {
 }
 
 async function pickCurrency(dialog: Dialog, title: string) {
-  fireEvent.click(dialog.getByRole('combobox', { name: 'Waluta' }));
+  fireEvent.click(dialog.getByRole('combobox', { name: 'Waluta płatności' }));
   fireEvent.click(await screen.findByRole('option', { name: new RegExp(title) }));
 }
 

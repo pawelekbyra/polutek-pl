@@ -26,7 +26,7 @@ export function DemoControls({ onChanged }: { onChanged: () => void }) {
     const result = await postDemoControl(action);
     setBusy(false);
     if (!result && action === "expire") {
-      setMessage(tx("Nie masz jeszcze dostępu do strefy patrona.", "You do not have patron zone access yet."));
+      setMessage(tx("Nie masz jeszcze dostępu do Strefy Premium.", "You do not have Premium Zone access yet."));
       return;
     }
     setMessage(action === "expire" ? tx("Dostęp wygasł.", "Access has expired.") : tx("Dostęp usunięty.", "Access deleted."));

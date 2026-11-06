@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { X } from "../../icons";
+import { CloseButton } from "@/components/ui/close-button";
 import { SafeAvatar } from "../../SafeAvatar";
 import { AuthorBadge } from "./AuthorBadge";
 import type { CommentBadgeKind } from "../types";
@@ -56,15 +56,7 @@ export function UserProfileCard({
         >
           {/* Band the avatar overlaps: the site's ink colour, like its primary buttons (tokens only, so it follows light/dark). */}
           <div aria-hidden="true" className="h-24 bg-[var(--chan-ink)]" />
-          {/* Close sits on the ink band: a solid card-coloured disc with an ink X is the exact inverse of the band, so the
-              X keeps the ink-on-card contrast (>= 15:1) and the disc stays distinct from the band if the pair ever flips.
-              The focus ring is offset with the band colour so it reads as a halo, not as a smear on the disc. */}
-          <DialogClose
-            aria-label={tx("Zamknij", "Close")}
-            className="absolute right-3 top-3 grid cursor-pointer h-9 w-9 place-items-center rounded-full bg-[var(--chan-card)] text-[var(--chan-ink)] shadow-[0_2px_8px_-2px_rgba(15,23,42,0.5)] transition-colors hover:bg-[var(--chan-surface)] active:bg-[var(--chan-line)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--chan-ink)] motion-reduce:transition-none"
-          >
-            <X aria-hidden="true" className="h-[18px] w-[18px]" />
-          </DialogClose>
+          <DialogClose aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
 
           <div className="flex flex-col items-center px-6 pb-7 text-center">
             <div className="-mt-20">
@@ -72,7 +64,7 @@ export function UserProfileCard({
                 src={avatarSrc}
                 alt=""
                 size={PROFILE_AVATAR_SIZE}
-                className={cn("ring-4 shadow-[0_14px_34px_-14px_rgba(15,23,42,0.5)]", badge ? "ring-[var(--cm-blue-22)] border-2 border-[var(--chan-blue)]" : "ring-[var(--chan-card)]")}
+                className={cn("ring-4 shadow-[0_14px_34px_-14px_rgba(15,23,42,0.5)]", badge === "AUTHOR" ? "ring-[var(--cm-blue-22)] border-2 border-[var(--chan-blue)]" : "ring-[var(--chan-card)]")}
               />
             </div>
 

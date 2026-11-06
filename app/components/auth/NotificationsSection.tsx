@@ -4,7 +4,7 @@
 // time through PATCH /api/user/notification-preferences (validated there by zod). A toggle changes at
 // once and goes back when the save fails.
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "../icons";
 import type { Tx } from "@/lib/i18n/ui";
 import { Feedback } from "./AccountSections";
@@ -17,18 +17,34 @@ type Preferences = {
 
 type ToggleKey = keyof Preferences;
 
+async function requestPreferences(options: RequestInit = {}): Promise<Preferences> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const response = await fetch("/api/user/notification-preferences", { cache: "no-store", ...options, signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json() as Preferences;
+    if ([data.newVideoInApp, data.commentEnabled, data.systemEnabled].some((value) => typeof value !== "boolean")) {
+      throw new Error("Invalid notification preferences");
+    }
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+
 export function NotificationsSection({ tx }: { tx: Tx }) {
   const [prefs, setPrefs] = useState<Preferences | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState<ToggleKey | null>(null);
+  const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoadFailed(false);
     try {
-      const response = await fetch("/api/user/notification-preferences", { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      setPrefs((await response.json()) as Preferences);
+      setPrefs(await requestPreferences());
     } catch {
       setLoadFailed(true);
     }
@@ -39,23 +55,24 @@ export function NotificationsSection({ tx }: { tx: Tx }) {
   }, [load]);
 
   async function toggle(key: ToggleKey, value: boolean) {
-    if (!prefs) return;
+    if (!prefs || savingRef.current) return;
+    savingRef.current = true;
     const before = prefs;
     setError(null);
     setSaving(key);
     setPrefs({ ...prefs, [key]: value });
     try {
-      const response = await fetch("/api/user/notification-preferences", {
+      const saved = await requestPreferences({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [key]: value }),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      setPrefs((await response.json()) as Preferences);
+      setPrefs(saved);
     } catch {
       setPrefs(before);
       setError(tx("Nie udało się zapisać ustawienia. Spróbuj ponownie.", "Could not save the setting. Please try again."));
     } finally {
+      savingRef.current = false;
       setSaving(null);
     }
   }
@@ -120,7 +137,7 @@ export function NotificationsSection({ tx }: { tx: Tx }) {
                 type="checkbox"
                 role="switch"
                 checked={prefs[row.key]}
-                disabled={saving === row.key}
+                disabled={saving !== null}
                 aria-describedby={`${id}-hint`}
                 onChange={(event) => void toggle(row.key, event.target.checked)}
                 className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-[var(--chan-ink)] disabled:cursor-wait"

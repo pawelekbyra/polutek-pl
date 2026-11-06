@@ -97,7 +97,7 @@ describe('SupportModal (tip gate)', () => {
     renderModal();
 
     // Step 1: recipient. Consent to the Terms/Privacy is required before continuing.
-    expect(screen.getAllByText('Bramka napiwkowa').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Bramka Napiwkowa').length).toBeGreaterThan(0);
     expect(screen.getByText('Odbiorca napiwku')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wstecz' })).not.toBeInTheDocument();
     // Legal documents open as a second modal on top of the gate, not a new tab.

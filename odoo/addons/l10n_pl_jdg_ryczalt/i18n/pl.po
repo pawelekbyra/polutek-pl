@@ -1,0 +1,2213 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_pl_jdg_ryczalt
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0-20261015\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-02 16:29+0000\n"
+"PO-Revision-Date: 2026-11-02 16:29+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: pl\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "% W"
+msgstr "% W"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "% · W ="
+msgstr "% · W ="
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "(od 1 stycznia)"
+msgstr "(od 1 stycznia)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "(różnica +"
+msgstr "(różnica +"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "(składki)."
+msgstr "(składki)."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "(szacunek)"
+msgstr "(szacunek)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "): liczymy z nich, ale musi je potwierdzić księgowy."
+msgstr "): liczymy z nich, ale musi je potwierdzić księgowy."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__ryczalt_rate_key__ryczalt_rate_vod_12
+msgid "12% (oprogramowanie i usługi IT, art. 12 ust. 1 pkt 2b)"
+msgstr "12% (oprogramowanie i usługi IT, art. 12 ust. 1 pkt 2b)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__ryczalt_rate_key__ryczalt_rate_vod_15
+msgid "15% (np. PKWiU 59.11.25.0 / 59.20.36.0)"
+msgstr "15% (np. PKWiU 59.11.25.0 / 59.20.36.0)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__ryczalt_rate_key__ryczalt_rate_vod_85
+msgid "8,5% (usługi niewymienione inaczej, np. PKWiU 63.11.19.0)"
+msgstr "8,5% (usługi niewymienione inaczej, np. PKWiU 63.11.19.0)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid ""
+";\n"
+"                                    gdyby"
+msgstr ""
+";\n"
+"                                    gdyby"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid "Akt prawny, komunikat, interpretacja albo uwaga księgowego"
+msgstr "Akt prawny, komunikat, interpretacja albo uwaga księgowego"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__source_note
+msgid "Akt prawny, komunikat, interpretacja albo uwaga księgowego."
+msgstr "Akt prawny, komunikat, interpretacja albo uwaga księgowego."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Alert OSS (10 000 EUR) i Mały ZUS Plus dojdą w kolejnych iteracjach."
+msgstr "Alert OSS (10 000 EUR) i Mały ZUS Plus dojdą w kolejnych iteracjach."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_correct_wizard_form
+msgid "Anuluj"
+msgstr "Anuluj"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.actions.act_window,help:l10n_pl_jdg_ryczalt.action_jdg_fx_rate
+msgid "Brak kursów"
+msgstr "Brak kursów"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.actions.act_window,help:l10n_pl_jdg_ryczalt.action_jdg_tax_rule
+msgid "Brak reguł"
+msgstr "Brak reguł"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Brak terminów w najbliższym czasie."
+msgstr "Brak terminów w najbliższym czasie."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__sickness_insurance
+msgid "Chorobowa dobrowolna"
+msgstr "Chorobowa dobrowolna"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Cień stawki"
+msgstr "Cień stawki"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Cień stawki."
+msgstr "Cień stawki."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid "Co to jest"
+msgstr "Co to jest"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__kind
+msgid "Co zapłacono"
+msgstr "Co zapłacono"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid "Cofnij weryfikację"
+msgstr "Cofnij weryfikację"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__create_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__create_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__create_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__create_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__create_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__create_uid
+msgid "Created by"
+msgstr "Created by"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__create_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__create_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__create_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__create_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__create_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__create_date
+msgid "Created on"
+msgstr "Created on"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__currency_id
+msgid "Currency"
+msgstr "Currency"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__deduct_fp
+msgid ""
+"Czy Fundusz Pracy odliczać od przychodu jak składki społeczne. Domyślnie nie"
+" (ostrożnie) [N]."
+msgstr ""
+"Czy Fundusz Pracy odliczać od przychodu jak składki społeczne. Domyślnie nie"
+" (ostrożnie) [N]."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__vat_status__active
+msgid "Czynny podatnik VAT"
+msgstr "Czynny podatnik VAT"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__label
+msgid "Czytelna nazwa po polsku."
+msgstr "Czytelna nazwa po polsku."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Część to projekty lub prognozy na 2027."
+msgstr "Część to projekty lub prognozy na 2027."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model,name:l10n_pl_jdg_ryczalt.model_jdg_dashboard
+msgid "Dane pulpitu JDG"
+msgstr "Dane pulpitu JDG"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__kind__donation
+msgid "Darowizna / napiwek (poza przychodem)"
+msgstr "Darowizna / napiwek (poza przychodem)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Darowizny"
+msgstr "Darowizny"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Darowizny (napiwki)"
+msgstr "Darowizny (napiwki)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__rate_date
+msgid "Data publikacji tabeli A (nie dzień przychodu)."
+msgstr "Data publikacji tabeli A (nie dzień przychodu)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__start_date
+msgid "Data rozpoczęcia działalności"
+msgstr "Data rozpoczęcia działalności"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__rate_date
+msgid "Data tabeli NBP"
+msgstr "Data tabeli NBP"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__income_date
+msgid "Data uzyskania przychodu"
+msgstr "Data uzyskania przychodu"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__paid_on
+msgid "Data zapłaty"
+msgstr "Data zapłaty"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__income_date
+msgid "Data zwrotu / korekty"
+msgstr "Data zwrotu / korekty"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__display_name
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_dashboard__display_name
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__display_name
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__display_name
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__display_name
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__display_name
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__display_name
+msgid "Display Name"
+msgstr "Display Name"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__income_date
+msgid ""
+"Dla płatności online: dzień zapłaty przez klienta (strefa Europe/Warsaw). To"
+" ta data wyznacza miesiąc, kwartał i kurs NBP."
+msgstr ""
+"Dla płatności online: dzień zapłaty przez klienta (strefa Europe/Warsaw). To"
+" ta data wyznacza miesiąc, kwartał i kurs NBP."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__description
+msgid "Do czego służy / skąd ta liczba"
+msgstr "Do czego służy / skąd ta liczba"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid "Do czego służy ten parametr"
+msgstr "Do czego służy ten parametr"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_search
+msgid "Do weryfikacji"
+msgstr "Do weryfikacji"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.actions.act_window,help:l10n_pl_jdg_ryczalt.action_jdg_fx_rate
+msgid ""
+"Dodaj kurs średni NBP (tabela A) dla waluty obcej. Wpis w EUR lub USD użyje "
+"kursu z ostatniej tabeli sprzed dnia przychodu."
+msgstr ""
+"Dodaj kurs średni NBP (tabela A) dla waluty obcej. Wpis w EUR lub USD użyje "
+"kursu z ostatniej tabeli sprzed dnia przychodu."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Dodaj przychód"
+msgstr "Dodaj przychód"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Dodaj przychód ręcznie"
+msgstr "Dodaj przychód ręcznie"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.actions.act_window,help:l10n_pl_jdg_ryczalt.action_jdg_income_entry
+msgid ""
+"Dodaj przychód ręcznie (data, opis, kwota, waluta) i kliknij „Zaksięguj”. Zaksięgowany wpis jest zapisany\n"
+"                na stałe; błąd poprawiasz wpisem korygującym."
+msgstr ""
+"Dodaj przychód ręcznie (data, opis, kwota, waluta) i kliknij „Zaksięguj”. Zaksięgowany wpis jest zapisany\n"
+"                na stałe; błąd poprawiasz wpisem korygującym."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__fetched_at
+msgid "Dodano"
+msgstr "Dodano"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid "Dodatkowe"
+msgstr "Dodatkowe"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__reference
+msgid "Dokument / referencja"
+msgstr "Dokument / referencja"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__tips_as_income
+msgid ""
+"Domyślnie WYŁĄCZONE (decyzja właściciela): napiwki i wsparcie od widzów bez "
+"świadczenia zwrotnego to darowizny, nie przychód ryczałtowy (wyrok NSA z "
+"7.07.2026, III FSK 113/26: sygnatura do weryfikacji). Włącz, gdy "
+"interpretacja KIS lub księgowy uznają inaczej: darowizny wejdą wtedy do "
+"przychodu."
+msgstr ""
+"Domyślnie WYŁĄCZONE (decyzja właściciela): napiwki i wsparcie od widzów bez "
+"świadczenia zwrotnego to darowizny, nie przychód ryczałtowy (wyrok NSA z "
+"7.07.2026, III FSK 113/26: sygnatura do weryfikacji). Włącz, gdy "
+"interpretacja KIS lub księgowy uznają inaczej: darowizny wejdą wtedy do "
+"przychodu."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_correct_wizard_form
+msgid "Dopisz korektę"
+msgstr "Dopisz korektę"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__income_category__vod
+msgid "Dostęp do wideo (VOD)"
+msgstr "Dostęp do wideo (VOD)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid "Działalność"
+msgstr "Działalność"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Dzień"
+msgstr "Dzień"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__paid_on
+msgid "Dzień obciążenia konta. Od tej daty składka obniża podstawę ryczałtu."
+msgstr "Dzień obciążenia konta. Od tej daty składka obniża podstawę ryczałtu."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.actions.client,name:l10n_pl_jdg_ryczalt.action_jdg_dashboard
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_dashboard
+msgid "Dzisiaj"
+msgstr "Dzisiaj"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Dzisiaj zarobiłem"
+msgstr "Dzisiaj zarobiłem"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Dziś"
+msgstr "Dziś"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Dziś jeszcze nic nie wpłynęło."
+msgstr "Dziś jeszcze nic nie wpłynęło."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Ewidencja"
+msgstr "Ewidencja"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.actions.act_window,name:l10n_pl_jdg_ryczalt.action_jdg_income_entry
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_entries
+msgid "Ewidencja przychodów"
+msgstr "Ewidencja przychodów"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__invoice_policy
+msgid "Faktury"
+msgstr "Faktury"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__company_id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__company_id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__company_id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__company_id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__company_id
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_root
+msgid "Firma"
+msgstr "Firma"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__buyer_type__b2b
+msgid "Firma (B2B)"
+msgstr "Firma (B2B)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:res.groups.privilege,name:l10n_pl_jdg_ryczalt.res_groups_privilege_jdg
+msgid "Firma (JDG na ryczałcie)"
+msgstr "Firma (JDG na ryczałcie)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__tax_form
+msgid "Forma opodatkowania"
+msgstr "Forma opodatkowania"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.actions.act_window,help:l10n_pl_jdg_ryczalt.action_jdg_payment
+msgid ""
+"Gdy zapłacisz ZUS, składkę zdrowotną albo zaliczkę, zapisz to tutaj. "
+"Zapłacone składki obniżają podstawę ryczałtu."
+msgstr ""
+"Gdy zapłacisz ZUS, składkę zdrowotną albo zaliczkę, zapisz to tutaj. "
+"Zapłacone składki obniżają podstawę ryczałtu."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Gdyby"
+msgstr "Gdyby"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__group
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_search
+msgid "Grupa"
+msgstr "Grupa"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_dashboard__id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__id
+msgid "ID"
+msgstr "ID"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__external_ref
+msgid "Identyfikator zewnętrzny"
+msgstr "Identyfikator zewnętrzny"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__owner_name
+msgid "Imię i nazwisko przedsiębiorcy (do wydruków i eksportów)."
+msgstr "Imię i nazwisko przedsiębiorcy (do wydruków i eksportów)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__source__import
+msgid "Import"
+msgstr "Import"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_contribution_payment__source__bank_import
+msgid "Import z banku"
+msgstr "Import z banku"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__income_category__other
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__group__inne
+msgid "Inne"
+msgstr "Inne"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__is_foreign
+msgid "Is Foreign"
+msgstr "Is Foreign"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.constraint,message:l10n_pl_jdg_ryczalt.constraint_jdg_profile_company_uniq
+msgid "Jedna firma ma jeden profil JDG."
+msgstr "Jedna firma ma jeden profil JDG."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__unit
+msgid "Jednostka"
+msgstr "Jednostka"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid ""
+"Jeszcze nic nie sprzedałeś w tym miesiącu. Gdy pojawi się pierwsza wpłata, "
+"zobaczysz tu, ile z niej zostaje Tobie."
+msgstr ""
+"Jeszcze nic nie sprzedałeś w tym miesiącu. Gdy pojawi się pierwsza wpłata, "
+"zobaczysz tu, ile z niej zostaje Tobie."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.actions.act_window,help:l10n_pl_jdg_ryczalt.action_jdg_income_entry
+msgid "Jeszcze nic nie wpisałeś"
+msgstr "Jeszcze nic nie wpisałeś"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.actions.act_window,help:l10n_pl_jdg_ryczalt.action_jdg_payment
+msgid "Jeszcze nic nie zapłaciłeś"
+msgstr "Jeszcze nic nie zapłaciłeś"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__vat_status__not_decided
+msgid "Jeszcze nie zdecydowano"
+msgstr "Jeszcze nie zdecydowano"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__income_category
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Kategoria"
+msgstr "Kategoria"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__key
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_search
+msgid "Klucz"
+msgstr "Klucz"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__donor_key
+msgid "Klucz darczyńcy (pseudonim)"
+msgstr "Klucz darczyńcy (pseudonim)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__external_ref
+msgid "Klucz idempotencji integracji (np. stripe:pi_...:sale). Unikalny."
+msgstr "Klucz idempotencji integracji (np. stripe:pi_...:sale). Unikalny."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__pref_end_date
+msgid "Koniec preferencyjnego ZUS"
+msgstr "Koniec preferencyjnego ZUS"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__ulga_end_date
+msgid "Koniec ulgi na start"
+msgstr "Koniec ulgi na start"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__buyer_type__b2c
+msgid "Konsument (B2C)"
+msgstr "Konsument (B2C)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid "Korekta lub zwrot"
+msgstr "Korekta lub zwrot"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model,name:l10n_pl_jdg_ryczalt.model_jdg_income_correct_wizard
+msgid "Korekta lub zwrot wpisu przychodu"
+msgstr "Korekta lub zwrot wpisu przychodu"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_correct_wizard__kind__adjustment
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__kind__adjustment
+msgid "Korekta ręczna"
+msgstr "Korekta ręczna"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__reverses_id
+msgid "Koryguje wpis"
+msgstr "Koryguje wpis"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__entry_id
+msgid "Koryguję wpis"
+msgstr "Koryguję wpis"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__uses_ulga_na_start
+msgid "Korzystam z ulgi na start"
+msgstr "Korzystam z ulgi na start"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Koszty stałe do pokrycia w tym miesiącu:"
+msgstr "Koszty stałe do pokrycia w tym miesiącu:"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__country_code
+msgid "Kraj klienta (ISO)"
+msgstr "Kraj klienta (ISO)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Krok"
+msgstr "Krok"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__ryczalt_rate_key
+msgid ""
+"Którą stawkę z tabeli reguł stosować do NOWYCH wpisów. Stawka NIE jest "
+"rozstrzygnięta (8,5% / 12% / 15% zależy od klasyfikacji PKWiU): potwierdź z "
+"księgowym. Wpis zapamiętuje stawkę z chwili utworzenia."
+msgstr ""
+"Którą stawkę z tabeli reguł stosować do NOWYCH wpisów. Stawka NIE jest "
+"rozstrzygnięta (8,5% / 12% / 15% zależy od klasyfikacji PKWiU): potwierdź z "
+"księgowym. Wpis zapamiętuje stawkę z chwili utworzenia."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fx_rate
+msgid "Kurs (zł za 1 jednostkę)"
+msgstr "Kurs (zł za 1 jednostkę)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model,name:l10n_pl_jdg_ryczalt.model_jdg_fx_rate
+msgid "Kurs NBP (tabela A)"
+msgstr "Kurs NBP (tabela A)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fx_info
+msgid "Kurs NBP (tabela, data)"
+msgstr "Kurs NBP (tabela, data)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.constraint,message:l10n_pl_jdg_ryczalt.constraint_jdg_fx_rate_currency_date_uniq
+msgid "Kurs tej waluty z tego dnia już istnieje."
+msgstr "Kurs tej waluty z tego dnia już istnieje."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__mid
+msgid "Kurs średni (zł za 1 jednostkę)"
+msgstr "Kurs średni (zł za 1 jednostkę)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fx_rate
+msgid ""
+"Kurs średni NBP, tabela A, z ostatniego dnia roboczego PRZED dniem "
+"przychodu. Podpowiada się z tabeli kursów; możesz wpisać ręcznie."
+msgstr ""
+"Kurs średni NBP, tabela A, z ostatniego dnia roboczego PRZED dniem "
+"przychodu. Podpowiada się z tabeli kursów; możesz wpisać ręcznie."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_fx_rate_form
+msgid ""
+"Kurs średni NBP, tabela A. Do przeliczenia przychodu używamy tabeli z ostatniego dnia roboczego\n"
+"                        PRZED dniem przychodu. Kursów nie edytujemy (to dowód): popraw błąd nowym wpisem.\n"
+"                        Automatyczne pobieranie z api.nbp.pl dojdzie w iteracji 2."
+msgstr ""
+"Kurs średni NBP, tabela A. Do przeliczenia przychodu używamy tabeli z ostatniego dnia roboczego\n"
+"                        PRZED dniem przychodu. Kursów nie edytujemy (to dowód): popraw błąd nowym wpisem.\n"
+"                        Automatyczne pobieranie z api.nbp.pl dojdzie w iteracji 2."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.actions.act_window,name:l10n_pl_jdg_ryczalt.action_jdg_fx_rate
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_fx
+msgid "Kursy NBP"
+msgstr "Kursy NBP"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__advance_rhythm__quarterly
+msgid "Kwartalnie (do 20. po kwartale)"
+msgstr "Kwartalnie (do 20. po kwartale)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Kwota"
+msgstr "Kwota"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_list
+msgid "Kwota (waluta)"
+msgstr "Kwota (waluta)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__amount
+msgid "Kwota brutto"
+msgstr "Kwota brutto"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__amount
+msgid "Kwota do odjęcia"
+msgstr "Kwota do odjęcia"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid "Kwota i kurs"
+msgstr "Kwota i kurs"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__pln_amount
+msgid "Kwota w PLN"
+msgstr "Kwota w PLN"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__amount
+msgid ""
+"Kwota zapłacona przez klienta (brutto, w walucie oryginalnej). Opłaty Stripe"
+" jej nie zmniejszają."
+msgstr ""
+"Kwota zapłacona przez klienta (brutto, w walucie oryginalnej). Opłaty Stripe"
+" jej nie zmniejszają."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.constraint,message:l10n_pl_jdg_ryczalt.constraint_jdg_contribution_payment_amount_check
+msgid "Kwota zapłaty nie może być ujemna."
+msgstr "Kwota zapłaty nie może być ujemna."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__pln_amount
+msgid ""
+"Kwota × kurs, zaokrąglona do grosza (liczone dla każdego wpisu osobno)."
+msgstr ""
+"Kwota × kurs, zaokrąglona do grosza (liczone dla każdego wpisu osobno)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__tax_base_pln
+msgid ""
+"Kwota, od której liczy się ryczałt. Dla wpisów podatkowych = kwota w PLN."
+msgstr ""
+"Kwota, od której liczy się ryczałt. Dla wpisów podatkowych = kwota w PLN."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__write_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__write_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__write_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__write_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__write_uid
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__write_uid
+msgid "Last Updated by"
+msgstr "Last Updated by"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__write_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__write_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__write_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__write_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__write_date
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__write_date
+msgid "Last Updated on"
+msgstr "Last Updated on"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Masz"
+msgstr "Masz"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__zus_after_variant__mzp
+msgid "Mały ZUS Plus (liczony jak pełny, do dopracowania)"
+msgstr "Mały ZUS Plus (liczony jak pełny, do dopracowania)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Miesiąc"
+msgstr "Miesiąc"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__for_month
+msgid ""
+"Miesiąc, którego dotyczy składka (dla zaliczki kwartalnej: pierwszy miesiąc "
+"kwartału). Zapisujemy pierwszy dzień miesiąca."
+msgstr ""
+"Miesiąc, którego dotyczy składka (dla zaliczki kwartalnej: pierwszy miesiąc "
+"kwartału). Zapisujemy pierwszy dzień miesiąca."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__advance_rhythm__monthly
+msgid "Miesięcznie (do 20. następnego miesiąca)"
+msgstr "Miesięcznie (do 20. następnego miesiąca)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__tax_form
+msgid ""
+"Moduł liczy dziś wyłącznie ryczałt. Pozostałe formy pojawią się w "
+"symulatorze (iteracja 6)."
+msgstr ""
+"Moduł liczy dziś wyłącznie ryczałt. Pozostałe formy pojawią się w "
+"symulatorze (iteracja 6)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__health_threshold_mode
+msgid "Moment zmiany progu składki zdrowotnej"
+msgstr "Moment zmiany progu składki zdrowotnej"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Na dzień"
+msgstr "Na dzień"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__buyer_type
+msgid "Nabywca"
+msgstr "Nabywca"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid "Nadaje numer kolejny i zapisuje wpis na stałe."
+msgstr "Nadaje numer kolejny i zapisuje wpis na stałe."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Najbliższe terminy"
+msgstr "Najbliższe terminy"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Największa suma darowizn od jednej osoby"
+msgstr "Największa suma darowizn od jednej osoby"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__due_amount
+msgid "Należność wg modułu"
+msgstr "Należność wg modułu"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__income_category__tips
+msgid "Napiwki i wsparcie"
+msgstr "Napiwki i wsparcie"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__label
+msgid "Nazwa"
+msgstr "Nazwa"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Nie udało się policzyć pulpitu."
+msgstr "Nie udało się policzyć pulpitu."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Nie udało się policzyć rozliczenia."
+msgstr "Nie udało się policzyć rozliczenia."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Nie wliczane do przychodu, o ile bez świadczenia zwrotnego."
+msgstr "Nie wliczane do przychodu, o ile bez świadczenia zwrotnego."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__donor_key
+msgid ""
+"Nieodwracalny pseudonim darczyńcy (HMAC liczony po stronie aplikacji, bez "
+"danych osobowych, RODO). Służy do sumowania darowizn od jednej osoby w oknie"
+" kilku lat wobec limitu z tabeli reguł."
+msgstr ""
+"Nieodwracalny pseudonim darczyńcy (HMAC liczony po stronie aplikacji, bez "
+"danych osobowych, RODO). Służy do sumowania darowizn od jednej osoby w oknie"
+" kilku lat wobec limitu z tabeli reguł."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__is_unverified
+msgid "Niezweryfikowana"
+msgstr "Niezweryfikowana"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__note
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid "Notatki"
+msgstr "Notatki"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__description
+msgid "Np. 'Dostęp 30 dni', 'Napiwek'."
+msgstr "Np. 'Dostęp 30 dni', 'Napiwek'."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__table_no
+msgid "Np. 001/A/NBP/2027."
+msgstr "Np. 001/A/NBP/2027."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid "Np. Dostęp 30 dni, Napiwek"
+msgstr "Np. Dostęp 30 dni, Napiwek"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__reference
+msgid "Np. numer deklaracji DRA albo tytuł przelewu."
+msgstr "Np. numer deklaracji DRA albo tytuł przelewu."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid "Np. ustalenia z księgowym"
+msgstr "Np. ustalenia z księgowym"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_correct_wizard_form
+msgid "Np. zwrot na prośbę klienta, pomyłka w kwocie"
+msgstr "Np. zwrot na prośbę klienta, pomyłka w kwocie"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__seq_no
+msgid "Nr kolejny w roku"
+msgstr "Nr kolejny w roku"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__name
+msgid "Numer"
+msgstr "Numer"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__doc_ref
+msgid "Numer dowodu"
+msgstr "Numer dowodu"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__doc_ref
+msgid "Numer faktury albo identyfikator płatności (np. stripe:pi_...)."
+msgstr "Numer faktury albo identyfikator płatności (np. stripe:pi_...)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.constraint,message:l10n_pl_jdg_ryczalt.constraint_jdg_income_entry_seq_uniq
+msgid "Numer kolejny w roku musi być unikalny."
+msgstr "Numer kolejny w roku musi być unikalny."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__table_no
+msgid "Numer tabeli"
+msgstr "Numer tabeli"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fx_table_no
+msgid "Numer tabeli NBP"
+msgstr "Numer tabeli NBP"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__state__active
+msgid "Obowiązuje"
+msgstr "Obowiązuje"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__valid_to
+msgid "Obowiązuje do"
+msgstr "Obowiązuje do"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__valid_from
+msgid "Obowiązuje od"
+msgstr "Obowiązuje od"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_search
+msgid "Obowiązujące dziś"
+msgstr "Obowiązujące dziś"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__health_threshold_mode__crossing_month
+msgid "Od miesiąca przekroczenia progu (ostrożnie)"
+msgstr "Od miesiąca przekroczenia progu (ostrożnie)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__health_threshold_mode__next_month
+msgid "Od następnego miesiąca po przekroczeniu"
+msgstr "Od następnego miesiąca po przekroczeniu"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_payment_form
+msgid ""
+"Od przychodu odliczamy tylko składki ZAPŁACONE. Zapisz tu każdą zapłaconą składkę z datą zapłaty;\n"
+"                        kwota należna podpowiada się sama (szacunek, nie porada podatkowa)."
+msgstr ""
+"Od przychodu odliczamy tylko składki ZAPŁACONE. Zapisz tu każdą zapłaconą składkę z datą zapłaty;\n"
+"                        kwota należna podpowiada się sama (szacunek, nie porada podatkowa)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__start_date
+msgid ""
+"Od tej daty liczy się ulga na start (6 miesięcy bez składek społecznych), "
+"potem preferencyjny ZUS (24 miesiące). Zmiana daty przelicza terminy i "
+"warianty ZUS; wpisy sprzed daty startu są blokowane (chyba że oznaczone jako"
+" testowe)."
+msgstr ""
+"Od tej daty liczy się ulga na start (6 miesięcy bez składek społecznych), "
+"potem preferencyjny ZUS (24 miesiące). Zmiana daty przelicza terminy i "
+"warianty ZUS; wpisy sprzed daty startu są blokowane (chyba że oznaczone jako"
+" testowe)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__deduct_fp
+msgid "Odliczaj Fundusz Pracy"
+msgstr "Odliczaj Fundusz Pracy"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid ""
+"Odliczenia liczą się tylko ze składek ZAPŁACONYCH (Firma > Zapłacone "
+"składki). Kwoty w złotych."
+msgstr ""
+"Odliczenia liczą się tylko ze składek ZAPŁACONYCH (Firma > Zapłacone "
+"składki). Kwoty w złotych."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Okres"
+msgstr "Okres"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fx_table_no
+msgid "Opcjonalnie, przy kursie wpisanym ręcznie."
+msgstr "Opcjonalnie, przy kursie wpisanym ręcznie."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__description
+msgid "Opis zdarzenia"
+msgstr "Opis zdarzenia"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fee_amount
+msgid "Opłata Stripe (informacyjnie)"
+msgstr "Opłata Stripe (informacyjnie)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fee_pln
+msgid "Opłata w PLN"
+msgstr "Opłata w PLN"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid "Oznacz jako zweryfikowaną"
+msgstr "Oznacz jako zweryfikowaną"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__unit
+msgid "PLN, %, EUR, dzień, miesiące..."
+msgstr "PLN, %, EUR, dzień, miesiące..."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Parametry niezweryfikowane ("
+msgstr "Parametry niezweryfikowane ("
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__confidence
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_search
+msgid "Pewność"
+msgstr "Pewność"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_search
+msgid "Pewność [N]"
+msgstr "Pewność [N]"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__ryczalt_rate_confidence
+msgid "Pewność stawki"
+msgstr "Pewność stawki"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__zus_after_variant__full
+msgid "Pełny ZUS"
+msgstr "Pełny ZUS"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__pln_currency_id
+msgid "Pln Currency"
+msgstr "Pln Currency"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_fx_rate__source__nbp
+msgid "Pobrany z api.nbp.pl"
+msgstr "Pobrany z api.nbp.pl"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__source
+msgid "Pochodzenie"
+msgstr "Pochodzenie"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__amount
+msgid "Podaj kwotę dodatnią: wpis korygujący zapisze się jako ujemny."
+msgstr "Podaj kwotę dodatnią: wpis korygujący zapisze się jako ujemny."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__group__podatek
+msgid "Podatek (ryczałt)"
+msgstr "Podatek (ryczałt)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__tax_form__liniowy
+msgid "Podatek liniowy 19% (tylko porównanie, w przygotowaniu)"
+msgstr "Podatek liniowy 19% (tylko porównanie, w przygotowaniu)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Podatek narastająco przy tej stawce:"
+msgstr "Podatek narastająco przy tej stawce:"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+#: model:ir.actions.client,name:l10n_pl_jdg_ryczalt.action_jdg_taxes
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_taxes
+msgid "Podatki i składki"
+msgstr "Podatki i składki"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Podgląd na inny dzień, np. w styczniu 2027"
+msgstr "Podgląd na inny dzień, np. w styczniu 2027"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid ""
+"Podgląd na inny dzień, np. w styczniu 2027, żeby zobaczyć ulgę na start"
+msgstr ""
+"Podgląd na inny dzień, np. w styczniu 2027, żeby zobaczyć ulgę na start"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__vat_exempt_basis
+msgid "Podstawa zwolnienia z VAT (na fakturze)"
+msgstr "Podstawa zwolnienia z VAT (na fakturze)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Pokaż dane testowe"
+msgstr "Pokaż dane testowe"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__invoice_policy
+msgid ""
+"Potwierdzenie zakupu e-mailem (sprzedaż cyfrowa B2C) to nie faktura. Faktura"
+" z NIP dla B2B na żądanie."
+msgstr ""
+"Potwierdzenie zakupu e-mailem (sprzedaż cyfrowa B2C) to nie faktura. Faktura"
+" z NIP dla B2B na żądanie."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__reason
+msgid "Powód"
+msgstr "Powód"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Prawdziwe (bez testowych)"
+msgstr "Prawdziwe (bez testowych)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__refund_reserve_pct
+msgid ""
+"Procent przychodu odejmowany w 'wolnych środkach' na zwroty i spory. "
+"Domyślnie 0, żeby liczby zgadzały się z przykładami."
+msgstr ""
+"Procent przychodu odejmowany w 'wolnych środkach' na zwroty i spory. "
+"Domyślnie 0, żeby liczby zgadzały się z przykładami."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.actions.server,name:l10n_pl_jdg_ryczalt.action_jdg_profile_open
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_profile
+msgid "Profil firmy"
+msgstr "Profil firmy"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid "Profil firmy JDG"
+msgstr "Profil firmy JDG"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model,name:l10n_pl_jdg_ryczalt.model_jdg_profile
+msgid "Profil firmy JDG (ustawienia)"
+msgstr "Profil firmy JDG (ustawienia)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Progi"
+msgstr "Progi"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__state__draft
+msgid "Projekt / prognoza"
+msgstr "Projekt / prognoza"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__state
+msgid ""
+"Projekt: wartość prognozowana lub z projektu aktu (liczona, ale z "
+"ostrzeżeniem). Wycofana: pomijana."
+msgstr ""
+"Projekt: wartość prognozowana lub z projektu aktu (liczona, ale z "
+"ostrzeżeniem). Wycofana: pomijana."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_search
+msgid "Projekty i prognozy"
+msgstr "Projekty i prognozy"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_correct_wizard__kind__dispute_lost
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__kind__dispute_lost
+msgid "Przegrany spór (chargeback)"
+msgstr "Przegrany spór (chargeback)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_pivot
+msgid "Przychody"
+msgstr "Przychody"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_graph
+msgid "Przychody w PLN"
+msgstr "Przychody w PLN"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid "Przychód"
+msgstr "Przychód"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__tax_base_pln
+msgid "Przychód do ryczałtu (PLN)"
+msgstr "Przychód do ryczałtu (PLN)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Przychód dzień po dniu:"
+msgstr "Przychód dzień po dniu:"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Przychód narastająco (po społecznych):"
+msgstr "Przychód narastająco (po społecznych):"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__income_date
+msgid ""
+"Przychód pomniejszamy w miesiącu zwrotu, kurs NBP z dnia roboczego przed tą "
+"datą [N: do potwierdzenia z księgowym, pytanie P-Z7]."
+msgstr ""
+"Przychód pomniejszamy w miesiącu zwrotu, kurs NBP z dnia roboczego przed tą "
+"datą [N: do potwierdzenia z księgowym, pytanie P-Z7]."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Próg składki zdrowotnej"
+msgstr "Próg składki zdrowotnej"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__valid_to
+msgid "Puste = bezterminowo."
+msgstr "Puste = bezterminowo."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__verified_on
+msgid "Puste = niezweryfikowane: pulpit pokaże ostrzeżenie."
+msgstr "Puste = niezweryfikowane: pulpit pokaże ostrzeżenie."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__company_id
+msgid "Puste = reguła globalna. Reguła przypisana do firmy ma pierwszeństwo."
+msgstr "Puste = reguła globalna. Reguła przypisana do firmy ma pierwszeństwo."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_payment_list
+msgid "Razem"
+msgstr "Razem"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_list
+msgid "Razem PLN"
+msgstr "Razem PLN"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid ""
+"Reguła niezweryfikowana: pulpit liczy z niej, ale pokazuje ostrzeżenie. Sprawdź wartość w źródle\n"
+"                        (link poniżej) lub u księgowego i kliknij „Oznacz jako zweryfikowaną”."
+msgstr ""
+"Reguła niezweryfikowana: pulpit liczy z niej, ale pokazuje ostrzeżenie. Sprawdź wartość w źródle\n"
+"                        (link poniżej) lub u księgowego i kliknij „Oznacz jako zweryfikowaną”."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model,name:l10n_pl_jdg_ryczalt.model_jdg_tax_rule
+msgid "Reguła podatkowa / parametr"
+msgstr "Reguła podatkowa / parametr"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid ""
+"Reguła zweryfikowana: nie zmieniamy jej wartości. Gdy parametr się zmieni, dodaj NOWĄ regułę z nową\n"
+"                        datą „obowiązuje od”, a tej ustaw datę „obowiązuje do”."
+msgstr ""
+"Reguła zweryfikowana: nie zmieniamy jej wartości. Gdy parametr się zmieni, dodaj NOWĄ regułę z nową\n"
+"                        datą „obowiązuje od”, a tej ustaw datę „obowiązuje do”."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+#: model:ir.actions.act_window,name:l10n_pl_jdg_ryczalt.action_jdg_tax_rule
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_rules
+msgid "Reguły i parametry"
+msgstr "Reguły i parametry"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__refund_reserve_pct
+msgid "Rezerwa na zwroty i spory (%)"
+msgstr "Rezerwa na zwroty i spory (%)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Robocze"
+msgstr "Robocze"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__state__draft
+msgid "Roboczy"
+msgstr "Roboczy"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__kind
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__kind
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Rodzaj"
+msgstr "Rodzaj"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__entry_year
+msgid "Rok ewidencji"
+msgstr "Rok ewidencji"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Rozliczenie krok po kroku"
+msgstr "Rozliczenie krok po kroku"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__health_threshold_mode__annual_true_up
+msgid "Rozliczenie roczne (jak next_month + ostrzeżenie)"
+msgstr "Rozliczenie roczne (jak next_month + ostrzeżenie)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__tax_form__ryczalt
+msgid "Ryczałt od przychodów ewidencjonowanych"
+msgstr "Ryczałt od przychodów ewidencjonowanych"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__advance_rhythm
+msgid "Rytm zaliczek na ryczałt"
+msgstr "Rytm zaliczek na ryczałt"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_contribution_payment__source__manual
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__source__manual
+msgid "Ręcznie"
+msgstr "Ręcznie"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__tax_form__skala
+msgid "Skala podatkowa 12/32% (tylko porównanie, w przygotowaniu)"
+msgstr "Skala podatkowa 12/32% (tylko porównanie, w przygotowaniu)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid "Skąd ta liczba"
+msgstr "Skąd ta liczba"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Skąd ta liczba?"
+msgstr "Skąd ta liczba?"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__sickness_insurance
+msgid ""
+"Składka chorobowa 2,45% podstawy. Domyślnie TAK (tak liczą przykłady w "
+"specyfikacji: 469,85 zł w preferencyjnym ZUS); odznacz, jeśli rezygnujesz."
+msgstr ""
+"Składka chorobowa 2,45% podstawy. Domyślnie TAK (tak liczą przykłady w "
+"specyfikacji: 469,85 zł w preferencyjnym ZUS); odznacz, jeśli rezygnujesz."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_contribution_payment__kind__health
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__group__zdrowotna
+msgid "Składka zdrowotna"
+msgstr "Składka zdrowotna"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid "Składka zdrowotna i pulpit"
+msgstr "Składka zdrowotna i pulpit"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__source
+msgid "Source"
+msgstr "Source"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__kind__sale
+msgid "Sprzedaż"
+msgstr "Sprzedaż"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Spróbuj ponownie"
+msgstr "Spróbuj ponownie"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__state
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__state
+msgid "Stan"
+msgstr "Stan"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__vat_status
+msgid "Status VAT"
+msgstr "Status VAT"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Stawka"
+msgstr "Stawka"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__ryczalt_rate_pct
+msgid "Stawka (%)"
+msgstr "Stawka (%)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__ryczalt_rate_key
+msgid "Stawka ryczałtu"
+msgstr "Stawka ryczałtu"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__rate_pct
+msgid "Stawka ryczałtu (%)"
+msgstr "Stawka ryczałtu (%)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid "Stawka ryczałtu (do potwierdzenia z księgowym)"
+msgstr "Stawka ryczałtu (do potwierdzenia z księgowym)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Stawka ryczałtu nierozstrzygnięta. Potwierdź z księgowym."
+msgstr "Stawka ryczałtu nierozstrzygnięta. Potwierdź z księgowym."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__accident_rate_pct
+msgid "Stawka wypadkowa (%)"
+msgstr "Stawka wypadkowa (%)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__rate_pct
+msgid "Stawka zamrożona w chwili wpisu (z ustawień firmy i tabeli reguł)."
+msgstr "Stawka zamrożona w chwili wpisu (z ustawień firmy i tabeli reguł)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__source__stripe
+msgid "Stripe"
+msgstr "Stripe"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__due_amount
+msgid "Szacunek należności z chwili zapisu (do porównania z przelewem)."
+msgstr "Szacunek należności z chwili zapisu (do porównania z przelewem)."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Szybka rezerwa"
+msgstr "Szybka rezerwa"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__set_aside_pct
+msgid "Szybka rezerwa na podatki i składki (%)"
+msgstr "Szybka rezerwa na podatki i składki (%)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fx_rate_id
+msgid "Tabela NBP"
+msgstr "Tabela NBP"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.constraint,message:l10n_pl_jdg_ryczalt.constraint_jdg_tax_rule_key_from_uniq
+msgid ""
+"Taka reguła (klucz + data od) już istnieje. Zmianę wartości zapisz jako nową"
+" wersję z nową datą 'od'."
+msgstr ""
+"Taka reguła (klucz + data od) już istnieje. Zmianę wartości zapisz jako nową"
+" wersję z nową datą 'od'."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__key
+msgid ""
+"Techniczna nazwa parametru, np. min_wage albo health.rate_pct. Używa jej kod"
+" obliczeń."
+msgstr ""
+"Techniczna nazwa parametru, np. min_wage albo health.rate_pct. Używa jej kod"
+" obliczeń."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Ten"
+msgstr "Ten"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Ten miesiąc"
+msgstr "Ten miesiąc"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Ten rok"
+msgstr "Ten rok"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.constraint,message:l10n_pl_jdg_ryczalt.constraint_jdg_income_entry_external_ref_uniq
+msgid "Ten zapis już istnieje (duplikat zewnętrznego identyfikatora)."
+msgstr "Ten zapis już istnieje (duplikat zewnętrznego identyfikatora)."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__group__terminy
+msgid "Terminy i kalendarz"
+msgstr "Terminy i kalendarz"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_list
+msgid "Test"
+msgstr "Test"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Testowe"
+msgstr "Testowe"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__tips_as_income
+msgid "Traktuj napiwki jako przychód"
+msgstr "Traktuj napiwki jako przychód"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__set_aside_pct
+msgid ""
+"Tryb uproszczony pulpitu: ile procent każdej wpłaty odkładać 'na wszelki "
+"wypadek'."
+msgstr ""
+"Tryb uproszczony pulpitu: ile procent każdej wpłaty odkładać 'na wszelki "
+"wypadek'."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.actions.act_window,help:l10n_pl_jdg_ryczalt.action_jdg_tax_rule
+msgid ""
+"Tu leżą wszystkie stawki, progi i podstawy ZUS. Każda ma datę obowiązywania,"
+" źródło i poziom pewności."
+msgstr ""
+"Tu leżą wszystkie stawki, progi i podstawy ZUS. Każda ma datę obowiązywania,"
+" źródło i poziom pewności."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fee_amount
+msgid ""
+"Tylko informacyjnie: na ryczałcie opłat nie odliczamy od przychodu. Służy do"
+" wyliczenia, ile realnie wpłynęło."
+msgstr ""
+"Tylko informacyjnie: na ryczałcie opłat nie odliczamy od przychodu. Służy do"
+" wyliczenia, ile realnie wpłynęło."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__invoice_policy__on_request
+msgid "Tylko na żądanie kupującego (B2B z NIP)"
+msgstr "Tylko na żądanie kupującego (B2B z NIP)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__uses_ulga_na_start
+msgid ""
+"Ulga na start: 6 miesięcy bez składek społecznych (płacisz tylko zdrowotną)."
+" Wymaga m.in. braku działalności w ostatnich 60 miesiącach. Właściciel "
+"potwierdził korzystanie z ulgi."
+msgstr ""
+"Ulga na start: 6 miesięcy bez składek społecznych (płacisz tylko zdrowotną)."
+" Wymaga m.in. braku działalności w ostatnich 60 miesiącach. Właściciel "
+"potwierdził korzystanie z ulgi."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_settings
+msgid "Ustawienia"
+msgstr "Ustawienia"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid ""
+"Ustawienia zmieniasz tutaj, bez zmiany kodu. Wszystkie wyliczenia to\n"
+"                            szacunek, nie porada podatkowa."
+msgstr ""
+"Ustawienia zmieniasz tutaj, bez zmiany kodu. Wszystkie wyliczenia to\n"
+"                            szacunek, nie porada podatkowa."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid ""
+"Ustawienie „Traktuj napiwki jako przychód” jest włączone: darowizny liczą "
+"się do przychodu i podatku."
+msgstr ""
+"Ustawienie „Traktuj napiwki jako przychód” jest włączone: darowizny liczą "
+"się do przychodu i podatku."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__note
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__note
+msgid "Uwagi"
+msgstr "Uwagi"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid "Uwagi (można edytować także po zaksięgowaniu)"
+msgstr "Uwagi (można edytować także po zaksięgowaniu)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__ryczalt_rate_note
+msgid "Uwagi do stawki"
+msgstr "Uwagi do stawki"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:res.groups,name:l10n_pl_jdg_ryczalt.group_jdg_user
+msgid "Użytkownik (wpisy i podgląd)"
+msgstr "Użytkownik (wpisy i podgląd)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__group__vat
+msgid "VAT i OSS"
+msgstr "VAT i OSS"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid "VAT i faktury"
+msgstr "VAT i faktury"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__currency_id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__currency_id
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__currency_id
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Waluta"
+msgstr "Waluta"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_correct_wizard__currency_id
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__currency_id
+msgid ""
+"Waluta, w której klient zapłacił. Przychód zapisujemy w walucie oryginalnej "
+"i przeliczamy na złote."
+msgstr ""
+"Waluta, w której klient zapłacił. Przychód zapisujemy w walucie oryginalnej "
+"i przeliczamy na złote."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Waluty obce"
+msgstr "Waluty obce"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__value_display
+msgid "Wartość"
+msgstr "Wartość"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__value_num
+msgid "Wartość (liczba)"
+msgstr "Wartość (liczba)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__value_json
+msgid "Wartość (lista / tabela)"
+msgstr "Wartość (lista / tabela)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__value_char
+msgid "Wartość (tekst)"
+msgstr "Wartość (tekst)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_tax_rule_form
+msgid "Wartość i okres"
+msgstr "Wartość i okres"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:res.groups,comment:l10n_pl_jdg_ryczalt.group_jdg_user
+msgid "Widzi pulpit i ewidencję, dodaje wpisy przychodów i zapłacone składki."
+msgstr "Widzi pulpit i ewidencję, dodaje wpisy przychodów i zapłacone składki."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model,name:l10n_pl_jdg_ryczalt.model_jdg_income_entry
+msgid "Wpis ewidencji przychodów"
+msgstr "Wpis ewidencji przychodów"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__is_test
+msgid "Wpis testowy"
+msgstr "Wpis testowy"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid ""
+"Wpis testowy: nie wchodzi do żadnych obliczeń podatkowych ani eksportów."
+msgstr ""
+"Wpis testowy: nie wchodzi do żadnych obliczeń podatkowych ani eksportów."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_fx_rate__source__manual
+msgid "Wpisany ręcznie"
+msgstr "Wpisany ręcznie"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_income_entry__is_test
+msgid ""
+"Wpisy testowe NIE wchodzą do żadnych obliczeń podatkowych ani eksportów."
+msgstr ""
+"Wpisy testowe NIE wchodzą do żadnych obliczeń podatkowych ani eksportów."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid ""
+"Wpisy testowe nie wchodzą do prawdziwych obliczeń. Włącz, żeby zobaczyć je "
+"na pulpicie."
+msgstr ""
+"Wpisy testowe nie wchodzą do prawdziwych obliczeń. Włącz, żeby zobaczyć je "
+"na pulpicie."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__state__retired
+msgid "Wycofana"
+msgstr "Wycofana"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__owner_name
+msgid "Właściciel"
+msgstr "Właściciel"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:res.groups,name:l10n_pl_jdg_ryczalt.group_jdg_manager
+msgid "Właściciel (ustawienia i reguły)"
+msgstr "Właściciel (ustawienia i reguły)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Z tego do odłożenia:"
+msgstr "Z tego do odłożenia:"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_profile_form
+msgid "ZUS"
+msgstr "ZUS"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "ZUS (składki społeczne)"
+msgstr "ZUS (składki społeczne)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__group__zus
+msgid "ZUS (społeczne)"
+msgstr "ZUS (społeczne)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__zus_after_variant
+msgid "ZUS po okresie preferencyjnym"
+msgstr "ZUS po okresie preferencyjnym"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_contribution_payment__kind__zus_fp
+msgid "ZUS: Fundusz Pracy"
+msgstr "ZUS: Fundusz Pracy"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_contribution_payment__kind__zus_social
+msgid "ZUS: składki społeczne"
+msgstr "ZUS: składki społeczne"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__for_month
+msgid "Za miesiąc"
+msgstr "Za miesiąc"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Zaksięgowane"
+msgstr "Zaksięgowane"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_correct_wizard_form
+msgid ""
+"Zaksięgowanego wpisu nie edytujemy. Ta akcja dopisze NOWY, ujemny wpis, który pomniejszy przychód\n"
+"                    w miesiącu zwrotu."
+msgstr ""
+"Zaksięgowanego wpisu nie edytujemy. Ta akcja dopisze NOWY, ujemny wpis, który pomniejszy przychód\n"
+"                    w miesiącu zwrotu."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__posted_on
+msgid "Zaksięgowano"
+msgstr "Zaksięgowano"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__state__posted
+msgid "Zaksięgowany"
+msgstr "Zaksięgowany"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__posted_by
+msgid "Zaksięgował"
+msgstr "Zaksięgował"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid "Zaksięguj"
+msgstr "Zaksięguj"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__accident_rate_pct
+msgid "Zależy od płatnika; 1,67% to wartość standardowa [PR]."
+msgstr "Zależy od płatnika; 1,67% to wartość standardowa [PR]."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Zaliczka (szacunek):"
+msgstr "Zaliczka (szacunek):"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_contribution_payment__kind__income_tax_advance
+msgid "Zaliczka na ryczałt"
+msgstr "Zaliczka na ryczałt"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Zaliczka w tym miesiącu przy"
+msgstr "Zaliczka w tym miesiącu przy"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__advance_rhythm
+msgid ""
+"Zaliczki na podatek: kwartalnie albo miesięcznie. ZUS i składka zdrowotna są"
+" ZAWSZE miesięczne."
+msgstr ""
+"Zaliczki na podatek: kwartalnie albo miesięcznie. ZUS i składka zdrowotna są"
+" ZAWSZE miesięczne."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_form
+msgid ""
+"Zapisane na stałe. Błąd? Dodaj wpis korygujący (przycisk „Korekta lub "
+"zwrot”)."
+msgstr ""
+"Zapisane na stałe. Błąd? Dodaj wpis korygujący (przycisk „Korekta lub "
+"zwrot”)."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Zapłaciłem składkę lub zaliczkę"
+msgstr "Zapłaciłem składkę lub zaliczkę"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_contribution_payment__amount
+msgid "Zapłacona kwota"
+msgstr "Zapłacona kwota"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model,name:l10n_pl_jdg_ryczalt.model_jdg_contribution_payment
+msgid "Zapłacona składka lub zaliczka"
+msgstr "Zapłacona składka lub zaliczka"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.actions.act_window,name:l10n_pl_jdg_ryczalt.action_jdg_payment
+#: model:ir.ui.menu,name:l10n_pl_jdg_ryczalt.menu_jdg_payments
+msgid "Zapłacone składki"
+msgstr "Zapłacone składki"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__supersedes_id
+msgid "Zastępuje"
+msgstr "Zastępuje"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_profile__has_employees
+msgid "Zatrudniam pracowników"
+msgstr "Zatrudniam pracowników"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__invoice_policy__always
+msgid "Zawsze"
+msgstr "Zawsze"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__has_employees
+msgid "Zmienia termin ZUS z 20. na 15. dnia miesiąca."
+msgstr "Zmienia termin ZUS z 20. na 15. dnia miesiąca."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:res.groups,comment:l10n_pl_jdg_ryczalt.group_jdg_manager
+msgid ""
+"Zmienia ustawienia firmy i tabelę reguł podatkowych, usuwa wpisy testowe."
+msgstr ""
+"Zmienia ustawienia firmy i tabelę reguł podatkowych, usuwa wpisy testowe."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.constraint,message:l10n_pl_jdg_ryczalt.constraint_jdg_income_entry_sign_check
+msgid ""
+"Znak kwoty nie pasuje do rodzaju wpisu: sprzedaż i darowizna są dodatnie, "
+"zwrot i spór ujemne."
+msgstr ""
+"Znak kwoty nie pasuje do rodzaju wpisu: sprzedaż i darowizna są dodatnie, "
+"zwrot i spór ujemne."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "Zobacz reguły"
+msgstr "Zobacz reguły"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__verified_on
+msgid "Zweryfikowano dnia"
+msgstr "Zweryfikowano dnia"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__verified_by
+msgid "Zweryfikował"
+msgstr "Zweryfikował"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_profile__vat_status__exempt_113
+msgid "Zwolniony z VAT (art. 113 ustawy o VAT)"
+msgstr "Zwolniony z VAT (art. 113 ustawy o VAT)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_correct_wizard__kind__refund
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__kind__refund
+msgid "Zwrot"
+msgstr "Zwrot"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_income_entry_search
+msgid "Zwroty i korekty"
+msgstr "Zwroty i korekty"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "[N] do potwierdzenia"
+msgstr "[N] do potwierdzenia"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__confidence__n
+msgid "[N] niepotwierdzone"
+msgstr "[N] niepotwierdzone"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__confidence__pr
+msgid "[PR] prawdopodobne"
+msgstr "[PR] prawdopodobne"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_tax_rule__confidence__p
+msgid "[P] potwierdzone"
+msgstr "[P] potwierdzone"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "bieżącego progu składki zdrowotnej"
+msgstr "bieżącego progu składki zdrowotnej"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__fx_source__missing
+msgid "brak kursu"
+msgstr "brak kursu"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "dane testowe"
+msgstr "dane testowe"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "do"
+msgstr "do"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "dziś"
+msgstr "dziś"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid ""
+"niezaksięgowanych wpisów roboczych. Nie liczą się do sum, dopóki ich nie "
+"zaksięgujesz."
+msgstr ""
+"niezaksięgowanych wpisów roboczych. Nie liczą się do sum, dopóki ich nie "
+"zaksięgujesz."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model_terms:ir.ui.view,arch_db:l10n_pl_jdg_ryczalt.view_jdg_fx_rate_form
+msgid "np. 001/A/NBP/2027"
+msgstr "np. 001/A/NBP/2027"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "od"
+msgstr "od"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "ok."
+msgstr "ok."
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "pewność ["
+msgstr "pewność ["
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "podatek"
+msgstr "podatek"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "składki"
+msgstr "składki"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "stawka"
+msgstr "stawka"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "szacunek, nie porada podatkowa"
+msgstr "szacunek, nie porada podatkowa"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__fx_source__nbp
+msgid "tabela NBP z bazy kursów"
+msgstr "tabela NBP z bazy kursów"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "w tym miesiącu · dziś"
+msgstr "w tym miesiącu · dziś"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__fx_source__manual
+msgid "wpisany ręcznie"
+msgstr "wpisany ręcznie"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "za"
+msgstr "za"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields.selection,name:l10n_pl_jdg_ryczalt.selection__jdg_income_entry__fx_source__pln
+msgid "złote (kurs 1)"
+msgstr "złote (kurs 1)"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "· blisko progu"
+msgstr "· blisko progu"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "· po opłatach Stripe zostaje"
+msgstr "· po opłatach Stripe zostaje"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/taxes.xml:0
+msgid "· próg"
+msgstr "· próg"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "· próg przekroczony"
+msgstr "· próg przekroczony"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "· w roku"
+msgstr "· w roku"
+
+#. module: l10n_pl_jdg_ryczalt
+#. odoo-javascript
+#: code:addons/l10n_pl_jdg_ryczalt/static/src/js/dashboard.xml:0
+msgid "Ładowanie danych"
+msgstr "Ładowanie danych"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,help:l10n_pl_jdg_ryczalt.field_jdg_profile__health_threshold_mode
+msgid ""
+"Źródła są sprzeczne co do momentu, od którego obowiązuje wyższa składka po "
+"przekroczeniu 60 000 zł [N]. Domyślnie ostrożnie: od miesiąca przekroczenia."
+" Potwierdź z księgowym lub kalkulatorem ZUS."
+msgstr ""
+"Źródła są sprzeczne co do momentu, od którego obowiązuje wyższa składka po "
+"przekroczeniu 60 000 zł [N]. Domyślnie ostrożnie: od miesiąca przekroczenia."
+" Potwierdź z księgowym lub kalkulatorem ZUS."
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_fx_rate__source
+msgid "Źródło"
+msgstr "Źródło"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__source_url
+msgid "Źródło (link)"
+msgstr "Źródło (link)"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_tax_rule__source_note
+msgid "Źródło i uwagi"
+msgstr "Źródło i uwagi"
+
+#. module: l10n_pl_jdg_ryczalt
+#: model:ir.model.fields,field_description:l10n_pl_jdg_ryczalt.field_jdg_income_entry__fx_source
+msgid "Źródło kursu"
+msgstr "Źródło kursu"

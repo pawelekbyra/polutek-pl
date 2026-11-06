@@ -9,6 +9,7 @@ import { Pin } from "lucide-react";
 import { Trash2, Heart, MoreVertical, Edit, Flag } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
+import { roleRingClass } from "@/lib/role-badge";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
 import { DeleteCommentDialog } from "./DeleteCommentDialog";
@@ -51,9 +52,16 @@ interface CommentItemProps {
   isReply?: boolean;
 }
 
+
 /** Avatar sizes: replies are visibly subordinate to their parent. */
 const AVATAR_SIZE = 40;
 const REPLY_AVATAR_SIZE = 24;
+/**
+ * The avatar column starts lower than the row: the visible top of the avatar (its 2 px ring + 2 px offset reach 4 px above
+ * the image) lines up with the top of the nick's capital letters. The 18 px name line puts the cap height 4.5 px below
+ * its top (13 px bold, 9 px caps), so the column moves down by 7.5 (cap offset 4.5 + ring 4, less the 1 px the avatar box already sits below the row top). The badge under the avatar goes with it.
+ */
+const AVATAR_COLUMN_NUDGE = 7.5;
 
 function formatCommentAge(date: Date, language: Locale, now: Date) {
   const formatted = formatDistance(date, now, {
@@ -84,6 +92,10 @@ function CommentItemComponent({
   const isDeletedForPublic = comment.status === 'DELETED';
 
   const authorBadge = getAuthorBadge(comment.author);
+  // Decorative ring (a box-shadow, nothing for assistive tech): blue for the creator, amber for VIP. getAuthorBadge lets the
+  // creator win over VIP, so a creator who is also VIP keeps the blue ring. Same width and offset for both, so no layout shift.
+  // Width, offset and colours are shared with the top bar (lib/role-badge.ts).
+  const avatarRing = authorBadge ? roleRingClass(authorBadge) : undefined;
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text || "");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -214,9 +226,11 @@ function CommentItemComponent({
         isHighlighted && "-mx-2 bg-[var(--chan-blue-soft)]/60 px-2",
       )}
     >
-      {/* Badges live under the avatar (never next to the name). The badge is positioned absolutely,
-          centred on the avatar, so it never changes the column width or the text alignment. */}
-      <div className="relative z-[5] shrink-0" style={{ width: avatarSize, height: avatarSize }}>
+      {/* Badges live under the avatar (never next to the name). The column is exactly as wide as the avatar and the pill
+          hangs centred from a zero-width slot, so it never changes the column width or the text alignment; the slot only
+          reserves its own height under the avatar. */}
+      <div className="relative z-[5] shrink-0" style={{ width: avatarSize, marginTop: AVATAR_COLUMN_NUDGE }}>
+        <div className="relative" style={{ width: avatarSize, height: avatarSize }}>
         {canOpenProfile ? (
           <button
             type="button"
@@ -230,7 +244,7 @@ function CommentItemComponent({
               src={avatarSrc}
               alt={comment.author?.displayName || "Avatar"}
               size={avatarSize}
-              className={cn("border border-[var(--chan-line)]", authorBadge && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
+              className={cn("border border-[var(--chan-line)]", avatarRing)}
             />
           </button>
         ) : (
@@ -238,8 +252,16 @@ function CommentItemComponent({
             src={avatarSrc}
             alt={comment.author?.displayName || "Avatar"}
             size={avatarSize}
-            className={cn("border border-[var(--chan-line)]", authorBadge && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
+            className={cn("border border-[var(--chan-line)]", avatarRing)}
           />
+        )}
+        </div>
+        {authorBadge && (
+          <div className="relative mt-1.5 flex justify-center" style={{ width: avatarSize, height: isReply ? 15 : 17 }}>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2">
+              <AuthorBadge kind={authorBadge} language={language} size={isReply ? "sm" : "md"} />
+            </div>
+          </div>
         )}
       </div>
       <div className="relative z-[5] min-w-0 flex-1">
@@ -262,7 +284,6 @@ function CommentItemComponent({
                 {profileName}
               </span>
             )}
-            {authorBadge && <AuthorBadge kind={authorBadge} language={language} />}
             <time
               className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
               dateTime={validCreatedAt ? comment.createdAt : undefined}

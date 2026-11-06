@@ -4,7 +4,7 @@
  * the real `constructEvent`; only the database (in-memory fake), e-mail, notifications, audit and the Stripe API client
  * are replaced. No network, no charge.
  */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Stripe from "stripe";
 import { NextRequest } from "next/server";
 import { createFakePaymentsDb } from "../payments/fake-payments-db";
@@ -89,12 +89,19 @@ const grant = () => parsePassRecord(db.appSetting.rows.find((row: any) => row.ke
 const DAY = 86_400_000;
 
 beforeEach(() => {
+  // a fixed clock (only Date): 21.10.2026 12:00 in Warsaw, so calendar-month ends are exact
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-21T10:00:00.000Z"));
   for (const name of ["payment", "stripeEvent", "patronGrant", "user", "userPaymentTotal", "appSetting"]) db[name].rows.length = 0;
   db.user.rows.push({ id: "user_1", email: "payer@example.com", language: "pl" });
   vi.clearAllMocks();
   stripeRefunds.clear();
   process.env.STRIPE_WEBHOOK_SECRET = SECRET;
   process.env.STRIPE_SECRET_KEY = "sk_test_dummy";
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("patron zone access from the verified webhook", () => {
@@ -146,26 +153,39 @@ describe("patron zone access from the verified webhook", () => {
     expect(afterSecond).toMatchObject({ totalMinor: 2998, priceMinor: 1499, paymentIds: [first.id, second.id], grantedAt: afterFirst.grantedAt });
   });
 
-  it("the unlimited option stores an explicit lifetime marker, not a far-future date", async () => {
+  it("the 3-month plan grants exactly 3 calendar months from the payment (same price table, no lifetime marker, no unlimited access)", async () => {
     const payment = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME", method: "card" } });
     await POST(signedRequest("payment_intent.succeeded", intent(payment)));
     const record = grant()!;
-    expect(record).toMatchObject({ productId: "ACCESS_LIFETIME", priceMinor: 2999, lifetime: true, lifetimePaymentId: payment.id, expiresAt: null, paymentIds: [payment.id] });
-    expect(passStateOf(record, new Date("2099-01-01T00:00:00.000Z")).state).toBe("active");
-    expect(JSON.stringify(record)).not.toMatch(/20[3-9]\d-|2[1-9]\d\d-/);
+    // paid 21.10.2026 12:00 (Warsaw, CEST) -> access to 21.01.2027 12:00 (Warsaw, CET)
+    expect(record).toMatchObject({ productId: "ACCESS_LIFETIME", priceMinor: 2999, lifetime: false, lifetimePaymentId: null, expiresAt: "2027-01-21T11:00:00.000Z", paymentIds: [payment.id] });
+    expect(passStateOf(record, new Date("2027-01-21T10:59:59.000Z")).state).toBe("active");
+    expect(passStateOf(record, new Date("2027-01-21T11:00:00.000Z")).state).toBe("expired"); // the access ends at expiresAt
+    expect(passStateOf(record, new Date("2099-01-01T00:00:00.000Z")).state).toBe("expired");
   });
 
-  it("unlimited bought while a 30-day access runs converts it to lifetime; a later 30-day payment adds nothing", async () => {
+  it("the 3-month plan bought while an access runs extends it from its end (never overwrites); a later 30-day payment adds 30 days on top", async () => {
     const first = seedPatronPayment();
     await POST(signedRequest("payment_intent.succeeded", intent(first)));
-    const running = grant()!;
-    const life = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
-    await POST(signedRequest("payment_intent.succeeded", intent(life)));
-    const converted = grant()!;
-    expect(converted).toMatchObject({ lifetime: true, lifetimePaymentId: life.id, totalMinor: 4498, grantedAt: running.grantedAt, paymentIds: [first.id, life.id] });
+    const running = grant()!; // to 20.11.2026
+    const three = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
+    await POST(signedRequest("payment_intent.succeeded", intent(three)));
+    const extended = grant()!;
+    expect(extended).toMatchObject({ lifetime: false, lifetimePaymentId: null, expiresAt: "2027-02-20T10:00:00.000Z", totalMinor: 4498, grantedAt: running.grantedAt, paymentIds: [first.id, three.id] });
     const late = seedPatronPayment();
     await POST(signedRequest("payment_intent.succeeded", intent(late)));
-    expect(grant()).toMatchObject({ lifetime: true, expiresAt: converted.expiresAt, paymentIds: [first.id, life.id, late.id] });
+    expect(grant()).toMatchObject({ lifetime: false, expiresAt: "2027-03-22T10:00:00.000Z", paymentIds: [first.id, three.id, late.id] });
+  });
+
+  it("a replayed event for the 3-month payment grants nothing more (idempotent)", async () => {
+    const payment = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
+    await POST(signedRequest("payment_intent.succeeded", intent(payment), { id: "evt_3m" }));
+    const once = grant()!;
+    await POST(signedRequest("payment_intent.succeeded", intent(payment), { id: "evt_3m" }));
+    await POST(signedRequest("payment_intent.succeeded", intent(payment), { id: "evt_3m_other" }));
+    expect(grant()).toEqual(once);
+    expect(grant()!.expiresAt).toBe("2027-01-21T11:00:00.000Z");
+    expect(db.userPaymentTotal.rows[0].amountMinor).toBe(2999);
   });
 
   it("after an ended access a new payment starts a fresh 30 days from now", async () => {
@@ -236,7 +256,7 @@ describe("patron zone access from the verified webhook", () => {
     const usdLife = seedPatronPayment({ amountMinor: 899, currency: "USD", metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
     await POST(signedRequest("payment_intent.succeeded", intent(usdLife)));
     // totals never mix currencies: the paid currency changed, so the running total restarts
-    expect(grant()).toMatchObject({ currency: "USD", priceMinor: 899, totalMinor: 899, lifetime: true });
+    expect(grant()).toMatchObject({ currency: "USD", priceMinor: 899, totalMinor: 899, lifetime: false, expiresAt: "2027-02-20T10:00:00.000Z" });
   });
 
   it("never grants when the intent metadata names another account", async () => {
@@ -276,20 +296,32 @@ describe("patron zone access from the verified webhook", () => {
     expect(new Date(both.expiresAt!).getTime() - new Date(after.expiresAt!).getTime()).toBe(30 * DAY);
   });
 
-  it("a full refund of the unlimited payment removes the lifetime marker; of a 30-day payment it leaves it", async () => {
+  it("a full refund of the 3-month payment takes 3 months back; of a 30-day payment it takes 30 days; the last refund ends the access", async () => {
     const thirty = seedPatronPayment();
-    const life = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
+    const three = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
     await POST(signedRequest("payment_intent.succeeded", intent(thirty)));
-    await POST(signedRequest("payment_intent.succeeded", intent(life)));
+    await POST(signedRequest("payment_intent.succeeded", intent(three)));
+    expect(grant()!.expiresAt).toBe("2027-02-20T10:00:00.000Z");
     const refund = (p: { id: string; stripeIntentId: string }, amount: number) => {
       stripeRefunds.set(p.stripeIntentId, [{ id: `re_${p.id}`, amount, status: "succeeded" }]);
       return POST(signedRequest("charge.refunded", { id: `ch_${p.id}`, object: "charge", payment_intent: p.stripeIntentId, metadata: { paymentId: p.id } }));
     };
     await refund(thirty, 1499);
-    expect(grant()).toMatchObject({ lifetime: true, lifetimePaymentId: life.id, paymentIds: [life.id] });
-    await refund(life, 2999);
+    expect(grant()).toMatchObject({ lifetime: false, expiresAt: "2027-01-21T10:00:00.000Z", paymentIds: [three.id] });
+    await refund(three, 2999);
     const ended = grant()!;
     expect(ended).toMatchObject({ lifetime: false, lifetimePaymentId: null, paymentIds: [], totalMinor: 0 });
     expect(passStateOf(ended, new Date(Date.now() + 1000)).state).toBe("expired");
+  });
+
+  it("a legacy unlimited record (stored before 2026-11-03) is read as time-limited and a new 3-month payment extends it from its end", async () => {
+    db.appSetting.rows.push({
+      key: "xp.premium_pass:user_1",
+      value: JSON.stringify({ v: 3, provider: "STRIPE", ref: "old", productId: "ACCESS_LIFETIME", priceMinor: 2999, totalMinor: 2999, currency: "PLN", method: "card", paymentIds: ["old"], lifetime: true, lifetimePaymentId: "old", grantedAt: "2026-10-20T10:00:00.000Z", expiresAt: null, consents: { termsVersion: "x", waiverAt: "2026-10-20T10:00:00.000Z" } }),
+    });
+    expect(grant()).toMatchObject({ lifetime: false, expiresAt: "2027-01-20T11:00:00.000Z" });
+    const payment = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
+    await POST(signedRequest("payment_intent.succeeded", intent(payment)));
+    expect(grant()).toMatchObject({ lifetime: false, lifetimePaymentId: null, expiresAt: "2027-04-20T10:00:00.000Z", paymentIds: ["old", payment.id] }); // CET -> CEST keeps the wall clock 12:00
   });
 });

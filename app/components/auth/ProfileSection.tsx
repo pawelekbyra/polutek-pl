@@ -5,8 +5,13 @@
 // User.name through PATCH /api/user/nickname.
 
 import React, { useRef, useState } from "react";
+import { Camera, Check, ChevronDown, Globe, LoaderCircle } from "lucide-react";
+import { Select } from "@base-ui/react/select";
 import { useLanguage } from "../LanguageContext";
 import { useSwitchLanguage } from "../useSwitchLanguage";
+import LanguageFlag from "../language-switcher/LanguageFlag";
+import { LANGUAGE_OPTIONS } from "../language-switcher/languages";
+import type { Locale } from "@/lib/i18n/routing";
 import {
   checkNicknameAvailability,
   isSameNickname,
@@ -15,41 +20,58 @@ import {
   normalizeNickname,
   validateNickname,
 } from "@/lib/auth/nickname";
-import { Feedback, Field, Primary, useAccountUser } from "./AccountSections";
+import { Feedback, Primary, useAccountUser } from "./AccountSections";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { refreshSession } from "@/lib/auth/react";
 import { avatarProblemMessage, validateAvatarFile } from "@/lib/auth/avatar";
 import { fileToAvatarDataUrl } from "@/lib/auth/avatar-client";
 import type { Tx } from "@/lib/i18n/ui";
-import { LANGUAGE_OPTIONS } from "@/app/components/language-switcher/languages";
 
 function LanguageField({ tx }: { tx: Tx }) {
   const { language } = useLanguage();
   const switchLanguage = useSwitchLanguage();
 
   return (
-    <div className="flex items-center justify-between rounded-[12px] border border-[var(--chan-line)] px-3 py-2.5">
-      <span className="text-[13px] font-bold text-[var(--chan-ink)]">{tx("Język", "Language")}</span>
-      <div className="flex flex-wrap justify-end gap-1" role="group" aria-label={tx("Język", "Language")}>
-        {LANGUAGE_OPTIONS.map(({ locale, label, lang }) => (
-          <button
-            key={locale}
-            type="button"
-            lang={lang}
-            aria-label={label}
-            aria-pressed={language === locale}
-            onClick={() => switchLanguage(locale)}
-            className={
-              "rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-wide transition-colors " +
-              (language === locale
-                ? "bg-[var(--chan-ink)] text-white"
-                : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)]")
-            }
-          >
-            {locale}
-          </button>
-        ))}
+    <div className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-2 sm:px-4 sm:py-3">
+      <div className="min-w-0">
+        <p className="text-[13px] font-bold text-[var(--chan-ink)]">{tx("Język", "Language")}</p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--chan-muted)]">
+          {tx("Język interfejsu strony.", "Language used across the site.")}
+        </p>
       </div>
+      <Select.Root value={language} onValueChange={(value) => value && switchLanguage(value as Locale)}>
+        <Select.Trigger
+          aria-label={tx("Język interfejsu", "Interface language")}
+          className="inline-flex h-9 min-w-[104px] shrink-0 items-center gap-1.5 rounded-lg border border-[var(--chan-line)] bg-[var(--chan-card)] px-2.5 text-[13px] font-semibold text-[var(--chan-ink)] outline-none transition-colors hover:bg-[var(--chan-surface)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+        >
+          <Globe className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+          <Select.Value>
+            {(value: Locale | null) => LANGUAGE_OPTIONS.find((option) => option.locale === value)?.label ?? "Polski"}
+          </Select.Value>
+          <Select.Icon><ChevronDown className="h-3.5 w-3.5 text-[var(--chan-muted)]" aria-hidden="true" /></Select.Icon>
+        </Select.Trigger>
+        <Select.Portal>
+          <Select.Positioner side="bottom" sideOffset={6} align="end" alignItemWithTrigger={false} className="z-[1200]">
+            <Select.Popup className="max-h-(--available-height) min-w-[190px] overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-1.5 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.2)]">
+              <Select.List className="max-h-[min(60dvh,420px)] overflow-y-auto overscroll-contain">
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <Select.Item
+                    key={option.locale}
+                    value={option.locale}
+                    label={option.label}
+                    lang={option.lang}
+                    className="group flex min-h-10 cursor-pointer items-center gap-2.5 rounded-xl px-2.5 text-[13px] outline-none data-highlighted:bg-[var(--chan-surface)] data-selected:font-semibold data-selected:text-[var(--chan-blue)]"
+                  >
+                    <LanguageFlag option={option} size={22} />
+                    <Select.ItemText className="min-w-0 flex-1 truncate">{option.label}</Select.ItemText>
+                    <Select.ItemIndicator><Check className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" /></Select.ItemIndicator>
+                  </Select.Item>
+                ))}
+              </Select.List>
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Portal>
+      </Select.Root>
     </div>
   );
 }
@@ -123,33 +145,50 @@ export function ProfileSection({ tx }: { tx: Tx }) {
   }
 
   return (
-    <form onSubmit={save} className="space-y-3">
+    <form onSubmit={save} className="space-y-2 sm:space-y-4">
       <Feedback error={error} info={info} />
-      <LanguageField tx={tx} />
-      <div className="flex items-center gap-3">
-        {/* Avatar is a small data URL or a local file; plain img avoids next/image config for the account panel. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={user.imageUrl}
-          alt=""
-          className="h-14 w-14 shrink-0 rounded-full border border-[var(--chan-line)] object-cover"
-        />
-        {/* A real button (reachable with Tab, Enter and Space) opens the hidden file input (WCAG 2.1.1, audit A07). */}
-        <button
-          type="button"
-          onClick={() => avatarInputRef.current?.click()}
-          disabled={avatarLoading}
-          className="cursor-pointer rounded text-[13px] font-bold text-[var(--chan-ink)] underline hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--chan-blue)] disabled:cursor-default disabled:opacity-60"
-        >
-          {avatarLoading ? (tx("Wgrywanie...", "Uploading...")) : (tx("Zmień zdjęcie", "Change photo"))}
-        </button>
-        <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" tabIndex={-1} aria-hidden="true" onChange={onAvatar} disabled={avatarLoading} />
-      </div>
-      <Field label={tx("Pseudonim", "Nickname")} value={nickname} onChange={setNickname} autoComplete="nickname" />
-      <p className="-mt-1 text-[12px] text-[var(--chan-muted)]">
-        {tx("To nazwa widoczna na stronie, np. przy Twoich komentarzach.", "The name shown on the site, e.g. with your comments.")}
-      </p>
-      <Primary loading={loading} label={tx("Zapisz", "Save")} />
+      <section className="w-full">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 sm:gap-4">
+          <div className="relative">
+            {/* Avatar images are supplied by the account; plain img avoids next/image config here. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={user.imageUrl}
+              alt=""
+              className="h-28 w-28 shrink-0 rounded-full border border-white object-cover shadow-[0_6px_18px_rgba(37,99,235,0.16)] ring-2 ring-[var(--chan-blue-soft)]"
+            />
+            {/* Keyboard-accessible edit control, positioned beside the avatar without crowding its center. */}
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarLoading}
+              aria-label={avatarLoading ? tx("Wgrywanie...", "Uploading...") : tx("Zmień zdjęcie", "Change photo")}
+              title={avatarLoading ? tx("Wgrywanie...", "Uploading...") : tx("Zmień zdjęcie", "Change photo")}
+              className="absolute -right-2 bottom-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-[var(--chan-surface)] bg-[var(--chan-blue)] text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--chan-surface)] disabled:cursor-default disabled:opacity-70"
+            >
+              {avatarLoading ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Camera className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />}
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" tabIndex={-1} aria-hidden="true" onChange={onAvatar} disabled={avatarLoading} />
+          </div>
+
+          <label className="block w-full text-center">
+            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-muted)]">
+              {tx("Pseudonim", "Nickname")}
+            </span>
+            <input
+              type="text"
+              value={nickname}
+              autoComplete="nickname"
+              onChange={(event) => setNickname(event.target.value)}
+              className="w-full rounded-xl border border-[var(--chan-control-border)] bg-[var(--chan-surface)] px-3 py-2 text-center font-brand text-[18px] font-bold text-[var(--chan-ink)] outline-none transition-colors focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] sm:py-2.5"
+            />
+          </label>
+          <LanguageField tx={tx} />
+          <div className="w-full">
+            <Primary loading={loading} label={tx("Zapisz", "Save")} />
+          </div>
+        </div>
+      </section>
     </form>
   );
 }

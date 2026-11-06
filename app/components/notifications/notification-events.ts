@@ -1,4 +1,9 @@
 /** The bell polls its count once a minute; anything that just created a notification for the viewer says so here. */
+export const NOTIFICATION_SETTINGS_EVENT = "polutek:open-notification-settings";
+
+/** Account-specific channel, carrying invalidation only, never notification content. */
+export function notificationChannelName(accountId: string): string { return `polutek:notifications:${accountId}`; }
+
 export const NOTIFICATIONS_CHANGED_EVENT = "polutek:notifications-changed";
 
 export function announceNotificationsChanged(): void {

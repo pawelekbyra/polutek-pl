@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="l10n_pl_jdg_ryczalt.Dashboard">
+        <div class="o_jdg_app">
+            <div class="o_jdg_page">
+                <header class="o_jdg_header">
+                    <h1 class="o_jdg_title">Dzisiaj zarobiłem</h1>
+                    <div class="o_jdg_header_tools">
+                        <span t-if="state.data and state.data.meta.include_test" class="o_jdg_pill o_jdg_pill_test">dane testowe</span>
+                        <span class="o_jdg_pill o_jdg_pill_warn">szacunek, nie porada podatkowa</span>
+                    </div>
+                </header>
+
+                <t t-if="state.loading and !state.data">
+                    <div class="o_jdg_skeleton" aria-busy="true" aria-label="Ładowanie danych">
+                        <div class="o_jdg_skel_block"/><div class="o_jdg_skel_block"/><div class="o_jdg_skel_block"/>
+                    </div>
+                </t>
+
+                <t t-elif="state.error">
+                    <div class="o_jdg_card o_jdg_error" role="alert">
+                        <strong>Nie udało się policzyć pulpitu.</strong>
+                        <p class="mb-2"><t t-out="state.error"/></p>
+                        <button class="btn btn-secondary" t-on-click="() => this.load()">Spróbuj ponownie</button>
+                        <button class="btn btn-link" t-on-click="openRules">Reguły i parametry</button>
+                    </div>
+                </t>
+
+                <t t-elif="state.data">
+                    <t t-set="d" t-value="state.data"/>
+
+                    <div class="o_jdg_toolbar">
+                        <button class="btn btn-primary" t-on-click="addEntry"><i class="fa fa-plus me-1"/> Dodaj przychód</button>
+                        <button class="btn btn-secondary" t-on-click="openEntries">Ewidencja</button>
+                        <span class="o_jdg_toolbar_spacer"/>
+                        <label class="o_jdg_inline" title="Podgląd na inny dzień, np. w styczniu 2027, żeby zobaczyć ulgę na start">
+                            Na dzień
+                            <input type="date" class="form-control form-control-sm" t-att-value="state.onDate" t-on-change="onDateChange"/>
+                        </label>
+                        <button t-if="state.onDate" class="btn btn-link btn-sm p-0" t-on-click="resetDate">dziś</button>
+                        <label t-if="d.meta.test_entries or state.includeTest" class="o_jdg_inline" title="Wpisy testowe nie wchodzą do prawdziwych obliczeń. Włącz, żeby zobaczyć je na pulpicie.">
+                            <input type="checkbox" t-att-checked="state.includeTest" t-on-change="onToggleTest"/>
+                            Pokaż dane testowe
+                        </label>
+                    </div>
+
+                    <div t-foreach="d.notes" t-as="note" t-key="note_index" class="o_jdg_note o_jdg_note_info" role="status">
+                        <i class="fa fa-info-circle me-1"/> <t t-out="note"/>
+                    </div>
+                    <div t-if="d.rate.unverified" class="o_jdg_note o_jdg_note_warn" role="status">
+                        <i class="fa fa-exclamation-triangle me-1"/> <strong>Stawka <t t-out="fmt.pct(d.rate.pct, 1)"/>:</strong> <t t-out="d.rate_warning"/>
+                    </div>
+                    <div t-if="d.vat.banner" t-att-class="'o_jdg_note ' + (d.vat.exceeded ? 'o_jdg_note_warn o_jdg_vat_over' : 'o_jdg_note_warn')" role="alert">
+                        <i class="fa fa-exclamation-triangle me-1"/> <strong>Limit VAT:</strong> <t t-out="d.vat.banner"/>
+                    </div>
+                    <div t-if="d.meta.rules_unverified" class="o_jdg_note o_jdg_note_warn" role="status">
+                        <i class="fa fa-exclamation-triangle me-1"/>
+                        Parametry niezweryfikowane (<t t-out="d.meta.rules_unverified"/>): liczymy z nich, ale musi je potwierdzić księgowy.
+                        <t t-if="d.meta.rules_drafts"> Część to projekty lub prognozy na 2027.</t>
+                        <t t-out="'\u00a0'"/><a href="#" t-on-click.prevent="openRules">Zobacz reguły</a>
+                    </div>
+                    <div t-if="d.meta.draft_entries" class="o_jdg_note o_jdg_note_info" role="status">
+                        <i class="fa fa-pencil me-1"/> Masz <t t-out="d.meta.draft_entries"/> niezaksięgowanych wpisów roboczych. Nie liczą się do sum, dopóki ich nie zaksięgujesz.
+                        <a href="#" t-on-click.prevent="openEntries">Ewidencja</a>
+                    </div>
+
+                    <section class="o_jdg_cards">
+                        <article class="o_jdg_card o_jdg_hero">
+                            <h2 class="o_jdg_card_label">Dzisiaj zarobiłem</h2>
+                            <div class="o_jdg_big"><t t-out="fmt.money(d.today.revenue)"/></div>
+                            <div class="o_jdg_sub">
+                                <t t-out="d.today.count"/> <t t-out="d.today.count === 1 ? 'wpłata' : 'wpłat'"/>
+                                <t t-if="d.today.fees > 0"> · po opłatach Stripe zostaje <t t-out="fmt.money(d.today.after_fees)"/></t>
+                            </div>
+                            <div class="o_jdg_aside" t-if="d.today.revenue !== 0">
+                                Z tego do odłożenia:
+                                <strong t-att-title="d.today.tax_why">podatek <t t-out="fmt.money(d.today.set_aside_tax)"/></strong> ·
+                                <strong t-att-title="d.today.contrib_why">składki <t t-out="fmt.money(d.today.set_aside_contrib)"/></strong>
+                                <div class="o_jdg_aside_small">
+                                    Szybka rezerwa <t t-out="fmt.pct(d.today.set_aside_pct, 0)"/>: <t t-out="fmt.money(d.today.set_aside_simple)"/>
+                                </div>
+                            </div>
+                            <div class="o_jdg_aside" t-else="">Dziś jeszcze nic nie wpłynęło.</div>
+                        </article>
+
+                        <article class="o_jdg_card">
+                            <h2 class="o_jdg_card_label">Ten miesiąc</h2>
+                            <div class="o_jdg_big o_jdg_big_dark"><t t-out="fmt.auto(d.month.revenue)"/></div>
+                            <div class="o_jdg_sub o_jdg_muted"><t t-out="d.month.label"/></div>
+                            <div class="o_jdg_sub o_jdg_muted"><t t-out="changeText"/></div>
+                        </article>
+
+                        <article class="o_jdg_card">
+                            <h2 class="o_jdg_card_label">Ten <t t-out="d.period.rhythm === 'monthly' ? 'miesiąc (okres zaliczki)' : 'kwartał'"/></h2>
+                            <div class="o_jdg_big o_jdg_big_dark"><t t-out="fmt.auto(d.period.revenue)"/></div>
+                            <div class="o_jdg_sub o_jdg_muted"><t t-out="d.period.label"/></div>
+                            <div class="o_jdg_sub o_jdg_muted">
+                                Zaliczka (szacunek): <strong><t t-out="fmt.money(d.period.advance)"/></strong>
+                                do <t t-out="d.period.due_date_long"/>
+                            </div>
+                            <div t-if="d.shadow and d.shadow.period_diff > 0" class="o_jdg_shadow" t-att-title="d.shadow.text">
+                                Gdyby <t t-out="fmt.pct(d.shadow.rate, 0)"/>: <strong><t t-out="fmt.money(d.shadow.period_advance)"/></strong>
+                                (+<t t-out="fmt.money(d.shadow.period_diff)"/>)
+                            </div>
+                        </article>
+
+                        <article class="o_jdg_card">
+                            <h2 class="o_jdg_card_label">Ten rok</h2>
+                            <div class="o_jdg_big o_jdg_big_dark"><t t-out="fmt.auto(d.year.revenue)"/></div>
+                            <div class="o_jdg_sub o_jdg_muted" t-if="d.year.pct_of_health_limit !== null and d.year.pct_of_health_limit !== undefined">
+                                <t t-out="fmt.pct(d.year.pct_of_health_limit)"/> bieżącego progu składki zdrowotnej
+                            </div>
+                            <div class="o_jdg_sub o_jdg_muted"><t t-out="d.year.label"/> (od 1 stycznia)</div>
+                        </article>
+                    </section>
+
+                    <div class="o_jdg_main">
+                        <div class="o_jdg_col">
+                            <article class="o_jdg_card">
+                                <h2 class="o_jdg_card_label"><t t-out="d.free.title"/></h2>
+
+                                <t t-if="d.free.revenue > 0">
+                                    <div class="o_jdg_stack" role="img" t-att-aria-label="'Podział przychodu miesiąca: ' + d.free.rows.map(r => r.label + ' ' + fmt.money(r.amount)).join(', ')">
+                                        <div t-foreach="barSegments" t-as="seg" t-key="seg.key" t-att-class="'o_jdg_seg o_jdg_tone_' + seg.tone"
+                                             t-att-style="'width:' + seg.width + '%'" t-att-title="seg.title"><t t-out="seg.label"/></div>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div class="o_jdg_empty">
+                                        <p class="mb-1">Jeszcze nic nie sprzedałeś w tym miesiącu. Gdy pojawi się pierwsza wpłata, zobaczysz tu, ile z niej zostaje Tobie.</p>
+                                        <p t-if="d.free.fixed_costs" class="mb-2 o_jdg_muted">Koszty stałe do pokrycia w tym miesiącu: <strong><t t-out="fmt.money(d.free.fixed_costs)"/></strong> (składki).</p>
+                                        <button class="btn btn-primary btn-sm" t-on-click="addEntry">Dodaj przychód ręcznie</button>
+                                    </div>
+                                </t>
+
+                                <ul class="o_jdg_rows">
+                                    <li t-foreach="d.free.rows" t-as="row" t-key="row.key">
+                                        <div class="o_jdg_row">
+                                            <span class="o_jdg_dot" t-att-class="'o_jdg_tone_' + row.tone"/>
+                                            <button class="o_jdg_rowlabel" type="button" t-on-click="() => this.toggleWhy(row.key)"
+                                                    t-att-aria-expanded="state.openWhy[row.key] ? 'true' : 'false'">
+                                                <t t-out="row.label"/>
+                                                <i class="fa fa-question-circle-o o_jdg_why_icon" title="Skąd ta liczba?"/>
+                                            </button>
+                                            <strong class="o_jdg_rowamount"><t t-out="fmt.money(row.amount)"/></strong>
+                                        </div>
+                                        <p t-if="state.openWhy[row.key]" class="o_jdg_why"><t t-out="row.why"/></p>
+                                    </li>
+                                </ul>
+
+                                <p t-if="d.shadow and d.shadow.period_diff > 0" class="o_jdg_why" role="note">
+                                    <strong>Cień stawki.</strong> Zaliczka w tym miesiącu przy <t t-out="fmt.pct(d.rate.pct, 1)"/>: <t t-out="fmt.money(d.free.rows[1].amount)"/>;
+                                    gdyby <t t-out="fmt.pct(d.shadow.rate, 0)"/>: <t t-out="fmt.money(d.shadow.month_advance)"/> (różnica +<t t-out="fmt.money(d.shadow.month_diff)"/>).
+                                    <t t-out="d.shadow.text"/>
+                                </p>
+                                <h2 class="o_jdg_card_label o_jdg_mt">Przychód dzień po dniu: <t t-out="d.chart.label"/></h2>
+                                <svg class="o_jdg_chart" viewBox="0 0 600 140" role="img"
+                                     t-att-aria-label="'Wykres przychodu dziennego, ' + d.chart.label">
+                                    <line x1="0" y1="124" x2="600" y2="124" class="o_jdg_axis"/>
+                                    <g t-foreach="bars" t-as="b" t-key="b_index">
+                                        <rect t-if="b.h > 0" t-att-x="b.x" t-att-y="b.y" t-att-width="b.w" t-att-height="b.h" rx="2"
+                                              t-att-class="'o_jdg_bar' + (b.today ? ' o_jdg_bar_today' : '')"><title><t t-out="b.title"/></title></rect>
+                                        <text t-if="b.showDay" t-att-x="b.x + b.w / 2" y="137" text-anchor="middle" class="o_jdg_axis_text" t-att-class="b.future ? 'o_jdg_axis_text o_jdg_future' : 'o_jdg_axis_text'"><t t-out="b.day"/></text>
+                                    </g>
+                                </svg>
+                                <button class="btn btn-link btn-sm p-0" t-on-click="() => state.showTable = !state.showTable">
+                                    <t t-out="state.showTable ? 'Ukryj tabelę' : 'Pokaż tabelę z danymi wykresu'"/>
+                                </button>
+                                <table t-if="state.showTable" class="table table-sm o_jdg_table">
+                                    <thead><tr><th>Dzień</th><th class="text-end">Przychód</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="d.chart.days.filter(x => x.revenue !== 0)" t-as="day" t-key="day.date">
+                                            <td><t t-out="day.date"/></td><td class="text-end"><t t-out="fmt.money(day.revenue)"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </article>
+                        </div>
+
+                        <div class="o_jdg_col">
+                            <article class="o_jdg_card">
+                                <h2 class="o_jdg_card_label">Progi</h2>
+                                <div t-foreach="d.thresholds" t-as="th" t-key="th.key" class="o_jdg_threshold">
+                                    <div class="o_jdg_threshold_title">
+                                        <button class="o_jdg_rowlabel" type="button" t-on-click="() => this.toggleWhy('th_' + th.key)">
+                                            <t t-out="th.title"/> <i class="fa fa-question-circle-o o_jdg_why_icon" title="Skąd ta liczba?"/>
+                                        </button>
+                                    </div>
+                                    <div class="o_jdg_threshold_text"><t t-out="th.text"/></div>
+                                    <div class="o_jdg_meter" role="progressbar" t-att-aria-valuenow="th.pct" aria-valuemin="0" aria-valuemax="100"
+                                         t-att-aria-label="th.title">
+                                        <div t-att-class="'o_jdg_meter_fill o_jdg_level_' + th.level" t-att-style="'width:' + Math.min(100, th.pct) + '%'"/>
+                                    </div>
+                                    <div class="o_jdg_threshold_value">
+                                        <t t-if="th.unit === 'EUR'"><t t-out="fmt.num(th.value, 0)"/> / <t t-out="fmt.num(th.limit, 0)"/> EUR (<t t-out="fmt.pct(th.pct)"/>)</t>
+                                        <t t-else=""><t t-out="fmt.money(th.value, 0)"/> / <t t-out="fmt.money(th.limit, 0)"/> (<t t-out="fmt.pct(th.pct)"/>)</t>
+                                        <t t-if="th.level === 'high'"> · blisko progu</t>
+                                        <t t-if="th.level === 'over'"> · próg przekroczony</t>
+                                    </div>
+                                    <p t-if="state.openWhy['th_' + th.key]" class="o_jdg_why"><t t-out="th.why"/></p>
+                                </div>
+                                <p class="o_jdg_muted o_jdg_small mb-0">Alerty progów (70/90/100%) trafiają do kanału „Moja firma: terminy i alerty” w Discuss. Mały ZUS Plus dojdzie w kolejnej iteracji.</p>
+                            </article>
+
+
+                            <article class="o_jdg_card o_jdg_vat_shadow">
+                                <h2 class="o_jdg_card_label">VAT, gdyby czynny (w cieniu)</h2>
+                                <div class="o_jdg_big o_jdg_big_dark o_jdg_big_sm"><t t-out="fmt.money(d.vat.year)"/></div>
+                                <div class="o_jdg_sub o_jdg_muted">VAT <t t-out="fmt.pct(d.vat.rate, 0)"/> w ciągu roku · w tym miesiącu <t t-out="fmt.money(d.vat.month)"/> · dziś <t t-out="fmt.money(d.vat.today)"/></div>
+                                <div class="o_jdg_sub o_jdg_muted" t-if="d.vat.exempt">Firma jest zwolniona z VAT: to tylko informacja, ile VAT trzeba by odprowadzić po przekroczeniu limitu. Nie obniża wolnych środków.</div>
+                                <div class="o_jdg_note o_jdg_note_warn" t-if="d.vat.active">Status VAT „czynny”: VAT jest należny, a przychód ryczałtowy liczymy od kwoty netto.</div>
+                                <div class="o_jdg_threshold" t-if="d.vat.exempt">
+                                    <div class="o_jdg_threshold_text">Limit zwolnienia: <t t-out="fmt.money(d.vat.used, 0)"/> z <t t-out="fmt.money(d.vat.limit, 0)"/> (<t t-out="fmt.pct(d.vat.pct)"/>), zostało <t t-out="fmt.money(d.vat.remaining, 0)"/>.</div>
+                                    <div class="o_jdg_meter" role="progressbar" t-att-aria-valuenow="d.vat.pct" aria-valuemin="0" aria-valuemax="100" aria-label="Zużycie limitu zwolnienia z VAT">
+                                        <div t-att-class="'o_jdg_meter_fill o_jdg_level_' + d.vat.level" t-att-style="'width:' + Math.min(100, d.vat.pct) + '%'"/>
+                                    </div>
+                                    <div t-if="d.vat.since" class="o_jdg_why" role="status">Limit przekroczony sprzedażą <t t-out="d.vat.since.name"/> z <t t-out="d.vat.since.date_long"/>: od niej należy naliczać VAT (VAT w cieniu od tej sprzedaży: <t t-out="fmt.money(d.vat.since.vat)"/>).</div>
+                                </div>
+                            </article>
+
+                            <article class="o_jdg_card o_jdg_donations">
+                                <h2 class="o_jdg_card_label">Darowizny (napiwki)</h2>
+                                <div class="o_jdg_big o_jdg_big_dark o_jdg_big_sm"><t t-out="fmt.money(d.donations.month)"/></div>
+                                <div class="o_jdg_sub o_jdg_muted">w tym miesiącu · dziś <t t-out="fmt.money(d.donations.today)"/> · w roku <t t-out="fmt.money(d.donations.year)"/></div>
+                                <div class="o_jdg_sub o_jdg_muted" t-if="!d.donations.tips_as_income">
+                                    Nie wliczane do przychodu, o ile bez świadczenia zwrotnego.
+                                </div>
+                                <div class="o_jdg_note o_jdg_note_warn" t-else="">Ustawienie „Traktuj napiwki jako przychód” jest włączone: darowizny liczą się do przychodu i podatku.</div>
+                                <div class="o_jdg_threshold">
+                                    <div class="o_jdg_threshold_text"><t t-out="d.donations.text"/></div>
+                                    <div class="o_jdg_meter" role="progressbar" t-att-aria-valuenow="d.donations.pct" aria-valuemin="0" aria-valuemax="100" aria-label="Największa suma darowizn od jednej osoby">
+                                        <div t-att-class="'o_jdg_meter_fill o_jdg_level_' + d.donations.level" t-att-style="'width:' + Math.min(100, d.donations.pct) + '%'"/>
+                                    </div>
+                                    <div t-if="d.donations.level !== 'ok'" class="o_jdg_why" role="status"><t t-out="d.donations.sdz2"/></div>
+                                </div>
+                            </article>
+
+                            <article class="o_jdg_card">
+                                <h2 class="o_jdg_card_label">Najbliższe terminy</h2>
+                                <p t-if="!d.deadlines.length" class="o_jdg_muted mb-0">Brak terminów w najbliższym czasie.</p>
+                                <ul class="o_jdg_deadlines">
+                                    <li t-foreach="d.deadlines" t-as="dl" t-key="dl_index">
+                                        <div>
+                                            <strong><t t-out="dl.date_short"/></strong> · <t t-out="dl.label"/>
+                                            <div t-if="dl.amount !== null and dl.amount !== undefined" class="o_jdg_muted o_jdg_small">ok. <t t-out="fmt.money(dl.amount)"/> (szacunek)</div>
+                                        </div>
+                                        <span t-att-class="'o_jdg_pill o_jdg_due_' + dl.level"><t t-out="fmt.days(dl.days)"/></span>
+                                    </li>
+                                </ul>
+                                <button class="btn btn-link btn-sm p-0 mt-2" t-on-click="openTaxes">Rozliczenie krok po kroku</button>
+                            </article>
+                        </div>
+                    </div>
+
+                    <footer class="o_jdg_footer">
+                        <t t-out="d.meta.footer"/>
+                        <span t-if="d.rate.confidence === 'N'" class="o_jdg_pill o_jdg_pill_bad" title="Stawka ryczałtu nierozstrzygnięta. Potwierdź z księgowym.">stawka <t t-out="fmt.pct(d.rate.pct, 1)"/> [N] do potwierdzenia</span>
+                    </footer>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

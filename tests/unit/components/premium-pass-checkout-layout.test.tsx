@@ -44,13 +44,13 @@ describe('patron checkout layout', () => {
     vi.unstubAllGlobals();
   });
 
-  it('the modal title is "Kup se Premium" (capital P), also the accessible name of the dialog', async () => {
+  it('the modal title is "Dostęp Premium" (capital P), also the accessible name of the dialog', async () => {
     openCheckout();
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByRole('heading', { level: 2, name: 'Kup se Premium' })).toBeInTheDocument();
-    expect(dialog).toHaveAccessibleName('Kup se Premium');
-    expect(dialog).not.toHaveTextContent('Zostań patronem');
-    expect(dialog).not.toHaveTextContent('Kup se premium');
+    expect(within(dialog).getByRole('heading', { level: 2, name: 'Dostęp Premium' })).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleName('Dostęp Premium');
+    expect(dialog).not.toHaveTextContent('Kup Premium');
+    expect(dialog).not.toHaveTextContent('Dostęp premium');
   });
 
   it('step 2 has ONE visible "Metoda płatności" (the dropdown label); the heading for focus and screen readers is visually hidden', async () => {
@@ -65,18 +65,23 @@ describe('patron checkout layout', () => {
     expect(dialog.getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
   });
 
-  it('step 1: the "Wybierz dostęp" label sits in one row with the small currency pill ("Waluta" is screen-reader only); the other field labels share one typography class', async () => {
+  it('step 1: the currency is a small pill on a slim row above the access cards (label visible, 44 px touch area); field labels share one typography class', async () => {
     openCheckout();
     const dialog = within(await screen.findByRole('dialog'));
     const legend = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'LEGEND')!;
     expect(legend.className).toContain('sr-only');
-    const visible = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'SPAN')!;
-    expect(visible).toHaveAttribute('aria-hidden', 'true');
-    const pill = dialog.getByRole('combobox', { name: 'Waluta' });
-    expect(visible.parentElement).toBe(pill.closest('div')?.parentElement); // same row
-    expect(dialog.getByText('Waluta').className).toContain('sr-only');
-    expect(pill.className).toContain('h-7'); // 28 px pill, hit area grown to 44 px by the ::before
-    expect(pill.className).toContain('before:-top-2.5');
+    expect(dialog.getAllByText('Wybierz dostęp')).toHaveLength(1); // only the screen-reader legend: no visible title row
+    expect(dialog.getByRole('group', { name: 'Wybierz dostęp' })).toBe(legend.closest('fieldset'));
+    const field = dialog.getByRole('combobox', { name: 'Waluta płatności' });
+    const row = field.closest('[class*="currencyRow"]') as HTMLElement;
+    const visibleLabel = row.querySelector('[class*="currencyLabel"]') as HTMLElement;
+    expect(visibleLabel).toHaveTextContent('Waluta płatności'); // readable label next to the pill (aria-hidden: the pill carries the same name)
+    expect(visibleLabel).toHaveAttribute('aria-hidden', 'true');
+    expect(field).toHaveTextContent('zł · PLN');
+    expect(field.className).toContain('h-[34px]'); // a 34 px select (as in the owner reference), not the 52 px tile
+    expect(field.className).not.toContain('w-full');
+    expect(field.className).toContain('before:-inset-y-[5px]'); // 5 + 34 + 5 = 44 px touch height
+    expect(row.nextElementSibling?.className).toContain('productGrid'); // access cards follow the currency row directly
     expect(FIELD_LABEL_CLASS).toMatch(/text-\[13px\].*text-\[var\(--chan-body\)\]|text-\[var\(--chan-body\)\].*text-\[13px\]/);
     expect(FIELD_LABEL_CLASS).toContain('font-[weight:var(--field-label-weight,400)]'); // regular in the gate, bold in the checkout via the one variable
     expect(FIELD_LABEL_CLASS).toContain('mb-[var(--field-label-gap,8px)]'); // label to field: one variable (8 px in the gate, 0 in the checkout, like step 3)
@@ -102,20 +107,42 @@ describe('patron checkout layout', () => {
     expect(dots.previousElementSibling?.contains(dots)).toBe(false);
   });
 
-  it('the dots take no part in the scroll: a plain flex item with ~9px under it, no pull-up margin', () => {
+  it('the dots take no part in the scroll: a plain flex item with 4-9px under it (scaled with the window height), no pull-up margin', () => {
     const rule = css.match(/\.stepDots \{([^}]*)\}/)?.[1] ?? '';
     expect(rule).toContain('flex: 0 0 auto');
-    expect(rule).toContain('padding: 0 0 9px');
+    expect(rule).toMatch(/padding: 0 0 calc\(4px \+ [\d.]+ \* var\(--pass-ramp\)\)/);
     expect(rule).not.toMatch(/--pass-title-gap/);
   });
 
+  it('the dots are a stepper: 8 px dots 44 px apart, a 44 px touch area from a pseudo-element, a focus ring, no motion when reduced', () => {
+    const dots = css.match(/\.stepDots \{([^}]*)\}/)?.[1] ?? '';
+    expect(dots).toContain('gap: 36px'); // 8 + 36 = 44 px between centres: the touch areas never overlap
+    expect(dots).toContain('z-index: 1'); // above the sticky action bar the touch area reaches into
+    expect(css).toMatch(/\.stepPip \{[^}]*width: 8px; height: 8px;/);
+    expect(css).toMatch(/\.stepBtn::before \{[^}]*inset: -18px;/); // 8 + 18 + 18 = 44
+    expect(css).toMatch(/\.stepBtn:focus-visible \{ outline: 3px solid/);
+    expect(css).toMatch(/\.stepBtn:disabled \{/);
+  });
+
+  it('the payment boxes use the blue family: tokens for the edge (3.6:1) and the placeholder (6.1:1), both AA on white', () => {
+    expect(css).toMatch(/--pass-field-edge: #5f87c9;/);
+    expect(css).toMatch(/--pass-blue-ink: #4b6384;/);
+    const lum = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+    };
+    const ratio = (a: string) => 1.05 / (lum(a) + 0.05);
+    expect(ratio('#5f87c9')).toBeGreaterThanOrEqual(3); // WCAG 1.4.11 (the edge of the field)
+    expect(ratio('#4b6384')).toBeGreaterThanOrEqual(4.5); // WCAG 1.4.3 (the placeholder)
+  });
+
   it('one variable, --pass-title-gap, sets the distance from the title row to the first label in every step (no per-step hacks)', () => {
-    expect(css).toMatch(/\.pass \{[^}]*--pass-title-gap: \d+px;/);
+    expect(css).toMatch(/\.pass \{[^}]*--pass-title-gap: calc\(12px \+ [\d.]+ \* var\(--pass-ramp\)\);/);
     expect(css).toMatch(/\.sheetBody \{[^}]*padding: var\(--pass-title-gap\)/);
     expect(css).toMatch(/\.payHead \{[^}]*padding: var\(--pass-title-gap\)/);
     expect(css).not.toMatch(/\.sheetHead \+ \.sheetBody/);
-    // defined twice (default + short-phone override) and consumed by exactly two containers: no per-step values
-    expect((css.match(/--pass-title-gap:/g) ?? []).length).toBe(2);
+    // defined once (12 -> 24 px, scaled by the window height through --pass-ramp) and consumed by exactly two containers: no per-step values
+    expect((css.match(/--pass-title-gap:/g) ?? []).length).toBe(1);
     expect((css.match(/var\(--pass-title-gap\)/g) ?? []).length).toBe(2);
   });
 

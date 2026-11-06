@@ -32,6 +32,13 @@ thumbnail-r2-migration-*.json
 /.claude/local-ci-cache/
 .vercel
 
+# Surowe artefakty audytu >300 KB trzymamy poza repo (lista: POMINIETE-ARTEFAKTY.md)
+docs/audit/2026-11-01-platform-research/**/unit-*final.json
+docs/audit/2026-11-01-platform-research/**/unit-full.json
+docs/audit/2026-11-01-platform-research/**/unit.vitest.json
+docs/audit/2026-11-01-platform-research/vitest-results.json
+docs/audit/2026-11-01-platform-research/program-audytu/evidence/architecture-graph.json
+
 # Local audit repair verification and unpublished release artifacts
 .claude/audit-k06/
 .claude/releases/

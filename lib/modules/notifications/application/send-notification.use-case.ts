@@ -72,7 +72,9 @@ export async function sendNotification(input: SendNotificationInput, tx?: Db) {
         bodyPl: override?.bodyPl ?? input.bodyPl,
         bodyEn: override?.bodyEn ?? input.bodyEn,
         href: input.href,
-        ...(input.templateKey && !override ? { templateKey: input.templateKey, params: input.params ?? {} } : {}),
+        ...(input.templateKey ? override
+          ? { params: { ...input.params, eventType: input.templateKey } }
+          : { templateKey: input.templateKey, params: input.params ?? {} } : {}),
         ...(input.channelId ? { channelId: input.channelId } : {}),
         ...(input.videoId ? { videoId: input.videoId } : {}),
       },
@@ -93,8 +95,8 @@ export const notificationTemplates = {
     templateKey: "welcome" as NotificationTemplateKey,
     titlePl: "Witaj!",
     titleEn: "Welcome!",
-    bodyPl: "Dziękujemy za dołączenie! Wszystkie filmy są dostępne po zalogowaniu.",
-    bodyEn: "Thank you for joining! Every video is available once you are signed in.",
+    bodyPl: "Dziękujemy za dołączenie! Obserwuj ulubione kanały i odkrywaj nowe filmy.",
+    bodyEn: "Thanks for joining! Follow your favorite channels and discover new videos.",
   },
   // A tip is a voluntary gift that unlocks nothing (Regulamin §4): thanks only, no promise of access.
   supportThanks: {

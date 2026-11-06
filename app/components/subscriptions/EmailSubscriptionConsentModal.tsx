@@ -1,17 +1,18 @@
 "use client";
 
 import React from "react";
+import { CloseButton } from "@/components/ui/close-button";
 import { useLanguage } from "../LanguageContext";
-import { LegalDocLink } from "../legal/LegalDocLink";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
+  DialogClose,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { txRich } from "@/lib/i18n/rich";
+import { tidyWrap } from "@/lib/i18n/typography";
+import { htmlLang } from "@/lib/i18n/ui";
 
 type EmailSubscriptionConsentModalProps = {
   open: boolean;
@@ -39,24 +40,17 @@ export default function EmailSubscriptionConsentModal({
     >
       <DialogContent
         showCloseButton={false}
-        className="max-w-sm gap-0 rounded-[22px] border border-[var(--chan-line)] bg-[var(--chan-card)] p-7 text-[var(--chan-ink)] shadow-[0_26px_70px_-30px_rgba(15,23,42,0.45)] motion-reduce:animate-none"
+        lang={htmlLang(language)}
+        className="!w-[min(400px,calc(100vw-2rem))] !max-w-none [line-break:strict] max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] gap-0 overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-5 py-6 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)] ring-0 sm:px-6 sm:py-7 motion-reduce:animate-none"
       >
-        <DialogHeader className="gap-2">
-          <DialogTitle className="font-sans text-xl font-bold tracking-tight">
-            {t.confirmSubscribeTitle}
+        <DialogClose disabled={pending} aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
+        <DialogHeader className="gap-3 text-center">
+          <DialogTitle className="min-w-0 break-words px-6 text-balance font-brand text-2xl font-bold leading-tight tracking-tight">
+            {tidyWrap(t.confirmSubscribeTitle, language)}
           </DialogTitle>
-          <DialogDescription className="text-sm leading-relaxed text-[var(--chan-muted)]">
-            {t.confirmSubscribeText}
+          <DialogDescription className="mx-auto max-w-[38ch] text-balance break-words hyphens-auto text-center text-sm leading-relaxed text-[var(--chan-muted)]">
+            {tidyWrap(t.confirmSubscribeText, language, { widow: true })}
           </DialogDescription>
-          <p data-testid="email-consent-legal" className="text-xs leading-relaxed text-[var(--chan-muted)]">
-            {txRich(
-              tx,
-              "Zgodę wycofasz w każdej chwili linkiem w każdej wiadomości. Szczegóły: {0} i {1}.",
-              "You can withdraw consent at any time with the link in every message. Details: {0} and {1}.",
-              <LegalDocLink doc="privacy" language={language}>{tx("Polityka prywatności", "Privacy Policy")}</LegalDocLink>,
-              <LegalDocLink doc="terms" language={language}>{tx("Regulamin", "Terms")}</LegalDocLink>,
-            )}
-          </p>
         </DialogHeader>
 
         {errorMessage && (
@@ -65,12 +59,12 @@ export default function EmailSubscriptionConsentModal({
           </p>
         )}
 
-        <DialogFooter className="mx-0 mb-0 mt-7 grid grid-cols-2 border-0 bg-transparent p-0">
+        <div className="mt-5 grid grid-cols-2 gap-2.5">
           <button
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="min-h-11 rounded-xl bg-[var(--chan-blue)] px-4 text-sm font-semibold text-white transition-[transform,background-color] duration-160 hover:bg-[var(--cm-blue-88-black)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-50 motion-reduce:transition-none"
+            className="flex min-h-11 items-center justify-center rounded-[12px] bg-[var(--chan-blue)] px-4 py-2 font-brand text-[15px] font-bold text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:shadow-[0_8px_20px_var(--cm-blue-25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             {t.yes}
           </button>
@@ -78,11 +72,11 @@ export default function EmailSubscriptionConsentModal({
             type="button"
             onClick={onDismiss}
             disabled={pending}
-            className="min-h-11 rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-4 text-sm font-semibold text-[var(--chan-ink)] transition-colors duration-160 hover:bg-[var(--chan-surface)] disabled:opacity-50 motion-reduce:transition-none"
+            className="flex min-h-11 items-center justify-center rounded-[12px] bg-[var(--chan-surface)] px-4 py-2 font-sans text-[14px] font-bold text-[var(--chan-ink)] transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-[0.98] disabled:opacity-60 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             {t.no}
           </button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

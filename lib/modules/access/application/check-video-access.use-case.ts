@@ -118,7 +118,7 @@ export async function checkVideoAccess(
   const passGate = isPublished ? await premiumPassGate(ctx, video, now) : null;
   if (passGate && "denied" in passGate) return decide({ hasAccess: false, reason: "PASS_REQUIRED" });
   if (passGate) premiumPassGated = true;
-  if (passGate) premiumPassUntil = passGate.activeUntil ?? undefined; // lifetime access has no end date to show
+  if (passGate) premiumPassUntil = passGate.activeUntil;
 
   // Staff and members of the channel with `video.preview` see their non-archived content
   if (canPreview) return decide({ hasAccess: true });

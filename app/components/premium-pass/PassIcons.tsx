@@ -52,3 +52,13 @@ export function PlayIcon({ className }: P) {
     </svg>
   );
 }
+
+/** Filled trust shield with a check (the seller card badge). Decorative: the wrapper carries role="img" and the label. */
+export function TrustShieldIcon({ className }: P) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" focusable="false" fill="none">
+      <path fill="currentColor" d="M12 1.8l8.2 3v6.4c0 5.1-3.4 9.3-8.2 11.1-4.8-1.8-8.2-6-8.2-11.1V4.8z" />
+      <path stroke="#fff" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" d="M7.9 12.1l2.9 2.9 5.4-5.8" />
+    </svg>
+  );
+}

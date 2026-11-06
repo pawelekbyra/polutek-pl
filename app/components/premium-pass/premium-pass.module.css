@@ -14,15 +14,25 @@
   --pass-radius-btn: 14px;
   --pass-shadow: 0 24px 54px -28px rgba(15, 23, 42, 0.34);
   /* Checkout rhythm (one place, no per-step hacks): title row -> first label; field -> next label; gutters; radii; the blue family. */
-  --pass-title-gap: 20px;
-  --pass-gap: 16px;
+  /* Vertical responsiveness (checkout-fit): --pass-ramp runs from 0 (view <= 560 px high) to 200 px (view >= 760 px high); every vertical
+     token below is "tightest + k * ramp", so the checkout shrinks smoothly with the window and fits one screen on a laptop (no scrolling
+     from ~640 px up). Without dvh support the full-size values apply. */
+  --pass-ramp: 200px;
+  --pass-title-gap: calc(12px + 0.06 * var(--pass-ramp));   /* 12 -> 24 */
+  --pass-gap: calc(8px + 0.04 * var(--pass-ramp));           /* 8 -> 16 */
+  --pass-gap-lg: calc(10px + 0.05 * var(--pass-ramp));     /* 10 -> 20 (step 3 strip -> form) */
+  --pass-head-top: calc(8px + 0.02 * var(--pass-ramp));     /* 8 -> 12 */
+  --pass-body-pb: calc(6px + 0.02 * var(--pass-ramp));      /* 6 -> 10 */
+  --pass-card-pad: calc(12px + 0.02 * var(--pass-ramp));    /* 12 -> 16 */
+  --pass-btn-h: calc(44px + 0.02 * var(--pass-ramp));       /* 44 -> 48 */
+  --pass-input-h: calc(48px + 0.06 * var(--pass-ramp));     /* 52 -> 64 (BLIK code) */
   /* Label text -> the field under it, in every step (1: "Wybierz dostęp" -> cards, 2: "Metoda płatności" -> field, 3: "Płatność" -> summary): just the label's own line box. The gate's default is 8 px (FIELD_LABEL_CLASS). */
   --field-label-gap: 0px;
   /* Section / field labels ("Wybierz dostęp", "Metoda płatności", "Płatność", "Kod BLIK…"): bold in the checkout only; hints and notes stay regular. */
   --field-label-weight: 600;
   --pass-gutter: 18px;
-  --pass-box-y: 12px;
-  --pass-bar-y: 10px;
+  --pass-box-y: calc(8px + 0.02 * var(--pass-ramp));        /* 8 -> 12 */
+  --pass-bar-y: calc(8px + 0.01 * var(--pass-ramp));       /* 8 -> 10 */
   --pass-r-field: 16px;
   --pass-r-card: 14px;
   --pass-r-pill: 999px;
@@ -31,7 +41,32 @@
   --pass-blue-soft: #e8f1ff;
   --pass-blue-line: #bcd4f6;
   --pass-blue-ink: #4b6384;
+  /* Text boxes of the payment forms (BLIK code, card): edge 3.6:1 on white, focus ring in blue (the amber of the tip gate is not used here). */
+  --pass-field-edge: #5f87c9;
+  /* The exact Tailwind v3 values of the owner's reference (ref-bramka-wlasciciela.html, /opt/claude/shots-checkout-v2/ref-colors.json). Scoped to the checkout. */
+  --pass-gray-50: #f9fafb;
+  --pass-gray-100: #f3f4f6;
+  --pass-gray-200: #e5e7eb;
+  --pass-gray-300: #d1d5db;
+  --pass-gray-400: #9ca3af;
+  --pass-gray-500: #6b7280;
+  --pass-gray-600: #4b5563;
+  --pass-gray-700: #374151;
+  --pass-gray-800: #1f2937;
+  --pass-gray-900: #111827;
+  --pass-blue-50-50: rgba(239, 246, 255, .5);
+  --pass-blue-50-80: rgba(239, 246, 255, .8);
+  --pass-blue-100: #dbeafe;
+  --pass-blue-400: #60a5fa;
+  --pass-blue-600: #2563eb;
+  --pass-amber-400: #fbbf24;
+  --pass-amber-950: #451a03;
+  --pass-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, .05);
+  --pass-field-ring: rgba(37, 99, 235, .2);
   font-variant-numeric: tabular-nums;
+}
+@supports (height: 100dvh) {
+  .pass { --pass-ramp: clamp(0px, calc(100dvh - 560px), 200px); }
 }
 
 /* ---------- demo ribbon ---------- */
@@ -95,7 +130,8 @@
 .expired { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 10px; background: color-mix(in srgb, #ef4444 20%, transparent); color: #fee2e2; font-size: 12px; font-weight: 600; border: 1px solid color-mix(in srgb, #ef4444 45%, transparent); }
 
 /* ---------- light buttons ---------- */
-.inkBtn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 16px; border: 0; border-radius: var(--pass-r-card); cursor: pointer; background: var(--chan-ink, #111827); color: var(--chan-card, #fff); font-weight: 800; font-size: 16px; box-shadow: 0 14px 30px -16px rgba(17, 24, 39, .7); }
+.inkBtn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--pass-btn-h); padding: 0 16px; border: 0; border-radius: 12px; cursor: pointer; background: var(--pass-gray-900); color: #fff; font-weight: 600; font-size: 14px; line-height: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .1), 0 4px 6px -4px rgba(0, 0, 0, .1); transition: background-color 150ms ease; }
+.inkBtn:hover:not(:disabled) { background: #000; }
 .inkBtn:disabled { opacity: .6; cursor: progress; }
 .inkBtn svg { width: 18px; height: 18px; }
 .lineBtn { flex: 1; min-height: 50px; border-radius: var(--pass-r-card); border: 2px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); font-weight: 700; font-size: 15px; color: var(--chan-ink, #111827); cursor: pointer; }
@@ -103,34 +139,47 @@
 
 /* ---------- checkout sheet ---------- */
 .overlay { position: fixed; inset: 0; z-index: 9990; background: rgba(5, 7, 13, .55); opacity: 1; transition: opacity 320ms ease; }
-.sheet { position: fixed; z-index: 9991; right: 0; top: 0; bottom: 0; width: min(400px, 100vw); height: 100dvh; max-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--chan-card, #fff); color: var(--chan-ink, #111827); border: 1px solid var(--chan-line, #e1e6ef); border-top: 0; border-right: 0; border-bottom: 0; border-radius: 20px 0 0 20px; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .6); outline: none; transform: translateY(0); transition: transform 320ms cubic-bezier(.22, 1, .36, 1); will-change: transform; }
+.sheet { position: fixed; z-index: 9991; right: 0; top: 0; bottom: 0; width: min(400px, 100vw); height: 100dvh; max-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--chan-card, #fff); color: var(--chan-ink, #111827); border: 1px solid var(--pass-gray-100); border-top: 0; border-right: 0; border-bottom: 0; border-radius: 20px 0 0 20px; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .6); outline: none; transform: translateY(0); transition: transform 320ms cubic-bezier(.22, 1, .36, 1); will-change: transform; }
 .sheet[data-starting-style], .sheet[data-ending-style] { transform: translateY(calc(-100% - 48px)); }
 .overlay[data-starting-style], .overlay[data-ending-style] { opacity: 0; }
 @media (min-width: 900px) { .overlay { background: rgba(5, 7, 13, .2); touch-action: none; } }
 /* Title and close button on one row (the close button keeps its corner). Every step starts --pass-title-gap below this row. */
-.sheetHead { position: relative; display: flex; align-items: flex-start; gap: 12px; padding: calc(12px + env(safe-area-inset-top)) var(--pass-gutter) 0; }
-.sheetTitle { margin: 0; font-size: 20px; line-height: 1.1; font-weight: 800; letter-spacing: -.01em; outline: none; }
+.sheetHead { position: relative; display: flex; align-items: flex-start; gap: 12px; padding: calc(var(--pass-head-top) + env(safe-area-inset-top)) var(--pass-gutter) 0; }
+.sheetTitle { margin: 0; font-size: 20px; line-height: 28px; font-weight: 700; color: var(--pass-gray-900); letter-spacing: 0; outline: none; }
 /* The close button stays in its corner and no longer sets the height of the row: the title's top edge lines up with the button's top edge and everything below rises. */
-.close { position: absolute; top: calc(2px + env(safe-area-inset-top)); right: 6px; z-index: 3; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; display: grid; place-items: center; color: var(--chan-ink, #111827); cursor: pointer; }
-.close svg { width: 20px; height: 20px; stroke-width: 2.2; }
-.close:disabled { opacity: .4; cursor: not-allowed; }
-.sheetBody { padding: var(--pass-title-gap) var(--pass-gutter) 10px; display: flex; flex-direction: column; gap: var(--pass-gap); flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.sheetBody { padding: var(--pass-title-gap) var(--pass-gutter) var(--pass-body-pb); display: flex; flex-direction: column; gap: var(--pass-gap); flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .sheetBody > * { flex-shrink: 0; }
+/* A short screen scrolls the body: a soft shadow on the cut edge shows there is more (only while content is hidden there). */
+.sheetBody {
+  background:
+    linear-gradient(var(--chan-card, #fff) 30%, transparent) 0 0 / 100% 28px no-repeat local,
+    linear-gradient(transparent, var(--chan-card, #fff) 70%) 0 100% / 100% 28px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(15, 23, 42, .16), transparent) 0 0 / 100% 8px no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(15, 23, 42, .16), transparent) 0 100% / 100% 8px no-repeat scroll;
+}
 .sheetBody :global([id]) { scroll-margin: 16px 0 120px; }
 .order { border: 1px solid var(--chan-line, #e1e6ef); border-radius: var(--pass-r-card); overflow: hidden; }
 .orderLine { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: var(--pass-box-y) 14px; }
-.muted { color: var(--chan-muted, #5d6679); font-size: 12px; }
-.orderTotal { position: relative; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; background: var(--pass-blue-fill); border-top: 1px solid var(--pass-blue-line); font-size: 15px; }
+.muted { color: var(--chan-muted, #5d6679); font-size: 12px; text-wrap: pretty; }
+.orderTotal { position: relative; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; background: var(--pass-blue-50-80); border-top: 1px solid var(--pass-blue-100); font-size: 15px; }
 .orderTotal b { font-size: 20px; letter-spacing: -.01em; }
+/* Step 1: the total is the whole box (no product line above it), so no divider and the box keeps the blue fill. */
+.orderSolo { border-color: var(--pass-blue-100); border-radius: 12px; background: var(--pass-blue-50-80); }
+.orderSoloRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: calc(10px + 0.03 * var(--pass-ramp)) 16px; }
+.orderSoloLabel { display: block; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--pass-gray-600); }
+.orderSoloNote { display: block; font-size: 12px; line-height: 16px; color: var(--pass-gray-500); text-wrap: balance; }
+.orderSoloPrice { display: block; text-align: right; font-size: 20px; line-height: 28px; font-weight: 800; color: var(--pass-gray-900); letter-spacing: 0; }
+.orderSoloVat { display: block; text-align: right; font-size: 12px; line-height: 16px; color: var(--pass-gray-500); text-wrap: balance; }
+
 /* The VAT note takes no part in the layout (the bar keeps its height and the price its place): bottom right, under the price. */
-.orderTotal small { position: absolute; right: 14px; bottom: 2px; font-size: 10px; line-height: 1; color: var(--chan-body, #344054); }
+.orderTotal small { position: absolute; right: 14px; bottom: 2px; font-size: 11px; line-height: 1; color: var(--chan-body, #344054); }
 .consent { display: grid; grid-template-columns: 18px 1fr; gap: 8px; font-size: 12px; line-height: 1.4; align-items: start; color: var(--chan-body, #344054); }
 .consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--chan-ink, #111827); cursor: pointer; }
 .consent a { color: var(--chan-blue, #2563eb); text-decoration: underline; }
 .consentError input { outline: 2px solid var(--pass-err); outline-offset: 2px; }
 .error { grid-column: 2; margin: -4px 0 0; color: var(--pass-err); font-size: 13px; font-weight: 600; }
 .pay { position: sticky; bottom: 0; display: grid; gap: 6px; text-align: center; padding: var(--pass-bar-y) var(--pass-gutter) calc(var(--pass-bar-y) + env(safe-area-inset-bottom)); background: var(--chan-card, #fff); border-top: 1px solid var(--chan-line, #e1e6ef); }
-.secureFooter { margin: 0; border-top: 1px solid var(--chan-line, #e1e6ef); padding: calc(var(--pass-bar-y) - 2px) var(--pass-gutter) calc(var(--pass-bar-y) - 2px + env(safe-area-inset-bottom)); display: flex; gap: 6px; align-items: flex-start; justify-content: center; text-align: center; color: var(--chan-muted, #5d6679); font-size: 12px; line-height: 1.4; }
+.secureFooter { margin: 0; border-top: 1px solid var(--chan-line, #e1e6ef); padding: calc(var(--pass-bar-y) - 2px) var(--pass-gutter) calc(var(--pass-bar-y) - 2px + env(safe-area-inset-bottom)); display: flex; gap: 6px; align-items: flex-start; justify-content: center; text-align: center; color: var(--chan-muted, #5d6679); font-size: 12px; line-height: 1.3; }
 .secureFooter svg { flex: 0 0 auto; margin-top: 1.5px; }
 .progress { position: relative; overflow: hidden; display: grid; place-items: center; min-height: 52px; border-radius: var(--pass-r-card); background: var(--chan-surface, #f0f3f8); border: 1px solid var(--chan-line, #e1e6ef); font-size: 14px; font-weight: 700; }
 .progress::before { content: ""; position: absolute; inset: 0 40% 0 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--chan-amber, #f59e0b) 35%, transparent)); animation: sweep 1.2s ease-in-out infinite; }
@@ -140,37 +189,62 @@
 
 /* ---------- patron checkout: steps, amount, notices ---------- */
 /* Centred at the bottom, between the scrolling body and the action bar: 9px above the bar's top line, outside the scroll area (they never scroll). */
-.stepDots { flex: 0 0 auto; display: flex; justify-content: center; gap: 6px; margin: 0; padding: 0 0 9px; list-style: none; }
-.stepPip { width: 8px; height: 8px; border-radius: 50%; background: var(--chan-line-soft, #d5dce8); transition: background-color 160ms ease; }
-.stepPipNow { background: var(--chan-ink, #111827); }
+.stepDots { flex: 0 0 auto; position: relative; z-index: 1; display: flex; justify-content: center; gap: 36px; margin: 0; padding: 0 0 calc(4px + 0.025 * var(--pass-ramp)); list-style: none; }
+/* A stepper: dots 8 px, 44 px apart centre to centre (so each button's 44 px touch area, .stepBtn::before, has its own space), a thin line between them. */
+.stepItem { position: relative; width: 8px; height: 8px; }
+.stepItem:not(:last-child)::after { content: ""; position: absolute; left: 8px; top: 3px; width: 36px; height: 2px; background: var(--pass-gray-200); }
+.stepItemDone:not(:last-child)::after { background: var(--pass-gray-300); }
+.stepPip { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--pass-gray-300); transition: background-color 160ms ease; }
+.stepPipNow { background: var(--pass-gray-800); }
+/* A finished step: a darker dot (4.4:1) that is a real button; the touch area grows to 44 x 44 px without growing the dot. */
+.stepBtn { position: relative; padding: 0; border: 0; background: var(--pass-gray-500); cursor: pointer; }
+.stepBtn::before { content: ""; position: absolute; inset: -18px; }
+.stepBtn:hover:not(:disabled) { background: var(--pass-gray-800); }
+.stepBtn:disabled { cursor: default; opacity: .45; }
+.stepBtn:focus-visible { outline: 3px solid var(--chan-focus-ring, #2563eb); outline-offset: 3px; }
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.stepTitle { margin: 0 0 var(--field-label-gap); outline: none; }
+.stepTitle { margin: 0 0 var(--field-label-gap); outline: none; line-height: calc(16px + 0.02 * var(--pass-ramp)); }
 .resultTitle:focus-visible { outline: 3px solid var(--chan-blue, #2563eb); outline-offset: 3px; border-radius: 6px; }
 .payHost { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-.testBadge { margin-right: 4px; padding: 3px 8px; border-radius: 7px; vertical-align: middle; background: var(--pass-gold); color: var(--pass-gold-ink); font: 800 11px/1 var(--font-geist-mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; }
-.testNote { margin: 0; padding: 0 68px 8px var(--pass-gutter); line-height: 1.7; font-size: 12px; color: var(--chan-muted, #5d6679); }
+.testNote { flex: 0 0 auto; display: grid; gap: 2px; margin: 0 var(--pass-gutter) calc(0.04 * var(--pass-ramp)); padding: calc(2px + 0.03 * var(--pass-ramp)) 0; text-align: left; line-height: 1.45; font-size: 13px; color: var(--chan-body, #344054); }
+.testNote > span:first-child { font-size: 12px; font-weight: 400; color: var(--pass-gray-500); }
+.testCard { font-size: 12px; color: var(--pass-gray-600); font-variant-numeric: tabular-nums; }
 .notice, .noticeWarn { margin: 0; padding: 10px 12px; border-radius: var(--pass-r-card); font-size: 13px; line-height: 1.4; border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-surface, #f0f3f8); }
 .noticeWarn { border-color: color-mix(in srgb, var(--pass-err) 40%, transparent); background: color-mix(in srgb, var(--pass-err) 8%, transparent); color: var(--chan-ink, #111827); font-weight: 600; }
-.products { border: 0; margin: 0; padding: 0; min-width: 0; }
-.productGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.products { border: 0; margin: 0 0 calc(0.02 * var(--pass-ramp)); padding: 0; min-width: 0; }
+.productGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: calc(8px + 0.01 * var(--pass-ramp)); }
 .products legend { padding: 0; }
-.accessHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: var(--field-label-gap); }
-.accessHead > span { font-size: 13px; line-height: 1.55; font-weight: var(--field-label-weight, 400); color: var(--chan-body, #344054); }
 .products:disabled { opacity: .5; }
-.product { position: relative; display: grid; align-content: start; gap: 2px; padding: var(--pass-box-y) 12px calc(var(--pass-box-y) - 1px); border-radius: var(--pass-r-card); border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); cursor: pointer; font-size: 13px; }
-.product:has(input:checked) { border: 2px solid var(--chan-ink, #111827); padding: calc(var(--pass-box-y) - 1px) 11px calc(var(--pass-box-y) - 2px); background: var(--chan-amber-soft, #fff3d6); }
+.product { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: calc(6px + 0.05 * var(--pass-ramp)); padding: var(--pass-card-pad); border: 2px solid var(--pass-gray-200); border-radius: 16px; background: #fff; cursor: pointer; font-size: 13px; transition: border-color 150ms ease; }
+.product:hover { border-color: var(--pass-blue-400); }
+.product:has(input:checked) { border-color: var(--pass-blue-600); background: var(--pass-blue-50-50); box-shadow: var(--pass-shadow-sm); }
+/* A radio mark top right, like the reference: ring 20 px (grey), the chosen card gets a blue ring and a blue dot. */
+.productCheck { position: absolute; top: 12px; right: 12px; box-sizing: border-box; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--pass-gray-300); }
+.productCheck::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--pass-blue-600); opacity: 0; transform: scale(.5); transition: opacity 150ms ease, transform 150ms ease; }
+.product:has(input:checked) .productCheck { border-color: var(--pass-blue-600); }
+.product:has(input:checked) .productCheck::after { opacity: 1; transform: none; }
 .product:has(input:focus-visible) { outline: 3px solid var(--chan-blue, #2563eb); outline-offset: 2px; }
 .product input { position: absolute; opacity: 0; pointer-events: none; }
-.productName { font-weight: 800; font-size: 14px; }
-.productPrice { font-weight: 800; font-size: 20px; letter-spacing: -.01em; }
-.productNote { color: var(--chan-muted, #5d6679); font-size: 12px; }
-.bestValue, .badgeSlot { justify-self: start; box-sizing: border-box; height: 16px; margin-bottom: 2px; }
-.bestValue { padding: 0 8px; border-radius: var(--pass-r-pill); background: var(--chan-ink, #111827); color: var(--chan-card, #fff); font-size: 10px; line-height: 16px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.productName { padding-right: 26px; font-weight: 700; font-size: 14px; line-height: 20px; color: var(--pass-gray-900); text-wrap: balance; }
+.productFoot { display: grid; gap: 2px; }
+.productPrice { font-weight: 800; font-size: 18px; line-height: calc(24px + 0.02 * var(--pass-ramp)); color: var(--pass-gray-900); }
+.productNote { color: var(--pass-gray-500); font-size: 12px; line-height: 16px; text-wrap: balance; }
+
+/* The only amber left on the cards: the BESTSELLER badge (ink on gold, 8:1). */
+/* The BESTSELLER badge sits on the top edge of its card (amber-400 / amber-950, 10 px bold), as in the reference. */
+.bestValue { position: absolute; top: -9px; left: var(--pass-card-pad); z-index: 1; padding: 1px 10px; border-radius: var(--pass-r-pill); background: var(--pass-amber-400); color: var(--pass-amber-950); font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: .25px; text-transform: uppercase; box-shadow: var(--pass-shadow-sm); }
+/* Step 1: the currency is a slim row (label left, small pill right) above the purchase cards. */
+.currencyRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: var(--pass-box-y) 12px; margin-bottom: calc(2px + 0.07 * var(--pass-ramp)); border: 1px solid var(--pass-gray-100); border-radius: 12px; background: var(--pass-gray-50); }
+.currencyLabel { min-width: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--pass-gray-700); text-wrap: balance; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 14px; align-items: stretch; }
 @media (max-width: 340px) { .productGrid { grid-template-columns: minmax(0, 1fr); } }
-.legalRow { display: block; }
-.secureFooter a, .consent a { color: var(--chan-blue, #2563eb); text-decoration: underline; text-underline-offset: 2px; }
-.consents { display: grid; gap: 8px; }
+.legalRow { display: inline-flex; align-items: center; justify-content: center; gap: 11px; flex-wrap: nowrap; }
+.legalRow a { line-height: 16px; white-space: nowrap; }
+.legalSep { flex: 0 0 auto; display: block; width: 1px; height: 13px; background: var(--pass-sep, #9aa9bf); }
+.secureFooter a { color: var(--pass-gray-500); text-decoration: underline; text-underline-offset: 2px; }
+.secureFooter a:hover { color: var(--pass-gray-600); }
+.consent a { color: var(--chan-blue, #2563eb); text-decoration: underline; text-underline-offset: 2px; }
+.consents { display: grid; gap: calc(5px + 0.015 * var(--pass-ramp)); }
 .consentsSpaced { margin-top: var(--pass-gap); }
 .strip .ghostBtn { min-height: 24px; padding: 0; color: var(--chan-ink, #111827); font-size: 13px; font-weight: 700; text-decoration: none; }
 .strip .ghostBtn:hover { text-decoration: underline; }
@@ -241,6 +315,7 @@
 @media (prefers-reduced-motion: reduce) {
   .stageInner, .sheet, .playerChip { animation: none; }
   .sheet, .overlay, .stepPip { transition: none; }
+  .productCheck::after, .product, .inkBtn { transition: none; }
   .playerChip { opacity: 1; }
   .goldBtn { transition: none; }
   .goldBtn:hover { transform: none; }
@@ -249,36 +324,99 @@
 }
 .payRow { display: flex; gap: 10px; align-items: stretch; }
 .payRow .inkBtn { flex: 1; width: auto; }
-.backBtn { flex: 0 0 52px; min-height: 50px; display: grid; place-items: center; border-radius: var(--pass-r-card); border: 2px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); color: var(--chan-ink, #111827); cursor: pointer; }
+.backBtn { flex: 0 0 52px; min-height: var(--pass-btn-h); display: grid; place-items: center; border-radius: 12px; border: 2px solid var(--pass-gray-200); background: var(--chan-card, #fff); color: var(--pass-gray-900); cursor: pointer; }
 .backBtn:focus-visible { outline: 3px solid var(--chan-blue, #2563eb); outline-offset: 2px; }
 .backBtn svg { width: 20px; height: 20px; }
-.summaryRow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; border-radius: var(--pass-r-card); border: 1px solid var(--pass-blue-line); background: var(--pass-blue-fill); font-size: 15px; }
-.summaryRow b { font-size: 20px; letter-spacing: -.01em; }
+.summaryRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; padding: calc(6px + 0.02 * var(--pass-ramp)) 14px; border-radius: 12px; border: 1px solid var(--pass-blue-100); background: var(--pass-blue-50-80); font-size: 15px; }
+.summaryRow b { font-size: 20px; line-height: 26px; letter-spacing: -.01em; }
+/* The VAT note (vatTermsNote) under the price, small, on its own line. */
+.summaryRow small { grid-column: 1 / -1; justify-self: end; margin-top: 2px; text-align: right; font-size: 12px; line-height: 1.3; color: var(--chan-body, #344054); text-wrap: balance; }
 .payHead { display: flex; flex-direction: column; gap: var(--pass-gap); padding: var(--pass-title-gap) var(--pass-gutter) var(--pass-gap); }
 /* The seller card is light blue, in the family of the order summary (--pass-blue-fill) and the currency field. */
-.sellerCard { border: 1px solid var(--chan-line, #e1e6ef); border-radius: var(--pass-r-card); background: var(--chan-card, #fff); padding: var(--pass-box-y) 8px var(--pass-box-y) 14px; }
-.sellerCardRow { display: flex; align-items: center; gap: 12px; }
-.sellerCardIcon { width: 24px; height: 24px; flex: 0 0 auto; color: var(--chan-ink, #111827); opacity: .8; }
-.sellerCardText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.sellerCardText b { font-size: 15px; line-height: 1.3; font-weight: 700; color: var(--chan-ink, #111827); }
-.sellerCardText span { font-size: 13px; line-height: 1.35; color: var(--chan-body, #344054); }
-.sellerCardText .sellerLabel { font-size: 13px; color: var(--chan-body, #344054); }
-.sellerCardInfo { flex: 0 0 auto; width: 44px; height: 44px; margin: -6px 0; display: grid; place-items: center; border: 0; border-radius: 999px; background: transparent; color: var(--chan-body, #344054); cursor: pointer; }
-.sellerCardInfo[aria-expanded="true"] { color: var(--chan-ink, #111827); }
-.sellerCardInfo:focus-visible { outline: 3px solid var(--chan-blue, #2563eb); outline-offset: 0; }
-.sellerCardNote { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 220ms ease, visibility 0s linear 220ms; }
-.sellerCardNoteOpen { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 220ms ease, visibility 0s; }
-.sellerCardNote > div { min-height: 0; overflow: hidden; }
-.sellerCardNote p { margin: 0; padding: 10px 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--chan-body, #344054); }
+/* Passive info row, NOT a card: no fill, no edge, no shadow, default cursor; only the (i) button is clickable. */
+.sellerCard { border: 1px solid var(--pass-gray-200); border-radius: 12px; background: var(--pass-gray-100); box-shadow: none; cursor: default; padding: calc(10px + 0.02 * var(--pass-ramp)) 14px; }
+/* Icon, label + name and the trust shield all sit on ONE vertical centre line of the card (equal top and bottom padding); the shield's right margin equals the icon's left padding (14 px). */
+.sellerCardRow { display: flex; align-items: center; gap: 12px; min-height: calc(32px + 0.02 * var(--pass-ramp)); }
+.sellerCardIconBox { width: calc(32px + 0.02 * var(--pass-ramp)); height: calc(32px + 0.02 * var(--pass-ramp)); flex: 0 0 auto; display: grid; place-items: center; border-radius: 8px; background: var(--pass-gray-200); color: var(--pass-gray-500); }
+.sellerCardText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 0; }
+.sellerCardText b { font-size: 14px; line-height: 20px; font-weight: 700; color: var(--pass-gray-700); text-wrap: balance; overflow-wrap: anywhere; }
+.sellerCardText span { font-size: 12px; line-height: 16px; color: var(--pass-gray-500); }
+.sellerCardText .sellerLabel { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--pass-gray-500); }
 .sellerCardCompact { padding-top: 6px; padding-bottom: 6px; }
-.sellerCardCompact .sellerCardRow { gap: 10px; }
-.sellerCardCompact .sellerCardIcon { width: 20px; height: 20px; }
+.sellerCardCompact .sellerCardRow { gap: 10px; min-height: 28px; }
+.sellerCardCompact .sellerBadge, .sellerCardCompact .sellerBadge svg { width: 28px; height: 28px; }
+.sellerCardCompact .sellerCardIconBox { width: 28px; height: 28px; }
 .sellerCardCompact .sellerCardText b { font-size: 13.5px; }
 @media (min-width: 350px) { .sellerCardCompact .sellerCardText b { white-space: nowrap; } }
-@media (prefers-reduced-motion: reduce) { .sellerCardNote, .sellerCardNoteOpen { transition: none; } }
-/* Short phones (360x640 and below): the same rhythm, just tighter, so steps 1 and 2 fit without scrolling. */
-@media (max-height: 700px) { .pass { --pass-title-gap: 14px; --pass-gap: 10px; --pass-box-y: 7px; --pass-bar-y: 8px; }
-  .sheetBody { padding-bottom: 6px; }
-}
 /* 320 px wide: the title must stay on one row even in French / Portuguese. */
 @media (max-width: 340px) { .sheetTitle { font-size: 18px; } }
+
+/* Trust signals (checkout-trust): the SSL line + payment logos under the order summary, the Stripe badge on the seller card. Green is used ONLY for security elements. */
+.trustRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: calc(4px + 0.03 * var(--pass-ramp)); }
+.trustSsl { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--pass-ok); }
+.trustSsl svg { flex: 0 0 auto; }
+.trustLogos { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+.trustLogos li { display: block; line-height: 0; }
+.trustLogos img { display: block; height: 15px; width: auto; }
+
+/* ===== Checkout palette A (owner decision 2026-11-03): navy CTA, vivid blue accent, navy-tinted neutrals. Scoped to the checkout sheet (.sheet),
+   so the offer page and the locked stage keep their own tokens. Amber stays ONLY on BESTSELLER / VIP, green ONLY on security elements.
+   Contrasts (checked in tests/unit/premium-pass-palette-contrast.test.ts): text >= 4.5:1, control edges >= 3:1. ===== */
+.sheet {
+  /* shared gate components read --chan-ink / --chan-body / --chan-muted: inside the checkout they become navy-tinted */
+  --chan-ink: #0b1b3d;
+  --chan-body: #334155;
+  --chan-muted: #56627a;
+  --pass-cta: #01286a;
+  --pass-cta-hover: #011d4d;
+  --pass-cta-ink: #ffffff;
+  --pass-accent: #1d4ed8;          /* selection, focus */
+  --pass-tint: #eaf2ff;            /* order summary, selected card, currency row */
+  --pass-tint-line: #b9cdf0;
+  --pass-card-line: #c5d3ec;       /* neutral card edge */
+  --pass-edge: #6b87c0;            /* control edges: 3.59:1 on white, 3.19:1 on the tint */
+  --pass-ok: #15803d;              /* security only */
+  --pass-err: #b91c1c;
+  --pass-gray-500: #56627a;
+  --pass-gray-600: #475569;
+  --pass-gray-700: #334155;
+  --pass-gray-800: #1b2a4e;
+  --pass-gray-900: #0b1b3d;
+  --pass-gray-300: #6b87c0;        /* rings of radios / pill (controls) */
+  --pass-blue-600: #1d4ed8;
+  --pass-blue-400: #1d4ed8;
+  --pass-blue-100: #b9cdf0;
+  --pass-blue-50-80: #eaf2ff;
+  --pass-blue-50-50: #eaf2ff;
+  --pass-blue-edge: #6b87c0;       /* select fields of the shared gate */
+  --pass-field-ring: rgba(29, 78, 216, .22);
+  --pass-shadow-sm: 0 1px 2px 0 rgba(1, 40, 106, .08);
+  box-shadow: 0 40px 80px -30px rgba(1, 40, 106, .55);
+}
+/* A very light blue wash behind the title row, fading to white inside the (unchanged) header height. */
+.sheet .sheetHead { background: linear-gradient(180deg, #e6efff 0%, #ffffff 100%); }
+.sheet .sheetTitle, .sheet .productName, .sheet .productPrice, .sheet .orderSoloPrice { color: var(--chan-ink); }
+.sheet .orderSoloLabel, .sheet .sellerCardText b { color: var(--chan-body); }
+.sheet .inkBtn { background: var(--pass-cta); color: var(--pass-cta-ink); box-shadow: 0 10px 18px -8px rgba(1, 40, 106, .55), 0 3px 6px -2px rgba(1, 40, 106, .3); }
+.sheet .inkBtn:hover:not(:disabled) { background: var(--pass-cta-hover); }
+.sheet .product { border-color: var(--pass-card-line); }
+.sheet .product:hover { border-color: var(--pass-accent); }
+.sheet .product:has(input:checked) { border-color: var(--pass-accent); background: var(--pass-tint); box-shadow: 0 12px 24px -12px rgba(1, 40, 106, .5), 0 2px 4px -1px rgba(1, 40, 106, .12); }
+.sheet .productCheck { border-color: var(--pass-edge); }
+.sheet .product:has(input:checked) .productCheck { border-color: var(--pass-accent); }
+.sheet .productCheck::after { background: var(--pass-accent); }
+.sheet .currencyRow { background: var(--pass-tint); border-color: var(--pass-tint-line); }
+.sheet .orderSolo, .sheet .summaryRow { background: var(--pass-tint); border-color: var(--pass-tint-line); }
+.sheet .sellerCard { background: #f3f6fc; border-color: #d5deef; }
+.sheet .sellerCardIconBox { background: #dce6f8; color: #1e3a8a; }
+.sheet .stepPip { background: #b9c8e3; }
+.sheet .stepPipNow { background: var(--pass-cta); }
+.sheet .stepItem:not(:last-child)::after, .sheet .stepItemDone:not(:last-child)::after { background: #c5d3ec; }
+.sheet .stepBtn { background: var(--pass-edge); }
+.sheet .legalSep { background: var(--pass-edge); opacity: .7; }
+.sheet .backBtn { border-color: var(--pass-edge); color: var(--chan-ink); }
+.sheet .pay, .sheet .secureFooter { border-top-color: var(--pass-card-line); }
+
+/* Trust shield: informative only, on the card's right edge (32 px, centred on the card). Green = security only. */
+.sellerBadge { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; color: var(--pass-ok); }
+.sellerBadge svg { width: 32px; height: 32px; display: block; }

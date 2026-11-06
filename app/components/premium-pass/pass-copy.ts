@@ -3,21 +3,26 @@ import type { Tx } from "@/lib/i18n/ui";
 import { intlLocale } from "@/lib/i18n/ui";
 import type { Locale } from "@/lib/i18n/routing";
 import { formatPassPrice } from "@/lib/modules/patron-zone/domain/offer";
+import { isVatExempt } from "@/lib/config/vat";
 import { describeTipMethod } from "../support/tip-flow-config";
 
-/** Owner decision 2026-10-20: the seller shown in the checkout and the receipt (the company does not exist yet). */
+/**
+ * The seller name, the ONE place to edit it (owner decision 2026-11-02: just "Paweł Perfect", no legal form). The NBSP
+ * keeps the two words together. Used by the seller card (PATRON_SELLER.name) and, with the demo suffix, by sellerName().
+ */
+export const SELLER_NAME = "Paweł Perfect";
+
+/** The seller shown in the terms and the receipt (the company does not exist yet, hence the demo suffix). */
 export function sellerName(tx: Tx): string {
-  return tx("Paweł Perfect sp. z o.o. (dane demo)", "Paweł Perfect sp. z o.o. (demo data)");
+  return tx("{0} (dane demo)", "{0} (demo data)", SELLER_NAME);
 }
 
 /**
  * The seller shown on the seller card of the checkout (steps 1-3). ONE place to edit once the company exists:
  * `nip` is null until the owner supplies it (the card then shows no tax id at all); never put an invented number here.
- * `registryLine` is the claim "registered in Poland": the owner must confirm it when the company is registered.
  */
-export const PATRON_SELLER: { name: string; registryLine: (tx: Tx) => string; nip: string | null } = {
-  name: "Paweł Perfect sp. z o.o.",
-  registryLine: (tx) => tx("Spółka zarejestrowana w Polsce", "Company registered in Poland"),
+export const PATRON_SELLER: { name: string; nip: string | null } = {
+  name: SELLER_NAME,
   nip: null,
 };
 
@@ -28,8 +33,30 @@ export function sellerLine(tx: Tx): string {
   return tx("Sprzedawca: {0}", "Seller: {0}", sellerName(tx));
 }
 
+/*
+ * VAT wording (lib/config/vat.ts, `VAT_STATUS`). DO UZGODNIENIA z właścicielem/księgowym: sformułowania dla konsumenta w trybie
+ * "exempt" (sprzedawca zwolniony podmiotowo z VAT). Podstawa prawna zwolnienia (art. 113 ustawy o VAT) ma być tylko na fakturze,
+ * nie w interfejsie. Tryb "active" zachowuje dotychczasowe teksty ("zawiera VAT", ceny brutto). Kwoty płatności są takie same w obu trybach.
+ */
+
+/** The short VAT note under the total and on the offer cards. */
 export function vatLine(tx: Tx): string {
-  return tx("zawiera VAT", "includes VAT");
+  return isVatExempt() ? tx("sprzedawca zwolniony z VAT", "seller exempt from VAT") : tx("zawiera VAT", "includes VAT");
+}
+
+/** The VAT note in the terms footer (longer than `vatLine`, a full statement). */
+export function vatTermsNote(tx: Tx): string {
+  return isVatExempt() ? tx("Cena końcowa; sprzedawca jest zwolniony z VAT", "Final price; the seller is exempt from VAT") : tx("zawiera VAT", "includes VAT");
+}
+
+/** The label of the total in the order summary. */
+export function totalLabel(tx: Tx): string {
+  return isVatExempt() ? tx("Razem do zapłaty", "Total to pay") : tx("Razem do zapłaty (brutto)", "Total to pay (incl. VAT)");
+}
+
+/** The word after the amount on the receipt ("brutto" while VAT is active; nothing when the seller is exempt: the price is just final). */
+export function receiptPriceSuffix(tx: Tx): string {
+  return isVatExempt() ? "" : tx("brutto", "gross");
 }
 
 /** Stripe method ids and the demo ids share one label (the tip gateway's own tile copy). */
@@ -42,11 +69,12 @@ export function price(language: Locale, minor: number, currency: string = "PLN")
 }
 
 export function productName(tx: Tx, id: string): string {
-  return id === "ACCESS_LIFETIME" ? tx("Dostęp bez limitu", "Unlimited access") : tx("Dostęp na 30 dni", "30-day access");
+  // ACCESS_LIFETIME is the historical id of the second plan; since 2026-11-03 it is a 3-calendar-month access (PLAN_DURATIONS), not an unlimited one.
+  return id === "ACCESS_LIFETIME" ? tx("Dostęp na 3 miesiące", "3 months access") : tx("Dostęp na 30 dni", "30-day access");
 }
 
-export function productNote(tx: Tx, product: { days: number | null }): string {
-  return product.days === null ? tx("jednorazowo, bez końca", "one-time, no end date") : tx("jednorazowo, {0} dni", "one-time, {0} days", product.days);
+export function productNote(tx: Tx, product: { days: number | null; months: number | null }): string {
+  return product.months !== null ? tx("jednorazowo, {0} miesiące", "one-time, {0} months", product.months) : tx("jednorazowo, {0} dni", "one-time, {0} days", product.days ?? 30);
 }
 
 /** Dates in the site's time zone, so the server and the browser print the same text. */
