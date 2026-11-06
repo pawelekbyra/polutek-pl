@@ -171,6 +171,7 @@ case "$1" in
     case "$sub" in
       up)
         for a in "$@"; do svc=$a; done
+        echo "service=$svc app=\${APP_IMAGE:-} admin=\${ADMIN_IMAGE:-}" >> "$FAKE_DIR/up.log"
         has FAKE_UP_FAIL "$svc" && exit 1
         [ -n "\${FAKE_UP_FAIL_APP_IMAGE:-}" ] && [ "\${APP_IMAGE:-}" = "$FAKE_UP_FAIL_APP_IMAGE" ] && exit 1
         exit 0;;
@@ -334,6 +335,8 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     writeFileSync(path.join(app, 'deploy-admin.sh'), adminSh);
     writeFileSync(path.join(app, 'app.env'), extra.appEnv ?? 'HEALTHCHECK_TOKEN=secret-token\n');
     writeFileSync(path.join(app, 'db.env'), 'POSTGRES_USER=u\n');
+    writeFileSync(path.join(app, 'admin.env'), 'ADMIN_AUTH_SECRET=test\n', { mode: 0o600 });
+    chmodSync(path.join(app, 'admin.env'), 0o600);
     writeFileSync(path.join(app, 'docker-compose.yml'), 'services: {}\n');
     const release = path.join(app, '.release-artifacts', '1111111111111111111111111111111111111111');
     mkdirSync(path.join(release, 'source/scripts/ops'), { recursive: true });
@@ -446,7 +449,63 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     expect(out).toContain('rolling back to polutek-app:old');
     expect(out).toContain('rolled back to polutek-app:old');
     expect(rd('.current-image')).toBe('polutek-app:old');
+    expect(fk('node.log').match(/--release-dir=\.release-artifacts/g)).toHaveLength(1);
+    expect(fk('node.log')).toContain('--release-dir=.release-state/1111111111111111111111111111111111111111');
+    expect(fk('up.log')).toContain('app=polutek-app:old');
     expect(fk('jobs.log')).toContain('deploy|fail|');
+  });
+
+  it('manual app rollback re-verifies the retained proof before activation', () => {
+    const revision = '1111111111111111111111111111111111111111';
+    const sb = setup({ state: {
+      '.current-image': 'polutek-app:new',
+      '.current-release-revision': '2222222222222222222222222222222222222222',
+      '.previous-release-revision': revision,
+      '.previous-image': 'polutek-app:old',
+    } });
+    writeFileSync(path.join(sb.app, '.current-release-revision'), '2222222222222222222222222222222222222222');
+    const { r, out, rd, fk } = deploy(sb, ['rollback', '--rollback'], { FAKE_HEALTH_BODY: okBody });
+
+    expect(r.status, out).toBe(0);
+    expect(out).toContain('rollback to polutek-app:rollback');
+    expect(fk('node.log')).toContain(`--release-dir=.release-state/${revision}`);
+    expect(fk('node.log')).toContain('--scope=app');
+    expect(fk('up.log')).toContain('app=polutek-app:rollback');
+    expect(rd('.current-image')).toBe('polutek-app:rollback');
+    expect(rd('.current-release-revision')).toBe(revision);
+  });
+
+  it('refuses manual app rollback when the externally approved proof hash differs', () => {
+    const revision = '1111111111111111111111111111111111111111';
+    const sb = setup({ state: { '.current-image': 'polutek-app:new', '.previous-release-revision': revision } });
+    const { r, out, fk } = deploy(sb, ['rollback', '--rollback'], { RELEASE_PROOF_SHA256: 'b'.repeat(64) });
+
+    expect(r.status).toBe(1);
+    expect(out).toContain('rollback proof hash must match');
+    expect(fk('node.log')).toBe('');
+    expect(fk('up.log')).toBe('');
+  });
+
+  it('manual panel rollback verifies only the retained admin image proof', () => {
+    const revision = '1111111111111111111111111111111111111111';
+    const sb = setup({ state: {
+      '.current-admin-image': 'polutek-admin:new',
+      '.current-admin-release-revision': '2222222222222222222222222222222222222222',
+      '.previous-admin-release-revision': revision,
+      '.previous-admin-image': 'polutek-admin:old',
+    } });
+    const state = path.join(sb.app, '.release-state', revision);
+    mkdirSync(path.join(state, 'source/scripts/ops'), { recursive: true });
+    writeFileSync(path.join(state, 'source/scripts/ops/deploy-release.mjs'), '// test adapter\n');
+    writeFileSync(path.join(state, 'proof.sha256'), `${'a'.repeat(64)}\n`);
+    const { r, out, rd, fk } = deploy(sb, ['rollback', '--rollback'], { ADMIN_HOST_STATUS_DIR: posix(path.join(sb.dir, 'host-status')) }, 'deploy-admin.sh');
+
+    expect(r.status, out).toBe(0);
+    expect(fk('node.log')).toContain(`--release-dir=.release-state/${revision}`);
+    expect(fk('node.log')).toContain('--scope=admin');
+    expect(fk('up.log')).toContain('admin=polutek-admin:rollback');
+    expect(rd('.current-admin-image')).toBe('polutek-admin:rollback');
+    expect(rd('.current-admin-release-revision')).toBe(revision);
   });
 
   it('image cleanup keeps the image named by .previous-worker-image', () => {

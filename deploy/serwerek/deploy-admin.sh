@@ -44,7 +44,7 @@ proof_hash="${RELEASE_PROOF_SHA256:-}"
 
 [[ -f admin.env ]] || die "missing admin.env (see docs/operations/ADMIN-PANEL.md)"
 [[ "$(stat -c %a admin.env)" == "600" ]] || die "admin.env must be chmod 600"
-mkdir -p /var/lib/serwerek/host-status
+mkdir -p "${ADMIN_HOST_STATUS_DIR:-/var/lib/serwerek/host-status}"
 
 new_image="polutek-admin:$tag"
 prev_image="$(cat .current-admin-image 2>/dev/null || true)"
