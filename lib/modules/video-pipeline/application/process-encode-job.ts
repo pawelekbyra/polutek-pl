@@ -17,6 +17,7 @@ import {
 } from "../domain/encode-job.state";
 import { hlsAttemptAssetKey, hlsAttemptObjectKey, hlsContentType, isUploadableHlsFile, sortForUpload } from "../domain/keys";
 import type { EncodeJobStore } from "../infrastructure/encode-job.repository";
+import { RouteActivationOutcomeUnknownError } from "../domain/route-activation-outcome-unknown";
 
 /** What the encoder library reports about a source file (subset of probeSource()). */
 export interface SourceProbe {
@@ -51,6 +52,11 @@ export interface FinalizeInput {
   totalBytes: number;
 }
 
+export interface ExistingEncodeOutput {
+  assetId: string;
+  assetKey: string;
+}
+
 /** Everything the processor touches outside itself; the worker wires real ones, tests wire fakes. */
 export interface ProcessorPorts {
   store: EncodeJobStore;
@@ -62,6 +68,7 @@ export interface ProcessorPorts {
   };
   hls: {
     bucket: string;
+    verifyOutput(assetKey: string): Promise<{ complete: boolean; objectCount: number; reason: string | null }>;
     putFile(key: string, filePath: string, contentType: string, signal?: AbortSignal): Promise<number>;
     exists(key: string): Promise<boolean>;
     countPrefix(prefix: string): Promise<number>;
@@ -78,7 +85,7 @@ export interface ProcessorPorts {
   };
   finalizer: {
     /** Asset id when this job's output is already live (crash between finalize and markSucceeded). */
-    findExisting(job: VideoEncodeJob, assetKey: string): Promise<string | null>;
+    findExisting(job: VideoEncodeJob, assetKey: string): Promise<ExistingEncodeOutput | null>;
     finalize(input: FinalizeInput): Promise<{ assetId: string }>;
   };
   /**
@@ -208,13 +215,23 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
   try {
     await ports.audit("VIDEO_ENCODE_STARTED", job, { attempt: job.attemptCount, attemptId: job.attemptId, versionNumber: job.versionNumber, assetKey });
 
-    // A previous attempt may have crashed after the output went live; do not redo or delete it.
+    // A previous attempt may have crashed after the output went live. Reuse only after checking its storage prefix.
     const existing = await ports.finalizer.findExisting(job, assetKey);
     if (existing) {
-      const succeeded = await ports.store.markSucceeded(job.id, ports.workerId, job.attemptId, { assetId: existing, result: { reusedExistingAsset: true } });
-      if (!succeeded) return "lost";
-      await ports.audit("VIDEO_ENCODE_SUCCEEDED", job, { assetId: existing, reused: true });
-      return "succeeded";
+      const output = await ports.hls.verifyOutput(existing.assetKey);
+      if (output.complete) {
+        const succeeded = await ports.store.markSucceeded(job.id, ports.workerId, job.attemptId, {
+          assetId: existing.assetId,
+          result: { reusedExistingAsset: true, assetKey: existing.assetKey, verifiedObjects: output.objectCount },
+        });
+        if (!succeeded) return "lost";
+        await ports.audit("VIDEO_ENCODE_SUCCEEDED", job, { assetId: existing.assetId, assetKey: existing.assetKey, reused: true, objects: output.objectCount });
+        return "succeeded";
+      }
+      ports.log("active output is incomplete; encoding a replacement attempt", {
+        jobId: job.id, attemptId: job.attemptId, existingAssetId: existing.assetId, existingAssetKey: existing.assetKey,
+        objects: output.objectCount, reason: output.reason,
+      });
     }
 
     await mkdir(workDir, { recursive: true });
@@ -359,8 +376,10 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
 
   async function handleFailure(err: unknown): Promise<ProcessOutcome> {
     const cancelled = err instanceof EncodeCancelledError || controller.signal.aborted;
+    const preserveOutput = err instanceof RouteActivationOutcomeUnknownError;
     // Nothing references the prefix until the asset exists, so partial output can always go.
-    if (uploadStarted && !finalized) await ports.hls.deletePrefix(prefix).catch((e) => ports.log("cleanup failed", { jobId: job.id, attemptId: job.attemptId, prefix, error: String(e) }));
+    if (uploadStarted && !finalized && !preserveOutput) await ports.hls.deletePrefix(prefix).catch((e) => ports.log("cleanup failed", { jobId: job.id, attemptId: job.attemptId, prefix, error: String(e) }));
+    if (preserveOutput) ports.log("route activation outcome unknown; preserving HLS output for retry", { jobId: job.id, attemptId: job.attemptId, prefix });
     if (shutdownState.requested && !lostState.lost) {
       await ports.store.release(job.id, ports.workerId, job.attemptId);
       ports.log("released on shutdown", { jobId: job.id, attemptId: job.attemptId });

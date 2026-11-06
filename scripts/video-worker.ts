@@ -76,6 +76,7 @@ async function main() {
       finalizer,
       hls: {
         bucket: hls.bucket,
+        verifyOutput: (assetKey) => hls.verifyOutput(assetKey),
         putFile: (key, file, type) => hls.putFile(key, file, type),
         exists: (key) => hls.exists(key),
         countPrefix: (prefix) => hls.countPrefix(prefix),

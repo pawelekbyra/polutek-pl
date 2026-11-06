@@ -5,6 +5,7 @@ import type { VideoEncodeJob } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { processEncodeJob, type EncodeOutcome, type ProcessorPorts, type SourceProbe } from "@/lib/modules/video-pipeline/application/process-encode-job";
 import type { EncodeJobStore } from "@/lib/modules/video-pipeline/infrastructure/encode-job.repository";
+import { RouteActivationOutcomeUnknownError } from "@/lib/modules/video-pipeline/domain/route-activation-outcome-unknown";
 
 function makeJob(overrides: Partial<VideoEncodeJob> = {}): VideoEncodeJob {
   return {
@@ -73,6 +74,7 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
   const uploaded: string[] = [];
   const hls = {
     bucket: "polutek-hls",
+    verifyOutput: vi.fn(async () => ({ complete: true, objectCount: 5, reason: null })),
     putFile: vi.fn(async (key: string) => { uploaded.push(key); events.push(`put:${key.split("/").slice(4).join("/")}`); return 1; }),
     exists: vi.fn(async () => true),
     countPrefix: vi.fn(async () => uploaded.length),
@@ -87,7 +89,7 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
     }),
   };
   const finalizer = {
-    findExisting: vi.fn(async (): Promise<string | null> => null),
+    findExisting: vi.fn(async () => null),
     finalize: vi.fn(async () => { events.push("finalize"); return { assetId: "asset-1" }; }),
   };
   const audit = vi.fn(async (action: string) => { events.push(`audit:${action}`); });
@@ -114,6 +116,14 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
 }
 
 describe("processEncodeJob", () => {
+  it("preserves the uploaded attempt when route activation outcome cannot be reconciled", async () => {
+    const h = harness();
+    h.finalizer.finalize.mockRejectedValueOnce(new RouteActivationOutcomeUnknownError(new Error("database unavailable")));
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("retry");
+    expect(h.hls.deletePrefix).toHaveBeenCalledTimes(1); // the initial empty-prefix cleanup only
+    expect(h.store.markFailedOrRetry).toHaveBeenCalled();
+  });
+
   it("runs the whole pipeline, uploads the master last and publishes only after verification", async () => {
     const h = harness();
     const outcome = await processEncodeJob(h.job, h.ports);
@@ -334,11 +344,22 @@ describe("processEncodeJob", () => {
 
   it("is idempotent: an output that is already live is only marked done (no re-encode, no R2 delete)", async () => {
     const h = harness();
-    h.finalizer.findExisting.mockResolvedValue("asset-live");
+    h.finalizer.findExisting.mockResolvedValue({ assetId: "asset-live", assetKey: "videos/vid-1/v/v2/attempts/55555555-5555-4555-8555-555555555555" });
+    h.hls.countPrefix.mockResolvedValue(3);
     expect(await processEncodeJob(h.job, h.ports)).toBe("succeeded");
     expect(h.ports.originals.download).not.toHaveBeenCalled();
     expect(h.hls.deletePrefix).not.toHaveBeenCalled();
     expect(h.store.markSucceeded).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ assetId: "asset-live" }));
+  });
+
+  it("re-encodes instead of reporting success for an active DB route whose files are missing", async () => {
+    const h = harness();
+    h.finalizer.findExisting.mockResolvedValue({ assetId: "asset-live", assetKey: "videos/vid-1/v/v2/attempts/66666666-6666-4666-8666-666666666666" });
+    h.hls.verifyOutput.mockResolvedValueOnce({ complete: false, objectCount: 2, reason: "referenced object is missing" });
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("succeeded");
+    expect(h.encoder.encode).toHaveBeenCalledTimes(1);
+    expect(h.finalizer.finalize).toHaveBeenCalledTimes(1);
+    expect(h.store.markSucceeded).toHaveBeenCalledTimes(1);
   });
 
   it("does not delete a live output when marking success fails after finalize", async () => {
