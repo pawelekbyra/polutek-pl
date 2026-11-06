@@ -2,25 +2,33 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { enqueuePublishedVideoAnnouncement, runNewVideoFanOutJobs } from "@/lib/modules/notifications/application/new-video-fan-out.use-case";
+import { notifyDuePremieres } from "@/lib/modules/notifications/application/premiere-notifications.use-case";
 
 const prisma = new PrismaClient();
 const RUN = `k23-${Date.now().toString(36)}`;
 let userId = "";
+let subscriberId = "";
 let creatorId = "";
 const videoIds: string[] = [];
 
 beforeAll(async () => {
   userId = `${RUN}-user`;
-  const user = await prisma.user.create({ data: { id: userId, email: `${RUN}@example.test` } });
+  subscriberId = `${RUN}-subscriber`;
+  await prisma.user.createMany({ data: [
+    { id: userId, email: `${RUN}@example.test` },
+    { id: subscriberId, email: `${RUN}-subscriber@example.test` },
+  ] });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
   const creator = await prisma.creator.create({ data: { userId: user.id, slug: `${RUN}-creator`, name: "K23 test" } });
   creatorId = creator.id;
+  await prisma.subscription.create({ data: { creatorId, userId: subscriberId, notify: true } });
 });
 
 afterAll(async () => {
   await prisma.durableJob.deleteMany({ where: { kind: "NEW_VIDEO_FANOUT", dedupeKey: { in: videoIds } } });
   if (videoIds.length) await prisma.video.deleteMany({ where: { id: { in: videoIds } } });
   if (creatorId) await prisma.creator.deleteMany({ where: { id: creatorId } });
-  if (userId) await prisma.user.deleteMany({ where: { id: userId } });
+  if (userId || subscriberId) await prisma.user.deleteMany({ where: { id: { in: [userId, subscriberId].filter(Boolean) } } });
   await prisma.$disconnect();
 });
 
@@ -72,5 +80,32 @@ describe("K23 publication notification intent (PostgreSQL)", () => {
 
     expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id } })).toMatchObject({ status: "DRAFT", publishedAt: null });
     expect(await prisma.durableJob.count({ where: { kind: "NEW_VIDEO_FANOUT", dedupeKey: video.id } })).toBe(0);
+  });
+
+  it("enqueues a due premiere once and delivers its premiere notification through the durable runner", async () => {
+    const video = await draft("premiere");
+    const now = new Date("2026-11-07T12:00:00.000Z");
+    await prisma.video.update({ where: { id: video.id }, data: {
+      status: "PUBLISHED",
+      publishedAt: new Date(now.getTime() - 60_000),
+      premiereAt: new Date(now.getTime() - 1_000),
+    } });
+
+    const firstTick = await notifyDuePremieres({ db: prisma, now: () => now });
+    expect(firstTick).toMatchObject({ candidates: 1, enqueued: 1, failed: 0 });
+    const job = await prisma.durableJob.findUniqueOrThrow({
+      where: { kind_dedupeKey: { kind: "NEW_VIDEO_FANOUT", dedupeKey: video.id } },
+    });
+    expect(job).toMatchObject({ status: "PENDING", payload: { variant: "premiere" } });
+
+    await notifyDuePremieres({ db: prisma, now: () => now });
+    expect(await prisma.durableJob.count({ where: { kind: "NEW_VIDEO_FANOUT", dedupeKey: video.id } })).toBe(1);
+    expect(await runNewVideoFanOutJobs({ db: prisma, now: () => now, maxJobs: 1 })).toMatchObject({ claimed: 1, done: 1 });
+    expect(await prisma.notification.findMany({ where: { videoId: video.id, userId: subscriberId, kind: "NEW_VIDEO" } })).toMatchObject([
+      { templateKey: "premiere", titlePl: "Premiera: K23 premiere" },
+    ]);
+    expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id } })).toMatchObject({ premiereNotifiedAt: now });
+    expect(await notifyDuePremieres({ db: prisma, now: () => now })).toMatchObject({ candidates: 0, enqueued: 0, failed: 0 });
+    expect(await prisma.notification.count({ where: { videoId: video.id, userId: subscriberId, kind: "NEW_VIDEO" } })).toBe(1);
   });
 });

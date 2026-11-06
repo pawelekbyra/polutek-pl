@@ -1,0 +1,52 @@
+{
+  "package": "K23",
+  "finding": "R05",
+  "date": "2026-11-07",
+  "branch": "docs/polutek-platform-audit",
+  "base_revision": "3cabe34f",
+  "test_file": "tests/postgres/k23-publish-crash-cron-http.pg.test.ts",
+  "database": {
+    "engine": "PostgreSQL 17 (postgres:17)",
+    "migrations_applied": 84,
+    "disposable_container": true,
+    "container_removed_after_test": true,
+    "synthetic_users_after_cleanup": 0,
+    "synthetic_fanout_jobs_after_cleanup": 0,
+    "test_trigger_after_cleanup": 0
+  },
+  "scenario": [
+    "A real local Next dev server receives an authenticated Studio POST /api/studio/videos/:id/publish for a synthetic ready SELF_HLS video and subscriber.",
+    "The committed publication and NEW_VIDEO_FANOUT intent are verified in PostgreSQL; a disposable test trigger gives the new job a future lease so the immediate best-effort kick cannot consume it.",
+    "The publishing server process group is SIGKILLed after the committed HTTP response, then the test trigger is removed and the durable job lease is released.",
+    "A fresh local Next dev server starts and the real authenticated GET /api/cron/premiere-notifications endpoint claims and completes the persisted fan-out job.",
+    "The subscriber receives exactly one NEW_VIDEO notification; a repeated real cron HTTP request leaves the count at one."
+  ],
+  "checks": {
+    "vitest": {
+      "command": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/k23-publish-crash-cron-http.pg.test.ts",
+      "files_passed": 1,
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "duration_seconds": 31.36,
+      "exit_code": 0
+    },
+    "repository_typecheck": {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exit_code": 0
+    },
+    "eslint": {
+      "command": "npx eslint tests/postgres/k23-publish-crash-cron-http.pg.test.ts",
+      "exit_code": 0
+    },
+    "database_migrations": {
+      "command": "npx prisma migrate deploy",
+      "migrations_applied": 84,
+      "exit_code": 0
+    }
+  },
+  "scope_limits": [
+    "The crash boundary is after the successful publishing HTTP response; the trigger deterministically prevents the background fan-out kick from consuming the durable intent before the process group is killed.",
+    "The HLS asset, playback route, subscriber, and database rows are synthetic; there is no external R2/S3, production data, deployed cron scheduler, or independent review.",
+    "This proves recovery through the real local cron HTTP handler after process loss and retry idempotency for this publication path; K23 remains partial pending independent review and remaining premiere/provider boundaries."
+  ]
+}

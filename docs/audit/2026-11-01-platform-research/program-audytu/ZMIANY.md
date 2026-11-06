@@ -1,5 +1,12 @@
 # Historia programu badania
 
+## 7 listopada 2026 — K23/R05: crash po publikacji i odzyskanie przez cron HTTP
+
+- Dodano `tests/postgres/k23-publish-crash-cron-http.pg.test.ts`: Studio publikuje przez rzeczywisty lokalny Next HTTP, proces dostaje SIGKILL po COMMIT, a nowy proces obsługuje cron HTTP i domyka trwały fan-out.
+- Disposable PostgreSQL 17 po 84 migracjach: **1/1 PASS**; ponowny cron nie dubluje powiadomienia. ESLint i repo typecheck PASS; syntetyczne rekordy usunięte, brak zmian produkcyjnych.
+- Rozszerzono PostgreSQL test intentu publikacji o rzeczywisty due-premiere producer i fan-out: drugi tick utrzymuje jeden job, runner emituje właściwy template raz, a po oznaczeniu wysłania nie ma kolejnego kandydata. **3/3 PASS** w pliku (premiere, idempotentny intent, rollback), ESLint/typecheck PASS. [Dowód](evidence/k23-premiere-postgres-2026-11-07/result.json).
+- Testowa dzierżawa zapewnia deterministyczną utratę kicka; HLS/subskrybent są syntetyczne. K23 pozostaje częściowe do niezależnego review i pozostałych scenariuszy premiere/provider. [Dowód](evidence/k23-http-crash-cron-2026-11-07/result.json).
+
 ## 6 listopada 2026 — K20/R23: właściwy kanał automatycznej publikacji
 
 - Worker ponownie odczytuje aktualny job z tokenem próby i relację do filmu; `video.creatorId` jest źródłem kontekstu kanału, a rozbieżny `job.channelId` blokuje publikację. Auto-publish zwraca jawny wynik i worker go loguje; publikacja nadal idzie przez autoryzowane use case'y.

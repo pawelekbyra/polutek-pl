@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "date": "2026-11-03",
+  "date": "2026-11-07",
   "scope": "OWNER_APPROVED_H1",
   "audit_parent_sha": "35466051eb27c6957854532bba231b5e13a6bca7",
   "audit_branch": "docs/polutek-platform-audit",
@@ -1517,6 +1517,34 @@
     "scenario": "Real publishAdminVideo transaction persisted one NEW_VIDEO_FANOUT intent; request-side kick was suppressed at the post-commit seam; a fresh OS process ran the actual durable worker and delivered one subscriber notification; retry produced no duplicate.",
     "scope_limit": "Did not kill the HTTP publishing process after COMMIT or call the scheduled cron HTTP route; synthetic HLS route, no R2/S3 or independent review.",
     "evidence": "program-audytu/evidence/k23-process-recovery-2026-11-06/result.json",
+    "k23_closed": false
+  },
+  "latest_k23_http_followup": {
+    "date": "2026-11-07",
+    "base_revision": "3cabe34f",
+    "test_file": "tests/postgres/k23-publish-crash-cron-http.pg.test.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 1,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "scenario": "Actual local Studio HTTP publish commits the video and durable fan-out intent; a test-only future lease prevents the immediate kick from claiming it; the publishing Next process is SIGKILLed, then a fresh Next process runs the actual cron HTTP route and delivers exactly one notification; repeated cron remains idempotent.",
+    "scope_limit": "Synthetic SELF_HLS/subscriber, disposable database, no external R2/S3 or independent review. K23 remains partial pending review and remaining premiere/provider boundaries.",
+    "evidence": "program-audytu/evidence/k23-http-crash-cron-2026-11-07/result.json",
+    "k23_closed": false
+  },
+  "latest_k23_premiere_followup": {
+    "date": "2026-11-07",
+    "base_revision": "f1cf838a",
+    "test_file": "tests/postgres/published-video-notification-intent.pg.test.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 3,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "scenario": "Actual notifyDuePremieres enqueues one due premiere, repeat tick leaves one durable intent, actual runner delivers the premiere template once and marks premiereNotifiedAt; later tick has no candidate. Same DB file preserves ordinary intent and rollback checks.",
+    "scope_limit": "Synthetic PostgreSQL fixtures only; no R2/S3 or external review. K23 remains partial pending independent review and non-production operational acceptance.",
+    "evidence": "program-audytu/evidence/k23-premiere-postgres-2026-11-07/result.json",
     "k23_closed": false
   }
 }
