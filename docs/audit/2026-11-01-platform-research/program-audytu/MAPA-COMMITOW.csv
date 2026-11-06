@@ -10,3 +10,10 @@ K03-baseline,d72dc0e5,program-audytu/evidence/k06-local-producer-2026-11-03/base
 K01-K03-HDR,f9e5b027,program-audytu/evidence/k06-local-producer-2026-11-03/hdr/result.json,CZESCIOWO
 K01-K03-real-PG-email,1aaef191,program-audytu/evidence/k06-local-producer-2026-11-03/postgres/result.json,CZESCIOWO
 K03-final-gates,2d081d7f,program-audytu/evidence/k06-local-producer-2026-11-03/final-gates/result.json,CZESCIOWO
+K06-consumers,578cfd6b,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
+K06-merge-preflight,64671a16,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
+K06-compose-fallbacks,6f393985,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
+K06-transfer-sandbox,371a03ce,tests/unit/ops/mergedeploy-release.test.ts,CZESCIOWO
+K06-operator-actions,cf8d1bbe,tests/unit/ops/actions-lib.test.ts,CZESCIOWO
+K06-cache-proof-id,227b5c37,tests/unit/ops/deploy-release.test.ts,CZESCIOWO
+K06-operations-runbooks,ce6570bd,docs/operations/RELEASE-PROOF.md,CZESCIOWO

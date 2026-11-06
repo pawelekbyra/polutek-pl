@@ -359,3 +359,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - `2d081d7f`:61/61 transakcji/powiązanych,253/253 komponentów/Studia/i18n, typy aplikacji/architektura/hotspots/strict-escapes PASS, lint0/12ostrzeżeń. Cztery wcześniejsze refaktory H1 przywrócone bez zmiany budżetów i wyglądu. Starsze pełne wyniki zachowują własną atrybucję.
 - Po poleceniu STOP przy1% limitu dokończono wyłącznie bieżący lint i zapis. Osobny checkpoint WIP opisuje nieukończone K06/H1 i komendę wznowienia. Publikator rejestru nie rozpoczęty. Nie pozostawiono niezapisanych zmian kodu, własnych kontenerów ani działających testów.
 - Nie wznawiać automatycznie. Bez nowych pakietów/heavy tests, PR/push/merge/deploy/produkcji. Całość5–10%, bez formalnego zamknięcia całych pakietów i bez release_ready.
+
+## 6 listopada 2026 — wznowienie K06 i proof-aware konsumenci
+
+- Właściciel wznowił roadmapę. Ukończono lokalnie integrację producer/publisher z deploy/app/admin/rollback i transferem proof bundle; preflight release inputs biegnie przed GitHub CLI, compose nie ma fallbacków `:current`, a jednorazowe akcje operatora sprawdzają proof aktywnego release.
+- Hermetyczne testy transferu obejmują wariant lokalny i Actions, poprawne przekazanie do atrapowego SSH oraz odmowę błędnego proofu, rewizji, workflow run/head i brakującego artifactu. Konsument wykorzystuje cache tylko przy zgodnym ID obrazu.
+- Wyniki: handoff 6/6, release consumers/artifact 9/9, skrypty serwera 29/29, actions-lib 48/48; lint, `bash -n`, YAML parser i diff check PASS. Brak rzeczywistego Actions/GHCR/SSH, pięciu obrazów produktu, pełnej bramki audit, serwera lub runtime odbioru.
+- K06 pozostaje otwarte. Runbooki opisują granicę między starym stanem produkcji i niewdrożonym kandydatem. Szczegóły commitów są w `MAPA-COMMITOW.csv`; punkt wznowienia w `STAN.md` i `POSTEP-NAPRAW.md`.
