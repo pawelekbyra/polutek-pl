@@ -111,7 +111,8 @@ describe('EmailSubscriptionConsentModal', () => {
   });
 
   it("ends right after the buttons: no withdrawal note and no Privacy Policy or Terms links in the modal", () => {
-    for (const language of ['pl', 'en']) {
+    const languages: Locale[] = ['pl', 'en'];
+    for (const language of languages) {
       lang.language = language;
       render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
       expect(screen.queryByTestId('email-consent-legal')).toBeNull();
@@ -125,7 +126,8 @@ describe('EmailSubscriptionConsentModal', () => {
   });
 
   it("protects line breaking in CSS, in any language: balanced text, width cap, lang for hyphenation, CJK rules", () => {
-    for (const language of ['pl', 'de', 'zh']) {
+    const languages: Locale[] = ['pl', 'de', 'zh'];
+    for (const language of languages) {
       lang.language = language;
       render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
       const dialog = screen.getByRole('dialog');
