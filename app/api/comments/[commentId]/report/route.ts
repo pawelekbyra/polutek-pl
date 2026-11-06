@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
       );
     }
 
-    const body = await request.json().catch(() => null);
+    const body = await readRequestJsonOrNullWithLimit(request);
     const resultJson = reportSchema.safeParse(body);
     if (!resultJson.success) {
       return NextResponse.json(

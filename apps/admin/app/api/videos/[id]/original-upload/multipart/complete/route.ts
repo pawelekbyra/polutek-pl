@@ -1,5 +1,5 @@
 import { completeOriginalMultipart } from "@/lib/modules/video-pipeline";
-import { adminMultipartCompleteSchema } from "@/lib/api/admin-schemas";
+import { ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES, adminMultipartCompleteSchema } from "@/lib/api/admin-schemas";
 import { panelRouteContext, readJson, resultResponse, unauthorizedJson, sampleDataResponse } from "@admin/lib/api/panel-route";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
   const sample = sampleDataResponse();
   if (sample) return sample;
   const { id } = await props.params;
-  const body = await readJson(request, adminMultipartCompleteSchema);
+  const body = await readJson(request, adminMultipartCompleteSchema, ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES);
   if (!body.ok) return body.response;
   return resultResponse(await completeOriginalMultipart({ videoId: id, ...body.data }, ctx));
 }

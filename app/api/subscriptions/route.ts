@@ -7,6 +7,7 @@ import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getOrCreateCurrentUser } from "@/lib/modules/users";
+import { RequestBodyTooLargeError, readRequestTextWithLimit } from "@/lib/utils/request-body";
 import {
   GetSubscriptionStatusUseCase,
   SetSubscriptionNotifyUseCase,
@@ -35,8 +36,11 @@ function invalidRequest(message: string) {
 async function readJsonBody(req: NextRequest): Promise<{ value: unknown } | { error: NextResponse }> {
   let text = "";
   try {
-    text = await req.text();
-  } catch {
+    text = await readRequestTextWithLimit(req, 16 * 1024);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return { error: NextResponse.json({ error: "PAYLOAD_TOO_LARGE", message: "Request body is too large." }, { status: 413 }) };
+    }
     return { error: invalidRequest("Unreadable request body.") };
   }
   if (!text.trim()) return { value: {} };

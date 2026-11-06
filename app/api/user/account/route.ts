@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { auth } from "@/lib/auth/server";
@@ -34,7 +35,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "TOO_MANY_ATTEMPTS" }, { status: 429 });
     }
 
-    const body = (await req.json().catch(() => null)) as { password?: unknown } | null;
+    const body = (await readRequestJsonOrNullWithLimit(req)) as { password?: unknown } | null;
     const session = await auth({ fresh: true });
     const reauth = await checkSensitiveReauth({
       userId: actor.userId,

@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 // patron zone (docs/architecture/patron-zone.md)
 // Demo panel: expire or delete the caller's OWN demo pass (any signed-in viewer who sees the patron zone).
 import { NextRequest, NextResponse } from "next/server";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const parsed = demoControlInputSchema.safeParse(await req.json().catch(() => null));
+    const parsed = demoControlInputSchema.safeParse(await readRequestJsonOrNullWithLimit(req));
     const ctx = createAppContext({ actor: await getActorFromAuth() });
     if (!parsed.success) return passInvalidRequest();
     const result = await runPassDemoControl(ctx, parsed.data);

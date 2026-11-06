@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { getCorrelationId } from "./utils/correlation";
 
 import { AppError } from "@/lib/modules/shared/app-error";
+import {
+  MalformedFormDataBodyError,
+  MalformedJsonBodyError,
+  RequestBodyTooLargeError,
+} from "@/lib/utils/request-body";
 
 export { AppError };
 
@@ -23,6 +28,13 @@ export function handleApiError(error: unknown) {
       { error: error.code || 'BAD_REQUEST', message: error.message },
       { status: error.statusCode }
     );
+  }
+
+  if (error instanceof RequestBodyTooLargeError) {
+    return NextResponse.json({ error: "PAYLOAD_TOO_LARGE" }, { status: 413 });
+  }
+  if (error instanceof MalformedJsonBodyError || error instanceof MalformedFormDataBodyError) {
+    return NextResponse.json({ error: "INVALID_REQUEST_BODY" }, { status: 400 });
   }
 
   const isDev = process.env.NODE_ENV === 'development';
