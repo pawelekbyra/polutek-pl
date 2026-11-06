@@ -616,6 +616,36 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     expect(rd('.current-admin-image')).toBe('polutek-admin:old');
   });
 
+  it('admin deploy verifies its proof and activates only the panel', () => {
+    const sb = setup();
+    writeFileSync(path.join(sb.fake, 'images-polutek-admin'), 't1\n');
+    const { r, out, rd, fk } = deploy(sb, ['t1'], {
+      ADMIN_HOST_STATUS_DIR: posix(path.join(sb.dir, 'host-status')),
+    }, 'deploy-admin.sh');
+
+    expect(r.status, out).toBe(0);
+    expect(fk('node.log')).toContain('--scope=admin');
+    expect(fk('up.log')).toContain('admin=polutek-admin:t1');
+    expect(fk('up.log')).not.toContain('service=app');
+    expect(fk('docker.log')).not.toContain('compose --profile tools run --rm migrate');
+    expect(rd('.current-admin-image')).toBe('polutek-admin:t1');
+    expect(rd('.current-admin-release-revision')).toBe('1111111111111111111111111111111111111111');
+  });
+
+  it('admin deploy refuses a bad proof before any Docker activation', () => {
+    const sb = setup();
+    const { r, out, fk } = deploy(sb, ['t1'], {
+      ADMIN_HOST_STATUS_DIR: posix(path.join(sb.dir, 'host-status')),
+      FAKE_NODE_FAIL_VERIFY: '1',
+    }, 'deploy-admin.sh');
+
+    expect(r.status).toBe(1);
+    expect(out).toContain('panel release proof verification failed');
+    expect(fk('node.log')).toContain('--scope=admin');
+    expect(fk('docker.log')).toBe('');
+    expect(fk('up.log')).toBe('');
+  });
+
   it('manual app rollback re-verifies the retained proof before activation', () => {
     const revision = '1111111111111111111111111111111111111111';
     const sb = setup({ state: {
