@@ -109,11 +109,17 @@ describe('EncodeJobRepository on Postgres', () => {
     expect((await prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: cancelled.id } })).status).toBe('CANCELLED');
   });
 
-  it('only lets the owning worker finish a job', async () => {
+  it('only lets the current attempt mutate a job, even when a stale attempt has the same worker id', async () => {
     await job();
     const claimed = (await repo.claimNext('w1', new Date()))!;
-    expect(await repo.markSucceeded(claimed.id, 'intruder', { assetId: 'x', result: {} })).toBe(false);
-    expect(await repo.markSucceeded(claimed.id, 'w1', { assetId: 'asset-1', result: { ok: true } })).toBe(true);
+    const replacementAttempt = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    await prisma.videoEncodeJob.update({ where: { id: claimed.id }, data: { attemptId: replacementAttempt, workerId: 'w1' } });
+    expect(await repo.reportProgress(claimed.id, 'w1', claimed.attemptId, { progressPercent: 1 })).toEqual({ owned: false, cancelRequested: false });
+    expect(await repo.markSucceeded(claimed.id, 'w1', claimed.attemptId, { assetId: 'x', result: {} })).toBe(false);
+    expect(await repo.markFailedOrRetry(claimed.id, 'w1', claimed.attemptId, { next: 'FAILED', code: 'INVALID_MEDIA', message: 'stale' }, new Date())).toBe(false);
+    expect(await repo.markCancelled(claimed.id, 'w1', claimed.attemptId)).toBe(false);
+    expect(await repo.release(claimed.id, 'w1', claimed.attemptId)).toBe(false);
+    expect(await repo.markSucceeded(claimed.id, 'w1', replacementAttempt, { assetId: 'asset-1', result: { ok: true } })).toBe(true);
     expect(await prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: claimed.id } })).toMatchObject({ status: 'SUCCEEDED', stage: 'DONE', progressPercent: 100, assetId: 'asset-1' });
   });
 
@@ -121,7 +127,7 @@ describe('EncodeJobRepository on Postgres', () => {
     await job();
     const claimed = (await repo.claimNext('w1', new Date()))!;
     const now = new Date();
-    expect(await repo.markFailedOrRetry(claimed.id, 'w1', { next: 'QUEUED', code: 'TRANSIENT_ERROR', message: 'x', delayMs: 60_000 }, now)).toBe(true);
+    expect(await repo.markFailedOrRetry(claimed.id, 'w1', claimed.attemptId, { next: 'QUEUED', code: 'TRANSIENT_ERROR', message: 'x', delayMs: 60_000 }, now)).toBe(true);
     const retry = await prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: claimed.id } });
     expect(retry).toMatchObject({ status: 'QUEUED', workerId: null, failureCode: 'TRANSIENT_ERROR' });
     expect(retry.nextAttemptAt!.getTime()).toBe(now.getTime() + 60_000);
@@ -131,7 +137,7 @@ describe('EncodeJobRepository on Postgres', () => {
     await prisma.videoEncodeJob.update({ where: { id: claimed.id }, data: { nextAttemptAt: new Date(Date.now() - 1000) } });
     const again = (await repo.claimNext('w1', new Date()))!;
     expect(again.attemptCount).toBe(2);
-    expect(await repo.markFailedOrRetry(again.id, 'w1', { next: 'FAILED', code: 'INVALID_MEDIA', message: 'bad' }, new Date())).toBe(true);
+    expect(await repo.markFailedOrRetry(again.id, 'w1', again.attemptId, { next: 'FAILED', code: 'INVALID_MEDIA', message: 'bad' }, new Date())).toBe(true);
     expect(await prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: again.id } })).toMatchObject({ status: 'FAILED', failureCode: 'INVALID_MEDIA' });
   });
 
@@ -139,8 +145,8 @@ describe('EncodeJobRepository on Postgres', () => {
     await job();
     const claimed = (await repo.claimNext('w1', new Date()))!;
     expect(claimed.attemptCount).toBe(1);
-    expect(await repo.release(claimed.id, 'other')).toBe(false);
-    expect(await repo.release(claimed.id, 'w1')).toBe(true);
+    expect(await repo.release(claimed.id, 'other', claimed.attemptId)).toBe(false);
+    expect(await repo.release(claimed.id, 'w1', claimed.attemptId)).toBe(true);
     expect(await prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: claimed.id } })).toMatchObject({ status: 'QUEUED', attemptCount: 0, workerId: null, nextAttemptAt: null });
     expect((await repo.claimNext('w2', new Date()))?.id).toBe(claimed.id);
   });
@@ -148,10 +154,10 @@ describe('EncodeJobRepository on Postgres', () => {
   it('reports progress only while owning the job, and passes the cancel flag back', async () => {
     await job();
     const claimed = (await repo.claimNext('w1', new Date()))!;
-    expect(await repo.reportProgress(claimed.id, 'w1', { stage: 'ENCODING', progressPercent: 40 })).toEqual({ owned: true, cancelRequested: false });
+    expect(await repo.reportProgress(claimed.id, 'w1', claimed.attemptId, { stage: 'ENCODING', progressPercent: 40 })).toEqual({ owned: true, cancelRequested: false });
     await repo.requestCancel(claimed.id, videoId);
-    expect(await repo.reportProgress(claimed.id, 'w1', { progressPercent: 41 })).toEqual({ owned: true, cancelRequested: true });
-    expect(await repo.reportProgress(claimed.id, 'w2', { progressPercent: 42 })).toEqual({ owned: false, cancelRequested: false });
+    expect(await repo.reportProgress(claimed.id, 'w1', claimed.attemptId, { progressPercent: 41 })).toEqual({ owned: true, cancelRequested: true });
+    expect(await repo.reportProgress(claimed.id, 'w2', claimed.attemptId, { progressPercent: 42 })).toEqual({ owned: false, cancelRequested: false });
   });
 
   it('enqueue is idempotent per original and numbers versions after existing ones', async () => {

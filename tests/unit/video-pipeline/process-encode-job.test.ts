@@ -160,13 +160,25 @@ describe("processEncodeJob", () => {
     expect(h.hls.deletePrefix).not.toHaveBeenCalledWith(otherPrefix);
   });
 
+  it("leaves finalized files intact when the claim changes before the success write", async () => {
+    const h = harness({ job: makeJob({ attemptId: "44444444-4444-4444-8444-444444444444" }) });
+    h.store.markSucceeded = vi.fn(async () => false);
+    const prefix = "videos/vid-1/v/v2/attempts/44444444-4444-4444-8444-444444444444/";
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("lost");
+    expect(h.finalizer.finalize).toHaveBeenCalledTimes(1);
+    expect(h.store.markFailedOrRetry).not.toHaveBeenCalled();
+    expect(h.hls.deletePrefix).toHaveBeenCalledTimes(1); // only the empty-before-upload, never final cleanup
+    expect(h.hls.deletePrefix).toHaveBeenCalledWith(prefix);
+    expect(h.audit).not.toHaveBeenCalledWith("VIDEO_ENCODE_SUCCEEDED", expect.anything(), expect.anything());
+  });
+
   it("never finalizes when the R2 object count does not match, and retries", async () => {
     const h = harness();
     h.hls.countPrefix.mockResolvedValue(1);
     const outcome = await processEncodeJob(h.job, h.ports);
     expect(outcome).toBe("retry");
     expect(h.finalizer.finalize).not.toHaveBeenCalled();
-    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ next: "QUEUED", code: "UPLOAD_VERIFY_FAILED" }), expect.any(Date));
+    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ next: "QUEUED", code: "UPLOAD_VERIFY_FAILED" }), expect.any(Date));
     // the partial output is removed so nothing half-uploaded can be reached
     expect(h.hls.deletePrefix.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
@@ -177,7 +189,7 @@ describe("processEncodeJob", () => {
     const outcome = await processEncodeJob(h.job, h.ports);
     expect(outcome).toBe("succeeded");
     expect(h.encoder.encode).toHaveBeenCalledTimes(1);
-    expect(h.store.reportProgress).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ sourceInfo: expect.objectContaining({ hdr: true }) }));
+    expect(h.store.reportProgress).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ sourceInfo: expect.objectContaining({ hdr: true }) }));
   });
 
   it("rejects over-long and over-large sources", async () => {
@@ -195,7 +207,7 @@ describe("processEncodeJob", () => {
       h.encoder.probe.mockResolvedValue({ ...GOOD_PROBE, duration: 901 });
       h.ports.channelLimits = { maxVideoSeconds: vi.fn(async () => 900) };
       expect(await processEncodeJob(h.job, h.ports)).toBe("failed");
-      expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ code: "CHANNEL_DURATION_LIMIT", next: "FAILED", message: expect.stringContaining("15 min") }), expect.any(Date));
+      expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ code: "CHANNEL_DURATION_LIMIT", next: "FAILED", message: expect.stringContaining("15 min") }), expect.any(Date));
       expect(h.encoder.encode).not.toHaveBeenCalled();
     });
 
@@ -218,7 +230,7 @@ describe("processEncodeJob", () => {
     const h = harness();
     h.encoder.probe.mockRejectedValue(new Error("Source has no video stream"));
     expect(await processEncodeJob(h.job, h.ports)).toBe("failed");
-    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ code: "NO_VIDEO_STREAM", next: "FAILED" }), expect.any(Date));
+    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ code: "NO_VIDEO_STREAM", next: "FAILED" }), expect.any(Date));
   });
 
   it("does not publish an output that failed encoder validation", async () => {
@@ -316,7 +328,7 @@ describe("processEncodeJob", () => {
       }),
     );
     expect(await processEncodeJob(h.job, h.ports)).toBe("released");
-    expect(h.store.release).toHaveBeenCalledWith("job-1", "w1");
+    expect(h.store.release).toHaveBeenCalledWith("job-1", "w1", null);
     expect(h.store.markFailedOrRetry).not.toHaveBeenCalled();
   });
 
@@ -326,7 +338,7 @@ describe("processEncodeJob", () => {
     expect(await processEncodeJob(h.job, h.ports)).toBe("succeeded");
     expect(h.ports.originals.download).not.toHaveBeenCalled();
     expect(h.hls.deletePrefix).not.toHaveBeenCalled();
-    expect(h.store.markSucceeded).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ assetId: "asset-live" }));
+    expect(h.store.markSucceeded).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ assetId: "asset-live" }));
   });
 
   it("does not delete a live output when marking success fails after finalize", async () => {
