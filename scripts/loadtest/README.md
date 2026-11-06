@@ -12,10 +12,15 @@ response times degrade. Results and method: `docs/operations/LOAD-TEST.md`.
 - Each 200 response must have the expected MIME type (HTML for home, JSON for APIs, image for thumbnail);
   non-200 and wrong/missing MIME metrics make the summarizer stop the series. Bodies remain discarded to cap
   generator memory, so this is an envelope check, not semantic validation of JSON fields or page content.
-- Every request carries `User-Agent: pp-loadtest/1` and a fake `CF-Connecting-IP` from `198.18.0.0/15`
+- Every run gets a unique `User-Agent: pp-loadtest/<uuid>` saved in `OUT_DIR/client-user-agent` and a fake `CF-Connecting-IP` from `198.18.0.0/15`
   (RFC 2544 benchmark range), so each iteration looks like a new visitor (the app trusts that header behind the
-  tunnel). `/api/media-source` creates one `VideoPlaybackSession` row per call; `cleanup.sh` deletes exactly
-  those rows (`userAgentHash = sha256('pp-loadtest/1')`, guest).
+  tunnel). `/api/media-source` creates one `VideoPlaybackSession` row per call. `cleanup.sh` asks the running
+  app container to derive the exact HMAC using its configured client-hash secret and deletes only guest rows
+  matching this run's unique user-agent hash. The secret never leaves the app container. Missing/invalid
+  identity, unavailable app, HMAC failure, database failure or an active runner stop cleanup before deletion.
+  `run-steps.sh` takes an exclusive per-OUT_DIR lock; cleanup refuses to run while that lock exists.
+  If a runner was killed with SIGKILL, verify no `run-steps.sh`/k6 process is active before manually removing
+  the stale `.run-lock`; the scripts never clear it automatically.
 - `preflight.sh` refuses to start a step during a deploy (`deploy.sh`), an encode (`VideoEncodeJob`
   RUNNING/QUEUED), with < 600 MB available memory or load1 > 3.
 - `guard.sh` samples every ~5 s (memory, swap, load, `docker stats`, `pg_stat_activity`) into `monitor.csv`
@@ -52,7 +57,7 @@ fuse), then one journey step at a known-safe rate.
 ## Clean up (always)
 
 ```bash
-./cleanup.sh                   # stops guard, deletes the test sessions, removes the k6 image
+./cleanup.sh                   # stops guard, deletes only this run's sessions, removes the k6 image
 rm -rf /tmp/pp-loadtest
 curl -s -o /dev/null -w '%{http_code}\n' https://www.pawelperfect.com/api/health   # 200
 AI_AGENT=claude-loadtest ai-log "load test end, cleaned up"

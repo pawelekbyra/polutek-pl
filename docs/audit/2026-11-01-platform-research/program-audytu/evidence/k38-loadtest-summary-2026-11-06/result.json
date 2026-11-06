@@ -1,27 +1,59 @@
 {
   "date": "2026-11-06",
   "package": "K38/R11 partial load-test report validation",
-  "base_commit": "afc2f0a1",
+  "base_commit": "df154ba1",
   "source_sha256": {
     "scripts/loadtest/summarize.py": "f16c04f5faae6d36f965003f3360b1447a07d79412222968f4293db0b534965a",
-    "scripts/loadtest/k6-guest.js": "40d6f54ae549850542c9047f067b8ff01a63f6133f340f7a0a7739cc71d7e175",
+    "scripts/loadtest/k6-guest.js": "63bf6ed613e88e7734cb80fe89ca861bd6e61e4a4806f13052294d11581ddcd6",
     "scripts/loadtest/response-contract.mjs": "09370e44ec53aded97a8f2c7fa5e6ad23bd06d7d0f2fe9dc6e4f16aab56b30af",
-    "scripts/loadtest/run-steps.sh": "ea860ffbbc9bd45f8b67a19459219f7c94e1bf7c5c03d0864dd37d2e35e89a7a",
-    "tests/unit/scripts/loadtest-contract.test.ts": "a80bbe9df22f239b8af635f7fc53819e17b7e0f66dda437633f7f2cabbbb88a8"
+    "scripts/loadtest/run-steps.sh": "1959981a293ef8a94d572b0aa92e5132d4bd44368868d7286e884737c36fac3b",
+    "scripts/loadtest/cleanup.sh": "3a5692922dc7311d55e908779f423ddd6236708ba2f8c95ecd597e79cd10db1d",
+    "scripts/loadtest/session-hash.mjs": "bbecfc0299b411741d3e9f5285d80e49bd45013c3f8c0a34b85ed652465e8fc3",
+    "scripts/loadtest/README.md": "ca26f37955f28ab1502e78f3ec58af172b36fa38ba815f3f45911ad3ea060709",
+    "tests/unit/scripts/loadtest-contract.test.ts": "77e7916a2b6fbbb62245c701b4dc2c2cb67777c7a00056feb8308cfa07dccbbb"
   },
   "checks": [
     {
+      "command": "node --check scripts/loadtest/session-hash.mjs",
+      "result": "PASS"
+    },
+    {
+      "command": "cleanup fake-docker + app-HMAC integration fixture (in loadtest-contract.test.ts)",
+      "result": "PASS"
+    },
+    {
       "command": "npx vitest run tests/unit/scripts/loadtest-contract.test.ts",
       "result": "PASS",
-      "tests": 17
+      "tests": 20
     },
-    { "command": "npm run quality:architecture-boundaries", "result": "PASS" },
-    { "command": "npm run typecheck", "result": "PASS" },
-    { "command": "node --input-type=module --check < scripts/loadtest/k6-guest.js", "result": "PASS" },
-    { "command": "node --check scripts/loadtest/response-contract.mjs", "result": "PASS" },
-    { "command": "bash -n scripts/loadtest/run-steps.sh", "result": "PASS" },
-    { "command": "python3 compile() for scripts/loadtest/summarize.py", "result": "PASS" },
-    { "command": "git diff --check", "result": "PASS" },
+    {
+      "command": "npm run quality:architecture-boundaries",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "node --input-type=module --check < scripts/loadtest/k6-guest.js",
+      "result": "PASS"
+    },
+    {
+      "command": "node --check scripts/loadtest/response-contract.mjs",
+      "result": "PASS"
+    },
+    {
+      "command": "bash -n scripts/loadtest/cleanup.sh scripts/loadtest/run-steps.sh",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 compile() for scripts/loadtest/summarize.py",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
     {
       "command": "npx eslint scripts/loadtest/summarize.py scripts/loadtest/response-contract.mjs scripts/loadtest/k6-guest.js scripts/loadtest/run-steps.sh tests/unit/scripts/loadtest-contract.test.ts",
       "result": "PASS for explicitly linted JS/TS files; Python and shell files are outside configured ESLint"
@@ -33,13 +65,16 @@
     "A 200 with an unexpected content type is rejected.",
     "A missing required metric fails closed.",
     "Existing 5xx, saturation, and p95 stop gates remain active.",
-    "HTML, JSON API, and image MIME contracts are exercised for all configured endpoints."
+    "HTML, JSON API, and image MIME contracts are exercised for all configured endpoints.",
+    "The unique run user-agent hash is produced with the same HMAC protocol as lib/modules/privacy/domain/client-hash.ts; test secret is not present in command output.",
+    "Cleanup SQL is constrained to this run userAgentHash and guest sessions; if app-side HMAC derivation fails, it does not call the database and keeps the identity file.",
+    "A per-OUT_DIR lock prevents concurrent run-steps and cleanup refuses to run while that lock exists."
   ],
   "boundaries": [
-    "No k6 binary/container, HTTP endpoint, application server, database, load, or cleanup script was run.",
-    "Response bodies remain discarded; the MIME check does not parse JSON or semantically inspect HTML/image payloads.",
-    "The historical capacity measurements were not repeated and are not re-certified by this code change.",
-    "No server-side fixture/HMAC cleanup behavior or protected foreign session was exercised."
+    "No k6 binary/container, HTTP endpoint, application server, real database, real cleanup, or load was run; no server or production container was touched.",
+    "Cleanup behavior was exercised with fake Docker/database commands and the real HMAC helper logic, not with a non-production application container or database.",
+    "Response bodies remain discarded; MIME validation does not parse JSON or semantically inspect HTML/image payloads.",
+    "The historical capacity measurements were not repeated and are not re-certified by this code change."
   ],
   "independent_review": "PENDING"
 }

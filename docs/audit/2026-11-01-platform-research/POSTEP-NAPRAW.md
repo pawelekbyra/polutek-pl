@@ -2,7 +2,7 @@
 
 ## K38/R11 — częściowa realizacja, 6 listopada 2026
 
-Poprawiono raport obciążeniowy: summarizer zwraca błąd dla nieoczekiwanego statusu, niewłaściwego MIME 200 i niekompletnego zestawu metryk k6; run-steps kończy się niezerowym statusem dla takiego wyniku. `k6-guest.js` kontroluje MIME dla HTML, JSON i miniaturek bez materializowania body odpowiedzi, zachowując limit pamięci generatora. 17 syntetycznych testów statusów, MIME, kodów progowych i zachowania runnera PASS; bez uruchamiania k6, HTTP, obciążenia lub cleanup na serwerze. Test nie bada semantycznych pól JSON/HTML. K38 pozostaje częściowy: HMAC cleanup, pełne report/mix i weryfikacja bezpiecznego fixture wymagają osobnego wykonania. Szczegóły: [K38](ROADMAPA-NAPRAW.md#k38).
+Poprawiono raport obciążeniowy: summarizer zwraca błąd dla nieoczekiwanego statusu, niewłaściwego MIME 200 i niekompletnego zestawu metryk k6; run-steps kończy się niezerowym statusem dla takiego wyniku. `k6-guest.js` kontroluje MIME dla HTML, JSON i miniaturek bez materializowania body odpowiedzi, zachowując limit pamięci generatora. **Aktualizacja:** identity cleanup jest teraz unikalne dla katalogu przebiegu; aplikacja sama liczy HMAC przy użyciu własnego klucza, a cleanup odmawia usuwania przy braku identity, błędzie HMAC/DB lub aktywnym runnerze. 20 testów syntetycznych kontraktów i ścieżki cleanup PASS; bash/node syntax, lint, repo typecheck i diff check PASS. Nie uruchamiano k6, HTTP, bazy, obciążenia ani prawdziwego cleanup. Semantyczne body i pełny mix/versioning nadal otwarte. K38 pozostaje częściowy. Szczegóły: [K38](ROADMAPA-NAPRAW.md#k38) i [dowód](program-audytu/evidence/k38-loadtest-summary-2026-11-06/result.json).
 
 ## K31/R36 — częściowa realizacja, 6 listopada 2026
 

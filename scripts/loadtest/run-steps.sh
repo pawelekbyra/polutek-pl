@@ -15,6 +15,17 @@ K6_IMAGE="${K6_IMAGE:-grafana/k6:1.3.0}"
 LABEL="${LABEL:-$TARGET}"
 : "${VIDEO_ID:?VIDEO_ID is required}"
 mkdir -p "$OUT"; chmod 777 "$OUT"
+LOCK="$OUT/.run-lock"
+if ! mkdir "$LOCK" 2>/dev/null; then echo "load test already active for OUT_DIR; refusing concurrent runner" >&2; exit 7; fi
+trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
+trap 'exit 130' INT TERM
+UA_FILE="$OUT/client-user-agent"
+if [ ! -s "$UA_FILE" ]; then
+  printf 'pp-loadtest/%s\n' "$(cat /proc/sys/kernel/random/uuid)" > "$UA_FILE"
+  chmod 600 "$UA_FILE"
+fi
+LOADTEST_USER_AGENT="$(cat "$UA_FILE")"
+[[ "$LOADTEST_USER_AGENT" =~ ^pp-loadtest/[0-9a-f-]{36}$ ]] || { echo "invalid load-test identity file" >&2; exit 8; }
 RESULTS="$OUT/results.tsv"
 HEADER="target\trate\titer_per_s\treq_per_s\treqs\tdropped\tp50\tp95\tp99\tmax\terr5xx_pct\tnon200\twrong_content\tper_endpoint_p50/p95/p99_ms\tlabel\tstarted"
 if [ ! -s "$RESULTS" ]; then
@@ -34,7 +45,7 @@ while awk -v r="$rate" -v m="$MAX" 'BEGIN{exit !(r<=m)}'; do
   echo "== $name  ($started, ${STEP}s)"
   docker run --rm --name pp-loadtest-k6 --network host --cpus 0.5 --memory 256m \
     -v "$DIR:/scripts:ro" -v "$OUT:/out" \
-    -e TARGET="$TARGET" -e RATE="$rate" -e DURATION="${STEP}s" -e VIDEO_ID="$VIDEO_ID" \
+    -e TARGET="$TARGET" -e RATE="$rate" -e DURATION="${STEP}s" -e VIDEO_ID="$VIDEO_ID" -e LOADTEST_USER_AGENT="$LOADTEST_USER_AGENT" \
     -e OUT="/out/$name.json" "$K6_IMAGE" run -q --no-usage-report /scripts/k6-guest.js >/dev/null 2>"$OUT/$name.log"
   if [ ! -s "$OUT/$name.json" ]; then echo "no summary (k6 killed?)"; tail -3 "$OUT/$name.log"; exit 5; fi
   row="$(python3 "$DIR/summarize.py" "$OUT/$name.json" "$TARGET" "$rate" "$STOP_P95")"; code=$?

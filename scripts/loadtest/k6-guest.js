@@ -24,7 +24,8 @@ const DURATION = __ENV.DURATION || "60s";
 const LOCALE = __ENV.LOCALE || "pl";
 const ITERATIONS = __ENV.ITERATIONS ? Number(__ENV.ITERATIONS) : 0;
 // Marks every request (and every VideoPlaybackSession row it creates, via userAgentHash) as test traffic.
-const UA = "pp-loadtest/1";
+const UA = __ENV.LOADTEST_USER_AGENT;
+if (!UA || !/^pp-loadtest\/[0-9a-f-]{36}$/.test(UA)) throw new Error("LOADTEST_USER_AGENT must be the run identity created by run-steps.sh");
 
 if (!VIDEO_ID) throw new Error("VIDEO_ID is required");
 

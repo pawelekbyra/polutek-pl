@@ -933,6 +933,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Postęp lokalny 6 listopada 2026 (częściowy):** summarizer odrzuca metrykę nieoczekiwanego statusu, zły MIME odpowiedzi 200 i brak wymaganej metryki; skrypt k6 sprawdza status i oczekiwany MIME dla endpointu bez pobierania body. Runner kończy się niezerowym statusem dla niepoprawnego lub niekompletnego raportu. Dodano 17 syntetycznych testów bramki i kontraktu MIME (PASS). Nie wykonywano obciążenia, generatora k6, HTTP ani cleanup na serwerze. Semantyczna zawartość JSON/HTML, wersjonowanie profilu, HMAC i odporność sprzątania pozostają poza tym krokiem; K38 jest częściowy. [Dowody i hashe](program-audytu/evidence/k38-loadtest-summary-2026-11-06/result.json).
 
+**Aktualizacja 6 listopada:** usunięto rozjazd między HMAC-SHA256 zapisywanym przez aplikację i plain SHA szukanym przez cleanup. Runner tworzy UUID identity w `OUT_DIR`, przekazuje ją jako UA i wyklucza dwa równoległe przebiegi w tym samym katalogu. `cleanup.sh` liczy hash przez Node wewnątrz app kontenera, nigdy nie odczytując/drukując klucza; wymaga zgodnej identity, odmawia przy aktywnym runnerze lub błędzie HMAC/DB i zachowuje identity do retry. 20 syntetycznych testów w tym symulacja poleceń Docker/SQL PASS; nie wykonano serwerowego cleanupu ani testu prawdziwej bazy. Semantyka JSON/HTML, pełny profil/mix, HMAC fixture w środowisku non-production i odbiór niezależny wciąż otwarte; pakiet częściowy.
+
 <a id="k39"></a>
 
 #### K39. Pomiar celu 10 tys. widzów i plan wąskich usprawnień

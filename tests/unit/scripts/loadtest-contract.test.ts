@@ -1,9 +1,10 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { hasExpectedLoadContentType } from '../../../scripts/loadtest/response-contract.mjs';
+import { hashClientValue } from '../../../lib/modules/privacy/domain/client-hash';
 
 const root = process.cwd();
 const temp = mkdtempSync(path.join(tmpdir(), 'polutek-loadtest-summary-'));
@@ -85,6 +86,76 @@ describe('load-test response contract', () => {
     expect(runner).toContain('14) echo "invalid result: incomplete k6 summary" >&2; exit 14 ;;');
     expect(runner).toContain('*) echo "invalid result: summarizer failed (exit $code)" >&2; exit "$code" ;;');
     expect(runner).toContain('incompatible results.tsv header; select a fresh OUT_DIR or archive the previous results');
+  });
+
+  it('derives cleanup identity with the same HMAC protocol as playback sessions', () => {
+    const userAgent = 'pp-loadtest/123e4567-e89b-12d3-a456-426614174000';
+    const secret = 'loadtest-only-test-secret';
+    const result = spawnSync('node', [path.join(root, 'scripts/loadtest/session-hash.mjs')], {
+      encoding: 'utf8',
+      env: { ...process.env, LOADTEST_USER_AGENT: userAgent, IP_HASH_SECRET: secret },
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe(hashClientValue(userAgent, { IP_HASH_SECRET: secret }));
+    expect(result.stdout).not.toContain(secret);
+  });
+
+  it('requires an exact per-run identity and refuses cleanup while a run is active', () => {
+    const cleanup = readFileSync(path.join(root, 'scripts/loadtest/cleanup.sh'), 'utf8');
+    const runner = readFileSync(path.join(root, 'scripts/loadtest/run-steps.sh'), 'utf8');
+    const k6 = readFileSync(path.join(root, 'scripts/loadtest/k6-guest.js'), 'utf8');
+
+    expect(cleanup).toContain('if [ -d "$LOCK" ]');
+    expect(cleanup).toContain('missing run identity; refusing to delete playback sessions');
+    expect(cleanup).toContain('session-hash.mjs');
+    expect(cleanup).toContain('where "userAgentHash" = :\'h\' and "userId" is null');
+    expect(runner).toContain('/proc/sys/kernel/random/uuid');
+    expect(runner).toContain('-e LOADTEST_USER_AGENT="$LOADTEST_USER_AGENT"');
+    expect(k6).toContain('const UA = __ENV.LOADTEST_USER_AGENT;');
+  });
+
+  it('deletes only rows matching the app-derived HMAC and retains identity if the app is unavailable', () => {
+    const sandbox = mkdtempSync(path.join(tmpdir(), 'polutek-loadtest-cleanup-'));
+    const bin = path.join(sandbox, 'bin');
+    const out = path.join(sandbox, 'out');
+    const trace = path.join(sandbox, 'docker.log');
+    const sql = path.join(sandbox, 'cleanup.sql');
+    const docker = path.join(bin, 'docker');
+    const userAgent = 'pp-loadtest/123e4567-e89b-12d3-a456-426614174000';
+    const secret = 'loadtest-cleanup-test-secret';
+    const script = `#!/usr/bin/env bash
+if [[ "$*" == *polutek-app-1* ]]; then
+  for arg in "$@"; do [[ "$arg" == LOADTEST_USER_AGENT=* ]] && export "$arg"; done
+  [ "\${FAIL_APP_HASH:-}" != 1 ] || exit 21
+  exec node -
+fi
+if [[ "$*" == *polutek-db-1* ]]; then printf '%s\\n' "$*" >> "$DOCKER_TRACE"; cat > "$SQL_CAPTURE"; exit 0; fi
+exit 0
+`;
+    mkdirSync(bin, { recursive: true });
+    mkdirSync(out, { recursive: true });
+    writeFileSync(docker, script, { mode: 0o755 });
+    writeFileSync(path.join(out, 'client-user-agent'), `${userAgent}\n`);
+
+    try {
+      const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, OUT_DIR: out, DOCKER_TRACE: trace, SQL_CAPTURE: sql, IP_HASH_SECRET: secret };
+      const result = spawnSync('bash', [path.join(root, 'scripts/loadtest/cleanup.sh'), '--keep-image'], { encoding: 'utf8', env });
+      const expectedHash = hashClientValue(userAgent, { IP_HASH_SECRET: secret });
+      expect(result.status).toBe(0);
+      expect(readFileSync(sql, 'utf8')).toContain('where "userAgentHash" = :\'h\' and "userId" is null;');
+      expect(readFileSync(trace, 'utf8')).toContain(expectedHash);
+      expect(readFileSync(trace, 'utf8')).not.toContain(secret);
+
+      writeFileSync(path.join(out, 'client-user-agent'), `${userAgent}\n`);
+      const failed = spawnSync('bash', [path.join(root, 'scripts/loadtest/cleanup.sh'), '--keep-image'], {
+        encoding: 'utf8', env: { ...env, FAIL_APP_HASH: '1', SQL_CAPTURE: `${sql}.must-not-exist` },
+      });
+      expect(failed.status).toBe(9);
+      expect(readFileSync(path.join(out, 'client-user-agent'), 'utf8').trim()).toBe(userAgent);
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
   });
 
   it('preserves the HTTP 5xx/timeouts stop gate', () => {
