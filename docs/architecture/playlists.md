@@ -21,6 +21,7 @@ Playlista **nie zmienia** `sidebarOrder` ani niczego w pasku bocznym i odwrotnie
 - `Playlist(id, channelId, title, description, visibility PUBLIC|UNLISTED|PRIVATE, slug, createdAt, updatedAt, deletedAt)`; **slug unikalny w obrębie kanału** (`@@unique([channelId, slug])`), liczony z tytułu (`slugifyPlaylistTitle`, `pickUniqueSlug`: `-2`, `-3`…), niezmienny po utworzeniu (linki są stabilne). Usunięcie to **soft delete** (`deletedAt`), slug zostaje zajęty.
 - `PlaylistItem(id, playlistId, videoId, position, addedAt)`; `@@unique([playlistId, videoId])` (film raz na liście), indeks `(playlistId, position)`. `position` tylko porządkuje (po usunięciu mogą zostać luki).
 - Limity: 100 playlist na kanał, 200 filmów na playlistę, tytuł 100 znaków, opis 1000 (`domain/playlist-rules.ts`).
+- Zmiany liczby aktywnych playlist (utworzenie i soft delete) trzymają blokadę transakcyjną PostgreSQL `pg_advisory_xact_lock(hashtext("playlists:channel:<id>"))` przed COUNT/UPDATE/INSERT. Blokada jest per kanał: równoległe kanały nie czekają na siebie, a retry przy kolizji sluga zaczyna nową transakcję i zapisuje audyt tylko przy skutecznym INSERT.
 - Playlista zawiera **wyłącznie filmy własnego kanału**: `addPlaylistVideo` szuka filmu z `creatorId = kanał playlisty`, obcy id wygląda jak brak filmu (404).
 
 ## 3. Uprawnienia i audyt
