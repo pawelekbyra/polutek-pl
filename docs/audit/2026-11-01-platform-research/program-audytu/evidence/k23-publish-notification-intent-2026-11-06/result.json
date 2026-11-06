@@ -12,6 +12,24 @@
   ],
   "checks": [
     {
+      "name": "cron-route-wiring",
+      "command": "npx vitest run tests/unit/cron/premiere-notifications-route.test.ts",
+      "exitCode": 0,
+      "files": 1,
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "source_sha256": {
+        "tests/unit/cron/premiere-notifications-route.test.ts": "42d2e5d8e52947d91fda52a9bbec189d0a12974bda0efb18ad1a4a0966bb140a",
+        "app/api/cron/premiere-notifications/route.ts": "c0b47069f7f7dd1d91be19672931573b336128bfcdabc7ccef78330dcbdaf818"
+      },
+      "covers": [
+        "Unauthorized route calls do not invoke any job runner",
+        "Every authorized route tick calls durable NEW_VIDEO_FANOUT runner",
+        "Runner failure returns HTTP 500 and does not falsely complete later cron work"
+      ]
+    },
+    {
       "name": "focused-unit",
       "command": "npx vitest run tests/unit/modules/notifications/new-video-fan-out.test.ts tests/unit/modules/notifications/announce-published-video.test.ts tests/unit/modules/video/unlist-admin-video.use-case.test.ts tests/unit/modules/video/update-admin-video.use-case.test.ts --testTimeout=120000 --hookTimeout=120000",
       "exitCode": 0,
