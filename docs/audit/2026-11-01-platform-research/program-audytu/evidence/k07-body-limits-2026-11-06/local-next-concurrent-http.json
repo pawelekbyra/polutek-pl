@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-06",
+  "nextVersion": "16.4.5",
+  "target": "http://127.0.0.1:43127/api/subscriptions/unsubscribe",
+  "routeLimitBytes": 16384,
+  "method": "POST",
+  "contentType": "application/x-www-form-urlencoded",
+  "contentLength": "absent; Node fetch sent streamed request bodies",
+  "concurrency": 16,
+  "bodyBytesEach": 16385,
+  "statuses": {
+    "413": 16
+  },
+  "elapsedMs": 1091,
+  "reverseProxyIncluded": false,
+  "productionTouched": false,
+  "server": "Local Next production server bound to loopback in the permitted worktree; stopped after the request",
+  "limitation": "The exercised route has a 16 KiB cap; this does not establish memory behavior of the 13 MiB multipart routes or a reverse proxy."
+}

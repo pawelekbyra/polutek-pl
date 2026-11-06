@@ -29,3 +29,4 @@ K06-admin-standalone-tracing,7d97d067,program-audytu/evidence/admin-standalone-t
 K02-runtime-16.4.5,e2cb87d9,program-audytu/evidence/k02-runtime-2026-11-06-next-16.4.5/result.json,CZESCIOWO
 K07-bounded-request-bodies,b8b5d4dd,app/api;apps/admin/app/api;lib/utils/request-body.ts;tests/unit/utils/request-body.test.ts,CZESCIOWO
 K06-deployer-negative-paths,2b7891ac,tests/unit/ops/serwerek-scripts.test.ts;program-audytu/evidence/k06-deployer-failures-2026-11-06/,CZESCIOWO
+K07-reader-buffering,3dc8fb29,lib/utils/request-body.ts;tests/unit/utils/request-body.test.ts;program-audytu/evidence/k07-body-limits-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO

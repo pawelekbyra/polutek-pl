@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K07: pamięć czytnika body
+
+- Commit `3dc8fb29` zastępuje bufor z wielokrotnym realokowaniem porcjami stałych slabów 64 KiB; dodano regresję przekraczającą granicę slaba. 9 plików testów: 111/111 PASS; repo typecheck, lint zmienionych plików i `git diff --check` PASS.
+- Odtwarzalny benchmark Node-only dla 16 równoległych chunked multipart żądań +1 byte powyżej limitu 13 MiB: 16/16 odpowiedzi 413. Jedna para pomiarów: przyrost RSS 261 791 744 → 246 124 544 B, czas 951 → 500 ms. Równoległy test HTTP lokalnego Next 16.4.5 na trasie 16 KiB zwrócił 16/16 odpowiedzi 413 w 1,091 ms. Build publiczny/admin PASS po zmianie. Pomiar HTTP nie obciąża trasy 13 MiB; Node-only benchmark nie obejmuje Next, Cloudflare ani proxy.
+- K07 nadal otwarte. Konfiguracji Cloudflare Tunnel nie ma w repo; nie zmierzono dużych body przez Next/proxy. Harness i surowe wyniki: `program-audytu/tools/k07-body-memory-benchmark.mjs` oraz `program-audytu/evidence/k07-body-limits-2026-11-06/`.
+
 ## 6 listopada 2026 — wznowienie roadmapy i aktualizacja bazy
 
 - Na polecenie właściciela wznowiono pełną roadmapę po wcześniejszym STOP. Gałąź audytu lokalnie scalono z `origin/main` (`e2d33e0e`) commitem `7e6f5335`, aby naprawy odnosiły się do aktualnego kodu.

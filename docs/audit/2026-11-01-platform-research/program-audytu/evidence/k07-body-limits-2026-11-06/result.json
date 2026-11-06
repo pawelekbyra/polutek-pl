@@ -1,6 +1,7 @@
 {
   "package": "K07",
-  "commit": "b8b5d4dd",
+  "commit": "3dc8fb29",
+  "sourceRevision": "3dc8fb29997171f1ef413d9e21a598038ffd72d5",
   "status": "PARTIAL_OPEN",
   "date": "2026-11-06",
   "code": {
@@ -15,21 +16,35 @@
     "focusedVitest": {
       "command": "npx vitest run tests/unit/utils/request-body.test.ts tests/unit/api/video-progress-route.test.ts tests/unit/api/studio-routes.test.ts tests/unit/api/playback-event-route.test.ts tests/unit/api/video-favorite-route.test.ts tests/unit/comments-route.test.ts tests/unit/comment-reactions-route.test.ts tests/unit/subscriptions-route.test.ts tests/unit/modules/patron-zone/premium-pass-checkout-route.test.ts --reporter=json",
       "files": 9,
-      "testsPassed": 110,
+      "testsPassed": 111,
       "testsFailed": 0,
       "success": true,
-      "raw": "vitest.json",
-      "log": "vitest.log"
+      "raw": "vitest-after-slabs.json",
+      "log": "vitest-after-slabs-summary.log"
     },
     "repoTypecheck": {
       "passed": true,
-      "log": "typecheck.log"
+      "log": "typecheck-after-slabs.log"
     },
     "changedFilesEslint": {
       "passed": true,
-      "log": "eslint.log"
+      "log": "eslint-after-slabs.log"
     },
     "gitDiffCheck": "PASS"
+  },
+  "concurrentNodeReaderBenchmark": {
+    "harness": "tools/k07-body-memory-benchmark.mjs",
+    "command": "node --import tsx docs/audit/2026-11-01-platform-research/program-audytu/tools/k07-body-memory-benchmark.mjs",
+    "runtime": "Node v22.23.3",
+    "scenario": "16 concurrent chunked multipart bodies, each one byte above 13 MiB, without Content-Length",
+    "before": "body-memory-before.json",
+    "after": "body-memory-after.json",
+    "beforeRssIncreaseBytes": 261791744,
+    "afterRssIncreaseBytes": 246124544,
+    "beforeElapsedMs": 951,
+    "afterElapsedMs": 500,
+    "outcome": "16/16 rejected with 413",
+    "scope": "Node Request/ReadableStream + application reader; single observational run per version, not Next/proxy or production evidence"
   },
   "localNextProductionHttp": {
     "result": "http-result.json",
@@ -40,11 +55,23 @@
     "multipartDeclaredBytes": 413,
     "multipartChunkedNoLength": 413
   },
+  "localNextConcurrentHttp": {
+    "nextVersion": "16.4.5",
+    "route": "/api/subscriptions/unsubscribe",
+    "reverseProxyIncluded": false,
+    "concurrency": 16,
+    "bodyBytes": 16385,
+    "limitBytes": 16384,
+    "contentLength": "absent",
+    "results": "16/16 returned 413",
+    "elapsedMs": 1091,
+    "raw": "local-next-concurrent-http.json"
+  },
+  "buildsAfterBufferChange": "build-result-after-slabs.json",
   "notVerified": [
     "Cloudflare or another actual reverse proxy's body and buffering limits",
-    "memory and latency under concurrent oversized requests",
-    "full-stack denial-of-service resource budget",
-    "public and admin builds after the final small validation adjustment"
+    "memory and latency under concurrent oversized requests at the 13 MiB route limit in the actual Next and reverse-proxy stack",
+    "full-stack denial-of-service resource budget"
   ],
   "proxyInventory": "proxy-inventory.json",
   "buildsBeforeFinalValidationAdjustment": {
@@ -57,5 +84,5 @@
       "log": "admin-build-before-final-adjustment.log"
     }
   },
-  "conclusion": "Bounded readers and route coverage are implemented and locally verified, but K07 acceptance requires actual proxy behavior and concurrent memory/time measurements; keep the package open."
+  "conclusion": "Bounded readers and route coverage are implemented and locally verified. Public/admin builds pass after the change; 16 concurrent local Next chunked requests at the 16 KiB route limit return 413. The Node-only 13 MiB benchmark is informative but does not prove large-body Next/proxy budgets. Keep K07 open."
 }
