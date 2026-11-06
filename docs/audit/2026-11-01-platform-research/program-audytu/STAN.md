@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## Aktualizacja K04 — 6 listopada 2026
+
+K04/R34 częściowo zaimplementowany lokalnie w commicie opisanym w historii gałęzi: czyste wejście `video/pure.ts` rozcina wskazany import layoutu przez szeroki barrel, a facade Prisma inicjalizuje domyślnego klienta dopiero przy pierwszym użyciu. Architektura PASS, 43/43 testy w 5 celowanych plikach, typecheck i ESLint PASS; konstruktor-probe: 0 wywołań przy imporcie/wstrzykniętym DB, 1 przy domyślnej transakcji. Dowód/granice: `evidence/architecture-import-probe.json` i sekcja K04 w D02. K04 pozostaje częściowy do niezależnego przeglądu wszystkich metod facade i produkcyjnego composition root. Następny krok: odnotować commit K04 i przejść do niezależnego pakietu; K26 nadal czeka na decyzję właściciela.
+
 ## Wznowienie napraw — 6 listopada 2026
 
 - Właściciel wznowił pełną roadmapę po STOP z 4 listopada. Ograniczenia bieżącej pracy: tylko worktree `platform-audit`/gałąź `docs/polutek-platform-audit`; bez push, PR, merge do main, produkcji ani `/opt/serwerek`.

@@ -44,9 +44,13 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   },
   'lib/modules/channel/application/channel-layout.service.ts': {
     'video/domain/premiere': PREMIERE_HELPER_REASON,
+    'video/pure': 'Narrow, dependency-free video helper entry; avoids importing the video public service barrel and its cycle back through MainChannelService.',
   },
   'lib/modules/video/domain/public-visibility.ts': {
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class (the one rule for a publicly visible channel); the video domain needs only that predicate, not the channel barrel with its services.',
+  },
+  'lib/modules/video/application/publish-after-asset-ready.use-case.ts': {
+    'channel/domain/channel.policy': 'The pipeline worker needs only the pure channel visibility policy; the channel barrel would pull layout and video services back into this worker dependency path.',
   },
   'lib/modules/syndication/domain/embed-eligibility.ts': {
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,

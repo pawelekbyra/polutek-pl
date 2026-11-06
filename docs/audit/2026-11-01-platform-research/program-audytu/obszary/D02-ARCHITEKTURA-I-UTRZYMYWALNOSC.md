@@ -128,6 +128,12 @@ W tej partii częściowo przeczytano 18 wskazanych źródeł; [lista/hash](../ev
 
 [Poradnik serwera](https://github.com/Chocobozzz/PeerTube/blob/fa7d2b5d8a44bbec99159b11e91763f7d2308faa/support/doc/development/server.md) opisuje zmianę funkcji przez konfigurację, walidator, model, wspólne typy, komendy/testy i specyfikację. To dobry wzorzec kompletności zmiany; część wskazanych ścieżek testów jest historyczna względem obecnego packages/tests. Nie wykonano tego workflow. Nie kopiowano implementacji.
 
+## K04 — częściowa realizacja, 6 listopada 2026
+
+W `channel-layout.service.ts` zastąpiono szeroki import `@/lib/modules/video` nowym czystym wejściem `@/lib/modules/video/pure.ts`, które eksportuje wyłącznie `compareSidebarItems`. To rozcina wskazaną pętlę `video → channel → channel-layout → video barrel` dla tego helpera; nie jest to przebudowa ani pomiar wszystkich cykli. `lib/prisma.ts` ma teraz leniwy facade: sam import AppContext ani przekazanie testowej bazy nie konstruuje domyślnego klienta, a pierwsze użycie default DB nadal go tworzy. Próba VM odnotowała 0 konstrukcji po wstrzyknięciu i 1 po pierwszej domyślnej transakcji; pełne ścieżki aplikacji i zachowanie wszystkich metod proxy wymagają przeglądu.
+
+Wyniki: kontrola granic architektury PASS; 5 celowanych plików Vitest, 43/43; repo typecheck PASS; ESLint dotkniętych plików PASS. [Probe i hashe źródeł](../evidence/architecture-import-probe.json). Próba nie wykonuje SQL ani prawdziwego konstruktora Prisma. K04 pozostaje częściowy do niezależnego przeglądu facade i integracji produkcyjnego composition root.
+
 ## Źródło językowe i kolejne kroki
 
 Pobrano online oficjalne [TypeScript 3.8 release notes](../sources/typescript-38-release-notes.md) oraz [licencję CC BY 4.0](../sources/typescript-website-LICENSE), Microsoft i współtwórcy, oba HTTP 200; [adresy/hash](../sources/fetch-architecture-batch12.json). Odczytano część Type-Only Imports and Export: jawne import type/export type są usuwane z outputu. To źródło historycznego wprowadzenia tej składni, nie instrukcja stosowania wycofanej opcji importsNotUsedAsValues do bieżącej wersji. Zachowano niezmienioną kopię.

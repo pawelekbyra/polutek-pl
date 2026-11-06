@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { VideoStatus } from '@prisma/client';
 import { toVideoAccessTier, type VideoAccessTier } from '@/lib/access-tier';
 import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
-import { compareSidebarItems } from '@/lib/modules/video';
+import { compareSidebarItems } from '@/lib/modules/video/pure';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 // Deep import allowlisted in scripts/check-architecture.ts (pure helper).

@@ -1,5 +1,11 @@
 # Postęp realizacji roadmapy — H1
 
+## K04/R34 — częściowa realizacja, 6 listopada 2026
+
+Wydzielono `lib/modules/video/pure.ts` dla helpera sortowania sidebaru, usuwając wskazaną zależność layoutu kanału od szerokiego video barrel. `lib/prisma.ts` używa leniwego facade: import i wstrzyknięty DB nie tworzą domyślnego klienta, pierwsza domyślna transakcja go inicjalizuje. Probe: 5 obserwacji, 13 rzeczywistych plików źródłowych, 0 konstrukcji przy injected DB i 1 przy domyślnej transakcji. Kontrola architektury PASS, 5 celowanych testów PASS (43/43), typecheck i ESLint PASS. Pełne ograniczenia są w D02 i `program-audytu/evidence/architecture-import-probe.json`.
+
+Pozostaje niezależny przegląd zgodności wszystkich użyć facade Prisma i produkcyjnego composition root; próba nie używa prawdziwej bazy, Prisma engine ani bundlera. Pakiet K04 jest częściowy, nie zamknięty. Następny krok: przegląd po stronie Claude’a; dalsza lokalna praca może iść do kolejnych niezależnych pakietów.
+
 ## Wznowienie właściciela — 6 listopada 2026
 
 Właściciel wznowił realizację i polecił wykonać całą roadmapę. Historyczny STOP z 4 listopada nie obowiązuje od tego polecenia; pozostaje niżej jako zapis. Praca jest tylko w lokalnym worktree `/opt/codex/polutek-pl/.worktrees/platform-audit`, gałąź `docs/polutek-platform-audit`, bez publikacji, PR, wdrożeń ani dostępu do produkcji.
