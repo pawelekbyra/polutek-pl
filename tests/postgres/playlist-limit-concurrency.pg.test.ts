@@ -1,5 +1,7 @@
 /** K25 exercises playlist count mutations through Prisma transactions on PostgreSQL. */
 import { PrismaClient } from "@prisma/client";
+import { spawn } from "node:child_process";
+import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { createPlaylist, deletePlaylist } from "@/lib/modules/playlists/application/playlist-manage.use-cases";
@@ -12,6 +14,7 @@ const RUN = `k25-${Date.now().toString(36)}`;
 const userIds: string[] = [];
 const channelIds: string[] = [];
 let fixtureBatch = 0;
+const PROCESS_TIMEOUT_MS = 30_000;
 
 beforeAll(async () => {
   for (let index = 0; index < 2; index += 1) {
@@ -47,24 +50,68 @@ async function addFixtures(channelIndex: number, count: number) {
   return rows.map((row) => row.id);
 }
 
+function createPlaylistInProcess(channelId: string, userId: string, title: string): Promise<{ ok: true; id: string } | { ok: false; code: string; statusCode: number }> {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error("DATABASE_URL is required for K25 separate-process PostgreSQL test");
+  const env: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH,
+    NODE_ENV: "test",
+    DATABASE_URL: databaseUrl,
+    DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED || databaseUrl,
+    K25_CHANNEL_ID: channelId,
+    K25_USER_ID: userId,
+    K25_TITLE: title,
+  };
+  const child = spawn(process.execPath, [
+    path.join(process.cwd(), "node_modules/tsx/dist/cli.mjs"),
+    path.join(process.cwd(), "tests/helpers/k25-create-playlist-process.ts"),
+  ], { cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe"] });
+
+  return new Promise((resolve, reject) => {
+    let stdout = "";
+    let stderr = "";
+    const timeout = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error(`K25 child process timed out: ${title}`));
+    }, PROCESS_TIMEOUT_MS);
+    child.stdout.on("data", (chunk: Buffer | string) => { stdout += chunk.toString(); });
+    child.stderr.on("data", (chunk: Buffer | string) => { stderr += chunk.toString(); });
+    child.once("error", (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    child.once("close", (code) => {
+      clearTimeout(timeout);
+      if (code !== 0) return reject(new Error(`K25 child process failed (${code}): ${stderr.slice(-800)}`));
+      try {
+        resolve(JSON.parse(stdout) as { ok: true; id: string } | { ok: false; code: string; statusCode: number });
+      } catch {
+        reject(new Error(`K25 child process returned invalid JSON: ${stdout.slice(-800)}`));
+      }
+    });
+  });
+}
+
 describe("K25 playlist limit concurrency (PostgreSQL)", () => {
-  it("allows only one of two creators at 99 active playlists", async () => {
+  it("allows only one of two separate Node processes at 99 active playlists", async () => {
     await addFixtures(0, 99);
 
-    const results = await Promise.all([
-      createPlaylist(ctx(0), { channelId: channelIds[0]!, title: "Concurrent Alpha" }),
-      createPlaylist(ctx(0), { channelId: channelIds[0]!, title: "Concurrent Beta" }),
-    ]);
-    const successes = results.filter((result) => result.ok);
-    const refusals = results.filter((result) => !result.ok);
+    try {
+      const results = await Promise.all([
+        createPlaylistInProcess(channelIds[0]!, userIds[0]!, "Concurrent Alpha"),
+        createPlaylistInProcess(channelIds[0]!, userIds[0]!, "Concurrent Beta"),
+      ]);
+      const successes = results.filter((result) => result.ok);
+      const refusals = results.filter((result) => !result.ok);
 
-    expect(successes).toHaveLength(1);
-    expect(refusals).toHaveLength(1);
-    expect(refusals[0]).toMatchObject({ error: { code: "PLAYLIST_LIMIT", statusCode: 409 } });
-    expect(await prisma.playlist.count({ where: { channelId: channelIds[0], deletedAt: null } })).toBe(100);
-    const createdId = successes[0]!.ok ? successes[0]!.data.id : "";
-    expect(await prisma.auditLog.count({ where: { action: "PLAYLIST_CREATED", targetId: createdId } })).toBe(1);
-    await prisma.playlist.updateMany({ where: { channelId: channelIds[0], deletedAt: null }, data: { deletedAt: new Date() } });
+      expect(successes).toHaveLength(1);
+      expect(refusals).toHaveLength(1);
+      expect(refusals[0]).toMatchObject({ ok: false, code: "PLAYLIST_LIMIT", statusCode: 409 });
+      expect(await prisma.playlist.count({ where: { channelId: channelIds[0], deletedAt: null } })).toBe(100);
+      expect(await prisma.auditLog.count({ where: { action: "PLAYLIST_CREATED", targetId: successes[0]!.id } })).toBe(1);
+    } finally {
+      await prisma.playlist.updateMany({ where: { channelId: channelIds[0], deletedAt: null }, data: { deletedAt: new Date() } });
+    }
   });
 
   it("frees a slot on soft delete, rejects a foreign channel id, and does not serialize another channel", async () => {

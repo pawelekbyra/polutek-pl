@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 7 listopada 2026 — K25/R26: limit playlists z dwóch procesów Node
+
+- Rozszerzono test PostgreSQL tak, by przy 99 aktywnych playlistach dwa niezależne procesy Node równolegle wykonywały rzeczywisty `createPlaylist` i autoryzację na wspólnej bazie.
+- Po 84 migracjach: **2/2 PASS** w pliku; końcowy licznik 100, jeden sukces, jedna odmowa `PLAYLIST_LIMIT`, dokładnie jeden audit row. ESLint i repo typecheck PASS. Kontener disposable usunięty.
+- Pozostaje Studio HTTP/deployed multi-server acceptance i niezależny review. [Dowód](evidence/k25-playlist-limit-2026-11-06/result.json).
+
 ## 7 listopada 2026 — K04/R34: jawna baza w rzeczywistym serwisie
 
 - Nowy test przechodzi przez prawdziwy `MainChannelService` i `ChannelRepository`, używając delegate `creator.findUnique` przekazanego przez `createAppContext`; 1/1 PASS.

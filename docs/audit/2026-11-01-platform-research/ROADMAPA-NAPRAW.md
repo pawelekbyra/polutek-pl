@@ -660,6 +660,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K25-T1** — Z 99 playlist dwa równoległe żądania przez odrębne procesy kończą z najwyżej 100; jedno ma legalny sukces, drugie kontrolowaną odmowę limitu.
 - **K25-T2** — Usunięcie zwalnia miejsce; retry nie tworzy duplikatu ani nie psuje audytu. Inny kanał nie jest niepotrzebnie blokowany, cudzy zasób jest odrzucony.
 
+**Uzupełnienie odbioru lokalnego 7 listopada 2026:** dwa osobne procesy Node uruchomiły rzeczywisty `createPlaylist` i authz jednocześnie na wspólnym disposable PostgreSQL 17 po 84 migracjach przy stanie 99 playlist. Wynik: jeden sukces, jedna odmowa `PLAYLIST_LIMIT`, licznik 100 i dokładnie jeden audit row. Istniejące testy tej samej bazy weryfikują zwolnienie slotu przez soft delete, odmowę cudzej playlisty i niezależny zapis na drugim kanale. Cały plik PostgreSQL **2/2 PASS**, ESLint i repo typecheck PASS; jednorazowy kontener usunięty. [Dowód](program-audytu/evidence/k25-playlist-limit-2026-11-06/result.json). To odrębne procesy aplikacyjne i prawdziwe use case’y, ale bez HTTP/Studio i serwerów wdrożonych; K25 pozostaje częściowe do endpoint acceptance i niezależnego review.
+
 <a id="k26"></a>
 
 #### K26. Usunięcie konta a własność i publiczny profil kanału
