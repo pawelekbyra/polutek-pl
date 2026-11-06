@@ -495,6 +495,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K18-T1** — Wstrzyknięty błąd audytu tuż po COMMIT dla nowego i istniejącego assetu: aktywowany film nadal ma manifest/segmenty i się odtwarza; restart/retry nie zgłasza fałszywego sukcesu przy brakujących plikach.
 - **K18-T2** — Awaria przed COMMIT nie pozostawia aktywnej trasy; cleanup usuwa tylko własny nieaktywny wynik. K17 nadal odcina starą próbę.
 
+**Wynik lokalny 6 listopada 2026 (częściowy):** obowiązkowy `VIDEO_PLAYBACK_ROUTE_ACTIVATED` zapisuje się w tej samej transakcji co aktywacja trasy i zmiana primary assetu, więc błąd audytu wycofuje całą aktywację. Finalizer odróżnia rollback od utraconego potwierdzenia COMMIT; gdy odczyt uzgadniający sam zawiedzie, zachowuje wiersz i prefiks HLS do retry zamiast ryzykować skasowanie aktywnych plików. Retry ponownie używa aktywnego wyniku tylko po rekurencyjnym sprawdzeniu manifestów, playlist i referencji do segmentów w R2; brak obiektu uruchamia nową próbę zamiast fałszywego sukcesu. PostgreSQL 17 + 82 migracje: **4/4 integracyjne** (trzy K18, jedna regresja K17); unit **52/52**, ESLint i repo typecheck PASS ([dowody](program-audytu/evidence/k18-finalizer-audit-2026-11-06/)). Nie ma sandboxa R2, rzeczywistych plików kontrolnych ani dwóch niezależnych workerów; T1/T2 i K18 pozostają częściowe do odbioru tych granic oraz niezależnego przeglądu.
+
 <a id="k19"></a>
 
 #### K19. Wspólny protokół aktywacji i wycofywania HLS

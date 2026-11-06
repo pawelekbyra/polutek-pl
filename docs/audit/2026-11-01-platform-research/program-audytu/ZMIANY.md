@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K18/R28: bezpieczny wynik finalizacji HLS
+
+- Obowiązkowy audyt zmiany trasy jest teraz w tej samej transakcji co jej aktywacja. Finalizer uzgadnia utracone potwierdzenie COMMIT; przy niedostępnej bazie proces zachowuje output HLS i przechodzi do retry. Ponowienie potwierdza obecność mastera, zagnieżdżonych playlist, URI z tagów i segmentów przed sukcesem.
+- PostgreSQL 17 po 82 migracjach: integracja K18+K17 **4/4**; unit **52/52**; ESLint i typecheck PASS. Bez fizycznego R2 i dwóch niezależnych workerów; K18 częściowe. Dowody: `evidence/k18-finalizer-audit-2026-11-06/`.
+- Kod: `dcfe8dde` (`fix(video): make HLS finalization recoverable`).
+
 ## 6 listopada 2026 — K17/R02: fencing po przejęciu próby
 
 - Commit `f85504f3`: aktywacja route blokuje i weryfikuje aktualny token próby w transakcji; postęp, statusy terminalne/retry, anulowanie i release także porównują `attemptId`. Aktywne assety z prefiksu dowolnej próby tej generacji można odzyskać po przerwaniu.

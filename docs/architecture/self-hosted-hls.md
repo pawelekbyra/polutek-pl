@@ -38,7 +38,7 @@ Każdy nowy claim dostaje UUID zapisany w `VideoEncodeJob.attemptId`. Pliki, wpi
 
 Migracja blokuje przejście zadania do `RUNNING`, jeśli claim nie wpisał `attemptId`, więc binarny stary worker nie może pobrać nowego zadania. Heartbeat już działającego legacy zadania jest dozwolony. Przed migracją i startem nowych workerów wdrożenie musi kontrolowanie wygasić stare workery; lokalny test nie zastępuje tej procedury ani fencing skutków starego workera, które jest osobnym K17.
 
-Przed aktywacją finalizer blokuje w transakcji wiersz joba i potwierdza `RUNNING`, `workerId` oraz `attemptId`; równocześnie odświeża heartbeat. Wszystkie zapisy postępu/końcowego statusu/retry/anulowania/zwolnienia claimu używają tego samego tokenu. Stara próba nie aktywuje swojej trasy po przejęciu joba; jeśli poprzednia trasa została już zatwierdzona, kolejna próba może odnaleźć aktywny asset w jej prefiksie. Ta bramka nie dowodzi zachowania dwóch realnych procesów ani nie zamyka post-COMMIT i audytowych efektów z K18.
+Przed aktywacją finalizer blokuje w transakcji wiersz joba i potwierdza `RUNNING`, `workerId` oraz `attemptId`; równocześnie odświeża heartbeat. Wszystkie zapisy postępu/końcowego statusu/retry/anulowania/zwolnienia claimu używają tego samego tokenu. Aktywacja trasy, wybór primary assetu i obowiązkowy wpis audytu są jedną transakcją. Po utracie potwierdzenia COMMIT finalizer uzgadnia aktywną trasę; gdy baza nie pozwala rozstrzygnąć wyniku, worker zachowuje prefiks HLS do retry. Retry potwierdza cały graf playlist i segmentów przed uznaniem aktywnego wyniku; niekompletny graf nie jest sukcesem. Lokalna weryfikacja K17/K18 nie dowodzi zachowania dwóch realnych workerów ani fizycznego R2; odbiór pozostaje otwarty.
 
 ## Sprzątanie obiektów
 
