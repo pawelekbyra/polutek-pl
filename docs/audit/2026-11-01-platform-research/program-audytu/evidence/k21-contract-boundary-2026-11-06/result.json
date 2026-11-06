@@ -13,7 +13,12 @@
       "tests": 18,
       "passed": 18,
       "failed": 0,
-      "covers": ["valid pipeline and playback DTOs", "invalid response structure and enum", "null/wrong/invalid JSON 200 in Studio client", "malformed multipart success does not continue to upload"]
+      "covers": [
+        "valid pipeline and playback DTOs",
+        "invalid response structure and enum",
+        "null/wrong/invalid JSON 200 in Studio client",
+        "malformed multipart success does not continue to upload"
+      ]
     },
     {
       "name": "server-route-contracts",
@@ -23,7 +28,11 @@
       "tests": 53,
       "passed": 53,
       "failed": 0,
-      "covers": ["actual Studio upload and pipeline route serializers", "actual media-source route sanitizer and playback response", "controlled use-case doubles; not a live process or real server-backed API"]
+      "covers": [
+        "actual Studio upload and pipeline route serializers",
+        "actual media-source route sanitizer and playback response",
+        "controlled use-case doubles; not a live process or real server-backed API"
+      ]
     },
     {
       "name": "postgres-studio-upload-and-job-routes",
@@ -33,7 +42,13 @@
       "testsInFile": 4,
       "passed": 4,
       "failed": 0,
-      "covers": ["real Prisma and PostgreSQL rows", "actual Studio multipart-start/complete and pipeline GET route handlers", "encode job DTO reflects persisted queued job", "pre-contract generic Studio client consumes additive current response", "R2 isolated behind controlled fake"]
+      "covers": [
+        "real Prisma and PostgreSQL rows",
+        "actual Studio multipart-start/complete and pipeline GET route handlers",
+        "encode job DTO reflects persisted queued job",
+        "pre-contract generic Studio client consumes additive current response",
+        "R2 isolated behind controlled fake"
+      ]
     },
     {
       "name": "postgres-playback-route",
@@ -43,7 +58,34 @@
       "tests": 1,
       "passed": 1,
       "failed": 0,
-      "covers": ["actual media-source route handler", "actual PlaybackService and checkVideoAccess backed by PostgreSQL", "valid denied playback plan matches response contract", "rate limiter controlled"]
+      "covers": [
+        "actual media-source route handler",
+        "actual PlaybackService and checkVideoAccess backed by PostgreSQL",
+        "valid denied playback plan matches response contract",
+        "rate limiter controlled"
+      ]
+    },
+    {
+      "name": "next-http-playback-runtime",
+      "command": "Start local `npm run dev -- --hostname 127.0.0.1 --port 3377` against disposable PostgreSQL 17; GET /api/media-source/<synthetic-video-id>; validate response with PlaybackPlanResponseSchema.safeParse.",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "httpStatus": 403,
+      "responseBytes": 596,
+      "contractValid": true,
+      "playbackStatus": "LOGIN_REQUIRED",
+      "cleanup": "Stopped the Next dev process and removed the disposable PostgreSQL container after the request.",
+      "runtimeNote": "Next 16.4.5 logged its sync-dynamic-apis warning from lib/utils/correlation.ts getCorrelationId(); the helper caught the error and the request completed with the expected contract. This separate finding is left for Claude's server review."
+    },
+    {
+      "name": "next-http-authenticated-studio-pipeline-runtime",
+      "command": "Start local npm run dev -- --hostname 127.0.0.1 --port 3377 against disposable PostgreSQL 17; seed synthetic Better Auth user/session/creator/draft video; sign disposable session cookie; GET /api/studio/videos/<id>/pipeline; validate with PipelineStateResponseSchema.safeParse.",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "httpStatus": 200,
+      "contractValid": true,
+      "pipelineSummary": "NO_ORIGINAL",
+      "cleanup": "Synthetic rows were deleted by the harness; Next dev process stopped and disposable PostgreSQL container removed."
     },
     {
       "name": "typecheck",
@@ -70,7 +112,7 @@
     "compatibility": "Existing endpoints and URLs are unchanged; response schemas accept additive DTO fields."
   },
   "limits": [
-    "Studio upload/job and media-source handlers were exercised in-process with actual PostgreSQL-backed use cases; the media-source request was not sent through a running Next.js HTTP process, so K21-T1 remains open.",
+    "Playback and authenticated Studio pipeline were verified through a running local Next.js HTTP process and disposable PostgreSQL; multipart upload HTTP with real R2 was not exercised, so K21-T1 remains partial.",
     "Focused tests cover the changed client boundary, not every response from the running server; K21-T2 remains partial.",
     "No independent review; R21 is not marked closed."
   ]
