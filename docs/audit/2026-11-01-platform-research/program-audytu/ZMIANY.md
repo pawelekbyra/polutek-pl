@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 7 listopada 2026 — K20/R23: uzupełnienie odbioru DB i publikacji
+
+- Uporządkowano ROADMAPĘ po uruchomieniu wcześniejszych lokalnych prób: realny PostgreSQL finalizera **7/7** po 83 migracjach oraz wyścig statusu kanału/publication **1/1** po 84 migracjach, oprócz celowanych unit **26/26** i repo typecheck/ESLint PASS.
+- Dowody potwierdzają właściwy kanał, PUBLIC/UNLISTED, fencing próby, odmowę dla kanału zawieszonego/usuniętego i odmowę publikacji po zmianie statusu ACTIVE→SUSPENDED przed transakcją.
+- Nie ma jeszcze odbioru osobnego procesu całego encodera/workera ani niezależnego review; K20 zostaje częściowe. [Dowody](evidence/k20-channel-auto-publish-2026-11-06/result.json).
+
 ## 7 listopada 2026 — K23/R05: crash po publikacji i odzyskanie przez cron HTTP
 
 - Dodano `tests/postgres/k23-publish-crash-cron-http.pg.test.ts`: Studio publikuje przez rzeczywisty lokalny Next HTTP, proces dostaje SIGKILL po COMMIT, a nowy proces obsługuje cron HTTP i domyka trwały fan-out.
