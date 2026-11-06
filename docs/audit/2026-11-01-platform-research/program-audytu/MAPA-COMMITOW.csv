@@ -22,3 +22,4 @@ K06-active-proof-tests,cce16ea3,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOW
 K06-telemetry-proof-tests,16218f14,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
 K06-admin-deploy-proof-tests,6aacd4b5,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
 K06-telemetry-success-test,c58586d8,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
+K06-cache-miss-digest-test,8224f010,tests/unit/ops/deploy-release.test.ts,CZESCIOWO

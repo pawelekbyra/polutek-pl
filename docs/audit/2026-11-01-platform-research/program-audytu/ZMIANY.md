@@ -385,3 +385,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - `c58586d8`: test atrapowego `telemetry-enable.sh` przechodzi przez aktywną weryfikację proofu, symuluje istniejącą rolę telemetryczną i potwierdza ograniczone uruchomienie collectora oraz app, a także zmianę konfiguracji dopiero w tej ścieżce.
 - Pięć skupionych zestawów przeszło **101/101**; skrypty serwera **44/44**. ESLint, `bash -n` i `git diff --check` PASS.
 - Odmowę złego hash i odmowę aktywnego proofu obejmują istniejące testy. Dowody pozostają sandboxowe; bez GHCR, prawdziwego serwera i produkcji.
+
+## 6 listopada 2026 — odrzucenie cache obrazu o innym ID
+
+- `8224f010`: test `deploy-release` potwierdza, że przy różnym lokalnym ID pobierane są wszystkie pięć dokładnych, zatwierdzonych digestów przed retagowaniem obrazów do wdrożenia. Poprzedni test pokrywa reuse wyłącznie zgodnego cache'u.
+- Pięć skupionych zestawów przeszło **102/102**; `deploy-release`/artifact/handoff **10/10**. ESLint i `git diff --check` PASS.
+- Test używa atrapowego Dockera; nie pobierano obrazów z GHCR. K06 nadal wymaga rzeczywistego odbioru i pełnej bramki wydania.
