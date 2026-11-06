@@ -391,3 +391,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - `8224f010`: test `deploy-release` potwierdza, że przy różnym lokalnym ID pobierane są wszystkie pięć dokładnych, zatwierdzonych digestów przed retagowaniem obrazów do wdrożenia. Poprzedni test pokrywa reuse wyłącznie zgodnego cache'u.
 - Pięć skupionych zestawów przeszło **102/102**; `deploy-release`/artifact/handoff **10/10**. ESLint i `git diff --check` PASS.
 - Test używa atrapowego Dockera; nie pobierano obrazów z GHCR. K06 nadal wymaga rzeczywistego odbioru i pełnej bramki wydania.
+
+## 6 listopada 2026 — odświeżony lokalny runtime K02 na Next 16.4.4
+
+- Po wykryciu niezgodności starego `node_modules` z lockfile przywrócono instalację i zweryfikowano aktualne pakiety oraz obrazy natywne. Rzeczywisty izolowany Next dev: **PASS**, PNG 200; SVG, błędne wejście i obcy host 400. [Wynik i granice](evidence/k02-runtime-2026-11-06/result.json).
+- `npm ci` domyślnie wykonało automatyczne żądanie audit i wyświetliło podsumowanie. Nie jest ono reviewed, nie zaliczono nim R01/K02 i nie powtarzać takiej operacji. Przyszłe instalacje wymagają `npm_config_audit=false`, aż polityka grafu będzie jawnie rozwiązana.
+- K02 pozostaje częściowe: brak reviewed audit oraz obrazu aplikacji zawierającego poprawione zależności. Nie uruchamiano pełnego quality, Docker build ani GHCR.

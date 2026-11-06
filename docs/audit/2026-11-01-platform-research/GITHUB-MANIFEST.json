@@ -3,7 +3,7 @@
   "branch": "docs/polutek-platform-audit",
   "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
   "peertube_baseline_sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
-  "note": "Owner resumed the roadmap on 2026-11-06. Baseline merge 7e6f5335 passed npm run quality (564 files, 4980 tests passed; 1 file/2 tests skipped). K06 consumers gate deploy/rollback/transfers/operator containers and reject mutable compose fallbacks; sandboxed handoffs, isolated admin deploy, proof-aware telemetry activation and cache-mismatch digest pulls are covered. Latest focused suites: 102/102 pass (server scripts 44/44; release consumer/artifact/handoff 10/10), including commits 6aacd4b5, c58586d8 and 8224f010. No real Actions, GHCR, SSH, production deployment or runtime acceptance has run. K06 remains open.",
+  "note": "Owner resumed the roadmap on 2026-11-06. Baseline merge 7e6f5335 passed npm run quality (564 files, 4980 tests passed; 1 file/2 tests skipped). K06 consumers gate deploy/rollback/transfers/operator containers and reject mutable compose fallbacks; focused K06 suites: 102/102 pass. K02 now has a real isolated image-runtime PASS on lockfile Next 16.4.4 with sharp 0.35.5/librsvg 2.63.2/vips 8.18.7; no reviewed audit or application image proof. npm ci triggered its default audit request; summary is unreviewed and must not be reused. Future npm install/ci requires npm_config_audit=false until policy is resolved. No real GHCR, production deployment or runtime acceptance has run. K02 and K06 remain open.",
   "files": {
     ".gitignore": "bb558b7880363d26adf156a8f7e8fb06242fd9ee797c16ec132007fd364ce7d1",
     "BACKLOG.csv": "3c2b1b9417096fa0e404e4668e14d3385fc925ff3eab36f6da1f0c71d6f24b0d",
@@ -14,7 +14,7 @@
     "PLAN-WDROZENIA-NAPRAW.md": "4179df729dc75d1f55b53b2f38b4fdf1bd9d22c1581864b5c451c59f213b8dc1",
     "PLAN-WERYFIKACJI.md": "8c97ea0f95c463c521432fa2e75ad5dc6035e9b411af8ed70388cbaf238c34d9",
     "POROWNANIE-WSTEPNE.md": "eb4cd574aa6b1097f6509906b30f31021d81c948b2d520122a3b062814d2b19a",
-    "POSTEP-NAPRAW.md": "178a76efe5cbc3703b583641acea6090ae458e3c0de91e43c7d1a8a0e695c005",
+    "POSTEP-NAPRAW.md": "a0dd49b6f5ba40fa06429647aec7dc965b9142fbf0da0d274429a3b7eee25dfd",
     "RAPORT.md": "8c1939b7ba4a1fbba6de18efaf7aa432a0fedecb38e2b4c1e0819176e9c93399",
     "README.md": "89b36be6f11e2a9520c905913f8771dd044ad72cb06045892b1f7fe819474cd3",
     "ROADMAPA-NAPRAW.md": "d604777c12c05fcac154b9eaa590eb7a4cff67ab345d09d1b6225a6a172553e8",
@@ -58,7 +58,7 @@
     "program-audytu/SCENARIUSZE-WDROZENIA.csv": "4e67d47429bc70d6ea3cde439ee2e043dea4d39b5f0a1f99c3a23ce61d0a0dd8",
     "program-audytu/SCENARIUSZE-WEJSCIA.csv": "b1f629c120a931fb518d90a6cafa96fd1137deca4b4b247296357b31d82be92c",
     "program-audytu/SOURCES.md": "eec2a422f868981256d46d4f361f30a3295f6f9155a744694888dcaf47e479e8",
-    "program-audytu/STAN.md": "c9f847cc8cec1c5109019fe92a50464060709e7dc925d0ed21ae041dad74795a",
+    "program-audytu/STAN.md": "832394771dfdc560e68d415f8d8da72109aaab538eabede73899cc72c775cd78",
     "program-audytu/TESTY-INWENTARZ.csv": "2566b13c29d3a4018ff09a4116f0259bd62083197bfe76f9c747d6b249439a11",
     "program-audytu/USTALENIA.json": "1a0e8e97d6fca4fae1cb31bd29be7e741b2d97c43f6e7011e13adeb8ad04225f",
     "program-audytu/WARSTWY-TESTOW.csv": "017cff9d9ece98e2eddff5f8db143e6db6d0da140c7a70ffd8cf2d2e8f11b5f6",
@@ -67,7 +67,7 @@
     "program-audytu/ZADANIA-UZYTKOWNIKA.csv": "fb74e24c9eebd56786c52a4fd2ab8f7a5c7a3d0a941e5ba5c66b738f7516576c",
     "program-audytu/ZALEZNOSCI-MODULOW.csv": "3ac9ec49c1105ea6150c4fe77379c1674caa708bb20cbf09802caf523f345b0e",
     "program-audytu/ZALOZENIA-KOSZTOW.json": "e210767d24d3d2b336fcb4bffc37cad8aad91ca368b5787e754ccd3399f445f1",
-    "program-audytu/ZMIANY.md": "fbdc91c560c73467d3b3676fdbaada73f3f2a9c3996f96a52ff30fd87b4b66cd",
+    "program-audytu/ZMIANY.md": "9a9fecf0ea19dd01257d23ca4d5fe161e9e906e7fd6aa1ea5342a39ebb0ee76f",
     "program-audytu/evidence/api-contract-probe.json": "3b1857af809f57b37d29373680f3e282f60f20cf5b837a07d3356d4111fff704",
     "program-audytu/evidence/approval-review-interruption-batch13.json": "480f5b422e5925d66141c261577592fe633aad74d9e28dee1e0e18f9d9d11102",
     "program-audytu/evidence/architecture-graph.json": "0b7a2e435acdd31779abe3b1c7ed23591008f43c138833c306aaba45e81edac0",
@@ -736,7 +736,7 @@
     "program-audytu/evidence/k06-local-producer-2026-11-03/baseline/result.json": "a42c578e46137d345577fea7ff8b08f651277588fe8dfaa265c8d28d56872594",
     "program-audytu/evidence/k06-local-producer-2026-11-03/baseline/types-green.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "program-audytu/evidence/k06-local-producer-2026-11-03/baseline/unit-vitest.json": "efd2314f788edff3172caff98159e7a3fd1e2258b700a29ae4428f12653fb035",
-    "program-audytu/MAPA-COMMITOW.csv": "7c8a4ee52e080d899e754600107b57526641f97a1fe6710bdd0d44cbaf23674f",
+    "program-audytu/MAPA-COMMITOW.csv": "7d7b82ed4961b6caf469f4265221c739d0f1b26520f78c9bda75008b4c7504cd",
     "program-audytu/evidence/k06-local-producer-2026-11-03/hdr/types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "program-audytu/evidence/k06-local-producer-2026-11-03/hdr/red-command.log": "243a15dd8bd1a8b80bf3a3a4c78f0213c4ea32e8e208ef70cd0faf47c0626b80",
     "program-audytu/evidence/k06-local-producer-2026-11-03/hdr/green-vitest.json": "f4df668bf0f1b873f95e16f70105db2cc1330cfeea4d43985b6330e942ad289b",
@@ -776,6 +776,9 @@
     "program-audytu/evidence/k06-local-producer-2026-11-03/final-gates/lint.log": "aea94e38a93e2237ade6c514854c28b41022bf54298d7d8cd314f293b8069756",
     "program-audytu/evidence/k06-local-producer-2026-11-03/final-gates/ui-selection.json": "a7aa238b599c54ad539f8393a351ab84113985535ada367359fbe46704d95700",
     "program-audytu/evidence/k06-local-producer-2026-11-03/final-gates/gates-red.log": "3ed2ffc37ef99c37944207f53f3b8520087616ab934a6f7ea446046a7aa15291",
-    "program-audytu/evidence/k06-local-producer-2026-11-03/final-gates/hotspots-red.log": "31b9d1b596ce8bace7eac21abff8e135511aa7bf05b32dc6ab81255cb6b7376e"
+    "program-audytu/evidence/k06-local-producer-2026-11-03/final-gates/hotspots-red.log": "31b9d1b596ce8bace7eac21abff8e135511aa7bf05b32dc6ab81255cb6b7376e",
+    "program-audytu/evidence/k02-runtime-2026-11-06/result.json": "a383ebf9c134a7a44a53a0e43b619aadef2d6e6d03d7637c95886d9163f8cff2",
+    "program-audytu/evidence/k02-runtime-2026-11-06/observations.json": "f80a02b39e193a6db64465a24a1f65477c64d067e654dc3020a54785033c6a00",
+    "program-audytu/evidence/k02-runtime-2026-11-06/next-runtime.log": "00f2c82015a154164188fd98a7fc9e7e0a9b16a6f68e07b5e8683e1603882795"
   }
 }
