@@ -32,6 +32,12 @@ Odtworzono R04 testami RED: `DeleteObjects` HTTP 200 z `AccessDenied` był ignor
 
 Weryfikacja lokalna: 2 pliki **14/14 PASS**, ESLint i repo typecheck PASS. Dowody: [K13](program-audytu/evidence/k13-r2-delete-2026-11-06/result.json). K13 pozostaje częściowe: brak sandboxa R2/S3 oraz niezależnego drugiego przeglądu R04.
 
+## K14 — uploady kończą się przed cleanup (częściowo)
+
+Odtworzono R03: szybka awaria jednego PUT pozwalała rozpocząć cleanup, kiedy inny transfer nadal trwał. Pula zatrzymuje dalsze przydzielanie, przerywa aktywne żądania sygnałem `AbortSignal` i czeka na zakończenie wszystkich rozpoczętych PUT przed cleanup. Sygnał uploadu jest odrębny od anulowania zadania, więc chwilowy błąd nadal kwalifikuje job do retry. `HlsWriter` przekazuje sygnał do AWS SDK i sprząta strumień pliku.
+
+Wynik RED→GREEN z opóźnionym sukcesem i błędem; dodatkowo sprawdzenie braku kolejnych przydziałów oraz przekazania sygnału do S3. 2 pliki testów **23/23 PASS**, ESLint i repo typecheck PASS. Dowody: [K14](program-audytu/evidence/k14-upload-cleanup-2026-11-06/result.json). K14 częściowe: brak sandboxa R2/S3, potwierdzenia zachowania abort po stronie dostawcy i niezależnego przeglądu.
+
 K02-T2 uzupełnione na SHA `d6f0d33c`: dziewięć celowanych plików testów **179/179**, trzy regresyjne fixture UI **25/25**, lint i repo typecheck PASS; buildy strony i panelu admina na Next 16.4.4 exit 0. Build ujawnił i doprowadził do naprawy czterech błędów typów istniejących fixture’ów — nie wyłączono typecheck. Pełne logi: [build-result](program-audytu/evidence/k02-runtime-2026-11-06/build-result.json). Ostrzeżenie admina o dynamicznym śledzeniu całego projektu naprawiono w `7d97d067`; standalone build zakończył się bez niego i nie dołączył źródeł `.ts/.tsx/.md` do app tree ([dowód](program-audytu/evidence/admin-standalone-trace-2026-11-06/result.json)). To nie jest build Docker image. Brak reviewed audit i dowodu rzeczywistych obrazów, zatem K02 pozostaje otwarte.
 
 **Zapisane prace K06 — wznowienie po otwartych pomiarach K07:** `578cfd6b` podłączył proof do deploy/rollbacku, transferu lokalnego/GitHub i telemetrii; `64671a16` przeniósł kontrolę wejść przed GitHub CLI; `6f393985` usunął ruchome fallbacki compose; `371a03ce` dodał hermetyczne testy transferu; `cf8d1bbe` chroni jednorazowe narzędzia operatora; `227b5c37` pozwala używać cache bez GHCR tylko przy zgodnym niezmiennym ID. Runbooki odtworzenia oznaczają granicę starej produkcji i kandydata K06.
@@ -40,7 +46,7 @@ Dowody: lokalny handoff oraz GitHub Actions wariant przeszły **6/6** testów pr
 
 K06 nadal nie jest zamknięte: brak odbioru pięciu rzeczywistych obrazów, pełnego produktu/runtime, prób prawdziwego rollbacku i pełnej bramki wydania. Dostępne testy przekazania kończą się na atrapie SSH; nie dowodzą zachowania serwera. K01/K02/K03, K05 i decyzje DP01–DP09 pozostają otwarte. Całość nadal szacunkowo **8–10%**, żaden pakiet nie jest formalnie zamknięty.
 
-**Następny krok:** K13 wymaga odbioru na sandboxie R2/S3 i drugiego przeglądu; K07 — dozwolonej próby zewnętrznego proxy. K11 wymaga jawnego kontraktu wkładów płatności oraz read-only raportu historycznych niejednoznaczności; nie cofać istniejących praw automatycznie. K06/K02 nadal wymagają obowiązkowej bramki `audit` i odbioru rzeczywistych obrazów. Nie pomijać bramki. Bez push/PR/merge/deploy.
+**Następny krok:** K15 — monotoniczne ukończenie wersji oryginału; K13/K14 wymagają później odbioru na sandboxie R2/S3 i drugiego przeglądu. K07 — dozwolonej próby zewnętrznego proxy. K11 wymaga jawnego kontraktu wkładów płatności oraz read-only raportu historycznych niejednoznaczności; nie cofać istniejących praw automatycznie. K06/K02 nadal wymagają obowiązkowej bramki `audit` i odbioru rzeczywistych obrazów. Nie pomijać bramki. Bez push/PR/merge/deploy.
 
 ## K06 — GHCR images workflow, część 1
 

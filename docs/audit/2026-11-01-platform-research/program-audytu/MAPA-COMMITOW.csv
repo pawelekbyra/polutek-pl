@@ -34,3 +34,4 @@ K07-complete-body-budget,c3c2c6c1,lib/api/admin-schemas.ts;tests/unit/utils/requ
 K07-next-proxy-buffer,1f467577,next.config.mjs;tests/unit/utils/request-body.test.ts;program-audytu/evidence/k07-body-limits-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K10-hidden-premiere,99426387,program-audytu/evidence/k10-hidden-premiere-2026-11-06/result.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K13-r2-delete,aef5db90,program-audytu/evidence/k13-r2-delete-2026-11-06/result.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K14-upload-cleanup,e55f1f1c,program-audytu/evidence/k14-upload-cleanup-2026-11-06/result.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO

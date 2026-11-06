@@ -403,6 +403,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K14-T1** — Jedna awaria + opóźniony sukces i opóźniony błąd: po zakończeniu procesora oraz wszystkich PUT nie ma nieodnotowanych obiektów; cleanup zaczyna się dopiero po ustaniu zapisów.
 - **K14-T2** — Normalny upload wszystkich części działa, anulowanie nie wiesza procesu, nowa praca nie jest przydzielana po awarii. Późniejsza integracja z K16 nie usuwa obiektów innej próby.
 
+**Wynik lokalny 6 listopada 2026:** regresja RED odtworzyła cleanup przed zakończeniem rozpoczętego PUT. `runPool` zatrzymuje teraz przydzielanie plików po pierwszej awarii, anuluje uploadowy `AbortSignal` i czeka na wszystkie rozpoczęte operacje; błąd transferu pozostaje retryowalny, bo sygnał uploadu jest oddzielony od sygnału anulowania zadania. `HlsWriter.putFile()` przekazuje sygnał do `S3Client.send` i zamyka strumień po zakończeniu żądania. Kontrolowany test z opóźnionym sukcesem i opóźnionym błędem potwierdza kolejność cleanup; test potwierdza też brak przydzielania dalszych plików. Dwa pliki testów pipeline/storage: **23/23 PASS**, ESLint i repo typecheck PASS ([surowe wyniki](program-audytu/evidence/k14-upload-cleanup-2026-11-06/result.json)). Nadal brakuje sandboxa S3/R2, niezależnego przeglądu i potwierdzenia zachowania abort po stronie dostawcy; K14 częściowe, K16 nadal osobnym odbiorem.
+
 <a id="k15"></a>
 
 #### K15. Monotoniczne ukończenie wersji oryginału

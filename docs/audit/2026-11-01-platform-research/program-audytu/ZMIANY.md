@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K14/R03: zakończenie rozpoczętych uploadów przed cleanup
+
+- `e55f1f1c`: po pierwszym błędzie pula uploadów nie przydziela dalszych plików, sygnał anuluje rozpoczęte PUT, a proces czeka na ich ustanie przed cleanup. Sygnał transferu oddzielono od sygnału anulowania joba, zachowując retry po błędach sieciowych.
+- Test regresyjny RED potwierdził wcześniejszy cleanup przed zakończeniem opóźnionego PUT. Po zmianie dwa pliki testów przeszły 23/23; ESLint i repo typecheck PASS.
+- Brak sandboxa Cloudflare R2/S3, niezależnego przeglądu i pomiaru zachowania providerowego abort. K14 pozostaje częściowe, K16 wymaga osobnego odbioru. Dowody: `evidence/k14-upload-cleanup-2026-11-06/`.
+
 ## 6 listopada 2026 — K13/R04: per-object błędy usuwania R2
 
 - RED: HTTP 200 z `AccessDenied` był ignorowany, a licznik zgłaszał wszystkie żądane klucze; `SlowDown` nie uruchamiał ponowienia.
