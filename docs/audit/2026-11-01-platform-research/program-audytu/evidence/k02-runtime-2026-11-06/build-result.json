@@ -45,7 +45,7 @@
   },
   "warnings": [
     "Public app build: deprecated middleware convention and Tailwind config module warning; privacy/terms routes fell back to dynamic rendering when headers were used.",
-    "Admin build: dynamic host-status file path makes Turbopack trace the whole project into the output; investigate/fix before relying on a compact standalone image."
+    "The first admin build warned that dynamic host-status file access traced the project. Commit 7d97d067 added the documented Turbopack ignore annotation; the subsequent standalone build passed without that warning and included zero .ts/.tsx/.md source files in the apps/admin tree. Evidence: ../admin-standalone-trace-2026-11-06/result.json. This is still not a Docker image build."
   ],
   "npm_ci": {
     "exit": 0,
