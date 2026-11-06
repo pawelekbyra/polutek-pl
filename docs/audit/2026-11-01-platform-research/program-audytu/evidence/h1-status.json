@@ -1487,5 +1487,20 @@
     "http_evidence": "program-audytu/evidence/k27-http-postgres-2026-11-06/result.json",
     "http_database_migrations": 84,
     "http_env": "Sanitized child env; no inherited Redis or provider credentials."
+  },
+  "latest_k17_followup": {
+    "date": "2026-11-06",
+    "base_revision": "990cabaf",
+    "test_file": "tests/postgres/encode-attempt-fencing-race.pg.test.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 1,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "diff_check_exit": 0,
+    "interleaving": "Stale A observed waiting on the real job-row FOR UPDATE lock while B holds an uncommitted takeover in an independent PostgreSQL session; after B commits, A is rejected and only B activates.",
+    "scope_limit": "Two independent DB sessions in one Vitest process; separate worker processes, R2/S3, controlled drain, and independent review remain open.",
+    "evidence": "program-audytu/evidence/k17-two-session-race-2026-11-06/result.json",
+    "k17_closed": false
   }
 }

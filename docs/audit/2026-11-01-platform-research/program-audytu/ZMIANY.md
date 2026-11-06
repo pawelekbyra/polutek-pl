@@ -493,3 +493,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Test PostgreSQL uruchomił lokalny Next dev na loopback i wywołał pełny route HTTP z rzeczywistym Better Auth: gość 401, podpisany właściciel 200/no-store z tylko własnym komentarzem, cofnięta sesja 401. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
 - Store limitów był rzeczywistym in-memory store development; brak proxy, Redis/Cloudflare i produkcji. Kontener jednorazowy usunięty, fixture User count 0. K27 częściowe; K37 oraz zależności polityki/review otwarte. [Dowód](evidence/k27-http-postgres-2026-11-06/result.json).
+
+## 6 listopada 2026 — K17/R02: przejęcie joba w rzeczywistym wyścigu PostgreSQL
+
+- Dwa niezależne połączenia DB wymusiły blokadę: finalizer A czekał na job row lock, gdy B trzymał niezatwierdzone przejęcie. Po COMMIT A został odrzucony, a tylko B aktywował asset. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
+- To dwa połączenia w jednym procesie, nie dwa worker procesy; brak prawdziwego R2/S3 i niezależnego review. R02/K17 częściowe. [Dowód](evidence/k17-two-session-race-2026-11-06/result.json).

@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K17/R02 — wyścig przejęcia na dwóch sesjach PostgreSQL, 6 listopada 2026
+
+Test `encode-attempt-fencing-race.pg.test.ts` utrzymuje niezatwierdzoną blokadę wiersza joba w kliencie B, aż stary finalizer A rzeczywiście czeka na `FOR UPDATE` w drugim połączeniu. Po COMMIT przejęcia A zostaje odrzucony i sprząta tylko własny asset; finalizer B aktywuje własną trasę, job zachowuje ownera B, a A nie pozostawia assetu. **1/1 PASS**, PostgreSQL 17, 84 migracje; repo typecheck, ESLint i diff check PASS. Dane testowe usunięte, jednorazowy kontener usunięty. Weryfikuje dwa połączenia/sesje DB w jednym procesie testowym; dwa odrębne procesy workerów, R2/S3 i niezależny review są nadal otwarte, więc R02 i K17 pozostają częściowe. [Dowód](evidence/k17-two-session-race-2026-11-06/result.json).
+
 ## K27 — kategorie eksportu własnych danych, 6 listopada 2026
 
 Pierwszy etap dodał numer wersji kontraktu, profile kanałów właściciela, członkostwa, preferencje powiadomień (brak wiersza = jawne `null`) i zminimalizowaną historię grantów patrona. Zapytania filtrują po aktorze, a profile/granty wykluczają moderator IDs, notatki, provider/payment IDs i pola techniczne. Test 3/3, repo typecheck i ESLint PASS. Późniejszy przyrost mediów opisano bezpośrednio poniżej. Bez rzeczywistego HTTP/DB; marketplace records i inne otwarte kategorie pozostają. K27 nadal czeka na K05/K11/K26, pełny test i niezależny review. Dowód pierwszego etapu: `evidence/k27-export-categories-2026-11-06/result.json`.

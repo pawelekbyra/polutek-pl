@@ -96,6 +96,8 @@ RED na prawdziwym PostgreSQL wykazał, że po przejęciu joba i finalizacji prze
 
 Integracja K17 i repozytorium na PostgreSQL 17: **12/12 PASS** przy 82 migracjach; testy unit **34/34**, ESLint i repo typecheck PASS. Dowody: [K17](program-audytu/evidence/k17-stale-worker-fencing-2026-11-06/). Sekwencja takeover była kontrolowana w teście, bez dwóch niezależnych procesów i fizycznego R2. Brak pełnego buildu i niezależnego przeglądu; te granice nadal są otwarte.
 
+**K17 — dodatkowy test wyścigu DB:** dwa niezależne połączenia Prisma wymuszają rzeczywisty interleaving: transakcja B aktualizuje właściciela joba i trzyma blokadę wiersza, finalizer A blokuje się na `FOR UPDATE`, B zatwierdza przejęcie, a A jest odrzucony. Finalizer B aktywuje trasę; w bazie pozostaje tylko jego asset, job zachowuje ownera B. **1/1 PASS** na PostgreSQL 17 po 84 migracjach, ESLint, repo typecheck i diff check PASS. To test dwóch sesji DB w jednym procesie Vitest, nie dwóch procesów workerów; bez rzeczywistego R2/S3, kontrolowanego drainu ani niezależnego review. R02/K17 pozostają częściowe. [Dowód](program-audytu/evidence/k17-two-session-race-2026-11-06/result.json).
+
 ## K18 — granica COMMIT i ochrona aktywowanego HLS (częściowo)
 
 Obowiązkowy wpis audytu aktywacji trasy przeniesiono do tej samej transakcji co zmianę trasy, aktywnego wskaźnika i primary assetu. Finalizer uzgadnia utracone potwierdzenie COMMIT; jeśli odczyt bazy jest niedostępny, rzuca jawny błąd nieznanego wyniku, a proces kodowania zachowuje pliki HLS do kolejnego retry. Ponowienie uznaje wcześniejszy wynik tylko po rekurencyjnym sprawdzeniu mastera, playlist wariantów, URI w tagach i obiektów segmentów w R2; niekompletny output nie kończy joba sukcesem.
