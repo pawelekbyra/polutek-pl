@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 
-// Hardening of the server scripts (backup.sh, deploy.sh, deploy-admin.sh, mergedeploy.sh).
+// Hardening of the server scripts (backup.sh, deploy.sh, deploy-admin.sh, telemetry-enable.sh, mergedeploy.sh).
 // 1) Static checks of the script text (run everywhere).
 // 2) Behaviour checks in bash with fake `docker`, `flock`, `age`, `rclone`, `tar`, `curl` on PATH. They need a POSIX
 //    userland (GNU stat/find/gzip), so they are skipped on win32 unless SERWEREK_BASH_TESTS=1 (Git Bash) is set.
@@ -15,6 +15,8 @@ const read = (p: string) => readFileSync(path.join(root, p), 'utf8');
 const backupSh = read('scripts/serwerek/backup.sh');
 const deploySh = read('deploy/serwerek/deploy.sh');
 const adminSh = read('deploy/serwerek/deploy-admin.sh');
+const verifyActiveSh = read('deploy/serwerek/verify-active-release.sh');
+const telemetryEnableSh = read('scripts/serwerek/telemetry-enable.sh');
 const mergeSh = read('scripts/ops/mergedeploy.sh');
 
 describe('serwerek scripts: static', () => {
@@ -54,16 +56,30 @@ describe('serwerek scripts: static', () => {
     expect(adminSh).not.toMatch(/^\s*nice -n 10 docker build(?:\s|$)/m);
   });
 
+  it('verifies the deployed release before telemetry role changes or app/collector activation', () => {
+    const verify = telemetryEnableSh.indexOf('verify-active-release.sh app');
+    expect(verify).toBeGreaterThan(0);
+    expect(verify).toBeLessThan(telemetryEnableSh.indexOf('ALTER ROLE pp_collector'));
+    expect(verify).toBeLessThan(telemetryEnableSh.indexOf('docker compose up -d --no-deps collector'));
+    expect(telemetryEnableSh).toContain('RELEASE_PROOF_SHA256');
+    expect(telemetryEnableSh.indexOf('flock -n 9')).toBeLessThan(telemetryEnableSh.indexOf('ALTER ROLE pp_collector'));
+    expect(verifyActiveSh.indexOf('proof.sha256')).toBeLessThan(verifyActiveSh.indexOf('deploy-release.mjs'));
+    expect(verifyActiveSh).toContain('externally approved RELEASE_PROOF_SHA256');
+    expect(mergeSh).toContain('verify-active-release.sh ./verify-active-release.sh');
+  });
+
   it('mergedeploy.sh requires a completed proof artifact and locks before staging source', () => {
     const lock = mergeSh.indexOf('flock -n 9');
     expect(lock).toBeGreaterThan(0);
     expect(lock).toBeLessThan(mergeSh.indexOf('rm -rf src.previous'));
     expect(mergeSh).toContain('RELEASE_RUN_ID');
+    expect(mergeSh).toContain('RELEASE_BUNDLE_DIR');
     expect(mergeSh).toContain('gh run download');
     expect(mergeSh).toContain('release-artifact.mjs');
     expect(mergeSh).toContain('hash proofu nie odpowiada zewnetrznie zatwierdzonemu wynikowi');
     expect(mergeSh).toContain('DEPLOY_LOCK_HELD=1 RELEASE_REVISION=');
     expect(mergeSh).toContain('bash .release-artifacts/${revision}/source/deploy/serwerek/deploy.sh');
+    expect(mergeSh).not.toContain('--admin');
   });
 
   it('a failing "compose up" is part of the rollback condition', () => {

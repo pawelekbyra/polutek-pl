@@ -82,7 +82,7 @@ df -h /opt/serwerek/data/video-work && ls -la /opt/serwerek/data/video-work
 
 | Objaw | Przyczyna / co robić |
 |---|---|
-| Admin: „worker nie odpowiada” (przy `QUEUED`) | kontener nie działa: `docker compose up -d encoder` (albo `deploy.sh`); brak `worker.env`; zły obraz. Heartbeat workera to `AppSetting video_worker_heartbeat`, odświeżany między zadaniami (w trakcie długiego zadania patrz `heartbeatAt` zadania) |
+| Admin: „worker nie odpowiada” (przy `QUEUED`) | kontener nie działa: uruchom proof-zweryfikowane `deploy.sh` albo zrestartuj istniejący kontener; brak `worker.env`; zły obraz. Nie aktywuj ręcznie nowego tagu. Heartbeat workera to `AppSetting video_worker_heartbeat`, odświeżany między zadaniami (w trakcie długiego zadania patrz `heartbeatAt` zadania) |
 | `QUEUED` z `nextAttemptAt` w przyszłości | czeka na ponowienie po błędzie przejściowym; `failureCode` mówi czemu (np. `DISK_FULL`, `TRANSIENT_ERROR`) |
 | `RUNNING`, ale heartbeat stary | worker padł; po 3 min zadanie wróci do kolejki samo. Natychmiast: `docker compose restart encoder` |
 | `FAILED` + `INVALID_MEDIA` / `NO_VIDEO_STREAM` | zły plik; wgraj inny. `TOO_LONG`, `TOO_LARGE_FRAME`: poza limitami |
@@ -110,7 +110,7 @@ Ręczne awaryjne czyszczenie zadania: `update "VideoEncodeJob" set status='CANCE
 2. CORS bucketa oryginałów: `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (potrzebny token Cloudflare z uprawnieniem do R2).
 3. Upewnij się, że token R2 ma odczyt i zapis na `polutek`, `polutek-hls` i bucketach miniatur; w `app.env` muszą być `CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS=polutek` i (opcjonalnie) `CLOUDFLARE_R2_BUCKET_HLS=polutek-hls`.
 4. Na serwerze: `cd /opt/serwerek/apps/polutek && grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env && mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work`
-5. `ENCODER_IMAGE=polutek-worker:<tag> docker compose up -d --no-deps encoder` (albo ponowny `./deploy.sh <tag>`), `docker compose logs -f encoder` ma pokazać `started`. `ai-log "enabled video encoder"`.
+5. Użyj proof-zweryfikowanego `./deploy.sh <tag>`; nie uruchamiaj nowego tagu bezpośrednio przez `docker compose`. `docker compose logs -f encoder` ma pokazać `started`. `ai-log "enabled video encoder"`.
 6. Test: nowy szkic, wgraj krótki plik, obserwuj Media -> Przetwarzanie.
 7. Timer sprzątania uploadów: `cp deploy/serwerek/systemd/polutek-cron-abandon-stale-originals.timer /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-abandon-stale-originals.timer`.
 

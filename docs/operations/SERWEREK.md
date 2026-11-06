@@ -188,6 +188,8 @@ Zmiany w Cloudflare (DNS, Access, tunel, Workery) wykonuje agent tylko na wyraź
 
 ## 7. Wdrożenie
 
+**Granica stanu (6.11.2026):** instrukcje i skrypty proof-aware z K06 są tylko w lokalnej gałęzi audytu `docs/polutek-platform-audit`; nie zostały wypchnięte ani zastosowane na serwerze. Zainstalowana produkcja nadal używa procedury opisanej niżej. Nowy kontrakt i kandydatna procedura są w [RELEASE-PROOF.md](RELEASE-PROOF.md); nie kopiować tych plików na serwer przed osobnym przeglądem i zatwierdzonym wdrożeniem.
+
 Wdrożenie strony to `deploy.sh` uruchamiany NA serwerze (obrazy buduje się na serwerku: 2 vCPU, robi się to poza godzinami ruchu). Skrypt jest w repo
 (`deploy/serwerek/deploy.sh`) i na serwerze jest z nim identyczny (sprawdzone `diff` 2026-10-05). `docker-compose.yml` i `deploy.sh` NIE synchronizują się same:
 po zmianie w repo kopiuje się je ręcznie (z kopią poprzedniego pliku: `cp -a plik plik.bak-<data>`).
@@ -404,10 +406,10 @@ Stan 2026-10-05: włączona (kontener `polutek-collector-1` healthy).
 
 - Kontener `collector` w compose (obraz `polutek-collector:<tag>`, `node:22-alpine`, `mem_limit 96m`, bez portu na hoście); `deploy.sh` startuje go tylko, gdy obok leży `collector.env`.
 - Baza: schemat `telemetry`, role `pp_collector` (zapis) i `pp_analytics_ro` (odczyt).
-- **Włączenie (raz):** skopiuj `scripts/serwerek/telemetry-enable.sh` do `/opt/serwerek/apps/polutek/` (jest tam) i uruchom; nadaje `pp_collector` losowe hasło, zapisuje `collector.env` (600),
+- **Włączenie (raz):** po wdrożeniu K06 skopiuj `scripts/serwerek/telemetry-enable.sh` do `/opt/serwerek/apps/polutek/` (jest tam) i uruchom z `RELEASE_REVISION=<pełny SHA>` oraz `RELEASE_PROOF_SHA256=<hash zatwierdzonego proofu>` z zaufanego wyniku wydania. Skrypt sprawdza zachowany proof i obrazy przed zmianą roli `pp_collector`, zapisem `collector.env` (600),
   dopisuje `TELEMETRY_COLLECTOR_URL=http://collector:3200` do `app.env` (z kopią), startuje kolektor i odtwarza `app` (kilka sekund przerwy). Wpis w `ai-log`.
 - **Migawki Cloudflare (opcjonalnie):** po włączeniu telemetrii dodaj do `collector.env` token GraphQL z prawem tylko do odczytu analityki oraz `CLOUDFLARE_ACCOUNT_TAG`, `CLOUDFLARE_ZONE_TAG` i `CLOUDFLARE_HLS_WORKER_NAME`. Zmienne nie trafiają do aplikacji www; plik zostaje `root:600`. Wdrożenie kolektora uruchamia poller co 15 minut. Bez kompletu zmiennych ruch video pozostaje „bez pomiaru”; instrukcja i ograniczenie dokładności przez próbkowanie adaptacyjne: `HLS-SELF-HOSTED.md`.
-- **Wyłączenie bez przebudowy:** `TELEMETRY_BEACON=off` w `app.env` i `docker compose up -d --no-deps app`; całkowicie: usuń `TELEMETRY_COLLECTOR_URL` i `docker compose stop collector`.
+- **Wyłączenie bez przebudowy:** ustaw `TELEMETRY_BEACON=off` w `app.env`, wyeksportuj `RELEASE_REVISION=<pełny SHA>` i `RELEASE_PROOF_SHA256=<zatwierdzony hash>`, uruchom `./verify-active-release.sh app`, a potem `APP_IMAGE="polutek-app:$RELEASE_REVISION" docker compose up -d --no-deps app`; całkowicie: usuń `TELEMETRY_COLLECTOR_URL` i zatrzymaj kolektor.
 - Sprawdzenie: `docker compose logs --tail 20 collector` (przy ruchu co minutę linia `pp-collector stats`) oraz wiersze `telemetry.job_run` (rollup co 5 min, retencja co 6 h).
 - Retencja: surowe 90 dni, agregaty 25 miesięcy, `job_run` 400 dni, sól dnia kasowana po dniu.
 

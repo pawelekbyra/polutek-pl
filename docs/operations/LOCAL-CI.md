@@ -30,7 +30,7 @@ Skrypt pobiera `origin/<gałąź>` i `origin/main`, sprawdza, że PR wskazuje do
 - w bieżącym katalogu, jeśli jest czysty, stoi na tym samym commicie i zawiera już `origin/main`;
 - w przeciwnym razie w tymczasowym `git worktree` z własnym `npm ci` (kilka minut i ok. 1,5 GB na czas przebiegu; worktree jest usuwany na końcu).
 
-Scala tylko przy PASS (`gh pr merge --squash --admin --match-head-commit <sha>`, więc nowszy push do PR nie zostanie scalony bez testu), a tabela wyników trafia do opisu scalenia. Dotychczasowe tryby bez zmian: domyślnie czekanie na CI GitHuba, `SKIP_CI=1` bez sprawdzeń.
+Scala tylko przy PASS (`gh pr merge --squash --match-head-commit <sha>`, bez omijania ochrony gałęzi; nowszy push do PR nie zostanie scalony bez testu), a tabela wyników trafia do opisu scalenia. Dotychczasowe tryby bez zmian: domyślnie czekanie na CI GitHuba, `SKIP_CI=1` bez lokalnych sprawdzeń. Samo scalenie nie stanowi proofu ani nie pozwala wdrożyć obrazu.
 
 ## Bramki
 
@@ -60,6 +60,10 @@ Równoległość: każda bramka zajmuje „sloty” CPU (Vitest: rdzenie − 1 i
 - `postgres` i `encode-smoke` wymagają Dockera i ffmpeg; bez nich SKIP (na maszynie właściciela 2026-10-04 nie ma żadnego z nich). `--strict` zamienia to w FAIL.
 - Dodatkowo względem CI: `ci-parity`, `migrations` i `typecheck-all`.
 - Nie jest odwzorowany workflow `images.yml` (obrazy GHCR); obraz buduje `deploy.sh` na serwerze.
+
+## K06: lokalne wydanie po weryfikacji proofu
+
+Kandydat na gałęzi `docs/polutek-platform-audit` dodaje lokalny flow bez uruchamiania GitHub Actions: `release-produce.mjs` wykonuje pełne ścisłe kontrole i buduje pięć obrazów; `release-publish.mjs` wypycha wyłącznie zweryfikowane ID do GHCR i zapisuje proof z digestami. Potem zewnętrznie zatwierdzony hash i pięć plików artifactu przekazuje się przez `mergedeploy.sh`. Ten flow wymaga dostępu do GHCR i pełnego zielonego producenta; nie jest aktywny na serwerze i nie był uruchamiany w tej sesji. Szczegóły i format bundle: [RELEASE-PROOF.md](RELEASE-PROOF.md).
 
 ## Czas i co spowalnia testy (2026-10-04, Windows 10, 4 rdzenie, maszyna obciążona innymi agentami)
 

@@ -2,8 +2,8 @@
 # Scala PR po ZIELONYM CI najnowszego commita galezi i (opcjonalnie) wdraza main na serwerek.
 #
 #   scripts/ops/mergedeploy.sh <PR> <galaz> <prefiks-tagu> --no-deploy # merge only
-#   RELEASE_RUN_ID=… RELEASE_REVISION=… RELEASE_PROOF_SHA256=… scripts/ops/mergedeploy.sh <PR> <galaz> <prefiks-tagu>
-#   The deploy form consumes a completed images workflow artifact; it never starts a paid/long-running workflow itself.
+#   RELEASE_BUNDLE_DIR=… RELEASE_REVISION=… RELEASE_PROOF_SHA256=… scripts/ops/mergedeploy.sh <PR> <galaz> <prefiks-tagu>
+#   Or pass RELEASE_RUN_ID for an already completed images workflow run. It never starts Actions itself.
 #
 # Tryby sprawdzania przed scaleniem:
 #   (domyslnie)  czeka na KONKLUZJE ostatniego przebiegu CI GitHuba dla galezi (konkluzja, nie status)
@@ -81,7 +81,7 @@ elif [ "$state" = "OPEN" ]; then
 fi
 
 if [ "$state" = "OPEN" ]; then
-  gh pr merge "$PR" --squash --admin "${MERGE_ARGS[@]}" 2>&1 | tail -1
+  gh pr merge "$PR" --squash "${MERGE_ARGS[@]}" 2>&1 | tail -1
   state=$(gh pr view "$PR" --json state --jq .state); echo "PR: $state"
 fi
 [ "$state" = "MERGED" ] || exit 3
@@ -91,21 +91,29 @@ git fetch -q origin main
 revision="${RELEASE_REVISION:-}"
 approved_hash="${RELEASE_PROOF_SHA256:-}"
 run_id="${RELEASE_RUN_ID:-}"
-[[ "$revision" =~ ^[a-f0-9]{40}$ && "$approved_hash" =~ ^[a-f0-9]{64}$ && "$run_id" =~ ^[0-9]+$ ]] \
-  || { echo "PR scalony; deploy wymaga RELEASE_REVISION, RELEASE_PROOF_SHA256 i RELEASE_RUN_ID z udanego images workflow" >&2; exit 4; }
+bundle_dir="${RELEASE_BUNDLE_DIR:-}"
+[[ "$revision" =~ ^[a-f0-9]{40}$ && "$approved_hash" =~ ^[a-f0-9]{64}$ ]] \
+  || { echo "PR scalony; deploy wymaga RELEASE_REVISION i zewnetrznie zatwierdzonego RELEASE_PROOF_SHA256" >&2; exit 4; }
+if [[ -z "$bundle_dir" && ! "$run_id" =~ ^[0-9]+$ ]]; then
+  echo "podaj lokalny RELEASE_BUNDLE_DIR albo ukończony RELEASE_RUN_ID" >&2; exit 4
+fi
 git rev-parse --verify "origin/main^{commit}" >/dev/null || exit 2
 main_sha=$(git rev-parse origin/main)
 [ "$revision" = "$main_sha" ] || { echo "RELEASE_REVISION nie odpowiada origin/main ($main_sha)" >&2; exit 4; }
 
-run_json=$(gh run view "$run_id" --json headSha,status,conclusion,event,workflowName) || exit 4
-printf '%s' "$run_json" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s);process.exit(r.headSha===process.argv[1]&&r.status==="completed"&&r.conclusion==="success"&&r.workflowName==="images"?0:1)}catch{process.exit(1)}})' "$revision" \
-  || { echo "images workflow nie ma zielonego wyniku dla tej rewizji" >&2; exit 4; }
-
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/polutek-release-deploy-XXXXXX") || exit 4
 trap 'rm -rf "$tmp"' EXIT
 artifact="$tmp/artifact"; bundle="$tmp/bundle"; stage="$tmp/stage"
-mkdir -p "$artifact" "$stage/.release-artifacts"
-gh run download "$run_id" --name "polutek-release-$revision" --dir "$artifact" || { echo "brak artifactu wydania" >&2; exit 4; }
+mkdir -p "$stage/.release-artifacts"
+if [[ -n "$bundle_dir" ]]; then
+  artifact=$(cd "$bundle_dir" && pwd -P) || { echo "lokalny artifact nie istnieje" >&2; exit 4; }
+else
+  run_json=$(gh run view "$run_id" --json headSha,status,conclusion,event,workflowName) || exit 4
+  printf '%s' "$run_json" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s);process.exit(r.headSha===process.argv[1]&&r.status==="completed"&&r.conclusion==="success"&&r.workflowName==="images"?0:1)}catch{process.exit(1)}})' "$revision" \
+    || { echo "images workflow nie ma zielonego wyniku dla tej rewizji" >&2; exit 4; }
+  mkdir -p "$artifact"
+  gh run download "$run_id" --name "polutek-release-$revision" --dir "$artifact" || { echo "brak artifactu wydania" >&2; exit 4; }
+fi
 prepared=$(node scripts/ops/release-artifact.mjs --artifact="$artifact" --revision="$revision" --out="$bundle") \
   || { echo "artifact wydania nie przechodzi walidacji" >&2; exit 4; }
 prepared_hash=$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).proof_sha256)' "$prepared")
@@ -116,6 +124,6 @@ cp -a "$bundle/source" "$stage/src"
 full_tag="${TAG}-${revision:0:12}"
 
 # The shared lock is acquired before staging source/artifact; the source-owned deploy script inherits fd 9.
-tar -C "$stage" -cf - . | ssh serwerek "cd /opt/serwerek/apps/polutek && exec 9>.deploy.lock && { flock -n 9 || { echo 'deploy-busy: .deploy.lock'; exit 75; }; } && incoming=.deploy-staging-${revision} && rm -rf \"\$incoming\" && mkdir \"\$incoming\" && tar -xf - -C \"\$incoming\" && test -d \"\$incoming/.release-artifacts/${revision}/source\" && test -d \"\$incoming/src\" && mkdir -p .release-artifacts && { if [ -e .release-artifacts/${revision} ]; then diff -qr \"\$incoming/.release-artifacts/${revision}\" .release-artifacts/${revision} >/dev/null || exit 76; rm -rf \"\$incoming/.release-artifacts/${revision}\"; else mv \"\$incoming/.release-artifacts/${revision}\" .release-artifacts/; fi; } && rm -rf src.previous && { test ! -e src || mv src src.previous; } && mv \"\$incoming/src\" src && rm -rf \"\$incoming\" && DEPLOY_APP_DIR=\$PWD DEPLOY_LOCK_HELD=1 RELEASE_REVISION=${revision} RELEASE_PROOF_SHA256=${approved_hash} bash .release-artifacts/${revision}/source/deploy/serwerek/deploy.sh ${full_tag} && install -m 0755 .release-artifacts/${revision}/source/deploy/serwerek/deploy.sh ./deploy.sh && install -m 0755 .release-artifacts/${revision}/source/deploy/serwerek/deploy-admin.sh ./deploy-admin.sh"
+tar -C "$stage" -cf - . | ssh serwerek "cd /opt/serwerek/apps/polutek && exec 9>.deploy.lock && { flock -n 9 || { echo 'deploy-busy: .deploy.lock'; exit 75; }; } && incoming=.deploy-staging-${revision} && rm -rf \"\$incoming\" && mkdir \"\$incoming\" && tar -xf - -C \"\$incoming\" && test -d \"\$incoming/.release-artifacts/${revision}/source\" && test -d \"\$incoming/src\" && mkdir -p .release-artifacts && { if [ -e .release-artifacts/${revision} ]; then diff -qr \"\$incoming/.release-artifacts/${revision}\" .release-artifacts/${revision} >/dev/null || exit 76; rm -rf \"\$incoming/.release-artifacts/${revision}\"; else mv \"\$incoming/.release-artifacts/${revision}\" .release-artifacts/; fi; } && rm -rf src.previous && { test ! -e src || mv src src.previous; } && mv \"\$incoming/src\" src && rm -rf \"\$incoming\" && DEPLOY_APP_DIR=\$PWD DEPLOY_LOCK_HELD=1 RELEASE_REVISION=${revision} RELEASE_PROOF_SHA256=${approved_hash} bash .release-artifacts/${revision}/source/deploy/serwerek/deploy.sh ${full_tag} && install -m 0755 .release-artifacts/${revision}/source/deploy/serwerek/deploy.sh ./deploy.sh && install -m 0755 .release-artifacts/${revision}/source/deploy/serwerek/deploy-admin.sh ./deploy-admin.sh && install -m 0755 .release-artifacts/${revision}/source/deploy/serwerek/verify-active-release.sh ./verify-active-release.sh"
 rc=${PIPESTATUS[1]}
 [ "$rc" -eq 0 ] || { echo "deploy nie przeszedl (kod $rc); PR pozostaje scalony, sprawdz logi serwera"; exit 4; }
