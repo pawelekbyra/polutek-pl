@@ -19,8 +19,18 @@ function fixture() {
   symlinkSync(path.join(root, 'node_modules'), path.join(directory, 'node_modules'), 'junction');
   writeFileSync(path.join(directory, 'package.json'), '{"type":"module"}\n');
   writeFileSync(path.join(directory, 'vitest.config.mjs'), "export default { test: { include: ['tests/**/*.test.ts'] } };\n");
+  writeFileSync(path.join(directory, '.gitignore'), 'node_modules\n');
   writeFileSync(path.join(directory, restoreSuite), passing);
   writeFileSync(path.join(directory, launchSuite), passing);
+  const gitEnv = { ...process.env, GIT_AUTHOR_NAME: 'Test Fixture', GIT_AUTHOR_EMAIL: 'fixture@example.invalid', GIT_COMMITTER_NAME: 'Test Fixture', GIT_COMMITTER_EMAIL: 'fixture@example.invalid' };
+  for (const args of [
+    ['init', '-q'],
+    ['add', '.gitignore', 'package.json', 'vitest.config.mjs', restoreSuite, launchSuite],
+    ['commit', '-qm', 'critical path fixture'],
+  ]) {
+    const result = spawnSync('git', args, { cwd: directory, env: gitEnv, encoding: 'utf8' });
+    if (result.status !== 0) throw new Error(`Could not prepare git fixture: ${result.stderr}`);
+  }
   return directory;
 }
 
@@ -44,8 +54,52 @@ describe('critical-path CLI with the real Vitest runner', () => {
     const report = path.join(directory, 'receipt.json');
     const result = run(directory, [`--report-json=${report}`]);
     expect(result.status).toBe(0);
-    expect(result.output).toContain('2 required suites, 2 tests passed');
-    expect(JSON.parse(readFileSync(report, 'utf8'))).toMatchObject({ success: true, numPassedTests: 2 });
+    expect(result.output).toContain('Critical-path evidence: result=PASS; suites=2; collected=2; executed=2; passed=2; failed=0; skipped=0; revision=');
+    const receipt = JSON.parse(readFileSync(report, 'utf8'));
+    expect(receipt).toMatchObject({ success: true, numPassedTests: 2 });
+    expect(receipt.criticalPathEvidence).toMatchObject({
+      revision: expect.stringMatching(/^[a-f0-9]{40}$/),
+      sourceFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/),
+      workingTreeClean: true,
+      result: 'PASS',
+      tests: { executed: 2, passed: 2, failed: 0, skipped: 0 },
+    });
+  });
+
+  it('writes SHA and failed/skipped counts when a required suite fails', () => {
+    const directory = fixture();
+    writeFileSync(path.join(directory, launchSuite), "import { it, expect } from 'vitest'; it('control', () => expect(1).toBe(2));\n");
+    const report = path.join(directory, 'failed-receipt.json');
+    const result = run(directory, [`--report-json=${report}`]);
+    expect(result.status).toBe(1);
+    const receipt = JSON.parse(readFileSync(report, 'utf8'));
+    expect(receipt.criticalPathEvidence).toMatchObject({
+      result: 'FAIL',
+      tests: { collected: 2, executed: 2, passed: 1, failed: 1, skipped: 0 },
+      requiredSuites: [
+        { suite: restoreSuite, tests: 1, passed: 1, failed: 0, skipped: 0 },
+        { suite: launchSuite, tests: 1, passed: 0, failed: 1, skipped: 0 },
+      ],
+    });
+    expect(result.output).toContain('Critical-path evidence: result=FAIL; suites=2; collected=2; executed=2; passed=1; failed=1; skipped=0; revision=');
+  });
+
+  it('reports skipped counts even though Vitest itself exits successfully', () => {
+    const directory = fixture();
+    writeFileSync(path.join(directory, launchSuite), passing + "it.skip('not run', () => {});\n");
+    const report = path.join(directory, 'skipped-receipt.json');
+    const result = run(directory, [`--report-json=${report}`]);
+    expect(result.status).toBe(1);
+    const receipt = JSON.parse(readFileSync(report, 'utf8'));
+    expect(receipt.criticalPathEvidence).toMatchObject({
+      result: 'FAIL',
+      exitCode: 0,
+      tests: { collected: 3, executed: 2, passed: 2, failed: 0, skipped: 1 },
+      requiredSuites: [
+        { suite: restoreSuite, tests: 1, passed: 1, failed: 0, skipped: 0 },
+        { suite: launchSuite, tests: 2, passed: 1, failed: 0, skipped: 1 },
+      ],
+    });
   });
 
   it.each(['missing', 'directory'])('rejects a %s target before launching Vitest', scenario => {
