@@ -18,6 +18,7 @@ const adminSh = read('deploy/serwerek/deploy-admin.sh');
 const verifyActiveSh = read('deploy/serwerek/verify-active-release.sh');
 const telemetryEnableSh = read('scripts/serwerek/telemetry-enable.sh');
 const mergeSh = read('scripts/ops/mergedeploy.sh');
+const composeYml = read('deploy/serwerek/docker-compose.yml');
 
 describe('serwerek scripts: static', () => {
   it('keeps LF line endings', () => {
@@ -54,6 +55,13 @@ describe('serwerek scripts: static', () => {
     expect(adminSh).toContain('automatic rollback refused');
     expect(deploySh).not.toMatch(/^\s*docker build(?:\s|$)/m);
     expect(adminSh).not.toMatch(/^\s*nice -n 10 docker build(?:\s|$)/m);
+  });
+
+  it('does not let plain compose activation fall back to mutable current tags', () => {
+    for (const kind of ['app', 'worker', 'admin', 'collector', 'migrator']) {
+      expect(composeYml).toContain(`polutek-${kind}:proof-required`);
+      expect(composeYml).not.toContain(`polutek-${kind}:current`);
+    }
   });
 
   it('verifies the deployed release before telemetry role changes or app/collector activation', () => {
