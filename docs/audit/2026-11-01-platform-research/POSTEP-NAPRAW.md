@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K38/R11 — częściowa realizacja, 6 listopada 2026
+
+Poprawiono raport obciążeniowy: summarizer zwraca błąd dla nieoczekiwanego statusu, niewłaściwego MIME 200 i niekompletnego zestawu metryk k6; run-steps kończy się niezerowym statusem dla takiego wyniku. `k6-guest.js` kontroluje MIME dla HTML, JSON i miniaturek bez materializowania body odpowiedzi, zachowując limit pamięci generatora. 17 syntetycznych testów statusów, MIME, kodów progowych i zachowania runnera PASS; bez uruchamiania k6, HTTP, obciążenia lub cleanup na serwerze. Test nie bada semantycznych pól JSON/HTML. K38 pozostaje częściowy: HMAC cleanup, pełne report/mix i weryfikacja bezpiecznego fixture wymagają osobnego wykonania. Szczegóły: [K38](ROADMAPA-NAPRAW.md#k38).
+
 ## K31/R36 — częściowa realizacja, 6 listopada 2026
 
 Dodano D1 outbox `alert_delivery` dla zdarzeń DOWN/recovery. Niezależny worker ponowień zachowuje zdrowy status, a wiadomość pozostaje pending po HTTP non-2xx, błędzie sieciowym lub wyczerpaniu dziennego limitu. Retry ma backoff do 6 godzin, limit dzienny przesuwa próbę do następnej północy UTC, warunkowy lease zapobiega jednoczesnej obsłudze przez overlapping runs, Resend dostaje stabilny klucz idempotencji zdarzenia. Weryfikacja: 2 pliki testów 5/5, kontrola granic architektury, typecheck i ESLint PASS.

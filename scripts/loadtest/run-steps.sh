@@ -16,7 +16,13 @@ LABEL="${LABEL:-$TARGET}"
 : "${VIDEO_ID:?VIDEO_ID is required}"
 mkdir -p "$OUT"; chmod 777 "$OUT"
 RESULTS="$OUT/results.tsv"
-[ -s "$RESULTS" ] || printf "target\trate\titer_per_s\treq_per_s\treqs\tdropped\tp50\tp95\tp99\tmax\terr5xx_pct\tnon200\tper_endpoint_p50/p95/p99_ms\tlabel\tstarted\n" > "$RESULTS"
+HEADER="target\trate\titer_per_s\treq_per_s\treqs\tdropped\tp50\tp95\tp99\tmax\terr5xx_pct\tnon200\twrong_content\tper_endpoint_p50/p95/p99_ms\tlabel\tstarted"
+if [ ! -s "$RESULTS" ]; then
+  printf '%s\n' "$HEADER" > "$RESULTS"
+elif [ "$(head -n 1 "$RESULTS")" != "$HEADER" ]; then
+  echo "incompatible results.tsv header; select a fresh OUT_DIR or archive the previous results" >&2
+  exit 6
+fi
 
 rate="$START"
 while awk -v r="$rate" -v m="$MAX" 'BEGIN{exit !(r<=m)}'; do
@@ -36,9 +42,13 @@ while awk -v r="$rate" -v m="$MAX" 'BEGIN{exit !(r<=m)}'; do
   echo "$row"
   [ -f "$OUT/ABORT" ] && { echo "ABORT: $(tail -1 "$OUT/ABORT")"; exit 4; }
   case "$code" in
+    0) ;;
+    13) echo "invalid result: unexpected status or response content type" >&2; exit 13 ;;
+    14) echo "invalid result: incomplete k6 summary" >&2; exit 14 ;;
     10) echo "stop: p95 above ${STOP_P95} ms"; exit 0 ;;
     11) echo "stop: >2% server errors"; exit 0 ;;
     12) echo "stop: saturated (could not serve the target rate)"; exit 0 ;;
+    *) echo "invalid result: summarizer failed (exit $code)" >&2; exit "$code" ;;
   esac
   sleep "$REST"
   rate=$(awk -v r="$rate" 'BEGIN{print r*2}')

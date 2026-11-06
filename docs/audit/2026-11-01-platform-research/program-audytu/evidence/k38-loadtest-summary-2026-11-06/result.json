@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-06",
+  "package": "K38/R11 partial load-test report validation",
+  "base_commit": "afc2f0a1",
+  "source_sha256": {
+    "scripts/loadtest/summarize.py": "f16c04f5faae6d36f965003f3360b1447a07d79412222968f4293db0b534965a",
+    "scripts/loadtest/k6-guest.js": "40d6f54ae549850542c9047f067b8ff01a63f6133f340f7a0a7739cc71d7e175",
+    "scripts/loadtest/response-contract.mjs": "09370e44ec53aded97a8f2c7fa5e6ad23bd06d7d0f2fe9dc6e4f16aab56b30af",
+    "scripts/loadtest/run-steps.sh": "ea860ffbbc9bd45f8b67a19459219f7c94e1bf7c5c03d0864dd37d2e35e89a7a",
+    "tests/unit/scripts/loadtest-contract.test.ts": "a80bbe9df22f239b8af635f7fc53819e17b7e0f66dda437633f7f2cabbbb88a8"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/scripts/loadtest-contract.test.ts",
+      "result": "PASS",
+      "tests": 17
+    },
+    { "command": "npm run quality:architecture-boundaries", "result": "PASS" },
+    { "command": "npm run typecheck", "result": "PASS" },
+    { "command": "node --input-type=module --check < scripts/loadtest/k6-guest.js", "result": "PASS" },
+    { "command": "node --check scripts/loadtest/response-contract.mjs", "result": "PASS" },
+    { "command": "bash -n scripts/loadtest/run-steps.sh", "result": "PASS" },
+    { "command": "python3 compile() for scripts/loadtest/summarize.py", "result": "PASS" },
+    { "command": "git diff --check", "result": "PASS" },
+    {
+      "command": "npx eslint scripts/loadtest/summarize.py scripts/loadtest/response-contract.mjs scripts/loadtest/k6-guest.js scripts/loadtest/run-steps.sh tests/unit/scripts/loadtest-contract.test.ts",
+      "result": "PASS for explicitly linted JS/TS files; Python and shell files are outside configured ESLint"
+    }
+  ],
+  "verified": [
+    "A healthy complete synthetic k6 summary is accepted.",
+    "Any unexpected status is rejected even when the 5xx rate is zero.",
+    "A 200 with an unexpected content type is rejected.",
+    "A missing required metric fails closed.",
+    "Existing 5xx, saturation, and p95 stop gates remain active.",
+    "HTML, JSON API, and image MIME contracts are exercised for all configured endpoints."
+  ],
+  "boundaries": [
+    "No k6 binary/container, HTTP endpoint, application server, database, load, or cleanup script was run.",
+    "Response bodies remain discarded; the MIME check does not parse JSON or semantically inspect HTML/image payloads.",
+    "The historical capacity measurements were not repeated and are not re-certified by this code change.",
+    "No server-side fixture/HMAC cleanup behavior or protected foreign session was exercised."
+  ],
+  "independent_review": "PENDING"
+}

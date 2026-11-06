@@ -13,6 +13,7 @@
 //   OUT        summary JSON path inside the container (default /out/summary.json)
 import http from "k6/http";
 import { Rate, Counter } from "k6/metrics";
+import { hasExpectedLoadContentType } from "./response-contract.mjs";
 
 const BASE = __ENV.BASE || "http://127.0.0.1:3000";
 const HOST = __ENV.HOST_HEADER || "www.pawelperfect.com";
@@ -29,6 +30,7 @@ if (!VIDEO_ID) throw new Error("VIDEO_ID is required");
 
 const serverErrors = new Rate("server_errors"); // 5xx or no response
 const unexpected = new Counter("unexpected_status"); // anything that is not the expected status
+const unexpectedContent = new Counter("unexpected_content"); // 200 response has the wrong/missing MIME type
 
 const EPS = ["home", "sidebar", "comments", "media", "thumb"];
 const thresholds = {
@@ -94,24 +96,25 @@ const REQ = {
   thumb: (ip) => ["GET", `${BASE}/api/videos/${VIDEO_ID}/thumbnail`, null, params("thumb", ip, "image/avif,image/webp,*/*")],
 };
 
-function record(res) {
+function record(res, endpoint) {
   serverErrors.add(res.status === 0 || res.status >= 500);
-  if (res.status !== 200) unexpected.add(1, { status: String(res.status) });
+  unexpected.add(res.status === 200 ? 0 : 1, { status: String(res.status) });
+  unexpectedContent.add(res.status === 200 && !hasExpectedLoadContentType(endpoint, res.headers) ? 1 : 0, { endpoint });
 }
 
-export default function () {
+export default function loadTest() {
   const ip = fakeIp();
   if (TARGET === "journey") {
     // What one new guest's first page view costs the origin: the SSR page first, then the
     // browser's parallel API calls (sidebar, comments, playback plan, one thumbnail via the proxy).
-    record(http.request(...REQ.home(ip)));
+    record(http.request(...REQ.home(ip)), "home");
     const rs = http.batch([REQ.sidebar(ip), REQ.comments(ip), REQ.media(ip), REQ.thumb(ip)]);
-    for (const r of rs) record(r);
+    for (const [index, response] of rs.entries()) record(response, ["sidebar", "comments", "media", "thumb"][index]);
     return;
   }
   const make = REQ[TARGET];
   if (!make) throw new Error(`unknown TARGET ${TARGET}`);
-  record(http.request(...make(ip)));
+  record(http.request(...make(ip)), TARGET);
 }
 
 export function handleSummary(data) {

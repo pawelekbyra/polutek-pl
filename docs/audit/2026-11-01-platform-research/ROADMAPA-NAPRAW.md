@@ -931,6 +931,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K38-T1** — Szybkie 500 nieoczekiwanych statusów przy dobrym p95/rate oraz 200 z niewłaściwą treścią muszą odrzucić raport; legalne odpowiedzi przechodzą. Powolne/5xx nadal odmawiają.
 - **K38-T2** — Przerwane i poprawne wykonanie usuwa tylko oznaczone fixture/sesje HMAC; kontrolna cudza sesja pozostaje. Raport jasno przelicza widzów na żądania/profil czasu i nie myli request/s z jednoczesnymi osobami.
 
+**Postęp lokalny 6 listopada 2026 (częściowy):** summarizer odrzuca metrykę nieoczekiwanego statusu, zły MIME odpowiedzi 200 i brak wymaganej metryki; skrypt k6 sprawdza status i oczekiwany MIME dla endpointu bez pobierania body. Runner kończy się niezerowym statusem dla niepoprawnego lub niekompletnego raportu. Dodano 17 syntetycznych testów bramki i kontraktu MIME (PASS). Nie wykonywano obciążenia, generatora k6, HTTP ani cleanup na serwerze. Semantyczna zawartość JSON/HTML, wersjonowanie profilu, HMAC i odporność sprzątania pozostają poza tym krokiem; K38 jest częściowy. [Dowody i hashe](program-audytu/evidence/k38-loadtest-summary-2026-11-06/result.json).
+
 <a id="k39"></a>
 
 #### K39. Pomiar celu 10 tys. widzów i plan wąskich usprawnień

@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## Aktualizacja K38 — 6 listopada 2026
+
+K38/R11 częściowo poprawia wiarygodność load testu: summarizer odmawia nieoczekiwanym statusom, niewłaściwemu MIME 200 i brakującym wymaganym metrykom; runner zwraca błąd i nie kontynuuje. k6 sprawdza envelope HTML/JSON/image przy odrzuconym body. 17 testów syntetycznych PASS. Nie uruchomiono k6, serwera ani cleanup; payload semantyczny, HMAC fixture oraz profile testowe nadal wymagają pracy. Pełne zastrzeżenia i hashe: `evidence/k38-loadtest-summary-2026-11-06/result.json`. Zmiana lokalna; bez obciążania serwera.
+
 ## Aktualizacja K31 — 6 listopada 2026
 
 K31/R36 częściowo zaimplementowany lokalnie: `workers/pp-watchdog/worker.mjs` odkłada DOWN/recovery w trwałym D1 outboxie, stosuje backoff z limitem 6 h, czeka do północy UTC po limicie dziennym, claimuje wiadomość krótką dzierżawą i podaje stabilny klucz idempotencji dostawcy. Cztery nowe przypadki z atrapą D1 obejmują recovery 503→retry, reset dziennego limitu, wyjątek sieciowy i dwa współbieżne runy; wraz z poprzednimi testami 6/6 PASS. Dodatkowy rzeczywisty Worker na lokalnym SQLite 3.51.3 zweryfikował DDL, `UPDATE ... RETURNING` i pojedynczy provider stub call przy dwóch `/run`. Nadal brak Cloudflare D1/Resend i sandboxu; nie wdrożono Workera. Przed odbiorem sprawdzić D1, restart/timeout i przypadek akceptacji Resend przed awarią zapisu SENT. Wyniki i hashe: `evidence/k31-watchdog-outbox-2026-11-06/result.json`; odtwarzalny helper `tools/k31-watchdog-sqlite-check.mjs`; opis sekcji K31 dokumentu D16. Dalsza praca lokalna może iść do następnego niezależnego pakietu; bez push/PR/deploy/produkcji.

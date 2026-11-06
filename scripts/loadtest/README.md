@@ -9,6 +9,9 @@ response times degrade. Results and method: `docs/operations/LOAD-TEST.md`.
   server** against `http://127.0.0.1:3000` with `Host: www.pawelperfect.com`. Never through Cloudflare.
 - Guest GET requests only: `/pl`, `/api/channel/sidebar`, `/api/comments`, `/api/media-source/<id>`,
   `/api/videos/<id>/thumbnail`. No logins, writes, payments, `/api/admin`, PP Support.
+- Each 200 response must have the expected MIME type (HTML for home, JSON for APIs, image for thumbnail);
+  non-200 and wrong/missing MIME metrics make the summarizer stop the series. Bodies remain discarded to cap
+  generator memory, so this is an envelope check, not semantic validation of JSON fields or page content.
 - Every request carries `User-Agent: pp-loadtest/1` and a fake `CF-Connecting-IP` from `198.18.0.0/15`
   (RFC 2544 benchmark range), so each iteration looks like a new visitor (the app trusts that header behind the
   tunnel). `/api/media-source` creates one `VideoPlaybackSession` row per call; `cleanup.sh` deletes exactly
