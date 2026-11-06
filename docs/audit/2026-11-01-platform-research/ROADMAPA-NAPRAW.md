@@ -541,6 +541,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K20-T1** — Dwa niegłówne kanały, prawdziwe DB/worker: legalne PUBLIC i UNLISTED publikują właściwy film na właściwym kanale, a route i pliki odpowiadają temu filmowi.
 - **K20-T2** — Cudze ID, usunięty/zawieszony kanał i stara próba nie publikują; odmowa nie jest raportowana jako skuteczna publikacja. Kanał main nadal działa.
 
+**Wynik lokalny 6 listopada 2026 (częściowy):** finalizer sprawdza aktualne `RUNNING + workerId + attemptId`, rozwiązuje kanał z `video.creatorId` i odrzuca niezgodność z `job.channelId`; publikator ogranicza odczyt do tego kanału, odrzuca kanał usunięty/zawieszony i zwraca/loguje jawny wynik. Zachowano `publishAdminVideo`/`unlistAdminVideo` i `authorize()`. Dwa celowane pliki: **24/24 testy**, ESLint, typecheck i `git diff --check` PASS. Przygotowano też siedmioprzypadkowy test PostgreSQL realnego finalizera; typy i lint PASS, ale brak `DATABASE_URL`, więc test nie został wykonany ([dowody](program-audytu/evidence/k20-channel-auto-publish-2026-11-06/result.json)). **Nie zalicza K20-T1/T2:** brak uruchomionej bazy/workera, brak wyścigu statusu kanału oraz niezależnego przeglądu. K20 pozostaje częściowe.
+
 <a id="k21"></a>
 
 #### K21. Wąski wspólny kontrakt upload/job/playback

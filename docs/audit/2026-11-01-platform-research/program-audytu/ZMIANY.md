@@ -1,5 +1,10 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K20/R23: właściwy kanał automatycznej publikacji
+
+- Worker ponownie odczytuje aktualny job z tokenem próby i relację do filmu; `video.creatorId` jest źródłem kontekstu kanału, a rozbieżny `job.channelId` blokuje publikację. Auto-publish zwraca jawny wynik i worker go loguje; publikacja nadal idzie przez autoryzowane use case'y.
+- Dwa celowane pliki testów: **24/24 PASS**, ESLint i repo typecheck PASS. Przygotowano siedmioprzypadkowy test PostgreSQL finalizera (typy i lint PASS), ale brak `DATABASE_URL`, więc nie wykonano go ani pełnego workera; K20 pozostaje częściowe. [Dowody](evidence/k20-channel-auto-publish-2026-11-06/).
+
 ## 6 listopada 2026 — K19/R29: rezerwacja aktywacji i cleanupu HLS
 
 - Asset otrzymuje `cleanupPendingAt` pod blokadą wiersza filmu współdzieloną z aktywacją. Transakcja wyłącza aktywną trasę szkicu, zapisuje audyt i kolejkuje `VIDEO_ASSET_CLEANUP`; trigger DB blokuje też stare klienty. Runner wykonuje idempotentne DeleteObjects poza transakcją i kasuje wiersz dopiero po potwierdzeniu storage.
