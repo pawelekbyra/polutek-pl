@@ -29,13 +29,19 @@ function original(over: Partial<VideoOriginal> = {}): VideoOriginal {
   } as VideoOriginal;
 }
 
-function setup(row: VideoOriginal | null = original(), opts: { activeJob?: boolean; stale?: VideoOriginal[] } = {}) {
+function setup(row: VideoOriginal | null = original(), opts: { activeJob?: boolean; stale?: VideoOriginal[]; activeOriginal?: VideoOriginal } = {}) {
   const prisma = {
     video: { findFirst: vi.fn(async () => ({ id: "v1", title: "t", status: "DRAFT", activeOriginalId: null })), update: vi.fn(async () => ({})), updateMany: vi.fn(async () => ({ count: 1 })) },
     $executeRaw: vi.fn(async () => 1),
+    $queryRaw: vi.fn(async () => []),
     videoEncodeJob: { findFirst: vi.fn(async () => (opts.activeJob ? { id: "j" } : null)) },
     videoOriginal: {
-      findFirst: vi.fn(async (a: { orderBy?: unknown }) => (a?.orderBy ? { version: 3 } : row)),
+      findFirst: vi.fn(async (a: { orderBy?: unknown; where?: { id?: string; status?: string }; select?: { version?: boolean } }) => {
+        if (a?.where?.id && a.where.id === opts.activeOriginal?.id) return opts.activeOriginal;
+        if (a?.where?.status === "READY" && a?.orderBy) return row?.status === "READY" ? { version: row.version } : null;
+        if (a?.select?.version) return { version: 3 };
+        return row;
+      }),
       findMany: vi.fn(async () => opts.stale ?? []),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => original({ ...(data as Partial<VideoOriginal>), id: "new" })),
       update: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({})),
@@ -138,10 +144,10 @@ describe("completeOriginalMultipart", () => {
     expect(res).toMatchObject({ ok: true, data: { originalId: "o1", job: { id: "job1" } } });
     expect(t.storage.complete).toHaveBeenCalledWith("originals/v1/1.mp4", "up1", [{ partNumber: 1, etag: '"a"' }, { partNumber: 2, etag: '"b"' }]);
     expect(t.prisma.videoOriginal.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "SUPERSEDED" }) }));
-    expect(t.prisma.videoOriginal.updateMany).toHaveBeenCalledWith({
-      where: { id: "o1", status: "UPLOADING" },
+    expect(t.prisma.videoOriginal.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "o1", status: "UPLOADING", version: 1 },
       data: expect.objectContaining({ status: "READY", uploadId: null, mimeType: "video/mp4" }),
-    });
+    }));
     expect(t.prisma.video.update).toHaveBeenCalledWith({ where: { id: "v1" }, data: { activeOriginalId: "o1" } });
     expect(requestPublish).toHaveBeenCalledWith("v1", expect.anything());
     expect(enqueue).toHaveBeenCalledWith({ videoId: "v1", originalId: "o1" }, expect.anything());
@@ -191,6 +197,22 @@ describe("completeOriginalMultipart", () => {
     expect(t.storage.complete).not.toHaveBeenCalled();
     expect(enqueue).toHaveBeenCalledTimes(1);
     expect(t.prisma.video.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { activeOriginalId: "o1" } }));
+  });
+
+  it("does not reactivate a READY snapshot that a newer completion already superseded", async () => {
+    const t = setup(original({ status: "READY", uploadId: null }));
+    const staleRead = original({ status: "READY", uploadId: null, version: 1 });
+    const current = original({ id: "o2", objectKey: "originals/v1/2.mp4", status: "READY", uploadId: null, version: 2 });
+    t.prisma.videoOriginal.findFirst
+      .mockImplementationOnce(async () => staleRead)
+      .mockImplementationOnce(async () => original({ ...staleRead, status: "SUPERSEDED", supersededAt: new Date() }));
+    t.prisma.videoOriginal.findFirst.mockImplementation(async (args: { orderBy?: unknown }) => args?.orderBy ? current : staleRead);
+
+    const result = await completeOriginalMultipart({ videoId: "v1", originalId: "o1", parts }, t.ctx, t.deps);
+
+    expect(result).toMatchObject({ ok: false, error: { code: "UPLOAD_SUPERSEDED", statusCode: 409 } });
+    expect(t.prisma.video.updateMany).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
   });
 
   it("continues verification when R2 says the upload was already completed", async () => {

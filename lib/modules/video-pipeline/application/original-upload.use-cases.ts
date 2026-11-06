@@ -22,6 +22,7 @@ import { enqueueEncode, type EncodeJobDto } from "./encode-queue.use-cases";
 import { requireVideo } from "./video-guard";
 import { channelUploadLimitError } from "./channel-limits";
 import { MainChannelService } from "@/lib/modules/channel";
+import type { WriteTx } from "@/lib/modules/shared/db";
 
 /** The storage operations the use cases need (R2 in production, a fake in tests). */
 export type OriginalsStoragePort = Pick<OriginalsMultipart, "bucket" | "create" | "presignPart" | "listParts" | "complete" | "abort" | "head" | "readHead" | "deleteObject">;
@@ -50,6 +51,28 @@ async function loadUploadingOriginal(videoId: string, originalId: string, ctx: A
   const original = await ctx.prisma.videoOriginal.findFirst({ where: { id: originalId, videoId } });
   if (!original) throw new AppError("Upload nie istnieje.", 404, "ORIGINAL_NOT_FOUND");
   return original;
+}
+
+async function lockOriginalCompletion(tx: WriteTx, videoId: string): Promise<void> {
+  await tx.$queryRaw`SELECT 'locked'::text FROM (SELECT pg_advisory_xact_lock(hashtext(${`original-complete:${videoId}`}))) AS completion_lock`;
+}
+
+async function activeOriginalVersion(tx: WriteTx, videoId: string): Promise<number> {
+  const video = await tx.video.findFirst({ where: { id: videoId }, select: { activeOriginalId: true } });
+  if (!video?.activeOriginalId) return 0;
+  const active = await tx.videoOriginal.findFirst({ where: { id: video.activeOriginalId, videoId }, select: { version: true } });
+  return active?.version ?? 0;
+}
+
+async function latestReadyVersion(tx: WriteTx, videoId: string): Promise<number> {
+  const latest = await tx.videoOriginal.findFirst({ where: { videoId, status: "READY" }, orderBy: { version: "desc" }, select: { version: true } });
+  return latest?.version ?? 0;
+}
+
+async function enqueueWithinTransaction(videoId: string, originalId: string, ctx: AppContext, tx: WriteTx): Promise<EncodeJobDto> {
+  const queued = await enqueueEncode({ videoId, originalId }, { ...ctx, prisma: tx });
+  if (!queued.ok) throw queued.error;
+  return queued.data;
 }
 
 function requireOpenUpload(original: VideoOriginal): asserts original is VideoOriginal & { uploadId: string; uploadPartCount: number; uploadPartSize: number } {
@@ -212,16 +235,43 @@ export async function completeOriginalMultipart(
     const video = await requireVideo(input.videoId, ctx, "video.upload");
     const original = await loadUploadingOriginal(video.id, input.originalId, ctx);
 
-    // Retried "complete" after success: just make sure the job exists.
+    // Retried "complete" after success: repair a historical READY -> enqueue gap, but never
+    // let a stale read reactivate an original that a newer version has already superseded.
     if (original.status === "READY") {
-      // The first attempt may have died between READY and the active pointer: repair it (no-op when it is right).
-      await ctx.prisma.video.updateMany({
-        where: { id: video.id, OR: [{ activeOriginalId: null }, { activeOriginalId: { not: original.id } }] },
-        data: { activeOriginalId: original.id },
+      const recovered = await ctx.db.writeTransaction(async (tx) => {
+        await lockOriginalCompletion(tx, video.id);
+        const current = await tx.videoOriginal.findFirst({ where: { id: original.id, videoId: video.id } });
+        if (!current || current.status !== "READY") return null;
+
+        const [activeVersion, newestReadyVersion, currentVideo] = await Promise.all([
+          activeOriginalVersion(tx, video.id),
+          latestReadyVersion(tx, video.id),
+          tx.video.findFirst({ where: { id: video.id }, select: { activeOriginalId: true } }),
+        ]);
+        const newerVersion = Math.max(activeVersion, newestReadyVersion);
+        if (current.version < newerVersion) {
+          await tx.videoOriginal.updateMany({
+            where: { id: current.id, status: "READY" },
+            data: { status: "SUPERSEDED", supersededAt: ctx.now() },
+          });
+          return null;
+        }
+
+        if (currentVideo?.activeOriginalId !== current.id) {
+          await tx.videoOriginal.updateMany({
+            where: { videoId: video.id, status: "READY", version: { lt: current.version } },
+            data: { status: "SUPERSEDED", supersededAt: ctx.now() },
+          });
+          const pointer = await tx.video.updateMany({
+            where: { id: video.id, activeOriginalId: currentVideo?.activeOriginalId ?? null },
+            data: { activeOriginalId: current.id },
+          });
+          if (pointer.count !== 1) throw new AppError("Aktywny plik zmienił się podczas odzyskiwania uploadu.", 409, "UPLOAD_SUPERSEDED");
+        }
+        return enqueueWithinTransaction(video.id, current.id, ctx, tx);
       });
-      const queued = await enqueueEncode({ videoId: video.id, originalId: original.id }, ctx);
-      if (!queued.ok) return fail(queued.error);
-      return ok({ originalId: original.id, job: queued.data });
+      if (!recovered) return fail(new AppError("Nowsza wersja pliku zastąpiła ten upload.", 409, "UPLOAD_SUPERSEDED"));
+      return ok({ originalId: original.id, job: recovered });
     }
 
     requireOpenUpload(original);
@@ -265,28 +315,46 @@ export async function completeOriginalMultipart(
     const now = new Date();
     const verifiedSize = BigInt(head.sizeBytes);
     const promoted = await ctx.db.writeTransaction(async (tx) => {
+      await lockOriginalCompletion(tx, video.id);
+      const current = await tx.videoOriginal.findFirst({ where: { id: original.id, videoId: video.id } });
+      if (!current || current.status !== "UPLOADING") return null;
+
+      const [activeVersion, newestReadyVersion] = await Promise.all([
+        activeOriginalVersion(tx, video.id),
+        latestReadyVersion(tx, video.id),
+      ]);
+      if (Math.max(activeVersion, newestReadyVersion) >= current.version) {
+        await tx.videoOriginal.updateMany({
+          where: { id: current.id, status: "UPLOADING" },
+          data: { status: "SUPERSEDED", supersededAt: now, uploadId: null },
+        });
+        return { kind: "superseded" as const };
+      }
+
       const cas = await tx.videoOriginal.updateMany({
-        where: { id: original.id, status: "UPLOADING" },
+        where: { id: current.id, status: "UPLOADING", version: current.version },
         data: { status: "READY", uploadCompletedAt: now, verifiedAt: now, uploadId: null, sizeBytes: verifiedSize, mimeType: mimeForContainer(container), failureReason: null },
       });
-      if (cas.count === 0) return false;
-      await tx.videoOriginal.updateMany({ where: { videoId: video.id, status: "READY", id: { not: original.id } }, data: { status: "SUPERSEDED", supersededAt: now } });
+      if (cas.count === 0) return null;
+      await tx.videoOriginal.updateMany({ where: { videoId: video.id, status: "READY", version: { lt: current.version } }, data: { status: "SUPERSEDED", supersededAt: now } });
       await tx.video.update({ where: { id: video.id }, data: { activeOriginalId: original.id } });
-      return true;
+      const job = await enqueueWithinTransaction(video.id, original.id, ctx, tx);
+      return { kind: "promoted" as const, job };
     });
     if (!promoted) return fail(new AppError("Ten upload nie jest otwarty (zakończony, przerwany albo odrzucony).", 409, "UPLOAD_NOT_OPEN"));
+    if (promoted.kind === "superseded") {
+      await storage.deleteObject(original.objectKey).catch(() => undefined);
+      return fail(new AppError("Nowsza wersja pliku zastąpiła ten upload.", 409, "UPLOAD_SUPERSEDED"));
+    }
     if (input.publishAfterReady) await requestPublishAfterAssetReady(video.id, ctx);
-
-    const queued = await enqueueEncode({ videoId: video.id, originalId: original.id }, ctx);
-    if (!queued.ok) return fail(queued.error);
 
     await recordAuditEvent(ctx, {
       action: "VIDEO_ORIGINAL_UPLOAD_COMPLETED",
       targetType: "Video",
       targetId: video.id,
-      metadata: { originalId: original.id, sizeBytes: head.sizeBytes, container, jobId: queued.data.id, publishAfterReady: Boolean(input.publishAfterReady) },
+      metadata: { originalId: original.id, sizeBytes: head.sizeBytes, container, jobId: promoted.job.id, publishAfterReady: Boolean(input.publishAfterReady) },
     });
-    return ok({ originalId: original.id, job: queued.data });
+    return ok({ originalId: original.id, job: promoted.job });
   } catch (error) {
     return fail(asFailure(error));
   }

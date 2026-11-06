@@ -31,7 +31,7 @@ export interface EncodeJobStore {
 const CLAIM_ADVISORY_LOCK = 947201;
 
 export class EncodeJobRepository implements EncodeJobStore {
-  constructor(private readonly db: PrismaClient) {}
+  constructor(private readonly db: PrismaClient | Prisma.TransactionClient) {}
 
   // ---------- worker side ----------
 
@@ -209,38 +209,42 @@ export class EncodeJobRepository implements EncodeJobStore {
    * The advisory lock serialises concurrent enqueues of the same video.
    */
   async enqueue(input: { videoId: string; originalId: string; requestedById: string | null; channelId?: string | null; maxAttempts?: number }) {
-    return this.db.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`encode:${input.videoId}`}))`;
+    const work = (tx: Prisma.TransactionClient) => this.enqueueWithinTransaction(tx, input);
+    if ("$transaction" in this.db) return this.db.$transaction(work);
+    return work(this.db);
+  }
 
-      const active = await tx.videoEncodeJob.findFirst({
-        where: { videoId: input.videoId, status: { in: [...ACTIVE_ENCODE_STATUSES] } },
-        orderBy: { createdAt: "desc" },
-      });
-      if (active) {
-        if (active.originalId === input.originalId) return { job: active, created: false };
-        throw new EncodeJobError("ENCODE_ALREADY_ACTIVE", "Dla tego filmu trwa juz kodowanie innego pliku.", true);
-      }
+  private async enqueueWithinTransaction(tx: Prisma.TransactionClient, input: { videoId: string; originalId: string; requestedById: string | null; channelId?: string | null; maxAttempts?: number }) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`encode:${input.videoId}`}))`;
 
-      const generation = (await tx.videoEncodeJob.count({ where: { originalId: input.originalId } })) + 1;
-      const [jobVersions, assets] = await Promise.all([
-        tx.videoEncodeJob.aggregate({ where: { videoId: input.videoId }, _max: { versionNumber: true } }),
-        tx.videoAsset.findMany({ where: { videoId: input.videoId, provider: "SELF_HLS" }, select: { objectKey: true } }),
-      ]);
-      const versionNumber = Math.max(jobVersions._max.versionNumber ?? 0, ...assets.map((a) => parseVersionNumber(a.objectKey))) + 1;
-
-      const job = await tx.videoEncodeJob.create({
-        data: {
-          videoId: input.videoId,
-          channelId: input.channelId ?? null,
-          originalId: input.originalId,
-          versionNumber,
-          idempotencyKey: `${input.originalId}:${generation}`,
-          requestedById: input.requestedById,
-          maxAttempts: input.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
-        },
-      });
-      return { job, created: true };
+    const active = await tx.videoEncodeJob.findFirst({
+      where: { videoId: input.videoId, status: { in: [...ACTIVE_ENCODE_STATUSES] } },
+      orderBy: { createdAt: "desc" },
     });
+    if (active) {
+      if (active.originalId === input.originalId) return { job: active, created: false };
+      throw new EncodeJobError("ENCODE_ALREADY_ACTIVE", "Dla tego filmu trwa juz kodowanie innego pliku.", true);
+    }
+
+    const generation = (await tx.videoEncodeJob.count({ where: { originalId: input.originalId } })) + 1;
+    const [jobVersions, assets] = await Promise.all([
+      tx.videoEncodeJob.aggregate({ where: { videoId: input.videoId }, _max: { versionNumber: true } }),
+      tx.videoAsset.findMany({ where: { videoId: input.videoId, provider: "SELF_HLS" }, select: { objectKey: true } }),
+    ]);
+    const versionNumber = Math.max(jobVersions._max.versionNumber ?? 0, ...assets.map((a) => parseVersionNumber(a.objectKey))) + 1;
+
+    const job = await tx.videoEncodeJob.create({
+      data: {
+        videoId: input.videoId,
+        channelId: input.channelId ?? null,
+        originalId: input.originalId,
+        versionNumber,
+        idempotencyKey: `${input.originalId}:${generation}`,
+        requestedById: input.requestedById,
+        maxAttempts: input.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
+      },
+    });
+    return { job, created: true };
   }
 
   /** QUEUED -> CANCELLED at once; RUNNING -> flag the worker polls on every heartbeat. */
