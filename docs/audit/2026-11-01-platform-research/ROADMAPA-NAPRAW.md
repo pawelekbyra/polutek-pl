@@ -706,6 +706,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Historia oglądania:** dodano własne widoki, sesje oraz zdarzenia odtwarzania w K27, wybierając tylko jawne pola i wykluczając hashe IP/UA, identyfikatory sesji/DB, dowolne metadata i teksty błędów. Zmiana podniosła kontrakt do `schemaVersion: 3`; celowane testy 6/6 i pozostałe lokalne bramki PASS. Brak pełnego HTTP/DB, review oraz paginacji/strumieniowania K37. [Dowód](program-audytu/evidence/k27-playback-history-2026-11-06/result.json).
 
+**Komunikacja e-mail:** dodano własne metadane odbioru kampanii i zdarzeń webhooka filtrowane po `userId`, bez adresów, identyfikatorów dostawcy/kampanii/odbiorcy, payloadów, błędów i retry. Rekordów bez pewnego `userId` nie łączymy po adresie. Kontrakt wzrósł do `schemaVersion: 4`; lokalne kontrole PASS, brak realnego providera i pełnego HTTP/DB. [Dowód](program-audytu/evidence/k27-email-history-2026-11-06/result.json).
+
 <a id="k28"></a>
 
 #### K28. Polityka cofania sesji WWW i krytyczne operacje

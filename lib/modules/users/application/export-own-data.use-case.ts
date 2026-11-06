@@ -24,7 +24,7 @@ function encodeOwnedImage(input: { type: "avatar" | "channel_banner"; ownerId: s
  */
 export interface OwnDataExport {
   /** Increment when the shape or meaning of this portable JSON contract changes. */
-  schemaVersion: 3;
+  schemaVersion: 4;
   exportedAt: string;
   account: Record<string, unknown> | null;
   comments: unknown[];
@@ -32,6 +32,13 @@ export interface OwnDataExport {
   commentReactions: unknown[];
   subscriptions: unknown[];
   emailPreferences: unknown[];
+  /** Own broadcast email delivery/engagement states, without provider or campaign identifiers. */
+  broadcastEmailRecipients: {
+    language: string; status: string; sentAt: Date | null; deliveredAt: Date | null; openedAt: Date | null;
+    clickedAt: Date | null; bouncedAt: Date | null; complainedAt: Date | null; createdAt: Date; updatedAt: Date;
+  }[];
+  /** Own email webhook event metadata, without addresses, payload, or provider IDs. */
+  emailEvents: { type: string; status: string; processedAt: Date | null; createdAt: Date; updatedAt: Date }[];
   payments: unknown[];
   /** Saved "resume watching" positions (one row per video, seconds). */
   videoProgress: { videoId: string; positionSeconds: number; durationSeconds: number | null; updatedAt: Date }[];
@@ -71,7 +78,7 @@ export interface OwnDataExport {
 export class ExportOwnDataUseCase {
   static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
-    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, videoViews, playbackSessions, playbackEvents, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, patronPass, avatar] = await Promise.all([
+    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, broadcastEmailRecipients, emailEvents, payments, videoProgress, videoFavorites, videoViews, playbackSessions, playbackEvents, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, patronPass, avatar] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -95,6 +102,16 @@ export class ExportOwnDataUseCase {
       prisma.emailPreference.findMany({
         where: { userId },
         select: { email: true, marketingEmails: true, systemEmails: true, unsubscribedAt: true, createdAt: true },
+      }),
+      prisma.broadcastEmailRecipient.findMany({
+        where: { userId },
+        select: { language: true, status: true, sentAt: true, deliveredAt: true, openedAt: true, clickedAt: true, bouncedAt: true, complainedAt: true, createdAt: true, updatedAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.emailEvent.findMany({
+        where: { userId },
+        select: { type: true, status: true, processedAt: true, createdAt: true, updatedAt: true },
+        orderBy: { createdAt: "asc" },
       }),
       prisma.payment.findMany({
         where: { userId },
@@ -183,7 +200,7 @@ export class ExportOwnDataUseCase {
     ];
 
     return {
-      schemaVersion: 3,
+      schemaVersion: 4,
       exportedAt: ctx.now().toISOString(),
       account: user,
       comments,
@@ -194,6 +211,8 @@ export class ExportOwnDataUseCase {
       commentReactions,
       subscriptions,
       emailPreferences,
+      broadcastEmailRecipients,
+      emailEvents,
       payments,
       videoProgress,
       videoFavorites,
