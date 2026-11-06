@@ -6,6 +6,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import type { PipelineStateDto } from "@/lib/modules/video-pipeline";
+import { ApiContractError, PipelineStateResponseSchema, parseApiContract } from "@/lib/video-api-contracts/contracts";
 import { encodeAction } from "@admin/app/(panel)/tresci/actions";
 import { ConfirmDialog, type ConfirmOptions } from "@admin/components/confirm-dialog";
 import { Icon } from "@admin/components/icons";
@@ -46,7 +47,16 @@ export function EncodePanel({ videoId, slug, initial }: { videoId: string; slug:
     let stop = false;
     const tick = async () => {
       const res = await fetch(`/api/videos/${encodeURIComponent(videoId)}/pipeline`, { cache: "no-store" }).catch(() => null);
-      const next = res?.ok ? ((await res.json()) as PipelineStateDto | null) : null;
+      let next: PipelineStateDto | null = null;
+      if (res?.ok) {
+        const body: unknown = await res.json().catch(() => null);
+        try {
+          next = parseApiContract(PipelineStateResponseSchema.nullable(), body, "encode pipeline state");
+        } catch (error) {
+          if (error instanceof ApiContractError && !stop) setError(error.message);
+          return;
+        }
+      }
       if (stop || !next) return;
       setState(next);
       if (!RUNNING.has(next.summary)) router.refresh();

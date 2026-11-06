@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, type MutableRefObject } from "react";
 import { logger } from "@/lib/logger";
 import type { PlaybackPlan } from "@/lib/modules/playback";
+import { readPlaybackPlan } from "@/lib/video-api-contracts/contracts";
 import { isPlayablePlaybackPlan } from "../playback-plan-state";
 
 /** Renew this long before the delivery token expires. */
@@ -58,7 +59,7 @@ export function usePlaybackTokenRenewal(args: {
       if (generationRef.current !== generation) return null;
       // Rate limit / server trouble: keep the current plan, the player retries later.
       if (response.status === 429 || response.status >= 500) return null;
-      const data = (await response.json().catch(() => null)) as PlaybackPlan | null;
+      const data = readPlaybackPlan(await response.json().catch(() => null));
       if (generationRef.current !== generation) return null;
       if (data && isPlayablePlaybackPlan(data, videoId)) {
         invalidatePreloaded?.(videoId);

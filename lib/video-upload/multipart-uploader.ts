@@ -1,3 +1,13 @@
+import {
+  ApiContractError,
+  MultipartCompleteResponseSchema,
+  MultipartPartsResponseSchema,
+  MultipartPresignResponseSchema,
+  MultipartStartResponseSchema,
+  parseApiContract,
+} from "@/lib/video-api-contracts/contracts";
+import type { z } from "zod";
+
 /**
  * Browser-side resumable multipart uploader for the own video pipeline.
  * Talks to <apiBase>/[id]/original-upload/multipart{,/parts,/complete} (admin panel apps/admin: /api/videos) and PUTs parts
@@ -86,11 +96,23 @@ export const xhrPutPart: PartPutter = (url, body, { signal, onProgress }) =>
     xhr.send(body);
   });
 
-async function api<T>(f: typeof fetch, url: string, init: RequestInit): Promise<T> {
+async function api<T>(f: typeof fetch, url: string, init: RequestInit, schema: z.ZodType<T>): Promise<T> {
   const res = await f(url, init);
-  const payload = (await res.json().catch(() => null)) as { error?: string; code?: string } | null;
-  if (!res.ok) throw new UploadError(payload?.error ?? `Błąd serwera (HTTP ${res.status}).`, payload?.code ?? `HTTP_${res.status}`, res.status >= 500);
-  return payload as T;
+  const payload: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const errorBody = payload && typeof payload === "object" ? payload as Record<string, unknown> : null;
+    throw new UploadError(
+      typeof errorBody?.error === "string" ? errorBody.error : `Błąd serwera (HTTP ${res.status}).`,
+      typeof errorBody?.code === "string" ? errorBody.code : `HTTP_${res.status}`,
+      res.status >= 500,
+    );
+  }
+  try {
+    return parseApiContract(schema, payload, url);
+  } catch (error) {
+    if (error instanceof ApiContractError) throw new UploadError(error.message, error.code, false);
+    throw error;
+  }
 }
 
 const json = (body: unknown, signal: AbortSignal): RequestInit => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
@@ -113,7 +135,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   const saved = store?.getItem(key) ?? null;
   if (saved) {
     try {
-      const listed = await api<{ parts: Array<{ partNumber: number; etag: string }>; partSize: number; partCount: number }>(f, `${base}?originalId=${encodeURIComponent(saved)}`, { signal });
+      const listed = await api(f, `${base}?originalId=${encodeURIComponent(saved)}`, { signal }, MultipartPartsResponseSchema);
       if (listed.partSize * (listed.partCount - 1) < file.size && listed.partSize * listed.partCount >= file.size) {
         originalId = saved;
         partSize = listed.partSize;
@@ -126,7 +148,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
     }
   }
   if (!originalId) {
-    const started = await api<{ originalId: string; partSize: number; partCount: number }>(f, base, json({ fileName: file.name, fileSize: file.size, contentType: file.type || "application/octet-stream" }, signal));
+    const started = await api(f, base, json({ fileName: file.name, fileSize: file.size, contentType: file.type || "application/octet-stream" }, signal), MultipartStartResponseSchema);
     originalId = started.originalId;
     partSize = started.partSize;
     partCount = started.partCount;
@@ -163,7 +185,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   const pending = Array.from({ length: partCount }, (_, i) => i + 1).filter((n) => !etags.has(n));
   const urls = new Map<number, string>();
   const presign = async (numbers: number[]) => {
-    const res = await api<{ urls: Array<{ partNumber: number; url: string }> }>(f, `${base}/parts`, json({ originalId: id, partNumbers: numbers }, signal));
+    const res = await api(f, `${base}/parts`, json({ originalId: id, partNumbers: numbers }, signal), MultipartPresignResponseSchema);
     for (const u of res.urls) urls.set(u.partNumber, u.url);
   };
 
@@ -219,7 +241,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   if (failure) throw failure;
 
   const parts = [...etags.entries()].sort((a, b) => a[0] - b[0]).map(([partNumber, etag]) => ({ partNumber, etag }));
-  const done = await api<{ originalId: string; job: { id: string } }>(f, `${base}/complete`, json({ originalId: id, parts, publishAfterReady: Boolean(opts.publishAfterReady) }, signal));
+  const done = await api(f, `${base}/complete`, json({ originalId: id, parts, publishAfterReady: Boolean(opts.publishAfterReady) }, signal), MultipartCompleteResponseSchema);
   store?.removeItem(key);
   return { originalId: done.originalId, jobId: done.job.id };
 }
