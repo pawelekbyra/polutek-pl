@@ -8,6 +8,8 @@ import { AppContext } from "@/lib/modules/shared/app-context";
  * included because they are the person's own records; the card or bank details never reach us.
  */
 export interface OwnDataExport {
+  /** Increment when the shape or meaning of this portable JSON contract changes. */
+  schemaVersion: 1;
   exportedAt: string;
   account: Record<string, unknown> | null;
   comments: unknown[];
@@ -20,12 +22,20 @@ export interface OwnDataExport {
   videoProgress: { videoId: string; positionSeconds: number; durationSeconds: number | null; updatedAt: Date }[];
   /** Videos saved to the person's favorites. */
   videoFavorites: { videoId: string; createdAt: Date }[];
+  /** Profiles owned by this account; moderation internals and binary media are intentionally excluded. */
+  creatorProfiles: unknown[];
+  /** This person's role and acceptance timestamps in channels they belong to. */
+  channelMemberships: unknown[];
+  /** Explicit null means no preference row exists and the application defaults apply. */
+  notificationPreferences: unknown | null;
+  /** The person's patron history, without internal reviewer IDs, reasons, or payment provider IDs. */
+  patronGrants: unknown[];
 }
 
 export class ExportOwnDataUseCase {
   static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
-    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites] = await Promise.all([
+    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, creatorProfiles, channelMemberships, notificationPreferences, patronGrants] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -64,9 +74,36 @@ export class ExportOwnDataUseCase {
         orderBy: { updatedAt: "desc" },
       }),
       prisma.videoFavorite.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "desc" } }),
+      prisma.creator.findMany({
+        where: { userId },
+        select: {
+          id: true, slug: true, name: true, bio: true, handle: true, avatarUrl: true,
+          bannerUpdatedAt: true, links: true, publicContactEmail: true, country: true,
+          language: true, isVerified: true, status: true, createdAt: true, updatedAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.channelMember.findMany({
+        where: { userId },
+        select: { channelId: true, role: true, acceptedAt: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.notificationPreference.findUnique({
+        where: { userId },
+        select: {
+          patronEnabled: true, commentEnabled: true, systemEnabled: true,
+          newVideoInApp: true, newVideoEmail: true, moderationEnabled: true, updatedAt: true,
+        },
+      }),
+      prisma.patronGrant.findMany({
+        where: { userId },
+        select: { source: true, createdAt: true, revokedAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
     ]);
 
     return {
+      schemaVersion: 1,
       exportedAt: ctx.now().toISOString(),
       account: user,
       comments,
@@ -80,6 +117,10 @@ export class ExportOwnDataUseCase {
       payments,
       videoProgress,
       videoFavorites,
+      creatorProfiles,
+      channelMemberships,
+      notificationPreferences,
+      patronGrants,
     };
   }
 }

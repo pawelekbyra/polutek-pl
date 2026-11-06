@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K27 — kategorie eksportu własnych danych, 6 listopada 2026
+
+Dodano numer wersji kontraktu oraz profile kanałów właściciela, członkostwa kanałowe, preferencje powiadomień (brak wiersza = jawne `null`) i zminimalizowaną historię grantów patrona. Zapytania filtrują po aktorze, a profile/granty wykluczają moderator IDs, notatki, provider/payment IDs i pola techniczne. Test 3/3, repo typecheck i ESLint PASS. Bez rzeczywistego HTTP/DB. Binary media, marketplace records i inne otwarte kategorie pozostają; K27 nadal czeka na K05/K11/K26, pełny test i niezależny review. Dowód: `evidence/k27-export-categories-2026-11-06/result.json`.
+
 ## Aktualizacja K03 — odrzucenie pustego manifestu, 6 listopada 2026
 
 Jeśli `RESTORE_EXPECTED_MANIFEST_PATH` wskazywał manifest z pustym `counts`, skrypt wykonywał pozostałe kontrole i mógł zgłosić sukces bez porównania żadnego oczekiwanego agregatu. Teraz jawnie odrzuca pusty zestaw, a test CLI w osobnym procesie pokrywa tę odmowę. Test procesu **32/32 PASS**, ESLint i repo `tsc --noEmit -p tsconfig.typecheck.json` PASS. Nie łączono się z bazą; DB w teście jest syntetyczną granicą. Publiczny `npm run test:critical-path` przechodzi przez wymagany guard. Guard zapisuje revision, fingerprint śledzonych źródeł, stan drzewa i liczniki również przy błędzie; **15/15** testów guarda PASS. Publiczne uruchomienie zaliczyło oba wymagane zestawy: **37 zebranych i wykonanych, 37 PASS, 0 failed, 0 skipped**. Uzupełniono syntetyczny model powiadomień i asercję podziękowania, więc przebieg nie wypisuje błędów fixture. To nie jest dowód dostarczenia powiadomień ani pełny baseline. K03 pozostaje częściowy; pełny baseline po K01 nadal otwarty. Dowody: `evidence/k03-empty-manifest-2026-11-06/result.json`, `evidence/k03-critical-path-invocation-2026-11-06/result.json`, `evidence/k03-critical-path-provenance-2026-11-06/result.json`.

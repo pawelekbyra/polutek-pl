@@ -700,6 +700,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K27-T1** — Osoba z kontem, rolami w kilku kanałach i aktywnymi danymi patrona otrzymuje każdą zadeklarowaną kategorię z wersją kontraktu; brak danych jest jawny, nie pominięty przypadkiem.
 - **K27-T2** — Cudze dane, sekrety i prywatne pola wewnętrzne nie trafiają do eksportu. Cofnięta sesja i cudze ID odmawiają, legalny ponowny eksport działa; K37 nadal otwarte dla dużych zbiorów.
 
+**Postęp lokalny 6 listopada 2026 (częściowy):** dodano `schemaVersion: 1` oraz własne profile kanałów, role i timestampy członkostwa, preferencje powiadomień i historię patron grants. Query są filtrowane po własnym `userId`; wybrane pola kanału i grant nie zawierają wewnętrznych reviewer IDs, powodów ani provider/payment IDs. Brak preferencji jest kategorią `null`, nie pominiętym kluczem. Test 3/3 PASS, ESLint i repo typecheck PASS. Binarne avatary/bannery, globalne AppSetting, powiadomienia jako zdarzenia i przyszłe marketplace orders/entitlements nie zostały dodane; brak pełnego HTTP/DB, review oraz decyzji zależnych K05/K11/K26. K27 pozostaje częściowe. [Dowód](program-audytu/evidence/k27-export-categories-2026-11-06/result.json).
+
 <a id="k28"></a>
 
 #### K28. Polityka cofania sesji WWW i krytyczne operacje
