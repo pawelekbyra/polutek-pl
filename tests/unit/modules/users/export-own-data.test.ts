@@ -17,6 +17,7 @@ function fakeCtx() {
     creator: { findMany: vi.fn(async () => [{ id: "ch1", slug: "owned", name: "Own channel", publicContactEmail: "public@example.com" }]) },
     channelMember: { findMany: vi.fn(async () => [{ channelId: "ch2", role: "EDITOR", acceptedAt: new Date(0), createdAt: new Date(0) }]) },
     notificationPreference: { findUnique: vi.fn(async () => ({ patronEnabled: false, commentEnabled: true, systemEnabled: true, newVideoInApp: false, newVideoEmail: false, moderationEnabled: true, updatedAt: new Date(0) })) },
+    notification: { findMany: vi.fn(async () => [{ kind: "NEW_VIDEO", read: true, createdAt: new Date(0) }]) },
     patronGrant: { findMany: vi.fn(async () => [{ source: "STRIPE_TIP", createdAt: new Date(0), revokedAt: null }]) },
     userAvatar: { findUnique: vi.fn(async () => ({ mime: "image/png", data: Buffer.from([0x89, 0x50, 0x4e, 0x47]) })) },
     channelBanner: { findMany: vi.fn(async () => [{ channelId: "ch1", mime: "image/webp", data: Buffer.from("RIFFdataWEBP") }]) },
@@ -42,6 +43,7 @@ describe("ExportOwnDataUseCase", () => {
     expect(data.creatorProfiles).toEqual([{ id: "ch1", slug: "owned", name: "Own channel", publicContactEmail: "public@example.com" }]);
     expect(data.channelMemberships).toHaveLength(1);
     expect(data.notificationPreferences).toMatchObject({ patronEnabled: false, newVideoInApp: false });
+    expect(data.notifications).toEqual([{ kind: "NEW_VIDEO", read: true, createdAt: new Date(0) }]);
     expect(data.patronGrants).toEqual([{ source: "STRIPE_TIP", createdAt: new Date(0), revokedAt: null }]);
     expect(data.mediaAttachments).toEqual([
       { type: "avatar", ownerId: "u1", mime: "image/png", dataBase64: "iVBORw==" },
@@ -56,6 +58,11 @@ describe("ExportOwnDataUseCase", () => {
     expect(prisma.creator.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.channelMember.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.notificationPreference.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
+    expect(prisma.notification.findMany).toHaveBeenCalledWith({
+      where: { userId: "u1" },
+      select: { kind: true, read: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
     expect(prisma.patronGrant.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.userAvatar.findUnique).toHaveBeenCalledWith({ where: { userId: "u1" }, select: { mime: true, data: true } });
     expect(prisma.channelBanner.findMany).toHaveBeenCalledWith({
@@ -75,6 +82,7 @@ describe("ExportOwnDataUseCase", () => {
       prisma.creator.findMany.mock.calls,
       prisma.channelMember.findMany.mock.calls,
       prisma.notificationPreference.findUnique.mock.calls,
+      prisma.notification.findMany.mock.calls,
       prisma.patronGrant.findMany.mock.calls,
       prisma.userAvatar.findUnique.mock.calls,
       prisma.channelBanner.findMany.mock.calls,
