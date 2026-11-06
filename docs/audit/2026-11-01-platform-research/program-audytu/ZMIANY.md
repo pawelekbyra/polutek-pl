@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K13/R04: per-object błędy usuwania R2
+
+- RED: HTTP 200 z `AccessDenied` był ignorowany, a licznik zgłaszał wszystkie żądane klucze; `SlowDown` nie uruchamiał ponowienia.
+- `HlsWriter.deletePrefix()` używa odpowiedzi per obiekt, liczy tylko potwierdzone `Deleted`, ponawia przejściowe błędy wyłącznie dla nieudanych kluczy (maks. 3 próby), uznaje `NoSuchKey` za idempotentne i rzuca `R2DeleteObjectsError` dla trwałych/wyczerpanych błędów. 2 pliki testów 14/14 PASS, ESLint i typecheck PASS.
+- K13 pozostaje częściowe: nie wykonano Cloudflare R2/S3 sandbox ani drugiego przeglądu R04. [Dowody](evidence/k13-r2-delete-2026-11-06/result.json).
+
 ## 6 listopada 2026 — K10/R30: ukryta przyszła premiera
 
 - Czerwony test odtworzył ujawnienie: gość dostawał `LOGIN_REQUIRED`, zalogowany obcy `COMING_SOON` dla filmu `REMOVED`; tytuł i termin przechodziły do planu.

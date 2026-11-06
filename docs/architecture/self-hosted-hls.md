@@ -28,6 +28,10 @@ Oryginał trafia z przeglądarki admina do prywatnego R2 `polutek`, kolejka w Po
 - Token nie jest związany z widzem: zalogowany widz może skopiować URL i pobrać pliki na czas TTL. To kontrola dostępu, nie DRM. Przy treściach darmowych po zalogowaniu (§4.4) akceptowalne.
 - Jeden sekret `HLS_TOKEN_SECRET` (Worker, `app.env`, `.ai-secrets`); rotacja unieważnia naraz wszystkie trwające odtworzenia (odtwarzacz odnowi token sam przy 403).
 
+## Sprzątanie obiektów
+
+`HlsWriter.deletePrefix()` odczytuje odpowiedź `DeleteObjects` per obiekt (`Quiet: false`), liczy tylko potwierdzone `Deleted` i ponawia wyłącznie przejściowe błędy do trzech prób. `NoSuchKey`/`NotFound` jest idempotentne i nie zwiększa licznika. Trwałe błędy lub wyczerpane próby rzucają `R2DeleteObjectsError`, więc strict purge/durable job nie może oznaczyć częściowego usunięcia jako sukcesu. Testy komponentów są zielone, ale brak jeszcze odbioru na sandboxie Cloudflare R2/S3; zachowanie dostawcy i cały przebieg purge pozostają niepotwierdzone.
+
 ## Koszt i limity
 
 Każdy plik HLS to jedno wywołanie Workera, także trafienie w cache. Plan Free: **twarde 100 000 żądań na dobę**, potem do 00:00 UTC wideo nie gra. Odtworzenie 3 min ≈ 35 żądań, godzina ≈ 600; każde wejście na stronę główną z autoodtwarzaniem hero ≈ 6-10 żądań, więc limit wyczerpuje już ok. 10-15 tys. wejść dziennie. Workers Paid: 5 USD/mies. z 10 mln żądań w cenie. R2: kilkadziesiąt filmów to 1-3 GB (w darmowych 10 GB), transfer 0 USD. `caches.default` działa per centrum danych (bez Tiered Cache): każde PoP przy pierwszym chybieniu czyta R2 (klasa B, pomijalne przy obecnym ruchu).

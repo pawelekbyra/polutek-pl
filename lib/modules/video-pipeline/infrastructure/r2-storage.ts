@@ -45,6 +45,72 @@ function isNotFound(err: unknown): boolean {
   return e?.name === "NoSuchKey" || e?.name === "NotFound" || e?.$metadata?.httpStatusCode === 404;
 }
 
+const DELETE_OBJECT_MAX_ATTEMPTS = 3;
+const TRANSIENT_DELETE_CODES = new Set([
+  "InternalError",
+  "OperationAborted",
+  "RequestTimeout",
+  "ServiceUnavailable",
+  "SlowDown",
+  "Throttling",
+  "ThrottlingException",
+]);
+
+export class R2DeleteObjectsError extends Error {
+  constructor(readonly failedCount: number, readonly errorCodes: string[], readonly removedCount: number) {
+    super(`R2 DeleteObjects failed for ${failedCount} object(s) after confirming ${removedCount} removal(s): ${errorCodes.join(", ") || "unknown error"}`);
+    this.name = "R2DeleteObjectsError";
+  }
+}
+
+async function deleteKeysWithRetry(client: S3Client, bucket: string, keys: string[]) {
+  let pending = keys;
+  let removed = 0;
+  const failures: string[] = [];
+
+  for (let attempt = 1; pending.length > 0 && attempt <= DELETE_OBJECT_MAX_ATTEMPTS; attempt += 1) {
+    const requested = new Set(pending);
+    const result = await client.send(new DeleteObjectsCommand({
+      Bucket: bucket,
+      Delete: { Objects: pending.map((Key) => ({ Key })), Quiet: false },
+    }));
+    const deleted = new Set<string>();
+    for (const item of result.Deleted ?? []) {
+      if (!item.Key || !requested.has(item.Key) || deleted.has(item.Key)) {
+        throw new Error("R2 DeleteObjects returned an invalid Deleted entry");
+      }
+      deleted.add(item.Key);
+    }
+
+    const errors = new Map<string, string>();
+    for (const item of result.Errors ?? []) {
+      const code = item.Code || "Unknown";
+      if (!item.Key || !requested.has(item.Key) || errors.has(item.Key) || deleted.has(item.Key)) {
+        throw new Error("R2 DeleteObjects returned an invalid Errors entry");
+      }
+      errors.set(item.Key, code);
+    }
+
+    const retry: string[] = [];
+    for (const key of pending) {
+      if (deleted.has(key)) {
+        removed += 1;
+        continue;
+      }
+      const code = errors.get(key);
+      if (!code) throw new Error("R2 DeleteObjects returned no result for a requested object");
+      if (code === "NoSuchKey" || code === "NotFound") continue; // already absent is idempotent, but not counted as removed
+      if (TRANSIENT_DELETE_CODES.has(code) && attempt < DELETE_OBJECT_MAX_ATTEMPTS) retry.push(key);
+      else failures.push(code);
+    }
+
+    pending = retry;
+    if (pending.length > 0) await new Promise((resolve) => setTimeout(resolve, 25 * 2 ** (attempt - 1)));
+  }
+
+  return { removed, failures };
+}
+
 /** Streams objects of the PRIVATE originals bucket to local disk. */
 export class OriginalsReader {
   constructor(private readonly client: S3Client) {}
@@ -129,16 +195,19 @@ export class HlsWriter {
       throw new Error(`Refusing to delete a too-broad prefix: ${prefix}`);
     }
     let removed = 0;
+    const failures: string[] = [];
     let token: string | undefined;
     do {
       const list = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
       const keys = (list.Contents ?? []).map((o) => o.Key).filter((k): k is string => Boolean(k));
       if (keys.length > 0) {
-        await this.client.send(new DeleteObjectsCommand({ Bucket: this.bucket, Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true } }));
-        removed += keys.length;
+        const result = await deleteKeysWithRetry(this.client, this.bucket, keys);
+        removed += result.removed;
+        failures.push(...result.failures);
       }
       token = list.IsTruncated ? list.NextContinuationToken : undefined;
     } while (token);
+    if (failures.length > 0) throw new R2DeleteObjectsError(failures.length, [...new Set(failures)], removed);
     return removed;
   }
 }

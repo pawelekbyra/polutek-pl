@@ -1,0 +1,41 @@
+{
+  "package": "K13",
+  "finding": "R04",
+  "date": "2026-11-06",
+  "baseRevision": "504e5d08b7ed7174f6ad1662091813d1d749b546",
+  "status": "PARTIAL_LOCAL_VERIFICATION",
+  "change": {
+    "file": "lib/modules/video-pipeline/infrastructure/r2-storage.ts",
+    "behavior": [
+      "Request per-object DeleteObjects results (Quiet=false) and count only confirmed Deleted keys.",
+      "Retry only transient per-object errors (SlowDown, InternalError, OperationAborted, RequestTimeout, ServiceUnavailable, throttling) up to three total attempts with bounded backoff.",
+      "Treat NoSuchKey/NotFound as idempotent success without inflating the removed count.",
+      "Aggregate permanent/exhausted errors after processing all listed pages and throw R2DeleteObjectsError with failed count, error codes and confirmed removal count."
+    ]
+  },
+  "redRegression": {
+    "command": "npx vitest run tests/unit/video-pipeline/r2-storage-delete.test.ts --reporter=verbose",
+    "exitCode": 1,
+    "observed": [
+      "AccessDenied in an HTTP 200 DeleteObjects response was ignored and deletePrefix returned the requested key count.",
+      "A SlowDown key was not retried; no retry request was sent."
+    ]
+  },
+  "greenVerification": {
+    "focusedTests": {
+      "command": "npx vitest run tests/unit/video-pipeline/r2-storage-delete.test.ts tests/unit/video-pipeline/output-cleanup.test.ts --reporter=json",
+      "files": 2,
+      "passed": 14,
+      "failed": 0,
+      "raw": "vitest.json"
+    },
+    "eslint": { "command": "npx eslint lib/modules/video-pipeline/infrastructure/r2-storage.ts tests/unit/video-pipeline/r2-storage-delete.test.ts", "passed": true, "log": "eslint.log" },
+    "repoTypecheck": { "command": "npm run typecheck", "passed": true, "log": "typecheck.log" },
+    "gitDiffCheck": "PASS"
+  },
+  "limitations": [
+    "No Cloudflare R2 or other S3-compatible sandbox was used; provider-specific DeleteObjects behavior and pagination remain unverified.",
+    "No full public/admin build was run for this infrastructure-only change.",
+    "The imported R04 finding still requires an independent review before K13 can close."
+  ]
+}

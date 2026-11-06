@@ -208,7 +208,7 @@ Szczegóły: `docs/architecture/premieres-and-fundraising.md`.
 
 `StorageProvider.SELF_HLS`: token dostarczania (`SelfHlsTokenService`, HMAC) wystawia **wyłącznie** `PlaybackService` po `checkVideoAccess()` i bramce premiery (`buildSelfHlsPlan()`); plan odmowy nie niesie URL. Bez `HLS_TOKEN_SECRET` albo gdy zasób nie jest `READY`
 plan jest `ERROR`/`PROCESSING`/`NO_PRIMARY_ASSET`, bez URL i tokenu; **nie ma fallbacku** na innego dostawcę. To kontrola dostępu, nie DRM. Odtwarzacz: `hls.js/light` z własnego bundla (nigdy z CDN), odnowienie tokenu bez remontu odtwarzacza.
-Upload oryginału prosto do prywatnego R2 (presigned multipart, weryfikacja rozmiaru i magic bytes), kolejka `VideoEncodeJob` w Postgresie (`FOR UPDATE SKIP LOCKED`), kodowanie wyłącznie w kontenerze `encoder`, **nigdy w żądaniu Next.js**.
+Upload oryginału prosto do prywatnego R2 (presigned multipart, weryfikacja rozmiaru i magic bytes), kolejka `VideoEncodeJob` w Postgresie (`FOR UPDATE SKIP LOCKED`), kodowanie wyłącznie w kontenerze `encoder`, **nigdy w żądaniu Next.js**. Usuwanie HLS przez `HlsWriter.deletePrefix()` liczy tylko potwierdzone klucze; przejściowe błędy per obiekt są ponawiane, a trwały błąd nie może oznaczać sukcesu purge.
 Wartości `StorageProvider` inne niż `SELF_HLS` i tabele dostawców są legacy (nie zapisuj; usunie je migracja czyszcząca). Szczegóły: `docs/operations/VIDEO-PIPELINE.md`, `docs/operations/HLS-SELF-HOSTED.md`, `docs/architecture/self-hosted-hls.md`.
 
 ### 4.18 E-mail
