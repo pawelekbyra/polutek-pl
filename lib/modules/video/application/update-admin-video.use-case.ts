@@ -9,7 +9,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { MediaStorageService, isDerivedThumbnailUrl, isThumbnailProxyPath } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
-import { announcePublishedVideo } from './announce-published-video';
+import { announcePublishedVideo, enqueuePublishedVideoAnnouncement } from './announce-published-video';
 import { publishAdminVideo } from "./publish-admin-video.use-case";
 import { isAllowedPremiereChange, isUpcomingPremiere } from "../domain/premiere";
 import { isAllowedStatusTransition } from "../domain/video-visibility";
@@ -149,6 +149,10 @@ export async function updateAdminVideo(
         ...(safeInput.fundraisingManualPercent !== undefined ? { fundraisingManualPercent: safeInput.fundraisingManualPercent } : {}),
       }
     }, tx);
+
+    if (goesLiveNow && video.status === 'PUBLISHED') {
+      await enqueuePublishedVideoAnnouncement(video.id, tx, ctx.now());
+    }
 
     return video;
   });

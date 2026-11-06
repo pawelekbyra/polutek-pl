@@ -9,7 +9,7 @@ import { toAdminVideoDto } from "../domain/video.dto";
 import { VideoNotFoundError, VideoNotReadyForPublicationError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
-import { announcePublishedVideo } from "./announce-published-video";
+import { announcePublishedVideo, enqueuePublishedVideoAnnouncement } from "./announce-published-video";
 import { clearReadyVisibility } from "./ready-visibility";
 
 export async function publishAdminVideo(
@@ -55,6 +55,8 @@ export async function publishAdminVideo(
         targetId: videoId,
         metadata: { title: result.title }
     }, tx);
+
+    await enqueuePublishedVideoAnnouncement(result.id, tx, now);
 
     return result;
   });
