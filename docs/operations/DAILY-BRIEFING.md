@@ -100,9 +100,9 @@ Kwoty zawsze w groszach/centach (`500` = 5,00). Polecenie do wykonania podgląd 
 właścicielowi razem z podglądem i uruchamia dopiero po jego „tak”/„wykonaj” (skill `odprawa`, sekcja 5).
 
 **Jak to działa na serwerze.** Działania na aplikacji idą przez istniejące use case'y, nie surowy SQL: `lib.mjs`
-łączy się `ssh serwerek` i uruchamia jednorazowy kontener `docker compose run --rm --no-deps -T` usługi `app` z
-obrazem workera (`.current-worker-image`, ten sam commit co aplikacja; obraz aplikacji to zbudowany Next bez źródeł
-use case'ów, więc nie `docker exec polutek-app-1`). Kontener ma `app.env` i sieć compose, nie publikuje portów, a skrypt
+łączy się `ssh serwerek`, weryfikuje zachowany proof aktywnej rewizji i uruchamia jednorazowy kontener
+`docker compose run --rm --no-deps -T` usługi `app` z obrazu workera przypiętego do tej rewizji. Obraz aplikacji to
+zbudowany Next bez źródeł use case'ów, więc nie `docker exec polutek-app-1`. Kontener ma `app.env` i sieć compose, nie publikuje portów, a skrypt
 `app-runner.ts` dostaje na stdin, parametry jako base64url (bez znaków powłoki). Podgląd czyta w transakcji
 `SET TRANSACTION READ ONLY` (Postgres odrzuci zapis) plus `GET` listy zwrotów w Stripe. Trwa ok. 7 s. Działania PP
 Support: `support-remote.mjs` przez `ssh serwerek node` na lokalnym API `127.0.0.1:3010` tokenem „Agent AI” z pliku
