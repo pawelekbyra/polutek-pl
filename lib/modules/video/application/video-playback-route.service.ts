@@ -16,18 +16,22 @@ export class VideoPlaybackRouteService {
     reason?: string;
     encodeClaim?: { jobId: string; workerId: string; attemptId: string | null };
   }, ctx: AppContext): Promise<VideoPlaybackRoute> {
-    const [video, asset] = await Promise.all([
-      ctx.prisma.video.findUnique({ where: { id: input.videoId }, select: { id: true, tier: true } }),
-      ctx.prisma.videoAsset.findUnique({ where: { id: input.assetId } }),
-    ]);
-    if (!video) throw new AppError("Video not found.", 404, "VIDEO_NOT_FOUND");
-    if (!asset || asset.videoId !== input.videoId) throw new AppError("Asset does not belong to this video.", 400, "VIDEO_ASSET_MISMATCH");
-    if (asset.processingState !== VideoAssetProcessingState.READY) throw new AppError("Only READY assets can be activated.", 409, "VIDEO_ASSET_NOT_READY");
-    if (asset.provider !== StorageProvider.SELF_HLS) {
-      throw new AppError(`${asset.provider} cannot be activated: only own HLS is supported.`, 400, "PROVIDER_CANNOT_SERVE_TIER");
-    }
-
     const route = await ctx.db.writeTransaction(async (tx) => {
+      // Asset cleanup takes this same video-row lock before setting cleanupPendingAt.
+      // This fresh read closes the check/delete race: only one transition can win.
+      const videos = await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "Video" WHERE "id" = ${input.videoId} FOR UPDATE`;
+      if (videos.length !== 1) throw new AppError("Video not found.", 404, "VIDEO_NOT_FOUND");
+      const [video, asset] = await Promise.all([
+        tx.video.findUnique({ where: { id: input.videoId }, select: { id: true, tier: true } }),
+        tx.videoAsset.findUnique({ where: { id: input.assetId } }),
+      ]);
+      if (!video) throw new AppError("Video not found.", 404, "VIDEO_NOT_FOUND");
+      if (!asset || asset.videoId !== input.videoId) throw new AppError("Asset does not belong to this video.", 400, "VIDEO_ASSET_MISMATCH");
+      if (asset.cleanupPendingAt) throw new AppError("Asset is reserved for cleanup.", 409, "VIDEO_ASSET_CLEANUP_PENDING");
+      if (asset.processingState !== VideoAssetProcessingState.READY) throw new AppError("Only READY assets can be activated.", 409, "VIDEO_ASSET_NOT_READY");
+      if (asset.provider !== StorageProvider.SELF_HLS) {
+        throw new AppError(`${asset.provider} cannot be activated: only own HLS is supported.`, 400, "PROVIDER_CANNOT_SERVE_TIER");
+      }
       if (input.encodeClaim) {
         const claim = input.encodeClaim;
         const owned = await tx.$queryRaw<Array<{ id: string }>>`

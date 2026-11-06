@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * 1. puts the premieres whose time has come in the queue (`notifyDuePremieres`: one NEW_VIDEO_FANOUT job per video);
  * 2. runs NEW_VIDEO_FANOUT jobs (in-app notifications in resumable pages, also publish-time fan-outs a dead
  *    process left half-way);
- * 3. runs STORAGE_CLEANUP jobs (R2 objects of deleted videos, retried until confirmed).
+ * 3. runs durable storage jobs: deleted-video manifests and reserved HLS asset cleanup, retried until confirmed.
  * Safe to overlap or repeat: a job is taken with a lease, and its notifications are deduped per (user, video).
  */
 export async function GET(req: NextRequest) {

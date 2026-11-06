@@ -12,8 +12,8 @@ function ctxForRoute(assetOverrides: any = {}) {
       updateMany: async ({ data }: any) => calls.routeUpdates.push(data),
       create: async ({ data }: any) => ({ id: 'route-new', ...data, createdAt: new Date(), updatedAt: new Date() }),
     },
-    video: { update: async ({ data }: any) => calls.videoUpdates.push(data), updateMany: async ({ data }: any) => calls.videoUpdates.push(data) },
-    videoAsset: { updateMany: async ({ data }: any) => calls.assetUpdateMany.push(data), update: async ({ data }: any) => calls.assetUpdates.push(data) },
+    video: { findUnique: async () => ({ id: 'video-1', tier: AccessTier.PUBLIC }), update: async ({ data }: any) => calls.videoUpdates.push(data), updateMany: async ({ data }: any) => calls.videoUpdates.push(data) },
+    videoAsset: { findUnique: async () => ({ id: 'asset-1', videoId: 'video-1', provider: StorageProvider.SELF_HLS, processingState: VideoAssetProcessingState.READY, ...assetOverrides }), updateMany: async ({ data }: any) => calls.assetUpdateMany.push(data), update: async ({ data }: any) => calls.assetUpdates.push(data) },
   };
   const ctx = {
     actor: { type: 'admin', userId: 'admin-1' },
@@ -52,6 +52,11 @@ describe('VideoPlaybackRouteService', () => {
   it('rejects non-ready assets', async () => {
     const { ctx } = ctxForRoute({ processingState: VideoAssetProcessingState.PROCESSING });
     await expect(new VideoPlaybackRouteService().activateRoute({ videoId: 'video-1', assetId: 'asset-1', activatedBy: 'POLICY' }, ctx)).rejects.toThrow(/READY assets/);
+  });
+
+  it('refuses an asset already reserved for cleanup', async () => {
+    const { ctx } = ctxForRoute({ cleanupPendingAt: new Date() });
+    await expect(new VideoPlaybackRouteService().activateRoute({ videoId: 'video-1', assetId: 'asset-1', activatedBy: 'POLICY' }, ctx)).rejects.toMatchObject({ code: 'VIDEO_ASSET_CLEANUP_PENDING' });
   });
 
   it.each([StorageProvider.CLOUDFLARE_STREAM, StorageProvider.MUX, StorageProvider.YOUTUBE, StorageProvider.VIMEO, StorageProvider.VERCEL_BLOB, StorageProvider.R2, StorageProvider.S3])('refuses to route a legacy %s asset, for any tier', async (provider) => {

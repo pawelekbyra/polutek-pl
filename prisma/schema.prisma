@@ -994,6 +994,8 @@ model VideoAsset {
   objectKey         String
   bucket            String?
   processingState   VideoAssetProcessingState @default(READY)
+  /// Non-null while a durable cleanup owns the HLS prefix; route-activation trigger blocks even legacy workers.
+  cleanupPendingAt  DateTime?
   isPrimary         Boolean                   @default(true)
   failureReason     String?
   processingEndedAt DateTime?
@@ -1837,7 +1839,7 @@ enum DurableJobStatus {
 /// e-mail broadcast queue, see lib/modules/shared/durable-job.ts.
 model DurableJob {
   id          String           @id @default(uuid())
-  /// "NEW_VIDEO_FANOUT" | "STORAGE_CLEANUP" (free text on purpose: a new kind needs no migration).
+  /// "NEW_VIDEO_FANOUT" | "STORAGE_CLEANUP" | "VIDEO_ASSET_CLEANUP" (free text on purpose: a new kind needs no migration).
   kind        String
   /// What the job is about (a video id); enqueueing the same (kind, dedupeKey) again does not create a second job.
   dedupeKey   String
