@@ -4,7 +4,7 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { createScopedLogger } from "@/lib/logger";
-import { hlsAssetKey } from "../domain/keys";
+import { isHlsAssetKey } from "../domain/keys";
 import { parseVersionNumber } from "../domain/encode-job.state";
 import { HlsWriter, hlsBucketName, makeR2Client, readR2Credentials } from "../infrastructure/r2-storage";
 import { OriginalsMultipart } from "../infrastructure/r2-multipart";
@@ -33,7 +33,7 @@ export async function deleteSelfHlsAsset(
     const asset = await ctx.prisma.videoAsset.findFirst({ where: { id: input.assetId, videoId: video.id, provider: "SELF_HLS" } });
     if (!asset) return fail(new AppError("Wynik kodowania nie istnieje.", 404, "ASSET_NOT_FOUND"));
     const version = parseVersionNumber(asset.objectKey);
-    if (!version || asset.objectKey !== hlsAssetKey(video.id, version)) return fail(new AppError("Niepoprawny klucz wyniku.", 409, "ASSET_KEY_INVALID"));
+    if (!version || !isHlsAssetKey(video.id, asset.objectKey)) return fail(new AppError("Niepoprawny klucz wyniku.", 409, "ASSET_KEY_INVALID"));
 
     const active = await ctx.prisma.videoPlaybackRoute.findFirst({ where: { videoId: video.id, assetId: asset.id, status: "ACTIVE" }, select: { id: true } });
     if (active && (video.status === "PUBLISHED" || video.status === "UNLISTED")) {
@@ -83,7 +83,7 @@ export async function purgeVideoStorage(
     if (hls) {
       for (const key of snapshot.assetKeys) {
         const version = parseVersionNumber(key);
-        if (version && key === hlsAssetKey(videoId, version)) result.hlsObjects += await hls.deletePrefix(`${key}/`).catch(() => 0);
+        if (version && isHlsAssetKey(videoId, key)) result.hlsObjects += await hls.deletePrefix(`${key}/`).catch(() => 0);
       }
     }
     if (originals) {
@@ -128,7 +128,7 @@ export async function purgeVideoStorageStrict(
   const result = { hlsObjects: 0, originals: 0 };
   const hlsKeys = snapshot.assetKeys.filter((key) => {
     const version = parseVersionNumber(key);
-    return Boolean(version) && key === hlsAssetKey(videoId, version as number);
+    return Boolean(version) && isHlsAssetKey(videoId, key);
   });
   const originalsToRemove = snapshot.originals.filter((o) => o.objectKey.startsWith(`originals/${videoId}/`));
   if (hlsKeys.length === 0 && originalsToRemove.length === 0) return result;

@@ -5,6 +5,7 @@ import { R2ThumbnailStorageClient } from "@/lib/modules/media";
 import { VideoPlaybackRouteService, attemptPublishAfterAssetReady, syncPublicThumbnailById } from "@/lib/modules/video";
 import { createScopedLogger } from "@/lib/logger";
 import type { FinalizeInput, ProcessorPorts } from "./process-encode-job";
+import { hlsAssetKey } from "../domain/keys";
 
 const logger = createScopedLogger("FinalizeSelfHls");
 
@@ -31,7 +32,7 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
   return {
     async findExisting(job: VideoEncodeJob, assetKey: string) {
       const asset = await prisma.videoAsset.findFirst({
-        where: { videoId: job.videoId, provider: "SELF_HLS", objectKey: assetKey, processingState: "READY" },
+        where: { videoId: job.videoId, provider: "SELF_HLS", objectKey: { in: [...new Set([assetKey, hlsAssetKey(job.videoId, job.versionNumber)])] }, processingState: "READY" },
         select: { id: true, playbackRoutes: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 } },
       });
       return asset && asset.playbackRoutes.length > 0 ? asset.id : null;
@@ -39,8 +40,9 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
 
     async finalize(input: FinalizeInput) {
       const { job, assetKey } = input;
+      const legacyAssetKey = hlsAssetKey(job.videoId, job.versionNumber);
       const created = await prisma.videoAsset.findFirst({
-        where: { videoId: job.videoId, provider: "SELF_HLS", objectKey: assetKey },
+        where: { videoId: job.videoId, provider: "SELF_HLS", objectKey: { in: [...new Set([assetKey, legacyAssetKey])] } },
         select: { id: true },
       });
       const assetId =
@@ -64,7 +66,7 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
 
       try {
         await new VideoPlaybackRouteService().activateRoute(
-          { videoId: job.videoId, assetId, activatedBy: "POLICY", reason: `own HLS encode job ${job.id}` },
+          { videoId: job.videoId, assetId, activatedBy: "POLICY", reason: `own HLS encode job ${job.id} attempt ${job.attemptId ?? "legacy"}` },
           ctx,
         );
       } catch (error) {

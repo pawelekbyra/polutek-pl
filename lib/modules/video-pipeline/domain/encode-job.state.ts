@@ -208,6 +208,6 @@ export function estimateEtaSeconds(input: { stageElapsedMs: number; fraction: nu
 
 /** "v3" -> 3; anything else -> 0. Used to pick the next HLS output generation. */
 export function parseVersionNumber(value: string | null | undefined): number {
-  const match = /(?:^|\/)v(\d+)$/.exec(value ?? "");
+  const match = /(?:^|\/)v(\d+)(?:\/attempts\/[0-9a-f-]{36})?$/.exec(value ?? "");
   return match ? Number(match[1]) : 0;
 }

@@ -6,7 +6,7 @@ import { EncodeJobRepository } from "@/lib/modules/video-pipeline/infrastructure
 function job(overrides: Partial<VideoEncodeJob> = {}): VideoEncodeJob {
   return {
     id: "j1", videoId: "v1", channelId: null, originalId: "o1", versionNumber: 1, idempotencyKey: "o1:1", status: "QUEUED", stage: "QUEUED",
-    progressPercent: 0, etaSeconds: null, attemptCount: 0, maxAttempts: 3, cancelRequested: false, failureCode: null,
+    progressPercent: 0, etaSeconds: null, attemptCount: 0, attemptId: null, maxAttempts: 3, cancelRequested: false, failureCode: null,
     failureReason: null, nextAttemptAt: null, workerId: null, heartbeatAt: null, startedAt: null, finishedAt: null,
     requestedById: null, assetId: null, sourceInfo: null, result: null, createdAt: new Date(), updatedAt: new Date(), ...overrides,
   };

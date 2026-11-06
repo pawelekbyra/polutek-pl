@@ -1079,6 +1079,8 @@ model VideoEncodeJob {
   progressPercent Int                  @default(0)
   etaSeconds      Int?
   attemptCount    Int                  @default(0)
+  /// Fresh UUID assigned atomically on every claim; null only for a legacy in-flight claim.
+  attemptId       String?
   maxAttempts     Int                  @default(3)
   cancelRequested Boolean              @default(false)
   failureCode     String?

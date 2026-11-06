@@ -19,6 +19,7 @@ function makeJob(overrides: Partial<VideoEncodeJob> = {}): VideoEncodeJob {
     progressPercent: 0,
     etaSeconds: null,
     attemptCount: 1,
+    attemptId: null,
     maxAttempts: 3,
     cancelRequested: false,
     failureCode: null,
@@ -126,11 +127,37 @@ describe("processEncodeJob", () => {
     expect(h.events.indexOf("finalize")).toBeGreaterThan(h.events.indexOf("put:master.m3u8"));
     expect(h.events.indexOf("markSucceeded")).toBeGreaterThan(h.events.indexOf("finalize"));
     expect(h.uploaded.every((k) => k.startsWith("videos/vid-1/v/v2/"))).toBe(true);
-    expect(h.hls.deletePrefix).toHaveBeenCalledWith("videos/vid-1/v/v2/"); // empties a stale partial attempt first
+    expect(h.hls.deletePrefix).toHaveBeenCalledWith("videos/vid-1/v/v2/"); // legacy jobs retain their original prefix
     expect(h.audit).toHaveBeenCalledWith("VIDEO_ENCODE_STARTED", expect.anything(), expect.anything());
     expect(h.audit).toHaveBeenCalledWith("VIDEO_ENCODE_SUCCEEDED", expect.anything(), expect.objectContaining({ assetId: "asset-1" }));
     // the work directory is gone
-    await expect(access(path.join(root, "job-1"))).rejects.toBeTruthy();
+    await expect(access(path.join(root, "job-1-legacy"))).rejects.toBeTruthy();
+  });
+
+  it("isolates upload and cleanup under the claimed attempt prefix", async () => {
+    const attemptId = "11111111-1111-4111-8111-111111111111";
+    const h = harness({ job: makeJob({ attemptId }) });
+    const prefix = `videos/vid-1/v/v2/attempts/${attemptId}/`;
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("succeeded");
+    expect(h.hls.deletePrefix).toHaveBeenCalledWith(prefix);
+    expect(h.uploaded.length).toBeGreaterThan(0);
+    expect(h.uploaded.every((key) => key.startsWith(prefix))).toBe(true);
+    expect(h.hls.exists).toHaveBeenCalledWith(`${prefix}master.m3u8`);
+    expect(h.finalizer.finalize).toHaveBeenCalledWith(expect.objectContaining({ assetKey: prefix.slice(0, -1) }));
+  });
+
+  it("cleans only the failed attempt prefix", async () => {
+    const attemptId = "22222222-2222-4222-8222-222222222222";
+    const otherAttemptId = "33333333-3333-4333-8333-333333333333";
+    const h = harness({ job: makeJob({ attemptId }) });
+    h.hls.countPrefix.mockResolvedValue(0);
+    const ownPrefix = `videos/vid-1/v/v2/attempts/${attemptId}/`;
+    const otherPrefix = `videos/vid-1/v/v2/attempts/${otherAttemptId}/`;
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("retry");
+    expect(h.hls.deletePrefix).toHaveBeenCalledTimes(2);
+    expect(h.hls.deletePrefix).toHaveBeenNthCalledWith(1, ownPrefix);
+    expect(h.hls.deletePrefix).toHaveBeenNthCalledWith(2, ownPrefix);
+    expect(h.hls.deletePrefix).not.toHaveBeenCalledWith(otherPrefix);
   });
 
   it("never finalizes when the R2 object count does not match, and retries", async () => {

@@ -13,7 +13,7 @@ import {
   parseVersionNumber,
   retryDelayMs,
 } from "@/lib/modules/video-pipeline/domain/encode-job.state";
-import { hlsAssetKey, hlsContentType, hlsObjectKey, isUploadableHlsFile, sortForUpload } from "@/lib/modules/video-pipeline/domain/keys";
+import { hlsAssetKey, hlsAttemptAssetKey, hlsAttemptObjectKey, hlsContentType, hlsObjectKey, isHlsAssetKey, isUploadableHlsFile, sortForUpload } from "@/lib/modules/video-pipeline/domain/keys";
 import { stepWeights } from "@/scripts/hls/encode-hls.mjs";
 
 describe("encode job state machine", () => {
@@ -83,6 +83,7 @@ describe("encode job state machine", () => {
 
   it("parses HLS output generations", () => {
     expect(parseVersionNumber("videos/abc/v/v3")).toBe(3);
+    expect(parseVersionNumber("videos/abc/v/v3/attempts/11111111-1111-4111-8111-111111111111")).toBe(3);
     expect(parseVersionNumber("v12")).toBe(12);
     expect(parseVersionNumber("videos/abc/v/final")).toBe(0);
     expect(parseVersionNumber(null)).toBe(0);
@@ -93,6 +94,11 @@ describe("hls keys", () => {
   it("builds the object keys the Worker and SelfHlsTokenService expect", () => {
     expect(hlsAssetKey("vid", 2)).toBe("videos/vid/v/v2");
     expect(hlsObjectKey("vid", 2, "720p/seg_00001.m4s")).toBe("videos/vid/v/v2/720p/seg_00001.m4s");
+    const attempt = "11111111-1111-4111-8111-111111111111";
+    expect(hlsAttemptAssetKey("vid", 2, attempt)).toBe(`videos/vid/v/v2/attempts/${attempt}`);
+    expect(hlsAttemptObjectKey("vid", 2, attempt, "master.m3u8")).toBe(`videos/vid/v/v2/attempts/${attempt}/master.m3u8`);
+    expect(isHlsAssetKey("vid", `videos/vid/v/v2/attempts/${attempt}`)).toBe(true);
+    expect(isHlsAssetKey("vid", "videos/other/v/v2")).toBe(false);
     expect(hlsContentType("master.m3u8")).toBe("application/vnd.apple.mpegurl");
     expect(hlsContentType("x.bin")).toBe("application/octet-stream");
   });
