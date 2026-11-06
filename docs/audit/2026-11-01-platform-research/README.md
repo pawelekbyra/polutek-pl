@@ -2,7 +2,7 @@
 
 Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-audit`** w repozytorium `pawelekbyra/polutek-pl`. Właściciel 1 listopada 2026 polecił zachowywać tutaj także poprzednie badanie i dopisywać kolejne wnioski na tej samej gałęzi.
 
-**Praca zatrzymana na polecenie właściciela 4 listopada2026 (limit tygodniowy1%).** Zielony kod do `2d081d7f`, osobny checkpoint WIP, bez automatycznego wznowienia. [Bieżący stan i komenda wznowienia](program-audytu/STAN.md), [postęp i dowody](POSTEP-NAPRAW.md), [mapa commitów](program-audytu/MAPA-COMMITOW.csv). Producent K06 istnieje, konsumenci i pełny produkt pozostają do dokończenia. Bez PR/push/merge/deploy; stare wyniki zachowują przypisanie do swoich SHA.
+**Roadmapa wznowiona na polecenie właściciela 6 listopada 2026.** Punkt bazowy to lokalny merge aktualnego `origin/main` (`e2d33e0e`), commit `7e6f5335`; pełne `npm run quality` przeszło na tym drzewie. Następny jest K06: wpięcie i weryfikacja konsumentów wydania; żaden pakiet nie jest jeszcze formalnie zamknięty. [Bieżący stan i komenda wznowienia](program-audytu/STAN.md), [postęp i dowody](POSTEP-NAPRAW.md), [mapa commitów](program-audytu/MAPA-COMMITOW.csv). Bez push, PR, merge do main, wdrożenia ani produkcji.
 
 ## Zacznij tutaj
 

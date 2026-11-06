@@ -1,5 +1,15 @@
 # Postęp realizacji roadmapy — H1
 
+## Wznowienie właściciela — 6 listopada 2026
+
+Właściciel wznowił realizację i polecił wykonać całą roadmapę. Historyczny STOP z 4 listopada nie obowiązuje od tego polecenia; pozostaje niżej jako zapis. Praca jest tylko w lokalnym worktree `/opt/codex/polutek-pl/.worktrees/platform-audit`, gałąź `docs/polutek-platform-audit`, bez publikacji, PR, wdrożeń ani dostępu do produkcji.
+
+Punkt bazowy odświeżono przez lokalne scalenie `origin/main` (`e2d33e0e`) do gałęzi audytu, commit **`7e6f5335`**. Pełne `npm run quality` na dokładnym drzewie tego merge: architektura PASS, typecheck PASS, **564 pliki testowe PASS, 1 pominięty; 4980 testów PASS, 2 pominięte**, exit 0. Vitest trwał 493,89 s; nie uruchamiać go ponownie bez zmiany kodu lub konkretnej przyczyny. To bazowa kontrola zintegrowanego drzewa, nie zamknięcie pakietu napraw.
+
+`origin/main` ma obecnie Next i eslint-config-next **16.4.4**; poprawki K02 są w kodzie gałęzi, ale K02 pozostaje niezamknięte bez pełnego świeżego przeglądu zależności i dowodu obrazu. W toku pozostaje K06: konsumenci wydania i rzeczywiste pięć obrazów. K01/K03 mają udokumentowane częściowe dowody, lecz pełny cykl API/worker/HLS/storage nadal nie jest odebrany. Cała roadmapa nadal ma 40 pakietów i żaden nie jest formalnie zamknięty.
+
+**Następny pakiet:** wznowić K06 od audytu wszystkich konsumentów wydania na aktualnym bazowym SHA i dodać próby odmowy, zaczynając od ścieżki `images.yml`; nie wykonywać publikacji ani wdrożenia. K05 i decyzje DP01–DP09 pozostają otwarte; niezależne naprawy można prowadzić bez zgadywania aktywnego profilu.
+
 ## STOP właściciela — 4 listopada 2026
 
 Praca **zatrzymana na wyraźne polecenie właściciela** z powodu pozostałego1% limitu tygodniowego. Nie wznawiać automatycznie. Ukończone zielone części są w lokalnych commitach, ostatni kod **`2d081d7f`**; osobny commit WIP zawiera checkpoint niedokończonej integracji H1/K06. Kod roboczy nie pozostał niesprawdzony ani niezapisany. Nie uruchamiano nowych pakietów ani ciężkich testów po poleceniu zatrzymania; dokończono tylko lint aktualnych14 plików i zapis.

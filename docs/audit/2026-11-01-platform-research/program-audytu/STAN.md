@@ -1,5 +1,12 @@
 # Stan badania i napraw — punkt wznowienia
 
+## Wznowienie napraw — 6 listopada 2026
+
+- Właściciel wznowił pełną roadmapę po STOP z 4 listopada. Ograniczenia bieżącej pracy: tylko worktree `platform-audit`/gałąź `docs/polutek-platform-audit`; bez push, PR, merge do main, produkcji ani `/opt/serwerek`.
+- Aktualny bazowy kod: `origin/main` `e2d33e0ed49d759effb3162b4f43c8540bafd4a1`, lokalnie scalony do gałęzi napraw commit `7e6f5335`. Pełne `npm run quality` na drzewie tego merge: architektura/typecheck PASS; Vitest 564 pliki PASS, 1 skipped; 4980 testów PASS, 2 skipped, exit 0 (493,89 s). To sprawdzenie bazy, nie dowód gotowości wydania ani zamknięcie K01–K06.
+- K02 kandydat ma Next/eslint-config-next 16.4.4; brak świeżego audytu zależności i dowodu pięciu bieżących obrazów, zatem nie zamykać. K06 producent i walidator istnieją, ale ich konsumentów nie zweryfikowano end-to-end.
+- Następny krok: K06, zinwentaryzować `images.yml` oraz wszystkie build/publish/deploy/migration/activation/rollback/manual consumers, potem próbą odmowną wykazać, że żaden nie publikuje ani nie aktywuje artefaktu bez zweryfikowanego dowodu. Bez użycia produkcji.
+
 ## ZATRZYMANE na polecenie właściciela — 4 listopada 2026
 
 Właściciel polecił zakończyć bieżącą pracę przy pozostałym 1% limitu tygodniowego, zapisać zielone części i osobny checkpoint WIP. **Nie wznawiać automatycznie.** Nie zaczynać nowych pakietów ani ciężkich testów przed nowym poleceniem właściciela.

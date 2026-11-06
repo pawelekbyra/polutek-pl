@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — wznowienie roadmapy i aktualizacja bazy
+
+- Na polecenie właściciela wznowiono pełną roadmapę po wcześniejszym STOP. Gałąź audytu lokalnie scalono z `origin/main` (`e2d33e0e`) commitem `7e6f5335`, aby naprawy odnosiły się do aktualnego kodu.
+- Pełne `npm run quality` na scalonym drzewie: architektura/typecheck PASS, Vitest 564 pliki PASS/1 skipped i 4980 testów PASS/2 skipped, exit 0. Nie jest to zamknięcie pakietu ani wydania.
+- Następny zakres: wznowienie K06 i sprawdzenie wszystkich konsumentów wydania przed dalszymi pakietami. K02 ma poprawiony zakres Next, ale nadal wymaga świeżego dowodu zależności/obrazu.
+
 ## 1 listopada 2026 — v1.0
 
 - Cel: duża platforma, pogłębione badanie zamiast pojedynczego porównania.
