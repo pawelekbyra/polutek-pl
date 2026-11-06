@@ -30,14 +30,17 @@
       "exitCode": 0
     },
     {
-      "name": "postgres-worker-integration",
+      "name": "postgres-finalizer-integration",
       "command": "npx vitest run --config vitest.postgres.config.ts tests/postgres/k20-auto-publish-channel.pg.test.ts",
-      "exitCode": null,
-      "status": "NOT_RUN",
+      "exitCode": 0,
+      "status": "PASS",
+      "database": "Disposable local PostgreSQL 17 container (isolated port 55492; stopped after test).",
+      "migrationsApplied": 83,
       "testFile": "tests/postgres/k20-auto-publish-channel.pg.test.ts",
       "expectedTests": 7,
-      "testFileStatus": "AUTHORED_AND_LINTED_NOT_EXECUTED",
-      "reason": "DATABASE_URL is unset in the authorized worktree; no disposable PostgreSQL test endpoint is configured."
+      "passed": 7,
+      "failed": 0,
+      "testFileStatus": "EXECUTED_AGAINST_REAL_POSTGRESQL"
     }
   ],
   "design": {
@@ -47,7 +50,7 @@
     "outcome": "The use case returns published, unlisted, waiting, skipped, refused, or failed; the worker logs the outcome. An owner-query failure fails closed."
   },
   "limits": [
-    "The focused tests use controlled database doubles; no real PostgreSQL finalizer/worker acceptance was run.",
+    "The PostgreSQL test exercises the real database-backed finalizer but not a complete independent worker process.",
     "A channel suspended between the status read and the publication transaction is not yet covered by a transactional channel-state check.",
     "No independent review; K20 remains partially verified and R23 is not marked closed."
   ]
