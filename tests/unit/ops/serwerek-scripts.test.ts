@@ -80,6 +80,7 @@ describe('serwerek scripts: static', () => {
     expect(mergeSh).toContain('DEPLOY_LOCK_HELD=1 RELEASE_REVISION=');
     expect(mergeSh).toContain('bash .release-artifacts/${revision}/source/deploy/serwerek/deploy.sh');
     expect(mergeSh).not.toContain('--admin');
+    expect(mergeSh.indexOf('deploy wymaga RELEASE_REVISION')).toBeLessThan(mergeSh.indexOf('state=$(gh pr view'));
   });
 
   it('a failing "compose up" is part of the rollback condition', () => {
@@ -103,6 +104,34 @@ describe('serwerek scripts: static', () => {
 const runBash = process.platform !== 'win32' || process.env.SERWEREK_BASH_TESTS === '1';
 const posix = (p: string) => p.replace(/\\/g, '/');
 const tmpDirs: string[] = [];
+
+describe.skipIf(!runBash)('mergedeploy.sh release preflight', () => {
+  it('rejects missing proof inputs before querying or merging a PR', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'mergedeploy-preflight-'));
+    tmpDirs.push(dir);
+    const repo = path.join(dir, 'repo');
+    const bin = path.join(dir, 'bin');
+    mkdirSync(path.join(repo, 'scripts/ops'), { recursive: true });
+    mkdirSync(bin);
+    writeFileSync(path.join(repo, 'scripts/ops/mergedeploy.sh'), mergeSh);
+    const ghLog = path.join(dir, 'gh.log');
+    const fakeGh = path.join(bin, 'gh');
+    writeFileSync(fakeGh, `#!/bin/sh\nprintf '%s\\n' "$*" >> '${posix(ghLog)}'\nexit 99\n`);
+    chmodSync(fakeGh, 0o755);
+    const init = spawnSync('git', ['init', '-q', repo], { encoding: 'utf8' });
+    expect(init.status, init.stderr).toBe(0);
+
+    const result = spawnSync('bash', [path.join(repo, 'scripts/ops/mergedeploy.sh'), '123', 'branch', 'release'], {
+      cwd: repo,
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH ?? ''}`, RELEASE_REVISION: '', RELEASE_PROOF_SHA256: '' },
+    });
+
+    expect(result.status, result.stderr).toBe(4);
+    expect(result.stderr).toContain('deploy wymaga RELEASE_REVISION');
+    expect(existsSync(ghLog)).toBe(false);
+  });
+});
 
 const FAKE_DOCKER = `#!/usr/bin/env bash
 echo "docker $*" >> "$FAKE_DIR/docker.log"

@@ -21,6 +21,18 @@ cd "$(git rev-parse --show-toplevel)" || exit 1
 [[ "$TAG" =~ ^[A-Za-z0-9._-]{1,32}$ ]] || { echo "nieprawidlowy prefiks tagu" >&2; exit 2; }
 [[ -z "$MODE" || "$MODE" == "--no-deploy" ]] || { echo "nieznany tryb" >&2; exit 2; }
 
+revision="${RELEASE_REVISION:-}"
+approved_hash="${RELEASE_PROOF_SHA256:-}"
+run_id="${RELEASE_RUN_ID:-}"
+bundle_dir="${RELEASE_BUNDLE_DIR:-}"
+if [ "$MODE" != "--no-deploy" ]; then
+  [[ "$revision" =~ ^[a-f0-9]{40}$ && "$approved_hash" =~ ^[a-f0-9]{64}$ ]] \
+    || { echo "deploy wymaga RELEASE_REVISION i zewnetrznie zatwierdzonego RELEASE_PROOF_SHA256" >&2; exit 4; }
+  if [[ -z "$bundle_dir" && ! "$run_id" =~ ^[0-9]+$ ]]; then
+    echo "podaj lokalny RELEASE_BUNDLE_DIR albo ukończony RELEASE_RUN_ID" >&2; exit 4
+  fi
+fi
+
 MERGE_ARGS=()
 
 # Runs local-ci on origin/$BR (+ origin/main). In place when this checkout is exactly that commit,
@@ -88,15 +100,6 @@ fi
 [ "$MODE" = "--no-deploy" ] && exit 0
 
 git fetch -q origin main
-revision="${RELEASE_REVISION:-}"
-approved_hash="${RELEASE_PROOF_SHA256:-}"
-run_id="${RELEASE_RUN_ID:-}"
-bundle_dir="${RELEASE_BUNDLE_DIR:-}"
-[[ "$revision" =~ ^[a-f0-9]{40}$ && "$approved_hash" =~ ^[a-f0-9]{64}$ ]] \
-  || { echo "PR scalony; deploy wymaga RELEASE_REVISION i zewnetrznie zatwierdzonego RELEASE_PROOF_SHA256" >&2; exit 4; }
-if [[ -z "$bundle_dir" && ! "$run_id" =~ ^[0-9]+$ ]]; then
-  echo "podaj lokalny RELEASE_BUNDLE_DIR albo ukończony RELEASE_RUN_ID" >&2; exit 4
-fi
 git rev-parse --verify "origin/main^{commit}" >/dev/null || exit 2
 main_sha=$(git rev-parse origin/main)
 [ "$revision" = "$main_sha" ] || { echo "RELEASE_REVISION nie odpowiada origin/main ($main_sha)" >&2; exit 4; }
