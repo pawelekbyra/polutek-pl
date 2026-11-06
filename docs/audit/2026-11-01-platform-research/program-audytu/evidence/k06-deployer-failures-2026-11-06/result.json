@@ -15,5 +15,15 @@
   "testsFailed": 0,
   "testAdapter": "fake Docker, fake process tools and temporary filesystem; database dump/migration are simulated",
   "productionDockerOrServerUsed": false,
-  "conclusion": "These negative-path controls are covered in an isolated harness. This does not prove real Docker, database, image or server behavior; K06 remains open."
+  "conclusion": "These negative-path controls are covered in an isolated harness. This does not prove real Docker, database, image or server behavior; K06 remains open.",
+  "fullSuite": {
+    "command": "npx vitest run tests/unit/ops/serwerek-scripts.test.ts --reporter=json",
+    "files": 1,
+    "testsPassed": 45,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "success": true,
+    "raw": "full-suite.json",
+    "log": "full-suite.log"
+  }
 }

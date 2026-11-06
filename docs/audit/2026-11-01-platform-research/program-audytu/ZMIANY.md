@@ -417,5 +417,5 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 ## 6 listopada 2026 — K06: awarie deployera w sandboxie
 
 - W fake-Docker harness dodano sterowaną awarię dumpu przed wdrożeniem i regresję: częściowy zrzut usunięty, bieżący obraz zachowany, migracja i aktywacja pominięte.
-- Cztery scenariusze przeszły **4/4 PASS**: błąd dumpu, błąd migracji, błąd uruchomienia aplikacji i rollback, błąd panelu i rollback po sprawdzeniu zachowanego proofu. [Wynik](evidence/k06-deployer-failures-2026-11-06/).
+- Pełny `tests/unit/ops/serwerek-scripts.test.ts` przeszedł **45/45 PASS, zero skip**. Cztery scenariusze przeszły **4/4 PASS**: błąd dumpu, błąd migracji, błąd uruchomienia aplikacji i rollback, błąd panelu i rollback po sprawdzeniu zachowanego proofu. [Wynik](evidence/k06-deployer-failures-2026-11-06/).
 - Adapter symuluje Docker, dump/migrator i filesystem; nie użyto prawdziwej bazy, obrazów, GHCR, SSH ani serwera. To weryfikacja częściowa; K06 pozostaje otwarte.
