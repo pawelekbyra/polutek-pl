@@ -373,3 +373,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Telemetria: błędny zachowany proof lub błąd `verify-active-release.sh` nie przechodzi do Docker/DB i nie zmienia `app.env`/`collector.env`.
 - Pięć skupionych pakietów testów: **95/95 PASS**; skrypty serwera **38/38**, release artifact/consumer **9/9**, handoff jest wliczony, operator actions **48/48**. To testy z atrapami/integracyjne lokalnie, nie odbiór prawdziwego serwera.
 - K06 nadal blokuje brak pełnego producer gate `audit`, prawdziwych pięciu obrazów i całego runtime. Nie uruchomiono workflow, GHCR, SSH ani produkcji.
+
+## 6 listopada 2026 — osobny deploy panelu admina
+
+- `6aacd4b5`: dwa testy integracyjne atrapowego deployera potwierdzają, że poprawny proof pozwala uruchomić wyłącznie panel admina, a błąd weryfikacji odmawia przed wywołaniem Dockera.
+- Pięć skupionych zestawów przeszło **100/100**; same skrypty serwera **43/43**. ESLint, `bash -n` i `git diff --check` PASS. Pełny zestaw: komenda z `POSTEP-NAPRAW.md`; bez ciężkiego quality.
+- To dowód ścieżki w sandboxie, nie wdrożenie ani odbiór na serwerze. K06 pozostaje otwarte.
