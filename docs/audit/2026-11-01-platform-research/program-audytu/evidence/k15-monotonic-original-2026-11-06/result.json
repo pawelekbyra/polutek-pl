@@ -28,13 +28,13 @@
   "greenVerification": {
     "postgresHttp": {
       "command": "DATABASE_URL=<temporary-local-Postgres-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts --reporter=json",
-      "migrations": 81,
-      "tests": 3,
-      "passed": 3,
+      "migrations": 83,
+      "tests": 4,
+      "passed": 4,
       "failed": 0,
       "raw": "postgres-vitest.json",
       "migrationLog": "migrate.log",
-      "environment": "Disposable local postgres:17-alpine container; real Prisma transactions and Studio POST handler; controlled session resolver and fake R2 storage. Container removed after the run."
+      "environment": "Disposable local postgres:17-alpine container; real Prisma transactions and Studio POST/GET handlers; controlled session resolver and fake R2 storage. Includes a K21 route-contract check. Container removed after the run."
     },
     "focusedUnit": {
       "command": "npx vitest run tests/unit/video-pipeline/original-upload.test.ts tests/unit/video-pipeline/encode-job-repository.test.ts --reporter=json",

@@ -26,6 +26,16 @@
       "covers": ["actual Studio upload and pipeline route serializers", "actual media-source route sanitizer and playback response", "controlled use-case doubles; not a live process or real server-backed API"]
     },
     {
+      "name": "postgres-studio-upload-and-job-routes",
+      "command": "DATABASE_URL=<disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "testsInFile": 4,
+      "passed": 4,
+      "failed": 0,
+      "covers": ["real Prisma and PostgreSQL rows", "actual Studio multipart-start/complete and pipeline GET route handlers", "encode job DTO reflects persisted queued job", "R2 isolated behind controlled fake"]
+    },
+    {
       "name": "typecheck",
       "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
       "exitCode": 0
@@ -50,7 +60,7 @@
     "compatibility": "Existing endpoints and URLs are unchanged; response schemas accept additive DTO fields."
   },
   "limits": [
-    "Route handlers were exercised in-process with controlled use-case doubles; no live server or real server-backed API endpoint was run, so K21-T1 remains open.",
+    "Studio upload/job handlers were exercised in-process with real database use cases; media-source route uses a controlled plan. No live server process or DB-backed playback endpoint was run, so K21-T1 remains open.",
     "No acceptance of a legal older supported client was run; K21-T1 is open.",
     "Focused tests cover the changed client boundary, not every response from the running server; K21-T2 remains partial.",
     "No independent review; R21 is not marked closed."
