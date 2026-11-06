@@ -6,11 +6,11 @@ Naprawiono rozjazd cleanupu sesji: aplikacja zapisuje HMAC-SHA256, a poprzedni s
 
 ## Aktualizacja K20 — 6 listopada 2026
 
-K20: publikacja ręczna ponownie sprawdza publiczną widoczność kanału wewnątrz transakcji, po zablokowaniu wiersza `Creator` (`FOR UPDATE`), co serializuje ją ze zmianą statusu moderacyjnego. Test odtwarza kanał aktywny przy przygotowaniu i zawieszony przed transakcją; brak zmiany filmu. Celowane testy **26/26 PASS**, ESLint, `npm run typecheck` i diff check PASS. Brak `DATABASE_URL`, więc bez rzeczywistego PG race proof. Surowe `npx tsc --noEmit` wykazało błędy w niezwiązanych testach; oficjalny skrypt repozytorium przechodzi. K20 nadal częściowe: PG race, przegląd Claude’a i niezależny worker nieodebrane. Szczegóły: `evidence/k20-channel-auto-publish-2026-11-06/result.json` oraz `../POSTEP-NAPRAW.md`.
+K20: publikacja ręczna ponownie sprawdza publiczną widoczność kanału wewnątrz transakcji, po zablokowaniu wiersza `Creator` (`FOR UPDATE`), co serializuje ją ze zmianą statusu moderacyjnego. Test jednostkowy i test PostgreSQL wymuszają zawieszenie kanału po odczycie przygotowawczym i przed transakcją; publikacja jest odrzucona, film pozostaje DRAFT. Celowane unit **26/26 PASS**, PG **1/1 PASS** na świeżej bazie PostgreSQL 17 po 84 migracjach, repo typecheck, ESLint i diff check PASS. Wszystkie testowe rekordy usunięto (0 User/Creator/Video), a utworzony kontener disposable usunięto. Test dowodzi świeżego odczytu w transakcji na prawdziwej bazie; nie jest testem dwóch konkurujących procesów moderacji/publikacji. Niezależny przegląd i osobny worker nadal nieodebrane. Szczegóły: `evidence/k20-channel-auto-publish-2026-11-06/result.json` oraz `../POSTEP-NAPRAW.md`.
 
-## Aktualizacja K38 — 6 listopada 2026
+## K38 — bramka statusu i MIME (pierwszy etap), 6 listopada 2026
 
-K38/R11 częściowo poprawia wiarygodność load testu: summarizer odmawia nieoczekiwanym statusom, niewłaściwemu MIME 200 i brakującym wymaganym metrykom; runner zwraca błąd i nie kontynuuje. k6 sprawdza envelope HTML/JSON/image przy odrzuconym body. 17 testów syntetycznych PASS. Nie uruchomiono k6, serwera ani cleanup; payload semantyczny, HMAC fixture oraz profile testowe nadal wymagają pracy. Pełne zastrzeżenia i hashe: `evidence/k38-loadtest-summary-2026-11-06/result.json`. Zmiana lokalna; bez obciążania serwera.
+K38/R11 częściowo poprawia wiarygodność load testu: summarizer odmawia nieoczekiwanym statusom, niewłaściwemu MIME 200 i brakującym wymaganym metrykom; runner zwraca błąd i nie kontynuuje. k6 sprawdza envelope HTML/JSON/image przy odrzuconym body. W tym pierwszym etapie 17 testów syntetycznych PASS; nie uruchomiono k6, serwera ani cleanup. Późniejsze rozwiązanie HMAC cleanup jest opisane wyżej. Semantyka payloadów i profile testowe nadal wymagają pracy. Pełne zastrzeżenia i hashe: `evidence/k38-loadtest-summary-2026-11-06/result.json`. Zmiana lokalna; bez obciążania serwera.
 
 ## Aktualizacja K31 — 6 listopada 2026
 
