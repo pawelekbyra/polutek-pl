@@ -245,6 +245,71 @@ function runScript(script: string, args: string[], cwd: string, bin: string, fak
   });
 }
 
+describe.skipIf(!runBash)('verify-active-release.sh', () => {
+  function setupActive() {
+    const sb = sandbox();
+    const app = path.join(sb.dir, 'app');
+    const revision = '1111111111111111111111111111111111111111';
+    const state = path.join(app, '.release-state', revision);
+    mkdirSync(path.join(state, 'source/scripts/ops'), { recursive: true });
+    writeFileSync(path.join(app, 'verify-active-release.sh'), verifyActiveSh);
+    writeFileSync(path.join(app, '.current-release-revision'), revision);
+    writeFileSync(path.join(state, 'proof.sha256'), `${'a'.repeat(64)}\n`);
+    writeFileSync(path.join(state, 'proof.json'), '{}\n');
+    writeFileSync(path.join(state, 'inputs.json'), '{}\n');
+    writeFileSync(path.join(state, 'source/scripts/ops/deploy-release.mjs'), '// fake node handles this invocation\n');
+    return { ...sb, app, revision, hash: 'a'.repeat(64) };
+  }
+
+  it('re-verifies the active app proof and tags only verifier-returned IDs', () => {
+    const sb = setupActive();
+    const r = runScript(path.join(sb.app, 'verify-active-release.sh'), ['app'], sb.app, sb.bin, sb.fake, {
+      DEPLOY_APP_DIR: posix(sb.app), RELEASE_REVISION: sb.revision, RELEASE_PROOF_SHA256: sb.hash,
+    });
+    const nodeCalls = existsSync(path.join(sb.fake, 'node.log')) ? readFileSync(path.join(sb.fake, 'node.log'), 'utf8') : '';
+
+    expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
+    expect(r.stdout).toContain('app=sha256:');
+    expect(nodeCalls).toContain(`--release-dir=.release-state/${sb.revision}`);
+    expect(nodeCalls).toContain('--scope=app');
+    expect(nodeCalls).toContain(`--proof-sha256=${sb.hash}`);
+  });
+
+  it('refuses a different proof hash before calling the verifier', () => {
+    const sb = setupActive();
+    const r = runScript(path.join(sb.app, 'verify-active-release.sh'), ['app'], sb.app, sb.bin, sb.fake, {
+      DEPLOY_APP_DIR: posix(sb.app), RELEASE_REVISION: sb.revision, RELEASE_PROOF_SHA256: 'b'.repeat(64),
+    });
+    const nodeLog = path.join(sb.fake, 'node.log');
+
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('approved proof does not match retained release state');
+    expect(existsSync(nodeLog)).toBe(false);
+  });
+
+  it('refuses a revision that is not active for the app before calling the verifier', () => {
+    const sb = setupActive();
+    const r = runScript(path.join(sb.app, 'verify-active-release.sh'), ['app'], sb.app, sb.bin, sb.fake, {
+      DEPLOY_APP_DIR: posix(sb.app), RELEASE_REVISION: '2222222222222222222222222222222222222222', RELEASE_PROOF_SHA256: sb.hash,
+    });
+
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('requested proof is not the active release');
+    expect(existsSync(path.join(sb.fake, 'node.log'))).toBe(false);
+  });
+
+  it('rejects admin-scope use when the requested release is not the active admin revision', () => {
+    const sb = setupActive();
+    const r = runScript(path.join(sb.app, 'verify-active-release.sh'), ['admin'], sb.app, sb.bin, sb.fake, {
+      DEPLOY_APP_DIR: posix(sb.app), RELEASE_REVISION: sb.revision, RELEASE_PROOF_SHA256: sb.hash,
+    });
+
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('requested proof is not the active release');
+    expect(existsSync(path.join(sb.fake, 'node.log'))).toBe(false);
+  });
+});
+
 afterAll(() => {
   for (const d of tmpDirs) rmSync(d, { recursive: true, force: true });
 });
