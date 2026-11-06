@@ -10,7 +10,10 @@ import { AccessTier, VideoStatus } from '@prisma/client';
 vi.mock('../../lib/modules/channel', () => ({
   MainChannelService: {
     getRequired: vi.fn().mockResolvedValue({ id: 'main-channel-id' })
-  }
+  },
+  ChannelNotFoundError: class ChannelNotFoundError extends Error {},
+  MainChannelNotApprovedError: class MainChannelNotApprovedError extends Error {},
+  MainChannelPolicy: { isPubliclyVisible: (channel: { status?: string; deletedAt?: Date | null }) => (channel.status === 'ACTIVE' || channel.status === 'LIMITED') && !channel.deletedAt },
 }));
 
 vi.mock('../../lib/modules/audit', () => ({

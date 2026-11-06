@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## Aktualizacja K04 — wygenerowany klient Prisma, 6 listopada 2026
+
+Oddzielny proces uruchomił prawdziwy `@prisma/client` przez lazy facade `lib/prisma.ts`, zobaczył wygenerowany delegat `user` i funkcję `$transaction`, po czym wykonał `$disconnect` bez `DATABASE_URL` i bez query/połączenia DB. Reprodukowalny test **1/1 PASS**; `npm run typecheck`, ESLint i kontrola granic architektury PASS. Weryfikuje to proxy z realnym klientem, podczas gdy dotychczasowy probe nadal dokumentuje brak konstrukcji przy czystym imporcie i DB injection. Nie dowodzi bundlera ani pełnego produkcyjnego composition root; K04 pozostaje częściowy. Szczegóły `evidence/architecture-import-probe.json`.
+
 ## Aktualizacja K38 — bezpieczna tożsamość cleanup, 6 listopada 2026
 
 Naprawiono rozjazd cleanupu sesji: aplikacja zapisuje HMAC-SHA256, a poprzedni skrypt szukał plain SHA-256 stałego UA. Każde `OUT_DIR` dostaje UUID w User-Agent, runner blokuje współbieżne użycie tego samego katalogu, a cleanup wysyła do działającego app kontenera wyłącznie UA i odbiera sam HMAC; klucz nie jest ujawniany. Cleanup wymaga identity, odmawia pracy przy aktywnym runnerze, błędzie hash/DB i zachowuje identity na retry. 20/20 testów kontraktu i fake-`docker` cleanup PASS, w tym zgodność z `hashClientValue`, dokładny SQL selektor i brak kasowania po błędzie hash; bash/node syntax, ESLint, repo typecheck i diff check PASS. Nie dotykano serwera, bazy ani sesji. Nie ma semantycznej walidacji treści odpowiedzi, pełnego profilu obciążenia/mix ani testu rzeczywistego cleanupu na non-production; K38 częściowy. Szczegóły: `evidence/k38-loadtest-summary-2026-11-06/result.json`.
@@ -18,7 +22,7 @@ K31/R36 częściowo zaimplementowany lokalnie: `workers/pp-watchdog/worker.mjs` 
 
 ## Aktualizacja K04 — 6 listopada 2026
 
-K04/R34 częściowo zaimplementowany lokalnie w commicie opisanym w historii gałęzi: czyste wejście `video/pure.ts` rozcina wskazany import layoutu przez szeroki barrel, a facade Prisma inicjalizuje domyślnego klienta dopiero przy pierwszym użyciu. Architektura PASS, 43/43 testy w 5 celowanych plikach, typecheck i ESLint PASS; konstruktor-probe: 0 wywołań przy imporcie/wstrzykniętym DB, 1 przy domyślnej transakcji. Dowód/granice: `evidence/architecture-import-probe.json` i sekcja K04 w D02. K04 pozostaje częściowy do niezależnego przeglądu wszystkich metod facade i produkcyjnego composition root. Następny krok: odnotować commit K04 i przejść do niezależnego pakietu; K26 nadal czeka na decyzję właściciela.
+K04/R34 częściowo zaimplementowany lokalnie w commicie opisanym w historii gałęzi: czyste wejście `video/pure.ts` rozcina wskazany import layoutu przez szeroki barrel, a facade Prisma inicjalizuje domyślnego klienta dopiero przy pierwszym użyciu. Architektura PASS, 43/43 testy w 5 celowanych plikach, typecheck i ESLint PASS; konstruktor-probe: 0 wywołań przy imporcie/wstrzykniętym DB, 1 przy domyślnej transakcji. Dowód/granice: `evidence/architecture-import-probe.json` i sekcja K04 w D02. K04 pozostaje częściowy do niezależnego przeglądu wszystkich metod facade i produkcyjnego composition root. Następny krok: niezależny review zgodności facade i production composition root; po K01 zweryfikować docelowy bundler. K26 nadal czeka na decyzję właściciela.
 
 ## Wznowienie napraw — 6 listopada 2026
 

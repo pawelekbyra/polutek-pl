@@ -186,6 +186,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K04-T1** — Import nowego czystego wejścia nie konstruuje DB, Redis ani providerów; test z zabronionym konstruktorem infrastruktury przechodzi. Produkcyjne złożenie nadal uruchamia prawdziwy klient.
 - **K04-T2** — Wstrzyknięta DB jest użyta przez rzeczywisty use case; integracyjne legalne i odmowne scenariusze pozostają zgodne. Graf wybranego cyklu ma udokumentowaną zmianę lub świadome odroczenie, bez deklaracji naprawy wszystkich cykli.
 
+**Postęp lokalny:** pierwotny probe wykazał 0 konstrukcji domyślnego klienta przy czystych importach i DB injection, oraz 1 przy pierwszym domyślnym transakcyjnym użyciu. Dodatkowy child-process test używa prawdziwego wygenerowanego PrismaClient przez `lib/prisma.ts`: delegat `user` i `$transaction` dostępne, `$disconnect` kończy się poprawnie bez DATABASE_URL lub połączenia do DB (**1/1 PASS**). Repo typecheck/ESLint i granice architektury PASS. Nie jest to build docelowym bundlerem ani pełny test use case z DB; pełny zakres K04 i niezależny przegląd pozostają otwarte. [Dowody](program-audytu/evidence/architecture-import-probe.json).
+
 <a id="k05"></a>
 
 #### K05. Jednoznaczny profil produktu i decyzje właściciela

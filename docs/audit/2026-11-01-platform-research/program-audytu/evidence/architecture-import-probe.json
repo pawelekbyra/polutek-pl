@@ -55,10 +55,33 @@
     }
   ],
   "boundaries": [
-    "PrismaClient is a constructor probe supplied to VM only; no generated client or network",
-    "No Next/SWC optimization, production DB query, or full public video/channel barrel execution",
-    "The selected video→channel→layout→video-barrel cycle is broken through the pure entry; unrelated cycles remain",
-    "Does not measure bundle size, request latency or production outage",
-    "No authorization result claimed from mere import of authz module"
-  ]
+    "The initial constructor probe uses a constructor stub inside VM; no generated client or network in that probe.",
+    "A separate follow-up instantiates the real generated client through the lazy facade and disconnects without a DB URL; no SQL or connection is attempted.",
+    "No Next/SWC optimization, production DB query, or full public video/channel barrel execution.",
+    "The selected video→channel→layout→video-barrel cycle is broken through the pure entry; unrelated cycles remain.",
+    "Does not measure bundle size, request latency or production outage.",
+    "No authorization result claimed from mere import of authz module."
+  ],
+  "followup_revision": "61405009",
+  "real_generated_client_smoke": {
+    "date": "2026-11-06",
+    "command": "env -u DATABASE_URL -u DATABASE_URL_UNPOOLED node --import tsx -e <probe>",
+    "exitCode": 0,
+    "status": "PASS",
+    "test": "tests/unit/architecture/prisma-lazy-composition.test.ts",
+    "testSha256": "ffba5ef889976dfc8ea3a3d4ce5b69878a324e27dbc914b17e0e43b6b43eb447",
+    "testCount": 1,
+    "observations": {
+      "generatedUserDelegatePresent": true,
+      "transactionMethodType": "function",
+      "disconnectCompleted": true
+    },
+    "client": "Actual generated @prisma/client accessed through the production lib/prisma.ts facade; no mock constructor.",
+    "databaseUrlConfigured": false,
+    "databaseQueries": 0,
+    "boundaries": [
+      "No database connection/query, bundler, Next production build, or latency measurement.",
+      "The constructor remains lazy until the test accesses a generated delegate/method."
+    ]
+  }
 }

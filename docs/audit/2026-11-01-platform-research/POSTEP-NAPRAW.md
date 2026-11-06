@@ -14,7 +14,7 @@ Lokalne SQLite 3.51.3 zweryfikowało rzeczywisty kod Workera, DDL, `UPDATE ... R
 
 Wydzielono `lib/modules/video/pure.ts` dla helpera sortowania sidebaru, usuwając wskazaną zależność layoutu kanału od szerokiego video barrel. `lib/prisma.ts` używa leniwego facade: import i wstrzyknięty DB nie tworzą domyślnego klienta, pierwsza domyślna transakcja go inicjalizuje. Probe: 5 obserwacji, 13 rzeczywistych plików źródłowych, 0 konstrukcji przy injected DB i 1 przy domyślnej transakcji. Kontrola architektury PASS, 5 celowanych testów PASS (43/43), typecheck i ESLint PASS. Pełne ograniczenia są w D02 i `program-audytu/evidence/architecture-import-probe.json`.
 
-Pozostaje niezależny przegląd zgodności wszystkich użyć facade Prisma i produkcyjnego composition root; próba nie używa prawdziwej bazy, Prisma engine ani bundlera. Pakiet K04 jest częściowy, nie zamknięty. Następny krok: przegląd po stronie Claude’a; dalsza lokalna praca może iść do kolejnych niezależnych pakietów.
+**Aktualizacja:** dodatkowy smoke w osobnym procesie użył rzeczywistego wygenerowanego `@prisma/client` przez domyślny facade, sprawdził delegat `user` i `$transaction`, po czym wywołał `$disconnect` bez `DATABASE_URL` i bez zapytania/połączenia do DB. Nowy test procesu **1/1 PASS**, architektura PASS, repo typecheck i ESLint PASS. Potwierdza to zgodność proxy z realnym PrismaClient, ale nie pomiar bundlera ani pełną produkcyjną composition root. Nadal potrzebny niezależny przegląd wszystkich użyć; K04 pozostaje częściowy. Dowód dodano do `program-audytu/evidence/architecture-import-probe.json`.
 
 ## Wznowienie właściciela — 6 listopada 2026
 
