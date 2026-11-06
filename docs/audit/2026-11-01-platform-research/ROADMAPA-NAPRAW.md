@@ -318,6 +318,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K10-T1** — Gość i obcy użytkownik znający ID ukrytego/REMOVED filmu nie otrzymują tytułu, postera, daty ani tokenu; status/shape zgodny z kontraktem NOT_FOUND.
 - **K10-T2** — Własny uprawniony podgląd i publiczna legalna premiera nadal działają, a odtwarzanie przed czasem pozostaje zabronione.
 
+**Postęp lokalny 6 listopada 2026 (częściowy):** wspólny sanitizer planu publicznego dodatkowo czyści metadane dla `NOT_FOUND`/`VIDEO_NOT_FOUND`, nawet jeśli caller poda DTO z załadowanym filmem. Route-handler regresja dla gościa i obcego użytkownika pokrywa tytuł, poster, termin, ofertę, rozdziały, napisy, źródło/token, asset diagnostics i sesję. Wraz z testem gate **19/19 PASS**, ESLint i repo typecheck PASS. Nie uruchamiano osobnego serwera HTTP ani rzeczywistej sesji/DB; pełny odbiór HTTP i niezależny review pozostają otwarte. [Dowód](program-audytu/evidence/k10-public-redaction-2026-11-06/result.json).
+
 ### E2 — Poprawność pieniędzy i płatnych uprawnień
 
 <a id="k11"></a>

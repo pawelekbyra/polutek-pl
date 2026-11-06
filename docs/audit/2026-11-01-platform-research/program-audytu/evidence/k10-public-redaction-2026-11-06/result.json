@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-06",
+  "package": "K10/R30 partial: public response redaction for hidden videos",
+  "base_commit": "98264c28",
+  "source_sha256": {
+    "lib/modules/playback/application/public-playback-plan.ts": "0d02e7b5e32e535e2450a479632c6f0137516f2ebca62a3d6a6a96c07db59aa7",
+    "tests/unit/api/media-source-route.test.ts": "95a986f6fd8889b3457c5ef9247986f6304e293db53c5df46b9b91bc6b50b94b"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/api/media-source-route.test.ts tests/unit/playback-premiere-gate.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 2,
+      "tests": 19,
+      "duration_seconds": 5.94
+    },
+    {
+      "command": "npx eslint lib/modules/playback/application/public-playback-plan.ts tests/unit/api/media-source-route.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "scope": "Route handler invoked with NextRequest and mocked auth/service; the sanitizer is real. No separate Next HTTP server, session, database, provider, or production service was used.",
+  "observed": {
+    "actors": ["guest", "signed-in stranger"],
+    "redacted": ["title", "poster", "premiereAt", "offer", "chapters", "text tracks", "signed media token", "asset diagnostics", "playback session"]
+  },
+  "limitations": [
+    "K10 requires an actual HTTP role/session matrix and independent review before closure."
+  ]
+}

@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K10 — sanitizacja ukrytych premier na granicy publicznej odpowiedzi
+
+Wspólny sanitizer usuwa teraz metadane filmu przy odmowie `NOT_FOUND`/`VIDEO_NOT_FOUND`, także gdy caller poda nieoczyszczony plan: tytuł, poster, termin, ofertę, rozdziały/napisy, źródło, asset diagnostics i sesję. Route-handler test dla gościa i zalogowanego obcego wstrzykuje sekretne wartości i sprawdza całą odpowiedź. Z testem logiki premiery **19/19 PASS**, repo typecheck i ESLint PASS. Test nie uruchamia osobnego serwera HTTP, sesji ani DB; K10 pozostaje częściowe do odbioru pełnej macierzy HTTP i niezależnego review. [Dowód](program-audytu/evidence/k10-public-redaction-2026-11-06/result.json).
+
 ## K03 — pusty manifest restore nie może dawać pozornego porównania
 
 Weryfikator przyjmował poprawny składniowo manifest `{"counts":{}}` i kończył pozostałe kontrole sukcesem, choć manifest nie wymuszał porównania żadnego agregatu. Teraz pusty zestaw liczników kończy się błędem; dodano regresję przez rzeczywisty CLI uruchomiony w osobnym procesie i doprecyzowano instrukcję operatora. **32/32 testy procesu PASS**, ESLint i repo typecheck PASS. Baza była syntetycznym adapterem, nie wykonywano odtworzenia ani połączenia do DB. Poprawiono też entrypoint `test:critical-path`, który omijał guard i uruchamiał surowy Vitest; publiczna komenda npm przechodzi teraz przez obowiązkowe zestawy, **37/37 PASS**. Uzupełniono mocki powiadomień w scenariuszu integracyjnym i asercję wysłania podziękowania; ponowny przebieg nie wykazał błędów fixture na stderr. To nadal nie dowodzi dostarczenia e-maila/powiadomienia ani pełnego baseline. K03 pozostaje częściowe. [Dowody](program-audytu/evidence/k03-empty-manifest-2026-11-06/result.json), [runner](program-audytu/evidence/k03-critical-path-invocation-2026-11-06/result.json).
