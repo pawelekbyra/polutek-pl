@@ -174,7 +174,9 @@ case "$1" in
         echo "service=$svc app=\${APP_IMAGE:-} admin=\${ADMIN_IMAGE:-}" >> "$FAKE_DIR/up.log"
         has FAKE_UP_FAIL "$svc" && exit 1
         [ -n "\${FAKE_UP_FAIL_APP_IMAGE:-}" ] && [ "\${APP_IMAGE:-}" = "$FAKE_UP_FAIL_APP_IMAGE" ] && exit 1
+        [ -n "\${FAKE_UP_FAIL_ADMIN_IMAGE:-}" ] && [ "\${ADMIN_IMAGE:-}" = "$FAKE_UP_FAIL_ADMIN_IMAGE" ] && exit 1
         exit 0;;
+      run) [ -n "\${FAKE_MIGRATE_FAIL:-}" ] && exit 1; exit 0;;
       ps) for a in "$@"; do svc=$a; done; has FAKE_NO_SERVICE "$svc" || echo "cid-$svc"; exit 0;;
       exec) echo "-- dump"; exit 0;;
     esac
@@ -207,6 +209,7 @@ printf '%s' "\${FAKE_HEALTH_BODY:-}"
 `;
 const FAKE_NODE = `#!/usr/bin/env bash
 echo "node $*" >> "$FAKE_DIR/node.log"
+[ -n "\${FAKE_NODE_FAIL_VERIFY:-}" ] && exit 1
 case " $* " in
   *" --scope=admin "*) echo 'admin=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';;
   *)
@@ -513,6 +516,27 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     expect(fk('docker.log')).toBe('');
   });
 
+  it('stops before touching Docker when the release proof verifier fails', () => {
+    const sb = setup();
+    const { r, out, fk } = deploy(sb, ['t1'], { FAKE_NODE_FAIL_VERIFY: '1' });
+
+    expect(r.status).toBe(1);
+    expect(out).toContain('release proof verification failed');
+    expect(fk('docker.log')).toBe('');
+  });
+
+  it('does not activate the app after a migration failure', () => {
+    const sb = setup({ state: { '.current-image': 'polutek-app:old' } });
+    const { r, out, rd, fk } = deploy(sb, ['t1'], { FAKE_MIGRATE_FAIL: '1' });
+
+    expect(r.status).toBe(1);
+    expect(out).toContain('migration failed; app NOT restarted');
+    expect(rd('.current-image')).toBe('polutek-app:old');
+    expect(fk('up.log')).toContain('service=db');
+    expect(fk('up.log')).not.toContain('service=app');
+    expect(fk('node.log')).toContain('--scope=app');
+  });
+
   it('encoder that fails to start: warning outcome, not promoted, logged in telemetry', () => {
     const sb = setup({ state: { '.current-worker-image': 'polutek-worker:old' } });
     const { r, out, rd, fk } = deploy(sb, ['t1'], { FAKE_HEALTH_BODY: okBody, FAKE_UP_FAIL: 'encoder' });
@@ -565,6 +589,31 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     expect(fk('node.log')).toContain('--release-dir=.release-state/1111111111111111111111111111111111111111');
     expect(fk('up.log')).toContain('app=polutek-app:old');
     expect(fk('jobs.log')).toContain('deploy|fail|');
+  });
+
+  it('automatically rolls back the admin image only after verifying the retained proof', () => {
+    const revision = '1111111111111111111111111111111111111111';
+    const sb = setup({ state: {
+      '.current-admin-image': 'polutek-admin:old',
+      '.current-admin-release-revision': revision,
+    } });
+    const state = path.join(sb.app, '.release-state', revision);
+    mkdirSync(path.join(state, 'source/scripts/ops'), { recursive: true });
+    writeFileSync(path.join(state, 'source/scripts/ops/deploy-release.mjs'), '// test adapter\n');
+    writeFileSync(path.join(state, 'proof.sha256'), `${'a'.repeat(64)}\n`);
+    const { r, out, rd, fk } = deploy(sb, ['t2'], {
+      ADMIN_HOST_STATUS_DIR: posix(path.join(sb.dir, 'host-status')),
+      FAKE_UP_FAIL_ADMIN_IMAGE: 'polutek-admin:t2',
+    }, 'deploy-admin.sh');
+
+    expect(r.status).toBe(1);
+    expect(out).toContain('rolled back to polutek-admin:old');
+    expect(fk('node.log')).toContain('--release-dir=.release-artifacts/1111111111111111111111111111111111111111');
+    expect(fk('node.log')).toContain('--release-dir=.release-state/1111111111111111111111111111111111111111');
+    expect(fk('node.log')).toContain('--scope=admin');
+    expect(fk('up.log')).toContain('admin=polutek-admin:t2');
+    expect(fk('up.log')).toContain('admin=polutek-admin:old');
+    expect(rd('.current-admin-image')).toBe('polutek-admin:old');
   });
 
   it('manual app rollback re-verifies the retained proof before activation', () => {
