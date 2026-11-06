@@ -78,6 +78,8 @@ K31/R36 częściowo zaimplementowany lokalnie: `workers/pp-watchdog/worker.mjs` 
 
 K04/R34 częściowo zaimplementowany lokalnie w commicie opisanym w historii gałęzi: czyste wejście `video/pure.ts` rozcina wskazany import layoutu przez szeroki barrel, a facade Prisma inicjalizuje domyślnego klienta dopiero przy pierwszym użyciu. Architektura PASS, 43/43 testy w 5 celowanych plikach, typecheck i ESLint PASS; konstruktor-probe: 0 wywołań przy imporcie/wstrzykniętym DB, 1 przy domyślnej transakcji. Dowód/granice: `evidence/architecture-import-probe.json` i sekcja K04 w D02. K04 pozostaje częściowy do niezależnego przeglądu wszystkich metod facade i produkcyjnego composition root. Następny krok: niezależny review zgodności facade i production composition root; po K01 zweryfikować docelowy bundler. K26 nadal czeka na decyzję właściciela.
 
+**Uzupełnienie K04, 7 listopada:** nowy test unit przechodzi przez rzeczywisty `MainChannelService` i `ChannelRepository` z delegatem `creator` wstrzykniętym przez `createAppContext`; **1/1 PASS**, ESLint/typecheck PASS. To test z fake adapterem, nie PostgreSQL. [Dowód](evidence/k04-injected-use-case-2026-11-07/result.json). K04 pozostaje częściowy do review facade/composition root i bundlera po K01.
+
 ## Wznowienie napraw — 6 listopada 2026
 
 - Właściciel wznowił pełną roadmapę po STOP z 4 listopada. Ograniczenia bieżącej pracy: tylko worktree `platform-audit`/gałąź `docs/polutek-platform-audit`; bez push, PR, merge do main, produkcji ani `/opt/serwerek`.

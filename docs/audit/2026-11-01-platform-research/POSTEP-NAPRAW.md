@@ -40,6 +40,8 @@ Wydzielono `lib/modules/video/pure.ts` dla helpera sortowania sidebaru, usuwają
 
 **Aktualizacja:** dodatkowy smoke w osobnym procesie użył rzeczywistego wygenerowanego `@prisma/client` przez domyślny facade, sprawdził delegat `user` i `$transaction`, po czym wywołał `$disconnect` bez `DATABASE_URL` i bez zapytania/połączenia do DB. Nowy test procesu **1/1 PASS**, architektura PASS, repo typecheck i ESLint PASS. Potwierdza to zgodność proxy z realnym PrismaClient, ale nie pomiar bundlera ani pełną produkcyjną composition root. Nadal potrzebny niezależny przegląd wszystkich użyć; K04 pozostaje częściowy. Dowód dodano do `program-audytu/evidence/architecture-import-probe.json`.
 
+**K04-T2 — rzeczywisty serwis z wstrzykniętą bazą:** nowy test przechodzi przez realny `MainChannelService.getPubliclyVisibleById` i `ChannelRepository`, używa delegata `creator` przekazanego do `createAppContext`, zwraca kanał z tego delegata i sprawdza dokładne zapytanie. **1/1 PASS**, ESLint i repo typecheck PASS. Adapter DB jest fake, więc to dowód składu i tożsamości injection, nie PostgreSQL ani query z produkcyjnym klientem. [Dowód](program-audytu/evidence/k04-injected-use-case-2026-11-07/result.json). K04 nadal częściowy do przeglądu facade/composition root i sprawdzenia docelowego bundlera po K01.
+
 ## Wznowienie właściciela — 6 listopada 2026
 
 Właściciel wznowił realizację i polecił wykonać całą roadmapę. Historyczny STOP z 4 listopada nie obowiązuje od tego polecenia; pozostaje niżej jako zapis. Praca jest tylko w lokalnym worktree `/opt/codex/polutek-pl/.worktrees/platform-audit`, gałąź `docs/polutek-platform-audit`, bez publikacji, PR, wdrożeń ani dostępu do produkcji.

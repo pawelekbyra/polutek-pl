@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 7 listopada 2026 — K04/R34: jawna baza w rzeczywistym serwisie
+
+- Nowy test przechodzi przez prawdziwy `MainChannelService` i `ChannelRepository`, używając delegate `creator.findUnique` przekazanego przez `createAppContext`; 1/1 PASS.
+- Repo typecheck i ESLint PASS. Fake adapter dowodzi składu/injection, nie PostgreSQL. Dotychczasowy constructor probe i real generated Prisma smoke nadal dokumentują lazy facade.
+- K04 pozostaje częściowy do niezależnego przeglądu facade/composition root oraz sprawdzenia bundlera po K01. [Dowód](evidence/k04-injected-use-case-2026-11-07/result.json).
+
 ## 7 listopada 2026 — K20/R23: uzupełnienie odbioru DB i publikacji
 
 - Uporządkowano ROADMAPĘ po uruchomieniu wcześniejszych lokalnych prób: realny PostgreSQL finalizera **7/7** po 83 migracjach oraz wyścig statusu kanału/publication **1/1** po 84 migracjach, oprócz celowanych unit **26/26** i repo typecheck/ESLint PASS.
