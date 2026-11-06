@@ -8,7 +8,7 @@
  */
 import { z } from "zod";
 
-/** Allows 10,000 parts with worst-case visible-character JSON escaping, below Next's 10 MiB proxy buffer. */
+/** Allows 10,000 parts with worst-case visible-character JSON escaping, below Next's configured 7 MiB proxy buffer. */
 export const ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES = 6 * 1024 * 1024;
 
 export const adminMultipartStartSchema = z.object({

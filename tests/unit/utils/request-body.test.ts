@@ -125,7 +125,11 @@ describe('bounded request body readers', () => {
   });
 
   it('keeps 10,000 parts with worst-case visible ETag escaping within the proxy-safe body budget', async () => {
-    expect(ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES).toBeLessThan(10 * 1024 * 1024);
+    const nextConfig = (await import('../../../next.config.mjs')).default as {
+      experimental?: { proxyClientMaxBodySize?: string };
+    };
+    expect(nextConfig.experimental?.proxyClientMaxBodySize).toBe('7mb');
+    expect(ADMIN_MULTIPART_COMPLETE_BODY_MAX_BYTES).toBeLessThan(7 * 1024 * 1024);
     const body = JSON.stringify({
       originalId: 'o'.repeat(64),
       parts: Array.from({ length: 10_000 }, (_, index) => ({ partNumber: index + 1, etag: '\\'.repeat(200) })),
