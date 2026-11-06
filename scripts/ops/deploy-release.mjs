@@ -39,8 +39,14 @@ function main(argv) {
     }
     refs.push([kind, ref]);
   }
-  // Pulling by digest only downloads images; verification still precedes tagging, DB migration and activation.
-  for (const [, ref] of refs) run('docker', ['pull', ref]);
+  // Reuse an installed digest only when its immutable config ID still matches the proof. Otherwise fetch the exact digest.
+  // This lets proof checks for operator actions work while the registry is unavailable, without trusting a mutable tag.
+  for (const [kind, ref] of refs) {
+    const expectedId = proof[kind].id;
+    const cached = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', ref],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    if (cached.status !== 0 || cached.stdout.trim() !== expectedId) run('docker', ['pull', ref]);
+  }
   const verifier = path.join(source, 'scripts/ops/release-proof.mjs');
   const result = run(process.execPath, [verifier, 'verify', `--proof=${proofFile}`,
     `--proof-sha256=${opts['proof-sha256']}`, `--revision=${opts.revision}`, `--source=${source}`,
