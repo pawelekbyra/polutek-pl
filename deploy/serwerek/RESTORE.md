@@ -1,5 +1,7 @@
 # Restore (serwerek backups)
 
+> **K06 candidate boundary (2026-11-06):** proof-aware deployment files on branch `docs/polutek-platform-audit` are not installed on the server. For this candidate, restore only infrastructure/database services with plain Compose; app/admin/encoder/collector/migrator activation must use a retained release bundle and externally approved proof as described in [`docs/operations/RELEASE-PROOF.md`](../../docs/operations/RELEASE-PROOF.md). Existing server behavior remains the legacy procedure until a reviewed deployment.
+
 Copy of this file on the server: `/opt/serwerek/backups/RESTORE.md`. Full runbook: `docs/operations/SERWEREK.md`, section 23.
 
 ## What exists
@@ -35,5 +37,5 @@ container; result in `/var/lib/serwerek/restore-test-last` and `/var/log/serwere
        for f in restore/*.age; do age -d -i serwerek-backups.agekey -o "${f%.age}" "$f"; done
        shred -u serwerek-backups.agekey
 
-4. `tar xzf configs-<ts>.tar.gz -C /`, `systemctl daemon-reload`, start the stacks (`docker compose up -d db` in each app dir),
-   restore the dumps as above, then deploy the app (`deploy.sh`), tunnel (`cloudflared-serwerek`), timers.
+4. `tar xzf configs-<ts>.tar.gz -C /`, `systemctl daemon-reload`, start only infrastructure/database services (`docker compose up -d db` in each app dir), then restore the dumps as above.
+5. Once a proof-verified release bundle is available, deploy it with the revision and externally approved proof hash; do not activate snapshot tags with a plain `docker compose up`. Then start the tunnel (`cloudflared-serwerek`) and timers in the documented order.

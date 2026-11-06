@@ -99,6 +99,8 @@ więc tego kryterium nie stosuje (use case bez zmian).
 Kwoty zawsze w groszach/centach (`500` = 5,00). Polecenie do wykonania podgląd wypisuje w całości; Claude pokazuje je
 właścicielowi razem z podglądem i uruchamia dopiero po jego „tak”/„wykonaj” (skill `odprawa`, sekcja 5).
 
+> **Granica K06 (2026-11-06):** weryfikacja proofu opisana poniżej jest kandydatem z lokalnej gałęzi audytu; nie działa na obecnym serwerze przed wdrożeniem tego pakietu.
+
 **Jak to działa na serwerze.** Działania na aplikacji idą przez istniejące use case'y, nie surowy SQL: `lib.mjs`
 łączy się `ssh serwerek`, weryfikuje zachowany proof aktywnej rewizji i uruchamia jednorazowy kontener
 `docker compose run --rm --no-deps -T` usługi `app` z obrazu workera przypiętego do tej rewizji. Obraz aplikacji to
