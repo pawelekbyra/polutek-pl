@@ -6,6 +6,11 @@
 - Pełne `npm run quality` na scalonym drzewie: architektura/typecheck PASS, Vitest 564 pliki PASS/1 skipped i 4980 testów PASS/2 skipped, exit 0. Nie jest to zamknięcie pakietu ani wydania.
 - Następny zakres: wznowienie K06 i sprawdzenie wszystkich konsumentów wydania przed dalszymi pakietami. K02 ma poprawiony zakres Next, ale nadal wymaga świeżego dowodu zależności/obrazu.
 
+## 6 listopada 2026 — K06: pierwsza ścieżka GHCR
+
+- `images.yml` zastępuje bezpośrednie build/push pełnym producentem, weryfikacją przed logowaniem oraz publikacją pięciu ID i kontroli registry digestów. Dodano walidowany generator publicznych inputs oraz przypięte manifesty amd64.
+- Testy helperów/workflow 6/6, typy, lint i parsowanie YAML PASS; digesty sprawdzone w registry. Nie uruchamiano Actions ani publikacji. Deploy, migrator, admin i rollback nadal wymagają proof verification.
+
 ## 1 listopada 2026 — v1.0
 
 - Cel: duża platforma, pogłębione badanie zamiast pojedynczego porównania.

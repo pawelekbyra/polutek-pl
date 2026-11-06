@@ -4,8 +4,9 @@
 
 - Właściciel wznowił pełną roadmapę po STOP z 4 listopada. Ograniczenia bieżącej pracy: tylko worktree `platform-audit`/gałąź `docs/polutek-platform-audit`; bez push, PR, merge do main, produkcji ani `/opt/serwerek`.
 - Aktualny bazowy kod: `origin/main` `e2d33e0ed49d759effb3162b4f43c8540bafd4a1`, lokalnie scalony do gałęzi napraw commit `7e6f5335`. Pełne `npm run quality` na drzewie tego merge: architektura/typecheck PASS; Vitest 564 pliki PASS, 1 skipped; 4980 testów PASS, 2 skipped, exit 0 (493,89 s). To sprawdzenie bazy, nie dowód gotowości wydania ani zamknięcie K01–K06.
-- K02 kandydat ma Next/eslint-config-next 16.4.4; brak świeżego audytu zależności i dowodu pięciu bieżących obrazów, zatem nie zamykać. K06 producent i walidator istnieją, ale ich konsumentów nie zweryfikowano end-to-end.
-- Następny krok: K06, zinwentaryzować `images.yml` oraz wszystkie build/publish/deploy/migration/activation/rollback/manual consumers, potem próbą odmowną wykazać, że żaden nie publikuje ani nie aktywuje artefaktu bez zweryfikowanego dowodu. Bez użycia produkcji.
+- K02 kandydat ma Next/eslint-config-next 16.4.4; brak świeżego audytu zależności i dowodu pięciu bieżących obrazów, zatem nie zamykać. GHCR image workflow jest podłączony i ma testy syntetyczne, ale nie został uruchomiony. Deploy/migracje/admin/rollback pozostają bez weryfikacji proofu end-to-end.
+- K06: pierwszy konsument, `.github/workflows/images.yml`, jest podłączony do producenta i publikatora weryfikujących pięć ID/digestów; testy kontrolowane 6/6, typecheck/lint/YAML PASS. Nie uruchomiono prawdziwego GitHub Actions ani publikacji.
+- Następny krok: K06 deploy consumers: dodać testy odmowy dla `deploy.sh`, migratora i admin/rollback bez wiarygodnego katalogu proof; potem przekazać artefakt przez `mergedeploy.sh`. Każdy verifier ma otrzymać zaufany expected hash, a aktywować może wyłącznie IDs z wyniku verify. Bez użycia produkcji.
 
 ## ZATRZYMANE na polecenie właściciela — 4 listopada 2026
 
@@ -41,7 +42,7 @@ sed -n '1,180p' docs/operations/RELEASE-PROOF.md
 rg -n 'push:|docker build|docker pull|start_app|start_admin|rollback' .github/workflows/images.yml deploy/serwerek/deploy.sh deploy/serwerek/deploy-admin.sh scripts/ops/mergedeploy.sh
 ```
 
-Po tej komendzie kontynuować K06 od `images.yml`: zapisać jego odmowną próbę przed zmianą i dopiero potem integrować release proof. Nie uruchamiać skryptów wdrożeniowych na hoście/produkcji. Nie przełączać na historyczną gałąź PR #2065. Ograniczenia publikacji i produkcji pozostają aktywne.
+Po tej komendzie kontynuować K06 od `deploy.sh`/migratora: zapisać odmowną próbę przed zmianą i wymagać zweryfikowanego proofu oraz ID przed każdą mutacją. `images.yml` jest już podłączony, ale nieuruchomiony. Nie uruchamiać skryptów wdrożeniowych na hoście/produkcji. Nie przełączać na historyczną gałąź PR #2065. Ograniczenia publikacji i produkcji pozostają aktywne.
 
 ## Historyczny stan przekazania z poprzedniej instancji
 

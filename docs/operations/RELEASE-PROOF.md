@@ -1,6 +1,6 @@
 # Dowód źródeł, kontroli i tożsamości obrazów — rdzeń K06
 
-`scripts/ops/release-proof.mjs` zawiera wspólny walidator i zapis dowodu. **Budowanie pięciu obrazów z przypiętych wejść jest dostępne przez `build`. Producent uruchamia pełne kontrole i archiwizuje sprawdzone źródła; podłączenie do `images.yml`, `deploy.sh`, `deploy-admin.sh` i ręcznych ścieżek nie jest jeszcze gotowe.** Samo dodanie tego narzędzia nie zabezpiecza obecnych ścieżek publikacji i nie upoważnia do wydania platformy.
+`scripts/ops/release-proof.mjs` zawiera wspólny walidator i zapis dowodu. `images.yml` używa `release-produce.mjs`, weryfikuje pięć lokalnych identyfikatorów przed logowaniem do GHCR, a `release-publish.mjs` publikuje dokładnie te ID i sprawdza każdy registry digest. **Integracja z GHCR jest zaimplementowana, ale nie została uruchomiona na GitHub Actions. `deploy.sh`, `deploy-admin.sh`, `mergedeploy.sh`, migracje i rollback nadal wymagają obowiązkowej weryfikacji dowodu.** Samo opublikowanie obrazów nie upoważnia do wdrożenia platformy.
 
 ## Kontrakt
 
@@ -45,3 +45,9 @@ Po zaliczeniu kontroli producent zachowuje `quality.json`, `inputs.json`, rzeczy
 W tej partii nie uruchamiano pełnego producenta: obowiązkowe `audit` nadal wymaga rozstrzygnięcia historycznej odmowy uploadu, a gałąź audytu nie zawiera jeszcze wszystkich poprawek historycznego H1. Nie obchodzić tych warunków filtrami ani syntetycznym raportem. Publikacja i aktywacja nadal wymagają osobnego podłączenia.
 
 Przed pierwszą budową `release/dockerfile.mjs` sprawdza ograniczony kontrakt obu Dockerfile: zewnętrzne `FROM` muszą używać globalnie zadeklarowanych `NODE_BASE`, `FFMPEG_BASE` lub `COLLECTOR_BASE`, właściwych dla rodzaju etapu; `COPY --from` może wskazywać tylko wcześniejszy lokalny etap. Nowe dyrektywy parsera i montowane zewnętrzne źródła wymagają przeglądu. To kontrola użycia deklarowanych baz, nie pełny parser, audyt poleceń RUN ani gwarancja powtarzalności repozytoriów apt/npm.
+
+## Publikowanie obrazów w GitHub Actions
+
+`.github/workflows/images.yml` wymaga, by commit był już przodkiem `origin/main`. Instalacja, pełne ścisłe kontrole i pięć lokalnych buildów pochodzą z `release-produce.mjs`; nie używamy `docker/build-push-action`. Zanim workflow zaloguje się do GHCR, `release-proof.mjs verify` sprawdza pełny SHA, source archive, inputs, raport i pięć lokalnych image ID. `release-publish.mjs` ponownie wykonuje tę kontrolę, taguje obrazy wyłącznie zwróconymi ID, wypycha tag równy pełnemu SHA i pobiera każdy obraz z powrotem po digest. Wydaje kompletny proof z pięcioma `registry_ref` dopiero, gdy wszystkie digesty wskazują oczekiwane ID i etykiety.
+
+`release-inputs.mjs` zapisuje wyłącznie osiem dozwolonych publicznych build args; tajne zmienne nie są wejściami. `release/bases-linux-amd64.json` przypina bazowe obrazy Node i FFmpeg do manifestów amd64. Zmiana platformy wymaga osobnych, zweryfikowanych digestów i zakresu buildera. Testy tej integracji używają syntetycznych proofów/obrazów; nie wykonano rzeczywistego workflow, logowania ani push do GHCR. Komplet artefaktów jest zachowywany jako artifact workflow, ale ścieżka deploy/rollback nie konsumuje go jeszcze.

@@ -8,7 +8,15 @@ Punkt bazowy odświeżono przez lokalne scalenie `origin/main` (`e2d33e0e`) do g
 
 `origin/main` ma obecnie Next i eslint-config-next **16.4.4**; poprawki K02 są w kodzie gałęzi, ale K02 pozostaje niezamknięte bez pełnego świeżego przeglądu zależności i dowodu obrazu. W toku pozostaje K06: konsumenci wydania i rzeczywiste pięć obrazów. K01/K03 mają udokumentowane częściowe dowody, lecz pełny cykl API/worker/HLS/storage nadal nie jest odebrany. Cała roadmapa nadal ma 40 pakietów i żaden nie jest formalnie zamknięty.
 
-**Następny pakiet:** wznowić K06 od audytu wszystkich konsumentów wydania na aktualnym bazowym SHA i dodać próby odmowy, zaczynając od ścieżki `images.yml`; nie wykonywać publikacji ani wdrożenia. K05 i decyzje DP01–DP09 pozostają otwarte; niezależne naprawy można prowadzić bez zgadywania aktywnego profilu.
+**Następny pakiet:** kontynuować K06 na aktualnym bazowym SHA: dowodowo zablokować niezweryfikowany `deploy.sh`, migrator, panel, `mergedeploy.sh` i rollback. Nie wykonywać publikacji ani wdrożenia. K05 i decyzje DP01–DP09 pozostają otwarte; niezależne naprawy można prowadzić bez zgadywania aktywnego profilu.
+
+## K06 — GHCR images workflow, część 1
+
+Zastąpiono bezpośrednie build-and-push czterech obrazów ścieżką `release-produce` → lokalne `verify` → publikacja pięciu obrazów zwróconymi ID → pull i sprawdzenie digestów → kompletny proof do artifactu. Commit włącza też walidowany generator ośmiu publicznych inputs oraz amd64 base manifesty przypięte digestem. Workflow odmawia commitów, których nie ma już na `main`.
+
+Dowody: test regresyjny workflow i testy helperów **6/6 PASS**; pełny typecheck PASS; lint zmienionych plików PASS; YAML workflow parsuje się poprawnie. Trzy base digesty potwierdzono odczytem registry przez Buildx. Nie uruchamiano prawdziwych Actions, npm audit, logowania/push do GHCR ani obrazów produktu. K06 pozostaje OTWARTE: obecne `deploy.sh`, `deploy-admin.sh`, `mergedeploy.sh`, ręczne migracje/aktywacja oraz rollback nie konsumują jeszcze proofu. Pełny producer wymaga m.in. obowiązkowego audit gate; status `release_ready=false` bez jego rzeczywistego zielonego raportu.
+
+**Następny krok:** testami odmowy objąć `deploy.sh`/migrację i admin, tak aby bez katalogu dowodowego lub błędnego zewnętrznego hasha nie pobierały/promowały obrazu ani nie migrowały. Następnie połączyć przekazanie artefaktu z `mergedeploy.sh` i zapisać dowód rollbacku. Nie wykonywać tych skryptów na serwerze.
 
 ## STOP właściciela — 4 listopada 2026
 
