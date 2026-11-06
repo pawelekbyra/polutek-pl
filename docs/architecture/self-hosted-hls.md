@@ -28,6 +28,10 @@ Oryginał trafia z przeglądarki admina do prywatnego R2 `polutek`, kolejka w Po
 - Token nie jest związany z widzem: zalogowany widz może skopiować URL i pobrać pliki na czas TTL. To kontrola dostępu, nie DRM. Przy treściach darmowych po zalogowaniu (§4.4) akceptowalne.
 - Jeden sekret `HLS_TOKEN_SECRET` (Worker, `app.env`, `.ai-secrets`); rotacja unieważnia naraz wszystkie trwające odtworzenia (odtwarzacz odnowi token sam przy 403).
 
+## Monotoniczna aktywacja oryginału
+
+`completeOriginalMultipart()` oraz retry dla wiersza `READY` używają tej samej blokady transakcyjnej per video. W transakcji ponownie odczytywany jest status i wersja; starszy `READY` nie może zastąpić nowszego aktywnego oryginału. Ukończenie zapisuje `READY`, `SUPERSEDED`, `Video.activeOriginalId` i `VideoEncodeJob` atomowo. Retry `READY` naprawia historyczny brak zadania, ale najpierw sprawdza, czy ta wersja nadal wygrywa. Testy HTTP z dwiema równoległymi ścieżkami na PostgreSQL są udokumentowane w K15 w roadmapie audytu.
+
 ## Sprzątanie obiektów
 
 `HlsWriter.deletePrefix()` odczytuje odpowiedź `DeleteObjects` per obiekt (`Quiet: false`), liczy tylko potwierdzone `Deleted` i ponawia wyłącznie przejściowe błędy do trzech prób. `NoSuchKey`/`NotFound` jest idempotentne i nie zwiększa licznika. Trwałe błędy lub wyczerpane próby rzucają `R2DeleteObjectsError`, więc strict purge/durable job nie może oznaczyć częściowego usunięcia jako sukcesu. Testy komponentów są zielone, ale brak jeszcze odbioru na sandboxie Cloudflare R2/S3; zachowanie dostawcy i cały przebieg purge pozostają niepotwierdzone.

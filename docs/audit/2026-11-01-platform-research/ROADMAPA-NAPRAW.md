@@ -426,6 +426,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K15-T1** — Zatrzymać retry v1 po odczycie READY, ukończyć v2, wznowić v1: activeOriginalId pozostaje v2, v1 pozostaje SUPERSEDED i nie zleca nowej aktywacji.
 - **K15-T2** — Zwykłe complete i jego replay działają; przerwa po DB przed enqueue zostaje naprawiona. Cancel/SUPERSEDED nie odzyskują aktywności przez spóźnione complete.
 
+**Wynik lokalny 6 listopada 2026:** odtworzono błąd RED: spóźniony retry ze snapshotem `READY` cofał aktywny wskaźnik i próbował zlecić starszy oryginał. Complete i READY replay mają teraz wspólną transakcyjną blokadę per video, odczyt statusu/wersji pod blokadą i CAS; wersja aktywna, statusy oryginałów oraz zadanie kolejki są atomowe. READY replay naprawia historyczny brak joba tylko dla nadal zwycięskiej wersji. Trzy testy przez rzeczywistą trasę Studio z prawdziwymi transakcjami Prisma/PostgreSQL 17 i barierą: **3/3 PASS** (v1 retry po v2, recovery i idempotentny replay, spóźniony upload v1); dodatkowo 28/28 celowanych unit, ESLint i repo typecheck PASS ([dowody](program-audytu/evidence/k15-monotonic-original-2026-11-06/result.json)). Sesja Studio i R2 są kontrolowanymi atrapami; brak sandboxa R2 i niezależnego przeglądu, więc K15 częściowe.
+
 <a id="k16"></a>
 
 #### K16. Tożsamość próby i odrębne prefiksy kodowania

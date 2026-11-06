@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K15/R27: monotoniczne ukończenie wersji oryginału
+
+- Commit `05c2b44d`: wspólna transakcyjna blokada per video, świeży odczyt statusu/wersji i CAS; aktywacja wskaźnika oraz utworzenie joba są atomowe. Spóźniony retry nie może reaktywować zastąpionej wersji; retry READY naprawia brakujący job tylko dla nadal zwycięskiej wersji.
+- Regresja RED odtworzyła cofnięcie wskaźnika. Test endpointu Studio na PostgreSQL 17: **3/3 PASS**, testy jednostkowe **28/28 PASS**, ESLint i repo typecheck PASS.
+- R2 i sesja były kontrolowane; brak sandboxa R2/S3, niezależnego przeglądu i pełnego buildu. K15 częściowe, otwarte. Dowody: `evidence/k15-monotonic-original-2026-11-06/`.
+
 ## 6 listopada 2026 — K14/R03: zakończenie rozpoczętych uploadów przed cleanup
 
 - `e55f1f1c`: po pierwszym błędzie pula uploadów nie przydziela dalszych plików, sygnał anuluje rozpoczęte PUT, a proces czeka na ich ustanie przed cleanup. Sygnał transferu oddzielono od sygnału anulowania joba, zachowując retry po błędach sieciowych.

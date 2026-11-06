@@ -9,9 +9,10 @@
 - K10/R30: odtworzono ujawnienie metadanych przyszłej premiery po `NOT_FOUND` dla gościa i obcego użytkownika; przeniesiono odmowę przed bramkę premiery. 3 celowane pliki 18/18 PASS, repo typecheck/ESLint/public build PASS; [dowody](evidence/k10-hidden-premiere-2026-11-06/result.json). Częściowe: brak macierzy HTTP z rolami/sesjami i niezależnego przeglądu.
 - K13/R04: `HlsWriter.deletePrefix()` odbiera wyniki per obiekt, liczy potwierdzone usunięcia, ponawia błędy przejściowe do 3 prób i zgłasza błędy trwałe. 14/14 testów celowanych, ESLint i repo typecheck PASS ([dowody](evidence/k13-r2-delete-2026-11-06/result.json)). Brak sandboxa R2 i niezależnego przeglądu; pakiet otwarty.
 - K14/R03: `runPool` zatrzymuje dalsze przydziały po błędzie i czeka na wszystkie rozpoczęte PUT; `HlsWriter.putFile()` przekazuje sygnał anulowania do AWS SDK. 23/23 celowane testy, ESLint i repo typecheck PASS ([dowody](evidence/k14-upload-cleanup-2026-11-06/result.json)). Lokalna regresja odtwarzała cleanup przed zakończeniem uploadu. Brak sandboxa R2/S3, potwierdzenia zachowania dostawcy i niezależnego przeglądu; pakiet otwarty.
+- K15/R27: wspólna blokada transakcyjna per video, świeży status i CAS wersji; promocja oryginału i enqueue joba atomowe. READY replay naprawia historyczny brak zadania tylko dla niewypchniętej wersji. 3/3 testy endpointu Studio z rzeczywistym PostgreSQL 17/barierą, 28/28 unit, ESLint/typecheck PASS ([dowody](evidence/k15-monotonic-original-2026-11-06/result.json)). Sesja i R2 kontrolowane; brak sandboxa R2 i niezależnego przeglądu; pakiet otwarty.
 - K06: `.github/workflows/images.yml` używa producenta/publikatora dla pięciu ID/digestów. Deploy, rollback, lokalny/GitHub artifact transfer, telemetria, compose i jednorazowe narzędzia operatora są proof-gated; cache obrazu jest używane bez GHCR wyłącznie przy zgodnym ID, a cache miss pobiera dokładny digest. Runbooki snapshot/restore oznaczają różnicę między produkcją a kandydatem. Ostatnie commity: `578cfd6b`, `64671a16`, `6f393985`, `371a03ce`, `cf8d1bbe`, `227b5c37`, `ce6570bd`, `deed50a9`, `cce16ea3`, `16218f14`, `6aacd4b5`, `c58586d8`, `8224f010`. Wszystkie pięć wcześniejszych skupionych zestawów: 102/102 PASS. Retest całego `serwerek-scripts.test.ts` na nowym SHA: **45/45 PASS, zero skip**; obejmuje m.in. cztery negatywne ścieżki (dump przed deployem, migracja bez aktywacji, start app z rollbackiem, start panelu z rollbackiem po weryfikacji proofu). [Wynik](evidence/k06-deployer-failures-2026-11-06/). ESLint, `bash -n`, YAML parse, `git diff --check` PASS. Compose config nie uruchomił się z powodu braku lokalnego `db.env`; YAML sparsowano osobno. Brak prawdziwego Actions/GHCR/SSH/serwera/DB.
 - K06 pozostaje otwarty: brak odbioru pięciu rzeczywistych obrazów, pełnego produktu/runtime, pełnych prób rollbacku i kompletnej bramki wydania. Atrapa SSH weryfikuje tylko staging i wywołanie komendy, nie zachowanie zdalnego serwera. Nie ogłaszać `release_ready` ani zamknięcia pakietu.
-- Następny krok: K15 — monotoniczne ukończenie wersji oryginału. K13/K14 — odbiór na sandboxie R2/S3 i drugi przegląd. K07 — zewnętrzny proxy nieprodukcyjny. K11 wymaga uzgodnionego kontraktu wkładów i read-only raportu historycznego przed migracją danych. K06 po przeglądzie konsumentów i zielonym fake-Docker suite nadal wymaga odbioru pięciu rzeczywistych obrazów/runtime i obowiązkowego przeglądu zależności. Nie uruchamiać produkcyjnych skryptów; bez push/PR/merge/deploy.
+- Następny krok: K16 — tożsamość próby i odrębne prefiksy kodowania. K13/K14/K15 — odbiór na sandboxie R2/S3 i drugi przegląd. K07 — zewnętrzny proxy nieprodukcyjny. K11 wymaga uzgodnionego kontraktu wkładów i read-only raportu historycznego przed migracją danych. K06 po przeglądzie konsumentów i zielonym fake-Docker suite nadal wymaga odbioru pięciu rzeczywistych obrazów/runtime i obowiązkowego przeglądu zależności. Nie uruchamiać produkcyjnych skryptów; bez push/PR/merge/deploy.
 
 ## ZATRZYMANE na polecenie właściciela — 4 listopada 2026
 
@@ -43,12 +44,12 @@ Dowody bieżącej sesji: `evidence/k06-local-producer-2026-11-03/` (katalog nazw
 cd /opt/codex/polutek-pl/.worktrees/platform-audit
 git status --short
 git log -5 --oneline
-sed -n '387,430p' docs/audit/2026-11-01-platform-research/ROADMAPA-NAPRAW.md
-rg -n 'monotonic|complete.*version|completeOriginal|original.*version' lib/modules/video-pipeline tests/unit/video-pipeline
-rg -n 'K15|Następny krok' docs/audit/2026-11-01-platform-research/POSTEP-NAPRAW.md docs/audit/2026-11-01-platform-research/program-audytu/STAN.md
+sed -n '430,475p' docs/audit/2026-11-01-platform-research/ROADMAPA-NAPRAW.md
+rg -n 'attempt|attemptId|attempt.*prefix|encode.*prefix' lib/modules/video-pipeline scripts/video-worker.ts
+rg -n 'K16|Następny krok' docs/audit/2026-11-01-platform-research/POSTEP-NAPRAW.md docs/audit/2026-11-01-platform-research/program-audytu/STAN.md
 ```
 
-Po tej komendzie kontynuować K15 od istniejącego completion/version flow i jego testów; zachować osobne otwarte odbiory K13/K14 na sandboxie R2/S3. Nie uruchamiać skryptów wdrożeniowych na hoście/produkcji. Nie przełączać na historyczną gałąź PR #2065. Ograniczenia publikacji i produkcji pozostają aktywne.
+Po tej komendzie kontynuować K16 od tożsamości próby kodowania, prefiksów R2 i własności cleanup. Zachować otwarte odbiory K13/K14/K15 na sandboxie R2/S3. Nie uruchamiać skryptów wdrożeniowych na hoście/produkcji. Nie przełączać na historyczną gałąź PR #2065. Ograniczenia publikacji i produkcji pozostają aktywne.
 
 ## Historyczny stan przekazania z poprzedniej instancji
 
