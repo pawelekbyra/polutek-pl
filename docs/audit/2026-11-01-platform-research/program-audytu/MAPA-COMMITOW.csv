@@ -36,3 +36,4 @@ K10-hidden-premiere,99426387,program-audytu/evidence/k10-hidden-premiere-2026-11
 K13-r2-delete,aef5db90,program-audytu/evidence/k13-r2-delete-2026-11-06/result.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K14-upload-cleanup,e55f1f1c,program-audytu/evidence/k14-upload-cleanup-2026-11-06/result.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K15-monotonic-original,05c2b44d,lib/modules/video-pipeline/application/original-upload.use-cases.ts;tests/postgres/original-upload.pg.test.ts;program-audytu/evidence/k15-monotonic-original-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K16-attempt-isolation,6975a492,prisma/migrations/20261106120000_encode_attempt_isolation/;tests/postgres/encode-attempt-isolation.pg.test.ts;program-audytu/evidence/k16-attempt-isolation-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO

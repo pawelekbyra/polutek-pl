@@ -449,6 +449,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K16-T1** — Dwie próby tego samego zadania mają rozłączne prefiksy i spójne ID w repo/finalizer/logach; cleanup A nie może adresować prefiksu B.
 - **K16-T2** — Migracja na reprezentatywnym legacy snapshot i restart po claim nie gubią aktywnego filmu. Test mieszanego wykonania wykazuje blokadę niezgodnego starego workera; R02 pozostaje otwarte do K17.
 
+**Wynik lokalny 6 listopada 2026:** każdy claim nowym repozytorium nadaje UUID; proces, katalog roboczy, HLS upload/weryfikacja, finalizer, logi i cleanup używają ID próby. Nowy prefiks ma postać `videos/<videoId>/v/v<version>/attempts/<uuid>/`; historyczny rekord `RUNNING` z pustym `attemptId` zachowuje stary prefiks i może dokończyć heartbeat. Addytywna migracja blokuje legacy claim do `RUNNING`, gdy UUID nie został ustawiony. Test na PostgreSQL 17 zastosował komplet 82 migracji i przeszedł: legacy claim odrzucony, dwie kolejne próby mają rozłączne ID/prefiksy, legacy heartbeat i odzyskanie po wygaśnięciu zachowują `activeOriginalId` (**1/1 test**). Testy unit: **53/53**, ESLint, Prisma validate i repo typecheck PASS ([dowody](program-audytu/evidence/k16-attempt-isolation-2026-11-06/)). To nie jest kontrolowane wygaszenie workerów w działającym środowisku ani fencing ich skutków; brak R2 sandboxa, niezależnego przeglądu i pełnego buildu. K16 pozostaje częściowe, K17 jest nadal wymagane dla R02.
+
 <a id="k17"></a>
 
 #### K17. Atomowe odcięcie skutków starego workera

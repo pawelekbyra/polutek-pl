@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K16/R02: odrębne prefiksy prób kodowania
+
+- Commit `6975a492`: claim nadaje UUID próby; proces, lokalny katalog roboczy, HLS output, finalizer, logi i cleanup przenoszą tę samą tożsamość. Dodatkowa migracja blokuje stare claimy bez `attemptId`, ale pozwala już działającemu legacy jobowi kontynuować heartbeat.
+- PostgreSQL 17 z kompletem 82 migracji: stary claim odrzucony; dwie próby dostały rozłączne UUID/prefiksy; wygasły legacy job został odzyskany z nowym ID bez zmiany `activeOriginalId`. Integracja 1/1, testy unit 53/53, ESLint, Prisma validate i typecheck PASS.
+- K16 pozostaje częściowe: nie wykonano kontrolowanego wygaszenia workerów w środowisku ani odbioru R2 i drugiego przeglądu; K17 musi jeszcze odgrodzić skutki starego ownera. Dowody: `evidence/k16-attempt-isolation-2026-11-06/`.
+
 ## 6 listopada 2026 — K15/R27: monotoniczne ukończenie wersji oryginału
 
 - Commit `05c2b44d`: wspólna transakcyjna blokada per video, świeży odczyt statusu/wersji i CAS; aktywacja wskaźnika oraz utworzenie joba są atomowe. Spóźniony retry nie może reaktywować zastąpionej wersji; retry READY naprawia brakujący job tylko dla nadal zwycięskiej wersji.

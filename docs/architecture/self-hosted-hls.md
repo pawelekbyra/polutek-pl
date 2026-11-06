@@ -32,6 +32,12 @@ Oryginał trafia z przeglądarki admina do prywatnego R2 `polutek`, kolejka w Po
 
 `completeOriginalMultipart()` oraz retry dla wiersza `READY` używają tej samej blokady transakcyjnej per video. W transakcji ponownie odczytywany jest status i wersja; starszy `READY` nie może zastąpić nowszego aktywnego oryginału. Ukończenie zapisuje `READY`, `SUPERSEDED`, `Video.activeOriginalId` i `VideoEncodeJob` atomowo. Retry `READY` naprawia historyczny brak zadania, ale najpierw sprawdza, czy ta wersja nadal wygrywa. Testy HTTP z dwiema równoległymi ścieżkami na PostgreSQL są udokumentowane w K15 w roadmapie audytu.
 
+## Prefiksy prób kodowania
+
+Każdy nowy claim dostaje UUID zapisany w `VideoEncodeJob.attemptId`. Pliki, wpis `VideoAsset`, finalizer, logi i cleanup używają tego samego prefiksu `videos/<videoId>/v/v<version>/attempts/<attemptId>/`; katalog roboczy także zawiera ID próby. Proces usuwa wyłącznie swój prefiks. Starsze aktywne rekordy z `attemptId = NULL` pozostają mapowane na historyczny `videos/<videoId>/v/v<version>` aż do ich wygaszenia.
+
+Migracja blokuje przejście zadania do `RUNNING`, jeśli claim nie wpisał `attemptId`, więc binarny stary worker nie może pobrać nowego zadania. Heartbeat już działającego legacy zadania jest dozwolony. Przed migracją i startem nowych workerów wdrożenie musi kontrolowanie wygasić stare workery; lokalny test nie zastępuje tej procedury ani fencing skutków starego workera, które jest osobnym K17.
+
 ## Sprzątanie obiektów
 
 `HlsWriter.deletePrefix()` odczytuje odpowiedź `DeleteObjects` per obiekt (`Quiet: false`), liczy tylko potwierdzone `Deleted` i ponawia wyłącznie przejściowe błędy do trzech prób. `NoSuchKey`/`NotFound` jest idempotentne i nie zwiększa licznika. Trwałe błędy lub wyczerpane próby rzucają `R2DeleteObjectsError`, więc strict purge/durable job nie może oznaczyć częściowego usunięcia jako sukcesu. Testy komponentów są zielone, ale brak jeszcze odbioru na sandboxie Cloudflare R2/S3; zachowanie dostawcy i cały przebieg purge pozostają niepotwierdzone.
