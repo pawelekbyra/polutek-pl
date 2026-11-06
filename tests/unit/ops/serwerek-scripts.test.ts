@@ -182,7 +182,7 @@ case "$1" in
         case " $* " in
           *"select 1 from pg_roles"*) echo "\${FAKE_TELEMETRY_ROLE:-}";;
           *"-v ON_ERROR_STOP=1"*) cat >> "$FAKE_DIR/sql.log";;
-          *) echo "-- dump";;
+          *) [ -n "\${FAKE_DEPLOY_DUMP_FAIL:-}" ] && exit 1; echo "-- dump";;
         esac
         exit 0;;
     esac
@@ -558,6 +558,18 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     expect(fk('up.log')).toContain('service=db');
     expect(fk('up.log')).not.toContain('service=app');
     expect(fk('node.log')).toContain('--scope=app');
+  });
+
+  it('does not migrate or activate when the pre-deploy database dump fails', () => {
+    const sb = setup({ state: { '.current-image': 'polutek-app:old' } });
+    const { r, out, rd, fk } = deploy(sb, ['t1'], { FAKE_DEPLOY_DUMP_FAIL: '1' });
+
+    expect(r.status).toBe(1);
+    expect(out).toContain('pre-deploy dump failed');
+    expect(rd('.current-image')).toBe('polutek-app:old');
+    expect(fk('docker.log')).not.toContain('compose --profile tools run --rm migrate');
+    expect(fk('up.log')).not.toContain('service=app');
+    expect(readdirSync(path.join(sb.dir, 'backups'))).toEqual([]);
   });
 
   it('encoder that fails to start: warning outcome, not promoted, logged in telemetry', () => {
