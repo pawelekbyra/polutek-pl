@@ -1464,5 +1464,20 @@
       "evidence": "k06-local-producer-2026-11-03/final-gates/result.json",
       "release_ready": false
     }
+  },
+  "latest_followup": {
+    "date": "2026-11-06",
+    "base_revision": "fc5e1c63",
+    "package": "K27 signed Better Auth session boundary",
+    "test_file": "tests/postgres/user-export-session.pg.test.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 1,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "diff_check_exit": 0,
+    "scope_limit": "Direct getAuth/resolveDbBackedActor calls; no Next HTTP; export route test still mocks auth and rate limiter.",
+    "evidence": "program-audytu/evidence/k27-session-postgres-2026-11-06/result.json",
+    "k27_closed": false
   }
 }

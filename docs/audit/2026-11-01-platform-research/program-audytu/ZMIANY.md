@@ -483,3 +483,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - W fake-Docker harness dodano sterowaną awarię dumpu przed wdrożeniem i regresję: częściowy zrzut usunięty, bieżący obraz zachowany, migracja i aktywacja pominięte.
 - Pełny `tests/unit/ops/serwerek-scripts.test.ts` przeszedł **45/45 PASS, zero skip**. Cztery scenariusze przeszły **4/4 PASS**: błąd dumpu, błąd migracji, błąd uruchomienia aplikacji i rollback, błąd panelu i rollback po sprawdzeniu zachowanego proofu. [Wynik](evidence/k06-deployer-failures-2026-11-06/).
 - Adapter symuluje Docker, dump/migrator i filesystem; nie użyto prawdziwej bazy, obrazów, GHCR, SSH ani serwera. To weryfikacja częściowa; K06 pozostaje otwarte.
+
+## 6 listopada 2026 — K27: podpisana sesja eksportu danych
+
+- Dodano test PostgreSQL z rzeczywistą konfiguracją Better Auth: aktywny podpisany cookie, mapowanie aktora z DB, błędny podpis i cofnięta sesja. PostgreSQL 17 po 84 migracjach; 1/1 PASS, typecheck, ESLint i diff check PASS.
+- Test jest bezpośrednim wywołaniem granicy auth, nie Next HTTP; route test eksportu nadal ma atrapę auth/rate limitera. K27 pozostaje otwarte. Dowód: `evidence/k27-session-postgres-2026-11-06/result.json`.
