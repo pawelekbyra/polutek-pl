@@ -1,0 +1,101 @@
+
+> kraufanding@0.1.0 admin:build
+> next build apps/admin
+
+▲ Next.js 16.4.4 (Turbopack)
+✓ Running next.config.mjs took 42ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.1s
+  Running TypeScript ...
+  Finished TypeScript in 15.2s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/1) ...
+✓ Generating static pages using 3 workers (1/1) in 254ms
+Turbopack build encountered 1 warning:
+./lib/modules/admin-overview/infrastructure/host-status-file.ts:75:23
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m73 |[0m [36mexport[0m [36masync[0m [36mfunction[0m readHostStatus(path: string = process.env.[33mADMIN_HOST_STATUS_FILE[0m || [33m...[0m
+  [90m74 |[0m   [36mtry[0m {
+[33m[1m>[0m [90m75 |[0m     [36mconst[0m raw = [36mawait[0m readFile(path, [32m"utf8"[0m);
+  [90m   |[0m                       [33m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m76 |[0m     [36mif[0m (raw.length > [35m512[0m_000) [36mreturn[0m { ok: [36mfalse[0m, reason: [32m"Plik statusu hosta jest za duży..[0m.
+  [90m77 |[0m     [36mreturn[0m parseHostStatus(raw);
+  [90m78 |[0m   } [36mcatch[0m {
+
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: fs.readFile(/*turbopackIgnore: true*/ ...), or
+- remove them.
+
+Import traces:
+  App Route:
+    ./lib/modules/admin-overview/infrastructure/host-status-file.ts
+    ./lib/modules/admin-overview/index.ts
+    ./apps/admin/app/api/search/route.ts
+
+  Server Component:
+    ./lib/modules/admin-overview/infrastructure/host-status-file.ts
+    ./lib/modules/admin-overview/index.ts
+    ./apps/admin/app/(panel)/kanaly/page.tsx
+
+
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /[modul]
+├ ƒ /analityka
+├ ƒ /api/auth/[...all]
+├ ƒ /api/email/preview
+├ ƒ /api/export/audit
+├ ƒ /api/export/payments
+├ ƒ /api/health
+├ ƒ /api/jobs/morning-report
+├ ƒ /api/live
+├ ƒ /api/search
+├ ƒ /api/settings/default-thumbnail
+├ ƒ /api/spolecznosc/uzytkownicy/export
+├ ƒ /api/videos/[id]/cover
+├ ƒ /api/videos/[id]/original-upload/multipart
+├ ƒ /api/videos/[id]/original-upload/multipart/complete
+├ ƒ /api/videos/[id]/original-upload/multipart/parts
+├ ƒ /api/videos/[id]/pipeline
+├ ƒ /api/videos/[id]/subtitles/[lang]
+├ ƒ /api/videos/[id]/thumbnail
+├ ƒ /bezpieczenstwo
+├ ƒ /kanaly
+├ ƒ /kanaly/[id]
+├ ƒ /komunikacja
+├ ƒ /logowanie
+├ ƒ /potwierdz
+├ ƒ /premiera
+├ ƒ /przychody
+├ ƒ /rejestracja
+├ ƒ /spolecznosc
+├ ƒ /spolecznosc/u/[id]
+├ ƒ /system
+├ ƒ /system/r2
+├ ƒ /tlumaczenia
+├ ƒ /tlumaczenia/[slug]
+├ ƒ /tresci
+├ ƒ /tresci/[slug]
+├ ƒ /tresci/[slug]/analityka
+├ ƒ /tresci/[slug]/edycja
+├ ƒ /tresci/[slug]/jakosc
+├ ƒ /tresci/[slug]/komentarze
+├ ƒ /tresci/[slug]/tlumaczenia
+├ ƒ /tresci/nowy
+├ ƒ /tresci/uklad
+└ ƒ /ustawienia
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+

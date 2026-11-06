@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-06",
+  "source_revision": "d6f0d33cba767b9c8f977965f9b514316191fcdc",
+  "node": "v22.23.3",
+  "npm": "10.9.9",
+  "dependencies": {
+    "next": "16.4.4",
+    "eslint-config-next": "16.4.4",
+    "sharp": "0.35.5",
+    "librsvg": "2.63.2",
+    "vips": "8.18.7"
+  },
+  "source_sha256": {
+    "package.json": "12a4823cb9540d25a28457a62c06ee5c8c9f585a9d49e990d5fbff22caf4b4b3",
+    "package-lock.json": "524607dc9c5e1ddb571c3592f9721f09febc5a363bb5605d3afdefff9cc6ec9f",
+    "next.config.mjs": "d381f1a26e6eb70bb14b99b25a030f07553258009a7b26aa5e6be20676a9214b",
+    "apps/admin/next.config.mjs": "f219291301a8c7ff2ff9c9f1412717f0433eadb79809d85d94272b7df0571ea0"
+  },
+  "checks": {
+    "npm_run_typecheck": { "exit": 0, "log": "repo-typecheck.log" },
+    "npm_run_build": { "exit": 0, "log": "public-build.log" },
+    "npm_run_admin_build": { "exit": 0, "log": "admin-build.log" },
+    "k02_related_vitest": {
+      "exit": 0,
+      "test_files": 9,
+      "suites_passed": 34,
+      "tests_passed": 179,
+      "tests_failed": 0,
+      "tests_skipped": 0,
+      "report": "k02-related-vitest.json"
+    },
+    "type_regression_fixture_tests": {
+      "exit": 0,
+      "files_passed": 3,
+      "tests_passed": 25,
+      "tests_failed": 0,
+      "log": "type-regression-tests.log"
+    },
+    "type_regression_eslint": { "exit": 0, "log": "type-regression-eslint.log" },
+    "next_image_runtime": { "result": "PASS", "observations": "observations.json", "runtime_log": "next-runtime.log" }
+  },
+  "changes": {
+    "commit": "d6f0d33c",
+    "summary": "Corrected three UI test fixture typings exposed by Next build type checking; no type checking was disabled."
+  },
+  "warnings": [
+    "Public app build: deprecated middleware convention and Tailwind config module warning; privacy/terms routes fell back to dynamic rendering when headers were used.",
+    "Admin build: dynamic host-status file path makes Turbopack trace the whole project into the output; investigate/fix before relying on a compact standalone image."
+  ],
+  "npm_ci": {
+    "exit": 0,
+    "prisma_generate": "PASS",
+    "note": "npm ci invoked npm's default automatic dependency audit and printed an unreviewed vulnerability summary. This is not an audit result and is not evidence for K02. Do not repeat npm audit or trigger it through npm install/ci until the earlier dependency-graph upload policy block is resolved; use npm_config_audit=false for future npm installs."
+  },
+  "limits": "The builds and runtime fixture are local, not application-container builds, GHCR publication, production or full runtime acceptance. No reviewed fresh dependency audit was run. K02 remains open pending that review and proof of the actual application image contents."
+}
