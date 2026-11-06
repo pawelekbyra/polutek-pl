@@ -42,7 +42,7 @@ Dowody bieżącej sesji: `evidence/k06-local-producer-2026-11-03/` (katalog nazw
 2. Brak kompletnego dowodu wydania pięciu rzeczywistych obrazów, w tym migratora i kolektora, oraz pełnego własnego HTTP/API/kolejka/Redis/storage/Worker/HLS. Połączenia zewnętrznych providerów w części testów pozostają kontrolowane. Brak nowego pełnego przyjęcia produktu i buildów na końcowym SHA.
 3. K05/DP01–DP09 i aktywny profil nadal otwarte. Nie zmieniać samodzielnie live płatności, prawnych dokumentów, logowania/CSRF, TTL, retencji, usuwania danych, ról/uprawnień, kluczy i DNS.
 4. `audit` nadal obowiązkowy, niewykonany po wcześniejszej automatycznej odmowie uploadu prywatnego grafu zależności. Nie obchodzić odmowy ani podstawiać PASS. Brak `release_ready`.
-5. K21 jest częściowe; K22 i pozostałe pakiety zależne/po nim nie rozpoczęte. Nie powtarzać zielonego pełnego unit17 minut bez zmiany uzasadniającej powtórzenie; dobierać kontrole do zmienianego zakresu.
+5. K21 pozostaje częściowe do runtime multipart/R2; kod i lokalny K21-T2 po review są pokryte. K22 jest częściowe: współdzielony silnik, mapowanie Studio, wznowienie brakujących części i świadomy discard; 34 unit + 4 PostgreSQL PASS. Brak przeglądarki, dwóch kart i realnego R2; szczegóły/handoff: `evidence/k22-studio-resume-2026-11-06/result.json`. Nie powtarzać zielonego pełnego unit17 minut bez zmiany uzasadniającej powtórzenie; dobierać kontrole do zmienianego zakresu.
 
 ### Komenda do kontynuacji bieżącego zlecenia
 

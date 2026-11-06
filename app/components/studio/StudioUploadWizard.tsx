@@ -2,15 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { jsonBody, studioApi, type StudioLimits } from "./studio-client";
+import { jsonBody, StudioApiError, studioApi, type StudioLimits } from "./studio-client";
 import { studioErrorText } from "./studio-errors";
-import { uploadOriginal, type UploadProgress } from "./upload-original";
+import { cancelStudioUpload, uploadOriginal, type UploadProgress } from "./upload-original";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
 import { DESCRIPTION_MAX, TITLE_MAX, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
 import VideoMoreOptions from "./VideoMoreOptions";
 import StudioUploadStatus, { type UploadPhase } from "./StudioUploadStatus";
 import StudioUploadFileInfo from "./StudioUploadFileInfo";
 import type { VideoCommentsModeValue } from "@/lib/video-metadata";
+import { forgetStudioDraft, rememberStudioDraft, rememberedStudioDraft } from "@/lib/video-upload/studio-resume";
 import { Card, CharCounter, Field, Notice, buttonClass, ghostButtonClass, inputClass } from "./ui";
 
 type Step = 1 | 2 | 3;
@@ -61,6 +62,7 @@ export default function StudioUploadWizard({
   const draftIdRef = useRef<string | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const discardRequestedRef = useRef(false);
 
   const sending = phase === "creating" || phase === "uploading";
 
@@ -144,30 +146,54 @@ export default function StudioUploadWizard({
     setWarning(null);
     setStep(3);
     const controller = new AbortController();
+    discardRequestedRef.current = false;
     abortRef.current = controller;
     try {
       let id = draftIdRef.current;
+      let reusedDraft = false;
       if (!id) {
         setPhase("creating");
-        const draft = await studioApi<{ id: string }>("/api/studio/videos", {
-          method: "POST",
-          ...jsonBody({
-            title: title.trim() || titleFromFileName(file.name) || "Film",
-            description: description.trim() || null,
-            tier,
-            tags,
-            category: category || null,
-            commentsMode,
-            isAdult,
-            publishAfterAssetReady: visibility.fields.publishAfterAssetReady,
-            premiereAt: visibility.fields.premiereAt,
-            ...(visibility.fields.publishAs ? { publishAs: visibility.fields.publishAs } : {}),
-          }),
-        });
-        id = draft.id;
+        id = await rememberedStudioDraft(file);
+        if (id) {
+          try {
+            const existing = await studioApi<{ id: string }>(`/api/studio/videos/${encodeURIComponent(id)}`);
+            if (existing.id !== id) {
+              await forgetStudioDraft(file);
+              id = null;
+            } else {
+              reusedDraft = true;
+            }
+          } catch (error) {
+            if (error instanceof StudioApiError && error.status === 404) {
+              await forgetStudioDraft(file);
+              id = null;
+            } else {
+              throw error;
+            }
+          }
+        }
+        if (!id) {
+          const draft = await studioApi<{ id: string }>("/api/studio/videos", {
+            method: "POST",
+            ...jsonBody({
+              title: title.trim() || titleFromFileName(file.name) || "Film",
+              description: description.trim() || null,
+              tier,
+              tags,
+              category: category || null,
+              commentsMode,
+              isAdult,
+              publishAfterAssetReady: visibility.fields.publishAfterAssetReady,
+              premiereAt: visibility.fields.premiereAt,
+              ...(visibility.fields.publishAs ? { publishAs: visibility.fields.publishAs } : {}),
+            }),
+          });
+          id = draft.id;
+        }
+        await rememberStudioDraft(file, id);
         draftIdRef.current = id;
         setDraftId(id);
-        if (cover) {
+        if (cover && !reusedDraft) {
           try {
             const body = new FormData();
             body.set("file", cover);
@@ -188,13 +214,32 @@ export default function StudioUploadWizard({
         file,
         fileName: file.name,
         contentType: file.type || undefined,
+        publishAfterReady: visibility.fields.publishAfterAssetReady,
         signal: controller.signal,
         onProgress: setProgress,
       });
+      await forgetStudioDraft(file);
       setUnsavedWork(false);
       onFinished(id);
     } catch (e) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        if (discardRequestedRef.current && draftIdRef.current) {
+          discardRequestedRef.current = false;
+          try {
+            await cancelStudioUpload({ videoId: draftIdRef.current, file, fileName: file.name });
+            await forgetStudioDraft(file);
+            draftIdRef.current = null;
+            setDraftId(null);
+            setProgress(null);
+            setError(null);
+            setPhase("error");
+          } catch (discardError) {
+            setError(studioErrorText(discardError, tx, tx("Nie udało się usunąć przesyłania.", "Could not discard the upload.")));
+            setPhase("error");
+          }
+        }
+        return;
+      }
       setError(
         studioErrorText(e, tx, tx("Przesyłanie nie powiodło się. Spróbuj ponownie.", "Upload failed. Please try again.")),
       );
@@ -214,6 +259,26 @@ export default function StudioUploadWizard({
     abortRef.current?.abort();
     setUnsavedWork(false);
     onCancel();
+  };
+
+  const discardUpload = async () => {
+    if (!file || !draftIdRef.current) return;
+    if (!window.confirm(tx("Usunąć niedokończone przesyłanie i zapisane części?", "Delete the unfinished upload and its stored parts?"))) return;
+    if (sending) {
+      discardRequestedRef.current = true;
+      abortRef.current?.abort();
+      return;
+    }
+    setError(null);
+    try {
+      await cancelStudioUpload({ videoId: draftIdRef.current, file, fileName: file.name });
+      await forgetStudioDraft(file);
+      draftIdRef.current = null;
+      setDraftId(null);
+      setProgress(null);
+    } catch (error) {
+      setError(studioErrorText(error, tx, tx("Nie udało się usunąć przesyłania.", "Could not discard the upload.")));
+    }
   };
 
   const steps: { id: Step; label: string }[] = [
@@ -420,7 +485,7 @@ export default function StudioUploadWizard({
       {step === 3 && (
         <StudioUploadStatus
           title={title} visibilityLabel={visibilityLabel[mode]} phase={phase} progress={progress}
-          warning={warning} error={error} draftId={draftId} onRetry={start} onCancel={cancel}
+          warning={warning} error={error} draftId={draftId} onRetry={start} onDiscard={discardUpload} onCancel={cancel}
           onOpenDraft={() => {
             if (!draftId) return;
             setUnsavedWork(false);
