@@ -62,7 +62,7 @@ export interface ProcessorPorts {
   };
   hls: {
     bucket: string;
-    putFile(key: string, filePath: string, contentType: string): Promise<number>;
+    putFile(key: string, filePath: string, contentType: string, signal?: AbortSignal): Promise<number>;
     exists(key: string): Promise<boolean>;
     countPrefix(prefix: string): Promise<number>;
     deletePrefix(prefix: string): Promise<number>;
@@ -146,16 +146,24 @@ async function listFiles(root: string, rel = ""): Promise<string[]> {
   return out;
 }
 
-async function runPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>, signal: AbortSignal): Promise<void> {
+async function runPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>, controller: AbortController): Promise<void> {
   let index = 0;
+  let firstError: unknown;
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (index < items.length) {
-      if (signal.aborted) throw new EncodeCancelledError();
+    while (index < items.length && !controller.signal.aborted) {
       const item = items[index++];
-      await fn(item);
+      try {
+        await fn(item);
+      } catch (error) {
+        if (firstError === undefined) firstError = error;
+        controller.abort();
+        return;
+      }
     }
   });
   await Promise.all(workers);
+  if (firstError !== undefined) throw firstError;
+  if (controller.signal.aborted) throw new EncodeCancelledError();
 }
 
 /**
@@ -293,14 +301,22 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     for (const f of files) sizes.set(f, (await stat(path.join(outDir, f))).size);
     const totalBytes = [...sizes.values()].reduce((a, b) => a + b, 0);
     let uploaded = 0;
+    const uploadController = new AbortController();
+    const abortUploads = () => uploadController.abort();
+    controller.signal.addEventListener("abort", abortUploads, { once: true });
+    if (controller.signal.aborted) abortUploads();
     const putOne = async (rel: string) => {
-      await ports.hls.putFile(hlsObjectKey(job.videoId, job.versionNumber, rel), path.join(outDir, rel), hlsContentType(rel));
+      await ports.hls.putFile(hlsObjectKey(job.videoId, job.versionNumber, rel), path.join(outDir, rel), hlsContentType(rel), uploadController.signal);
       uploaded += sizes.get(rel) ?? 0;
       progress.set({ stage: "UPLOADING", percent: overallProgress("UPLOADING", totalBytes ? uploaded / totalBytes : 1), eta: null });
       progress.tick();
     };
     const withoutMaster = files.filter((f) => f !== "master.m3u8");
-    await runPool(withoutMaster, ports.uploadConcurrency ?? 4, putOne, controller.signal);
+    try {
+      await runPool(withoutMaster, ports.uploadConcurrency ?? 4, putOne, uploadController);
+    } finally {
+      controller.signal.removeEventListener("abort", abortUploads);
+    }
     throwIfStopped();
     await putOne("master.m3u8");
 

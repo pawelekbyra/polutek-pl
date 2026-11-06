@@ -216,6 +216,40 @@ describe("processEncodeJob", () => {
     expect(await processEncodeJob(last.job, last.ports)).toBe("failed");
   });
 
+  it("waits for every started upload to settle before cleaning the prefix", async () => {
+    const h = harness();
+    h.ports.uploadConcurrency = 3;
+    let finishSlowSuccess!: () => void;
+    let finishSlowFailure!: () => void;
+    const slowSuccess = new Promise<void>((resolve) => { finishSlowSuccess = resolve; });
+    const slowFailure = new Promise<void>((resolve) => { finishSlowFailure = resolve; });
+    let started = 0;
+    h.hls.putFile.mockImplementation(async (key: string) => {
+      const rel = key.split("/").slice(4).join("/");
+      h.events.push(`put-start:${rel}`);
+      started += 1;
+      if (started === 1) await slowSuccess;
+      if (started === 2) {
+        await slowFailure;
+        h.events.push(`put-error:${rel}`);
+        throw new Error("socket hang up");
+      }
+      if (started === 3) throw new Error("connection reset");
+      h.uploaded.push(key);
+      h.events.push(`put:${rel}`);
+      return 1;
+    });
+
+    setTimeout(finishSlowSuccess, 20);
+    setTimeout(finishSlowFailure, 30);
+    const outcomePromise = processEncodeJob(h.job, h.ports);
+    expect(await outcomePromise).toBe("retry");
+    expect(started).toBe(3); // the remaining output files were never assigned after the first error
+    const cleanup = h.events.lastIndexOf("deletePrefix");
+    expect(cleanup).toBeGreaterThan(h.events.indexOf("put-error:"));
+    expect(cleanup).toBeGreaterThan(h.events.lastIndexOf("put:"));
+  });
+
   it("stops ffmpeg and cleans R2 when the admin cancels", async () => {
     const h = harness();
     h.encoder.encode.mockImplementation(({ signal }: { signal: AbortSignal }) =>

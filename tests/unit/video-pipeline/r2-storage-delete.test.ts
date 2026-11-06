@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { HlsWriter } from "@/lib/modules/video-pipeline/infrastructure/r2-storage";
 import { R2DeleteObjectsError } from "@/lib/modules/video-pipeline/infrastructure/r2-storage";
 
@@ -86,5 +89,22 @@ describe("HlsWriter.deletePrefix", () => {
 
     await expect(new HlsWriter(client, "hls").deletePrefix(prefix)).resolves.toBe(2);
     expect((send.mock.calls[2]?.[0] as ListObjectsV2Command).input.ContinuationToken).toBe("page-2");
+  });
+});
+
+describe("HlsWriter.putFile", () => {
+  it("passes the cancellation signal to the S3 request", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "hls-put-test-"));
+    const file = path.join(dir, "segment.m4s");
+    await writeFile(file, "segment");
+    try {
+      const send = vi.fn(async () => ({}));
+      const controller = new AbortController();
+      await new HlsWriter({ send } as never, "hls").putFile("key", file, "video/iso.segment", controller.signal);
+      expect(send.mock.calls[0]?.[0]).toBeInstanceOf(PutObjectCommand);
+      expect(send.mock.calls[0]?.[1]).toEqual({ abortSignal: controller.signal });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });
