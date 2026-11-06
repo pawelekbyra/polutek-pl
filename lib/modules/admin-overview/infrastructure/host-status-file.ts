@@ -72,7 +72,8 @@ export function parseHostStatus(raw: string): HostStatusRead {
 
 export async function readHostStatus(path: string = process.env.ADMIN_HOST_STATUS_FILE || DEFAULT_HOST_STATUS_FILE): Promise<HostStatusRead> {
   try {
-    const raw = await readFile(path, "utf8");
+    // The status JSON lives on a read-only host mount, outside the deploy artifact; do not trace the project for this runtime path.
+    const raw = await readFile(/*turbopackIgnore: true*/ path, "utf8");
     if (raw.length > 512_000) return { ok: false, reason: "Plik statusu hosta jest za duży." };
     return parseHostStatus(raw);
   } catch {
