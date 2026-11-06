@@ -59,16 +59,30 @@
       "exitCode": 0
     },
     {
+      "name": "studio-browser-resume",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> E2E_BASE_URL=http://127.0.0.1:<local-next-port> npx playwright test tests/e2e/studio-upload-resume.spec.ts --project=chromium",
+      "exitCode": 0,
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "covers": [
+        "rendered Studio wizard persists its draft id across a browser reload",
+        "same file fingerprint resumes stored ETag without another multipart start or part PUT",
+        "retry after a temporary completion failure completes the existing multipart upload"
+      ],
+      "storage": "Controlled same-origin R2 part PUT; not live R2."
+    },
+    {
       "name": "diff-check",
       "command": "git diff --check",
       "exitCode": 0
     }
   ],
   "limits": [
-    "No real browser refresh or two-tab acceptance was run; unit tests exercise the adapter and storage helper, not the rendered wizard lifecycle.",
+    "The browser test used a disposable PostgreSQL database, a local Next server and a controlled same-origin R2 route; no two-tab acceptance or live R2/S3-compatible multipart upload was run.",
     "No live R2/S3-compatible multipart upload was run. Claude must exercise authorized Studio upload, refresh/resume, URL expiry and explicit discard against the server non-production bucket before deployment.",
     "The sampled file identity is robust against ordinary re-selection mistakes but does not prove byte-for-byte identity for unsampled differences; do not describe it as a full-file checksum.",
-    "K22-T1/T2 and R22 remain open until browser, concurrency and storage acceptance plus independent review."
+    "K22-T1/T2 and R22 remain open until two-tab, live storage acceptance and independent review."
   ],
-  "handoff": "Claude: on a non-production server, confirm the actual R2 CORS ETag behavior, upload a part, reload and reselect the same file, verify only missing parts are PUT, expire one presigned URL and confirm refresh/retry, then deliberately discard and verify the reservation/parts are gone. Check two tabs and a different file with same metadata."
+  "handoff": "Claude: local browser acceptance now confirms reload/resume and retrying completion without repeating the multipart start or stored part PUT. On a non-production server, confirm actual R2 CORS ETag behavior, expire one presigned URL and verify refresh/retry, deliberately discard and verify reservation/parts are gone, then check two tabs and a different file with identical name/size/mtime. Do not deploy until this runtime acceptance and independent review pass."
 }
