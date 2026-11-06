@@ -708,6 +708,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Komunikacja e-mail:** dodano własne metadane odbioru kampanii i zdarzeń webhooka filtrowane po `userId`, bez adresów, identyfikatorów dostawcy/kampanii/odbiorcy, payloadów, błędów i retry. Rekordów bez pewnego `userId` nie łączymy po adresie. Kontrakt wzrósł do `schemaVersion: 4`; lokalne kontrole PASS, brak realnego providera i pełnego HTTP/DB. [Dowód](program-audytu/evidence/k27-email-history-2026-11-06/result.json).
 
+**Odbiór route/DB:** rzeczywisty handler eksportu wykonano przeciw świeżej PostgreSQL 17 z 84 migracjami; odpowiedź pobrania/no-store, zakres własnego konta, odmowa gościa i ponowny eksport przeszły **2/2**. Auth i limiter były kontrolowane; nie uruchomiono Next przez socket HTTP ani prawdziwej sesji. Dowód i ograniczenia: [K27 route/DB](program-audytu/evidence/k27-route-postgres-2026-11-06/result.json).
+
 <a id="k28"></a>
 
 #### K28. Polityka cofania sesji WWW i krytyczne operacje
