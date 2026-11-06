@@ -46,6 +46,7 @@
     "full-stack denial-of-service resource budget",
     "public and admin builds after the final small validation adjustment"
   ],
+  "proxyInventory": "proxy-inventory.json",
   "buildsBeforeFinalValidationAdjustment": {
     "public": {
       "passed": true,

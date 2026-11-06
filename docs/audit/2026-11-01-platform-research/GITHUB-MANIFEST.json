@@ -14,7 +14,7 @@
     "PLAN-WDROZENIA-NAPRAW.md": "4179df729dc75d1f55b53b2f38b4fdf1bd9d22c1581864b5c451c59f213b8dc1",
     "PLAN-WERYFIKACJI.md": "8c97ea0f95c463c521432fa2e75ad5dc6035e9b411af8ed70388cbaf238c34d9",
     "POROWNANIE-WSTEPNE.md": "eb4cd574aa6b1097f6509906b30f31021d81c948b2d520122a3b062814d2b19a",
-    "POSTEP-NAPRAW.md": "99e2d75523ecb82c63be468e106c1f5e73e19a98c9b7444c9c34fa7f4554a0d7",
+    "POSTEP-NAPRAW.md": "b86758e9b21633ad97be11a63947a9fa96fd17c21f917830e53165dd1c71c363",
     "RAPORT.md": "8c1939b7ba4a1fbba6de18efaf7aa432a0fedecb38e2b4c1e0819176e9c93399",
     "README.md": "89b36be6f11e2a9520c905913f8771dd044ad72cb06045892b1f7fe819474cd3",
     "ROADMAPA-NAPRAW.md": "d604777c12c05fcac154b9eaa590eb7a4cff67ab345d09d1b6225a6a172553e8",
@@ -58,7 +58,7 @@
     "program-audytu/SCENARIUSZE-WDROZENIA.csv": "4e67d47429bc70d6ea3cde439ee2e043dea4d39b5f0a1f99c3a23ce61d0a0dd8",
     "program-audytu/SCENARIUSZE-WEJSCIA.csv": "b1f629c120a931fb518d90a6cafa96fd1137deca4b4b247296357b31d82be92c",
     "program-audytu/SOURCES.md": "eec2a422f868981256d46d4f361f30a3295f6f9155a744694888dcaf47e479e8",
-    "program-audytu/STAN.md": "11298788fc09af8d07695880c6278eaf8b0264f41b72473fe78e88ca530a624f",
+    "program-audytu/STAN.md": "278cf18c7c42bef882316e0f49a50c2c2e660e24afdee7e5094c88739a95593d",
     "program-audytu/TESTY-INWENTARZ.csv": "2566b13c29d3a4018ff09a4116f0259bd62083197bfe76f9c747d6b249439a11",
     "program-audytu/USTALENIA.json": "1a0e8e97d6fca4fae1cb31bd29be7e741b2d97c43f6e7011e13adeb8ad04225f",
     "program-audytu/WARSTWY-TESTOW.csv": "017cff9d9ece98e2eddff5f8db143e6db6d0da140c7a70ffd8cf2d2e8f11b5f6",
@@ -67,7 +67,7 @@
     "program-audytu/ZADANIA-UZYTKOWNIKA.csv": "fb74e24c9eebd56786c52a4fd2ab8f7a5c7a3d0a941e5ba5c66b738f7516576c",
     "program-audytu/ZALEZNOSCI-MODULOW.csv": "3ac9ec49c1105ea6150c4fe77379c1674caa708bb20cbf09802caf523f345b0e",
     "program-audytu/ZALOZENIA-KOSZTOW.json": "e210767d24d3d2b336fcb4bffc37cad8aad91ca368b5787e754ccd3399f445f1",
-    "program-audytu/ZMIANY.md": "4d9eff5fd0d53139b6b2c581a974e1fa9b19b114c18637eb8389d8e165598ca7",
+    "program-audytu/ZMIANY.md": "c77ec3d785d24b39137e4d4968a89efdaa4170f0d071a3bab3c9723fc239ef48",
     "program-audytu/evidence/api-contract-probe.json": "3b1857af809f57b37d29373680f3e282f60f20cf5b837a07d3356d4111fff704",
     "program-audytu/evidence/approval-review-interruption-batch13.json": "480f5b422e5925d66141c261577592fe633aad74d9e28dee1e0e18f9d9d11102",
     "program-audytu/evidence/architecture-graph.json": "0b7a2e435acdd31779abe3b1c7ed23591008f43c138833c306aaba45e81edac0",
@@ -798,12 +798,13 @@
     "program-audytu/evidence/k02-runtime-2026-11-06-next-16.4.5/repo-typecheck.log": "0f7e5001dc859823b7c4b2c213a260e874133e526f8f3cb382d021e6f45c06f3",
     "program-audytu/evidence/k02-runtime-2026-11-06-next-16.4.5/result.json": "a85d4cd51ef8daf2886d804a24ba2442563f03abed5e5ad978e99d4673e51e61",
     "program-audytu/evidence/k07-body-limits-2026-11-06/http-result.json": "1ff64b8a1570a100f0e88d484ec9d5dc0b293ce51cf8ebc1dfe7044fdf738f7d",
-    "program-audytu/evidence/k07-body-limits-2026-11-06/result.json": "aaf46185298164de0ac521fdaf20db30ae153e718bf34100af1a35880ea32714",
+    "program-audytu/evidence/k07-body-limits-2026-11-06/result.json": "e9755966dc6c83756781323ea6ea22e3bdd396cd19b789e281c365760cc8b755",
     "program-audytu/evidence/k07-body-limits-2026-11-06/typecheck.log": "b56afc8fd49b204592e377b8683b7afaf9560e8a126953df7d85bcd1ddfe8d2d",
     "program-audytu/evidence/k07-body-limits-2026-11-06/vitest.json": "1114bb700bdef815b60b57210820b3371cb2b133f6986241f607bf58ec639cf0",
     "program-audytu/evidence/k07-body-limits-2026-11-06/vitest.log": "621b1a2e40eaf8ed5b88a60229fe35fa211f0b74f854a94318d16d2bb8247b48",
     "program-audytu/evidence/k07-body-limits-2026-11-06/admin-build-before-final-adjustment.log": "7b61d058c321529a4b33da8e5d845b3c8d4d57ea548af63dc3b1536442458e76",
     "program-audytu/evidence/k07-body-limits-2026-11-06/eslint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "program-audytu/evidence/k07-body-limits-2026-11-06/public-build-before-final-adjustment.log": "38696096310337e5252f9de83100a537ac652212166aa8fe64a7563bbfedc2ca"
+    "program-audytu/evidence/k07-body-limits-2026-11-06/public-build-before-final-adjustment.log": "38696096310337e5252f9de83100a537ac652212166aa8fe64a7563bbfedc2ca",
+    "program-audytu/evidence/k07-body-limits-2026-11-06/proxy-inventory.json": "c3323ce233f51774aceabc0d0aeb15cf83dc3cd863f26b67b8b5b037bb3a2675"
   }
 }
