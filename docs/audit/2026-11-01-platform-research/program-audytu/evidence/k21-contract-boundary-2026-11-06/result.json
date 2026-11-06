@@ -33,7 +33,17 @@
       "testsInFile": 4,
       "passed": 4,
       "failed": 0,
-      "covers": ["real Prisma and PostgreSQL rows", "actual Studio multipart-start/complete and pipeline GET route handlers", "encode job DTO reflects persisted queued job", "R2 isolated behind controlled fake"]
+      "covers": ["real Prisma and PostgreSQL rows", "actual Studio multipart-start/complete and pipeline GET route handlers", "encode job DTO reflects persisted queued job", "pre-contract generic Studio client consumes additive current response", "R2 isolated behind controlled fake"]
+    },
+    {
+      "name": "postgres-playback-route",
+      "command": "DATABASE_URL=<disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/k21-media-source-contract.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "covers": ["actual media-source route handler", "actual PlaybackService and checkVideoAccess backed by PostgreSQL", "valid denied playback plan matches response contract", "rate limiter controlled"]
     },
     {
       "name": "typecheck",
@@ -60,8 +70,7 @@
     "compatibility": "Existing endpoints and URLs are unchanged; response schemas accept additive DTO fields."
   },
   "limits": [
-    "Studio upload/job handlers were exercised in-process with real database use cases; media-source route uses a controlled plan. No live server process or DB-backed playback endpoint was run, so K21-T1 remains open.",
-    "No acceptance of a legal older supported client was run; K21-T1 is open.",
+    "Studio upload/job and media-source handlers were exercised in-process with actual PostgreSQL-backed use cases; the media-source request was not sent through a running Next.js HTTP process, so K21-T1 remains open.",
     "Focused tests cover the changed client boundary, not every response from the running server; K21-T2 remains partial.",
     "No independent review; R21 is not marked closed."
   ]
