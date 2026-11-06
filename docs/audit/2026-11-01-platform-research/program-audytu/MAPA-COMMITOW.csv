@@ -30,3 +30,5 @@ K02-runtime-16.4.5,e2cb87d9,program-audytu/evidence/k02-runtime-2026-11-06-next-
 K07-bounded-request-bodies,b8b5d4dd,app/api;apps/admin/app/api;lib/utils/request-body.ts;tests/unit/utils/request-body.test.ts,CZESCIOWO
 K06-deployer-negative-paths,2b7891ac,tests/unit/ops/serwerek-scripts.test.ts;program-audytu/evidence/k06-deployer-failures-2026-11-06/,CZESCIOWO
 K07-reader-buffering,3dc8fb29,lib/utils/request-body.ts;tests/unit/utils/request-body.test.ts;program-audytu/evidence/k07-body-limits-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K07-complete-body-budget,c3c2c6c1,lib/api/admin-schemas.ts;tests/unit/utils/request-body.test.ts;program-audytu/evidence/k07-body-limits-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K07-next-proxy-buffer,1f467577,next.config.mjs;tests/unit/utils/request-body.test.ts;program-audytu/evidence/k07-body-limits-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
