@@ -310,6 +310,53 @@ describe.skipIf(!runBash)('verify-active-release.sh', () => {
   });
 });
 
+describe.skipIf(!runBash)('telemetry-enable.sh proof preflight', () => {
+  function setupTelemetry() {
+    const sb = sandbox();
+    const app = path.join(sb.dir, 'app');
+    const revision = '1111111111111111111111111111111111111111';
+    const hash = 'a'.repeat(64);
+    mkdirSync(path.join(app, '.release-state', revision), { recursive: true });
+    writeFileSync(path.join(app, 'telemetry-enable.sh'), telemetryEnableSh);
+    writeFileSync(path.join(app, 'verify-active-release.sh'), '#!/usr/bin/env bash\necho called >> "$FAKE_DIR/verify.log"\nexit 1\n', { mode: 0o755 });
+    writeFileSync(path.join(app, 'app.env'), 'DATABASE_URL=original\n');
+    writeFileSync(path.join(app, 'db.env'), 'POSTGRES_DB=polutek\n');
+    writeFileSync(path.join(app, 'docker-compose.yml'), 'services: {}\n');
+    writeFileSync(path.join(app, '.current-collector-image'), 'polutek-collector:old');
+    writeFileSync(path.join(app, '.current-release-revision'), revision);
+    writeFileSync(path.join(app, '.release-state', revision, 'proof.sha256'), `${hash}\n`);
+    return { ...sb, app, revision, hash };
+  }
+
+  it('does not touch Docker, roles or env files when the retained proof hash differs', () => {
+    const sb = setupTelemetry();
+    const r = runScript(path.join(sb.app, 'telemetry-enable.sh'), [], sb.app, sb.bin, sb.fake, {
+      RELEASE_REVISION: sb.revision, RELEASE_PROOF_SHA256: 'b'.repeat(64),
+    });
+
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain('approved proof does not match');
+    expect(existsSync(path.join(sb.fake, 'verify.log'))).toBe(false);
+    expect(existsSync(path.join(sb.fake, 'docker.log'))).toBe(false);
+    expect(readFileSync(path.join(sb.app, 'app.env'), 'utf8')).toBe('DATABASE_URL=original\n');
+    expect(existsSync(path.join(sb.app, 'collector.env'))).toBe(false);
+  });
+
+  it('does not mutate the database or app config when active proof verification fails', () => {
+    const sb = setupTelemetry();
+    const r = runScript(path.join(sb.app, 'telemetry-enable.sh'), [], sb.app, sb.bin, sb.fake, {
+      RELEASE_REVISION: sb.revision, RELEASE_PROOF_SHA256: sb.hash,
+    });
+
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain('release proof verification failed');
+    expect(readFileSync(path.join(sb.fake, 'verify.log'), 'utf8')).toContain('called');
+    expect(existsSync(path.join(sb.fake, 'docker.log'))).toBe(false);
+    expect(readFileSync(path.join(sb.app, 'app.env'), 'utf8')).toBe('DATABASE_URL=original\n');
+    expect(existsSync(path.join(sb.app, 'collector.env'))).toBe(false);
+  });
+});
+
 afterAll(() => {
   for (const d of tmpDirs) rmSync(d, { recursive: true, force: true });
 });
