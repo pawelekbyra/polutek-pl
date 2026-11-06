@@ -2,7 +2,13 @@
 
 `scripts/ops/release-proof.mjs` zawiera wspólny walidator i zapis dowodu. `images.yml` używa `release-produce.mjs`, weryfikuje pięć lokalnych identyfikatorów przed logowaniem do GHCR, a `release-publish.mjs` publikuje dokładnie te ID i sprawdza każdy registry digest. **W tej gałęzi** `deploy.sh` i `deploy-admin.sh` wymagają teraz katalogu wydania, zewnętrznie zatwierdzonego SHA-256 proofu, pobierają obrazy po digestach, weryfikują cały kontrakt i tagują wyłącznie ID zwrócone przez verifier przed migracją lub aktywacją. Rollback jawny i automatyczny ponownie weryfikuje zapisany proof. Integracja publikatora z Actions nie była uruchomiona; przekazanie artifactu przez `mergedeploy.sh`, alternatywne/manualne ścieżki oraz próby end-to-end pozostają otwarte. Ta implementacja nie jest wdrożona na serwerze.
 
-`scripts/ops/deploy-release.mjs` przyjmuje katalog o strukturze `source/`, `proof.json`, `inputs.json`, pełny SHA commita i zatwierdzony hash dowodu. Ogranicza registry do `ghcr.io/pawelekbyra/polutek-{app,migrator,worker,collector,admin}@sha256:…`; pobranie digestów samo nie uruchamia kontenera. Zachowuje zweryfikowane źródła i proof w `.release-state/<revision>/` do późniejszego rollbacku. Wymaga Node.js dostępnego na hoście. Konsument odmawia lokalnego budowania obrazów.
+`scripts/ops/release-artifact.mjs` sprawdza zgodność SHA, hash opublikowanego proofu, inputs i raportu jakości, a potem bezpiecznie rozpakowuje archiwum źródłowe i porównuje je z inwentarzem raportu. Wynikiem jest katalog `source/`, `proof.json`, `inputs.json` dla konsumenta.
+
+`scripts/ops/deploy-release.mjs` przyjmuje ten katalog, pełny SHA commita i zatwierdzony hash dowodu. Ogranicza registry do `ghcr.io/pawelekbyra/polutek-{app,migrator,worker,collector,admin}@sha256:…`; pobranie digestów samo nie uruchamia kontenera. Zachowuje zweryfikowane źródła i proof w `.release-state/<revision>/` do późniejszego rollbacku. Wymaga Node.js 22 na hoście. Konsument odmawia lokalnego budowania obrazów.
+
+`mergedeploy.sh` może pobrać artifact wyłącznie z ukończonego, zielonego runu `images` dla dokładnego SHA. Wymaga zewnętrznego `RELEASE_PROOF_SHA256`, nie uruchamia Actions samodzielnie, sprawdza artifact przed transferem i blokuje serwer przed stagingiem źródeł. Ta ścieżka jest zaimplementowana w gałęzi, ale nie była uruchamiana; inne skrypty i ręczne ścieżki migracji/aktywacji nadal wymagają przeglądu.
+
+Ręczna sekwencja przygotowania po scaleniu: uruchomić `gh workflow run images.yml --ref main`, poczekać na `gh run watch <RUN_ID> --exit-status`, odczytać SHA-256 proofu z podsumowania workflow i uruchomić `mergedeploy.sh` z `RELEASE_RUN_ID`, `RELEASE_REVISION` i `RELEASE_PROOF_SHA256`. Skrypt sam nie uruchamia Actions ani nie wylicza zatwierdzonego hasha z pobranego pliku. Nie wykonywano tej sekwencji w bieżącej gałęzi.
 
 ## Kontrakt
 

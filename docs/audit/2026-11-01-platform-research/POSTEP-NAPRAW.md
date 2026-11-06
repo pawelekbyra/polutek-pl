@@ -8,9 +8,9 @@ Punkt bazowy odświeżono przez lokalne scalenie `origin/main` (`e2d33e0e`) do g
 
 `origin/main` ma obecnie Next i eslint-config-next **16.4.4**; poprawki K02 są w kodzie gałęzi, ale K02 pozostaje niezamknięte bez pełnego świeżego przeglądu zależności i dowodu obrazu. W toku pozostaje K06: konsumenci wydania i rzeczywiste pięć obrazów. K01/K03 mają udokumentowane częściowe dowody, lecz pełny cykl API/worker/HLS/storage nadal nie jest odebrany. Cała roadmapa nadal ma 40 pakietów i żaden nie jest formalnie zamknięty.
 
-**Bieżący pakiet:** K06 konsumenci wydania. `deploy.sh` i `deploy-admin.sh` wymagają katalogu proof, zewnętrznego hasha, pełnej rewizji i weryfikują digesty/ID przed migracją, aktywacją i rollbackiem; lokalne budowanie jest zablokowane. Testy zachowań i odmowy są w toku. Brakuje jeszcze bezpiecznego pobrania/przekazania artifactu przez `mergedeploy.sh`, integracji istniejących ścieżek ręcznych i prób całego protokołu. Nie uruchamiać skryptów na serwerze.
+**Bieżący pakiet:** K06 konsumenci wydania. `deploy.sh` i `deploy-admin.sh` wymagają katalogu proof, zewnętrznego hasha, pełnej rewizji i weryfikują digesty/ID przed migracją, aktywacją i rollbackiem; lokalne budowanie jest zablokowane. `release-artifact.mjs` waliduje raport, inputs, hash i archiwum. `mergedeploy.sh` przyjmuje zielony run `images` dla dokładnego SHA, zewnętrznie zatwierdzony hash i kopiuje źródła pod blokadą. Ostatnia runda: 26/26 testów skryptów serwera, 1/1 testu konsumenta release i 1/1 testu preparatora artifactu; ESLint, `bash -n`, Node --check i manifest 772/772 PASS. Nie uruchamiano Actions, GHCR, SSH ani serwera. Pozostają alternatywne/manualne ścieżki i próby pełnego protokołu. Nie uruchamiać skryptów na serwerze.
 
-**Następny krok:** dokończyć testy helpera oraz przekazanie artifactu `images.yml` przez `mergedeploy.sh`, bez merge/push/deploy. K05 i decyzje DP01–DP09 pozostają otwarte; niezależne naprawy można prowadzić bez zgadywania aktywnego profilu.
+**Następny krok:** dodać próby odmowy całego przekazania (błędny run, SHA, proof, brak artifactu), potem przegląd pozostałych ręcznych ścieżek migracji/aktywacji oraz testy zachowania rollbacku. Bez merge/push/deploy. K05 i decyzje DP01–DP09 pozostają otwarte.
 
 ## K06 — GHCR images workflow, część 1
 

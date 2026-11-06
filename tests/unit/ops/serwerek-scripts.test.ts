@@ -54,12 +54,16 @@ describe('serwerek scripts: static', () => {
     expect(adminSh).not.toMatch(/^\s*nice -n 10 docker build(?:\s|$)/m);
   });
 
-  it('mergedeploy.sh locks before replacing src and recognises the warning outcome', () => {
+  it('mergedeploy.sh requires a completed proof artifact and locks before staging source', () => {
     const lock = mergeSh.indexOf('flock -n 9');
     expect(lock).toBeGreaterThan(0);
-    expect(lock).toBeLessThan(mergeSh.indexOf('rm -rf src'));
-    expect(mergeSh).toContain('DEPLOY_LOCK_HELD=1 nohup ./deploy.sh');
-    expect(mergeSh).toContain('WITH WARNINGS');
+    expect(lock).toBeLessThan(mergeSh.indexOf('rm -rf src.previous'));
+    expect(mergeSh).toContain('RELEASE_RUN_ID');
+    expect(mergeSh).toContain('gh run download');
+    expect(mergeSh).toContain('release-artifact.mjs');
+    expect(mergeSh).toContain('hash proofu nie odpowiada zewnetrznie zatwierdzonemu wynikowi');
+    expect(mergeSh).toContain('DEPLOY_LOCK_HELD=1 RELEASE_REVISION=');
+    expect(mergeSh).toContain('bash .release-artifacts/${revision}/source/deploy/serwerek/deploy.sh');
   });
 
   it('a failing "compose up" is part of the rollback condition', () => {
