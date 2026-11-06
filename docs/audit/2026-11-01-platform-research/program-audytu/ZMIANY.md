@@ -400,3 +400,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Uzupełnienie po tej partii: na SHA `d6f0d33c` dziewięć plików testów K02 zaliczyło 179/179, typecheck i oba buildy aplikacji zakończyły się exit 0. Build ujawnił cztery błędne typy fixture’ów, poprawione w `d6f0d33c`, a następne buildy przeszły. Szczegóły i pełne logi: [build-result](evidence/k02-runtime-2026-11-06/build-result.json).
 - Pierwszy build admina zgłosił dynamiczne śledzenie repo. W `7d97d067` dodano komentarz `turbopackIgnore` dla ścieżki host mount; standalone build przeszedł bez warningu i `apps/admin` tree w artefakcie nie zawiera `.ts/.tsx/.md`. [Porównanie/logi](evidence/admin-standalone-trace-2026-11-06/result.json). Nadal nie jest to build obrazu Docker ani GHCR.
 - K02 pozostaje otwarte: brak reviewed audit i dowodu zależności w docelowym obrazie. `npm ci` automatycznie wywołało audit, który jest nieprzejrzany; nie powtarzać go i używać `npm_config_audit=false` przy przyszłej instalacji.
+
+
+## 6 listopada 2026 — K02: aktualizacja i pełne lokalne bramki na Next 16.4.5
+
+- Oficjalne [wydanie Next.js 16.4.5](https://github.com/vercel/next.js/releases/tag/v16.4.5) zawiera poprawki bezpieczeństwa opublikowane 3 listopada. Podniesiono `next` oraz `eslint-config-next` z 16.4.4 do 16.4.5 w `e2cb87d9`; `npm install` uruchomiono jawnie z `npm_config_audit=false`. sharp 0.35.5, librsvg 2.63.2 i vips 8.18.7 pozostały bez zmian.
+- Izolowany Next image runtime: **PASS** (PNG 200; SVG, niepoprawny obraz i niezatwierdzony host 400). Dziewięć celowanych plików: **179/179 PASS**, zero pominięć. Repo typecheck, public build i admin standalone build: PASS. Build admina nie zgłosił wcześniejszego whole-project tracing warningu.
+- Surowe wyniki i logi: [dowody](evidence/k02-runtime-2026-11-06-next-16.4.5/result.json). Nie wykonano reviewed `npm audit`, obrazu Docker aplikacji ani GHCR. K02 pozostaje otwarte do czasu przeglądu zależności i potwierdzenia wersji w docelowym obrazie. Poprzednie dowody 16.4.4 zachowano.
