@@ -59,7 +59,11 @@ export async function readRequestBytesWithLimit(req: Request, maxBytes: number):
   if (!req.body) return new Uint8Array();
 
   const reader = req.body.getReader();
-  let bytes = new Uint8Array(Math.min(maxBytes, 8 * 1024));
+  const chunks: Uint8Array[] = [];
+  const slabBytes = 64 * 1024;
+  let current = new Uint8Array(Math.min(maxBytes, slabBytes));
+  let currentBytes = 0;
+  let allocatedBytes = 0;
   let receivedBytes = 0;
 
   while (true) {
@@ -67,21 +71,35 @@ export async function readRequestBytesWithLimit(req: Request, maxBytes: number):
     if (chunk.done) break;
 
     const value = chunk.value;
-    receivedBytes += value.byteLength;
-    if (receivedBytes > maxBytes) {
+    if (value.byteLength > maxBytes - receivedBytes) {
       await reader.cancel().catch(() => undefined);
       throw new RequestBodyTooLargeError(maxBytes);
     }
-    if (receivedBytes > bytes.byteLength) {
-      const capacity = Math.min(maxBytes, Math.max(receivedBytes, Math.max(1, bytes.byteLength * 2)));
-      const expanded = new Uint8Array(capacity);
-      expanded.set(bytes.subarray(0, receivedBytes - value.byteLength));
-      bytes = expanded;
+
+    let valueOffset = 0;
+    while (valueOffset < value.byteLength) {
+      if (currentBytes === current.byteLength) {
+        chunks.push(current);
+        allocatedBytes += current.byteLength;
+        current = new Uint8Array(Math.min(slabBytes, maxBytes - allocatedBytes));
+        currentBytes = 0;
+      }
+      const copiedBytes = Math.min(value.byteLength - valueOffset, current.byteLength - currentBytes);
+      current.set(value.subarray(valueOffset, valueOffset + copiedBytes), currentBytes);
+      currentBytes += copiedBytes;
+      valueOffset += copiedBytes;
     }
-    bytes.set(value, receivedBytes - value.byteLength);
+    receivedBytes += value.byteLength;
   }
 
-  return bytes.slice(0, receivedBytes);
+  const bytes = new Uint8Array(receivedBytes);
+  let outputOffset = 0;
+  for (const part of chunks) {
+    bytes.set(part, outputOffset);
+    outputOffset += part.byteLength;
+  }
+  bytes.set(current.subarray(0, currentBytes), outputOffset);
+  return bytes;
 }
 
 export async function readRequestJsonWithLimit<T>(req: Request, maxBytes: number): Promise<T> {
@@ -133,7 +151,6 @@ export async function readRequestFormDataWithLimit(
   headers.delete('transfer-encoding');
   const body = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(body).set(bytes);
-
   let form: FormData;
   try {
     form = await new Request(req.url, { method: 'POST', headers, body }).formData();

@@ -67,6 +67,13 @@ describe('bounded request body readers', () => {
     await expect(readRequestTextWithLimit(textInput.request, encoded.byteLength)).resolves.toBe('{"value":"żółć"}');
   });
 
+  it('preserves bytes across bounded buffer slabs and arbitrary stream chunk boundaries', async () => {
+    const expected = new Uint8Array(64 * 1024 + 7).fill(0x61);
+    const input = streamedRequest([expected.subarray(0, 65_535), expected.subarray(65_535)]);
+
+    await expect(readRequestBytesWithLimit(input.request, expected.byteLength)).resolves.toEqual(expected);
+  });
+
   it('reports malformed JSON separately from an oversized payload', async () => {
     const input = streamedRequest([new TextEncoder().encode('{')]);
     await expect(readRequestJsonWithLimit(input.request, 8)).rejects.toBeInstanceOf(MalformedJsonBodyError);
