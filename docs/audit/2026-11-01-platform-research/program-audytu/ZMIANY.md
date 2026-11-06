@@ -366,3 +366,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Hermetyczne testy transferu obejmują wariant lokalny i Actions, poprawne przekazanie do atrapowego SSH oraz odmowę błędnego proofu, rewizji, workflow run/head i brakującego artifactu. Konsument wykorzystuje cache tylko przy zgodnym ID obrazu.
 - Wyniki: handoff 6/6, release consumers/artifact 9/9, skrypty serwera 29/29, actions-lib 48/48; lint, `bash -n`, YAML parser i diff check PASS. Brak rzeczywistego Actions/GHCR/SSH, pięciu obrazów produktu, pełnej bramki audit, serwera lub runtime odbioru.
 - K06 pozostaje otwarte. Runbooki opisują granicę między starym stanem produkcji i niewdrożonym kandydatem. Szczegóły commitów są w `MAPA-COMMITOW.csv`; punkt wznowienia w `STAN.md` i `POSTEP-NAPRAW.md`.
+
+## 6 listopada 2026 — rollback i aktywny proof K06
+
+- Dodano zachowanie testów rollbacku dla app/admin: stary proof jest ponownie weryfikowany przed aktywacją, a niezgodny zewnętrzny hash odmawia bez uruchomienia obrazu. Active-proof preflight jest sprawdzony dla rewizji aplikacji i panelu.
+- Telemetria: błędny zachowany proof lub błąd `verify-active-release.sh` nie przechodzi do Docker/DB i nie zmienia `app.env`/`collector.env`.
+- Pięć skupionych pakietów testów: **95/95 PASS**; skrypty serwera **38/38**, release artifact/consumer **9/9**, handoff jest wliczony, operator actions **48/48**. To testy z atrapami/integracyjne lokalnie, nie odbiór prawdziwego serwera.
+- K06 nadal blokuje brak pełnego producer gate `audit`, prawdziwych pięciu obrazów i całego runtime. Nie uruchomiono workflow, GHCR, SSH ani produkcji.

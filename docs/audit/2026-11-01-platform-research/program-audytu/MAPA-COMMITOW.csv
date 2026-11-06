@@ -17,3 +17,6 @@ K06-transfer-sandbox,371a03ce,tests/unit/ops/mergedeploy-release.test.ts,CZESCIO
 K06-operator-actions,cf8d1bbe,tests/unit/ops/actions-lib.test.ts,CZESCIOWO
 K06-cache-proof-id,227b5c37,tests/unit/ops/deploy-release.test.ts,CZESCIOWO
 K06-operations-runbooks,ce6570bd,docs/operations/RELEASE-PROOF.md,CZESCIOWO
+K06-rollback-tests,deed50a9,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
+K06-active-proof-tests,cce16ea3,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
+K06-telemetry-proof-tests,16218f14,tests/unit/ops/serwerek-scripts.test.ts,CZESCIOWO
