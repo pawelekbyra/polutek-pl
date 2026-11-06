@@ -106,8 +106,12 @@ export class VideoRepository {
   }
 
   async findByIdForMainChannel(id: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
+    return this.findByIdForChannel(id, mainChannelId);
+  }
+
+  async findByIdForChannel(id: string, channelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
     const video = await this.db.video.findFirst({
-        where: { id, creatorId: mainChannelId },
+        where: { id, creatorId: channelId },
         include: {
             _count: { select: { comments: true } },
             assets: true,

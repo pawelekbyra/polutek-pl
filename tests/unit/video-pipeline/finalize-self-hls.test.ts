@@ -46,7 +46,7 @@ function prismaStub(video: Record<string, unknown>, existingAsset: { id: string 
       delete: vi.fn(async () => ({})),
     },
     videoPlaybackRoute: { findFirst: vi.fn(async () => activeRoute) },
-    videoEncodeJob: { findFirst: vi.fn(async () => ({ id: "job-1" })) },
+    videoEncodeJob: { findFirst: vi.fn(async () => ({ id: "job-1", channelId: "channel-1", video: { creatorId: "channel-1" } })) },
     video: { findUnique: vi.fn(async () => video), updateMany: vi.fn(async () => ({ count: 1 })) },
   } as unknown as PrismaClient & { videoAsset: { create: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> }; video: { updateMany: ReturnType<typeof vi.fn> } };
 }
@@ -124,5 +124,14 @@ describe("createSelfHlsFinalizer", () => {
     const prisma = prismaStub({ id: "v1", status: "DRAFT", thumbnailUrl: "x", duration: "1:00" });
     attemptPublish.mockRejectedValueOnce(new Error("blocker"));
     await expect(createSelfHlsFinalizer(prisma).finalize(input())).resolves.toEqual({ assetId: "asset-new" });
+  });
+
+  it("does not auto-publish when the persisted job channel disagrees with the video's creator", async () => {
+    const prisma = prismaStub({ id: "v1", status: "DRAFT", thumbnailUrl: "x", duration: "1:00" });
+    (prisma as any).videoEncodeJob.findFirst.mockResolvedValueOnce({
+      id: "job-1", channelId: "foreign-channel", video: { creatorId: "actual-channel" },
+    });
+    await expect(createSelfHlsFinalizer(prisma).finalize(input())).resolves.toEqual({ assetId: "asset-new" });
+    expect(attemptPublish).not.toHaveBeenCalled();
   });
 });

@@ -107,17 +107,35 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
 
       await applyVideoDetails(prisma, input).catch((error: unknown) => logger.warn("poster/duration step failed (non-fatal)", { jobId: job.id, error: String(error) }));
 
-      const stillOwner = await prisma.videoEncodeJob.findFirst({
+      const ownerAndChannel = await prisma.videoEncodeJob.findFirst({
         where: { id: job.id, status: "RUNNING", workerId: job.workerId, attemptId: job.attemptId },
-        select: { id: true },
+        select: { id: true, channelId: true, video: { select: { creatorId: true } } },
       }).catch((error: unknown) => {
         logger.warn("encode owner check after route commit failed", { jobId: job.id, attemptId: job.attemptId, error: String(error) });
-        return { id: job.id };
+        return null;
       });
-      if (!stillOwner) return { assetId };
+      if (!ownerAndChannel) return { assetId };
+      const channelId = ownerAndChannel.video.creatorId;
+      if (!channelId || ownerAndChannel.channelId !== channelId) {
+        logger.error("auto-publish refused: encode job channel does not match its video", {
+          jobId: job.id,
+          videoId: job.videoId,
+          jobChannelId: ownerAndChannel.channelId,
+          videoChannelId: channelId,
+        });
+        return { assetId };
+      }
 
       try {
-        await attemptPublishAfterAssetReady(job.videoId, ctx, "SELF_HLS");
+        const outcome = await attemptPublishAfterAssetReady(job.videoId, createAppContext({
+          prisma,
+          actor: { type: "system", reason: "video_encode_worker" },
+          channelId,
+        }), "SELF_HLS");
+        logger.info("auto-publish outcome", { jobId: job.id, videoId: job.videoId, channelId, outcome });
+        if (outcome === "refused" || outcome === "failed") {
+          logger.warn("auto-publish did not complete", { jobId: job.id, videoId: job.videoId, channelId, outcome });
+        }
       } catch (error) {
         logger.warn("auto-publish after encode failed (non-fatal)", { jobId: job.id, error: String(error) });
       }

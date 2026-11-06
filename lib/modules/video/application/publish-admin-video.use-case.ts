@@ -21,7 +21,7 @@ export async function publishAdminVideo(
   if (denied) return fail(denied);
   const repository = new VideoRepository(ctx.prisma);
 
-  const video = await repository.findByIdForMainChannel(videoId, mainChannel.id);
+  const video = await repository.findByIdForChannel(videoId, mainChannel.id);
   if (!video) {
       return fail(new VideoNotFoundError(videoId));
   }
