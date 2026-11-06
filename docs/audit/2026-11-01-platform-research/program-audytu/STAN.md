@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## Aktualizacja K03 — odrzucenie pustego manifestu, 6 listopada 2026
+
+Jeśli `RESTORE_EXPECTED_MANIFEST_PATH` wskazywał manifest z pustym `counts`, skrypt wykonywał pozostałe kontrole i mógł zgłosić sukces bez porównania żadnego oczekiwanego agregatu. Teraz jawnie odrzuca pusty zestaw, a test CLI w osobnym procesie pokrywa tę odmowę. Test procesu **32/32 PASS**, ESLint i repo `tsc --noEmit -p tsconfig.typecheck.json` PASS. Nie łączono się z bazą; DB w teście jest syntetyczną granicą. K03 pozostaje częściowy: pełny baseline i pozostałe odbiory K01/K03 nadal są otwarte. Dowód: `evidence/k03-empty-manifest-2026-11-06/result.json`.
+
 ## Aktualizacja K04 — wygenerowany klient Prisma, 6 listopada 2026
 
 Oddzielny proces uruchomił prawdziwy `@prisma/client` przez lazy facade `lib/prisma.ts`, zobaczył wygenerowany delegat `user` i funkcję `$transaction`, po czym wykonał `$disconnect` bez `DATABASE_URL` i bez query/połączenia DB. Reprodukowalny test **1/1 PASS**; `npm run typecheck`, ESLint i kontrola granic architektury PASS. Weryfikuje to proxy z realnym klientem, podczas gdy dotychczasowy probe nadal dokumentuje brak konstrukcji przy czystym imporcie i DB injection. Nie dowodzi bundlera ani pełnego produkcyjnego composition root; K04 pozostaje częściowy. Szczegóły `evidence/architecture-import-probe.json`.

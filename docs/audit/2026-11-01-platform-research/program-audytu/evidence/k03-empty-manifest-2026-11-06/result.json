@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-06",
+  "package": "K03 partial: reject empty restore manifest",
+  "base_commit": "34434a2f",
+  "source_sha256": {
+    "scripts/verify-restored-database.ts": "f444db56dcacce908f058ea0f4d201259e15634a19cce5f9a8d97759c75aaeda",
+    "tests/unit/operations/verify-restored-database-process.test.ts": "a2633a4cfe584b573251db4df22b67902d9ef42850b1733e635c97cfdeaa7cc3",
+    "docs/operations/RESTORE-VERIFICATION.md": "5288d2b2bc26a0952c171774552e4f8745bf27e30cc40410e6b1d2f904266fe3"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/operations/verify-restored-database-process.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 32,
+      "duration_seconds": 39.29
+    },
+    {
+      "command": "npx eslint scripts/verify-restored-database.ts tests/unit/operations/verify-restored-database-process.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "scope": "The test launches the real CLI in child processes with a synthetic Prisma boundary. No database connection, restore, server, or production environment was used.",
+  "finding": "A valid JSON manifest with an empty counts object previously performed no aggregate comparisons and could still report verification success. It is now rejected."
+}

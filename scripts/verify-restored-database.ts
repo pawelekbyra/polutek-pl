@@ -180,6 +180,9 @@ async function main() {
           || !manifest.counts || typeof manifest.counts !== 'object' || Array.isArray(manifest.counts)) {
           throw new Error('Expected manifest.counts to be an object.');
         }
+        if (Object.keys(manifest.counts).length === 0) {
+          throw new Error('Expected manifest.counts to contain at least one expected aggregate.');
+        }
         let manifestMismatches = 0;
 
         for (const [key, expectedValue] of Object.entries(manifest.counts)) {

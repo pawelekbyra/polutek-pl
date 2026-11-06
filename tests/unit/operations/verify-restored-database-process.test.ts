@@ -82,6 +82,7 @@ describe('restore verification CLI result', () => {
   it.each([
     ['unknown aggregate', JSON.stringify({ counts: { UnknownAggregate: 1 } })],
     ['different count', JSON.stringify({ counts: { User: 2 } })],
+    ['empty counts object', JSON.stringify({ counts: {} })],
     ['missing counts object', JSON.stringify({})],
     ['array instead of counts object', JSON.stringify({ counts: [] })],
     ['invalid JSON', '{'],

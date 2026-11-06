@@ -165,6 +165,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K03-T2** — Kontrole: preflight, różny manifest i osierocony rekord odmawiają; dozwolona historia rolled-back oceniana według jawnej polityki migracji. Wyłączenie obowiązkowej weryfikacji musi zepsuć test, który sprawdza jej efekt.
 - **K03-T3** — Każda komenda baseline raportuje liczbę wykonanych, błędnych i pominiętych testów oraz SHA. Brak wymaganych plików/testów daje błąd; niezerowe wyniki mają osobny przydział, nie są automatycznie przypisane Prisma.
 
+**Postęp lokalny 6 listopada 2026 (częściowy):** pusty `manifest.counts` jest teraz odrzucany, aby przekazany manifest nie stawał się bezwarunkowym no-opem. Test procesu CLI 32/32 PASS, ESLint i repo typecheck PASS. Test używa syntetycznej granicy DB; K03 pozostaje otwarte bez pełnego baseline i reszty odbiorów K01/K03. [Dowód](program-audytu/evidence/k03-empty-manifest-2026-11-06/result.json).
+
 <a id="k04"></a>
 
 #### K04. Wąskie importy i jawne składanie infrastruktury

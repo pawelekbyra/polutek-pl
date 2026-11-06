@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K03 — pusty manifest restore nie może dawać pozornego porównania
+
+Weryfikator przyjmował poprawny składniowo manifest `{"counts":{}}` i kończył pozostałe kontrole sukcesem, choć manifest nie wymuszał porównania żadnego agregatu. Teraz pusty zestaw liczników kończy się błędem; dodano regresję przez rzeczywisty CLI uruchomiony w osobnym procesie i doprecyzowano instrukcję operatora. **32/32 testy procesu PASS**, ESLint i repo typecheck PASS. Baza była syntetycznym adapterem, nie wykonywano odtworzenia ani połączenia do DB. K03 pozostaje częściowe; brak pełnego baseline oraz innych wymaganych odbiorów. [Dowód](program-audytu/evidence/k03-empty-manifest-2026-11-06/result.json).
+
 ## K38/R11 — częściowa realizacja, 6 listopada 2026
 
 Poprawiono raport obciążeniowy: summarizer zwraca błąd dla nieoczekiwanego statusu, niewłaściwego MIME 200 i niekompletnego zestawu metryk k6; run-steps kończy się niezerowym statusem dla takiego wyniku. `k6-guest.js` kontroluje MIME dla HTML, JSON i miniaturek bez materializowania body odpowiedzi, zachowując limit pamięci generatora. **Aktualizacja:** identity cleanup jest teraz unikalne dla katalogu przebiegu; aplikacja sama liczy HMAC przy użyciu własnego klucza, a cleanup odmawia usuwania przy braku identity, błędzie HMAC/DB lub aktywnym runnerze. 20 testów syntetycznych kontraktów i ścieżki cleanup PASS; bash/node syntax, lint, repo typecheck i diff check PASS. Nie uruchamiano k6, HTTP, bazy, obciążenia ani prawdziwego cleanup. Semantyczne body i pełny mix/versioning nadal otwarte. K38 pozostaje częściowy. Szczegóły: [K38](ROADMAPA-NAPRAW.md#k38) i [dowód](program-audytu/evidence/k38-loadtest-summary-2026-11-06/result.json).
