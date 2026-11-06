@@ -6,6 +6,37 @@
   "scope": "Resolve the video-owning channel from persisted job→video relations during Self-HLS auto-publication, retain authorization and worker fencing, and report the publication outcome.",
   "checks": [
     {
+      "name": "publication-channel-state-race-unit",
+      "date": "2026-11-06",
+      "commands": [
+        "npx vitest run tests/unit/video-upload-flow.test.ts tests/unit/modules/video/unlist-admin-video.use-case.test.ts",
+        "npx eslint lib/modules/video/application/publish-admin-video.use-case.ts tests/unit/video-upload-flow.test.ts tests/unit/modules/video/unlist-admin-video.use-case.test.ts",
+        "git diff --check"
+      ],
+      "exitCode": 0,
+      "files": 2,
+      "tests": 26,
+      "passed": 26,
+      "failed": 0,
+      "covers": ["channel suspended after preflight read and before publication transaction", "transaction locks Creator row and rechecks visibility", "no video update when channel is no longer publicly visible"],
+      "databaseUrlConfigured": false,
+      "postgresRaceTest": "NOT_RUN"
+    },
+    {
+      "name": "repository-typecheck-after-race-guard",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "raw-tsc-diagnostic",
+      "command": "npx tsc --noEmit",
+      "exitCode": 2,
+      "status": "FAILED_EXISTING_ERRORS_OUTSIDE_CHANGED_FILES",
+      "errors": ["tests/postgres/finalize-audit-boundary.pg.test.ts", "tests/unit/video-pipeline/finalize-self-hls.test.ts", "tests/unit/video-pipeline/process-encode-job.test.ts", "tests/unit/video-pipeline/r2-storage-delete.test.ts", "tests/unit/workers/pp-watchdog-delivery.test.ts"],
+      "note": "This was not the repository's npm run typecheck command; run the scoped command before treating typecheck as a K20 regression."
+    },
+    {
       "name": "focused-unit",
       "command": "npx vitest run tests/unit/video-publish-idempotency.test.ts tests/unit/video-pipeline/finalize-self-hls.test.ts",
       "exitCode": 0,
@@ -51,7 +82,7 @@
   },
   "limits": [
     "The PostgreSQL test exercises the real database-backed finalizer but not a complete independent worker process.",
-    "A channel suspended between the status read and the publication transaction is not yet covered by a transactional channel-state check.",
+    "The publication transaction now locks and rechecks Creator visibility; only a unit simulation was run for the race because DATABASE_URL was unavailable. A real PostgreSQL race test remains outstanding.",
     "No independent review; K20 remains partially verified and R23 is not marked closed."
   ]
 }

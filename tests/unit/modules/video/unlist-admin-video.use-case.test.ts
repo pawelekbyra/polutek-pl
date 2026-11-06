@@ -17,6 +17,7 @@ describe('unlistAdminVideo and the PUBLISHED <-> UNLISTED <-> DRAFT transitions'
     creator: { findUnique: vi.fn(), findFirst: vi.fn() },
     channelMember: { findMany: vi.fn().mockResolvedValue([]) },
     auditLog: { create: vi.fn() },
+    $queryRaw: vi.fn().mockResolvedValue([{ id: 'c1' }]),
     $transaction: vi.fn((cb: any) => cb(mockPrisma)),
   } as any;
 
@@ -126,6 +127,20 @@ describe('unlistAdminVideo and the PUBLISHED <-> UNLISTED <-> DRAFT transitions'
     expect(data.status).toBe('PUBLISHED');
     expect(data.publishedAt.getTime()).toBeGreaterThan(new Date('2026-09-01T00:00:00Z').getTime());
     expect(mockPrisma.auditLog.create.mock.calls[0][0].data.action).toBe('VIDEO_PUBLISHED');
+  });
+
+  it('refuses publication when the channel is suspended before the publication transaction', async () => {
+    mockPrisma.video.findFirst.mockResolvedValue({ ...draft, status: 'UNLISTED' });
+    mockPrisma.creator.findUnique
+      .mockResolvedValueOnce(channel)
+      .mockResolvedValueOnce({ ...channel, status: 'SUSPENDED' });
+
+    const result = await publishAdminVideo('v1', staffCtx());
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('CHANNEL_NOT_APPROVED');
+    expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.video.update).not.toHaveBeenCalled();
   });
 
   it('publishing an unlisted video that lost its READY route is blocked', async () => {

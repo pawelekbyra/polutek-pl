@@ -4,6 +4,8 @@ import { VideoRepository } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { authorize } from "@/lib/modules/authz";
 import { VideoStatus } from "@prisma/client";
+import { ChannelNotFoundError, MainChannelNotApprovedError } from "@/lib/modules/channel/domain/channel.errors";
+import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { toAdminVideoDto } from "../domain/video.dto";
 import { VideoNotFoundError, VideoNotReadyForPublicationError } from "../domain/video.errors";
@@ -35,9 +37,22 @@ export async function publishAdminVideo(
     return ok(toAdminVideoDto(video));
   }
 
-  const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
-    const now = new Date();
-    const result = await tx.video.update({
+  let updated;
+  try {
+    updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
+      // Serialize publication with channel moderation. Recheck visibility after acquiring the
+      // row lock so a suspension committed while the request was preparing cannot leak a video.
+      const lockedChannel = await tx.$queryRaw`SELECT "id" FROM "Creator" WHERE "id" = ${mainChannel.id} FOR UPDATE`;
+      if (!Array.isArray(lockedChannel) || lockedChannel.length === 0) throw new ChannelNotFoundError(mainChannel.id);
+      const currentChannel = await tx.creator.findUnique({
+        where: { id: mainChannel.id },
+        select: { id: true, slug: true, status: true, deletedAt: true },
+      });
+      if (!currentChannel) throw new ChannelNotFoundError(mainChannel.id);
+      if (!MainChannelPolicy.isPubliclyVisible(currentChannel)) throw new MainChannelNotApprovedError(currentChannel.slug);
+
+      const now = new Date();
+      const result = await tx.video.update({
         where: { id: videoId },
         data: {
             status: VideoStatus.PUBLISHED,
@@ -49,17 +64,21 @@ export async function publishAdminVideo(
         }
     });
 
-    await recordAuditEvent(ctx, {
-        action: 'VIDEO_PUBLISHED',
-        targetType: 'Video',
-        targetId: videoId,
-        metadata: { title: result.title }
-    }, tx);
+      await recordAuditEvent(ctx, {
+          action: 'VIDEO_PUBLISHED',
+          targetType: 'Video',
+          targetId: videoId,
+          metadata: { title: result.title }
+      }, tx);
 
-    await enqueuePublishedVideoAnnouncement(result.id, tx, now);
+      await enqueuePublishedVideoAnnouncement(result.id, tx, now);
 
-    return result;
-  });
+      return result;
+    });
+  } catch (error) {
+    if (error instanceof ChannelNotFoundError || error instanceof MainChannelNotApprovedError) return fail(error);
+    throw error;
+  }
 
   await clearReadyVisibility(videoId, ctx);
   await syncPublicThumbnail(updated, ctx);
