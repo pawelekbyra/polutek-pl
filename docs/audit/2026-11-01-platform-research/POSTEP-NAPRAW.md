@@ -8,15 +8,17 @@ Punkt bazowy odświeżono przez lokalne scalenie `origin/main` (`e2d33e0e`) do g
 
 `origin/main` ma obecnie Next i eslint-config-next **16.4.4**; poprawki K02 są w kodzie gałęzi, ale K02 pozostaje niezamknięte bez pełnego świeżego przeglądu zależności i dowodu obrazu. W toku pozostaje K06: konsumenci wydania i rzeczywiste pięć obrazów. K01/K03 mają udokumentowane częściowe dowody, lecz pełny cykl API/worker/HLS/storage nadal nie jest odebrany. Cała roadmapa nadal ma 40 pakietów i żaden nie jest formalnie zamknięty.
 
-**Następny pakiet:** kontynuować K06 na aktualnym bazowym SHA: dowodowo zablokować niezweryfikowany `deploy.sh`, migrator, panel, `mergedeploy.sh` i rollback. Nie wykonywać publikacji ani wdrożenia. K05 i decyzje DP01–DP09 pozostają otwarte; niezależne naprawy można prowadzić bez zgadywania aktywnego profilu.
+**Bieżący pakiet:** K06 konsumenci wydania. `deploy.sh` i `deploy-admin.sh` wymagają katalogu proof, zewnętrznego hasha, pełnej rewizji i weryfikują digesty/ID przed migracją, aktywacją i rollbackiem; lokalne budowanie jest zablokowane. Testy zachowań i odmowy są w toku. Brakuje jeszcze bezpiecznego pobrania/przekazania artifactu przez `mergedeploy.sh`, integracji istniejących ścieżek ręcznych i prób całego protokołu. Nie uruchamiać skryptów na serwerze.
+
+**Następny krok:** dokończyć testy helpera oraz przekazanie artifactu `images.yml` przez `mergedeploy.sh`, bez merge/push/deploy. K05 i decyzje DP01–DP09 pozostają otwarte; niezależne naprawy można prowadzić bez zgadywania aktywnego profilu.
 
 ## K06 — GHCR images workflow, część 1
 
 Zastąpiono bezpośrednie build-and-push czterech obrazów ścieżką `release-produce` → lokalne `verify` → publikacja pięciu obrazów zwróconymi ID → pull i sprawdzenie digestów → kompletny proof do artifactu. Commit włącza też walidowany generator ośmiu publicznych inputs oraz amd64 base manifesty przypięte digestem. Workflow odmawia commitów, których nie ma już na `main`.
 
-Dowody: test regresyjny workflow i testy helperów **6/6 PASS**; pełny typecheck PASS; lint zmienionych plików PASS; YAML workflow parsuje się poprawnie. Trzy base digesty potwierdzono odczytem registry przez Buildx. Nie uruchamiano prawdziwych Actions, npm audit, logowania/push do GHCR ani obrazów produktu. K06 pozostaje OTWARTE: obecne `deploy.sh`, `deploy-admin.sh`, `mergedeploy.sh`, ręczne migracje/aktywacja oraz rollback nie konsumują jeszcze proofu. Pełny producer wymaga m.in. obowiązkowego audit gate; status `release_ready=false` bez jego rzeczywistego zielonego raportu.
+Dowody części 1: test workflow/helperów **6/6 PASS**; pełny typecheck PASS; lint zmienionych plików PASS; YAML parsuje się. Trzy base digesty potwierdzone registry przez Buildx. Nie uruchamiano Actions ani GHCR. Część 2 w toku: testy deploy consumers **33/33 PASS**; sprawdzono także, że obcy registry jest odrzucany przed wywołaniem Dockera. Wdrożeniowe skrypty wymagają zewnętrznego hash proofu, a verifier blokuje migrację i aktywację bez poprawnych digestów. Nie jest to jeszcze pełna integracja: artifact transfer w `mergedeploy.sh`, alternatywne/manualne ścieżki i próby pełnego cyklu pozostają niezaimplementowane. Pełny producer wymaga obowiązkowego audit gate; status `release_ready=false` bez jego rzeczywistego zielonego raportu.
 
-**Następny krok:** testami odmowy objąć `deploy.sh`/migrację i admin, tak aby bez katalogu dowodowego lub błędnego zewnętrznego hasha nie pobierały/promowały obrazu ani nie migrowały. Następnie połączyć przekazanie artefaktu z `mergedeploy.sh` i zapisać dowód rollbacku. Nie wykonywać tych skryptów na serwerze.
+**Następny krok:** domknąć celowane testy deploy/admin i helpera, potem połączyć artifact Actions z `mergedeploy.sh`, w tym walidować pełną rewizję oraz przekazywać zewnętrznie zatwierdzony hash. Nie wykonywać tych skryptów na serwerze.
 
 ## STOP właściciela — 4 listopada 2026
 

@@ -43,6 +43,17 @@ describe('serwerek scripts: static', () => {
     }
   });
 
+  it('requires verified release IDs before migration, activation, and every rollback path', () => {
+    expect(deploySh).toContain('IMAGE_SOURCE="${IMAGE_SOURCE:-ghcr}"');
+    expect(deploySh).toContain('unverified local builds are disabled');
+    expect(deploySh.indexOf('deploy-release.mjs')).toBeLessThan(deploySh.indexOf('docker compose --profile tools run --rm migrate'));
+    expect(deploySh).toContain('automatic rollback refused');
+    expect(adminSh.indexOf('deploy-release.mjs')).toBeLessThan(adminSh.indexOf('if start_admin "$new_image" && wait_healthy "$new_image"; then'));
+    expect(adminSh).toContain('automatic rollback refused');
+    expect(deploySh).not.toMatch(/^\s*docker build(?:\s|$)/m);
+    expect(adminSh).not.toMatch(/^\s*nice -n 10 docker build(?:\s|$)/m);
+  });
+
   it('mergedeploy.sh locks before replacing src and recognises the warning outcome', () => {
     const lock = mergeSh.indexOf('flock -n 9');
     expect(lock).toBeGreaterThan(0);
@@ -136,6 +147,17 @@ const FAKE_CURL = `#!/usr/bin/env bash
 cat >/dev/null
 printf '%s' "\${FAKE_HEALTH_BODY:-}"
 `;
+const FAKE_NODE = `#!/usr/bin/env bash
+echo "node $*" >> "$FAKE_DIR/node.log"
+case " $* " in
+  *" --scope=admin "*) echo 'admin=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';;
+  *)
+    echo 'app=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    echo 'migrator=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    echo 'worker=sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+    echo 'collector=sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd';;
+esac
+`;
 
 function sandbox() {
   const dir = mkdtempSync(path.join(tmpdir(), 'serwerek-test-'));
@@ -144,7 +166,7 @@ function sandbox() {
   const fake = path.join(dir, 'fake');
   mkdirSync(bin);
   mkdirSync(fake);
-  for (const [name, body] of Object.entries({ docker: FAKE_DOCKER, flock: FAKE_FLOCK, age: FAKE_AGE, tar: FAKE_TAR, rclone: FAKE_OK, curl: FAKE_CURL })) {
+  for (const [name, body] of Object.entries({ docker: FAKE_DOCKER, node: FAKE_NODE, flock: FAKE_FLOCK, age: FAKE_AGE, tar: FAKE_TAR, rclone: FAKE_OK, curl: FAKE_CURL })) {
     writeFileSync(path.join(bin, name), body, { mode: 0o755 });
     chmodSync(path.join(bin, name), 0o755);
   }
@@ -256,9 +278,21 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     writeFileSync(path.join(app, 'app.env'), extra.appEnv ?? 'HEALTHCHECK_TOKEN=secret-token\n');
     writeFileSync(path.join(app, 'db.env'), 'POSTGRES_USER=u\n');
     writeFileSync(path.join(app, 'docker-compose.yml'), 'services: {}\n');
+    const release = path.join(app, '.release-artifacts', '1111111111111111111111111111111111111111');
+    mkdirSync(path.join(release, 'source/scripts/ops'), { recursive: true });
+    writeFileSync(path.join(release, 'source/scripts/ops/deploy-release.mjs'), '// test adapter\n');
+    writeFileSync(path.join(release, 'proof.json'), '{}\n');
+    writeFileSync(path.join(release, 'inputs.json'), '{}\n');
     writeFileSync(path.join(app, 'collector.env'), 'X=1\n');
     if (!extra.noWorkerEnv) writeFileSync(path.join(app, 'worker.env'), 'X=1\n');
     for (const [f, v] of Object.entries(extra.state ?? {})) writeFileSync(path.join(app, f), v);
+    if (extra.state?.['.current-image']) {
+      const state = path.join(app, '.release-state/1111111111111111111111111111111111111111');
+      mkdirSync(path.join(state, 'source/scripts/ops'), { recursive: true });
+      writeFileSync(path.join(state, 'source/scripts/ops/deploy-release.mjs'), '// test adapter\n');
+      writeFileSync(path.join(state, 'proof.sha256'), 'a'.repeat(64));
+      writeFileSync(path.join(app, '.current-release-revision'), '1111111111111111111111111111111111111111');
+    }
     for (const [repo, tags] of Object.entries(extra.images ?? {})) writeFileSync(path.join(sb.fake, `images-${repo}`), tags);
     writeFileSync(
       path.join(sb.dir, 'common.sh'),
@@ -273,6 +307,8 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
       SERWEREK_COMMON: posix(path.join(sb.dir, 'common.sh')),
       START_SETTLE: '0',
       HEALTH_TIMEOUT: '1',
+      RELEASE_REVISION: '1111111111111111111111111111111111111111',
+      RELEASE_PROOF_SHA256: 'a'.repeat(64),
       ...env,
     });
     const rd = (f: string) => (existsSync(path.join(sb.app, f)) ? readFileSync(path.join(sb.app, f), 'utf8') : null);
@@ -292,8 +328,17 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     expect(rd('.previous-image')).toBe('polutek-app:old');
     expect(rd('.current-worker-image')).toBe('polutek-worker:t1');
     expect(rd('.previous-worker-image')).toBe('polutek-worker:old');
-    expect(fk('jobs.log')).toContain('deploy|ok|t1 (build): live on polutek-app:t1');
+    expect(fk('jobs.log')).toContain('deploy|ok|t1 (ghcr): live on polutek-app:t1');
     expect(fk('flock.log')).toContain('flock -n 9');
+  });
+
+  it('refuses an incomplete release bundle before any Docker or migration command', () => {
+    const sb = setup();
+    rmSync(path.join(sb.app, '.release-artifacts'), { recursive: true, force: true });
+    const { r, out, fk } = deploy(sb, ['t1']);
+    expect(r.status).toBe(1);
+    expect(out).toContain('missing verified release bundle');
+    expect(fk('docker.log')).toBe('');
   });
 
   it('encoder that fails to start: warning outcome, not promoted, logged in telemetry', () => {
@@ -306,7 +351,7 @@ describe.skipIf(!runBash)('deploy.sh with fake docker', () => {
     expect(rd('.previous-worker-image')).toBeNull();
     expect(rd('.current-image')).toBe('polutek-app:t1');
     expect(rd('.current-collector-image')).toBe('polutek-collector:t1');
-    expect(fk('jobs.log')).toMatch(/deploy\|ok\|t1 \(build\): live on polutek-app:t1 WITH WARNINGS: encoder not running/);
+    expect(fk('jobs.log')).toMatch(/deploy\|ok\|t1 \(ghcr\): live on polutek-app:t1 WITH WARNINGS: encoder not running/);
   });
 
   it('collector that starts and immediately exits is a warning too', () => {
