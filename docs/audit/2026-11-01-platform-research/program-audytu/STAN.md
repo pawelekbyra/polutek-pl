@@ -31,7 +31,7 @@ Dowody bieżącej sesji: `evidence/k06-local-producer-2026-11-03/` (katalog nazw
 4. `audit` nadal obowiązkowy, niewykonany po wcześniejszej automatycznej odmowie uploadu prywatnego grafu zależności. Nie obchodzić odmowy ani podstawiać PASS. Brak `release_ready`.
 5. H2 i dalsze pakiety nie rozpoczęte. Nie powtarzać zielonego pełnego unit17 minut bez zmiany uzasadniającej powtórzenie; po wznowieniu dobierać kontrole do zmienianego zakresu.
 
-### Komenda do wznowienia — wyłącznie po nowym poleceniu właściciela
+### Komenda do kontynuacji bieżącego zlecenia
 
 ```bash
 cd /opt/codex/polutek-pl/.worktrees/platform-audit
@@ -41,7 +41,7 @@ sed -n '1,180p' docs/operations/RELEASE-PROOF.md
 rg -n 'push:|docker build|docker pull|start_app|start_admin|rollback' .github/workflows/images.yml deploy/serwerek/deploy.sh deploy/serwerek/deploy-admin.sh scripts/ops/mergedeploy.sh
 ```
 
-Potem przygotować nowy mały pakiet testów konsumenta K06 (RED przed implementacją), bez uruchamiania skryptów wdrożeniowych na hoście/produkcji. Nie przełączać na historyczną gałąź PR #2065. Późniejsze historyczne polecenia pracy/push/deploy nie zastępują tego punktu zatrzymania.
+Po tej komendzie kontynuować K06 od `images.yml`: zapisać jego odmowną próbę przed zmianą i dopiero potem integrować release proof. Nie uruchamiać skryptów wdrożeniowych na hoście/produkcji. Nie przełączać na historyczną gałąź PR #2065. Ograniczenia publikacji i produkcji pozostają aktywne.
 
 ## Historyczny stan przekazania z poprzedniej instancji
 
