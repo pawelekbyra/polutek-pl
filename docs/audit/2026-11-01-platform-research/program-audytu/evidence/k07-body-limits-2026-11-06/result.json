@@ -1,0 +1,60 @@
+{
+  "package": "K07",
+  "commit": "b8b5d4dd",
+  "status": "PARTIAL_OPEN",
+  "date": "2026-11-06",
+  "code": {
+    "sharedReader": "lib/utils/request-body.ts",
+    "defaultJsonLimitBytes": 131072,
+    "multipartCountBeforeNativeParser": true,
+    "completeMultipartBudgetBytes": 13631488,
+    "completeLegalParts": 10000,
+    "directJsonAndFormDataParsersInApiRoutes": "replaced in app/api and apps/admin/app/api (apart from non-request File.arrayBuffer reads)"
+  },
+  "checks": {
+    "focusedVitest": {
+      "command": "npx vitest run tests/unit/utils/request-body.test.ts tests/unit/api/video-progress-route.test.ts tests/unit/api/studio-routes.test.ts tests/unit/api/playback-event-route.test.ts tests/unit/api/video-favorite-route.test.ts tests/unit/comments-route.test.ts tests/unit/comment-reactions-route.test.ts tests/unit/subscriptions-route.test.ts tests/unit/modules/patron-zone/premium-pass-checkout-route.test.ts --reporter=json",
+      "files": 9,
+      "testsPassed": 110,
+      "testsFailed": 0,
+      "success": true,
+      "raw": "vitest.json",
+      "log": "vitest.log"
+    },
+    "repoTypecheck": {
+      "passed": true,
+      "log": "typecheck.log"
+    },
+    "changedFilesEslint": {
+      "passed": true,
+      "log": "eslint.log"
+    },
+    "gitDiffCheck": "PASS"
+  },
+  "localNextProductionHttp": {
+    "result": "http-result.json",
+    "nextVersion": "16.4.5",
+    "reverseProxyIncluded": false,
+    "smallValidForm": 400,
+    "tooManyParts": 413,
+    "multipartDeclaredBytes": 413,
+    "multipartChunkedNoLength": 413
+  },
+  "notVerified": [
+    "Cloudflare or another actual reverse proxy's body and buffering limits",
+    "memory and latency under concurrent oversized requests",
+    "full-stack denial-of-service resource budget",
+    "public and admin builds after the final small validation adjustment"
+  ],
+  "buildsBeforeFinalValidationAdjustment": {
+    "public": {
+      "passed": true,
+      "log": "public-build-before-final-adjustment.log"
+    },
+    "adminStandalone": {
+      "passed": true,
+      "log": "admin-build-before-final-adjustment.log"
+    }
+  },
+  "conclusion": "Bounded readers and route coverage are implemented and locally verified, but K07 acceptance requires actual proxy behavior and concurrent memory/time measurements; keep the package open."
+}
