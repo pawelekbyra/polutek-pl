@@ -10,14 +10,15 @@
       "command": "npx vitest run tests/unit/video-api-contracts.test.ts tests/unit/video-pipeline/multipart-uploader.test.ts --testTimeout=120000 --hookTimeout=120000",
       "exitCode": 0,
       "files": 2,
-      "tests": 18,
-      "passed": 18,
+      "tests": 19,
+      "passed": 19,
       "failed": 0,
       "covers": [
         "valid pipeline and playback DTOs",
         "invalid response structure and enum",
         "null/wrong/invalid JSON 200 in Studio client",
-        "malformed multipart success does not continue to upload"
+        "malformed multipart success does not continue to upload",
+        "malformed remembered-upload response preserves resume point and sends no follow-up request (regression first reproduced red, then green)"
       ]
     },
     {
@@ -25,8 +26,8 @@
       "command": "npx vitest run tests/unit/api/studio-routes.test.ts tests/unit/api/media-source-route.test.ts tests/unit/video-api-contracts.test.ts tests/unit/video-pipeline/multipart-uploader.test.ts --testTimeout=120000 --hookTimeout=120000",
       "exitCode": 0,
       "files": 4,
-      "tests": 53,
-      "passed": 53,
+      "tests": 54,
+      "passed": 54,
       "failed": 0,
       "covers": [
         "actual Studio upload and pipeline route serializers",
@@ -89,7 +90,7 @@
     },
     {
       "name": "typecheck",
-      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json (after final K21 review fixes)",
       "exitCode": 0
     },
     {
@@ -101,8 +102,18 @@
     },
     {
       "name": "diff-check",
-      "command": "git diff --check",
+      "command": "git diff --check (after final K21 review fixes)",
       "exitCode": 0
+    },
+    {
+      "name": "postgres-route-regression-after-contract-tightening",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts tests/postgres/k21-media-source-contract.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "cleanup": "Temporary database container stopped after tests."
     }
   ],
   "design": {
@@ -112,8 +123,16 @@
     "compatibility": "Existing endpoints and URLs are unchanged; response schemas accept additive DTO fields."
   },
   "limits": [
-    "Playback and authenticated Studio pipeline were verified through a running local Next.js HTTP process and disposable PostgreSQL; multipart upload HTTP with real R2 was not exercised, so K21-T1 remains partial.",
-    "Focused tests cover the changed client boundary, not every response from the running server; K21-T2 remains partial.",
-    "No independent review; R21 is not marked closed."
-  ]
+    "Playback and authenticated Studio pipeline were verified through a running local Next.js HTTP process and disposable PostgreSQL; authenticated Studio multipart upload with a real R2/S3-compatible service was not exercised, so K21-T1 remains partial.",
+    "Focused negative tests cover malformed reservation/list responses and invalid enums; full browser/runtime client matrix and second-person review remain partial, so K21-T2 is locally covered but the package is not formally closed.",
+    "No separate reviewer; R21 is not marked closed."
+  ],
+  "review": {
+    "scope": "Independent pass over K21 boundary schemas and their callers after initial implementation.",
+    "findingsFixed": [
+      "Malformed 200 response while resuming a saved multipart upload cleared local resume state and immediately created a new reservation; fallback now occurs only for explicit ORIGINAL_NOT_FOUND or UPLOAD_NOT_OPEN.",
+      "Pipeline original.status accepted any non-empty string; it now validates the complete VideoOriginalStatus enum in admin and Studio schemas."
+    ],
+    "remaining": "Live authenticated Studio multipart upload against a real S3-compatible/R2 service remains for Claude/server acceptance; no independent second-person review."
+  }
 }
