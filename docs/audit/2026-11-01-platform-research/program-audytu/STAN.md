@@ -2,7 +2,11 @@
 
 ## K27 — kategorie eksportu własnych danych, 6 listopada 2026
 
-Dodano numer wersji kontraktu oraz profile kanałów właściciela, członkostwa kanałowe, preferencje powiadomień (brak wiersza = jawne `null`) i zminimalizowaną historię grantów patrona. Zapytania filtrują po aktorze, a profile/granty wykluczają moderator IDs, notatki, provider/payment IDs i pola techniczne. Test 3/3, repo typecheck i ESLint PASS. Bez rzeczywistego HTTP/DB. Binary media, marketplace records i inne otwarte kategorie pozostają; K27 nadal czeka na K05/K11/K26, pełny test i niezależny review. Dowód: `evidence/k27-export-categories-2026-11-06/result.json`.
+Pierwszy etap dodał numer wersji kontraktu, profile kanałów właściciela, członkostwa, preferencje powiadomień (brak wiersza = jawne `null`) i zminimalizowaną historię grantów patrona. Zapytania filtrują po aktorze, a profile/granty wykluczają moderator IDs, notatki, provider/payment IDs i pola techniczne. Test 3/3, repo typecheck i ESLint PASS. Późniejszy przyrost mediów opisano bezpośrednio poniżej. Bez rzeczywistego HTTP/DB; marketplace records i inne otwarte kategorie pozostają. K27 nadal czeka na K05/K11/K26, pełny test i niezależny review. Dowód pierwszego etapu: `evidence/k27-export-categories-2026-11-06/result.json`.
+
+### K27 — załączniki mediów, 6 listopada 2026
+
+Eksport dołącza zapisany awatar konta i bannery wyłącznie kanałów zwróconych z `Creator.where.userId = userId`, jako Base64 z typem, właścicielem i MIME. MIME spoza JPEG/PNG/WebP lub bajty przekraczające istniejące limity data URL kończą eksport kontrolowanym błędem, bez cichego pominięcia. Celowany test 5/5, ESLint, repo typecheck i `git diff --check` PASS. Test używa syntetycznych rekordów Prisma; bez HTTP, bazy, produkcyjnych danych ani przeglądarki. Limit łącznego rozmiaru eksportu i strumieniowanie należą do K37. Dowód: `evidence/k27-export-media-2026-11-06/result.json`.
 
 ## Aktualizacja K03 — odrzucenie pustego manifestu, 6 listopada 2026
 

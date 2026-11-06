@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-06",
+  "package": "K27/R16 partial: include owned avatar and channel banner bytes",
+  "base_commit": "815718a8",
+  "source_sha256": {
+    "lib/modules/users/application/export-own-data.use-case.ts": "c5884be4281d316ba0ae5a1d44f1a9d07927ced3a93128a8d440a3b6a3fd57ea",
+    "tests/unit/modules/users/export-own-data.test.ts": "a9789899b698997fe392433b2e2719730195b119dc66ca28e8292c95a6306fa3"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/modules/users/export-own-data.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 5
+    },
+    {
+      "command": "npx eslint lib/modules/users/application/export-own-data.use-case.ts tests/unit/modules/users/export-own-data.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "added_categories": [
+    "own UserAvatar bytes as Base64 with MIME and account owner ID",
+    "own ChannelBanner bytes as Base64, queried only for Creator IDs owned by the exporting user"
+  ],
+  "invalid_stored_media": "Unsupported MIME or content exceeding the existing data URL size limit fails the whole export instead of silently omitting the attachment.",
+  "scope": "Synthetic Prisma use-case test only. No HTTP server, real database, production data, provider, or browser was used.",
+  "limitations": [
+    "Aggregate export memory and size budget, pagination/streaming, and download lifecycle are K37; no new aggregate bound was introduced here.",
+    "Global AppSetting, notification event history, and conditional future marketplace orders/entitlements remain outside this increment.",
+    "K27 still requires full HTTP/DB coverage, policy dependencies K05/K11/K26, and independent review before closure."
+  ]
+}

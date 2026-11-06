@@ -2,7 +2,7 @@
 
 ## K27 — poszerzenie eksportu własnych danych
 
-Eksport JSON dostał `schemaVersion: 1` oraz własne profile kanałów, role `ChannelMember`, preferencje powiadomień i historię grantów patrona. Każde zapytanie jest ograniczone do `userId`; kanał eksportuje tylko wybrane pola profilu, grant bez ID płatności/reviewerów/notatek, a brak preferencji jest jawnie reprezentowany jako `null`. Test **3/3 PASS**, ESLint i repo typecheck PASS. Nie objęto binarnych plików avatara/banneru, globalnych `AppSetting`, samych zdarzeń powiadomień ani przyszłych marketplace orders/entitlements; nie wykonano pełnego HTTP/DB. Zależności polityki K05/K11/K26 i niezależny review pozostają, więc K27 jest częściowe. [Dowód](program-audytu/evidence/k27-export-categories-2026-11-06/result.json).
+Eksport JSON dostał `schemaVersion: 1`, własne profile kanałów, role `ChannelMember`, preferencje powiadomień, historię grantów patrona oraz własne awatary i bannery jako Base64. Bannery pobierane są tylko dla własnych profili; nieprawidłowy MIME lub rekord ponad limit blokuje eksport. Kwerendy wierszowe są ograniczone do `userId`; profile/granty nie zawierają ID płatności, reviewerów ani notatek. Brak preferencji jest jawnie `null`. Test **5/5 PASS**, ESLint, repo typecheck i diff check PASS. Globalne `AppSetting`, zdarzenia powiadomień i przyszłe marketplace orders/entitlements pozostają poza eksportem; nie wykonano pełnego HTTP/DB. Zależności polityki K05/K11/K26 i niezależny review pozostają, więc K27 jest częściowe. [Dowód kategorii](program-audytu/evidence/k27-export-categories-2026-11-06/result.json), [dowód mediów](program-audytu/evidence/k27-export-media-2026-11-06/result.json).
 
 ## K10 — sanitizacja ukrytych premier na granicy publicznej odpowiedzi
 
