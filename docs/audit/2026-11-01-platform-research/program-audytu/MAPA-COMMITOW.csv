@@ -32,3 +32,4 @@ K06-deployer-negative-paths,2b7891ac,tests/unit/ops/serwerek-scripts.test.ts;pro
 K07-reader-buffering,3dc8fb29,lib/utils/request-body.ts;tests/unit/utils/request-body.test.ts;program-audytu/evidence/k07-body-limits-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K07-complete-body-budget,c3c2c6c1,lib/api/admin-schemas.ts;tests/unit/utils/request-body.test.ts;program-audytu/evidence/k07-body-limits-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K07-next-proxy-buffer,1f467577,next.config.mjs;tests/unit/utils/request-body.test.ts;program-audytu/evidence/k07-body-limits-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K10-hidden-premiere,99426387,program-audytu/evidence/k10-hidden-premiere-2026-11-06/result.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
