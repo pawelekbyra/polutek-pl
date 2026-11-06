@@ -2,7 +2,7 @@
 
 ## Aktualizacja K03 — odrzucenie pustego manifestu, 6 listopada 2026
 
-Jeśli `RESTORE_EXPECTED_MANIFEST_PATH` wskazywał manifest z pustym `counts`, skrypt wykonywał pozostałe kontrole i mógł zgłosić sukces bez porównania żadnego oczekiwanego agregatu. Teraz jawnie odrzuca pusty zestaw, a test CLI w osobnym procesie pokrywa tę odmowę. Test procesu **32/32 PASS**, ESLint i repo `tsc --noEmit -p tsconfig.typecheck.json` PASS. Nie łączono się z bazą; DB w teście jest syntetyczną granicą. K03 pozostaje częściowy: pełny baseline i pozostałe odbiory K01/K03 nadal są otwarte. Dowód: `evidence/k03-empty-manifest-2026-11-06/result.json`.
+Jeśli `RESTORE_EXPECTED_MANIFEST_PATH` wskazywał manifest z pustym `counts`, skrypt wykonywał pozostałe kontrole i mógł zgłosić sukces bez porównania żadnego oczekiwanego agregatu. Teraz jawnie odrzuca pusty zestaw, a test CLI w osobnym procesie pokrywa tę odmowę. Test procesu **32/32 PASS**, ESLint i repo `tsc --noEmit -p tsconfig.typecheck.json` PASS. Nie łączono się z bazą; DB w teście jest syntetyczną granicą. Dodatkowo `npm run test:critical-path -- --maxWorkers=1` kieruje teraz do obowiązkowego guarda i zaliczył wymagane dwa zestawy, **37/37 PASS**. Uzupełniono syntetyczny model powiadomień w fixture integracyjnej i sprawdzono wysłanie podziękowania; ponowienie testu nie wypisało wcześniejszych błędów fixture. To nie jest dowód prawdziwego dostarczenia powiadomień ani pełny baseline. K03 pozostaje częściowy: pozostałe odbiory K01/K03 nadal są otwarte. Dowody: `evidence/k03-empty-manifest-2026-11-06/result.json`, `evidence/k03-critical-path-invocation-2026-11-06/result.json`.
 
 ## Aktualizacja K04 — wygenerowany klient Prisma, 6 listopada 2026
 

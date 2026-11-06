@@ -15,7 +15,7 @@
     "logo": "node scripts/brand/set-logo.mjs",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:critical-path": "vitest run tests/unit/architecture/post-merge-state-reconciliation.test.ts tests/integration/launch-candidate-critical-path.test.ts",
+    "test:critical-path": "node scripts/test-critical-path.mjs",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:verify": "npx ts-node scripts/verify_db.ts",
