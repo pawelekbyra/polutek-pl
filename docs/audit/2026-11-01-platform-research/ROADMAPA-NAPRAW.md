@@ -704,6 +704,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Dodatkowy rekord AppSetting:** własny Premium Pass jest czytany po dokładnym kluczu konta przez walidowany `readPass`, a do eksportu trafiają tylko produkt, kwoty, waluta, metoda, okres i zgody — bez `ref`, `requestId` i `paymentIds`. Nie eksportujemy globalnych dziennych liczników. Dodanie kategorii podniosło kontrakt do `schemaVersion: 2`. Celowany eksport 6/6, architektura, ESLint, repo typecheck i diff check PASS; pełny HTTP/DB oraz review pozostają otwarte. [Dowód](program-audytu/evidence/k27-patron-pass-2026-11-06/result.json).
 
+**Historia oglądania:** dodano własne widoki, sesje oraz zdarzenia odtwarzania w K27, wybierając tylko jawne pola i wykluczając hashe IP/UA, identyfikatory sesji/DB, dowolne metadata i teksty błędów. Zmiana podniosła kontrakt do `schemaVersion: 3`; celowane testy 6/6 i pozostałe lokalne bramki PASS. Brak pełnego HTTP/DB, review oraz paginacji/strumieniowania K37. [Dowód](program-audytu/evidence/k27-playback-history-2026-11-06/result.json).
+
 <a id="k28"></a>
 
 #### K28. Polityka cofania sesji WWW i krytyczne operacje
