@@ -1502,5 +1502,21 @@
     "scope_limit": "Two independent DB sessions in one Vitest process; separate worker processes, R2/S3, controlled drain, and independent review remain open.",
     "evidence": "program-audytu/evidence/k17-two-session-race-2026-11-06/result.json",
     "k17_closed": false
+  },
+  "latest_k23_followup": {
+    "date": "2026-11-06",
+    "base_revision": "d480a4bc",
+    "test_file": "tests/postgres/published-video-notification-restart.pg.test.ts",
+    "recovery_helper": "tests/helpers/k23-recover-notification-job.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 1,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "diff_check_exit": 0,
+    "scenario": "Real publishAdminVideo transaction persisted one NEW_VIDEO_FANOUT intent; request-side kick was suppressed at the post-commit seam; a fresh OS process ran the actual durable worker and delivered one subscriber notification; retry produced no duplicate.",
+    "scope_limit": "Did not kill the HTTP publishing process after COMMIT or call the scheduled cron HTTP route; synthetic HLS route, no R2/S3 or independent review.",
+    "evidence": "program-audytu/evidence/k23-process-recovery-2026-11-06/result.json",
+    "k23_closed": false
   }
 }

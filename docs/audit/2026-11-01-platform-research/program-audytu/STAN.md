@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K23/R05 — publikacja i proces odzysku fan-out, 6 listopada 2026
+
+Nowy test PostgreSQL uruchamia rzeczywisty `publishAdminVideo` z gotową trasą SELF_HLS oraz własnym subskrybentem; trwały `NEW_VIDEO_FANOUT` powstaje w tej samej transakcji. Post-commit kick jest zastąpiony no-opem i asercją wywołania, po czym osobny proces Node/tsx uruchamia prawdziwy runner: job DONE i jedna notyfikacja do odbiorcy. Ponowne enqueue/retry plus drugi run pozostawiają dokładnie jedną notyfikację. 1/1 PASS, PostgreSQL 17 po 84 migracjach, repo typecheck, ESLint i diff check PASS. To symulacja utraty kicka i uruchomienie świeżego procesu workera, nie SIGKILL procesu HTTP po COMMIT ani rzeczywisty endpoint cron. Trasa/asset są syntetyczne; bez zewnętrznego R2 i niezależnego review, więc K23/R05 pozostają częściowe. Fixture’y oraz jednorazowy DB usunięto. [Dowód](evidence/k23-process-recovery-2026-11-06/result.json).
+
 ## K17/R02 — wyścig przejęcia na dwóch sesjach PostgreSQL, 6 listopada 2026
 
 Test `encode-attempt-fencing-race.pg.test.ts` utrzymuje niezatwierdzoną blokadę wiersza joba w kliencie B, aż stary finalizer A rzeczywiście czeka na `FOR UPDATE` w drugim połączeniu. Po COMMIT przejęcia A zostaje odrzucony i sprząta tylko własny asset; finalizer B aktywuje własną trasę, job zachowuje ownera B, a A nie pozostawia assetu. **1/1 PASS**, PostgreSQL 17, 84 migracje; repo typecheck, ESLint i diff check PASS. Dane testowe usunięte, jednorazowy kontener usunięty. Weryfikuje dwa połączenia/sesje DB w jednym procesie testowym; dwa odrębne procesy workerów, R2/S3 i niezależny review są nadal otwarte, więc R02 i K17 pozostają częściowe. [Dowód](evidence/k17-two-session-race-2026-11-06/result.json).

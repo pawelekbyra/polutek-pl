@@ -498,3 +498,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Dwa niezależne połączenia DB wymusiły blokadę: finalizer A czekał na job row lock, gdy B trzymał niezatwierdzone przejęcie. Po COMMIT A został odrzucony, a tylko B aktywował asset. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
 - To dwa połączenia w jednym procesie, nie dwa worker procesy; brak prawdziwego R2/S3 i niezależnego review. R02/K17 częściowe. [Dowód](evidence/k17-two-session-race-2026-11-06/result.json).
+
+## 6 listopada 2026 — K23/R05: procesowy odzysk trwałego intentu
+
+- Rzeczywisty `publishAdminVideo` utworzył atomowy intent na PostgreSQL. Post-commit kick zasymulowano jako utracony; świeży proces OS uruchomił durable worker i dostarczył subskrybentowi jedno powiadomienie. Retry/reopen i drugi run nie dublują wpisu. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
+- Nie zabito HTTP procesu po commitcie ani nie wywołano cron HTTP; HLS syntetyczne, bez R2/S3 i niezależnego review. K23/R05 pozostają częściowe. [Dowód](evidence/k23-process-recovery-2026-11-06/result.json).
