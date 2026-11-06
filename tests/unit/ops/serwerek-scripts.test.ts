@@ -178,7 +178,13 @@ case "$1" in
         exit 0;;
       run) [ -n "\${FAKE_MIGRATE_FAIL:-}" ] && exit 1; exit 0;;
       ps) for a in "$@"; do svc=$a; done; has FAKE_NO_SERVICE "$svc" || echo "cid-$svc"; exit 0;;
-      exec) echo "-- dump"; exit 0;;
+      exec)
+        case " $* " in
+          *"select 1 from pg_roles"*) echo "\${FAKE_TELEMETRY_ROLE:-}";;
+          *"-v ON_ERROR_STOP=1"*) cat >> "$FAKE_DIR/sql.log";;
+          *) echo "-- dump";;
+        esac
+        exit 0;;
     esac
     exit 0;;
 esac
@@ -357,6 +363,23 @@ describe.skipIf(!runBash)('telemetry-enable.sh proof preflight', () => {
     expect(existsSync(path.join(sb.fake, 'docker.log'))).toBe(false);
     expect(readFileSync(path.join(sb.app, 'app.env'), 'utf8')).toBe('DATABASE_URL=original\n');
     expect(existsSync(path.join(sb.app, 'collector.env'))).toBe(false);
+  });
+
+  it('activates telemetry only after active proof verification succeeds', () => {
+    const sb = setupTelemetry();
+    writeFileSync(path.join(sb.app, 'verify-active-release.sh'), '#!/usr/bin/env bash\necho called >> "$FAKE_DIR/verify.log"\nexit 0\n', { mode: 0o755 });
+    chmodSync(path.join(sb.app, 'verify-active-release.sh'), 0o755);
+    const r = runScript(path.join(sb.app, 'telemetry-enable.sh'), [], sb.app, sb.bin, sb.fake, {
+      RELEASE_REVISION: sb.revision, RELEASE_PROOF_SHA256: sb.hash, FAKE_TELEMETRY_ROLE: '1',
+    });
+
+    expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
+    expect(readFileSync(path.join(sb.fake, 'verify.log'), 'utf8')).toContain('called');
+    expect(readFileSync(path.join(sb.fake, 'sql.log'), 'utf8')).toContain('ALTER ROLE pp_collector LOGIN');
+    expect(readFileSync(path.join(sb.fake, 'docker.log'), 'utf8')).toContain('compose up -d --no-deps collector');
+    expect(readFileSync(path.join(sb.fake, 'docker.log'), 'utf8')).toContain('compose up -d --no-deps app');
+    expect(readFileSync(path.join(sb.app, 'collector.env'), 'utf8')).toContain('TELEMETRY_ALLOWED_HOSTS=www.pawelperfect.com');
+    expect(readFileSync(path.join(sb.app, 'app.env'), 'utf8')).toContain('TELEMETRY_COLLECTOR_URL=http://collector:3200');
   });
 });
 
