@@ -1,0 +1,48 @@
+{
+  "package": "K21/R21",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "status": "PARTIAL",
+  "scope": "Add pure shared runtime response schemas for multipart upload, encode pipeline and playback plans; validate the Studio/admin/browser consumers at their JSON boundary and stop safely on malformed success responses.",
+  "checks": [
+    {
+      "name": "focused-unit",
+      "command": "npx vitest run tests/unit/video-api-contracts.test.ts tests/unit/video-pipeline/multipart-uploader.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "files": 2,
+      "tests": 18,
+      "passed": 18,
+      "failed": 0,
+      "covers": ["valid pipeline and playback DTOs", "invalid response structure and enum", "null/wrong/invalid JSON 200 in Studio client", "malformed multipart success does not continue to upload"]
+    },
+    {
+      "name": "typecheck",
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exitCode": 0
+    },
+    {
+      "name": "eslint",
+      "command": "npx eslint <11 changed TS/TSX files>",
+      "exitCode": 0,
+      "warnings": 4,
+      "warningNote": "Four react-hooks/set-state-in-effect warnings are in existing effects; no lint errors."
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "design": {
+    "contractModule": "lib/video-api-contracts/contracts.ts",
+    "dependencies": "Zod plus a type-only PlaybackPlan import; no application or infrastructure imports.",
+    "failureBehavior": "Studio HTTP 200 with malformed or invalid JSON becomes API_CONTRACT_MISMATCH/502; playback plan parsing returns null and consumers fail closed; multipart consumers stop before subsequent requests or PUTs.",
+    "compatibility": "Existing endpoints and URLs are unchanged; response schemas accept additive DTO fields."
+  },
+  "limits": [
+    "No live server or route-level integration test was available; K21-T1 is open.",
+    "No acceptance of a legal older supported client was run; K21-T1 is open.",
+    "Focused tests cover the changed client boundary, not every response from the running server; K21-T2 remains partial.",
+    "No independent review; R21 is not marked closed."
+  ]
+}
