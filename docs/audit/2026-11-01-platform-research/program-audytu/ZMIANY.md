@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K17/R02: fencing po przejęciu próby
+
+- Commit `f85504f3`: aktywacja route blokuje i weryfikuje aktualny token próby w transakcji; postęp, statusy terminalne/retry, anulowanie i release także porównują `attemptId`. Aktywne assety z prefiksu dowolnej próby tej generacji można odzyskać po przerwaniu.
+- RED na PostgreSQL odtworzył, że A po finalizacji B podmienił trasę. Po poprawce K17 i repo PostgreSQL 17: **12/12 PASS**, unit **34/34**, ESLint i typecheck PASS.
+- Odbiór używa kontrolowanej sekwencji, nie dwóch żywych workerów; brak fizycznego R2 i drugiego przeglądu. K17 częściowe; K18 sprawdza post-COMMIT i awarię audytu. Dowody: `evidence/k17-stale-worker-fencing-2026-11-06/`.
+
 ## 6 listopada 2026 — K16/R02: odrębne prefiksy prób kodowania
 
 - Commit `6975a492`: claim nadaje UUID próby; proces, lokalny katalog roboczy, HLS output, finalizer, logi i cleanup przenoszą tę samą tożsamość. Dodatkowa migracja blokuje stare claimy bez `attemptId`, ale pozwala już działającemu legacy jobowi kontynuować heartbeat.

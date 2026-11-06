@@ -38,6 +38,8 @@ Każdy nowy claim dostaje UUID zapisany w `VideoEncodeJob.attemptId`. Pliki, wpi
 
 Migracja blokuje przejście zadania do `RUNNING`, jeśli claim nie wpisał `attemptId`, więc binarny stary worker nie może pobrać nowego zadania. Heartbeat już działającego legacy zadania jest dozwolony. Przed migracją i startem nowych workerów wdrożenie musi kontrolowanie wygasić stare workery; lokalny test nie zastępuje tej procedury ani fencing skutków starego workera, które jest osobnym K17.
 
+Przed aktywacją finalizer blokuje w transakcji wiersz joba i potwierdza `RUNNING`, `workerId` oraz `attemptId`; równocześnie odświeża heartbeat. Wszystkie zapisy postępu/końcowego statusu/retry/anulowania/zwolnienia claimu używają tego samego tokenu. Stara próba nie aktywuje swojej trasy po przejęciu joba; jeśli poprzednia trasa została już zatwierdzona, kolejna próba może odnaleźć aktywny asset w jej prefiksie. Ta bramka nie dowodzi zachowania dwóch realnych procesów ani nie zamyka post-COMMIT i audytowych efektów z K18.
+
 ## Sprzątanie obiektów
 
 `HlsWriter.deletePrefix()` odczytuje odpowiedź `DeleteObjects` per obiekt (`Quiet: false`), liczy tylko potwierdzone `Deleted` i ponawia wyłącznie przejściowe błędy do trzech prób. `NoSuchKey`/`NotFound` jest idempotentne i nie zwiększa licznika. Trwałe błędy lub wyczerpane próby rzucają `R2DeleteObjectsError`, więc strict purge/durable job nie może oznaczyć częściowego usunięcia jako sukcesu. Testy komponentów są zielone, ale brak jeszcze odbioru na sandboxie Cloudflare R2/S3; zachowanie dostawcy i cały przebieg purge pozostają niepotwierdzone.

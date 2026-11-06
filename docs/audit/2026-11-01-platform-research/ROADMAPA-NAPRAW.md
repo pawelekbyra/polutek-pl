@@ -472,6 +472,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K17-T1** — Worker A zatrzymany przed finalizacją; B przejmuje zadanie i publikuje; A wraca: nie aktywuje starej trasy, nie zmienia statusu B ani nie usuwa obiektów B.
 - **K17-T2** — Kontrola bez takeover aktywuje i kończy zadanie; crash/lease expiry/requeue mają jednoznaczny wynik i retry. Test obserwuje DB i fizyczne pliki, nie sam odrzucony końcowy status.
 
+**Wynik lokalny 6 listopada 2026:** regresja RED na prawdziwym PostgreSQL 17 odtworzyła, że po finalizacji B stary A nadal aktywował własną trasę. Route activation blokuje job row, sprawdza `RUNNING + workerId + attemptId` i odświeża heartbeat w tej samej transakcji co zmianę trasy. Zapis progress/success/failure/cancel/release ma CAS z attempt ID, również gdy dwa procesy raportują ten sam `workerId`. Retry wyszukuje aktywny wynik dowolnej próby tej generacji. Po poprawce integracja K17 + repozytorium: **12/12 PASS** na PostgreSQL 17 z 82 migracjami; 3 pliki unit **34/34**, ESLint i repo typecheck PASS ([dowody](program-audytu/evidence/k17-stale-worker-fencing-2026-11-06/result.json)). Test przeprowadza takeover w kontrolowanej sekwencji, nie przez dwa niezależne procesy; brak fizycznego R2, pełnego buildu i niezależnego przeglądu. K17 częściowe; K18 sprawdza post-COMMIT/audyt, a R02 pozostaje otwarte.
+
 <a id="k18"></a>
 
 #### K18. Granica COMMIT i ochrona już aktywowanego HLS

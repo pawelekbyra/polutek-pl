@@ -1,0 +1,40 @@
+{
+  "package": "K17",
+  "finding": "R02",
+  "date": "2026-11-06",
+  "codeCommit": "f85504f3",
+  "status": "PARTIAL_LOCAL_VERIFICATION",
+  "redRegression": {
+    "scenario": "Attempt B takes over the job and activates its asset; stale attempt A then invokes the same finalizer.",
+    "observedBeforeFix": "The stale A finalizer resolved successfully and could replace the active playback route after B had finalized."
+  },
+  "change": {
+    "repository": "reportProgress, markSucceeded, markFailedOrRetry, markCancelled and release now compare job ID, worker ID, RUNNING state and attemptId. The attempt ID prevents a stale process with the same stable worker ID from mutating the replacement claim.",
+    "finalization": "Route activation locks the VideoEncodeJob row in the same transaction, verifies current ownership, and refreshes heartbeat before changing active routes/assets. A stale claim is rejected; a concurrent stale sweep must wait and then fails its heartbeat compare-and-set.",
+    "recovery": "findExisting searches an active legacy key or any attempt prefix for this unique output generation, so a retry can adopt a route committed just before its previous owner lost the lease.",
+    "cleanup": "A failed stale finalization deletes only its own attempt asset/prefix; it does not delete or overwrite the replacement attempt output."
+  },
+  "greenVerification": {
+    "postgres": {
+      "command": "DATABASE_URL=<disposable-local-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx prisma migrate deploy && npx vitest run --config vitest.postgres.config.ts tests/postgres/encode-attempt-fencing.pg.test.ts tests/postgres/encode-job.repository.pg.test.ts --reporter=json",
+      "migrations": 82,
+      "files": 2,
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "raw": "postgres-vitest.json",
+      "migrationLog": "migrate.log",
+      "scenario": "B takes ownership and finalizes; stale A is rejected, B remains RUNNING/current and active, only B's asset remains; same-worker-ID stale writes are rejected across repository mutations.",
+      "environment": "Disposable postgres:17-alpine container removed after run; no external storage."
+    },
+    "focusedUnit": { "files": 3, "passed": 34, "failed": 0, "raw": "unit-vitest.json" },
+    "eslint": { "passed": true, "log": "eslint.log" },
+    "repoTypecheck": { "passed": true, "log": "typecheck.log" },
+    "gitDiffCheck": "PASS"
+  },
+  "limits": [
+    "The takeover interleaving used real PostgreSQL and production routes/repositories, but was sequenced in one integration test rather than two independently running worker processes.",
+    "No Cloudflare R2/S3 sandbox, full product build, controlled worker drain or independent review was performed.",
+    "K18 still must examine post-COMMIT audit/finalizer effects; K17 does not close R02 or the full encoder release gate."
+  ]
+}
