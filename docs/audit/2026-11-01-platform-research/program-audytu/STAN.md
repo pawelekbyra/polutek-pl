@@ -6,7 +6,11 @@ Pierwszy etap dodał numer wersji kontraktu, profile kanałów właściciela, cz
 
 ### K27 — podpisana sesja i cofnięcie, 6 listopada 2026
 
-Nowy test PostgreSQL używa rzeczywistej konfiguracji Better Auth i podpisu `pp.session_token`: aktywna sesja identyfikuje użytkownika, bieżące dane DB mapują go na aktora, błędny podpis i usunięta sesja są odrzucone. 1/1 PASS; repo typecheck, ESLint i diff check PASS; 84/84 migracje. Sprawdzono bezpośrednio `getAuth` i `resolveDbBackedActor`, bez Next HTTP. Test handlera eksportu nadal kontroluje auth/rate limiter atrapami, więc kompletna ścieżka cookie→HTTP→eksport pozostaje do wykonania. Jednorazowa baza i kontener usunięte. [Dowód](evidence/k27-session-postgres-2026-11-06/result.json).
+Nowy test PostgreSQL używa rzeczywistej konfiguracji Better Auth i podpisu `pp.session_token`: aktywna sesja identyfikuje użytkownika, bieżące dane DB mapują go na aktora, błędny podpis i usunięta sesja są odrzucone. 1/1 PASS; repo typecheck, ESLint i diff check PASS; 84/84 migracje. Sprawdzono bezpośrednio `getAuth` i `resolveDbBackedActor`, bez Next HTTP; późniejszy test rzeczywistego HTTP zapisano poniżej. Jednorazowa baza i kontener usunięte. [Dowód](evidence/k27-session-postgres-2026-11-06/result.json).
+
+### K27 — lokalne HTTP z sesją rzeczywistą, 6 listopada 2026
+
+Dodano osobny test integracyjny uruchamiający Next dev na wolnym porcie loopback z ograniczonym środowiskiem, prawdziwym Better Auth i prawdziwym handlerem eksportu. Na jednorazowym PostgreSQL 17 po 84 migracjach: gość 401, podpisany właściciel 200/no-store z własnym komentarzem bez cudzej odpowiedzi, cofnięta sesja 401. 1/1 PASS; repo typecheck, ESLint i diff check PASS. W tym trybie użyto in-memory rate limiter; nie było reverse proxy ani zewnętrznych usług. Syntetyczne User/Session/Creator/Video/Comment usunięte (weryfikacja 0 użytkowników testowych), kontener DB usunięty. To domyka odrębną lukę dowodową cookie→HTTP dla tych kategorii, ale nie całe K27/T1/T2: otwarte pozostają zależności K05/K11/K26, kompletność polityki danych, K37 i niezależny przegląd. [Dowód](evidence/k27-http-postgres-2026-11-06/result.json).
 
 ### K27 — załączniki mediów, 6 listopada 2026
 

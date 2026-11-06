@@ -1467,7 +1467,7 @@
   },
   "latest_followup": {
     "date": "2026-11-06",
-    "base_revision": "fc5e1c63",
+    "base_revision": "f7ac94b5",
     "package": "K27 signed Better Auth session boundary",
     "test_file": "tests/postgres/user-export-session.pg.test.ts",
     "postgres_migrations": 84,
@@ -1478,6 +1478,14 @@
     "diff_check_exit": 0,
     "scope_limit": "Direct getAuth/resolveDbBackedActor calls; no Next HTTP; export route test still mocks auth and rate limiter.",
     "evidence": "program-audytu/evidence/k27-session-postgres-2026-11-06/result.json",
-    "k27_closed": false
+    "k27_closed": false,
+    "http_test_file": "tests/postgres/user-export-http.pg.test.ts",
+    "http_tests_passed": 1,
+    "http_tests_failed": 0,
+    "http_test_duration_seconds": 14.22,
+    "http_scope": "Local Next dev HTTP; actual Better Auth cookie and actor, real route and in-memory dev rate limiter, disposable PostgreSQL after 84 migrations; guest 401, owner 200 with own comment only, revoked session 401.",
+    "http_evidence": "program-audytu/evidence/k27-http-postgres-2026-11-06/result.json",
+    "http_database_migrations": 84,
+    "http_env": "Sanitized child env; no inherited Redis or provider credentials."
   }
 }

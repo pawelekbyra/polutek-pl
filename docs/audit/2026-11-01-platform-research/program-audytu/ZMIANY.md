@@ -488,3 +488,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Dodano test PostgreSQL z rzeczywistą konfiguracją Better Auth: aktywny podpisany cookie, mapowanie aktora z DB, błędny podpis i cofnięta sesja. PostgreSQL 17 po 84 migracjach; 1/1 PASS, typecheck, ESLint i diff check PASS.
 - Test jest bezpośrednim wywołaniem granicy auth, nie Next HTTP; route test eksportu nadal ma atrapę auth/rate limitera. K27 pozostaje otwarte. Dowód: `evidence/k27-session-postgres-2026-11-06/result.json`.
+
+## 6 listopada 2026 — K27: rzeczywiste Next HTTP z cofnięciem sesji
+
+- Test PostgreSQL uruchomił lokalny Next dev na loopback i wywołał pełny route HTTP z rzeczywistym Better Auth: gość 401, podpisany właściciel 200/no-store z tylko własnym komentarzem, cofnięta sesja 401. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
+- Store limitów był rzeczywistym in-memory store development; brak proxy, Redis/Cloudflare i produkcji. Kontener jednorazowy usunięty, fixture User count 0. K27 częściowe; K37 oraz zależności polityki/review otwarte. [Dowód](evidence/k27-http-postgres-2026-11-06/result.json).
