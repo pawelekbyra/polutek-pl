@@ -40,6 +40,12 @@ Migracja blokuje przejście zadania do `RUNNING`, jeśli claim nie wpisał `atte
 
 Przed aktywacją finalizer blokuje w transakcji wiersz joba i potwierdza `RUNNING`, `workerId` oraz `attemptId`; równocześnie odświeża heartbeat. Wszystkie zapisy postępu/końcowego statusu/retry/anulowania/zwolnienia claimu używają tego samego tokenu. Aktywacja trasy, wybór primary assetu i obowiązkowy wpis audytu są jedną transakcją. Po utracie potwierdzenia COMMIT finalizer uzgadnia aktywną trasę; gdy baza nie pozwala rozstrzygnąć wyniku, worker zachowuje prefiks HLS do retry. Retry potwierdza cały graf playlist i segmentów przed uznaniem aktywnego wyniku; niekompletny graf nie jest sukcesem. Lokalna weryfikacja K17/K18 nie dowodzi zachowania dwóch realnych workerów ani fizycznego R2; odbiór pozostaje otwarty.
 
+## Rezerwacja i sprzątanie assetu HLS
+
+Usunięcie wersji HLS najpierw blokuje wiersz `Video`, tak samo jak aktywacja trasy. W jednej transakcji odłącza aktywną trasę szkicu (PUBLISHED/UNLISTED z aktywnym assetem są chronione), zapisuje `VideoAsset.cleanupPendingAt`, oznacza asset jako nieaktywny i tworzy `VIDEO_ASSET_CLEANUP`. Trigger PostgreSQL blokuje aktywowanie zarezerwowanego assetu także przez starszy kod aplikacji. Wdrożenie migracji wymaga wygaszenia starszych procesów przed wznowieniem żądań usuwania, ponieważ ich wersja usuwała obiekty synchronicznie.
+
+Runner usuwa prefiks R2 poza transakcją, a dopiero po potwierdzonym usunięciu kasuje wiersz assetu i zapisuje audyt. Awaria po częściowym DeleteObjects zostawia rezerwację i zadanie trwałe; retry jest idempotentne. Dla aktywnego assetu szkicu route jest wyłączana w tej samej transakcji co rezerwacja, więc nie wskazuje plików podczas cleanupu.
+
 ## Sprzątanie obiektów
 
 `HlsWriter.deletePrefix()` odczytuje odpowiedź `DeleteObjects` per obiekt (`Quiet: false`), liczy tylko potwierdzone `Deleted` i ponawia wyłącznie przejściowe błędy do trzech prób. `NoSuchKey`/`NotFound` jest idempotentne i nie zwiększa licznika. Trwałe błędy lub wyczerpane próby rzucają `R2DeleteObjectsError`, więc strict purge/durable job nie może oznaczyć częściowego usunięcia jako sukcesu. Testy komponentów są zielone, ale brak jeszcze odbioru na sandboxie Cloudflare R2/S3; zachowanie dostawcy i cały przebieg purge pozostają niepotwierdzone.

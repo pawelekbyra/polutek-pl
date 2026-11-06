@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K19/R29: rezerwacja aktywacji i cleanupu HLS
+
+- Asset otrzymuje `cleanupPendingAt` pod blokadą wiersza filmu współdzieloną z aktywacją. Transakcja wyłącza aktywną trasę szkicu, zapisuje audyt i kolejkuje `VIDEO_ASSET_CLEANUP`; trigger DB blokuje też stare klienty. Runner wykonuje idempotentne DeleteObjects poza transakcją i kasuje wiersz dopiero po potwierdzeniu storage.
+- PostgreSQL 17 + 83 migracje: K19 **4/4**, regresje K17/K18 **8/8 razem**; unit **48/48**, ESLint/typecheck/Prisma validate PASS. Fake R2, bez drainu i niezależnego przeglądu; K19 częściowe. Dowody: `evidence/k19-activation-cleanup-2026-11-06/`.
+- Kod: `b8921135` (`fix(video): reserve HLS cleanup before deletion`).
+
 ## 6 listopada 2026 — K18/R28: bezpieczny wynik finalizacji HLS
 
 - Obowiązkowy audyt zmiany trasy jest teraz w tej samej transakcji co jej aktywacja. Finalizer uzgadnia utracone potwierdzenie COMMIT; przy niedostępnej bazie proces zachowuje output HLS i przechodzi do retry. Ponowienie potwierdza obecność mastera, zagnieżdżonych playlist, URI z tagów i segmentów przed sukcesem.

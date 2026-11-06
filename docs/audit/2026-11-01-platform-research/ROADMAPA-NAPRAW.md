@@ -518,6 +518,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K19-T1** — Cleanup rezerwuje zasób, potem aktywacja: aktywacja odmawia; aktywacja pierwsza, potem cleanup: aktywny zasób pozostaje. Po obu próbach DB i pliki są spójne.
 - **K19-T2** — PUBLISHED/UNLISTED chronione zgodnie z polityką; dla DRAFT jawne oczekiwanie. Crash po rezerwacji i w połowie DeleteObjects daje idempotentne dokończenie lub odwrót, bez aktywnej trasy do skasowanych plików.
 
+**Wynik lokalny 6 listopada 2026 (częściowy):** aktywacja i cleanup serializują się przez `Video FOR UPDATE`; cleanup odłącza aktywną trasę szkicu, zapisuje `cleanupPendingAt`, audyt i `VIDEO_ASSET_CLEANUP` atomowo. Addytywna migracja dodaje trigger blokujący route ACTIVE dla zarezerwowanego assetu także ze starego klienta. Runner usuwa R2 poza transakcją, po sukcesie usuwa asset i zapisuje audyt; partial delete zostawia trwałą rezerwację do retry. PostgreSQL 17 + 83 migracje: **4/4 testy K19** i **8/8 łącznie z regresjami K17/K18**; unit **48/48**, ESLint, repo typecheck, Prisma validate PASS ([dowody](program-audytu/evidence/k19-activation-cleanup-2026-11-06/)). Magazyn jest kontrolowanym fake, nie sandboxem R2; migracja i wznowienie żądań wymagają drainu starszych procesów. K19 pozostaje częściowe do odbioru R2 i niezależnego przeglądu.
+
 <a id="k20"></a>
 
 #### K20. Kontekst właściwego kanału podczas auto-publish
