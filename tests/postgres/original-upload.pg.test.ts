@@ -2,6 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createAppContext, type AppContext } from "@/lib/modules/shared/app-context";
+import { MultipartCompleteResponseSchema, MultipartStartResponseSchema, StudioPipelineStateResponseSchema } from "@/lib/video-api-contracts/contracts";
 
 const mocks = vi.hoisted(() => ({
   sessions: new Map<string, unknown>(),
@@ -27,6 +28,8 @@ vi.mock("@/lib/modules/video-pipeline/infrastructure/r2-multipart", () => ({
 }));
 
 import { POST as completeUpload } from "@/app/api/studio/videos/[id]/upload/complete/route";
+import { POST as startUpload } from "@/app/api/studio/videos/[id]/upload/route";
+import { GET as getPipeline } from "@/app/api/studio/videos/[id]/pipeline/route";
 
 const prisma = new PrismaClient();
 const RUN = `k15-${Date.now().toString(36)}`;
@@ -79,6 +82,13 @@ async function post(videoId: string, originalId: string, requestId: string) {
   );
 }
 
+async function getPipelineResponse(videoId: string, requestId: string) {
+  return getPipeline(
+    new Request(`https://www.pawelperfect.com/api/studio/videos/${videoId}/pipeline`, { headers: { "x-request-id": requestId } }),
+    { params: Promise.resolve({ id: videoId }) },
+  );
+}
+
 async function expectStatus(response: Response, status: number) {
   expect(response.status, await response.clone().text()).toBe(status);
 }
@@ -99,6 +109,29 @@ afterAll(async () => {
 });
 
 describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
+  it("returns contract-compatible multipart and pipeline DTOs from real Studio routes and PostgreSQL", async () => {
+    const { video } = await makeVideo("contract-route");
+    registerSession("contract-start", studioContext(userId, creatorId));
+
+    const started = await startUpload(
+      new Request(`https://www.pawelperfect.com/api/studio/videos/${video.id}/upload`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-request-id": "contract-start" },
+        body: JSON.stringify({ fileName: "original.mp4", fileSize: FILE_SIZE, contentType: "video/mp4" }),
+      }),
+      { params: Promise.resolve({ id: video.id }) },
+    );
+    await expectStatus(started, 200);
+    const startBody: unknown = await started.json();
+    expect(MultipartStartResponseSchema.safeParse(startBody).success).toBe(true);
+
+    const pipeline = await getPipelineResponse(video.id, "contract-start");
+    await expectStatus(pipeline, 200);
+    const pipelineBody: unknown = await pipeline.json();
+    expect(StudioPipelineStateResponseSchema.safeParse(pipelineBody).success).toBe(true);
+    expect(pipelineBody).toMatchObject({ summary: "UPLOADING", original: { status: "UPLOADING" }, job: null });
+  });
+
   it("does not let a v1 READY retry reverse v2 after it was read", async () => {
     const { video, v1 } = await makeVideo("retry-race");
     const v2 = await prisma.videoOriginal.create({
@@ -143,10 +176,17 @@ describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
 
     const first = await post(video.id, v1.id, "repair-ready-gap");
     await expectStatus(first, 200);
-    const firstBody = await first.json() as { job: { id: string } };
+    const firstBody: unknown = await first.json();
+    expect(MultipartCompleteResponseSchema.safeParse(firstBody).success).toBe(true);
+    const firstJobId = (firstBody as { job: { id: string } }).job.id;
     const replay = await post(video.id, v1.id, "repair-ready-gap");
     await expectStatus(replay, 200);
-    expect(await replay.json()).toMatchObject({ job: { id: firstBody.job.id } });
+    expect(await replay.json()).toMatchObject({ job: { id: firstJobId } });
+    const pipeline = await getPipelineResponse(video.id, "repair-ready-gap");
+    await expectStatus(pipeline, 200);
+    const pipelineBody: unknown = await pipeline.json();
+    expect(StudioPipelineStateResponseSchema.safeParse(pipelineBody).success).toBe(true);
+    expect(pipelineBody).toMatchObject({ summary: "QUEUED", job: { id: firstJobId, status: "QUEUED" } });
     expect(await prisma.videoEncodeJob.count({ where: { videoId: video.id, originalId: v1.id } })).toBe(1);
     expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id }, select: { activeOriginalId: true } })).toEqual({ activeOriginalId: v1.id });
   });
