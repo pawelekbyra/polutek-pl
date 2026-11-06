@@ -1,5 +1,11 @@
 # Historia programu badania
 
+## 6 listopada 2026 — K10/R30: ukryta przyszła premiera
+
+- Czerwony test odtworzył ujawnienie: gość dostawał `LOGIN_REQUIRED`, zalogowany obcy `COMING_SOON` dla filmu `REMOVED`; tytuł i termin przechodziły do planu.
+- `PlaybackService` rozstrzyga teraz `NOT_FOUND` przed bramką premiery. Trzy celowane pliki testów 18/18 PASS; ESLint, typecheck repo i publiczny build PASS. Legalna premiera nadal przechodzi dotychczasową ścieżkę. [Dowody](evidence/k10-hidden-premiere-2026-11-06/result.json).
+- Brak testu rzeczywistego HTTP z macierzą ról/sesji; K10 pozostaje częściowe.
+
 ## 6 listopada 2026 — K07: pamięć czytnika body
 
 - Kontynuacja zapisana commitami `c3c2c6c1` i `1f467577`: kompletny multipart ma limit 6 MiB (10 000 części zajmuje 4 299 010 B w skrajnym legalnym payloadzie), a Next proxy ma jawny bufor 7 MiB. Powód: domyślny bufor Next 16.4.5 wynosi 10 MiB i przy nadmiarze może przekazać trasie obcięte body.

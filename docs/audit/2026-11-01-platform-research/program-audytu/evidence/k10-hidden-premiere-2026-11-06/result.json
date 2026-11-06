@@ -1,0 +1,37 @@
+{
+  "package": "K10",
+  "finding": "R30",
+  "date": "2026-11-06",
+  "baseRevision": "517fc86524111fff5c5fee79a1a8082b912973d7",
+  "status": "PARTIAL_LOCAL_VERIFICATION",
+  "change": {
+    "file": "lib/modules/playback/application/playback.service.ts",
+    "behavior": "Return the generic UNAVAILABLE plan for access decision NOT_FOUND before applying the upcoming-premiere gate, so hidden or removed future premieres disclose no title, poster, schedule, source, token, or playback session."
+  },
+  "redRegression": {
+    "command": "npx vitest run tests/unit/playback-premiere-gate.test.ts -t 'does not reveal metadata' --reporter=verbose",
+    "exitCode": 1,
+    "observed": [
+      { "actor": "guest", "expected": "UNAVAILABLE", "actual": "LOGIN_REQUIRED" },
+      { "actor": "signed-in stranger", "expected": "UNAVAILABLE", "actual": "COMING_SOON" }
+    ],
+    "source": "Observed before moving NOT_FOUND handling ahead of the premiere gate."
+  },
+  "greenVerification": {
+    "focusedTests": {
+      "command": "npx vitest run tests/unit/playback-premiere-gate.test.ts tests/unit/playback-plan-state-messaging.test.ts tests/unit/playback-denied-subtitle-leak.test.ts --reporter=json",
+      "files": 3,
+      "passed": 18,
+      "failed": 0,
+      "raw": "vitest.json"
+    },
+    "eslint": { "command": "npx eslint lib/modules/playback/application/playback.service.ts tests/unit/playback-premiere-gate.test.ts", "passed": true, "log": "eslint.log" },
+    "repoTypecheck": { "command": "npm run typecheck", "passed": true, "log": "typecheck.log" },
+    "publicBuild": { "command": "npm run build", "passed": true, "log": "build.log", "temporaryFixturePresent": false },
+    "gitDiffCheck": "PASS"
+  },
+  "limitations": [
+    "No real HTTP role/session matrix was run; this is unit/component-chain evidence only.",
+    "No production access or deployment occurred."
+  ]
+}

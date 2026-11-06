@@ -197,7 +197,7 @@ Strona główna jest `force-dynamic` + `no-store` (nigdy do współdzielonego ca
 ### 4.15 Premieres (zaplanowane wydania)
 
 `Video.premiereAt`: film jest nadchodzący, gdy `PUBLISHED` i `premiereAt > now`; sprawdza to wyłącznie `isUpcomingPremiere()` (bez crona, bez dodatkowego statusu). `publishedAt` NIE jest przesuwane (publiczne DTO używają `effectivePublishedAt()`).
-Bramka serwerowa w `PlaybackService` działa przed jakimkolwiek źródłem/tokenem/sesją (gość: `LOGIN_REQUIRED`, zalogowany: `COMING_SOON`). Szczegóły i kokpit: `docs/architecture/premieres-and-fundraising.md`.
+Bramka serwerowa w `PlaybackService` działa przed jakimkolwiek źródłem/tokenem/sesją (gość: `LOGIN_REQUIRED`, zalogowany: `COMING_SOON`); odmowa `NOT_FOUND` dla filmu ukrytego/usuniętego jest rozstrzygana wcześniej i nie może ujawnić tytułu, plakatu ani terminu premiery. Szczegóły i kokpit: `docs/architecture/premieres-and-fundraising.md`.
 
 ### 4.16 Fundraising progress bar (pasek zbiórki)
 

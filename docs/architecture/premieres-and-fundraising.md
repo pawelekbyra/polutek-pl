@@ -7,6 +7,7 @@ Stan 2026-10-05. Kod: `lib/modules/video/domain/premiere.ts` (re-export `lib/pre
 
 - **Model:** `Video.premiereAt DateTime?` (indeksowane). Film jest *nadchodzący* wtedy i tylko wtedy, gdy `status = PUBLISHED` i `premiereAt > now`. Nie ma dodatkowego statusu i **nie ma crona**:
   każda ścieżka odczytu sprawdza to w chwili żądania jednym helperem `isUpcomingPremiere()`. Nigdy nie porównuj `premiereAt` z zegarem ręcznie. W `premiereAt` film staje się zwykłym filmem w swojej sekcji, co do sekundy.
+- **Prywatność metadanych:** centralna odmowa `NOT_FOUND` dla ukrytego/usuniętego filmu ma pierwszeństwo przed bramką premiery; plan nie zwraca wtedy tytułu, plakatu ani terminu. Legalny podgląd i publiczna premiera zachowują dotychczasowe zachowanie.
 - **`publishedAt` NIE jest przesuwane na premierę.** Każde publiczne zapytanie (`publishedAt <= now`, `checkVideoAccess()`) traktuje przyszłe `publishedAt` jako ukryte, co ukryłoby nadchodzący film i zepsuło jego komentarze.
   Publiczne DTO i kolejność w sidebarze używają `effectivePublishedAt()` (późniejsze z `publishedAt` i `premiereAt`). DTO administratora zachowują zapisane `publishedAt`. Anulowanie premiery („Natychmiast”) ustawia `publishedAt = now`.
 - **Bramka serwerowa (bezpieczeństwo):** `PlaybackService.createPlaybackPlanWithContext()` sprawdza premierę przed jakimkolwiek źródłem, tokenem, identyfikatorem dostawcy czy sesją: gość dostaje `LOGIN_REQUIRED`,
