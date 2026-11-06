@@ -1,0 +1,19 @@
+{
+  "package": "K06",
+  "date": "2026-11-06",
+  "codeCommit": "2b7891ac",
+  "suite": "tests/unit/ops/serwerek-scripts.test.ts",
+  "command": "npx vitest run tests/unit/ops/serwerek-scripts.test.ts --testNamePattern='does not migrate or activate when the pre-deploy database dump fails|does not activate the app after a migration failure|a failing \"compose up\" of the app rolls back|automatically rolls back the admin image' --reporter=json",
+  "cases": {
+    "preDeployDatabaseDumpFailure": "FAIL closed: removes partial dump, preserves current app, does not migrate or activate",
+    "migrationFailure": "FAIL closed: preserves current app and does not activate new app",
+    "appStartupFailure": "automatic app rollback to previous image",
+    "adminStartupFailure": "automatic panel rollback after verifying retained proof"
+  },
+  "testsPassed": 4,
+  "testsSkippedByNameFilter": 41,
+  "testsFailed": 0,
+  "testAdapter": "fake Docker, fake process tools and temporary filesystem; database dump/migration are simulated",
+  "productionDockerOrServerUsed": false,
+  "conclusion": "These negative-path controls are covered in an isolated harness. This does not prove real Docker, database, image or server behavior; K06 remains open."
+}
