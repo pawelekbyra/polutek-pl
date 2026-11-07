@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-07",
+  "package": "K01/R08",
+  "tested_base_sha": "61f17738",
+  "runtime": {
+    "node": "v22.23.3",
+    "prisma_cli": "6.19.3",
+    "generated_prisma_client": "6.19.3",
+    "postgres": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "postgres_image_id": "sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f",
+    "migrations_successfully_applied": 84
+  },
+  "verification": {
+    "prisma_generate": "PASS",
+    "real_prisma_postgres_test": "1/1 PASS",
+    "test_file": "tests/postgres/k01-real-prisma-client.pg.test.ts",
+    "eslint": "PASS",
+    "repo_typecheck": "PASS",
+    "post_generate_postgres_run": "1/1 PASS"
+  },
+  "assertions": [
+    "generated client creates and reads a real User row",
+    "interactive transaction rolls back after a deliberate exception; the inserted row is absent",
+    "unique email constraint rejects a duplicate (P2002)",
+    "Creator foreign key rejects a missing User (P2003)"
+  ],
+  "isolation": {
+    "database": "new temporary database",
+    "container": "disposable PostgreSQL with loopback-only port and tmpfs data",
+    "cleanup": "container auto-removed; no task container remained",
+    "production_or_existing_db": "not used"
+  },
+  "limitations": [
+    "npm ci from a clean checkout was not repeated; the roadmap records an npm audit constraint",
+    "does not start Next HTTP or the encoder worker, and does not process a real short video",
+    "K01 remains partial",
+    "K01-T3 local HTTP/worker short-video path is still untested"
+  ],
+  "source_sha256": {
+    "tests/postgres/k01-real-prisma-client.pg.test.ts": "e199827911fb0a03d585ffe9fb16946d3e3330b699826c8415ece7b481fb3ac7",
+    "prisma/schema.prisma": "dde72e73d3169f07291175dd3a165009c0bc957a63ff49cb92180d08f523f830",
+    "package-lock.json": "0369f1f287f1d2cf20ef7615fbd326b316faa9a2d4c78e3044a97bf3ac14a83b"
+  },
+  "sequence": [
+    {
+      "step": "npx prisma generate",
+      "result": "PASS",
+      "generated_client": "@prisma/client 6.19.3"
+    },
+    {
+      "step": "Fresh disposable PostgreSQL 17.11 after all 84 migrations",
+      "result": "PASS"
+    },
+    {
+      "step": "tests/postgres/k01-real-prisma-client.pg.test.ts after generation",
+      "result": "1/1 PASS"
+    },
+    {
+      "step": "npx eslint tests/postgres/k01-real-prisma-client.pg.test.ts",
+      "result": "PASS"
+    },
+    {
+      "step": "npm run typecheck after generation",
+      "result": "PASS"
+    }
+  ],
+  "negative_check": {
+    "command": "vitest.postgres.config.ts + K01 file with DATABASE_URL and DATABASE_URL_UNPOOLED unset",
+    "expected": "nonzero exit; no empty/pass result",
+    "actual_exit": 1,
+    "failure": "PrismaClientInitializationError: Environment variable not found: DATABASE_URL",
+    "result": "PASS — unavailable DB blocks the required integration test"
+  }
+}

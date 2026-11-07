@@ -122,6 +122,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K01-T2** — Prawdziwy klient wykonuje zapis/odczyt i rollback transakcji; kontrola z niepoprawnym FK/unique jest odrzucona. Usunięcie klienta lub niedostępna DB blokuje wymagany test, zamiast dawać pusty PASS.
 - **K01-T3** — Uruchamia się lokalne API i worker na własnym krótkim filmie; izolacja kont/bucketów i sprzątanie fixture potwierdzone. Zablokowane usługi oznaczone BLOCKED, bez deklaracji pełnej integracji.
 
+**Postęp lokalny, 7 listopada 2026:** uruchomiono `prisma generate` na rzeczywistym `prisma/schema.prisma` (CLI i klient 6.19.3), następnie nowy test realnego klienta wygenerowanego przez Prisma na jednorazowym PostgreSQL 17.11 po 84 migracjach. **1/1 PASS**: zapis/odczyt `User`, rollback interaktywnej transakcji, odrzucenie duplikatu unique (`P2002`) i błędnego FK (`P2003`); repo typecheck i ESLint PASS. Kontener i baza były izolowane i usunięte. Osobne uruchomienie tego samego wymaganego testu bez obu zmiennych DB zakończyło się exit 1 z `PrismaClientInitializationError`; brak DB nie daje pustego PASS. To realizuje część K01-T1/T2, ale nie powtarza `npm ci` ze świeżego checkoutu i nie uruchamia HTTP/workera z krótkim własnym filmem (K01-T3); K01 pozostaje częściowe. [Dowód](program-audytu/evidence/k01-prisma-postgres-2026-11-07.json).
+
 <a id="k02"></a>
 
 #### K02. Pilna aktualizacja zależności objętych advisory

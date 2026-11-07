@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K01 — generated Prisma client i PostgreSQL, 7 listopada 2026
+
+`npx prisma generate` użył rzeczywistego schematu i wygenerował Prisma 6.19.3. Na świeżym disposable PostgreSQL 17.11 po 84 migracjach test realnego klienta przeszedł **1/1**: zapis/odczyt, rollback, odmowa unique P2002 i FK P2003; repo typecheck i ESLint PASS. Kontener z tmpfs został usunięty. Uruchomienie wymaganych testów z wyłączonym `DATABASE_URL` zwraca exit 1 z błędem inicjalizacji Prisma — brak bazy nie daje PASS. Następny krok: odtworzyć czystą instalację według przejrzanej polityki audytu oraz uruchomić lokalne API+worker na syntetycznym krótkim filmie. `npm ci` i pełne HTTP/worker nie były wykonane; K01 częściowe. [Dowód](evidence/k01-prisma-postgres-2026-11-07.json).
+
 ## K20 — combined PostgreSQL acceptance, 7 listopada 2026
 
 Na checkout SHA `7e277574` oba testy K20 uruchomiono wspólnie na nowej PostgreSQL 17.11 po 84 migracjach: **8/8 PASS**, obejmując siedem przypadków finalizera i zmianę kanału ACTIVE→SUSPENDED na granicy transakcji. ESLint i `npm run typecheck` PASS. Container był odizolowany, dane w tmpfs, automatycznie usunięty. Nie ma odbioru osobnego procesu workera, R2/HLS ani niezależnego review; K20 nadal częściowe. Następny krok: niezależnie zreviewować ownership/status fencing i zaplanować sandboxowy worker/R2 odbiór. [Dowód](evidence/k20-postgres-acceptance-2026-11-07.json).
