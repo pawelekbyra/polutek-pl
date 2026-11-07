@@ -1,3 +1,10 @@
+## 2026-11-07 — K01-T3 prawdziwy worker entrypoint
+
+- Test integracyjny uruchamia `scripts/video-worker.ts` w osobnym procesie i kontrolowanie kończy go przez SIGTERM po kodowaniu.
+- Testowy endpoint AWS SDK jest ograniczony do HTTP loopback i `NODE_ENV=test`; **2/2 guard unit PASS** dla endpointu zewnętrznego i trybu production.
+- PostgreSQL 17.11 po 84 migracjach: integration **1/1 PASS**, ESLint, repo typecheck i diff check PASS. Dowód: `evidence/k01-worker-entrypoint-2026-11-07.json`.
+- K01-T3 pozostaje częściowe do testu upload/playback HTTP, Cloudflare R2 i niezależnego review.
+
 ## 7 listopada 2026 — K01-T3: lokalny worker z FFmpeg
 
 - Osobny proces Node/tsx uruchamia `runWorkerLoop`, rzeczywisty claim Prisma, FFmpeg 8.0.1, AWS SDK storage adaptery i finalizer na PostgreSQL 17.11 po 84 migracjach. Syntetyczny film 6 s kończy `SUCCEEDED/DONE`, a aktywny asset ma attempt-scoped key i zweryfikowany HLS graph. **1/1 PASS**, typecheck, ESLint i diff check PASS.

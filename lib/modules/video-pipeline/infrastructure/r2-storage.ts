@@ -28,12 +28,37 @@ export function readR2Credentials(env: NodeJS.ProcessEnv = process.env): R2Crede
   return { accountId, accessKeyId, secretAccessKey };
 }
 
-export function makeR2Client(credentials: R2Credentials): S3Client {
+export function makeR2Client(credentials: R2Credentials, options: { testEndpoint?: string } = {}): S3Client {
+  let endpoint = `https://${credentials.accountId}.r2.cloudflarestorage.com`;
+  let forcePathStyle = false;
+  let maxAttempts = 5;
+  if (options.testEndpoint !== undefined) {
+    let parsed: URL;
+    try {
+      parsed = new URL(options.testEndpoint);
+    } catch {
+      throw new Error("The video worker test endpoint must be a loopback HTTP URL");
+    }
+    if (process.env.NODE_ENV !== "test"
+      || parsed.protocol !== "http:"
+      || !["127.0.0.1", "[::1]", "localhost"].includes(parsed.hostname)
+      || parsed.username !== ""
+      || parsed.password !== ""
+      || parsed.pathname !== "/"
+      || parsed.search !== ""
+      || parsed.hash !== "") {
+      throw new Error("The video worker test endpoint must be a loopback HTTP URL in NODE_ENV=test");
+    }
+    endpoint = parsed.origin;
+    forcePathStyle = true;
+    maxAttempts = 1;
+  }
   return new S3Client({
     region: "auto",
-    endpoint: `https://${credentials.accountId}.r2.cloudflarestorage.com`,
+    endpoint,
+    forcePathStyle,
     credentials: { accessKeyId: credentials.accessKeyId, secretAccessKey: credentials.secretAccessKey },
-    maxAttempts: 5,
+    maxAttempts,
   });
 }
 

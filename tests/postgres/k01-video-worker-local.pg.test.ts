@@ -103,9 +103,14 @@ function startObjectServer() {
   return app;
 }
 
-function runWorker(jobId: string): Promise<string> {
+async function runWorker(jobId: string): Promise<string> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is required for K01 worker acceptance");
+  const eligible = await prisma.videoEncodeJob.findMany({
+    where: { status: "QUEUED", cancelRequested: false, OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: new Date() } }] },
+    select: { id: true },
+  });
+  if (eligible.length !== 1 || eligible[0]?.id !== jobId) throw new Error("K01 isolated DB must contain only the target eligible job");
   const url = new URL(databaseUrl);
   url.searchParams.set("application_name", `${RUN}-worker`);
   const connection = url.toString();
@@ -114,29 +119,56 @@ function runWorker(jobId: string): Promise<string> {
     NODE_ENV: "test",
     DATABASE_URL: connection,
     DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED ? new URL(process.env.DATABASE_URL_UNPOOLED).toString() : connection,
-    K01_JOB_ID: jobId,
-    K01_S3_ENDPOINT: endpoint,
-    K01_ORIGINAL_BUCKET: ORIGINAL_BUCKET,
-    K01_HLS_BUCKET: HLS_BUCKET,
-    K01_WORK_ROOT: path.join(sourceDir, "worker-tmp"),
+    CLOUDFLARE_R2_ACCOUNT_ID: "k01-loopback",
+    CLOUDFLARE_R2_ACCESS_KEY_ID: "k01-loopback-only",
+    CLOUDFLARE_R2_SECRET_ACCESS_KEY: "k01-loopback-only",
+    CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS: ORIGINAL_BUCKET,
+    CLOUDFLARE_R2_BUCKET_HLS: HLS_BUCKET,
+    VIDEO_WORKER_TEST_S3_ENDPOINT: endpoint,
+    VIDEO_WORKER_WORK_DIR: path.join(sourceDir, "worker-tmp"),
+    HLS_PRESET: "ultrafast",
+    HLS_NICE: "0",
   };
   const child = spawn(process.execPath, [
     path.join(process.cwd(), "node_modules/tsx/dist/cli.mjs"),
-    path.join(process.cwd(), "tests/helpers/k01-video-worker-process.ts"),
+    path.join(process.cwd(), "scripts/video-worker.ts"),
   ], { cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe"] });
-  return new Promise((resolve, reject) => {
-    let stdout = "";
-    let stderr = "";
-    const timeout = setTimeout(() => child.kill("SIGKILL"), 120_000);
-    child.stdout.on("data", (chunk: Buffer | string) => { stdout += chunk.toString(); });
-    child.stderr.on("data", (chunk: Buffer | string) => { stderr += chunk.toString(); });
-    child.once("error", (error) => { clearTimeout(timeout); reject(error); });
-    child.once("close", (code) => {
-      clearTimeout(timeout);
-      if (code !== 0) return reject(new Error(`K01 worker process failed (${code}): ${stderr.slice(-3000)}\n${stdout.slice(-3000)}`));
-      resolve(stdout);
-    });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", (chunk: Buffer | string) => { stdout += chunk.toString(); });
+  child.stderr.on("data", (chunk: Buffer | string) => { stderr += chunk.toString(); });
+  const closed = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", (code, signal) => resolve({ code, signal }));
   });
+  const deadline = Date.now() + 120_000;
+  try {
+    while (Date.now() < deadline) {
+      const persisted = await prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: jobId }, select: { status: true } });
+      if (persisted.status === "SUCCEEDED") {
+        child.kill("SIGTERM");
+        const result = await closed;
+        if (result.code !== 0) throw new Error(`K01 worker exited ${result.code ?? result.signal}: ${stderr.slice(-3000)}\n${stdout.slice(-3000)}`);
+        return stdout;
+      }
+      if (persisted.status === "FAILED" || persisted.status === "CANCELLED") {
+        child.kill("SIGTERM");
+        await closed;
+        throw new Error(`K01 worker ended in ${persisted.status}: ${stderr.slice(-3000)}\n${stdout.slice(-3000)}`);
+      }
+      if (child.exitCode !== null || child.signalCode !== null) {
+        const result = await closed;
+        throw new Error(`K01 worker exited before job completion (${result.code ?? result.signal}): ${stderr.slice(-3000)}\n${stdout.slice(-3000)}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    throw new Error(`K01 worker timed out: ${stderr.slice(-3000)}\n${stdout.slice(-3000)}`);
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill("SIGKILL");
+      await closed.catch(() => undefined);
+    }
+  }
 }
 
 beforeAll(async () => {
@@ -191,7 +223,8 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
   it("claims, encodes, uploads, verifies, finalizes and activates one complete HLS graph", async () => {
     const job = await prisma.videoEncodeJob.findFirstOrThrow({ where: { videoId, originalId } });
     const output = await runWorker(job.id);
-    expect(output).toContain('K01_WORKER_RESULT=["succeeded"]');
+    expect(output).toContain('"message":"started"');
+    expect(output).toContain('"message":"stopped"');
     const [persistedJob, result, routes, assets] = await Promise.all([
       prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: job.id } }),
       prisma.video.findUniqueOrThrow({ where: { id: videoId }, include: { activePlaybackRoute: { include: { asset: true } } } }),

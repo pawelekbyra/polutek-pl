@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K01-T3 — prawdziwy entrypoint workera, 7 listopada 2026
+
+Test PostgreSQL uruchomił osobny proces `scripts/video-worker.ts`; worker pobrał syntetyczny film z loopbackowego S3 fixture, zakodował go FFmpeg 8.0.1, zweryfikował playlisty i zapisał aktywny SELF_HLS. Po sukcesie odebrał SIGTERM i zakończył się kontrolowanie. PostgreSQL 17.11/84 migracje: integration **1/1**, guard test endpointu **2/2**, ESLint/typecheck/diff check PASS. Endpoint działa tylko w `NODE_ENV=test` i jest ograniczony do loopbacka. Fixture’y wyczyszczono, kontener usunięto. [Dowód](evidence/k01-worker-entrypoint-2026-11-07.json). K01-T3/K35 nadal częściowe: upload/playback HTTP, Cloudflare R2 i niezależny review są otwarte.
+
 ## K01-T3 — lokalny worker z FFmpeg i syntetycznym HLS, 7 listopada 2026
 
 Osobny Node/tsx uruchomił rzeczywisty `runWorkerLoop` i worker pipeline na PostgreSQL 17.11 po 84 migracjach; FFmpeg 8.0.1 zakodował syntetyczny film 6 s, AWS SDK przesłał obiekty do loopbackowego S3-shaped HTTP fixture, a prawdziwy finalizer utworzył aktywną trasę i asset. **1/1 PASS**, repo typecheck, ESLint, diff check PASS. Test potwierdza attempt-scoped key, playlisty, segment fMP4, poster i `SUCCEEDED/DONE`. Fixture’y usunięte, tmpfs container zatrzymany. [Dowód](evidence/k01-local-worker-ffmpeg-loopback-2026-11-07.json). To lokalny dowód workera, nie Next HTTP/API ani R2; K01-T3/K35 pozostaje częściowe.
