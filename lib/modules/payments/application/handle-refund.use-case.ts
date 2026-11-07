@@ -107,7 +107,12 @@ export async function applyRefundedTotal(
 
   if (deltaRefundMinor > 0) {
     recordMetric('payment.refund_received', { status: newStatus, deltaMinor: deltaRefundMinor, fullRefund: cappedRefunded >= payment.amountMinor });
-    await repo.decrementUserPaymentTotal(payment.userId, payment.currency, deltaRefundMinor, tx);
+    // A lost chargeback already removed this payment's entire contribution. A later refund
+    // changes only the refund record; subtracting it again would make the aggregate depend on
+    // whether Stripe delivered the refund event before or after the dispute.
+    if (payment.status !== PaymentStatus.CHARGEBACK_LOST) {
+      await repo.decrementUserPaymentTotal(payment.userId, payment.currency, deltaRefundMinor, tx);
+    }
 
     if (newStatus === PaymentStatus.REFUNDED && isPremiumPassPayment(payment.metadata)) {
       // patron zone: a fully refunded patron-zone payment takes its period of access back.
@@ -161,7 +166,10 @@ export async function handleRefund(
         recordAlert('payment.refund_unmatched', { hasPaymentId: Boolean(input.paymentId), hasStripeIntentId: Boolean(input.stripeIntentId) });
         return null;
       }
-      return await applyRefundedTotal(payment, input.reportedRefundedMinor, input, ctx, tx, repo);
+      await repo.lockPaymentRow(payment.id, tx);
+      const lockedPayment = await repo.findById(payment.id, tx);
+      if (!lockedPayment) return null;
+      return await applyRefundedTotal(lockedPayment, input.reportedRefundedMinor, input, ctx, tx, repo);
     });
 
     return ok(undefined);

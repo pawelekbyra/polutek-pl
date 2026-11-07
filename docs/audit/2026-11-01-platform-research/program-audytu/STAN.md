@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K12/R32 — suma wpłat niezależna od kolejności sporu i refundu, 7 listopada 2026
+
+RED na disposable PostgreSQL: refund po przegranym sporze dawał 600 zamiast 1000 przy oczekiwanym A=0, B=1000; współbieżna kolejność schodziła do 0. Po wspólnym `FOR UPDATE` i ponownym odczycie wiersza w ścieżkach refund/dispute oraz pominięciu drugiego odjęcia wkładu z `CHARGEBACK_LOST`, **20/20** testów PG i **31/31** testów unit PASS; scenariusz współbieżny przeszedł jeszcze **5/5** osobnych uruchomień. ESLint i repo typecheck PASS. Sprawdzono refund partial/full, replay oraz odrębne PLN/USD. DB miała 84 migracje; po testach 0 fixture users, kontenery usunięte. [Dowód RED/GREEN, SHA kodu i ograniczenia](evidence/k12-refund-dispute-ordering-2026-11-07.json). K12-T1 częściowo pokryte; pełne K12-T2, przegląd i zależność polityki K11 pozostają otwarte.
+
 ## K03 — retest procesu weryfikatora restore, 7 listopada 2026
 
 Na rewizji `cd5f4f4e57fe49d71a255a22c6acd88259764a60` dwa celowane zestawy przeszły **47/47**: CLI weryfikatora działa w osobnym procesie i sprawdza rzeczywisty exit code dla preflight, query/count/migration errors, manifestów oraz sierot; guard critical-path również zaliczył suite. ESLint trzech plików PASS. Użyto syntetycznej granicy Prisma; nie odtwarzano bazy ani nie łączono się z usługą. [Dowód](evidence/k03-cli-regression-2026-11-07.json). K03 nadal wymaga osobnego odbioru live weekly restore.

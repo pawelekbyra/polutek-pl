@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K12/R32 — kolejność refundu i przegranego sporu, 7 listopada 2026
+
+Test RED na PostgreSQL 17.11 odtworzył podwójne odjęcie: przy A=1000 gr, B=1000 gr po utracie sporu A i późniejszej refundacji A=400 gr w totalu zostawało 600 zamiast 1000; współbieżne zdarzenia schodziły do 0. Naprawa blokuje ten sam wiersz płatności i ponownie go odczytuje w transakcjach refund/dispute; refund po `CHARGEBACK_LOST` zapisuje kwotę, ale nie odejmuje już wkładu z agregatu. Pełny `payments.pg.test.ts`: **20/20 PASS** (w tym obie kolejności, równoległość/replay, full refund i osobne PLN/USD); scenariusz współbieżny przeszedł dodatkowo **5/5** osobnych procesów. Trzy suite unit **31/31 PASS**, ESLint i repo typecheck PASS. Testowa DB miała 84 migracje, testowe rekordy wyczyszczono, kontenery usunięto. [Dowód RED/GREEN, hashe, polecenia i zakres](program-audytu/evidence/k12-refund-dispute-ordering-2026-11-07.json). Nie wykonano żadnego charge/refund ani korekty historii. K12 pozostaje częściowe do pełnego kontraktu T2, review i K11/K05.
+
 ## K01 — świeży checkout, migracje i Prisma, 7 listopada 2026
 
 Detached checkout rewizji `7e81993c` zainstalował 893 pakiety poleceniem `npm_config_audit=false npm ci`, wygenerował Prisma Client 6.19.3, a następnie zastosował **84/84** migracje do disposable PostgreSQL 17.11. Test `k01-real-prisma-client.pg.test.ts` przeszedł **1/1**: zapis/odczyt, rollback, P2002 i P2003; repo typecheck PASS. Po sprzątaniu nie pozostały rekordy testowe, kontener tmpfs ani worktree. P1012 przy pierwszym uruchomieniu wynikał z braku wymaganej zmiennej `DATABASE_URL_UNPOOLED`; ponowiono z oboma URL wskazującymi tylko testową bazę. [Wersje, hashe, komendy, wyniki i granice](program-audytu/evidence/k01-fresh-checkout-postgres-2026-11-07.json). K01-T1/T2 mają lokalny dowód; API/workera/filmu (T3) nie testowano.
