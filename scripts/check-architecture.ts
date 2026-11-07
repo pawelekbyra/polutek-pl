@@ -27,6 +27,23 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/video/application/get-public-video-list.use-case.ts': {
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; importing the channel barrel creates a video → channel → channel-layout → video cycle.',
   },
+  'lib/modules/video/application/get-admin-video-by-id.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/get-admin-video-list.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/infrastructure/video-content.service.ts': {
+    'channel/application/main-channel.service': 'This adapter needs the channel service, not the public index; the index re-exports channel use cases that depend on this adapter.',
+    'channel/domain/channel.policy': 'The video read adapter needs only the shared public-visibility query policy, not the channel service barrel.',
+    'channel/domain/channel-avatar': 'The video read adapter needs only the pure channel avatar URL resolver, not the channel service barrel.',
+    'media/domain/media.policy': 'This adapter needs only the media DTO safety policy; importing the media barrel reaches channel services.',
+    'media/domain/r2-thumbnail': 'This adapter needs only the public thumbnail URL resolver; importing the media barrel reaches channel services.',
+    'patron-zone/domain/config': 'This adapter needs only the pure Premium Pass visibility predicate; importing the patron-zone barrel reaches checkout, payments and channels.',
+  },
+  'lib/modules/video/infrastructure/video.repository.ts': {
+    'channel/domain/channel.policy': 'The video repository needs only the public channel visibility predicate; the channel barrel pulls moderation and notification paths back through video.',
+  },
   'lib/modules/channel/application/home-content.loader.ts': {
     'video/infrastructure/video-content.service': 'VideoContentService is an infra service; exporting via video index causes channel↔video circular dep through MainChannelService.',
   },
@@ -48,6 +65,14 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/channel/application/channel-layout.service.ts': {
     'video/domain/premiere': PREMIERE_HELPER_REASON,
     'video/pure': 'Narrow, dependency-free video helper entry; avoids importing the video public service barrel and its cycle back through MainChannelService.',
+    'media/domain/r2-thumbnail': 'Channel layout needs only the public thumbnail URL resolver; importing the media barrel reaches this service and loops back to channel.',
+    'patron-zone/application/pass-access': 'Channel layout needs only viewer Premium Pass facts; importing the patron-zone barrel reaches checkout and payments that depend on channel.',
+  },
+  'lib/modules/channel/application/update-admin-channel-settings.use-case.ts': {
+    'media/application/default-thumbnail.service': 'This use case only invalidates the thumbnail cache; importing the media barrel loads a resolver that imports the channel barrel back.',
+  },
+  'lib/modules/media/application/default-thumbnail.service.ts': {
+    'channel/application/main-channel.service': 'The thumbnail resolver needs only the main channel resolver; the channel barrel exports use cases that depend on media.',
   },
   'lib/modules/video/domain/public-visibility.ts': {
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class (the one rule for a publicly visible channel); the video domain needs only that predicate, not the channel barrel with its services.',

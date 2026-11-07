@@ -1,4 +1,4 @@
-/* Read-only runtime-import SCC probe for the current lib/modules TypeScript sources. */
+/* Read-only static runtime-import SCC probe for the current lib/modules TypeScript sources. */
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -41,7 +41,6 @@ function runtimeSpecifiers(sourceFile) {
       && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
       values.push(node.moduleSpecifier.text);
     } else if (ts.isCallExpression(node) && node.arguments.length === 1 && ts.isStringLiteral(node.arguments[0])) {
-      if (node.expression.kind === ts.SyntaxKind.ImportKeyword) values.push(node.arguments[0].text);
       if (ts.isIdentifier(node.expression) && node.expression.text === 'require') values.push(node.arguments[0].text);
     }
     ts.forEachChild(node, visit);
@@ -100,15 +99,38 @@ function visit(file) {
 }
 
 for (const file of files) if (!ids.has(file)) visit(file);
+const orderedCycles = cycles.sort((a, b) => b.length - a.length || a[0].localeCompare(b[0]));
+const largestComponent = new Set(orderedCycles[0] ?? []);
+let cycleWitness = [];
+const active = new Map();
+const done = new Set();
+const walkCycle = (file, route) => {
+  active.set(file, route.length);
+  route.push(file);
+  for (const target of graph.get(file)) {
+    if (!largestComponent.has(target)) continue;
+    if (active.has(target)) {
+      cycleWitness = [...route.slice(active.get(target)), target];
+      return true;
+    }
+    if (!done.has(target) && walkCycle(target, route)) return true;
+  }
+  route.pop();
+  active.delete(file);
+  done.add(file);
+  return false;
+};
+for (const file of files) if (largestComponent.has(file) && !done.has(file) && walkCycle(file, [])) break;
 const result = {
   date: new Date().toISOString(),
-  method: 'TypeScript transpileModule ESNext output; static imports/re-exports, literal require and dynamic import; TypeScript Bundler resolver; SCC over lib/modules files only.',
-  scope: 'Current tracked and untracked .ts/.tsx source files below lib/modules, excluding .d.ts; node_modules internals and computed imports are not followed.',
+  method: 'TypeScript transpileModule ESNext output; static imports/re-exports and literal require only; TypeScript Bundler resolver; SCC over lib/modules files only.',
+  scope: 'Current tracked and untracked .ts/.tsx source files below lib/modules, excluding .d.ts; node_modules internals, dynamic imports and computed imports are not followed.',
   files: files.length,
   parse_diagnostics: parseDiagnostics,
-  file_cycles: cycles.sort((a, b) => b.length - a.length || a[0].localeCompare(b[0])),
+  file_cycles: orderedCycles,
+  cycle_witness: cycleWitness,
   source_sha256: sourceHashes,
 };
 const target = process.argv[2];
 if (target) fs.writeFileSync(path.resolve(root, target), `${JSON.stringify(result, null, 2)}\n`);
-console.log(JSON.stringify({ files: result.files, parse_diagnostics: parseDiagnostics.length, file_cycle_count: cycles.length, file_cycles: result.file_cycles }));
+console.log(JSON.stringify({ files: result.files, parse_diagnostics: parseDiagnostics.length, file_cycle_count: cycles.length, largest_component_files: result.file_cycles[0]?.length ?? 0, cycle_witness: cycleWitness }));

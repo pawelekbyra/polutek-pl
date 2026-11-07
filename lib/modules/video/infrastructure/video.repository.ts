@@ -7,7 +7,7 @@ import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, 
 import { VideoPolicy } from "../domain/video.policy";
 import { withPrimaryAsset } from "../domain/video-asset-selection";
 import { pickFundraisingUpdate, type FundraisingGoalFields } from "../domain/fundraising";
-import { publiclyVisibleChannelWhere } from "@/lib/modules/channel";
+import { publiclyVisibleChannelWhere } from "@/lib/modules/channel/domain/channel.policy";
 import { isDerivedThumbnailUrl } from "@/lib/modules/media"; // derived thumbnail srcs are never stored
 import type { ChapterInput } from "@/lib/video-chapters";
 
