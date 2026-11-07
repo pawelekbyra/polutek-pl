@@ -666,6 +666,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie odbioru lokalnego 7 listopada 2026:** dwa osobne procesy Node uruchomiły rzeczywisty `createPlaylist` i authz jednocześnie na wspólnym disposable PostgreSQL 17 po 84 migracjach przy stanie 99 playlist. Wynik: jeden sukces, jedna odmowa `PLAYLIST_LIMIT`, licznik 100 i dokładnie jeden audit row. Istniejące testy tej samej bazy weryfikują zwolnienie slotu przez soft delete, odmowę cudzej playlisty i niezależny zapis na drugim kanale. Cały plik PostgreSQL **2/2 PASS**, ESLint i repo typecheck PASS; jednorazowy kontener usunięty. [Dowód](program-audytu/evidence/k25-playlist-limit-2026-11-06/result.json). To odrębne procesy aplikacyjne i prawdziwe use case’y, ale bez HTTP/Studio i serwerów wdrożonych; K25 pozostaje częściowe do endpoint acceptance i niezależnego review.
 
+**HTTP Studio, 7 listopada:** prawdziwy `POST /api/studio/playlists` handler z rzeczywistymi operacjami Prisma na disposable PostgreSQL przyjmuje przy 99 aktywnych playlistach dwa równoległe POST-y; dostaje się dokładnie 201 i 409 `PLAYLIST_LIMIT`, stan końcowy wynosi 100, a zatwierdzona zmiana ma jeden wpis audytu. Cała suite PostgreSQL **3/3 PASS**, unit **18/18**, ESLint i repo typecheck PASS ([dowód](program-audytu/evidence/k25-studio-postgres-2026-11-07.json)). Sesja i limiter były kontrolowane; test nie obejmuje dwóch wdrożonych procesów HTTP ani DELETE przez endpoint. K25 pozostaje częściowe.
+
 <a id="k26"></a>
 
 #### K26. Usunięcie konta a własność i publiczny profil kanału

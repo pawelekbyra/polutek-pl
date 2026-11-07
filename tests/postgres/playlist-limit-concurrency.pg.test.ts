@@ -7,7 +7,12 @@ import { createAppContext } from "@/lib/modules/shared/app-context";
 import { createPlaylist, deletePlaylist } from "@/lib/modules/playlists/application/playlist-manage.use-cases";
 import { PlaylistRepository } from "@/lib/modules/playlists/infrastructure/playlist.repository";
 
+const routeMocks = vi.hoisted(() => ({ resolveStudioSession: vi.fn() }));
 vi.mock("@/lib/modules/authz", () => ({ authorize: vi.fn(async () => null) }));
+vi.mock("@/lib/api/studio-session", () => ({ resolveStudioSession: routeMocks.resolveStudioSession }));
+vi.mock("@/lib/api/studio-rate-limit", () => ({ enforceStudioRateLimit: vi.fn(async () => null) }));
+
+import { POST as createStudioPlaylist } from "@/app/api/studio/playlists/route";
 
 const prisma = new PrismaClient();
 const RUN = `k25-${Date.now().toString(36)}`;
@@ -36,6 +41,26 @@ function ctx(channelIndex: number) {
     prisma,
     now: () => new Date(),
   });
+}
+
+function studioSession(channelIndex: number) {
+  const channelId = channelIds[channelIndex]!;
+  return {
+    ctx: createAppContext({
+      actor: { type: "user", userId: userIds[channelIndex]! }, prisma, channelId,
+    }),
+    userId: userIds[channelIndex]!,
+    channel: { id: channelId, slug: `${RUN}-channel-${channelIndex}`, handle: `${RUN}-channel-${channelIndex}`, name: `K25 channel ${channelIndex}`, status: "ACTIVE" },
+    channels: [],
+  };
+}
+
+function postStudioPlaylist(title: string) {
+  return createStudioPlaylist(new Request("https://www.pawelperfect.com/api/studio/playlists", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ title }),
+  }));
 }
 
 async function addFixtures(channelIndex: number, count: number) {
@@ -93,6 +118,31 @@ function createPlaylistInProcess(channelId: string, userId: string, title: strin
 }
 
 describe("K25 playlist limit concurrency (PostgreSQL)", () => {
+  it("enforces the concurrent limit through the real Studio POST handler", async () => {
+    await addFixtures(0, 99);
+    routeMocks.resolveStudioSession.mockResolvedValue(studioSession(0));
+
+    try {
+      const responses = await Promise.all([
+        postStudioPlaylist("HTTP Concurrent Alpha"),
+        postStudioPlaylist("HTTP Concurrent Beta"),
+      ]);
+      const payloads = await Promise.all(responses.map(async (response) => ({
+        status: response.status,
+        body: await response.json() as { id?: string; code?: string },
+      })));
+      const successes = payloads.filter((result) => result.status === 201);
+      const refusals = payloads.filter((result) => result.status === 409);
+
+      expect(successes).toHaveLength(1);
+      expect(refusals).toEqual([{ status: 409, body: expect.objectContaining({ code: "PLAYLIST_LIMIT" }) }]);
+      expect(await prisma.playlist.count({ where: { channelId: channelIds[0], deletedAt: null } })).toBe(100);
+      expect(await prisma.auditLog.count({ where: { action: "PLAYLIST_CREATED", targetId: successes[0]!.body.id } })).toBe(1);
+    } finally {
+      await prisma.playlist.updateMany({ where: { channelId: channelIds[0], deletedAt: null }, data: { deletedAt: new Date() } });
+    }
+  });
+
   it("allows only one of two separate Node processes at 99 active playlists", async () => {
     await addFixtures(0, 99);
 
