@@ -22,6 +22,7 @@
   },
   "cleanup": "Both disposable containers were removed. No app data or pre-existing container was changed. The acceptance tool itself is committed separately as WIP and has not passed end-to-end validation.",
   "next_step": "After an operator frees host disk space, rerun the tool using the command in program-audytu/STAN.md; inspect the resulting evidence before treating any K32 acceptance case as passed.",
+  "follow_up": "The WIP tool now preserves startup logs and checks Docker-root free space before starting; it requires at least 2 GiB. This preflight improvement is static-only and has not been runtime-validated.",
   "limitations": [
     "No Prisma migration, synthetic fixture, pg_dump/pg_restore, relationship comparison or constraint assertion ran.",
     "This does not prove any backup or recovery capability and does not close K32.",

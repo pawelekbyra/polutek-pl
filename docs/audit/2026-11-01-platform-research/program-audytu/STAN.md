@@ -58,6 +58,8 @@ Trzy paginowane metody storage teraz odrzucają `IsTruncated` bez nowego tokenu 
 
 Gotowy jest repo-only inwentarz zasobów i udokumentowanych granic backup/restore: [K32-RECOVERY-INVENTORY.md](K32-RECOVERY-INVENTORY.md). Przygotowano narzędzie [synthetic restore acceptance](tools/k32-synthetic-restore-acceptance.py), lecz dwa uruchomienia nie osiągnęły gotowości Postgresa. Diagnostyka wykazała `/dev/sda1` 100% (75G, 0 wolnego); żadne migracje ani asercje akceptacyjne nie ruszyły. Własne kontenery próbne usunięto. Narzędzie jest WIP i wymaga pełnego uruchomienia oraz poprawek wynikających z wyniku. [Dowód blokady](evidence/k32-synthetic-restore-2026-11-07.json). Następny krok po zwolnieniu miejsca przez operatora:
 
+Przed próbą narzędzie samo sprawdzi Docker root i wymaga co najmniej 2 GiB wolnego miejsca.
+
 ```bash
 cd /opt/codex/polutek-pl/.worktrees/platform-audit
 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/k32-synthetic-restore-acceptance.py
