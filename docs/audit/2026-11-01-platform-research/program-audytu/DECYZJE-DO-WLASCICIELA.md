@@ -11,4 +11,4 @@
 
 ## Pytania wymagające decyzji właściciela
 
-Decyzje DP01–DP09 opisane w dotychczasowym materiale H1 pozostają otwarte. Ten pakiet nie zmienia polityki logowania, płatności, uprawnień, TTL, retencji ani danych użytkowników.
+Rejestr DP01–DP09 wraz ze statusem, bramką i opisem profilu produktu znajduje się w [`K05-PROFIL-PRODUKTU.md`](K05-PROFIL-PRODUKTU.md). Wszystkie pozycje pozostają otwarte. Ten pakiet nie zmienia polityki logowania, płatności, uprawnień, TTL, retencji ani danych użytkowników.

@@ -13,7 +13,7 @@
     "K01": "REAL_PRISMA_PG_AND_OWN_WORKER_3_ENCODER_CASES_PASS_API_QUEUE_REDIS_STORAGE_EMAIL_INTEGRATION_OPEN",
     "K02": "THREE_LOCAL_IMAGES_LOAD_PATCHED_LIBRARIES_AND_OPTIMIZER_HTTP_PASSES_RELEASE_REVIEW_PRODUCTION_EVIDENCE_OPEN",
     "K03": "CI_SOURCE_PROVENANCE_REQUIRED_TEST_REPORTS_AND_GENERATED_TYPE_FAILURE_VERIFIED_FULL_STACK_EMAIL_OPEN",
-    "K05": "CODE_PROFILE_DOCUMENTED_9_DECISIONS_AND_ACTIVE_CONFIG_OPEN",
+    "K05": "OWNER_PROFILE_AND_DP01_DP09_REGISTERED_PAID_ACCESS_CONFLICT_AND_RUNTIME_OPEN",
     "K06": "COMMON_PROOF_VALIDATOR_SEALER_TESTED_PRODUCER_AND_ALL_PUBLISH_ACTIVATE_PATHS_NOT_YET_CONNECTED"
   },
   "acceptance": {
@@ -608,7 +608,7 @@
   "deployed": false,
   "merged": false,
   "paid_external_resources_created": false,
-  "resume": "Continue K06 with a trusted producer of pinned input-bound builds and all consumers: images workflow, local/existing-image deployment, GHCR immutable pulls, admin and rollback. Require externally supplied proof hash and revision, call verify before publish/migrate/activate and consume returned IDs. Negative full-path tests still needed. Retain mandatory audit requirement without retrying prior denied graph upload. Then full owned API/queue/HLS/Redis/storage and remaining email cases, K05 active profile/DP01-DP09. No merge/deploy/cost or generic ASVS expansion.",
+  "resume": "Continue K06 locally with synthetic consumer contracts and all non-production proof gates. K05 profile and DP01-DP09 register are documented, but Premium policy/runtime reconciliation remains open; keep monetization BLOCKED. Do not run deploy scripts, access production, create paid resources, merge, or publish.",
   "note": "Four small commits implement the shared proof contract, stable CI source snapshots and real test summaries; .next type errors now fail. Docker15 controls and real compiler before/after validated. Actual full unit and other executed local checks pass, but the partial CI report is deliberately rejected for release; no product proof or all-path enforcement claimed.",
   "previous_candidate_branch": "fix/polutek-h1-foundations",
   "previous_candidate_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
@@ -1321,11 +1321,11 @@
   "progress_estimates": {
     "h1_percent": 80,
     "h1_remaining_percent": 20,
-    "whole_roadmap_min_percent": 5,
-    "whole_roadmap_max_percent": 10,
-    "whole_roadmap_remaining_min_percent": 90,
-    "whole_roadmap_remaining_max_percent": 95,
-    "method": "Owner-requested rough effort estimate, not derived from passing test percentage;40 packages and unfinished evidence/security work remain the mission scope."
+    "whole_roadmap_min_percent": 10,
+    "whole_roadmap_max_percent": 15,
+    "whole_roadmap_remaining_min_percent": 85,
+    "whole_roadmap_remaining_max_percent": 90,
+    "method": "Rough effort estimate, not package count or test pass rate; no package is formally closed and substantial runtime, owner-decision, release and independent-review evidence remains."
   },
   "github_access_observation": {
     "date": "2026-11-03",
@@ -1546,5 +1546,18 @@
     "scope_limit": "Synthetic PostgreSQL fixtures only; no R2/S3 or external review. K23 remains partial pending independent review and non-production operational acceptance.",
     "evidence": "program-audytu/evidence/k23-premiere-postgres-2026-11-07/result.json",
     "k23_closed": false
+  },
+  "latest_k05_followup": {
+    "date": "2026-11-07",
+    "package": "K05 product profile and DP01-DP09 register",
+    "changes": [
+      "documented actor outcomes and code gates",
+      "marked conflicting monetization profile BLOCKED",
+      "updated R19 status"
+    ],
+    "runtime_or_production_verified": false,
+    "policy_or_code_changed": false,
+    "package_closed": false,
+    "evidence": "program-audytu/K05-PROFIL-PRODUKTU.md"
   }
 }

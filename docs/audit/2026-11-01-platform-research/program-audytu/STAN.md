@@ -1,5 +1,19 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K05 — profil produktu, 7 listopada 2026
+
+Utworzono [`K05-PROFIL-PRODUKTU.md`](K05-PROFIL-PRODUKTU.md) z oczekiwaniami dla widza/twórcy/admina, mapą flag, jawnie rozbieżnym profilem Premium/napiwków i rejestrem DP01–DP09. R19 w `KOLEJNOSC-NAPRAW.csv` wskazuje częściowe opracowanie; nie oznacza zamknięcia K05. Wartości konfiguracji produkcji i zachowanie runtime pozostają niepotwierdzone. Nie zmieniono kodu, płatności, danych ani środowiska.
+
+**Następny krok:** K05 pozostaje BLOCKED w obszarach monetyzacji do uzgodnienia sprzecznych zapisów i odbioru runtime. Kontynuować niezależną pracę K06 wyłącznie w tym worktree, przez testy kontraktu konsumentów i syntetyczne ścieżki; bez uruchamiania skryptów wdrożeniowych.
+
+```bash
+cd /opt/codex/polutek-pl/.worktrees/platform-audit
+git status --short --branch
+git log -5 --oneline
+sed -n '1,180p' docs/operations/RELEASE-PROOF.md
+rg -n 'release-proof|verify|deploy|rollback' scripts/ops .github/workflows
+```
+
 ## K01 — generated Prisma client i PostgreSQL, 7 listopada 2026
 
 `npx prisma generate` użył rzeczywistego schematu i wygenerował Prisma 6.19.3. Na świeżym disposable PostgreSQL 17.11 po 84 migracjach test realnego klienta przeszedł **1/1**: zapis/odczyt, rollback, odmowa unique P2002 i FK P2003; repo typecheck i ESLint PASS. Kontener z tmpfs został usunięty. Uruchomienie wymaganych testów z wyłączonym `DATABASE_URL` zwraca exit 1 z błędem inicjalizacji Prisma — brak bazy nie daje PASS. Następny krok: odtworzyć czystą instalację według przejrzanej polityki audytu oraz uruchomić lokalne API+worker na syntetycznym krótkim filmie. `npm ci` i pełne HTTP/worker nie były wykonane; K01 częściowe. [Dowód](evidence/k01-prisma-postgres-2026-11-07.json).

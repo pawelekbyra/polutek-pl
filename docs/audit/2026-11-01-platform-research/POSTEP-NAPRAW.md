@@ -1,5 +1,11 @@
 # Postęp realizacji roadmapy — H1
 
+## K05 — profil produktu i rejestr decyzji (częściowo, 7 listopada 2026)
+
+Dodano [`K05-PROFIL-PRODUKTU.md`](program-audytu/K05-PROFIL-PRODUKTU.md): zestawia zapis właściciela z 5 listopada z bieżącymi flagami kodu, określa oczekiwane zachowanie widza/twórcy/admina, opisuje rozbieżność Premium/napiwków i prowadzi DP01–DP09 z właścicielem oraz bramką. Otwarte monetyzacje są oznaczone BLOCKED; dokument wyraźnie nie poświadcza wartości produkcyjnych ani blokady płatności w API. Zaktualizowano status R19 w CSV i link do rejestru decyzji. Zmiana wyłącznie dokumentacyjna; bez testów runtime, zmian flag, prawnych tekstów, płatności, danych czy konfiguracji. K05 pozostaje częściowe do uzgodnienia rozbieżności i bezsekretowego odbioru runtime przez uprawnionego operatora. [Rejestr](program-audytu/DECYZJE-DO-WLASCICIELA.md).
+
+**Następny krok K05:** nie otwierać płatnych ścieżek; przy następnym dozwolonym odbiorze porównać aktywne flagi z profilem bez wypisywania sekretów, a sprzeczność Premium pozostawić BLOCKED do decyzji właściciela. Niezależnie kontynuować K06 na lokalnych/syntetycznych ścieżkach.
+
 ## K30 — odrzucanie błędnych statusów probe aplikacji (częściowo)
 
 `probePublicApp` uznaje tylko 2xx; wcześniej 401/404 były zdrowe. Publiczny health bez tokenu pozostaje liveness 200, a autoryzowany health zwraca 503, gdy kontrola zależności zgłasza `ok:false` (wcześniej 200 z błędnym JSON-em). Test probe obejmuje 200/204 i 401/404/500/503, test trasy sprawdza publiczne liveness i autoryzowane readiness 200/503, a test use case wymusza błąd zapytania DB i potwierdza `database: failed`. Osobny probe HLS nadal uznaje oczekiwane 404 korzenia za działający Worker. Celowane zestawy health/probe **29/29 PASS**, ESLint, repo typecheck i diff check PASS. Nie zmieniano sekretów ani produkcji. K30 pozostaje częściowe: brak canary manifestu i segmentu, dekodowania własnego filmu oraz odbioru alarmów/QoE. [Testy probe](../../../tests/unit/admin-overview/overview-use-cases.test.ts), [test trasy](../../../tests/unit/api/health-route.test.ts), [test DB](../../../tests/unit/modules/health/check-health.use-case.test.ts).
