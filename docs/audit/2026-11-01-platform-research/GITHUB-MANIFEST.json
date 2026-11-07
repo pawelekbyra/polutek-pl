@@ -10,12 +10,12 @@
     "GHSA-2464-fhr4-w9xw.html": "fb1fa051ab1d077bbead51da2eee9be77e10866c6e2bd3daf4d44e2fdde782d3",
     "GHSA-mrhx-c7xc-m3w5.html": "8a3438097c7fa67e8ebbfd37d4a4a4c37ee75fe65ebe6da77571e705ad9aabf8",
     "GHSA-wq5f-xc86-pv6w.html": "e4c0a5830bdd72a1644763317e08be1f8fe3f4cd66a5bf10de8844464724014b",
-    "KOLEJNOSC-NAPRAW.csv": "c0e4b73f1b1aa32f86a6c79e5b1d9fe91f9b66de78a1a576e2b3ac93739b1039",
+    "KOLEJNOSC-NAPRAW.csv": "eee8fc349f91861058eee689346c361a71aa96c6acdfc4ee0ea2e1a666750721",
     "PLAN-WDROZENIA-NAPRAW.md": "4179df729dc75d1f55b53b2f38b4fdf1bd9d22c1581864b5c451c59f213b8dc1",
     "PLAN-WERYFIKACJI.md": "8c97ea0f95c463c521432fa2e75ad5dc6035e9b411af8ed70388cbaf238c34d9",
     "POMINIETE-ARTEFAKTY.md": "b1ad39a6b44e4fac8ae8135e861060223b1c2da176b2e74133a220b20911561e",
     "POROWNANIE-WSTEPNE.md": "eb4cd574aa6b1097f6509906b30f31021d81c948b2d520122a3b062814d2b19a",
-    "POSTEP-NAPRAW.md": "69c3c44dfb1c043c6d87039c8191b9ae57578b3fdde152758d27eb0f537c348f",
+    "POSTEP-NAPRAW.md": "3e1c352a175cef1c6084081cacba37cb2e2db09b327e3bc30c54abb4d3451d88",
     "RAPORT.md": "8c1939b7ba4a1fbba6de18efaf7aa432a0fedecb38e2b4c1e0819176e9c93399",
     "README.md": "3ded193eeaf73dc431201df958769d22d17e57e0c159d4cdfc46503be11adede",
     "ROADMAPA-NAPRAW.md": "9bda0ad1c0f34e251281fadc2da23b83eef890633454ac885ffb766174e398e1",
@@ -61,7 +61,7 @@
     "program-audytu/SCENARIUSZE-WDROZENIA.csv": "4e67d47429bc70d6ea3cde439ee2e043dea4d39b5f0a1f99c3a23ce61d0a0dd8",
     "program-audytu/SCENARIUSZE-WEJSCIA.csv": "b1f629c120a931fb518d90a6cafa96fd1137deca4b4b247296357b31d82be92c",
     "program-audytu/SOURCES.md": "eec2a422f868981256d46d4f361f30a3295f6f9155a744694888dcaf47e479e8",
-    "program-audytu/STAN.md": "d566ffcb75fec222a42c6f5f34ae1ef04c033808e3d543512991d792644e0957",
+    "program-audytu/STAN.md": "3dda4aea1f63928b57587b8ffeef8edd5e2996b0daaf694dc2441d7115fbcb3a",
     "program-audytu/TESTY-INWENTARZ.csv": "2566b13c29d3a4018ff09a4116f0259bd62083197bfe76f9c747d6b249439a11",
     "program-audytu/USTALENIA.json": "1a0e8e97d6fca4fae1cb31bd29be7e741b2d97c43f6e7011e13adeb8ad04225f",
     "program-audytu/WARSTWY-TESTOW.csv": "017cff9d9ece98e2eddff5f8db143e6db6d0da140c7a70ffd8cf2d2e8f11b5f6",
@@ -412,7 +412,7 @@
     "program-audytu/evidence/h1-release-core-2026-11-02/wrong-base-ancestry.log": "ddf39345e3cc5756669b403f6448ed6462b6497c439f6a2af050e417cd40d2ea",
     "program-audytu/evidence/h1-release-core-2026-11-02/wrong-base-images.json": "09e53197568abebe3bee9f9ab61afa0c02e7628c126ffc507b75d7b67d38c3d8",
     "program-audytu/evidence/h1-release-core-2026-11-02/wrong-revision.log": "b26146b430ea18e37fd7737e2db1f2626d75aa8aa1d7c76f8f27fc90292e4735",
-    "program-audytu/evidence/h1-status.json": "e9714ad180129de121044391390cc2b96f659f1a62aa9a519e95634fa659f14c",
+    "program-audytu/evidence/h1-status.json": "fb0e3002c6df184a84e318d4a0818a2dfa0981d01b80cff5a6599e4b12405e0b",
     "program-audytu/evidence/h1-validation.json": "0aa50e414ff1e0bb95b5c58175512b5bfe66533b2c550aaefb63eacb44e19955",
     "program-audytu/evidence/hotspot-guard-batch12.log": "dbe54611034b886eaffed2d33a07f85d31af2aea35378d1ad75bd10ca28b4052",
     "program-audytu/evidence/i18n-catalog-measurement.json": "82feffff2de72049940a0adc9728de4b186b6e114c3c085d7cc85579db76ee4f",
@@ -915,6 +915,7 @@
     "program-audytu/evidence/k20-postgres-acceptance-2026-11-07.json": "61cce2a04ff39d94dad75c43c69b28b8da8fe25b2b1ffc7dccf9a9576cdd93d6",
     "program-audytu/evidence/k01-prisma-postgres-2026-11-07.json": "0343d2fb496c58f69e2b3fcf73ed6073db06ff1a24700e80b1fb92945a5b01a0",
     "program-audytu/K05-PROFIL-PRODUKTU.md": "f718bd50fe3e4c8e72186f935d7144227296fcdb89e7af3bceeae00ccf1facc0",
-    "program-audytu/evidence/k38-bounded-body-probe-2026-11-07.json": "6209a64f7e8695bc38a70f60b1090a41774bddd1aa7433c6212d5771115b7827"
+    "program-audytu/evidence/k38-bounded-body-probe-2026-11-07.json": "6209a64f7e8695bc38a70f60b1090a41774bddd1aa7433c6212d5771115b7827",
+    "program-audytu/evidence/k10-http-role-matrix-2026-11-07.json": "4143ed9f6338263b9d29236030ad4722ff6eec52c527621f9498fecdd136cd02"
   }
 }

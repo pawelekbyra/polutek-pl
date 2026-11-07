@@ -1,5 +1,11 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K10 — rzeczywista macierz HTTP i role, 7 listopada 2026
+
+`tests/postgres/k10-hidden-premiere-http.pg.test.ts` przeszedł **2/2** na świeżym PostgreSQL 17.11 po 84 migracjach i lokalnym Next dev serverze. Prawdziwe podpisane sesje Better Auth potwierdziły odmowę metadanych dla gościa i obcego konta dla REMOVED, działający podpisany token SELF_HLS dla draftu właściciela oraz legalną premierę z gotowym syntetycznym assetem bez tokena/sesji przed czasem dla gościa i obcego konta. Kontener z tmpfs usunięto; źródło i pełne kryteria są w [dowodzie](evidence/k10-http-role-matrix-2026-11-07.json). ESLint i diff check PASS. Globalny `npx tsc --noEmit` zakończył się błędami w innych, istniejących testach; nowy plik nie zgłosił błędu.
+
+**Następny krok K10:** niezależny review pozostaje otwarty. Wygenerowanie podpisanego adresu w teście nie dowodzi, że Worker akceptuje token i chroni obiekty; jeśli K10 będzie domykane, oddzielnie sprawdzić granicę Worker/HLS. Kontynuować inną otwartą pozycję.
+
 ## K38 — ograniczony probe treści, 7 listopada 2026
 
 Nowy `response-probe.py` sprawdza odpowiedź home i miniatury przez numeryczny loopback: HTTP 200, MIME i ograniczony prefiks (maks. 65536 bajtów plus jeden sentinel) z markerem HTML albo sygnaturą obrazu. `run-steps.sh` i `count-queries.sh` uruchamiają probe przed pomiarem tylko dla endpointów obecnych w profilu i zapisują JSONL; pomiar k6 nadal odrzuca duże body. Profil zapisuje BASE/Host/locale, skrót ID filmu, zastosowanie probe i SHA helpera. Fixed-count ma teraz tę samą tożsamość użytkownika-gościa i blokadę co runner serii, więc sesje z obu trybów można potem objąć kontrolowanym cleanupem. Test syntetyczny **36/36 PASS**, ESLint i składnia PASS. Nie uruchomiono k6, aplikacji, bazy, serwera ani cleanup. K38 jest częściowe; nadal potrzebny pełny non-production acceptance i pozostałe scenariusze obciążenia. [Dowód](evidence/k38-bounded-body-probe-2026-11-07.json).
