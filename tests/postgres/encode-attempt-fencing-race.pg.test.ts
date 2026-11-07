@@ -1,7 +1,8 @@
 /** K17 lock-order regression: stale worker A waits on activation while a real DB transaction takes over as B. */
+import { spawn } from "node:child_process";
+import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createSelfHlsFinalizer } from "@/lib/modules/video-pipeline/application/finalize-self-hls";
 import { hlsAttemptAssetKey } from "@/lib/modules/video-pipeline/domain/keys";
 
 const prisma = new PrismaClient();
@@ -13,7 +14,7 @@ let creatorId = "";
 let videoId = "";
 let originalId = "";
 let takeoverClient: PrismaClient | undefined;
-let staleWorkerClient: PrismaClient | undefined;
+const PROCESS_TIMEOUT_MS = 20_000;
 
 function deferred() {
   let resolve!: () => void;
@@ -21,13 +22,14 @@ function deferred() {
   return { promise, resolve };
 }
 
-async function waitUntilStaleActivationWaitsForJobLock(): Promise<boolean> {
+async function waitUntilStaleProcessWaitsForJobLock(): Promise<boolean> {
   const deadline = Date.now() + 5_000;
   while (Date.now() < deadline) {
     const [row] = await prisma.$queryRaw<Array<{ waiting: bigint }>>`
       SELECT COUNT(*) AS waiting
       FROM pg_stat_activity
       WHERE datname = current_database()
+        AND application_name = ${`${RUN}-attempt-a`}
         AND state = 'active'
         AND wait_event_type = 'Lock'
         AND query LIKE '%FROM "VideoEncodeJob"%'
@@ -39,6 +41,51 @@ async function waitUntilStaleActivationWaitsForJobLock(): Promise<boolean> {
   return false;
 }
 
+function runWorkerProcess(mode: "stale" | "current", jobId: string, applicationName: string): Promise<string> {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error("DATABASE_URL is required for K17 worker-process test");
+  const url = new URL(databaseUrl);
+  url.searchParams.set("application_name", applicationName);
+  const connection = url.toString();
+  const env: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH,
+    NODE_ENV: "test",
+    DATABASE_URL: connection,
+    DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED
+      ? new URL(process.env.DATABASE_URL_UNPOOLED).toString()
+      : connection,
+    K17_JOB_ID: jobId,
+    K17_MODE: mode,
+  };
+  const child = spawn(process.execPath, [
+    path.join(process.cwd(), "node_modules/tsx/dist/cli.mjs"),
+    path.join(process.cwd(), "tests/helpers/k17-finalize-self-hls-process.ts"),
+  ], { cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe"] });
+
+  return new Promise((resolve, reject) => {
+    let stdout = "";
+    let stderr = "";
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      fn();
+    };
+    const timeout = setTimeout(() => {
+      child.kill("SIGKILL");
+      finish(() => reject(new Error(`K17 ${mode} worker process timed out for job ${jobId}`)));
+    }, PROCESS_TIMEOUT_MS);
+    child.stdout.on("data", (chunk: Buffer | string) => { stdout += chunk.toString(); });
+    child.stderr.on("data", (chunk: Buffer | string) => { stderr += chunk.toString(); });
+    child.once("error", (error) => finish(() => reject(error)));
+    child.once("close", (code) => {
+      if (code !== 0) return finish(() => reject(new Error(`K17 ${mode} worker failed (${code}): ${stderr.slice(-1200)}`)));
+      finish(() => resolve(stdout));
+    });
+  });
+}
+
 beforeAll(async () => {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is required for this PostgreSQL integration test");
@@ -47,7 +94,6 @@ beforeAll(async () => {
     url.searchParams.set("application_name", applicationName);
     return url.toString();
   };
-  staleWorkerClient = new PrismaClient({ datasources: { db: { url: makeNamedUrl(`${RUN}-a`) } } });
   takeoverClient = new PrismaClient({ datasources: { db: { url: makeNamedUrl(`${RUN}-b`) } } });
 
   userId = `${RUN}-user`;
@@ -68,11 +114,11 @@ afterAll(async () => {
   if (videoId) await prisma.video.deleteMany({ where: { id: videoId } });
   if (creatorId) await prisma.creator.deleteMany({ where: { id: creatorId } });
   if (userId) await prisma.user.deleteMany({ where: { id: userId } });
-  await Promise.all([prisma.$disconnect(), takeoverClient?.$disconnect(), staleWorkerClient?.$disconnect()]);
+  await Promise.all([prisma.$disconnect(), takeoverClient?.$disconnect()]);
 });
 
-describe("K17 stale worker takeover race (two PostgreSQL sessions)", () => {
-  it("makes A wait at the real job row lock, commits B's takeover, and prevents A from activating", async () => {
+describe("K17 stale worker takeover race (separate processes and PostgreSQL sessions)", () => {
+  it("makes process A wait at B's job-row lock, then rejects A while process B alone activates", async () => {
     const attemptAJob = await prisma.videoEncodeJob.create({
       data: {
         videoId, originalId, versionNumber: 4, idempotencyKey: `${originalId}:k17-race`, status: "RUNNING",
@@ -91,35 +137,29 @@ describe("K17 stale worker takeover race (two PostgreSQL sessions)", () => {
     }, { timeout: 15_000 });
     await enteredTakeover.promise;
 
-    const makeInput = (job: typeof attemptAJob, attemptId: string) => ({
-      job: { ...job, attemptId, workerId: attemptId === ATTEMPT_A ? "worker-a" : "worker-b" },
-      assetKey: hlsAttemptAssetKey(videoId, job.versionNumber, attemptId),
-      hlsBucket: "k17-test-hls",
-      posterPath: "/unused-poster.jpg",
-      meta: { source: { durationSeconds: 30 } },
-      totalBytes: 100,
-    });
-    const staleActivation = createSelfHlsFinalizer(staleWorkerClient!).finalize(makeInput(attemptAJob, ATTEMPT_A));
+    const staleProcess = runWorkerProcess("stale", attemptAJob.id, `${RUN}-attempt-a`);
     let observedBlockedStaleWorker = false;
     try {
-      observedBlockedStaleWorker = await waitUntilStaleActivationWaitsForJobLock();
+      observedBlockedStaleWorker = await waitUntilStaleProcessWaitsForJobLock();
     } finally {
       commitTakeover.resolve();
     }
     const ownedByB = await takeover;
     if (!observedBlockedStaleWorker) {
-      await Promise.allSettled([staleActivation]);
-      throw new Error("Stale worker A was not observed waiting on B's PostgreSQL job-row lock");
+      await Promise.allSettled([staleProcess]);
+      throw new Error("Worker process A was not observed waiting on B's PostgreSQL job-row lock");
     }
 
-    await expect(staleActivation).rejects.toThrow();
-    const bResult = await createSelfHlsFinalizer(takeoverClient!).finalize(makeInput(ownedByB, ATTEMPT_B));
+    await expect(staleProcess).resolves.toContain("K17_STALE_ATTEMPT_REJECTED");
+    const currentOutput = await runWorkerProcess("current", ownedByB.id, `${RUN}-attempt-b`);
+    const bAssetId = /K17_FINALIZED=([^\r\n]+)/.exec(currentOutput)?.[1];
+    expect(bAssetId).toBeTruthy();
     const [video, assets, persistedJob] = await Promise.all([
       prisma.video.findUniqueOrThrow({ where: { id: videoId }, include: { activePlaybackRoute: true } }),
       prisma.videoAsset.findMany({ where: { videoId, provider: "SELF_HLS" } }),
       prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: attemptAJob.id } }),
     ]);
-    expect(video.activePlaybackRoute?.assetId).toBe(bResult.assetId);
+    expect(video.activePlaybackRoute?.assetId).toBe(bAssetId);
     expect(assets.map(({ objectKey }) => objectKey)).toEqual([hlsAttemptAssetKey(videoId, attemptAJob.versionNumber, ATTEMPT_B)]);
     expect(persistedJob).toMatchObject({ status: "RUNNING", workerId: "worker-b", attemptId: ATTEMPT_B });
   }, 30_000);

@@ -528,3 +528,7 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Rzeczywisty `publishAdminVideo` utworzył atomowy intent na PostgreSQL. Post-commit kick zasymulowano jako utracony; świeży proces OS uruchomił durable worker i dostarczył subskrybentowi jedno powiadomienie. Retry/reopen i drugi run nie dublują wpisu. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
 - Nie zabito HTTP procesu po commitcie ani nie wywołano cron HTTP; HLS syntetyczne, bez R2/S3 i niezależnego review. K23/R05 pozostają częściowe. [Dowód](evidence/k23-process-recovery-2026-11-06/result.json).
+## 7 listopada 2026 — K17/R02: dwa osobne procesy workera
+
+- Test PostgreSQL uruchamia osobny proces A ze starym snapshotem oraz osobny proces B po przejęciu próby. A czeka na blokadzie wiersza joba, po COMMIT B jest odrzucony; tylko B aktywuje asset i trasę. **1/1 PASS**, 84 migracje, PostgreSQL 17.11; ESLint/typecheck/diff check PASS. Fixture’y usunięte, kontener disposable zatrzymany.
+- K17/R02 nadal częściowe: bez R2/S3, pełnego worker lifecycle i niezależnego review. [Dowód](evidence/k17-two-worker-processes-2026-11-07.json).
