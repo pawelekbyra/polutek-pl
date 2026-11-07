@@ -3,6 +3,8 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync,
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { releaseControl } from '../../fixtures/release-control.mjs';
+import { createProof } from '../../../scripts/ops/release/proof.mjs';
+import { hashJson } from '../../../scripts/ops/release/source.mjs';
 
 const root = process.cwd();
 const cli = path.join(root, 'scripts/ops/release-proof.mjs');
@@ -27,6 +29,23 @@ describe('release proof CLI boundary', () => {
     const result = run(['check-ci', `--report=${f.reportPath}`, `--source=${f.archive}`, `--revision=${f.revision}`]);
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout)).toMatchObject({ verified: true, revision: f.revision, source_fingerprint: f.source.fingerprint });
+  });
+
+  it.skipIf(process.platform === 'win32')('preflights the approved proof and source without inspecting images', () => {
+    const f = fixture();
+    const proof = createProof({ report: f.report, inputs: f.inputs, references: f.references,
+      sourceRoot: f.archive, revision: f.revision }, f.inspect);
+    const proofPath = path.join(f.directory, 'proof.json');
+    const inputsPath = path.join(f.directory, 'inputs.json');
+    writeFileSync(proofPath, JSON.stringify(proof));
+    writeFileSync(inputsPath, JSON.stringify(f.inputs));
+    const result = run(['preflight', `--proof=${proofPath}`, `--proof-sha256=${hashJson(proof)}`,
+      `--inputs=${inputsPath}`, `--source=${f.archive}`, `--revision=${f.revision}`, '--scope=app']);
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({ preflight: true, revision: f.revision,
+      selected: ['app', 'migrator', 'worker', 'collector'] });
+    expect(run(['preflight', `--proof=${proofPath}`, `--proof-sha256=${'0'.repeat(64)}`,
+      `--inputs=${inputsPath}`, `--source=${f.archive}`, `--revision=${f.revision}`, '--scope=app']).status).toBe(1);
   });
 
   it.each(['--skip=audit', '--only=unit', '--revision=main', '--source=', '--scope=all'])(

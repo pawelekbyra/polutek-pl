@@ -39,6 +39,12 @@ function main(argv) {
     }
     refs.push([kind, ref]);
   }
+  const verifier = path.join(source, 'scripts/ops/release-proof.mjs');
+  const preflightResult = run(process.execPath, [verifier, 'preflight', `--proof=${proofFile}`,
+    `--proof-sha256=${opts['proof-sha256']}`, `--revision=${opts.revision}`, `--source=${source}`,
+    `--inputs=${inputsFile}`, `--scope=${opts.scope}`]);
+  const preflight = JSON.parse(preflightResult);
+  if (preflight.preflight !== true || preflight.revision !== opts.revision) fail('Release preflight returned an invalid result');
   // Reuse an installed digest only when its immutable config ID still matches the proof. Otherwise fetch the exact digest.
   // This lets proof checks for operator actions work while the registry is unavailable, without trusting a mutable tag.
   for (const [kind, ref] of refs) {
@@ -47,7 +53,6 @@ function main(argv) {
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     if (cached.status !== 0 || cached.stdout.trim() !== expectedId) run('docker', ['pull', ref]);
   }
-  const verifier = path.join(source, 'scripts/ops/release-proof.mjs');
   const result = run(process.execPath, [verifier, 'verify', `--proof=${proofFile}`,
     `--proof-sha256=${opts['proof-sha256']}`, `--revision=${opts.revision}`, `--source=${source}`,
     `--inputs=${inputsFile}`, `--scope=${opts.scope}`]);

@@ -63,7 +63,9 @@ describe.skipIf(!/^v22\./.test(process.version) || process.platform === 'win32')
     writeFileSync(path.join(source, 'release-proof.mjs'), `
       const revision = process.argv.find(value => value.startsWith('--revision='))?.slice('--revision='.length);
       const images = Object.fromEntries(['app','migrator','worker','collector','admin'].map(kind => [kind, '${imageId}']));
-      process.stdout.write(JSON.stringify({ verified: true, revision, images }));
+      process.stdout.write(JSON.stringify(process.argv[2] === 'preflight'
+        ? { preflight: true, revision, selected: ['app','migrator','worker','collector'] }
+        : { verified: true, revision, images }));
     `);
     const dockerLog = path.join(dir, 'docker.log');
     const fakeDocker = path.join(bin, 'docker');
@@ -103,7 +105,9 @@ describe.skipIf(!/^v22\./.test(process.version) || process.platform === 'win32')
     writeFileSync(path.join(source, 'release-proof.mjs'), `
       const revision = process.argv.find(value => value.startsWith('--revision='))?.slice('--revision='.length);
       const images = Object.fromEntries(['app','migrator','worker','collector','admin'].map(kind => [kind, '${imageId}']));
-      process.stdout.write(JSON.stringify({ verified: true, revision, images }));
+      process.stdout.write(JSON.stringify(process.argv[2] === 'preflight'
+        ? { preflight: true, revision, selected: ['app','migrator','worker','collector'] }
+        : { verified: true, revision, images }));
     `);
     const dockerLog = path.join(dir, 'docker.log');
     const fakeDocker = path.join(bin, 'docker');
@@ -124,5 +128,43 @@ describe.skipIf(!/^v22\./.test(process.version) || process.platform === 'win32')
     expect(calls.filter(call => call.startsWith('image inspect '))).toHaveLength(5);
     expect(Math.max(...calls.map((call, index) => call.startsWith('pull ') ? index : -1)))
       .toBeLessThan(calls.findIndex(call => call.startsWith('tag ')));
+  });
+
+  it('rejects a failed proof preflight before invoking Docker or pulling registry images', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'deploy-release-preflight-'));
+    tempDirs.push(dir);
+    const release = path.join(dir, 'release');
+    const source = path.join(release, 'source', 'scripts', 'ops');
+    const bin = path.join(dir, 'bin');
+    mkdirSync(source, { recursive: true });
+    mkdirSync(bin);
+    const revision = 'c'.repeat(40);
+    const imageId = `sha256:${'a'.repeat(64)}`;
+    const kinds = ['app', 'migrator', 'worker', 'collector', 'admin'];
+    const images = Object.fromEntries(kinds.map(kind => [kind, {
+      id: imageId,
+      registry_ref: `ghcr.io/pawelekbyra/polutek-${kind}@sha256:${'b'.repeat(64)}`,
+    }]));
+    writeFileSync(path.join(release, 'proof.json'), JSON.stringify({ images }));
+    writeFileSync(path.join(release, 'inputs.json'), '{}');
+    writeFileSync(path.join(source, 'release-proof.mjs'), `
+      process.stderr.write('Approved release proof hash mismatch\\n');
+      process.exit(1);
+    `);
+    const dockerLog = path.join(dir, 'docker.log');
+    const fakeDocker = path.join(bin, 'docker');
+    writeFileSync(fakeDocker, `#!/bin/sh\necho called >> '${dockerLog}'\nexit 0\n`);
+    chmodSync(fakeDocker, 0o755);
+
+    const result = spawnSync(process.execPath, [helper, `--release-dir=${release}`, `--revision=${revision}`,
+      `--proof-sha256=${'d'.repeat(64)}`, '--scope=app', '--tag=release-test'], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH ?? ''}` },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Approved release proof hash mismatch');
+    expect(existsSync(dockerLog)).toBe(false);
   });
 });

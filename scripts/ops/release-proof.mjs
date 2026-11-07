@@ -4,7 +4,7 @@ import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { HASH, REVISION, hashJson, readJson, requireValue, verifySourceArchive } from './release/source.mjs';
 import { IMAGE_KINDS, expectedLabels, validateInputs, validateQuality } from './release/policy.mjs';
-import { createProof, verifyProof } from './release/proof.mjs';
+import { createProof, preflightProof, verifyProof } from './release/proof.mjs';
 import { buildRelease } from './release/build.mjs';
 
 function run(argv) {
@@ -14,9 +14,10 @@ function run(argv) {
     labels: ['report', 'revision', 'source', 'inputs', 'kind'],
     seal: ['report', 'revision', 'source', 'inputs', 'images', 'out'],
     build: ['report', 'revision', 'source', 'inputs', 'out'],
+    preflight: ['proof', 'proof-sha256', 'revision', 'source', 'inputs', 'scope'],
     verify: ['proof', 'proof-sha256', 'revision', 'source', 'inputs', 'scope'],
   };
-  requireValue(Object.hasOwn(allowed, command), 'Usage: release-proof.mjs check-ci|labels|build|seal|verify --key=value');
+  requireValue(Object.hasOwn(allowed, command), 'Usage: release-proof.mjs check-ci|labels|build|seal|preflight|verify --key=value');
   const options = Object.create(null);
   for (const flag of flags) {
     const match = /^--([a-z][a-z0-9-]*)=(.+)$/s.exec(flag);
@@ -24,9 +25,14 @@ function run(argv) {
     options[match[1]] = match[2];
   }
   requireValue(REVISION.test(options.revision ?? '') && options.source, 'Full --revision and --source archive are required');
-  if (command === 'verify') {
+  if (command === 'preflight' || command === 'verify') {
     requireValue(options.proof && options.inputs && options['proof-sha256'], '--proof, --proof-sha256 and --inputs are required');
     const proof = readJson(options.proof);
+    if (command === 'preflight') {
+      const { selected } = preflightProof({ proof, proofSha256: options['proof-sha256'], revision: options.revision, sourceRoot: options.source,
+        inputs: readJson(options.inputs), scope: options.scope ?? 'all' });
+      return { preflight: true, revision: options.revision, proof_sha256: hashJson(proof), selected };
+    }
     const identities = verifyProof({ proof, proofSha256: options['proof-sha256'], revision: options.revision, sourceRoot: options.source,
       inputs: readJson(options.inputs), scope: options.scope ?? 'all' });
     return { verified: true, revision: options.revision, proof_sha256: hashJson(proof), images: identities };

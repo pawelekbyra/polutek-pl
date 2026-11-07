@@ -20,6 +20,10 @@ Tymczasowy detached checkout `7e81993c` przeszedł `npm_config_audit=false npm c
 
 Transfer lokalny i Actions podają teraz niezależny `RELEASE_PROOF_SHA256` do `release-artifact.mjs`. Hash proofu jest sprawdzany przed `tar -tf` i rozpakowaniem; test z niepoprawnym tar potwierdza wcześniejszą odmowę. **53/53** testów trzech suite, ESLint, `bash -n` i diff check PASS. Dowód ogranicza się do lokalnych fixture i atrapowego SSH; bez GHCR, Actions i serwera. K06 pozostaje częściowe do odbioru obrazów, całego procesu release i rollbacku. [Dowód](evidence/k06-proof-before-extraction-2026-11-07.json).
 
+## K06 — preflight przed kontaktem z Docker/rejestrem, 7 listopada 2026
+
+`deploy-release.mjs` uruchamia teraz osobną komendę `release-proof.mjs preflight`, która sprawdza niezależnie podany hash proofu, rewizję, wejścia oraz archiwum źródeł bez Dockera; dopiero potem możliwy jest inspect/pull, a pełne `verify` nadal porównuje digesty/ID/warstwy. **28/28** testów sześciu suite wydania PASS; ESLint, repo typecheck i diff check PASS. Negatywna próba potwierdza zero wywołań Dockera przy odrzuconym proofie. Wszystkie dane syntetyczne; bez GHCR/Actions/SSH/serwera. [Dowód i SHA plików](evidence/k06-preflight-before-image-pull-2026-11-07.json). K06 nadal częściowe: bez pozytywnego odbioru pełnego wydania, pięciu rzeczywistych obrazów i rollbacku.
+
 
 ## K03 — pełny baseline po naprawie 19 awarii, 7 listopada 2026
 

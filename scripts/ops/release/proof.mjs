@@ -61,7 +61,7 @@ function validateProof(proof, revision, inputs) {
   return quality;
 }
 
-export function verifyProof({ proof, proofSha256, revision, inputs, sourceRoot, scope = 'all' }, inspect = inspectImage) {
+export function preflightProof({ proof, proofSha256, revision, inputs, sourceRoot, scope = 'all' }) {
   requireValue(process.platform !== 'win32', 'Release verification requires POSIX archive modes (use Linux/WSL)');
   requireValue(['all', 'app', 'admin'].includes(scope), 'Unknown release verification scope');
   // The expected hash must come from the producer/reviewer, not from the file being verified.
@@ -69,6 +69,12 @@ export function verifyProof({ proof, proofSha256, revision, inputs, sourceRoot, 
   const quality = validateProof(proof, revision, inputs);
   verifySourceArchive(sourceRoot, quality.source);
   const selected = scope === 'admin' ? ['admin'] : scope === 'app' ? IMAGE_KINDS.filter(kind => kind !== 'admin') : IMAGE_KINDS;
+  return { quality, selected };
+}
+
+export function verifyProof(options, inspect = inspectImage) {
+  const { proof, inputs, sourceRoot, revision } = options;
+  const { quality, selected } = preflightProof(options);
   /** @type {Record<string, string>} */
   const identities = {};
   for (const kind of selected) {
