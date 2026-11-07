@@ -8,12 +8,14 @@ class FakeD1 {
   deliveries = new Map<string, Row>();
   days = new Map<string, number>();
   ping: Row | null = null;
+  failAcceptanceBatchOnce = false;
 
   prepare(sql: string) {
     const query = sql.replace(/\s+/g, ' ').trim();
     let args: any[] = [];
     const statement = {
       sql: query,
+      get testArgs() { return args; },
       bind: (...values: any[]) => { args = values; return statement; },
       first: async () => {
         if (query.startsWith('SELECT at, status, warn_since FROM ping')) return this.ping;
@@ -65,7 +67,31 @@ class FakeD1 {
   }
 
   async batch(statements: Array<{ sql: string }>) {
-    expect(statements.every((statement) => statement.sql.startsWith('CREATE TABLE IF NOT EXISTS'))).toBe(true);
+    if (statements.every((statement) => statement.sql.startsWith('CREATE TABLE IF NOT EXISTS'))) {
+      return statements.map(() => ({ success: true }));
+    }
+    if (this.failAcceptanceBatchOnce) {
+      this.failAcceptanceBatchOnce = false;
+      throw new Error('synthetic D1 batch failure');
+    }
+    expect(statements.map((statement) => statement.sql)).toHaveLength(3);
+    const [markSent, incrementDay] = statements;
+    expect(markSent.sql).toContain("status = 'SENT'");
+    expect(incrementDay.sql).toContain('INSERT INTO alert_day');
+    for (const statement of statements) {
+      const sql = statement.sql.replace(/\s+/g, ' ').trim();
+      if (sql.startsWith('UPDATE alert_delivery SET status')) {
+        const [sent_at, id] = (statement as any).testArgs ?? [];
+        const row = this.deliveries.get(id);
+        if (row?.status === 'PENDING') Object.assign(row, { status: 'SENT', sent_at, lease_until: null, last_error: null });
+      } else if (sql.startsWith('INSERT INTO alert_day')) {
+        const [day] = (statement as any).testArgs ?? [];
+        this.days.set(day, (this.days.get(day) ?? 0) + 1);
+      } else if (sql.startsWith('DELETE FROM alert_day')) {
+        const [before] = (statement as any).testArgs ?? [];
+        for (const day of this.days.keys()) if (day < before) this.days.delete(day);
+      }
+    }
     return statements.map(() => ({ success: true }));
   }
 }
@@ -173,5 +199,28 @@ describe('pp-watchdog durable alert delivery', () => {
     network.setMailStatus(200);
     await run(DB);
     expect(DB.deliveries.get(id)).toMatchObject({ status: 'SENT', attempts: 1 });
+  });
+
+  it('retries the same idempotent event when provider acceptance cannot be committed to D1', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-07T03:00:00Z'));
+    const DB = new FakeD1();
+    DB.ping = { at: Date.now(), status: 'OK', warn_since: null };
+    const id = 'www:1730930000000:recovery';
+    DB.deliveries.set(id, { id, check_name: 'www', kind: 'RECOVERY', subject: '[pp-watchdog] OK again: www', body: 'recovered', status: 'PENDING', attempts: 0, created_at: Date.now(), retry_at: Date.now(), lease_until: null, sent_at: null, last_error: null });
+    DB.failAcceptanceBatchOnce = true;
+    const network = mockFetch();
+
+    await expect(run(DB)).rejects.toThrow('synthetic D1 batch failure');
+    expect(DB.deliveries.get(id)).toMatchObject({ status: 'PENDING', attempts: 0 });
+    expect(DB.days.size).toBe(0);
+    expect(network.deliveries.map((item) => item.idempotencyKey)).toEqual([id]);
+
+    vi.setSystemTime(new Date('2026-11-07T03:00:31Z'));
+    await run(DB);
+
+    expect(DB.deliveries.get(id)).toMatchObject({ status: 'SENT', attempts: 0 });
+    expect(DB.days.get('2026-11-07')).toBe(1);
+    expect(network.deliveries.map((item) => item.idempotencyKey)).toEqual([id, id]);
   });
 });

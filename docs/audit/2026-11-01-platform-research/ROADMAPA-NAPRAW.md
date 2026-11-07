@@ -804,6 +804,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Postęp lokalny 6 listopada 2026 (częściowy):** dodano D1 outbox, retry/backoff, lease współbieżnego claimu i stabilny klucz idempotencji. Testy z atrapą D1 pokrywają recovery HTTP 503, wyjątek sieciowy, wyczerpanie limitu dziennego oraz dwa równoległe runy; 6/6 testów, typecheck i architektura PASS, ESLint bez błędów. Dodatkowy probe uruchomił rzeczywisty kod Workera na lokalnym SQLite 3.51.3 i potwierdził DDL, `UPDATE ... RETURNING` i pojedynczy claim podczas dwóch równoległych runów. Brak rzeczywistego Cloudflare D1/Resend/sandboxu, restartu i sprawdzenia kolejności awarii między dostawcą a zapisem SENT; K31 nie jest zamknięte. Szczegóły i ograniczenia: D16, sekcja K31.
 
+**Uzupełnienie lokalne 7 listopada 2026:** po odpowiedzi sukcesu dostawcy zmiana `alert_delivery` na SENT, zwiększenie limitu dnia i sprzątanie starych limitów wykonują się w jednym transakcyjnym `D1.batch()`. Awaria partii po pierwszym zapisie wycofuje całość; retry po zwolnieniu lease ponawia ten sam klucz idempotencji. Celowane testy **7/7 PASS**, ESLint (0 błędów, jedno istniejące ostrzeżenie), repo typecheck i diff check PASS. Rzeczywisty kod Workera na lokalnym SQLite 3.51.3: dwa równoległe runy dały jeden provider call dla jednego eventu; awaria commitu pozostawiła event PENDING i nie zmieniła licznika; retry zachował ten sam klucz, oznaczył SENT i zwiększył licznik raz. Cloudflare D1, Resend, restart/timeout i inbox nadal nieprzetestowane; K31 pozostaje częściowe. [Dowód](program-audytu/evidence/k31-atomic-acceptance-2026-11-07/result.json).
+
 <a id="k32"></a>
 
 #### K32. Odtworzenie całego produktu wyłącznie z kopii poza hostem

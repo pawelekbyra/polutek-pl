@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-07",
+  "package": "K31 partial: atomically record provider acceptance and outbox SENT state",
+  "base_commit": "6cb9ba35",
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/workers/pp-watchdog.test.ts tests/unit/workers/pp-watchdog-delivery.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 2,
+      "tests": 7
+    },
+    {
+      "command": "npx eslint workers/pp-watchdog/worker.mjs tests/unit/workers/pp-watchdog-delivery.test.ts",
+      "result": "PASS",
+      "errors": 0,
+      "warnings": ["Existing import/no-anonymous-default-export warning in worker.mjs"]
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "node docs/audit/2026-11-01-platform-research/program-audytu/tools/k31-watchdog-sqlite-check.mjs",
+      "result": "PASS",
+      "sqlite": "3.51.3",
+      "observed": {
+        "concurrent_runs": 2,
+        "provider_stub_calls": 3,
+        "failed_acceptance_batch_rolled_back": true,
+        "retry_used_same_idempotency_key": true,
+        "delivery_status": "SENT",
+        "daily_sent_count_final": 2,
+        "external_calls": 0
+      }
+    },
+    {
+      "command": "node --check docs/audit/2026-11-01-platform-research/program-audytu/tools/k31-watchdog-sqlite-check.mjs",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "finding": "After the provider returns success, delivery status SENT, daily quota increment, and old-quota cleanup are now one D1 batch. If the batch fails after its first statement, the SQLite transaction rolls back both DB changes; the event remains pending and a later retry uses the same provider idempotency key. The unit failure injection and actual Worker code on local SQLite exercised this boundary.",
+  "scope": "Synthetic provider only; local SQLite 3.51.3 executed the actual Worker code. No Cloudflare D1, Resend endpoint, inbox, deployment, or production environment was used.",
+  "remaining": "Cloudflare D1/runtime behavior, isolate restart and timeout, Resend idempotency retention/acceptance, and inbox delivery remain unverified. Provider idempotency reduces duplicate sends but does not prove exactly-once delivery. K31 remains partial."
+}

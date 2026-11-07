@@ -10,7 +10,8 @@
  *                (dead man's switch); a WARN reported for 30 min is escalated here too (second channel).
  * A check alerts after 2 failed runs in a row (no e-mail for a blip), again every 6 h while failing, and once
  * when it recovers. E-mail through Resend, at most MAX_ALERTS_PER_DAY a day (the app shares the Resend quota).
- * State: D1 (binding DB). Free-plan budget: 288 cron runs + 288 pings a day.
+ * State: D1 (binding DB). Provider acceptance, SENT state, and daily quota are committed together.
+ * Free-plan budget: 288 cron runs + 288 pings a day.
  *
  * HTTP (all need "Authorization: Bearer <PING_TOKEN>"):
  *   POST /ping        body "OK" or "WARN <issues>"  (health.sh)
@@ -116,8 +117,12 @@ async function sendMail(env, subject, text, now, idempotencyKey) {
     return { sent: false, retryAt: null, error: error && error.name ? error.name : 'network-error' };
   }
   if (!response.ok) return { sent: false, retryAt: null, error: `http-${response.status}` };
-  await env.DB.prepare('INSERT INTO alert_day (day, sent) VALUES (?, 1) ON CONFLICT(day) DO UPDATE SET sent = sent + 1').bind(day).run();
-  await env.DB.prepare('DELETE FROM alert_day WHERE day < ?').bind(new Date(now - 7 * 86400000).toISOString().slice(0, 10)).run();
+  // Outbox deliveries account for provider acceptance together with SENT in one D1 transaction below.
+  // If that transaction fails, retrying the same event uses the same provider idempotency key.
+  if (!idempotencyKey) {
+    await env.DB.prepare('INSERT INTO alert_day (day, sent) VALUES (?, 1) ON CONFLICT(day) DO UPDATE SET sent = sent + 1').bind(day).run();
+    await env.DB.prepare('DELETE FROM alert_day WHERE day < ?').bind(new Date(now - 7 * 86400000).toISOString().slice(0, 10)).run();
+  }
   return { sent: true, retryAt: null, error: null };
 }
 
@@ -147,9 +152,14 @@ async function deliverPending(env, now) {
     if (!claimed) continue;
     const result = await sendMail(env, claimed.subject, claimed.body, now, claimed.id);
     if (result.sent) {
-      await env.DB.prepare(
-        `UPDATE alert_delivery SET status = 'SENT', sent_at = ?, lease_until = NULL, last_error = NULL WHERE id = ? AND status = 'PENDING'`,
-      ).bind(now, claimed.id).run();
+      const day = new Date(now).toISOString().slice(0, 10);
+      await env.DB.batch([
+        env.DB.prepare(
+          `UPDATE alert_delivery SET status = 'SENT', sent_at = ?, lease_until = NULL, last_error = NULL WHERE id = ? AND status = 'PENDING'`,
+        ).bind(now, claimed.id),
+        env.DB.prepare('INSERT INTO alert_day (day, sent) VALUES (?, 1) ON CONFLICT(day) DO UPDATE SET sent = sent + 1').bind(day),
+        env.DB.prepare('DELETE FROM alert_day WHERE day < ?').bind(new Date(now - 7 * 86400000).toISOString().slice(0, 10)),
+      ]);
       continue;
     }
     const attempts = claimed.attempts + 1;
