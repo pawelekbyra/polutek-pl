@@ -20,8 +20,9 @@ response times degrade. Results and method: `docs/operations/LOAD-TEST.md`.
   app container to derive the exact HMAC using its configured client-hash secret and deletes only guest rows
   matching this run's unique user-agent hash. The secret never leaves the app container. Missing/invalid
   identity, unavailable app, HMAC failure, database failure or an active runner stop cleanup before deletion.
-  `run-steps.sh` takes an exclusive per-OUT_DIR lock; cleanup refuses to run while that lock exists.
-  If a runner was killed with SIGKILL, verify no `run-steps.sh`/k6 process is active before manually removing
+  Both `run-steps.sh` and `count-queries.sh` take the same exclusive per-OUT_DIR lock and share the same unique
+  user-agent identity; cleanup refuses to run while either is active. Clean up only after all measurements finish.
+  If a runner was killed with SIGKILL, verify no `run-steps.sh`/`count-queries.sh`/k6 process is active before manually removing
   the stale `.run-lock`; the scripts never clear it automatically.
 - `preflight.sh` refuses to start a step during a deploy (`deploy.sh`), an encode (`VideoEncodeJob`
   RUNNING/QUEUED), with < 600 MB available memory or load1 > 3.
@@ -31,7 +32,8 @@ response times degrade. Results and method: `docs/operations/LOAD-TEST.md`.
   > 900 MiB (`APP_MEM_FUSE_MIB`; the container limit is 1 GiB). It exits by itself after `GUARD_MAX_SECONDS`
   (1 h). k6 itself aborts at > 2% 5xx/timeouts; `run-steps.sh` ends a series at the first saturated step or
   p95 > `STOP_P95_MS` (default 2000 ms) and waits (up to 2 min) for the host to calm down between series.
-- Each `run-steps.sh` series writes `<LABEL>-profile.json`; `count-queries.sh` writes a fixed-count profile next to its output with its profile version, target, exact rate schedule, duration/rest, endpoint mix, k6 image reference and SHA-256 hashes of the generator and cleanup scripts. `results.tsv` and each `queries.tsv` result record that profile hash. An existing label cannot be reused for a different profile; `count-queries.sh` records exact N iterations, not throughput; choose a new `LABEL` or `OUT_DIR`. For `journey`, rate means new guest journeys per second (five requests per iteration); single-endpoint targets mean requests per second. Neither is a count of concurrent viewers. The label does not prove cache state; the profile records cache state as unspecified.
+- Each `run-steps.sh` series writes `<LABEL>-profile.json`; `count-queries.sh` writes a fixed-count profile next to its output with its profile version, target, exact rate schedule, duration/rest, endpoint mix, k6 image reference and SHA-256 hashes of the generator, response probe and cleanup scripts. `results.tsv` and each `queries.tsv` result record that profile hash. An existing label cannot be reused for a different profile; `count-queries.sh` records exact N iterations, not throughput; choose a new `LABEL` or `OUT_DIR`. For `journey`, rate means new guest journeys per second (five requests per iteration); single-endpoint targets mean requests per second. Neither is a count of concurrent viewers. The label does not prove cache state; the profile records cache state as unspecified.
+- Before either runner measures a target that includes home or thumbnail, `response-probe.py` makes one separate loopback GET per relevant endpoint. It accepts numeric loopback targets only, reads at most 64 KiB plus one sentinel byte, checks for an HTML document marker or a supported image signature matching the MIME type, and closes the response; this traffic is outside k6 timing and results. Redirects are refused. It does not decode the image, validate the whole HTML, or establish that the full asset is usable. `profile.json` records the request target (with a SHA-256 of the video ID), whether the probe runs, the fixed bound, its result filename, and the source hash; results are appended as JSONL.
 
 ## Run
 

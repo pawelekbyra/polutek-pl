@@ -2,6 +2,7 @@
 """Write an immutable description of one guest load-test series."""
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -69,7 +70,7 @@ def main() -> int:
         rates.append(rate)
         rate *= 2
 
-    source_files = ("k6-guest.js", "response-contract.mjs", "summarize.py", "run-steps.sh", "profile-metadata.py", "count-queries.sh", "cleanup.sh", "preflight.sh", "guard.sh")
+    source_files = ("k6-guest.js", "response-contract.mjs", "response-probe.py", "summarize.py", "run-steps.sh", "profile-metadata.py", "count-queries.sh", "cleanup.sh", "preflight.sh", "guard.sh")
     source_hashes = {}
     for name in source_files:
         source = Path(script_dir) / name
@@ -85,6 +86,12 @@ def main() -> int:
         "profile_id": "polutek-guest-read-only-v1",
         "label": label,
         "target": sys.argv[2],
+        "target_config": {
+            "base_url": os.environ.get("BASE", "http://127.0.0.1:3000"),
+            "host_header": os.environ.get("HOST_HEADER", "www.pawelperfect.com"),
+            "locale": os.environ.get("LOCALE", "pl"),
+            "video_id_sha256": hashlib.sha256(os.environ["VIDEO_ID"].encode()).hexdigest() if os.environ.get("VIDEO_ID") else None,
+        },
         "executor": executor,
         "rate_metric": (
             target.get("rate_metric", "single_endpoint_requests_per_second")
@@ -109,6 +116,14 @@ def main() -> int:
         "cache_state": "unspecified; label is descriptive and does not prove cache state",
         "generator_image_reference": image,
         "source_sha256": source_hashes,
+        "bounded_response_probe": {
+            "runner": "run-steps.sh" if executor == "constant-arrival-rate" else "count-queries.sh",
+            "executed": sys.argv[2] in ("journey", "home", "thumb"),
+            "endpoints": ["home", "thumb"],
+            "max_prefix_bytes": 65536,
+            "body_reading_during_k6_load": False,
+            "result_file": f"{label}-response-probe.jsonl",
+        },
     }
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)

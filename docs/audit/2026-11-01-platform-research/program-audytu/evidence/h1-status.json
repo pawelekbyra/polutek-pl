@@ -14,7 +14,8 @@
     "K02": "THREE_LOCAL_IMAGES_LOAD_PATCHED_LIBRARIES_AND_OPTIMIZER_HTTP_PASSES_RELEASE_REVIEW_PRODUCTION_EVIDENCE_OPEN",
     "K03": "CI_SOURCE_PROVENANCE_REQUIRED_TEST_REPORTS_AND_GENERATED_TYPE_FAILURE_VERIFIED_FULL_STACK_EMAIL_OPEN",
     "K05": "OWNER_PROFILE_AND_DP01_DP09_REGISTERED_PAID_ACCESS_CONFLICT_AND_RUNTIME_OPEN",
-    "K06": "COMMON_PROOF_VALIDATOR_SEALER_TESTED_PRODUCER_AND_ALL_PUBLISH_ACTIVATE_PATHS_NOT_YET_CONNECTED"
+    "K06": "COMMON_PROOF_VALIDATOR_SEALER_TESTED_PRODUCER_AND_ALL_PUBLISH_ACTIVATE_PATHS_NOT_YET_CONNECTED",
+    "K38": "BOUNDED_HTML_THUMBNAIL_PROBE_FIXED_COUNT_IDENTITY_LOCK_36_PASS_NONPRODUCTION_ACCEPTANCE_OPEN"
   },
   "acceptance": {
     "K02_existing_tests": {
@@ -1559,5 +1560,18 @@
     "policy_or_code_changed": false,
     "package_closed": false,
     "evidence": "program-audytu/K05-PROFIL-PRODUKTU.md"
+  },
+  "latest_k38_followup": {
+    "date": "2026-11-07",
+    "package": "bounded HTML/thumbnail probe and fixed-count runner identity",
+    "tests_passed": 36,
+    "tests_failed": 0,
+    "network_scope": "synthetic 127.0.0.1 fixture only",
+    "max_prefix_bytes": 65536,
+    "sentinel_bytes": 1,
+    "fixed_count_shares_lock_and_guest_identity": true,
+    "k6_load_or_app_used": false,
+    "package_closed": false,
+    "evidence": "program-audytu/evidence/k38-bounded-body-probe-2026-11-07.json"
   }
 }

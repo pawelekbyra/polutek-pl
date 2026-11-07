@@ -15,6 +15,9 @@ K6_IMAGE="${K6_IMAGE:-grafana/k6:1.3.0}"
 LABEL="${LABEL:-$TARGET}"
 [[ "$LABEL" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "invalid LABEL; use only letters, digits, dot, underscore or hyphen" >&2; exit 6; }
 : "${VIDEO_ID:?VIDEO_ID is required}"
+BASE="${BASE:-http://127.0.0.1:3000}"
+LOCALE="${LOCALE:-pl}"
+HOST_HEADER="${HOST_HEADER:-www.pawelperfect.com}"
 mkdir -p "$OUT"; chmod 777 "$OUT"
 LOCK="$OUT/.run-lock"
 if ! mkdir "$LOCK" 2>/dev/null; then echo "load test already active for OUT_DIR; refusing concurrent runner" >&2; exit 7; fi
@@ -31,7 +34,7 @@ RESULTS="$OUT/results.tsv"
 HEADER="target\trate\titer_per_s\treq_per_s\treqs\tdropped\tp50\tp95\tp99\tmax\terr5xx_pct\tnon200\twrong_content\tper_endpoint_p50/p95/p99_ms\tlabel\tstarted"
 HEADER+="\tprofile_id\tprofile_sha256"
 PROFILE_FILE="$OUT/${LABEL}-profile.json"
-python3 "$DIR/profile-metadata.py" "$PROFILE_FILE" "$TARGET" "$START" "$MAX" "$STEP" "$REST" "$STOP_P95" "$LABEL" "$K6_IMAGE" "$DIR" constant-arrival-rate || exit 14
+BASE="$BASE" HOST_HEADER="$HOST_HEADER" LOCALE="$LOCALE" VIDEO_ID="$VIDEO_ID" python3 "$DIR/profile-metadata.py" "$PROFILE_FILE" "$TARGET" "$START" "$MAX" "$STEP" "$REST" "$STOP_P95" "$LABEL" "$K6_IMAGE" "$DIR" constant-arrival-rate || exit 14
 PROFILE_SHA256="$(sha256sum "$PROFILE_FILE" | awk '{print $1}')"
 if [ ! -s "$RESULTS" ]; then
   printf '%s\n' "$HEADER" > "$RESULTS"
@@ -39,6 +42,21 @@ elif [ "$(head -n 1 "$RESULTS")" != "$HEADER" ]; then
   echo "incompatible results.tsv header; select a fresh OUT_DIR or archive the previous results" >&2
   exit 6
 fi
+PROBE_FILE="$OUT/${LABEL}-response-probe.jsonl"
+probe_response() {
+  local result code
+  result="$(python3 "$DIR/response-probe.py" "$1" "$2" "$HOST_HEADER" "$LOADTEST_USER_AGENT" 65536)" || {
+    code=$?
+    printf '%s\n' "$result" | tee -a "$PROBE_FILE" >&2
+    return "$code"
+  }
+  printf '%s\n' "$result" | tee -a "$PROBE_FILE"
+}
+case "$TARGET" in
+  journey) probe_response home "$BASE/$LOCALE" || exit 15; probe_response thumb "$BASE/api/videos/$VIDEO_ID/thumbnail" || exit 15 ;;
+  home) probe_response home "$BASE/$LOCALE" || exit 15 ;;
+  thumb) probe_response thumb "$BASE/api/videos/$VIDEO_ID/thumbnail" || exit 15 ;;
+esac
 
 rate="$START"
 while awk -v r="$rate" -v m="$MAX" 'BEGIN{exit !(r<=m)}'; do
@@ -51,6 +69,7 @@ while awk -v r="$rate" -v m="$MAX" 'BEGIN{exit !(r<=m)}'; do
   docker run --rm --name pp-loadtest-k6 --network host --cpus 0.5 --memory 256m \
     -v "$DIR:/scripts:ro" -v "$OUT:/out" \
     -e TARGET="$TARGET" -e RATE="$rate" -e DURATION="${STEP}s" -e VIDEO_ID="$VIDEO_ID" -e LOADTEST_USER_AGENT="$LOADTEST_USER_AGENT" \
+    -e BASE="$BASE" -e HOST_HEADER="$HOST_HEADER" -e LOCALE="$LOCALE" \
     -e OUT="/out/$name.json" "$K6_IMAGE" run -q --no-usage-report /scripts/k6-guest.js >/dev/null 2>"$OUT/$name.log"
   if [ ! -s "$OUT/$name.json" ]; then echo "no summary (k6 killed?)"; tail -3 "$OUT/$name.log"; exit 5; fi
   row="$(python3 "$DIR/summarize.py" "$OUT/$name.json" "$TARGET" "$rate" "$STOP_P95")"; code=$?

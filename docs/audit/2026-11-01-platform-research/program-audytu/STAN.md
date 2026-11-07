@@ -1,5 +1,11 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K38 — ograniczony probe treści, 7 listopada 2026
+
+Nowy `response-probe.py` sprawdza odpowiedź home i miniatury przez numeryczny loopback: HTTP 200, MIME i ograniczony prefiks (maks. 65536 bajtów plus jeden sentinel) z markerem HTML albo sygnaturą obrazu. `run-steps.sh` i `count-queries.sh` uruchamiają probe przed pomiarem tylko dla endpointów obecnych w profilu i zapisują JSONL; pomiar k6 nadal odrzuca duże body. Profil zapisuje BASE/Host/locale, skrót ID filmu, zastosowanie probe i SHA helpera. Fixed-count ma teraz tę samą tożsamość użytkownika-gościa i blokadę co runner serii, więc sesje z obu trybów można potem objąć kontrolowanym cleanupem. Test syntetyczny **36/36 PASS**, ESLint i składnia PASS. Nie uruchomiono k6, aplikacji, bazy, serwera ani cleanup. K38 jest częściowe; nadal potrzebny pełny non-production acceptance i pozostałe scenariusze obciążenia. [Dowód](evidence/k38-bounded-body-probe-2026-11-07.json).
+
+**Następny krok K38:** odbiór w non-production po stronie operatora, następnie pełny mix/playback/heartbeat i kontrolowany cleanup; nie uruchamiać na produkcji.
+
 ## K05 — profil produktu, 7 listopada 2026
 
 Utworzono [`K05-PROFIL-PRODUKTU.md`](K05-PROFIL-PRODUKTU.md) z oczekiwaniami dla widza/twórcy/admina, mapą flag, jawnie rozbieżnym profilem Premium/napiwków i rejestrem DP01–DP09. R19 w `KOLEJNOSC-NAPRAW.csv` wskazuje częściowe opracowanie; nie oznacza zamknięcia K05. Wartości konfiguracji produkcji i zachowanie runtime pozostają niepotwierdzone. Nie zmieniono kodu, płatności, danych ani środowiska.
@@ -28,7 +34,7 @@ Na checkout SHA `7e277574` oba testy K20 uruchomiono wspólnie na nowej PostgreS
 
 ## K38 — runtime przypiętego k6, 7 listopada 2026
 
-K6 v1.3.0 zweryfikowany po SHA-256 uruchomiono przeciw atrapowemu HTTP wyłącznie na `127.0.0.1`; po jednym żądaniu na próbę. Prawidłowa odpowiedź comments przechodzi summarizer (0), a 200 z JSON MIME i HTML body daje `unexpected_content=1` i exit 13. Szybkie HTTP 500 odrzuca k6 (99) i summarizer (13), a syntetyczne 2,2 s przekracza p95=2000 ms i daje exit 10. Runtime ujawnił brak metryki `dropped_iterations` w summary executora `per-vu-iterations`; summary hook uzupełnia ją zerem tylko dla trybu stałej liczby iteracji. Test kontraktu 31/31 PASS, ESLint, node/shell syntax i diff check PASS. Nie było połączenia do Polutka/DB/produkcji ani obciążenia. K38 pozostaje częściowe. Następny krok: rozszerzyć semantyczny kontrakt na HTML/miniaturę z ograniczeniem pamięci i doprecyzować wersjonowany mix; rzeczywisty cleanup oraz odbiór profilu wymagają non-production. [Dowód](evidence/k38-k6-runtime-contract-2026-11-07.json).
+K6 v1.3.0 zweryfikowany po SHA-256 uruchomiono przeciw atrapowemu HTTP wyłącznie na `127.0.0.1`; po jednym żądaniu na próbę. Prawidłowa odpowiedź comments przechodzi summarizer (0), a 200 z JSON MIME i HTML body daje `unexpected_content=1` i exit 13. Szybkie HTTP 500 odrzuca k6 (99) i summarizer (13), a syntetyczne 2,2 s przekracza p95=2000 ms i daje exit 10. Runtime ujawnił brak metryki `dropped_iterations` w summary executora `per-vu-iterations`; summary hook uzupełnia ją zerem tylko dla trybu stałej liczby iteracji. Test kontraktu 31/31 PASS, ESLint, node/shell syntax i diff check PASS. Nie było połączenia do Polutka/DB/produkcji ani obciążenia. Semantyczny probe HTML/miniatury dodano w nowszej sekcji K38 poniżej; rzeczywisty cleanup i odbiór profilu nadal wymagają non-production. [Dowód](evidence/k38-k6-runtime-contract-2026-11-07.json).
 
 ## K30 — probe statusu aplikacji, 7 listopada 2026
 

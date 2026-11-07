@@ -1,5 +1,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
+import { spawn, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -34,6 +36,55 @@ function runSummary(data: unknown) {
 afterAll(() => rmSync(temp, { recursive: true, force: true }));
 
 describe('load-test response contract', () => {
+  it('checks bounded HTML and image signatures against a loopback fixture', async () => {
+    const server = createServer((request, response) => {
+      if (request.url === '/html') {
+        response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        response.end('<!doctype html><html>' + 'x'.repeat(120000));
+      } else if (request.url === '/redirect') {
+        response.writeHead(302, { Location: '/html' });
+        response.end();
+      } else if (request.url === '/bad-html') {
+        response.writeHead(200, { 'Content-Type': 'text/html' });
+        response.end('<body>proxy error</body>');
+      } else if (request.url === '/thumb') {
+        response.writeHead(200, { 'Content-Type': 'image/webp' });
+        response.end('RIFF\x00\x00\x00\x00WEBP' + 'x'.repeat(120000));
+      } else {
+        response.writeHead(200, { 'Content-Type': 'image/jpeg' });
+        response.end('not an image');
+      }
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('loopback fixture did not bind TCP');
+    const probe = path.join(root, 'scripts/loadtest/response-probe.py');
+    const run = (endpoint: string, route: string) => new Promise<{ status: number | null; stdout: string; stderr: string }>((resolve) => {
+      const child = spawn('python3', [probe, endpoint, `http://127.0.0.1:${address.port}${route}`,
+        'www.pawelperfect.com', 'pp-loadtest/123e4567-e89b-12d3-a456-426614174000', '65536'], { stdio: ['ignore', 'pipe', 'pipe'] });
+      let stdout = '';
+      let stderr = '';
+      child.stdout.setEncoding('utf8').on('data', (chunk: string) => { stdout += chunk; });
+      child.stderr.setEncoding('utf8').on('data', (chunk: string) => { stderr += chunk; });
+      child.on('close', (status) => resolve({ status, stdout, stderr }));
+    });
+    try {
+      const html = await run('home', '/html');
+      expect(html.status, `${html.stdout}${html.stderr}`).toBe(0);
+      expect(JSON.parse(html.stdout)).toMatchObject({ ok: true, bytes_inspected: 65536, max_prefix_bytes: 65536, truncated: true });
+      expect((await run('home', '/bad-html')).status).toBe(1);
+      expect((await run('home', '/redirect')).status).toBe(1);
+      const thumb = await run('thumb', '/thumb');
+      expect(thumb.status).toBe(0);
+      expect(JSON.parse(thumb.stdout)).toMatchObject({ ok: true, bytes_inspected: 65536, truncated: true });
+      expect((await run('thumb', '/bad-thumb')).status).toBe(1);
+      expect(spawnSync('python3', [probe, 'home', 'http://example.com/', 'www.pawelperfect.com',
+        'pp-loadtest/123e4567-e89b-12d3-a456-426614174000', '65536'], { encoding: 'utf8' }).status).toBe(2);
+    } finally {
+      await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    }
+  });
+
   it.each([
     ['home', { 'Content-Type': 'text/html; charset=utf-8' }],
     ['sidebar', { 'content-type': 'application/json; charset=utf-8' }],
@@ -87,12 +138,16 @@ describe('load-test response contract', () => {
   it('writes a versioned profile that distinguishes guest journeys from concurrent viewers', () => {
     const output = path.join(temp, 'journey-profile.json');
     const profileScript = path.join(root, 'scripts/loadtest/profile-metadata.py');
-    const result = spawnSync('python3', [profileScript, output, 'journey', '2', '8', '60', '30', '2000', 'warm-check', 'grafana/k6:1.3.0', path.join(root, 'scripts/loadtest')], { encoding: 'utf8' });
+    const result = spawnSync('python3', [profileScript, output, 'journey', '2', '8', '60', '30', '2000', 'warm-check', 'grafana/k6:1.3.0', path.join(root, 'scripts/loadtest')], {
+      encoding: 'utf8', env: { ...process.env, BASE: 'http://127.0.0.1:3000', HOST_HEADER: 'www.pawelperfect.com', LOCALE: 'pl', VIDEO_ID: 'fixture-video-id' },
+    });
     expect(result.status).toBe(0);
     const profile = JSON.parse(readFileSync(output, 'utf8')) as {
       profile_id: string; rate_metric: string; iteration_unit: string; requests_per_iteration: number;
       rate_schedule_per_second: number[]; viewer_concurrency_measured: boolean; interpretation: string;
       cache_state: string; source_sha256: Record<string, string>;
+      bounded_response_probe: { runner: string; executed: boolean; endpoints: string[]; max_prefix_bytes: number; body_reading_during_k6_load: boolean; result_file: string };
+      target_config: { base_url: string; host_header: string; locale: string; video_id_sha256: string | null };
     };
     expect(profile.profile_id).toBe('polutek-guest-read-only-v1');
     expect(profile.rate_metric).toBe('new_guest_journeys_per_second');
@@ -103,6 +158,12 @@ describe('load-test response contract', () => {
     expect(profile.interpretation).toContain('not concurrent viewers');
     expect(profile.cache_state).toContain('does not prove cache state');
     expect(Object.keys(profile.source_sha256)).toContain('k6-guest.js');
+    expect(Object.keys(profile.source_sha256)).toContain('response-probe.py');
+    expect(profile.bounded_response_probe).toEqual({ runner: 'run-steps.sh', executed: true, endpoints: ['home', 'thumb'], max_prefix_bytes: 65536, body_reading_during_k6_load: false, result_file: 'warm-check-response-probe.jsonl' });
+    expect(profile.target_config).toEqual({
+      base_url: 'http://127.0.0.1:3000', host_header: 'www.pawelperfect.com', locale: 'pl',
+      video_id_sha256: createHash('sha256').update('fixture-video-id').digest('hex'),
+    });
   });
 
   it('labels single-endpoint profiles as requests per second rather than viewers', () => {
@@ -110,10 +171,11 @@ describe('load-test response contract', () => {
     const profileScript = path.join(root, 'scripts/loadtest/profile-metadata.py');
     const result = spawnSync('python3', [profileScript, output, 'comments', '32', '64', '60', '30', '1000', 'comments-warm', 'grafana/k6:1.3.0', path.join(root, 'scripts/loadtest')], { encoding: 'utf8' });
     expect(result.status).toBe(0);
-    const profile = JSON.parse(readFileSync(output, 'utf8')) as { rate_metric: string; routes: Array<{ route: string }>; interpretation: string };
+    const profile = JSON.parse(readFileSync(output, 'utf8')) as { rate_metric: string; routes: Array<{ route: string }>; interpretation: string; bounded_response_probe: { executed: boolean } };
     expect(profile.rate_metric).toBe('single_endpoint_requests_per_second');
     expect(profile.routes[0].route).toBe('/api/comments');
     expect(profile.interpretation).toContain('not viewers');
+    expect(profile.bounded_response_probe.executed).toBe(false);
   });
 
   it('refuses to overwrite a profile hash target with different run parameters', () => {
@@ -175,6 +237,10 @@ describe('load-test response contract', () => {
     const runner = readFileSync(path.join(root, 'scripts/loadtest/run-steps.sh'), 'utf8');
     expect(runner).toContain('13) echo "invalid result: unexpected status or response content type" >&2; exit 13 ;;');
     expect(runner).toContain('14) echo "invalid result: incomplete k6 summary" >&2; exit 14 ;;');
+    expect(runner).toContain('probe_response home "$BASE/$LOCALE" || exit 15');
+    expect(runner).toContain('probe_response thumb "$BASE/api/videos/$VIDEO_ID/thumbnail" || exit 15');
+    expect(runner.indexOf('response-probe.py')).toBeLessThan(runner.indexOf('docker run --rm --name pp-loadtest-k6'));
+    expect(runner).toContain('PROBE_FILE="$OUT/${LABEL}-response-probe.jsonl"');
     expect(runner).toContain('*) echo "invalid result: summarizer failed (exit $code)" >&2; exit "$code" ;;');
     expect(runner).toContain('incompatible results.tsv header; select a fresh OUT_DIR or archive the previous results');
     expect(runner).toContain('invalid LABEL; use only letters, digits, dot, underscore or hyphen');
@@ -184,6 +250,11 @@ describe('load-test response contract', () => {
     expect(counter).toContain('profile-metadata.py');
     expect(counter).toContain('per-vu-iterations');
     expect(counter).toContain('profile_sha256=%s');
+    expect(counter).toContain('LOCK="$OUT/.run-lock"');
+    expect(counter).toContain('UA_FILE="$OUT/client-user-agent"');
+    expect(counter).toContain('-e LOADTEST_USER_AGENT="$LOADTEST_USER_AGENT"');
+    expect(counter).toContain('probe_response thumb "$BASE/api/videos/$VIDEO_ID/thumbnail" || exit 15');
+    expect(counter).toContain('-e BASE="$BASE" -e HOST_HEADER="$HOST_HEADER" -e LOCALE="$LOCALE"');
   });
 
   it('derives cleanup identity with the same HMAC protocol as playback sessions', () => {
