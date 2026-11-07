@@ -50,4 +50,14 @@ describe('checkHealth Use Case', () => {
     expect(result.content?.allVideosCount).toBe(10);
     expect(mockPrisma.$queryRaw).toHaveBeenCalled();
   });
+
+  it('reports readiness failure when the database query fails', async () => {
+    mockPrisma.$queryRaw.mockRejectedValueOnce(new Error('database unavailable'));
+
+    const result = await checkHealth(ctx, 'test-token');
+
+    expect(result).toEqual({ ok: false, database: 'failed' });
+    expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.creator.findFirst).not.toHaveBeenCalled();
+  });
 });

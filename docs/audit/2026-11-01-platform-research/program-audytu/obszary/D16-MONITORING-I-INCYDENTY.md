@@ -44,6 +44,8 @@ Hostowe skrypty mają też `OnFailure` systemd, ograniczenie częstości wiadomo
 
 **Kierunek:** rozdzielić lekki liveness, chroniony readiness zależności oraz syntetyczny test znanego filmu: uzyskanie dostępu, manifest, właściwy segment i faktyczny start dekodowania. Osobno kontrolować ścieżkę od uploadu do publikacji. Próbki muszą mieć bezpieczny koszt, własne treści i sprzątanie; nie używać tokenów widzów. Dla płatności monitorować zdarzenia i uzgodnienie, nie cyklicznie obciążać karty.
 
+**Uzupełnienie K30, 7 listopada 2026:** app probe przyjmuje tylko statusy 2xx. `/api/health` bez tokenu jest liveness; z ważnym `x-health-token` jest readiness i odpowiedź zależności `ok:false` mapuje się na HTTP 503. Test use case potwierdza, że niedostępne SQL daje `{ok:false,database:"failed"}`. Trasa 3/3, łącznie celowane health/probe **29/29 PASS**, lint i typecheck PASS. Nadal brak canary manifestu/segmentu/dekodowania i end-to-end alertu. HLS Worker wymaga podpisanego, krótkotrwałego tokenu, więc nie należy konfigurować w zewnętrznym watchdogzie statycznego URL, który wygaśnie lub będzie bearer credentialem; kolejny projekt powinien mintować token po stronie aplikacji dla jawnie wybranego, własnego publicznego kontrolnego filmu.
+
 ## R36 — utracone powiadomienie „OK again”
 
 Źródło: [Worker, przejście stanu i zapis](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/workers/pp-watchdog/worker.mjs#L88). Priorytet **P2 operacyjny**, niezależny przegląd PENDING.

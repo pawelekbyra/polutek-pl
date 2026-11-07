@@ -779,6 +779,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K30-T1** — Osobne awarie DB, brak segmentu, zatrzymany encoder i nieświeże QoE dają właściwy stan/sygnał w zadanym czasie; sam HTTP 200 nie wystarcza do zaliczenia filmu.
 - **K30-T2** — Zdrowa kontrola dekoduje własny film i nie alarmuje; sygnał trafia do własnego odbiornika, logi nie zawierają tokenów, ruch nie przekracza budżetu canary.
 
+**Postęp lokalny 7 listopada 2026 (częściowy):** probe aplikacji w panelu admina uznaje teraz wyłącznie odpowiedzi 2xx z `/api/health`; wcześniejsze `status < 500` maskowało m.in. 401/404 jako zdrowie. Publiczny health bez tokenu pozostaje lekkim liveness 200. Autoryzowany readiness zwraca teraz HTTP 503, gdy diagnostyka zależności zwróci `ok:false`, zamiast HTTP 200 z błędnym JSON-em. Test regresyjny probe akceptuje 200/204 i odrzuca 401/404/500/503; test trasy sprawdza liveness 200 oraz readiness 200/503; test use case wymusza niedostępność DB i potwierdza `database: failed`. Probe HLS pozostaje osobny: oczekiwane 404 na pustym korzeniu nadal oznacza działający Worker. Celowane testy health/probe: **29/29 PASS**, ESLint i repo typecheck PASS. Nie realizuje to canary manifestu/segmentu/dekodowania ani odbioru alarmu/QoE; K30-T1/T2 i pakiet pozostają otwarte. [Testy probe](../../../tests/unit/admin-overview/overview-use-cases.test.ts), [test trasy](../../../tests/unit/api/health-route.test.ts), [test DB](../../../tests/unit/modules/health/check-health.use-case.test.ts).
+
 <a id="k31"></a>
 
 #### K31. Trwałe ponowienie powiadomienia recovery watchdog

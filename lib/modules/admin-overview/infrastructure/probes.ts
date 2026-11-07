@@ -32,11 +32,11 @@ async function timed(run: (signal: AbortSignal) => Promise<{ ok: boolean; detail
   }
 }
 
-/** Public site, from inside the Docker network (default http://app:3000). */
+/** Public site's health endpoint from inside Docker (default http://app:3000); only 2xx is healthy. */
 export function probePublicApp(baseUrl: string, fetcher: Fetcher = fetch): Promise<ProbeResult> {
   return timed(async (signal) => {
     const res = await fetcher(`${baseUrl.replace(/\/+$/, "")}/api/health`, { signal, cache: "no-store" });
-    return { ok: res.status < 500, detail: `HTTP ${res.status}` };
+    return { ok: res.ok, detail: `HTTP ${res.status}` };
   });
 }
 

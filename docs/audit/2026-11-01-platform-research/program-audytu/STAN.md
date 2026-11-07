@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K30 — probe statusu aplikacji, 7 listopada 2026
+
+`probePublicApp` uznaje wyłącznie 2xx; 401/404/5xx są awarią. Publiczny health bez tokenu pozostaje liveness 200; autoryzowany readiness zwraca 503, gdy diagnostyka zależności ma `ok:false`. Test use case wymusza błąd SQL i sprawdza `{ok:false,database:"failed"}`. Osobny probe HLS nadal uznaje oczekiwane 404 na korzeniu za działający Worker. Trzy celowane pliki health/probe: **29/29 PASS**, ESLint, repo typecheck i diff check PASS. Nie dowodzi to odtwarzania manifestu/segmentu, dekodowania, QoE ani odbioru alarmów. K30 pozostaje częściowe. Następny krok: canary wymaga kontrolnego własnego filmu i sposobu bezpiecznego uzyskania krótkotrwałego HLS URL; test dekodowania wymaga osobnego browser runnera/odbiornika. Nie utrwalać tokenu widza w Cloudflare ani logach.
+
 ## K23/R05 — publikacja i proces odzysku fan-out, 7 listopada 2026
 
 Test `tests/postgres/k23-publish-crash-cron-http.pg.test.ts` przechodzi przez rzeczywisty lokalny Next HTTP i PostgreSQL 17 po 84 migracjach: autoryzowane Studio POST publikuje syntetyczne gotowe SELF_HLS, a publikacja i `NEW_VIDEO_FANOUT` są zapisane razem. Testowa dzierżawa w disposable DB uniemożliwia kickowi skonsumowanie joba; po odpowiedzi HTTP proces Next dostaje SIGKILL. Po usunięciu dzierżawy świeży Next obsługuje rzeczywisty cron GET, kończy job i tworzy dokładnie jedno powiadomienie; powtórny cron nie tworzy duplikatu. **1/1 PASS** (31,36 s), ESLint i repo typecheck PASS; 84/84 migracje. Fixture’y i jednorazową bazę usunięto, produkcja nietknięta. Granice: sztuczny HLS/subskrybent, deterministyczna dzierżawa modeluje utratę kicka, brak R2/S3 i niezależnego review. K23/R05 pozostaje częściowe do review i pozostałych granic premiere/provider. [Dowód](evidence/k23-http-crash-cron-2026-11-07/result.json).
