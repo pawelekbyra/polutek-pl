@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { hasExpectedLoadContentType } from '../../../scripts/loadtest/response-contract.mjs';
+import { hasExpectedLoadContentType, hasExpectedLoadResponseBody } from '../../../scripts/loadtest/response-contract.mjs';
 import { hashClientValue } from '../../../lib/modules/privacy/domain/client-hash';
 
 const root = process.cwd();
@@ -52,6 +52,30 @@ describe('load-test response contract', () => {
     ['thumb', { 'Content-Type': 'text/html' }],
   ])('rejects wrong/missing %s MIME', (endpoint, headers) => {
     expect(hasExpectedLoadContentType(endpoint, headers)).toBe(false);
+  });
+
+  it.each([
+    ['sidebar', { viewerState: 'ANONYMOUS', currentVideoId: 'video-1', sections: [{ id: 'free', type: 'FREE', title: 'Publiczne', items: [], total: 0 }] }],
+    ['comments', { success: true, comments: [], totalCount: 0, nextCursor: null, viewer: { canComment: true, canReact: true, canReport: true, canModerate: false, commentsDisabled: false } }],
+    ['media', { videoId: 'video-1', status: 'READY', canPlay: true, access: { allowed: true }, source: { playbackUrl: '/hls/signed/master.m3u8' } }],
+  ])('accepts the expected %s JSON body shape', (endpoint, body) => {
+    expect(hasExpectedLoadResponseBody(endpoint, JSON.stringify(body))).toBe(true);
+  });
+
+  it.each([
+    ['sidebar', '{"unexpected":true}'],
+    ['sidebar', '{not json'],
+    ['comments', '{"success":false,"message":"error"}'],
+    ['comments', '{"success":true,"comments":[],"totalCount":"zero"}'],
+    ['media', '{"videoId":"video-1","status":"PROCESSING","canPlay":false,"access":{"allowed":false}}'],
+    ['media', 'upstream proxy error page'],
+  ])('rejects HTTP 200 with invalid %s content', (endpoint, body) => {
+    expect(hasExpectedLoadResponseBody(endpoint, body)).toBe(false);
+  });
+
+  it('does not require response bodies for the large HTML or image endpoints', () => {
+    expect(hasExpectedLoadResponseBody('home', null)).toBe(true);
+    expect(hasExpectedLoadResponseBody('thumb', null)).toBe(true);
   });
 
   it('accepts a complete healthy summary', () => {
@@ -113,6 +137,11 @@ describe('load-test response contract', () => {
     expect(runner).toContain('/proc/sys/kernel/random/uuid');
     expect(runner).toContain('-e LOADTEST_USER_AGENT="$LOADTEST_USER_AGENT"');
     expect(k6).toContain('const UA = __ENV.LOADTEST_USER_AGENT;');
+    expect(k6).toContain('requestParams.responseType = responseType');
+    expect(k6).toContain('params("sidebar", ip, undefined, "text")');
+    expect(k6).toContain('params("comments", ip, undefined, "text")');
+    expect(k6).toContain('params("media", ip, undefined, "text")');
+    expect(k6).toContain('!hasExpectedLoadResponseBody(endpoint, res.body)');
   });
 
   it('deletes only rows matching the app-derived HMAC and retains identity if the app is unavailable', () => {

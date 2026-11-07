@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-07",
+  "package": "K38/R11 \u2014 bounded semantic checks for small JSON responses",
+  "base_commit": "d06584e0ef5111a1d377953c2d4ec6685d7018fd",
+  "working_tree_files": [
+    "scripts/loadtest/k6-guest.js",
+    "scripts/loadtest/response-contract.mjs",
+    "scripts/loadtest/summarize.py",
+    "scripts/loadtest/run-steps.sh",
+    "scripts/loadtest/README.md",
+    "tests/unit/scripts/loadtest-contract.test.ts"
+  ],
+  "source_sha256": {
+    "scripts/loadtest/k6-guest.js": "b53c56f219c3dece039813a411abf3ecf89898f4bcad9918cc28f947e20b3ce5",
+    "scripts/loadtest/response-contract.mjs": "9a92a9752747f764683a3fced4ef60615213e89b8065e7765929c3606266f067",
+    "scripts/loadtest/summarize.py": "f16c04f5faae6d36f965003f3360b1447a07d79412222968f4293db0b534965a",
+    "scripts/loadtest/run-steps.sh": "1959981a293ef8a94d572b0aa92e5132d4bd44368868d7286e884737c36fac3b",
+    "scripts/loadtest/README.md": "7cecaa5ca7536a19e8f955fcec425e007c1334b7ccbc788435f20ed964fa3d58",
+    "tests/unit/scripts/loadtest-contract.test.ts": "ce2eb1cf1147a5f1fda436b39bc9edbafe44e8bd31ca29d4e9876382fe0b30fd"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/scripts/loadtest-contract.test.ts",
+      "result": "PASS",
+      "tests": 30
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "node --input-type=module --check < scripts/loadtest/k6-guest.js",
+      "result": "PASS"
+    },
+    {
+      "command": "node --check scripts/loadtest/response-contract.mjs",
+      "result": "PASS"
+    },
+    {
+      "command": "bash -n scripts/loadtest/run-steps.sh scripts/loadtest/cleanup.sh",
+      "result": "PASS"
+    },
+    {
+      "command": "npx eslint scripts/loadtest/k6-guest.js scripts/loadtest/response-contract.mjs tests/unit/scripts/loadtest-contract.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "verified": [
+    "200 responses from sidebar, comments and media endpoints are checked for JSON structure and endpoint-specific required fields; invalid JSON, error objects and unplayable media plans fail the semantic predicate.",
+    "k6 selectively sets responseType=text for the three small JSON APIs despite global discardResponseBodies=true; homepage HTML and thumbnail bodies remain discarded.",
+    "The existing unexpected_content metric and summarizer stop gate reject semantic or MIME contract failures; tests preserve this fail-closed result.",
+    "Valid synthetic response shapes pass; malformed JSON, structurally invalid JSON and error-shaped 200 responses fail."
+  ],
+  "boundaries": [
+    "No k6 binary/container, HTTP endpoint, application server, database, host load, cleanup, or production resource was used.",
+    "The actual k6 runtime did not execute this revision; k6 wiring is covered by source-contract assertions, while response validators and summarizer are executed in tests.",
+    "HTML body semantics, thumbnail image decoding, complete JSON schemas, load profiles/mix/versioning and non-production application acceptance remain open."
+  ],
+  "independent_review": "PENDING"
+}

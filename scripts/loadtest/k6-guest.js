@@ -13,7 +13,7 @@
 //   OUT        summary JSON path inside the container (default /out/summary.json)
 import http from "k6/http";
 import { Rate, Counter } from "k6/metrics";
-import { hasExpectedLoadContentType } from "./response-contract.mjs";
+import { hasExpectedLoadContentType, hasExpectedLoadResponseBody } from "./response-contract.mjs";
 
 const BASE = __ENV.BASE || "http://127.0.0.1:3000";
 const HOST = __ENV.HOST_HEADER || "www.pawelperfect.com";
@@ -31,7 +31,7 @@ if (!VIDEO_ID) throw new Error("VIDEO_ID is required");
 
 const serverErrors = new Rate("server_errors"); // 5xx or no response
 const unexpected = new Counter("unexpected_status"); // anything that is not the expected status
-const unexpectedContent = new Counter("unexpected_content"); // 200 response has the wrong/missing MIME type
+const unexpectedContent = new Counter("unexpected_content"); // 200 response has wrong MIME or an invalid small JSON API body
 
 const EPS = ["home", "sidebar", "comments", "media", "thumb"];
 const thresholds = {
@@ -72,8 +72,8 @@ function fakeIp() {
   return `198.${a}.${Math.floor(Math.random() * 256)}.${1 + Math.floor(Math.random() * 254)}`;
 }
 
-function params(ep, ip, accept) {
-  return {
+function params(ep, ip, accept, responseType) {
+  const requestParams = {
     headers: {
       Host: HOST,
       "User-Agent": UA,
@@ -87,20 +87,25 @@ function params(ep, ip, accept) {
     redirects: 0,
     timeout: "30s",
   };
+  if (responseType) requestParams.responseType = responseType;
+  return requestParams;
 }
 
 const REQ = {
   home: (ip) => ["GET", `${BASE}/${LOCALE}`, null, params("home", ip, "text/html,application/xhtml+xml")],
-  sidebar: (ip) => ["GET", `${BASE}/api/channel/sidebar?currentVideoId=${VIDEO_ID}`, null, params("sidebar", ip)],
-  comments: (ip) => ["GET", `${BASE}/api/comments?videoId=${VIDEO_ID}&sortBy=newest&limit=20`, null, params("comments", ip)],
-  media: (ip) => ["GET", `${BASE}/api/media-source/${VIDEO_ID}`, null, params("media", ip)],
+  sidebar: (ip) => ["GET", `${BASE}/api/channel/sidebar?currentVideoId=${VIDEO_ID}`, null, params("sidebar", ip, undefined, "text")],
+  comments: (ip) => ["GET", `${BASE}/api/comments?videoId=${VIDEO_ID}&sortBy=newest&limit=20`, null, params("comments", ip, undefined, "text")],
+  media: (ip) => ["GET", `${BASE}/api/media-source/${VIDEO_ID}`, null, params("media", ip, undefined, "text")],
   thumb: (ip) => ["GET", `${BASE}/api/videos/${VIDEO_ID}/thumbnail`, null, params("thumb", ip, "image/avif,image/webp,*/*")],
 };
 
 function record(res, endpoint) {
   serverErrors.add(res.status === 0 || res.status >= 500);
   unexpected.add(res.status === 200 ? 0 : 1, { status: String(res.status) });
-  unexpectedContent.add(res.status === 200 && !hasExpectedLoadContentType(endpoint, res.headers) ? 1 : 0, { endpoint });
+  unexpectedContent.add(res.status === 200 && (
+    !hasExpectedLoadContentType(endpoint, res.headers)
+    || !hasExpectedLoadResponseBody(endpoint, res.body)
+  ) ? 1 : 0, { endpoint });
 }
 
 export default function loadTest() {

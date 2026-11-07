@@ -10,8 +10,10 @@ response times degrade. Results and method: `docs/operations/LOAD-TEST.md`.
 - Guest GET requests only: `/pl`, `/api/channel/sidebar`, `/api/comments`, `/api/media-source/<id>`,
   `/api/videos/<id>/thumbnail`. No logins, writes, payments, `/api/admin`, PP Support.
 - Each 200 response must have the expected MIME type (HTML for home, JSON for APIs, image for thumbnail);
-  non-200 and wrong/missing MIME metrics make the summarizer stop the series. Bodies remain discarded to cap
-  generator memory, so this is an envelope check, not semantic validation of JSON fields or page content.
+  non-200 and wrong/missing MIME metrics make the summarizer stop the series. The three small JSON APIs
+  (`sidebar`, `comments`, `media`) selectively return text to k6 and are checked for their required response
+  shape; page HTML and image bodies remain discarded to cap generator memory. The checks validate only the
+  JSON fields needed to prove a usable public page/playback plan, not all domain fields or media decoding.
 - Every run gets a unique `User-Agent: pp-loadtest/<uuid>` saved in `OUT_DIR/client-user-agent` and a fake `CF-Connecting-IP` from `198.18.0.0/15`
   (RFC 2544 benchmark range), so each iteration looks like a new visitor (the app trusts that header behind the
   tunnel). `/api/media-source` creates one `VideoPlaybackSession` row per call. `cleanup.sh` asks the running
