@@ -128,6 +128,23 @@ describe('load-test response contract', () => {
     expect(readFileSync(output, 'utf8')).toBe(original);
   });
 
+  it('versions fixed-count query measurements without pretending they are throughput', () => {
+    const output = path.join(temp, 'count-comments-profile.json');
+    const profileScript = path.join(root, 'scripts/loadtest/profile-metadata.py');
+    const result = spawnSync('python3', [profileScript, output, 'comments', '1', '1', '0', '0', '2000', 'count-comments-n25', 'grafana/k6:1.3.0', path.join(root, 'scripts/loadtest'), 'per-vu-iterations', '25'], { encoding: 'utf8' });
+    expect(result.status).toBe(0);
+    const profile = JSON.parse(readFileSync(output, 'utf8')) as {
+      executor: string; rate_metric: string; fixed_iteration_count: number;
+      rate_schedule_per_second: number[] | null; interpretation: string; source_sha256: Record<string, string>;
+    };
+    expect(profile.executor).toBe('per-vu-iterations');
+    expect(profile.rate_metric).toBe('fixed_request_count');
+    expect(profile.fixed_iteration_count).toBe(25);
+    expect(profile.rate_schedule_per_second).toBeNull();
+    expect(profile.interpretation).toContain('not throughput or concurrent viewers');
+    expect(profile.source_sha256).toHaveProperty('count-queries.sh');
+  });
+
   it('accepts a complete healthy summary', () => {
     const result = runSummary(summary());
     expect(result.status).toBe(0);
@@ -163,6 +180,10 @@ describe('load-test response contract', () => {
     expect(runner).toContain('invalid LABEL; use only letters, digits, dot, underscore or hyphen');
     expect(runner).toContain('profile-metadata.py');
     expect(runner).toContain('profile_sha256');
+    const counter = readFileSync(path.join(root, 'scripts/loadtest/count-queries.sh'), 'utf8');
+    expect(counter).toContain('profile-metadata.py');
+    expect(counter).toContain('per-vu-iterations');
+    expect(counter).toContain('profile_sha256=%s');
   });
 
   it('derives cleanup identity with the same HMAC protocol as playback sessions', () => {

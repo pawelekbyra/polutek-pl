@@ -60,6 +60,6 @@
   ],
   "source_sha256": {
     "scripts/loadtest/k6-guest.js": "7f81f509af604574cc1fe2b0304f924493ad0f559ec840e98738c4847f537b7d",
-    "tests/unit/scripts/loadtest-contract.test.ts": "852ed03dca8fd59fa888119cbccc929e23d3b1bc878ac6f8ed2a025e5bcb845a"
+    "tests/unit/scripts/loadtest-contract.test.ts": "16a9dee688adcebaab8727e5242ac72b419f74927111f87efeb66f67b70a2343"
   }
 }

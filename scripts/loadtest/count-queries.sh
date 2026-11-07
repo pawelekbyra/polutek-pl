@@ -10,6 +10,9 @@ OUT="${OUT_DIR:-/tmp/pp-loadtest/out}"
 K6_IMAGE="${K6_IMAGE:-grafana/k6:1.3.0}"
 : "${VIDEO_ID:?VIDEO_ID is required}"
 mkdir -p "$OUT"; chmod 777 "$OUT"
+PROFILE_FILE="$OUT/count-$TARGET-n$N-profile.json"
+python3 "$DIR/profile-metadata.py" "$PROFILE_FILE" "$TARGET" 1 1 0 0 2000 "count-$TARGET-n$N" "$K6_IMAGE" "$DIR" per-vu-iterations "$N" || exit 14
+PROFILE_SHA256="$(sha256sum "$PROFILE_FILE" | awk '{print $1}')"
 
 snap() {
   docker exec polutek-db-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select xact_commit+xact_rollback, tup_returned, tup_fetched, tup_inserted from pg_stat_database where datname=current_database()"'
@@ -30,6 +33,6 @@ elapsed=$(awk -v a="$t0" -v b="$t1" 'BEGIN{print b-a}')
 b0="$(snap)"; sleep "${elapsed%.*}"; b1="$(snap)"
 read -r dx dr df di < <(delta "$s0" "$s1")
 read -r bx br bf bi < <(delta "$b0" "$b1")
-awk -v t="$TARGET" -v n="$N" -v dx="$dx" -v bx="$bx" -v dr="$dr" -v br="$br" -v df="$df" -v bf="$bf" -v di="$di" -v bi="$bi" -v e="$elapsed" \
-  'BEGIN{printf "%s\tN=%d\t%.1fs\txacts/iter=%.1f\ttup_returned/iter=%.0f\ttup_fetched/iter=%.0f\ttup_inserted/iter=%.1f\t(idle bg xacts=%d)\n", t, n, e, (dx-bx)/n, (dr-br)/n, (df-bf)/n, (di-bi)/n, bx}' \
+awk -v t="$TARGET" -v n="$N" -v dx="$dx" -v bx="$bx" -v dr="$dr" -v br="$br" -v df="$df" -v bf="$bf" -v di="$di" -v bi="$bi" -v e="$elapsed" -v ph="$PROFILE_SHA256" \
+  'BEGIN{printf "%s\tN=%d\t%.1fs\txacts/iter=%.1f\ttup_returned/iter=%.0f\ttup_fetched/iter=%.0f\ttup_inserted/iter=%.1f\t(idle bg xacts=%d)\tprofile_id=polutek-guest-read-only-v1\tprofile_sha256=%s\n", t, n, e, (dx-bx)/n, (dr-br)/n, (df-bf)/n, (di-bi)/n, bx, ph}' \
   | tee -a "$OUT/queries.tsv"

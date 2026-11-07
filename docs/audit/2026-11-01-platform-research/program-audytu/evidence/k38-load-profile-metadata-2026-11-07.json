@@ -12,24 +12,25 @@
     ],
     "step_duration_seconds": 60,
     "rest_between_steps_seconds": 30,
-    "profile_sha256": "340a2e8c032fd8123e172c29a9ee9eebcdec84680cbe8c0b99aacbddcc706585",
+    "profile_sha256": "c60f333a086f0bc6cd153d97a590648cf0c8d0ccc7883091f69a2e9c30aad796",
     "rate_metric": "new_guest_journeys_per_second",
     "requests_per_iteration": 5,
     "viewer_concurrency_measured": false,
     "source_sha256": {
       "cleanup.sh": "3a5692922dc7311d55e908779f423ddd6236708ba2f8c95ecd597e79cd10db1d",
+      "count-queries.sh": "721c238c381e1080560a589c63fd6f44900fb6c363d2c3b0c062a191d3a6b8df",
       "guard.sh": "22ccf764ce093bd53bc2f194d2fcf494afe263dfd0762cf3e7c7479baa832cab",
       "k6-guest.js": "7f81f509af604574cc1fe2b0304f924493ad0f559ec840e98738c4847f537b7d",
       "preflight.sh": "d82c7d5d60d06e040799b725ae389c8dc71ad2eb36c5b0d98a2394f8be0595a9",
-      "profile-metadata.py": "b1c569c8d547820b99a7fbfe6a77634442a9c92c6b621e64ffc6f5af749b0c25",
+      "profile-metadata.py": "730f11480e4b0085740bc61614d6023cd0787f4b6dbfff5548d6cca8cd24662e",
       "response-contract.mjs": "9a92a9752747f764683a3fced4ef60615213e89b8065e7765929c3606266f067",
-      "run-steps.sh": "145eb248ec7b62637285d04cc4dde8e6bf71213b5f89111bcad210c9aaab4b1b",
+      "run-steps.sh": "1a32a023e1aa9eda579bf7d274f55d74f55305f310e6363ce856ec02b2952d9b",
       "summarize.py": "f16c04f5faae6d36f965003f3360b1447a07d79412222968f4293db0b534965a"
     },
     "artifact": "program-audytu/evidence/k38-profile-sample-journey-2026-11-07.json"
   },
   "checks": {
-    "vitest": "tests/unit/scripts/loadtest-contract.test.ts: 34/34 PASS",
+    "vitest": "tests/unit/scripts/loadtest-contract.test.ts: 35/35 PASS",
     "python_compile": "PASS",
     "bash_syntax": "PASS",
     "eslint": "PASS",
@@ -40,5 +41,42 @@
     "no concurrent active playback, refresh, heartbeat or encoder demand",
     "cache state is not controlled or proven by the label",
     "server runner was not executed"
-  ]
+  ],
+  "fixed_count_profile_example": {
+    "cache_state": "unspecified; label is descriptive and does not prove cache state",
+    "executor": "per-vu-iterations",
+    "fixed_iteration_count": 25,
+    "generator_image_reference": "grafana/k6:1.3.0",
+    "interpretation": "Exactly N sequential fixed-count iterations; this is not throughput or concurrent viewers.",
+    "iteration_unit": "single_endpoint_request",
+    "label": "count-comments-n25",
+    "profile_id": "polutek-guest-read-only-v1",
+    "rate_metric": "fixed_request_count",
+    "rate_schedule_per_second": null,
+    "requests_per_iteration": 1,
+    "rest_between_steps_seconds": 0,
+    "routes": [
+      {
+        "count": 1,
+        "execution": "one_request",
+        "route": "/api/comments"
+      }
+    ],
+    "schema_version": 1,
+    "source_sha256": {
+      "cleanup.sh": "3a5692922dc7311d55e908779f423ddd6236708ba2f8c95ecd597e79cd10db1d",
+      "count-queries.sh": "721c238c381e1080560a589c63fd6f44900fb6c363d2c3b0c062a191d3a6b8df",
+      "guard.sh": "22ccf764ce093bd53bc2f194d2fcf494afe263dfd0762cf3e7c7479baa832cab",
+      "k6-guest.js": "7f81f509af604574cc1fe2b0304f924493ad0f559ec840e98738c4847f537b7d",
+      "preflight.sh": "d82c7d5d60d06e040799b725ae389c8dc71ad2eb36c5b0d98a2394f8be0595a9",
+      "profile-metadata.py": "730f11480e4b0085740bc61614d6023cd0787f4b6dbfff5548d6cca8cd24662e",
+      "response-contract.mjs": "9a92a9752747f764683a3fced4ef60615213e89b8065e7765929c3606266f067",
+      "run-steps.sh": "1a32a023e1aa9eda579bf7d274f55d74f55305f310e6363ce856ec02b2952d9b",
+      "summarize.py": "f16c04f5faae6d36f965003f3360b1447a07d79412222968f4293db0b534965a"
+    },
+    "step_duration_seconds": null,
+    "stop_p95_ms": 2000,
+    "target": "comments",
+    "viewer_concurrency_measured": false
+  }
 }

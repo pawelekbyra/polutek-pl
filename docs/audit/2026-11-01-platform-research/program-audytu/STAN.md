@@ -2,7 +2,7 @@
 
 ## K38 — wersjonowany profil load testu, 7 listopada 2026
 
-`run-steps.sh` zapisuje `<LABEL>-profile.json` ze schematem/profile ID, targetem, rate schedule, czasem kroku/przerwy, endpoint mixem, referencją k6 oraz SHA-256 generatora i skryptów cleanup; TSV linkuje do niego hashem; próba nadpisania labela inną konfiguracją jest odrzucana. Podróż = 5 żądań na iterację i nowych gości/s; pojedynczy target = żądania/s. Profil mówi jawnie, że nie mierzy równoczesnych widzów i nie potwierdza cache state. Test kontraktu 34/34 PASS, Python compile, bash syntax, ESLint i diff check PASS. Runner serwerowy i obciążenie nie były uruchamiane. Aktualny read-only workload jest wersjonowany; playback/heartbeat i kontrolowane cold/warm nadal otwarte. [Dowód](evidence/k38-load-profile-metadata-2026-11-07.json).
+`run-steps.sh` i `count-queries.sh` zapisują osobny JSON profilu ze schematem/profile ID, targetem, rate schedule, czasem kroku/przerwy, endpoint mixem, referencją k6 oraz SHA-256 generatora i skryptów cleanup; TSV oraz `queries.tsv` linkują wynik hashem profilu; licznik zapisuje exact N jako fixed count, nie rate; próba nadpisania labela inną konfiguracją jest odrzucana. Podróż = 5 żądań na iterację i nowych gości/s; pojedynczy target = żądania/s. Profil mówi jawnie, że nie mierzy równoczesnych widzów i nie potwierdza cache state. Test kontraktu 35/35 PASS, Python compile, bash syntax, ESLint i diff check PASS. Runner serwerowy i obciążenie nie były uruchamiane. Aktualny read-only workload jest wersjonowany; playback/heartbeat i kontrolowane cold/warm nadal otwarte. [Dowód](evidence/k38-load-profile-metadata-2026-11-07.json).
 
 ## K38 — runtime przypiętego k6, 7 listopada 2026
 

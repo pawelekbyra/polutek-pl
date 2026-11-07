@@ -28,11 +28,13 @@ TARGETS = {
 
 
 def main() -> int:
-    if len(sys.argv) != 11:
-        print("usage: profile-metadata.py <output> <target> <start> <max> <step-seconds> <rest-seconds> <stop-p95-ms> <label> <k6-image> <script-dir>", file=sys.stderr)
+    if len(sys.argv) not in (11, 13):
+        print("usage: profile-metadata.py <output> <target> <start> <max> <step-seconds> <rest-seconds> <stop-p95-ms> <label> <k6-image> <script-dir> [executor iterations]", file=sys.stderr)
         return 2
 
-    output, target, start_text, maximum_text, step_text, rest_text, p95_text, label, image, script_dir = sys.argv[1:]
+    output, target, start_text, maximum_text, step_text, rest_text, p95_text, label, image, script_dir = sys.argv[1:11]
+    executor = sys.argv[11] if len(sys.argv) == 13 else "constant-arrival-rate"
+    fixed_iterations = sys.argv[12] if len(sys.argv) == 13 else None
     if target not in TARGETS:
         print(f"unknown target: {target}", file=sys.stderr)
         return 2
@@ -43,9 +45,23 @@ def main() -> int:
     except ValueError:
         print("rates and limits must be integers", file=sys.stderr)
         return 2
-    if start < 1 or maximum < start or step < 1 or rest < 0 or stop_p95 < 1:
+    if executor not in ("constant-arrival-rate", "per-vu-iterations"):
+        print(f"unsupported executor: {executor}", file=sys.stderr)
+        return 2
+    if start < 1 or maximum < start or (executor == "constant-arrival-rate" and step < 1) or rest < 0 or stop_p95 < 1:
         print("invalid rate schedule or limits", file=sys.stderr)
         return 2
+    if executor == "per-vu-iterations":
+        try:
+            fixed_iterations = int(fixed_iterations or "")
+        except ValueError:
+            print("fixed-count executor requires a positive iteration count", file=sys.stderr)
+            return 2
+        if fixed_iterations < 1:
+            print("fixed-count executor requires a positive iteration count", file=sys.stderr)
+            return 2
+    else:
+        fixed_iterations = None
 
     rates = []
     rate = start
@@ -53,7 +69,7 @@ def main() -> int:
         rates.append(rate)
         rate *= 2
 
-    source_files = ("k6-guest.js", "response-contract.mjs", "summarize.py", "run-steps.sh", "profile-metadata.py", "cleanup.sh", "preflight.sh", "guard.sh")
+    source_files = ("k6-guest.js", "response-contract.mjs", "summarize.py", "run-steps.sh", "profile-metadata.py", "count-queries.sh", "cleanup.sh", "preflight.sh", "guard.sh")
     source_hashes = {}
     for name in source_files:
         source = Path(script_dir) / name
@@ -69,18 +85,24 @@ def main() -> int:
         "profile_id": "polutek-guest-read-only-v1",
         "label": label,
         "target": sys.argv[2],
-        "executor": "constant-arrival-rate",
-        "rate_metric": target.get("rate_metric", "single_endpoint_requests_per_second"),
+        "executor": executor,
+        "rate_metric": (
+            target.get("rate_metric", "single_endpoint_requests_per_second")
+            if executor == "constant-arrival-rate" else "fixed_request_count"
+        ),
         "iteration_unit": iteration_unit,
         "requests_per_iteration": target["requests_per_iteration"],
         "routes": target["routes"] if "routes" in target else [{"route": target["route"], "count": 1, "execution": "one_request"}],
-        "rate_schedule_per_second": rates,
-        "step_duration_seconds": step,
+        "rate_schedule_per_second": rates if executor == "constant-arrival-rate" else None,
+        "fixed_iteration_count": fixed_iterations,
+        "step_duration_seconds": step if executor == "constant-arrival-rate" else None,
         "rest_between_steps_seconds": rest,
         "stop_p95_ms": stop_p95,
         "viewer_concurrency_measured": False,
         "interpretation": (
-            "Rate is new guest journeys per second, not concurrent viewers."
+            "Exactly N sequential fixed-count iterations; this is not throughput or concurrent viewers."
+            if executor == "per-vu-iterations"
+            else "Rate is new guest journeys per second, not concurrent viewers."
             if iteration_unit == "new_guest_journey"
             else "Rate is requests per second to one endpoint, not viewers or concurrent sessions."
         ),

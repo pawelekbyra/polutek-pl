@@ -31,7 +31,7 @@ RESULTS="$OUT/results.tsv"
 HEADER="target\trate\titer_per_s\treq_per_s\treqs\tdropped\tp50\tp95\tp99\tmax\terr5xx_pct\tnon200\twrong_content\tper_endpoint_p50/p95/p99_ms\tlabel\tstarted"
 HEADER+="\tprofile_id\tprofile_sha256"
 PROFILE_FILE="$OUT/${LABEL}-profile.json"
-python3 "$DIR/profile-metadata.py" "$PROFILE_FILE" "$TARGET" "$START" "$MAX" "$STEP" "$REST" "$STOP_P95" "$LABEL" "$K6_IMAGE" "$DIR" || exit 14
+python3 "$DIR/profile-metadata.py" "$PROFILE_FILE" "$TARGET" "$START" "$MAX" "$STEP" "$REST" "$STOP_P95" "$LABEL" "$K6_IMAGE" "$DIR" constant-arrival-rate || exit 14
 PROFILE_SHA256="$(sha256sum "$PROFILE_FILE" | awk '{print $1}')"
 if [ ! -s "$RESULTS" ]; then
   printf '%s\n' "$HEADER" > "$RESULTS"
