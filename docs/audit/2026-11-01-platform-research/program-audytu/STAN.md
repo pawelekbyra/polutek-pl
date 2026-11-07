@@ -24,6 +24,10 @@ Transfer lokalny i Actions podają teraz niezależny `RELEASE_PROOF_SHA256` do `
 
 `deploy-release.mjs` uruchamia teraz osobną komendę `release-proof.mjs preflight`, która sprawdza niezależnie podany hash proofu, rewizję, wejścia oraz archiwum źródeł bez Dockera; dopiero potem możliwy jest inspect/pull, a pełne `verify` nadal porównuje digesty/ID/warstwy. **28/28** testów sześciu suite wydania PASS; ESLint, repo typecheck i diff check PASS. Negatywna próba potwierdza zero wywołań Dockera przy odrzuconym proofie. Wszystkie dane syntetyczne; bez GHCR/Actions/SSH/serwera. [Dowód i SHA plików](evidence/k06-preflight-before-image-pull-2026-11-07.json). K06 nadal częściowe: bez pozytywnego odbioru pełnego wydania, pięciu rzeczywistych obrazów i rollbacku.
 
+## K04 — bundler głównej aplikacji i admina, 7 listopada 2026
+
+Na SHA `f6f83ad261b3b80a8176bda99ef81ac2e8e38172` `npm run build` oraz `npm run admin:build` zakończyły się exit 0, oba wykonały kompilację, TypeScript i generowanie tras. Literalne znaczniki Prisma/Node fs/Nodemailer nie wystąpiły w żadnym z 114 klientowych chunków JS. Prisma pojawia się w Next server output traces dla 125/128 tras głównej aplikacji i 44/47 admina; trace nie mierzy połączeń DB ani runtime. Istniejące testy cyklu i injection: **23/23 PASS**, ESLint PASS. [Dowód](evidence/k04-next-bundler-boundary-2026-11-07.json). K04 pozostaje częściowe: potrzebny review facade/composition root i pełniejsze integration review.
+
 
 ## K03 — pełny baseline po naprawie 19 awarii, 7 listopada 2026
 

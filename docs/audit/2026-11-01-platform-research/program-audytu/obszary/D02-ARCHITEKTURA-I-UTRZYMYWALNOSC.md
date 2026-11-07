@@ -134,6 +134,10 @@ W `channel-layout.service.ts` zastąpiono szeroki import `@/lib/modules/video` n
 
 Wyniki: kontrola granic architektury PASS; 5 celowanych plików Vitest, 43/43; repo typecheck PASS; ESLint dotkniętych plików PASS. [Probe i hashe źródeł](../evidence/architecture-import-probe.json). Próba nie wykonuje SQL ani prawdziwego konstruktora Prisma. K04 pozostaje częściowy do niezależnego przeglądu facade i integracji produkcyjnego composition root.
 
+### K04 — produkcyjne bundlery Next, 7 listopada 2026
+
+Na `f6f83ad2` zakończyły się exit 0 oba rzeczywiste bundlery aplikacji: `npm run build` oraz `npm run admin:build`; każdy wykonał kompilację, TypeScript i generowanie tras. W 79 klientowych chunkach strony i 35 admina nie znaleziono literalnych `@prisma/client`, `PrismaClient`, `.prisma/client`, `node:fs`, `nodemailer` ani `better-auth/node_modules`. Prisma znajduje się w server output-file traces: odpowiednio 125/128 i 44/47 tras. To jest wynik generowania/tracingu Next, nie liczba połączeń DB, nie dowód kosztu runtime ani pełny skaner pochodzenia. Sześć regresyjnych suite istniejących czystych importów i injection **23/23 PASS**, ESLint PASS. [Pełny wynik i ograniczenia](../evidence/k04-next-bundler-boundary-2026-11-07.json). K04 pozostaje częściowe do przeglądu facade/composition root, integracji i niezależnego review.
+
 ## Źródło językowe i kolejne kroki
 
 Pobrano online oficjalne [TypeScript 3.8 release notes](../sources/typescript-38-release-notes.md) oraz [licencję CC BY 4.0](../sources/typescript-website-LICENSE), Microsoft i współtwórcy, oba HTTP 200; [adresy/hash](../sources/fetch-architecture-batch12.json). Odczytano część Type-Only Imports and Export: jawne import type/export type są usuwane z outputu. To źródło historycznego wprowadzenia tej składni, nie instrukcja stosowania wycofanej opcji importsNotUsedAsValues do bieżącej wersji. Zachowano niezmienioną kopię.
