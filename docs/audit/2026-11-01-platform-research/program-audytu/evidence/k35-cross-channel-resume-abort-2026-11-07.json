@@ -1,0 +1,26 @@
+{
+  "package": "K35-T2 cross-channel multipart resume and abort denial",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "7828a4ec7aec0fa6b712a5f0861025b9e69917cd",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped after test",
+    "scenarios": [
+      "owner A uses GET resume and DELETE abort against channel B's in-progress original",
+      "owner B uses GET resume and DELETE abort against channel A's in-progress original"
+    ],
+    "assertions": "All four requests return 404, cause no object-storage requests, and leave the rightful original UPLOADING.",
+    "repo_typecheck": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "1d329f16ec0d33eb90ebd2f9f6804c7c86e95384df846ea5e3fd4c40e10e584c"
+  },
+  "limitations": [
+    "Local PostgreSQL and loopback S3-shaped fixture only; no Cloudflare R2 or deployed Worker.",
+    "This extends Studio upload endpoints, not every application role/resource state or payment profile; K35 remains partial and independent review is open."
+  ]
+}

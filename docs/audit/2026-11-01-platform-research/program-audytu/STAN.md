@@ -1,6 +1,6 @@
 ## Punkt wznowienia — 7 listopada 2026, K35-T2 cross-channel complete
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `b5f8d969`; dokumentacja rollbacku DB po storage do osobnego commitu.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `7828a4ec`; dokumentacja odmów resume/abort do osobnego commitu.
 
 Lokalny acceptance obejmuje Studio multipart upload → rzeczywisty `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → poprawne playlisty/segment przez kod HLS edge Worker → Chromium odtwarza ponad 0,5 s materiału. PostgreSQL 17.11/84 migracje: integration 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Kontener disposable zatrzymany. [Dowód browser/edge](evidence/k35-browser-hls-local-2026-11-07.json).
 
@@ -8,7 +8,7 @@ Korekta: wcześniejszy fixture S3 zapisywał ramkowanie `aws-chunked` wewnątrz 
 
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
-**Następny krok:** rozszerzyć K35-T2 o inne role/stany i awarię workera między claimem a finalizacją; po commit storage wstrzyknięto już rollback DB i sprawdzono retry. To nadal nie wymusza zabicia procesu ani resetu prawdziwego połączenia R2. Kontynuować niezależnie od innych otwartych pozycji roadmapy. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
+**Następny krok:** przejrzeć następną otwartą pozycję z roadmapy poza K35 — po lokalnym odbiorze upload/playback/replacement/delete i granicy rollback/retry nie zawężać całości do HLS. K35 nadal częściowe do live-provider acceptance, pełnej macierzy pozostałych ról/profili i niezależnego review. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
 ## K35-T2 — odmowa cross-channel przy kończeniu uploadu, 7 listopada 2026
 
@@ -528,3 +528,7 @@ Fixture odtwarza granicę po commit storage i przed aktualizacją bazy: obiekt j
 ## K35-T2 — rollback promocji DB po ukończeniu multipart w storage, 7 listopada 2026
 
 Rzeczywisty Studio multipart HTTP kończy upload w loopback storage. Tymczasowy jednorazowy PostgreSQL trigger rzuca wyjątek podczas `UPLOADING → READY`; API odpowiada 500, transakcja cofa DB (oryginał nadal `UPLOADING`, `uploadId` zachowany, zero jobów), a już ukończony obiekt pozostaje w storage. Retry dostaje `NoSuchUpload`, weryfikuje obiekt, promuje oryginał i uruchamia właściwy worker do `SUCCEEDED`. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, repo typecheck, celowany ESLint i diff check PASS. [Dowód i SHA](evidence/k35-storage-commit-db-rollback-retry-2026-11-07.json). To kontrolowany rollback DB, nie kill procesu ani fault injection na prawdziwym R2; K35-T2 pozostaje częściowe.
+
+## K35-T2 — odmowa wznowienia i anulowania cudzego uploadu, 7 listopada 2026
+
+Właściciel A próbuje GET resume i DELETE abort na uploadie B; właściciel B robi to samo wobec uploadu A. Cztery żądania kończą się 404, bez requestów storage; oryginały pozostają `UPLOADING`. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, repo typecheck, celowany ESLint i diff check PASS. [Dowód i SHA](evidence/k35-cross-channel-resume-abort-2026-11-07.json). To rozszerza lokalną granicę Studio API; pełna macierz K35, R2/deployed Worker i niezależny review pozostają otwarte.
