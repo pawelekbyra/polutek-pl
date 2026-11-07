@@ -481,7 +481,7 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Ryzyko regresji:** Wysokie: transakcje aktywacji i przeniesienie własności zadania.
 
-**Do weryfikacji przed zamknięciem:** Dotychczas rzeczywiste komponenty z fake takeover: aktywacja przechodzi, status starego ownera odmawia. Odtworzyć na dwóch prawdziwych procesach/DB.
+**Do weryfikacji przed zamknięciem:** Osobne procesy i DB są już objęte testem finalizera; pełny lifecycle starego workera, fizyczne obiekty storage, crash/lease expiry/requeue, kontrolowany drain i niezależny review pozostają otwarte.
 
 **Testy odbioru:**
 
@@ -489,6 +489,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K17-T2** — Kontrola bez takeover aktywuje i kończy zadanie; crash/lease expiry/requeue mają jednoznaczny wynik i retry. Test obserwuje DB i fizyczne pliki, nie sam odrzucony końcowy status.
 
 **Wynik lokalny 6 listopada 2026:** regresja RED na prawdziwym PostgreSQL 17 odtworzyła, że po finalizacji B stary A nadal aktywował własną trasę. Route activation blokuje job row, sprawdza `RUNNING + workerId + attemptId` i odświeża heartbeat w tej samej transakcji co zmianę trasy. Zapis progress/success/failure/cancel/release ma CAS z attempt ID, również gdy dwa procesy raportują ten sam `workerId`. Retry wyszukuje aktywny wynik dowolnej próby tej generacji. Po poprawce integracja K17 + repozytorium: **12/12 PASS** na PostgreSQL 17 z 82 migracjami; 3 pliki unit **34/34**, ESLint i repo typecheck PASS ([dowody](program-audytu/evidence/k17-stale-worker-fencing-2026-11-06/result.json)). Test przeprowadza takeover w kontrolowanej sekwencji, nie przez dwa niezależne procesy; brak fizycznego R2, pełnego buildu i niezależnego przeglądu. K17 częściowe; K18 sprawdza post-COMMIT/audyt, a R02 pozostaje otwarte.
+
+**Uzupełnienie lokalne 7 listopada 2026:** test PostgreSQL po 84 migracjach uruchamia osobne procesy Node/tsx A i B. A odczytuje snapshot starej próby, jest zaobserwowany oczekując na blokadę `FOR UPDATE`, po czym po COMMIT przejęcia B jego finalizer odmawia; oddzielny proces B aktywuje wyłącznie własny asset/route. **1/1 PASS**, ESLint, repo typecheck i diff check PASS; fixture’y usunięte, kontener testowy zatrzymany. [Dowód](program-audytu/evidence/k17-two-worker-processes-2026-11-07.json). Test nie wykonuje pełnego download/FFmpeg/upload/cleanup worker lifecycle ani R2/S3; K17/R02 pozostaje częściowe do tych granic, kontrolowanego drainu i niezależnego review.
 
 <a id="k18"></a>
 
