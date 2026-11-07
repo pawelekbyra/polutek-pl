@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K01 — czysta instalacja lockfile w worktree, 7 listopada 2026
+
+Po czystym usunięciu `node_modules` przez `npm ci`, polecenie `npm_config_audit=false npm ci` zakończyło się exit 0 po 59 s: 893 pakiety, postinstall `prisma generate`, Prisma CLI/Client 6.19.3. `npm ls` potwierdził Next i eslint-config-next 16.4.5 oraz Prisma 6.19.3. Hash lockfile/schema i ostrzeżenia zapisano w [dowodzie](program-audytu/evidence/k01-clean-install-2026-11-07.json). To odtwarzalna instalacja na istniejącym worktree, nie nowy checkout; audyt npm był wyłączony zgodnie z zapisaną instrukcją. Nie wykonywano tu migracji, testu API/workera ani wideo. K01 pozostaje częściowy.
+
 ## K03 — ponowna kontrola CLI i guarda, 7 listopada 2026
 
 Na `cd5f4f4e57fe49d71a255a22c6acd88259764a60` uruchomiono ponownie `npx vitest run tests/unit/operations/verify-restored-database-process.test.ts tests/unit/operations/critical-path-runner.test.ts --reporter=dot`: **2 pliki, 47/47 PASS**, exit 0; ESLint trzech plików również PASS. Proces CLI potwierdza niezerowe kody błędnych przypadków i brak markera SUCCESS. Testy korzystają z syntetycznej granicy Prisma — bez PostgreSQL, restore, workera, storage i produkcji. [Dowód](program-audytu/evidence/k03-cli-regression-2026-11-07.json). Nie zmienia to statusu live weekly restore.

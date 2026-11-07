@@ -4,6 +4,10 @@
 
 Na rewizji `cd5f4f4e57fe49d71a255a22c6acd88259764a60` dwa celowane zestawy przeszły **47/47**: CLI weryfikatora działa w osobnym procesie i sprawdza rzeczywisty exit code dla preflight, query/count/migration errors, manifestów oraz sierot; guard critical-path również zaliczył suite. ESLint trzech plików PASS. Użyto syntetycznej granicy Prisma; nie odtwarzano bazy ani nie łączono się z usługą. [Dowód](evidence/k03-cli-regression-2026-11-07.json). K03 nadal wymaga osobnego odbioru live weekly restore.
 
+## K01 — czysta instalacja z lockfile, 7 listopada 2026
+
+W czystym katalogu `node_modules` dedykowanego worktree `npm_config_audit=false npm ci` zakończyło się exit 0 w 59 s: dodano 893 pakiety, postinstall wygenerował Prisma Client 6.19.3; `npm ls` potwierdził zgodne wersje Next, Prisma CLI i klienta. Hash lockfile i schematu, wersje runtime oraz ostrzeżenia zapisano w [dowodzie](evidence/k01-clean-install-2026-11-07.json). To nie był świeży klon, migracje ani test HTTP/workera; K01 pozostaje częściowy.
+
 ## K06 — approval proof przed ekstrakcją artefaktu, 7 listopada 2026
 
 Transfer lokalny i Actions podają teraz niezależny `RELEASE_PROOF_SHA256` do `release-artifact.mjs`. Hash proofu jest sprawdzany przed `tar -tf` i rozpakowaniem; test z niepoprawnym tar potwierdza wcześniejszą odmowę. **53/53** testów trzech suite, ESLint, `bash -n` i diff check PASS. Dowód ogranicza się do lokalnych fixture i atrapowego SSH; bez GHCR, Actions i serwera. K06 pozostaje częściowe do odbioru obrazów, całego procesu release i rollbacku. [Dowód](evidence/k06-proof-before-extraction-2026-11-07.json).
