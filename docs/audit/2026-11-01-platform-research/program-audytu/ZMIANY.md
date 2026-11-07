@@ -550,3 +550,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Test PostgreSQL uruchamia osobny proces A ze starym snapshotem oraz osobny proces B po przejęciu próby. A czeka na blokadzie wiersza joba, po COMMIT B jest odrzucony; tylko B aktywuje asset i trasę. **1/1 PASS**, 84 migracje, PostgreSQL 17.11; ESLint/typecheck/diff check PASS. Fixture’y usunięte, kontener disposable zatrzymany.
 - K17/R02 nadal częściowe: bez R2/S3, pełnego worker lifecycle i niezależnego review. [Dowód](evidence/k17-two-worker-processes-2026-11-07.json).
+## 2026-11-07 — K01-T3 Studio multipart acceptance
+
+- `a10761c2` rozszerza test K01 z ręcznie wstawionego oryginału na prawdziwe Studio API: multipart start, presigned PUT, complete i weryfikację oryginału, po której ten sam worker koduje film.
+- Testowy endpoint storage działa w Next dev tylko z jawnym znacznikiem i loopback URL; `production` nadal odrzuca injection. Guard **3/3**, integration PostgreSQL/Next/worker **1/1**, repo typecheck, ESLint i diff check PASS.
+- Dowód: `evidence/k01-multipart-studio-http-2026-11-07.json`. To lokalny S3-shaped fixture; Cloudflare R2, browser, deployed Worker i niezależny review są otwarte.
