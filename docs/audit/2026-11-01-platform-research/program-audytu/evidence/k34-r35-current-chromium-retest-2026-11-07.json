@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-07",
+  "status": "passed_not_reproduced",
+  "repository_head_sha": "e6a36fa1e08f855a10c8852ed8317303dc876441",
+  "browser": "Chromium 149.0.7827.55",
+  "source_sha256": {
+    "app/components/studio/ConfirmDialog.tsx": "c071877589611c8c424c61eadc9bbcc1d0fc4b824988718943fbb0accecddad9",
+    "components/ui/dialog.tsx": "1c7343c50a593860de16326a3a50f7a29d6ac42797525511fdf39c83ff0573f1",
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs": "1b9bd8b95fd6fff4b4885cc44db0568290aea38b31b39945a2497c4aa1dc77d1"
+  },
+  "temporary_probe_sha256": "8ca0006d8c3834a89365e73a2ccdb09d28e89c6ef5b92fb2b8fdff1cb35fbdf9",
+  "method": "Ran the existing 16-observation Chromium component experiment from a temporary copy. Its busyStart snapshot was changed to read document.activeElement immediately, without the helper's two-animation-frame wait, then it sent five Tabs and Enter while both dialog actions were disabled. All output files went to /tmp; tracked evidence was not overwritten.",
+  "observations": {
+    "busy_focus_at_first_snapshot": "Dialog panel (DIV), inside role=alertdialog",
+    "tab_steps": 5,
+    "tab_steps_inside_dialog": 5,
+    "background_control_in_accessible_role_tree": false,
+    "background_action_after_enter": false,
+    "busy_escape_policy_and_retry": "PASS"
+  },
+  "summary": {
+    "component_observations": 16,
+    "failed_assertions": 0,
+    "page_errors": 0,
+    "external_requests": 0,
+    "real_application_api_or_delete": false
+  },
+  "interpretation": "The historical R35 observation in ux-browser-focus-fast.json could not be reproduced on the recorded current ConfirmDialog and Base UI dialog sources, even when the initial focus snapshot skipped the two-frame settling helper. This isolated component experiment does not prove every Studio integration or assistive-technology behavior, so retain K34 as partial and request independent review.",
+  "limitations": [
+    "Synthetic page shell and callbacks; no Next application, Studio API, database or real deletion.",
+    "Chromium desktop only; no screen reader, Firefox recheck for this exact timing probe, or independent review.",
+    "A no-reproduction result does not erase the historical observation; its original harness/timing remains unverified."
+  ],
+  "cleanup": "Browser and local server closed; temporary bundle and probe report stayed under /tmp."
+}
