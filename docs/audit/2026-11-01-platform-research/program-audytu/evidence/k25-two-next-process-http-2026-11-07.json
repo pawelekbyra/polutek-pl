@@ -1,0 +1,33 @@
+{
+  "package": "K25/R26",
+  "date": "2026-11-07",
+  "scenario": "Concurrent Studio playlist mutations through two separate local Next.js production server processes sharing PostgreSQL.",
+  "buildRevision": "f6f83ad261b3b80a8176bda99ef81ac2e8e38172",
+  "buildApplicability": "The K25 route, playlist use cases, repository, auth/session code and middleware match the tested source revision; git diff against current HEAD was empty for these paths.",
+  "servers": [
+    { "process": 1, "command": "npx next start -p 3111" },
+    { "process": 2, "command": "npx next start -p 3112" }
+  ],
+  "database": "Disposable PostgreSQL 17.11 on loopback with tmpfs; all 84 migrations applied; removed after acceptance.",
+  "authentication": "Real Studio session resolution against synthetic Better Auth session and channel OWNER membership; production secure cookie; no mocked resolver.",
+  "results": {
+    "concurrentHttpPostStatuses": [201, 409],
+    "refusalCode": "PLAYLIST_LIMIT",
+    "activeCountAfterConcurrentPost": 100,
+    "successAuditRows": 1,
+    "deleteHttpStatus": 200,
+    "slotReusedByOtherServerPostStatus": 201,
+    "activeCountAfterDeleteAndReplacement": 100,
+    "deleteAuditRows": 1,
+    "replacementCreateAuditRows": 1,
+    "foreignChannelDeleteStatus": 404,
+    "foreignTargetRemainedActive": true,
+    "fixtureUserCreatorSessionRowsBeforeDatabaseRemoval": "2:2:2"
+  },
+  "rateLimit": "No Upstash Redis credentials were configured. The application logged the missing configuration and followed its existing fail-open behavior. This run does not verify rate limiting.",
+  "limits": [
+    "The two servers ran on one local host and shared the same previously verified production build; this is not deployed non-production acceptance or separate infrastructure failure testing.",
+    "The test verified a real authenticated Studio HTTP route, but no Redis-backed request limit or production services.",
+    "Independent review remains outstanding."
+  ]
+}

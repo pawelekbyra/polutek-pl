@@ -674,6 +674,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **HTTP Studio, 7 listopada:** prawdziwy `POST /api/studio/playlists` handler z rzeczywistymi operacjami Prisma na disposable PostgreSQL przyjmuje przy 99 aktywnych playlistach dwa równoległe POST-y; dostaje się dokładnie 201 i 409 `PLAYLIST_LIMIT`, stan końcowy wynosi 100, a zatwierdzona zmiana ma jeden wpis audytu. Cała suite PostgreSQL **3/3 PASS**, unit **18/18**, ESLint i repo typecheck PASS ([dowód](program-audytu/evidence/k25-studio-postgres-2026-11-07.json)). Sesja i limiter były kontrolowane; test nie obejmuje dwóch wdrożonych procesów HTTP ani DELETE przez endpoint. K25 pozostaje częściowe.
 
+**Odbiór dwóch procesów HTTP, 7 listopada 2026:** dwa osobne lokalne `next start` z tym samym buildem obsłużyły równoległe uwierzytelnione POST-y na wspólnej disposable PostgreSQL: 201/409 `PLAYLIST_LIMIT`, stan 100, jeden audit row. DELETE na pierwszym procesie zwolnił slot, który drugi proces wykorzystał nowym POST-em; licznik wrócił do 100, audyty delete/create po jednym. Cudzy zasób przez DELETE z drugiego kanału dał 404 i nie zmienił celu. Użyto prawdziwej sesji i handlerów HTTP; bez Redis limiter był fail-open, więc nie jest zaliczony. [Dowód](program-audytu/evidence/k25-two-next-process-http-2026-11-07.json). To nie jest odbiór wdrożonej infrastruktury ani niezależny review; K25 pozostaje częściowe.
+
 <a id="k26"></a>
 
 #### K26. Usunięcie konta a własność i publiczny profil kanału
