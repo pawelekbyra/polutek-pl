@@ -965,6 +965,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Aktualizacja 7 listopada — semantyka małych JSON API:** k6 ustawia `responseType: "text"` tylko dla sidebar, comments i media-source, mimo globalnego `discardResponseBodies: true`. Walidator sprawdza wymagane kształty (viewer/sekcje, komentarze/uprawnienia, gotowy playback plan z dozwolonym dostępem i źródłem); HTTP 200 z invalid JSON, błędnym kształtem, obiektem błędu lub nieodtwarzalnym planem zwiększa `unexpected_content`, które zatrzymuje serię. HTML strony i miniatury nadal nie są materializowane. Test kontraktu **30/30 PASS**, node/shell syntax, ESLint i diff check PASS. Nie uruchomiono k6 ani endpointu. [Dowód i hashe](program-audytu/evidence/k38-json-body-contract-2026-11-07.json).
 
+**Runtime k6, 7 listopada 2026:** przypięty k6 v1.3.0 uruchomiono na jednorazowym serwerze syntetycznym `127.0.0.1` (po jednym żądaniu, bez aplikacji/DB Polutka). Poprawne comments JSON dało summarizer exit 0; odpowiedź 200 z MIME JSON i HTML body dała `unexpected_content=1` i exit 13. Pierwszy przebieg ujawnił, że executor `per-vu-iterations` nie emituje `dropped_iterations`; summary hook dopisuje teraz zero tylko dla stałej liczby iteracji, bez zmiany danych stałego arrival rate. Po poprawce oba przypadki runtime przechodzą oczekiwany kontrakt; celowany plik testów **31/31 PASS**, ESLint i składnia PASS. Archiwum k6 zweryfikowano SHA-256. Nie jest to pomiar obciążenia ani odbiór bazy/cleanup; K38 pozostaje częściowe. [Dowód](program-audytu/evidence/k38-k6-runtime-contract-2026-11-07.json).
+
 <a id="k39"></a>
 
 #### K39. Pomiar celu 10 tys. widzów i plan wąskich usprawnień

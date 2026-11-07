@@ -43,7 +43,7 @@ co ~70 nowych widzów na minutę. Tego rodzaju żądań test nie wysyłał (zaka
 
 ## Metoda
 
-Lokalne narzędzia odrzucają raport zawierający nieoczekiwany status, brakujący lub niewłaściwy MIME dla statusu 200 albo brak wymaganej metryki k6. Kontrola MIME wciąż nie parsuje JSON ani nie porównuje semantycznej treści strony; bodies odpowiedzi są odrzucane w generatorze dla ograniczenia pamięci. Historyczny pomiar poniżej nie został ponowiony przez tę zmianę kodu.
+Lokalne narzędzia odrzucają raport zawierający nieoczekiwany status, brakujący lub niewłaściwy MIME dla statusu 200 albo brak wymaganej metryki k6. Dla małych odpowiedzi JSON z sidebar, comments i media-source generator parsuje treść i sprawdza pola potrzebne do potwierdzenia działającej strony oraz planu odtwarzania; pozostałe odpowiedzi HTML i obrazów nadal są odrzucane w generatorze dla ograniczenia pamięci. Stałolicznikowy executor k6 nie emituje `dropped_iterations`, więc summary hook raportuje tam zero; serie stałego tempa używają rzeczywistej metryki k6. Historyczny pomiar poniżej nie został ponowiony przez te zmiany. K6 v1.3.0 sprawdzono dodatkowo z jednym żądaniem do syntetycznego serwera loopback: poprawny JSON przechodzi, a odpowiedź 200 z niepoprawnym body zostaje odrzucona; to test kontraktu, nie pomiar wydajności. Szczegóły: [dowód K38 runtime](../audit/2026-11-01-platform-research/program-audytu/evidence/k38-k6-runtime-contract-2026-11-07.json).
 
 - Generator: k6 1.3.0 w jednorazowym kontenerze **na serwerze** (`--network host --cpus 0.5 --memory 256m`),
   cel `http://127.0.0.1:3000` z nagłówkiem `Host: www.pawelperfect.com`, z pominięciem Cloudflare.

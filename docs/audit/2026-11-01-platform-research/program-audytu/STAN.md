@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K38 — runtime przypiętego k6, 7 listopada 2026
+
+K6 v1.3.0 zweryfikowany po SHA-256 uruchomiono przeciw atrapowemu HTTP wyłącznie na `127.0.0.1`; po jednym żądaniu na próbę. Prawidłowa odpowiedź comments przechodzi summarizer (0), a 200 z JSON MIME i HTML body daje `unexpected_content=1` i exit 13. Runtime ujawnił brak metryki `dropped_iterations` w summary executora `per-vu-iterations`; summary hook uzupełnia ją zerem tylko dla trybu stałej liczby iteracji. Test kontraktu 31/31 PASS, ESLint, node/shell syntax i diff check PASS. Nie było połączenia do Polutka/DB/produkcji ani obciążenia. K38 pozostaje częściowe. Następny krok: rozszerzyć semantyczny kontrakt na HTML/miniaturę z ograniczeniem pamięci i doprecyzować wersjonowany mix; rzeczywisty cleanup oraz odbiór profilu wymagają non-production. [Dowód](evidence/k38-k6-runtime-contract-2026-11-07.json).
+
 ## K30 — probe statusu aplikacji, 7 listopada 2026
 
 `probePublicApp` uznaje wyłącznie 2xx; 401/404/5xx są awarią. Publiczny health bez tokenu pozostaje liveness 200; autoryzowany readiness zwraca 503, gdy diagnostyka zależności ma `ok:false`. Test use case wymusza błąd SQL i sprawdza `{ok:false,database:"failed"}`. Osobny probe HLS nadal uznaje oczekiwane 404 na korzeniu za działający Worker. Trzy celowane pliki health/probe: **29/29 PASS**, ESLint, repo typecheck i diff check PASS. Nie dowodzi to odtwarzania manifestu/segmentu, dekodowania, QoE ani odbioru alarmów. K30 pozostaje częściowe. Następny krok: canary wymaga kontrolnego własnego filmu i sposobu bezpiecznego uzyskania krótkotrwałego HLS URL; test dekodowania wymaga osobnego browser runnera/odbiornika. Nie utrwalać tokenu widza w Cloudflare ani logach.

@@ -124,5 +124,10 @@ export default function loadTest() {
 }
 
 export function handleSummary(data) {
+  // k6's per-vu-iterations executor does not emit dropped_iterations; sequential
+  // fixed-count runs cannot drop scheduled arrivals, so report the meaningful 0.
+  if (ITERATIONS && !data.metrics.dropped_iterations) {
+    data.metrics.dropped_iterations = { type: "counter", contains: "default", values: { count: 0, rate: 0 } };
+  }
   return { [__ENV.OUT || "/out/summary.json"]: JSON.stringify(data) };
 }

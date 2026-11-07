@@ -78,6 +78,12 @@ describe('load-test response contract', () => {
     expect(hasExpectedLoadResponseBody('thumb', null)).toBe(true);
   });
 
+  it('reports zero dropped arrivals for fixed-count iterations when k6 omits that metric', () => {
+    const k6 = readFileSync(path.join(root, 'scripts/loadtest/k6-guest.js'), 'utf8');
+    expect(k6).toContain('if (ITERATIONS && !data.metrics.dropped_iterations)');
+    expect(k6).toContain('values: { count: 0, rate: 0 }');
+  });
+
   it('accepts a complete healthy summary', () => {
     const result = runSummary(summary());
     expect(result.status).toBe(0);
