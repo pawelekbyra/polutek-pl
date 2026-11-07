@@ -31,6 +31,7 @@ function main(argv) {
   const proof = JSON.parse(run(process.execPath, ['-e', 'process.stdout.write(require(process.argv[1]).images ? JSON.stringify(require(process.argv[1]).images) : "")', proofFile]));
   if (Object.keys(proof).sort().join(',') !== [...kinds].sort().join(',')) fail('Release proof must contain all five image kinds');
   const refs = [];
+  const selected = opts.scope === 'admin' ? ['admin'] : kinds.filter(kind => kind !== 'admin');
   for (const kind of kinds) {
     const ref = proof[kind]?.registry_ref;
     const suffix = kind === 'admin' ? 'admin' : kind;
@@ -93,7 +94,7 @@ function main(argv) {
 
   // Reuse an installed digest only when its immutable config ID still matches the proof. Otherwise fetch the exact digest.
   // This lets proof checks for operator actions work while the registry is unavailable, without trusting a mutable tag.
-  for (const [kind, ref] of refs) {
+  for (const [kind, ref] of refs.filter(([kind]) => selected.includes(kind))) {
     const expectedId = proof[kind].id;
     const cached = spawnSync('docker', ['image', 'inspect', '--format', '{{.Id}}', ref],
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
@@ -104,7 +105,6 @@ function main(argv) {
     `--inputs=${stateInputs}`, `--scope=${opts.scope}`]);
   const verified = JSON.parse(result);
   if (verified.verified !== true || verified.revision !== opts.revision) fail('Release verifier returned an invalid result');
-  const selected = opts.scope === 'admin' ? ['admin'] : kinds.filter(kind => kind !== 'admin');
   for (const kind of selected) {
     const id = verified.images?.[kind];
     if (!/^sha256:[a-f0-9]{64}$/.test(id ?? '')) fail(`Verifier did not return image ID: ${kind}`);

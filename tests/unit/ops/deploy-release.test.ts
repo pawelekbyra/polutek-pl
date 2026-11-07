@@ -83,7 +83,7 @@ describe.skipIf(!/^v22\./.test(process.version) || process.platform === 'win32')
     const calls = readFileSync(dockerLog, 'utf8').trim().split('\n');
     expect(calls.filter(call => call.startsWith('pull '))).toHaveLength(0);
     expect(calls.filter(call => call.startsWith('tag '))).toHaveLength(4);
-    expect(calls.filter(call => call.startsWith('image inspect '))).toHaveLength(5);
+    expect(calls.filter(call => call.startsWith('image inspect '))).toHaveLength(4);
   });
 
   it('pulls each approved digest when the cached image ID differs from the proof', () => {
@@ -123,11 +123,63 @@ describe.skipIf(!/^v22\./.test(process.version) || process.platform === 'win32')
 
     expect(result.status, result.stderr).toBe(0);
     const calls = readFileSync(dockerLog, 'utf8').trim().split('\n');
-    expect(calls.filter(call => call.startsWith('pull '))).toEqual(kinds.map(kind => `pull ${refs[kind]}`));
+    expect(calls.filter(call => call.startsWith('pull '))).toEqual(kinds.filter(kind => kind !== 'admin').map(kind => `pull ${refs[kind]}`));
     expect(calls.filter(call => call.startsWith('tag '))).toHaveLength(4);
-    expect(calls.filter(call => call.startsWith('image inspect '))).toHaveLength(5);
+    expect(calls.filter(call => call.startsWith('image inspect '))).toHaveLength(4);
     expect(Math.max(...calls.map((call, index) => call.startsWith('pull ') ? index : -1)))
       .toBeLessThan(calls.findIndex(call => call.startsWith('tag ')));
+  });
+
+  it('checks and pulls only the admin image for an admin-scoped release', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'deploy-release-admin-scope-'));
+    tempDirs.push(dir);
+    const release = path.join(dir, 'release');
+    const source = path.join(release, 'source', 'scripts', 'ops');
+    const bin = path.join(dir, 'bin');
+    mkdirSync(source, { recursive: true });
+    mkdirSync(bin);
+    const revision = 'c'.repeat(40);
+    const imageId = `sha256:${'a'.repeat(64)}`;
+    const kinds = ['app', 'migrator', 'worker', 'collector', 'admin'];
+    const images = Object.fromEntries(kinds.map(kind => [kind, {
+      id: imageId,
+      registry_ref: `ghcr.io/pawelekbyra/polutek-${kind}@sha256:${'b'.repeat(64)}`,
+    }]));
+    writeFileSync(path.join(release, 'proof.json'), JSON.stringify({ images }));
+    writeFileSync(path.join(release, 'inputs.json'), '{}');
+    writeFileSync(path.join(source, 'release-proof.mjs'), `
+      const revision = process.argv.find(value => value.startsWith('--revision='))?.slice('--revision='.length);
+      const ids = Object.fromEntries(['app','migrator','worker','collector','admin'].map(kind => [kind, '${imageId}']));
+      process.stdout.write(JSON.stringify(process.argv[2] === 'preflight'
+        ? { preflight: true, revision, selected: ['admin'] }
+        : { verified: true, revision, images: ids }));
+    `);
+    const dockerLog = path.join(dir, 'docker.log');
+    const fakeDocker = path.join(bin, 'docker');
+    writeFileSync(fakeDocker, `#!/bin/sh
+printf '%s\\n' "$*" >> '${dockerLog}'
+case "$1:$2" in
+  image:inspect) case "$5" in *polutek-admin@sha256:*) echo "sha256:${'e'.repeat(64)}";; *) exit 41;; esac ;;
+  pull:*) case "$2" in *polutek-admin@sha256:*) exit 0;; *) exit 42;; esac ;;
+  tag:*) case "$3" in polutek-admin:admin-test) exit 0;; *) exit 43;; esac ;;
+  *) exit 44 ;;
+esac
+`);
+    chmodSync(fakeDocker, 0o755);
+
+    const result = spawnSync(process.execPath, [helper, `--release-dir=${release}`, `--revision=${revision}`,
+      `--proof-sha256=${'d'.repeat(64)}`, '--scope=admin', '--tag=admin-test'], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH ?? ''}` },
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+    const calls = readFileSync(dockerLog, 'utf8').trim().split('\n');
+    expect(calls).toHaveLength(3);
+    expect(calls[0]).toContain('polutek-admin@sha256:');
+    expect(calls[1]).toContain('polutek-admin@sha256:');
+    expect(calls[2]).toContain('polutek-admin:admin-test');
   });
 
   it('rejects a failed proof preflight before invoking Docker or pulling registry images', () => {

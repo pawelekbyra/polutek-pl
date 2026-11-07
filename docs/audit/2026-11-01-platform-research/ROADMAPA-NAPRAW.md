@@ -238,6 +238,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K06-T1** — Celowy błąd typu i celowa porażka wymaganego testu zatrzymują publikację/aktywację we wszystkich wspieranych ścieżkach. Wymagane testy nie mogą zostać zastąpione zerowym wyborem.
 - **K06-T2** — Artefakt z innym SHA/digest lub zmienionymi wejściami nie przechodzi zatwierdzenia. Poprawny artefakt przechodzi cały proces w sandboxie; brak wymuszenia SLSA poziomu bez oddzielnego dowodu.
 
+**Przyrost lokalny, 7 listopada 2026:** konsument `deploy-release.mjs` sprawdza i pobiera teraz wyłącznie obrazy wybrane przez `--scope`: cztery obrazy aplikacji dla `app`, sam panel dla `admin`. Wcześniej scope ograniczał końcowe tagowanie/weryfikację, ale Docker nadal odpytował wszystkie pięć registry digestów, więc niepowiązana niedostępność obrazu mogła blokować wąskie wdrożenie. Celowana regresja procesu obejmuje oba zakresy; bez registry, serwera ani publikacji. [Dowód](program-audytu/evidence/k06-scope-image-consumption-2026-11-07.json). K06 nadal częściowe do pozytywnego odbioru pełnego wydania, pięciu rzeczywistych obrazów i rollbacku.
+
 <a id="k07"></a>
 
 #### K07. Limit rzeczywistych bajtów przed parserem

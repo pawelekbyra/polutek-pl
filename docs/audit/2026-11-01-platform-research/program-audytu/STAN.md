@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K06 — zakres obrazów podczas weryfikacji, 7 listopada 2026
+
+`deploy-release.mjs` ogranicza teraz `docker inspect/pull` do wybranego profilu: `app` = cztery obrazy aplikacji, `admin` = sam panel. Celowany test procesu **6/6 PASS**, ESLint i diff check PASS; Docker był atrapą, bez registry/serwera. [Dowód](evidence/k06-scope-image-consumption-2026-11-07.json). K06 częściowe; następny krok to pozytywny pełny release/rollback acceptance z rzeczywistymi obrazami i niezależnym odbiorem, bez wdrażania w tej gałęzi.
+
 ## K32 — inwentarz odtwarzania, 7 listopada 2026
 
 Gotowy jest repo-only inwentarz zasobów i udokumentowanych granic backup/restore: [K32-RECOVERY-INVENTORY.md](K32-RECOVERY-INVENTORY.md). Nie uruchamiano testów ani nie łączono się z serwerem/usługami. K32 jest częściowe; następny krok lokalny to zaprojektowanie odizolowanego syntetycznego acceptance, a pełne domknięcie wymaga decyzji właściciela o RPO/RTO i mediach oraz zewnętrznych dowodów offsite/klucza.

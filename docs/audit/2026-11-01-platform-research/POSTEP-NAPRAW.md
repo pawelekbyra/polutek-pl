@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K06 — respektowanie zakresu obrazów przy weryfikacji wdrożenia, 7 listopada 2026
+
+Naprawiono rozjazd: `deploy-release.mjs --scope=app` odpytuje/pobiera cztery obrazy aplikacji, a `--scope=admin` tylko obraz panelu; wcześniej oba tryby dotykały wszystkich pięciu. Test procesu obejmuje cache app, pull przy innym ID oraz odmowę dostępu do niepowiązanych obrazów dla admin: **6/6 PASS**. ESLint i `git diff --check` PASS. Użyto wyłącznie atrapy Dockera i fixture; bez GHCR, Actions, SSH, serwera czy publikacji. K06 pozostaje częściowe do pełnego pozytywnego acceptance release/rollback i rzeczywistych obrazów. [Dowód](program-audytu/evidence/k06-scope-image-consumption-2026-11-07.json).
+
 ## K32 — inwentarz odtwarzania, 7 listopada 2026
 
 Spisano z dokumentacji repo zakres kopii DB, konfiguracji/sekretów, Support, kodu/obrazów, mediów, Cloudflare, płatności i Redis oraz granice `restore-test.sh`. Brak testu offsite-only, zmierzonego pełnego RTO, potwierdzonej niezależnej kopii klucza age i kopii oryginałów/HLS/miniatur. To przegląd dokumentów; nie łączono się z serwerem ani usługami. K32 pozostaje częściowe: potrzebne są decyzje właściciela o RPO/RTO i kopii mediów oraz syntetyczny, odizolowany restore acceptance. [Inwentarz](program-audytu/K32-RECOVERY-INVENTORY.md).
