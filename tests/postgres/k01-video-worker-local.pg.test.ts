@@ -673,5 +673,54 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     } finally {
       await browser.close();
     }
+
+    const replacementStartResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload`, {
+      method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "replacement.mp4", fileSize: sourceBytes.length, contentType: "video/mp4" }),
+    });
+    const replacementStartText = await replacementStartResponse.text();
+    expect(replacementStartResponse.status, `${replacementStartText}\n${nextOutput}`).toBe(200);
+    const replacementUpload = JSON.parse(replacementStartText) as { originalId: string; partCount: number; partSize: number; version: number };
+    expect(replacementUpload.version).toBe(2);
+    const replacementPartsResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/parts`, {
+      method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId: replacementUpload.originalId, partNumbers: Array.from({ length: replacementUpload.partCount }, (_, index) => index + 1) }),
+    });
+    const replacementPartsText = await replacementPartsResponse.text();
+    expect(replacementPartsResponse.status, `${replacementPartsText}\n${nextOutput}`).toBe(200);
+    const replacementSigned = JSON.parse(replacementPartsText) as { urls: Array<{ partNumber: number; url: string }> };
+    const replacementCompletedParts: Array<{ partNumber: number; etag: string }> = [];
+    for (const part of replacementSigned.urls) {
+      const start = (part.partNumber - 1) * replacementUpload.partSize;
+      const put = await fetch(part.url, { method: "PUT", body: sourceBytes.subarray(start, start + replacementUpload.partSize) });
+      expect(put.status).toBe(200);
+      replacementCompletedParts.push({ partNumber: part.partNumber, etag: put.headers.get("etag") ?? '"k01-local"' });
+    }
+    const replacementCompleteResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/complete`, {
+      method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId: replacementUpload.originalId, parts: replacementCompletedParts, publishAfterReady: true }),
+    });
+    const replacementCompleteText = await replacementCompleteResponse.text();
+    expect(replacementCompleteResponse.status, `${replacementCompleteText}\n${nextOutput}`).toBe(200);
+    const replacementJobBeforeWorker = await prisma.videoEncodeJob.findFirstOrThrow({ where: { videoId, originalId: replacementUpload.originalId } });
+    const replacementWorkerOutput = await runWorker(replacementJobBeforeWorker.id);
+    expect(replacementWorkerOutput).toContain('"message":"stopped"');
+    const [firstOriginal, secondOriginal, replacementVideo, activeRoutes, replacementPipeline, replacementJob] = await Promise.all([
+      prisma.videoOriginal.findUniqueOrThrow({ where: { id: originalId }, select: { status: true } }),
+      prisma.videoOriginal.findUniqueOrThrow({ where: { id: replacementUpload.originalId }, select: { status: true } }),
+      prisma.video.findUniqueOrThrow({ where: { id: videoId }, include: { activePlaybackRoute: { include: { asset: true } } } }),
+      prisma.videoPlaybackRoute.findMany({ where: { videoId, status: "ACTIVE" } }),
+      fetch(`${baseUrl}/api/studio/videos/${videoId}/pipeline`, { headers: { cookie: ownerCookie() }, cache: "no-store" }),
+      prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: replacementJobBeforeWorker.id } }),
+    ]);
+    const replacementPipelineText = await replacementPipeline.text();
+    expect(replacementPipeline.status, `${replacementPipelineText}\n${nextOutput}`).toBe(200);
+    expect(firstOriginal.status).toBe("SUPERSEDED");
+    expect(secondOriginal.status).toBe("READY");
+    expect(replacementVideo.status).toBe("PUBLISHED");
+    expect(replacementVideo.activeOriginalId).toBe(replacementUpload.originalId);
+    expect(replacementVideo.activePlaybackRoute?.asset.objectKey).toBe(hlsAttemptAssetKey(videoId, 2, replacementJob.attemptId));
+    expect(activeRoutes).toHaveLength(1);
+    expect(replacementPipelineText).toContain('"versionNumber":2');
   }, 150_000);
 });
