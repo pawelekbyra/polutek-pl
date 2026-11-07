@@ -414,8 +414,17 @@ export async function abortOriginalUpload(input: { videoId: string; originalId: 
     const video = await requireVideo(input.videoId, ctx, "video.upload");
     const original = await loadUploadingOriginal(video.id, input.originalId, ctx);
     if (original.status !== "UPLOADING") return fail(new AppError("Ten upload nie jest już w toku.", 409, "UPLOAD_NOT_OPEN"));
-    if (original.uploadId) await storage.abort(original.objectKey, original.uploadId);
-    await ctx.prisma.videoOriginal.update({ where: { id: original.id }, data: { status: "ABANDONED", failureReason: "Przerwany przez admina.", uploadId: null } });
+    if (original.uploadId) {
+      await storage.abort(original.objectKey, original.uploadId).catch((error: unknown) => {
+        const name = (error as { name?: string })?.name;
+        if (name !== "NoSuchUpload") throw error;
+      });
+    }
+    const closed = await ctx.prisma.videoOriginal.updateMany({
+      where: { id: original.id, videoId: video.id, status: "UPLOADING" },
+      data: { status: "ABANDONED", failureReason: "Przerwany przez admina.", uploadId: null },
+    });
+    if (closed.count !== 1) return fail(new AppError("Ten upload został już zakończony albo zastąpiony.", 409, "UPLOAD_NOT_OPEN"));
     await recordAuditEvent(ctx, { action: "VIDEO_ORIGINAL_UPLOAD_ABORTED", targetType: "Video", targetId: video.id, metadata: { originalId: original.id } });
     return ok({ originalId: original.id });
   } catch (error) {
