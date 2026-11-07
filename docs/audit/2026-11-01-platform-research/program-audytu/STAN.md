@@ -4,6 +4,10 @@ Next HTTP test po lokalnym kodowaniu wykrył `ERROR` w planie playback: signer n
 
 # Stan badania i napraw — punkt wznowienia
 
+## K35-T1 — lokalny manifest i segment przez kod edge Worker, 7 listopada 2026
+
+Po Studio multipart uploadzie i rzeczywistym kodowaniu FFmpeg acceptance przekazuje podpisany URL playback do `workers/hls-edge/worker.mjs`. Local R2-binding adapter czyta dokładne bajty encoder output: master i variant manifesty zwracają 200 i `#EXTM3U`, a wskazany segment fMP4 jest niepusty. Disposable PostgreSQL 17 po 84 migracjach: integration **1/1**, worker unit **20/20**, typecheck, ESLint i diff check PASS. [Dowód i SHA](evidence/k35-edge-hls-local-2026-11-07.json). To nie jest browser decode, Cloudflare/R2 ani pełna macierz K35; T1 częściowe, T2/T3 otwarte.
+
 ## K01-T3 — prawdziwy entrypoint workera, 7 listopada 2026
 
 Test PostgreSQL uruchomił osobny proces `scripts/video-worker.ts`; worker pobrał syntetyczny film z loopbackowego S3 fixture, zakodował go FFmpeg 8.0.1, zweryfikował playlisty i zapisał aktywny SELF_HLS. Po sukcesie odebrał SIGTERM i zakończył się kontrolowanie. PostgreSQL 17.11/84 migracje: integration **1/1**, guard test endpointu **2/2**, ESLint/typecheck/diff check PASS. Endpoint działa tylko w `NODE_ENV=test` i jest ograniczony do loopbacka. Fixture’y wyczyszczono, kontener usunięto. [Dowód](evidence/k01-worker-entrypoint-2026-11-07.json). K01-T3/K35 nadal częściowe: upload/playback HTTP, Cloudflare R2 i niezależny review są otwarte.

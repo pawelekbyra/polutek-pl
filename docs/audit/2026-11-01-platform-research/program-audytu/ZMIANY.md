@@ -555,3 +555,8 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - `a10761c2` rozszerza test K01 z ręcznie wstawionego oryginału na prawdziwe Studio API: multipart start, presigned PUT, complete i weryfikację oryginału, po której ten sam worker koduje film.
 - Testowy endpoint storage działa w Next dev tylko z jawnym znacznikiem i loopback URL; `production` nadal odrzuca injection. Guard **3/3**, integration PostgreSQL/Next/worker **1/1**, repo typecheck, ESLint i diff check PASS.
 - Dowód: `evidence/k01-multipart-studio-http-2026-11-07.json`. To lokalny S3-shaped fixture; Cloudflare R2, browser, deployed Worker i niezależny review są otwarte.
+## 2026-11-07 — K35-T1 lokalny edge playback
+
+- Test integracyjny przekazuje podpisany playback URL do rzeczywistego `workers/hls-edge/worker.mjs`; binding czyta dokładnie bajty HLS zapisane przez worker encoder.
+- Master/variant manifesty: 200 + `#EXTM3U`; segment z wariantu: 200 + niepuste bajty. PostgreSQL/Next/worker integration **1/1**, edge unit **20/20**, typecheck/ESLint/diff check PASS.
+- Tylko local R2 adapter: brak Cloudflare, prawdziwego R2, browser playback/decode i pozostałej macierzy K35. [Dowód](evidence/k35-edge-hls-local-2026-11-07.json).

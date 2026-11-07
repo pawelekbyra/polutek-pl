@@ -925,6 +925,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K35-T2** — Dwie osoby/kanały: cudze odczyty i mutacje odmawiają bez skutku, legalna kontrola własnego zasobu działa. Crash/retry w krytycznej granicy nie gubi/nie dubluje efektu.
 - **K35-T3** — Profil płatny używa tylko provider test-mode, podpisanego webhooka, replay/refundu/sporu i sprawdza sumę oraz realny dostęp do filmu. Raport exact SHA/digest rozlicza executed/failed/skipped/blocked, fixture sprzątnięte.
 
+**Postęp lokalny, 7 listopada 2026 (K35-T1 częściowo):** po pełnym Studio multipart uploadzie i kodowaniu syntetycznego filmu test wywołuje rzeczywisty `workers/hls-edge/worker.mjs` z podpisanym URL-em oraz bindingiem nad lokalnymi bajtami encoder output. Master i wariant manifestu odpowiadają 200, a wskazany segment fMP4 jest niepusty. Disposable PostgreSQL 17/84 migracje: integration **1/1 PASS**, edge unit **20/20 PASS**, typecheck, ESLint i diff check PASS. [Dowód](program-audytu/evidence/k35-edge-hls-local-2026-11-07.json). Brak browser/decode evidence, prawdziwego Cloudflare R2/deployed Worker, replace/delete, odmowy drugiego konta/kanału i profilu płatnego; K35 pozostaje otwarte.
+
 ### E6 — Dostępność, duże dane i udowodniona pojemność
 
 <a id="k36"></a>
