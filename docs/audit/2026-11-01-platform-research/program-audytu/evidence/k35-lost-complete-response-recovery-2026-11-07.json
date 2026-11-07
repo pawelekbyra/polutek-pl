@@ -1,0 +1,29 @@
+{
+  "package": "K35-T2 recover Studio completion after committed storage object and lost response",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "ed8fa0ae3949464eb5e27049284668a7a4ebfd4c",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped after test",
+    "scenario": "The loopback fixture is placed in the post-commit/lost-response state: the valid object exists and the multipart UploadId is gone while the database row still says UPLOADING.",
+    "assertions": [
+      "cross-channel complete is rejected with 404 before storage access",
+      "authorized retry receives NoSuchUpload, verifies the already-present object and returns HTTP 200",
+      "original becomes READY and exactly one encode job is created",
+      "the real scripts/video-worker.ts encodes that recovered object and the job becomes SUCCEEDED"
+    ],
+    "repo_typecheck": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "15e262781776810e5bd010aec18cf1394bdb8bb525c987d96f3cd33d6fd484bf"
+  },
+  "limitations": [
+    "Lost response is represented by preparing the exact post-commit storage/DB state, not by forcibly severing a network connection to real R2.",
+    "Storage and worker use a loopback S3-shaped fixture; no Cloudflare R2 or deployed Worker was contacted.",
+    "This covers one crash boundary only; broader K35 role/state/retry matrix and independent review remain open."
+  ]
+}

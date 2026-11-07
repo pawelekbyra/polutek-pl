@@ -425,3 +425,7 @@ Test usuwa przez Studio API syntetyczny film z dwiema wersjami HLS. Kaskada usuw
 ## K35-T1 — Chromium odtwarza v2 po podmianie, 7 listopada 2026
 
 Po zastąpieniu oryginału v2 i kodowaniu przez rzeczywisty `scripts/video-worker.ts` Chromium przeładowuje film i odtwarza nową wersję ponad 0,5 s. Browser acceptance widzi master playlistę i fMP4 segment pod podpisaną wersją `v2~<attemptId>` przez lokalny kod Worker; potem test kasuje film i sprawdza durable cleanup. PostgreSQL 17.11/84 migracje, integration **1/1 PASS**, typecheck/ESLint/diff check PASS. [Dowód](program-audytu/evidence/k35-browser-replacement-v2-2026-11-07.json). Cloudflare R2/deployed Worker, role/payment matrix, awarie i niezależny review pozostają otwarte.
+
+## K35-T2 — odzyskanie uploadu po utracie odpowiedzi storage, 7 listopada 2026
+
+Test ustawia fixture w stanie po ukończeniu multipart przez storage, lecz przed potwierdzeniem w DB (`UploadId` nie istnieje, poprawny obiekt jest, rekord `UPLOADING`). Właściciel ponawia `complete`; `NoSuchUpload` prowadzi do sprawdzenia istniejącego obiektu, `READY`, jednego joba i kodowania przez rzeczywisty worker do `SUCCEEDED`. PostgreSQL 17.11/84 migracje: **1/1 PASS**, repo typecheck, ESLint i diff check PASS. [Dowód](program-audytu/evidence/k35-lost-complete-response-recovery-2026-11-07.json). To model stanu fixture, a nie wymuszona utrata połączenia z R2; pełna macierz K35 i niezależny review pozostają otwarte.

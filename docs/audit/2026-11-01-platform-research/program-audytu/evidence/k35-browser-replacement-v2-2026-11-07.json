@@ -12,7 +12,8 @@
       "owner replaces the original through Studio multipart HTTP and the real FFmpeg worker",
       "Chromium reloads the same video after replacement and plays beyond 0.5 seconds",
       "browser requests for v2~<attemptId> include the master playlist and fMP4 segment through workers/hls-edge/worker.mjs",
-      "Studio DELETE then removes the video and its original/HLS objects through the durable cleanup runner"
+      "Studio DELETE then removes the video and its original/HLS objects through the durable cleanup runner",
+      "a second authenticated channel recovers an existing valid object after the multipart UploadId is gone; its original becomes READY and the worker reaches SUCCEEDED"
     ],
     "repo_typecheck": "PASS",
     "targeted_eslint": "PASS",
@@ -23,6 +24,7 @@
   },
   "limitations": [
     "This is local PostgreSQL, loopback S3-shaped storage and local Worker code; it does not verify Cloudflare R2, a deployed Worker or production rollout.",
-    "K35 role/state and payment profiles, adversarial crash boundaries and independent review remain open."
+    "K35 role/state and payment profiles, adversarial crash boundaries and independent review remain open.",
+    "The lost CompleteMultipartUpload response was modeled by preparing post-commit fixture state, not by cutting a real R2 connection."
   ]
 }
