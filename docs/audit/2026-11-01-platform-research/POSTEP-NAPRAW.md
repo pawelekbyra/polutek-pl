@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K02 — przegląd źródłowych advisory, 7 listopada 2026
+
+Oficjalne wydanie Next 16.4.5 z 3 listopada wymienia siedem naprawionych advisory; lokalne `next`, `eslint-config-next` i lockfile mają wersję 16.4.5. Oficjalne advisory sharp wskazuje 0.35.5 jako wersję naprawioną dla podatności librsvg; lokalny sharp i lockfile mają 0.35.5, a istniejący izolowany runtime image udokumentowano osobno. Zapisano [zakres, wersje, komendy, źródła i ograniczenia](program-audytu/evidence/k02-upstream-review-2026-11-07.json). Nie uruchamiano `npm audit` ani instalacji. Jest to przegląd wskazanych advisory K02, nie pełny przegląd wszystkich zależności. K02 pozostaje otwarte do kontrolowanego audytu transitive dependencies oraz inspekcji rzeczywistych obrazów aplikacji.
+
 ## K06 — proof approval przed przetworzeniem archiwum, 7 listopada 2026
 
 `mergedeploy.sh` przekazuje zewnętrznie zatwierdzony SHA do `release-artifact.mjs`; konsument porównuje go z proofem przed listowaniem/rozpakowaniem `source.tar`. Chroni to maszynę uruchamiającą transfer przed przetworzeniem archiwum z niezatwierdzonego artefaktu. Regresja używa błędnego archiwum i hash mismatch, potwierdzając odmowę przed odczytem tar. `release-artifact` + `mergedeploy-release`: **53/53 PASS**; ESLint 3 plików, `bash -n` i `git diff --check` PASS. Brak Actions/GHCR/SSH/Docker/serwera; rzeczywiste obrazy, cykl release i rollback nadal otwarte. [Dowód](program-audytu/evidence/k06-proof-before-extraction-2026-11-07.json).
