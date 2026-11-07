@@ -1,6 +1,6 @@
 ## Punkt wznowienia — 7 listopada 2026, K35-T2 cross-channel complete
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `60cc9238`; dokumentacja usunięcia do osobnego commitu.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `194198b4`; dokumentacja browser v2 do osobnego commitu.
 
 Lokalny acceptance obejmuje Studio multipart upload → rzeczywisty `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → poprawne playlisty/segment przez kod HLS edge Worker → Chromium odtwarza ponad 0,5 s materiału. PostgreSQL 17.11/84 migracje: integration 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Kontener disposable zatrzymany. [Dowód browser/edge](evidence/k35-browser-hls-local-2026-11-07.json).
 
@@ -8,7 +8,7 @@ Korekta: wcześniejszy fixture S3 zapisywał ramkowanie `aws-chunked` wewnątrz 
 
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
-**Następny krok:** po podmianie sprawdzić w Chromium, że wersja 2 odtwarza się przez nową aktywną trasę, a potem kontynuować K35-T2 awarie i retry; K35-T2 nadal wymaga dalszych granic i niezależnego review. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
+**Następny krok:** kontynuować K35-T2 od awarii między skutkami storage i DB oraz retry, następnie rozszerzyć role/stany; K35-T2 nadal wymaga kolejnych granic i niezależnego review. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
 ## K35-T2 — odmowa cross-channel przy kończeniu uploadu, 7 listopada 2026
 
@@ -516,3 +516,7 @@ Po pełnym pierwszym uploadzie, kodowaniu i browser playback test wykonuje drugi
 ## K35-T1 — usunięcie filmu i durable storage cleanup, 7 listopada 2026
 
 Studio DELETE usuwa film wraz z oryginałami, assetami i trasami; transakcja zapisuje trwały manifest dwóch HLS assetów i dwóch oryginałów. Lokalny runner oznacza `STORAGE_CLEANUP` jako `DONE`; loopbackowy S3 fixture nie zawiera już żadnych obiektów filmu. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, typecheck, celowany ESLint i diff check PASS. [Dowód i SHA](evidence/k35-studio-delete-cleanup-2026-11-07.json). Test używa wyłącznie loopbacka. Wersja v2 ma potwierdzony pipeline/aktywną trasę, ale browser playback v2 nie został jeszcze sprawdzony; dalsza macierz K35 i niezależny review są otwarte.
+
+## K35-T1 — Chromium playback wersji v2 po podmianie, 7 listopada 2026
+
+Po pierwszym playbacku film zostaje podmieniony przez Studio i rzeczywisty worker. Ta sama strona Chromium przeładowuje film; odtwarza v2 ponad 0,5 s, a odnotowane żądania obejmują master playlist i segment pod `v2~<attemptId>` przez lokalny kod HLS Worker. Następnie Studio DELETE kończy trwałe sprzątanie obiektów HLS i oryginałów. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, repo typecheck, ESLint i diff check PASS. [Dowód](evidence/k35-browser-replacement-v2-2026-11-07.json). Tylko loopback fixture i lokalny Worker; Cloudflare R2/deployment, pełna macierz K35 oraz niezależny review pozostają otwarte.

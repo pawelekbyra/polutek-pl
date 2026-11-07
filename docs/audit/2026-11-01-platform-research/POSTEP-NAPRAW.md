@@ -421,3 +421,7 @@ Po potwierdzonym Chromium playback v1 test przeprowadza przez Studio multipart u
 ## K35-T1 — delete filmu i trwałe sprzątanie storage, 7 listopada 2026
 
 Test usuwa przez Studio API syntetyczny film z dwiema wersjami HLS. Kaskada usuwa wiersze DB, a transakcja pozostawia `STORAGE_CLEANUP` z manifestem dwóch assetów i dwóch oryginałów; loopbackowy runner kończy job jako `DONE` i usuwa wszystkie obiekty z fixture. PostgreSQL 17.11/84 migracje, integration **1/1 PASS**, repo typecheck, ESLint i diff check PASS. [Dowód](program-audytu/evidence/k35-studio-delete-cleanup-2026-11-07.json). Poprzedni test przeprowadził upload v2 przez Studio i worker; playback Chromium potwierdzono dla v1, a v2 tylko przez API/DB/aktywną trasę. Rzeczywiste R2/deployed Worker i niezależny review pozostają otwarte.
+
+## K35-T1 — Chromium odtwarza v2 po podmianie, 7 listopada 2026
+
+Po zastąpieniu oryginału v2 i kodowaniu przez rzeczywisty `scripts/video-worker.ts` Chromium przeładowuje film i odtwarza nową wersję ponad 0,5 s. Browser acceptance widzi master playlistę i fMP4 segment pod podpisaną wersją `v2~<attemptId>` przez lokalny kod Worker; potem test kasuje film i sprawdza durable cleanup. PostgreSQL 17.11/84 migracje, integration **1/1 PASS**, typecheck/ESLint/diff check PASS. [Dowód](program-audytu/evidence/k35-browser-replacement-v2-2026-11-07.json). Cloudflare R2/deployed Worker, role/payment matrix, awarie i niezależny review pozostają otwarte.

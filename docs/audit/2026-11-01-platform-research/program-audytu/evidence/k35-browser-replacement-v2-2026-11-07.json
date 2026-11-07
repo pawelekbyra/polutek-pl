@@ -1,0 +1,28 @@
+{
+  "package": "K35-T1 Chromium playback of the replacement original through the local HLS Worker",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "194198b420650634929ce9a6fa388568259f9a95",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped after test",
+    "assertions": [
+      "Chromium plays the initial HLS original beyond 0.5 seconds through the local Worker",
+      "owner replaces the original through Studio multipart HTTP and the real FFmpeg worker",
+      "Chromium reloads the same video after replacement and plays beyond 0.5 seconds",
+      "browser requests for v2~<attemptId> include the master playlist and fMP4 segment through workers/hls-edge/worker.mjs",
+      "Studio DELETE then removes the video and its original/HLS objects through the durable cleanup runner"
+    ],
+    "repo_typecheck": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "c6be5600e2efcf82815b9a4455687d25328624f90be12dabdb701e8fd5c29d67"
+  },
+  "limitations": [
+    "This is local PostgreSQL, loopback S3-shaped storage and local Worker code; it does not verify Cloudflare R2, a deployed Worker or production rollout.",
+    "K35 role/state and payment profiles, adversarial crash boundaries and independent review remain open."
+  ]
+}
