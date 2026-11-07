@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-07",
+  "package": "K03",
+  "finding": "R08/R37",
+  "status": "KNOWN_FULL_SUITE_FAILURES_FIXED_TARGETED_GREEN_FULL_RERUN_OPEN",
+  "baselineRevision": "83b9c654",
+  "fullSuiteBeforeFixes": {
+    "command": "npm run quality",
+    "vitestFiles": 582,
+    "passed": 5128,
+    "failed": 19,
+    "skipped": 2,
+    "exitCode": 1,
+    "failedFiles": [
+      "tests/unit/legal-storage-inventory.test.ts",
+      "tests/unit/admin-content/content.test.ts",
+      "tests/unit/i18n/catalog-parity.test.ts",
+      "tests/unit/player/playback-token-renewal.test.tsx",
+      "tests/unit/components/server-seeded-playback.test.tsx",
+      "tests/unit/components/playback-viewer-cache-safety.test.tsx",
+      "tests/unit/components/premium-wrapper-token-renewal.test.tsx",
+      "tests/unit/modules/video/update-admin-video-premiere.test.ts"
+    ]
+  },
+  "changes": [
+    "Documented the administrator-only studio upload resume storage key in the browser storage inventory.",
+    "Updated admin-content and publish transaction fixtures for the exported cleanup handler and channel row-lock query.",
+    "Added five current upload UI translations to all six UI-only catalogs and removed one obsolete source string.",
+    "Completed playback-plan response fixtures to satisfy the runtime API contract, restoring server-seeded playback, viewer cache invalidation, and repeated token renewal tests."
+  ],
+  "targetedVerificationAfterFixes": {
+    "command": "npx vitest run tests/unit/legal-storage-inventory.test.ts tests/unit/admin-content/content.test.ts tests/unit/modules/video/update-admin-video-premiere.test.ts tests/unit/i18n/catalog-parity.test.ts tests/unit/components/server-seeded-playback.test.tsx tests/unit/components/playback-viewer-cache-safety.test.tsx tests/unit/components/premium-wrapper-token-renewal.test.tsx tests/unit/player/playback-token-renewal.test.tsx --reporter=dot",
+    "files": 8,
+    "passed": 64,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0
+  },
+  "repoTypecheck": {
+    "command": "npx tsc --noEmit --pretty false",
+    "exitCode": 0
+  },
+  "eslint": {
+    "files": 6,
+    "exitCode": 0
+  },
+  "fullSuiteAfterFixes": "NOT_RUN; the focused rerun covers all eight files that failed in the full baseline but does not establish a green full-repository suite.",
+  "remaining": [
+    "Rerun full npm run quality when permitted to establish the whole-repository baseline after the fixes.",
+    "K03 restore acceptance and real email delivery remain open."
+  ]
+}

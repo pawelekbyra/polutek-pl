@@ -1,8 +1,12 @@
 # Postęp realizacji roadmapy — H1
 
+## K03 — triage pełnej suite, 7 listopada 2026
+
+Pełne `npm run quality` (582 pliki) zakończyło się **5128 PASS, 19 FAIL, 2 SKIP**. Naprawiono znalezione problemy: inwentarz storage, eksport/mocks cleanup, pięć brakujących komunikatów w sześciu katalogach i niekompletne fixture playback. Wszystkie osiem pierwotnie czerwonych plików przechodzi razem: **64/64 PASS**. Nie powtórzono jeszcze całej suite, więc K03 nie jest potwierdzone jako zielone; otwarte pozostają pełny retest oraz odbiory restore/e-mail. [Wynik i ograniczenia](program-audytu/evidence/k03-full-suite-triage-2026-11-07.json).
+
 ## K03 — pełne typecheck i zielony build po naprawie testów, 7 listopada 2026
 
-Pełny `npx tsc --noEmit --pretty false` wcześniej blokowały błędy typów fixture’ów w ośmiu testach. Skorygowano typy mocków, nullowalne wyniki, sygnaturę mockowanego `this`, argumenty handlera GET oraz AWS `send`; bez zmiany asercji produktu ani logiki aplikacji. Pełny typecheck: **exit 0**. Osiem plików przeszło ESLint; sześć suite unit **50/50 PASS**; dwa testy PostgreSQL na świeżej bazie po 84 migracjach **5/5 PASS**. Następnie Next 16.4.5/Turbopack `npm run build`: **exit 0**, łącznie z repo-wide TypeScript i generowaniem stron. K03 nadal częściowe: pełny baseline całej suite i pozostałe odbiory restore/e-mail nie są wykonane. [Dowód](program-audytu/evidence/k03-repo-types-build-2026-11-07.json).
+Pełny `npx tsc --noEmit --pretty false` wcześniej blokowały błędy typów fixture’ów w ośmiu testach. Skorygowano typy mocków, nullowalne wyniki, sygnaturę mockowanego `this`, argumenty handlera GET oraz AWS `send`; bez zmiany asercji produktu ani logiki aplikacji. Pełny typecheck: **exit 0**. Osiem plików przeszło ESLint; sześć suite unit **50/50 PASS**; dwa testy PostgreSQL na świeżej bazie po 84 migracjach **5/5 PASS**. Następnie Next 16.4.5/Turbopack `npm run build`: **exit 0**, łącznie z repo-wide TypeScript i generowaniem stron. [Dowód](program-audytu/evidence/k03-repo-types-build-2026-11-07.json).
 
 ## K10 — macierz ról przez lokalny HTTP, 7 listopada 2026
 

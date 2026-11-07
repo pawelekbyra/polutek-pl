@@ -685,7 +685,6 @@
  "Previous": "上一步",
  "Creating a private draft…": "正在创建私密草稿…",
  "Upload stopped.": "上传已停止。",
- "Keep this tab open. If you stop, the video stays a private draft.": "请保持此标签页打开。如果中止，视频将保留为私密草稿。",
  "Go to the draft": "前往草稿",
  "Back to videos": "返回视频列表",
  "You have unsaved changes. Leave without saving?": "有未保存的更改。不保存就离开吗？",
@@ -1137,5 +1136,10 @@
   "See all": "查看全部",
   "PREMIERE: {0}.": "首映： {0}.",
   "Tip The Guy": "给创作者打赏",
-  "Payment processed by Stripe": "由 Stripe 处理付款"
+  "Payment processed by Stripe": "由 Stripe 处理付款",
+ "Operation in progress.": "操作正在进行。",
+ "You can refresh or come back later. Choose the same file to resume from the parts already stored.": "你可以刷新页面或稍后返回。选择同一个文件，即可从已保存的分片继续上传。",
+ "Discard unfinished upload": "放弃未完成的上传",
+ "Could not discard the upload.": "无法放弃此上传。",
+ "Delete the unfinished upload and its stored parts?": "删除未完成的上传及其已保存的分片？"
 }

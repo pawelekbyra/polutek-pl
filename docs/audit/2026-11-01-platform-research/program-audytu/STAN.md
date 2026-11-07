@@ -1,8 +1,12 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K03 — aktualizacja po pełnym baseline i naprawie 19 awarii, 7 listopada 2026
+
+`npm run quality` wykonał pełną suite (582 pliki): **5128 PASS, 19 FAIL, 2 SKIP**. Usterki objęły niezgodny spis storage, nieaktualne mocki transakcji, brakujące tłumaczenia uploadu i niekompletne fixture planu odtwarzania. Po poprawkach wszystkie osiem pierwotnie czerwonych plików przechodzi razem: **64/64 PASS**. Pełnego `npm run quality` po zmianach jeszcze nie powtórzono; nie uznajemy całej suite za zieloną. Nadal otwarte są odbiory restore i e-mail. [Szczegóły i dokładna komenda](evidence/k03-full-suite-triage-2026-11-07.json).
+
 ## K03 — repo-wide TypeScript i produkcyjny build, 7 listopada 2026
 
-Osiem testów z błędami typów otrzymało jawne typy dla mocków/nullable wyników, zgodną z route sygnaturę GET i argumenty AWS client mocka. `npx tsc --noEmit --pretty false` **exit 0**. ESLint osiem plików PASS; celowane testy: **50/50 unit** i **5/5 PostgreSQL** po 84 migracjach. Next build po tych poprawkach **exit 0** z domyślnym repo tsconfig, bez wyłączania kontroli testów. Nie uruchomiono pełnej suite unit. [Dowód i SHA plików](evidence/k03-repo-types-build-2026-11-07.json).
+Osiem testów z błędami typów otrzymało jawne typy dla mocków/nullable wyników, zgodną z route sygnaturę GET i argumenty AWS client mocka. `npx tsc --noEmit --pretty false` **exit 0**. ESLint osiem plików PASS; celowane testy: **50/50 unit** i **5/5 PostgreSQL** po 84 migracjach. Next build po tych poprawkach **exit 0** z domyślnym repo tsconfig, bez wyłączania kontroli testów. [Dowód i SHA plików](evidence/k03-repo-types-build-2026-11-07.json).
 
 ## K03 — świeży krytyczny baseline po K01, 7 listopada 2026
 

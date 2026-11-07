@@ -685,7 +685,6 @@
  "Previous": "Zurück",
  "Creating a private draft…": "Privater Entwurf wird erstellt…",
  "Upload stopped.": "Upload angehalten.",
- "Keep this tab open. If you stop, the video stays a private draft.": "Lassen Sie diesen Tab geöffnet. Bei einem Abbruch bleibt das Video ein privater Entwurf.",
  "Go to the draft": "Zum Entwurf",
  "Back to videos": "Zurück zu den Videos",
  "You have unsaved changes. Leave without saving?": "Es gibt ungespeicherte Änderungen. Ohne Speichern verlassen?",
@@ -1137,5 +1136,10 @@
   "See all": "Alle anzeigen",
   "PREMIERE: {0}.": "PREMIERE: {0}.",
   "Tip The Guy": "Dem Typen Trinkgeld geben",
-  "Payment processed by Stripe": "Zahlung über Stripe"
+  "Payment processed by Stripe": "Zahlung über Stripe",
+ "Operation in progress.": "Vorgang läuft.",
+ "You can refresh or come back later. Choose the same file to resume from the parts already stored.": "Sie können die Seite aktualisieren oder später zurückkehren. Wählen Sie dieselbe Datei aus, um den Upload mit den bereits gespeicherten Teilen fortzusetzen.",
+ "Discard unfinished upload": "Unvollständigen Upload verwerfen",
+ "Could not discard the upload.": "Der Upload konnte nicht verworfen werden.",
+ "Delete the unfinished upload and its stored parts?": "Den unvollständigen Upload und seine gespeicherten Teile löschen?"
 }

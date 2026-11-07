@@ -56,6 +56,7 @@ function readyPlan(videoId: string): PlaybackPlan {
     videoId,
     status: "READY",
     canPlay: true,
+    hasAccess: true,
     access: { allowed: true },
     source: { provider: "SELF_HLS", kind: "self_hls", playbackUrl: MANIFEST, isSignedUrl: true },
     player: { autoplayAllowed: true, mutedAutoplay: true, controls: true, poster: "", title: videoId },
