@@ -19,6 +19,7 @@ const prisma = new PrismaClient();
 const RUN = `k01-worker-${Date.now().toString(36)}`;
 const AUTH_SECRET = randomBytes(32).toString("base64url");
 const SESSION_TOKEN = randomBytes(32).toString("base64url");
+const STRANGER_SESSION_TOKEN = randomBytes(32).toString("base64url");
 const HLS_SECRET = randomBytes(32).toString("base64url");
 const ORIGINAL_BUCKET = "k01-originals";
 const HLS_BUCKET = "k01-hls";
@@ -28,6 +29,9 @@ const objectRequests: string[] = [];
 let userId = "";
 let creatorId = "";
 let videoId = "";
+let strangerUserId = "";
+let strangerCreatorId = "";
+let strangerVideoId = "";
 let originalId = "";
 let endpoint = "";
 let sourceDir = "";
@@ -67,15 +71,24 @@ async function findFreePort(): Promise<number> {
   return address.port;
 }
 
+function sessionCookie(token: string) {
+  const signature = createHmac("sha256", AUTH_SECRET).update(token).digest("base64");
+  return `pp.session_token=${token}.${signature}`;
+}
+
 function ownerCookie() {
-  const signature = createHmac("sha256", AUTH_SECRET).update(SESSION_TOKEN).digest("base64");
-  return `pp.session_token=${SESSION_TOKEN}.${signature}`;
+  return sessionCookie(SESSION_TOKEN);
+}
+
+function strangerCookie() {
+  return sessionCookie(STRANGER_SESSION_TOKEN);
 }
 
 function appendNextOutput(chunk: Buffer | string) {
   nextOutput = `${nextOutput}${chunk.toString()}`.slice(-8_000)
     .replaceAll(AUTH_SECRET, "[auth-secret-redacted]")
-    .replaceAll(SESSION_TOKEN, "[session-token-redacted]");
+    .replaceAll(SESSION_TOKEN, "[session-token-redacted]")
+    .replaceAll(STRANGER_SESSION_TOKEN, "[stranger-session-token-redacted]");
 }
 
 async function startNextServer() {
@@ -319,8 +332,17 @@ beforeAll(async () => {
   creatorId = creator.id;
   const video = await prisma.video.create({ data: { creatorId, title: "K01 synthetic video", slug: `${RUN}-video`, thumbnailUrl: "https://example.test/cover.jpg" } });
   videoId = video.id;
+  strangerUserId = `${RUN}-stranger`;
+  const stranger = await prisma.user.create({ data: { id: strangerUserId, email: `${RUN}-stranger@example.test` } });
+  const strangerCreator = await prisma.creator.create({ data: { userId: stranger.id, slug: `${RUN}-stranger-creator`, name: "K35 foreign channel" } });
+  strangerCreatorId = strangerCreator.id;
+  const strangerVideo = await prisma.video.create({ data: { creatorId: strangerCreatorId, title: "K35 foreign video", slug: `${RUN}-stranger-video`, thumbnailUrl: "https://example.test/cover.jpg" } });
+  strangerVideoId = strangerVideo.id;
   await prisma.session.create({ data: {
     id: `${RUN}-session`, token: SESSION_TOKEN, userId, expiresAt: new Date(Date.now() + 5 * 60_000),
+  } });
+  await prisma.session.create({ data: {
+    id: `${RUN}-stranger-session`, token: STRANGER_SESSION_TOKEN, userId: strangerUserId, expiresAt: new Date(Date.now() + 5 * 60_000),
   } });
   await startNextServer();
 }, 150_000);
@@ -334,8 +356,11 @@ afterAll(async () => {
     });
   }
   if (videoId) await prisma.video.deleteMany({ where: { id: videoId } });
+  if (strangerVideoId) await prisma.video.deleteMany({ where: { id: strangerVideoId } });
   if (creatorId) await prisma.creator.deleteMany({ where: { id: creatorId } });
+  if (strangerCreatorId) await prisma.creator.deleteMany({ where: { id: strangerCreatorId } });
   if (userId) await prisma.user.deleteMany({ where: { id: userId } });
+  if (strangerUserId) await prisma.user.deleteMany({ where: { id: strangerUserId } });
   await prisma.$disconnect();
   if (server) {
     server.closeAllConnections();
@@ -356,6 +381,22 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(guestPipeline.status).toBe(401);
 
     const sourceBytes = await import("node:fs/promises").then(({ readFile }) => readFile(path.join(sourceDir, "source.mp4")));
+    const crossChannelRequests = await Promise.all([
+      fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/pipeline`, { headers: { cookie: ownerCookie() } }),
+      fetch(`${baseUrl}/api/studio/videos/${videoId}/pipeline`, { headers: { cookie: strangerCookie() } }),
+      fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/upload`, {
+        method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+        body: JSON.stringify({ fileName: "source.mp4", fileSize: sourceBytes.length, contentType: "video/mp4" }),
+      }),
+      fetch(`${baseUrl}/api/studio/videos/${videoId}/upload`, {
+        method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
+        body: JSON.stringify({ fileName: "source.mp4", fileSize: sourceBytes.length, contentType: "video/mp4" }),
+      }),
+    ]);
+    for (const response of crossChannelRequests) expect(response.status).toBe(404);
+    expect(await prisma.videoOriginal.count({ where: { videoId: { in: [videoId, strangerVideoId] } } })).toBe(0);
+    expect(objectRequests).toHaveLength(0);
+
     const uploadResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload`, {
       method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
       body: JSON.stringify({ fileName: "source.mp4", fileSize: sourceBytes.length, contentType: "video/mp4" }),
@@ -364,6 +405,12 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(uploadResponse.status, `${uploadText}\nS3 requests: ${objectRequests.join(" | ")}\n${nextOutput}`).toBe(200);
     const upload = JSON.parse(uploadText) as { originalId: string; partCount: number; partSize: number };
     originalId = upload.originalId;
+    const foreignParts = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/parts`, {
+      method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId, partNumbers: [1] }),
+    });
+    expect(foreignParts.status).toBe(404);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: originalId }, select: { status: true } })).toMatchObject({ status: "UPLOADING" });
     const partsResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/parts`, {
       method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
       body: JSON.stringify({ originalId, partNumbers: Array.from({ length: upload.partCount }, (_, index) => index + 1) }),
