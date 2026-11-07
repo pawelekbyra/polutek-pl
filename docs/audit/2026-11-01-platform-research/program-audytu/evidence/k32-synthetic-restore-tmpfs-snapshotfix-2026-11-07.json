@@ -1,0 +1,39 @@
+{
+  "cases": [
+    {
+      "name": "fresh-disposable-postgres-loopback",
+      "passed": true,
+      "detail": "PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2); bound only to 127.0.0.1"
+    },
+    {
+      "name": "current-prisma-migrations",
+      "passed": true,
+      "detail": "Prisma migrate deploy applied 84 current migrations"
+    },
+    {
+      "name": "synthetic-owner-channel-membership-video-asset",
+      "passed": true,
+      "detail": "actual generated Prisma client seeded six rows across the five related models"
+    }
+  ],
+  "tmpfs_preflight": {
+    "root": "/dev/shm",
+    "available_bytes": 4058767360,
+    "required_bytes": 2147483648
+  },
+  "recorded_at_utc": "2026-11-07T09:14:30.463023+00:00",
+  "code_sha": "5da670acc2378516983011858c1ef21a8cb197f8",
+  "tool": "docs/audit/2026-11-01-platform-research/program-audytu/tools/k32-synthetic-restore-acceptance.py",
+  "tool_sha256": "b3b4828810a9c07745003a9d10d0b415c395bb52f8e4c4bdb0485f2ad84862b5",
+  "source": "synthetic-only PostgreSQL; current Prisma migrations; local pg_dump/pg_restore",
+  "status": "blocked_or_failed",
+  "postgres_image": "postgres:17",
+  "postgres_image_id": "sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f",
+  "postgres_repo_digests": "[postgres@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f]",
+  "limitations": [
+    "Does not use or prove recovery from any production/offsite backup, object storage, age key or external service.",
+    "Does not measure approved RPO/RTO or test Support attachments, payment reconciliation, host provisioning or media recovery.",
+    "Constraint probes cover only the synthetic video foreign key and channel membership uniqueness."
+  ],
+  "error": "command failed (1): docker ['cp']\nError response from daemon: Could not find the file /tmp/k32/k32-source.dump in container k32-restore-18a9a0d319\n"
+}

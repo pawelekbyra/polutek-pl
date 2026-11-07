@@ -19,7 +19,12 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[5]
-OUT = Path(__file__).resolve().parents[1] / "evidence" / "k32-synthetic-restore-2026-11-07.json"
+DEFAULT_OUT_DIR = Path(__file__).resolve().parents[1] / "evidence"
+OUT = Path(os.environ.get("K32_EVIDENCE_PATH", str(DEFAULT_OUT_DIR / f"k32-synthetic-restore-{secrets.token_hex(5)}.json")))
+if not OUT.is_absolute():
+    OUT = ROOT / OUT
+if not OUT.resolve().is_relative_to(ROOT):
+    raise SystemExit("K32_EVIDENCE_PATH must stay inside the repository")
 IMAGE = "postgres:17"
 RUN = secrets.token_hex(5)
 CONTAINER = "k32-restore-" + RUN
@@ -45,6 +50,18 @@ def docker(*args: str, check: bool = True, timeout: int = 120,
     return run(["docker", *args], check=check, timeout=timeout, input=input)
 
 
+def docker_binary(*args: str, input: bytes | None = None, timeout: int = 120) -> bytes:
+    result = subprocess.run(["docker", *args], cwd=ROOT, input=input, text=False,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            timeout=timeout, check=False)
+    if result.returncode:
+        detail = result.stderr.decode("utf-8", errors="replace")[-2000:]
+        raise RuntimeError(f"binary docker command failed ({result.returncode}): {args[1:3]}\n{detail}")
+    if result.stderr:
+        raise RuntimeError("binary docker command wrote diagnostics to stderr; refusing a potentially contaminated dump")
+    return result.stdout
+
+
 def record(name: str, passed: bool, detail: str) -> None:
     RESULT["cases"].append({"name": name, "passed": passed, "detail": detail})
     if not passed:
@@ -52,21 +69,23 @@ def record(name: str, passed: bool, detail: str) -> None:
 
 
 def main() -> None:
-    docker_root = Path(docker("info", "--format", "{{.DockerRootDir}}").stdout.strip())
-    docker_free = shutil.disk_usage(docker_root).free
-    RESULT["docker_storage_preflight"] = {
-        "root": str(docker_root),
-        "available_bytes": docker_free,
+    scratch_root = Path("/dev/shm")
+    scratch_free = shutil.disk_usage(scratch_root).free
+    RESULT["tmpfs_preflight"] = {
+        "root": str(scratch_root),
+        "available_bytes": scratch_free,
         "required_bytes": 2 * 1024**3,
     }
-    if docker_free < 2 * 1024**3:
-        raise RuntimeError(f"Docker storage has {docker_free} free bytes; at least 2 GiB is required")
+    if scratch_free < 2 * 1024**3:
+        raise RuntimeError(f"tmpfs has {scratch_free} free bytes; at least 2 GiB is required")
 
     image = docker("image", "inspect", IMAGE, "--format", "{{.Id}}\t{{.RepoDigests}}")
     image_id, _, repo_digests = image.stdout.strip().partition("\t")
     RESULT.update({
         "recorded_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "code_sha": run(["git", "rev-parse", "HEAD"]).stdout.strip(),
+        "tool": str(Path(__file__).resolve().relative_to(ROOT)),
+        "tool_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "source": "synthetic-only PostgreSQL; current Prisma migrations; local pg_dump/pg_restore",
         "status": "running",
         "postgres_image": IMAGE,
@@ -80,7 +99,10 @@ def main() -> None:
     })
 
     docker("run", "--detach", "--name", CONTAINER,
-           "--publish", "127.0.0.1::5432", "--env", "POSTGRES_PASSWORD=" + DB_PASSWORD,
+           "--publish", "127.0.0.1::5432",
+           "--tmpfs", "/var/lib/postgresql/data:rw,size=1536m",
+           "--tmpfs", "/tmp/k32:rw,size=512m",
+           "--env", "POSTGRES_PASSWORD=" + DB_PASSWORD,
            "--env", "POSTGRES_DB=" + SOURCE_DB, IMAGE)
     try:
         mapped = docker("port", CONTAINER, "5432/tcp").stdout.strip().splitlines()[0]
@@ -89,19 +111,22 @@ def main() -> None:
         env = dict(os.environ, DATABASE_URL=url, DATABASE_URL_UNPOOLED=url,
                    APP_ENV="development", CI="true")
 
+        last_ready = ""
         for attempt in range(60):
-            ready = docker("exec", CONTAINER, "pg_isready", "-U", "postgres", "-d", SOURCE_DB,
-                           check=False)
-            if ready.returncode == 0:
+            ready = docker("exec", CONTAINER, "psql", "-XAt", "-U", "postgres", "-d", SOURCE_DB,
+                           "-c", "SELECT 1", check=False)
+            last_ready = ready.stdout.strip()
+            process = docker("exec", CONTAINER, "cat", "/proc/1/comm", check=False)
+            if ready.returncode == 0 and last_ready == "1" and process.stdout.strip() == "postgres":
                 break
             running = docker("inspect", CONTAINER, "--format", "{{.State.Running}}", check=False)
             if running.returncode != 0 or running.stdout.strip() != "true":
                 logs = docker("logs", CONTAINER, check=False).stdout
-                raise RuntimeError("disposable PostgreSQL exited during startup: " + logs[-3000:])
+                raise RuntimeError("disposable PostgreSQL exited during startup: " + logs[-3000:] + last_ready[-1000:])
             time.sleep(1)
         else:
             logs = docker("logs", CONTAINER, check=False).stdout
-            raise RuntimeError("disposable PostgreSQL did not become ready: " + logs[-3000:])
+            raise RuntimeError("disposable PostgreSQL did not become query-ready: " + logs[-3000:] + last_ready[-1000:])
         version = docker("exec", CONTAINER, "psql", "-XAt", "-U", "postgres", "-d", SOURCE_DB,
                          "-c", "SHOW server_version").stdout.strip()
         record("fresh-disposable-postgres-loopback", True, f"PostgreSQL {version}; bound only to 127.0.0.1")
@@ -128,9 +153,9 @@ const p = new PrismaClient(); const x = process.env.K32_FIXTURE;
         snapshot_sql = """SELECT jsonb_build_object(
           'users',(SELECT jsonb_agg(jsonb_build_object('id',id,'email',email) ORDER BY id) FROM \"User\" WHERE id LIKE '%FIXTURE%'),
           'creators',(SELECT jsonb_agg(jsonb_build_object('id',id,'userId',\"userId\",'slug',slug) ORDER BY id) FROM \"Creator\" WHERE id LIKE '%FIXTURE%'),
-          'members',(SELECT jsonb_agg(jsonb_build_object('id',id,'channelId',\"channelId\",'userId',\"userId\",role) ORDER BY id) FROM \"ChannelMember\" WHERE id LIKE '%FIXTURE%'),
-          'videos',(SELECT jsonb_agg(jsonb_build_object('id',id,'creatorId',\"creatorId\",slug) ORDER BY id) FROM \"Video\" WHERE id LIKE '%FIXTURE%'),
-          'assets',(SELECT jsonb_agg(jsonb_build_object('id',id,'videoId',\"videoId\",provider,\"objectKey\") ORDER BY id) FROM \"VideoAsset\" WHERE id LIKE '%FIXTURE%'))"""
+          'members',(SELECT jsonb_agg(jsonb_build_object('id',id,'channelId',\"channelId\",'userId',\"userId\",'role',role) ORDER BY id) FROM \"ChannelMember\" WHERE id LIKE '%FIXTURE%'),
+          'videos',(SELECT jsonb_agg(jsonb_build_object('id',id,'creatorId',\"creatorId\",'slug',slug) ORDER BY id) FROM \"Video\" WHERE id LIKE '%FIXTURE%'),
+          'assets',(SELECT jsonb_agg(jsonb_build_object('id',id,'videoId',\"videoId\",'provider',provider,'objectKey',\"objectKey\") ORDER BY id) FROM \"VideoAsset\" WHERE id LIKE '%FIXTURE%'))"""
         # Fixture IDs are substituted as SQL literals only from the locally generated hex identifier.
         fixture_sql = snapshot_sql.replace("%FIXTURE%", FIXTURE + "%")
         source_snapshot = docker("exec", CONTAINER, "psql", "-XAt", "-U", "postgres", "-d", SOURCE_DB,
@@ -139,15 +164,11 @@ const p = new PrismaClient(); const x = process.env.K32_FIXTURE;
             raise RuntimeError("synthetic relation snapshot is incomplete")
         record("synthetic-owner-channel-membership-video-asset", True, "actual generated Prisma client seeded six rows across the five related models")
 
-        docker("exec", CONTAINER, "pg_dump", "-U", "postgres", "-Fc", "-d", SOURCE_DB,
-               "--file=/tmp/k32-source.dump")
-        docker("cp", f"{CONTAINER}:/tmp/k32-source.dump", "/tmp/k32-source-" + RUN + ".dump")
-        dump_path = Path("/tmp/k32-source-" + RUN + ".dump")
-        dump_hash = hashlib.sha256(dump_path.read_bytes()).hexdigest()
+        dump = docker_binary("exec", CONTAINER, "pg_dump", "-U", "postgres", "-Fc", "-d", SOURCE_DB)
+        dump_hash = hashlib.sha256(dump).hexdigest()
         docker("exec", CONTAINER, "createdb", "-U", "postgres", RESTORE_DB)
-        docker("exec", CONTAINER, "pg_restore", "-U", "postgres", "-d", RESTORE_DB,
-               "--exit-on-error", "/tmp/k32-source.dump")
-        dump_path.unlink()
+        docker_binary("exec", "-i", CONTAINER, "pg_restore", "-U", "postgres", "-d", RESTORE_DB,
+                      "--exit-on-error", input=dump)
         restored_snapshot = docker("exec", CONTAINER, "psql", "-XAt", "-U", "postgres", "-d", RESTORE_DB,
                                    "-c", fixture_sql).stdout.strip()
         source_migrations = docker("exec", CONTAINER, "psql", "-XAt", "-U", "postgres", "-d", SOURCE_DB,
@@ -191,7 +212,6 @@ const p = new PrismaClient(); const x = process.env.K32_FIXTURE;
         RESULT["restore_database"] = RESTORE_DB
     finally:
         docker("rm", "--force", CONTAINER, check=False, timeout=30)
-        Path("/tmp/k32-source-" + RUN + ".dump").unlink(missing_ok=True)
 
     RESULT["status"] = "passed"
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -211,6 +231,8 @@ if __name__ == "__main__":
         RESULT.setdefault("recorded_at_utc", datetime.datetime.now(datetime.timezone.utc).isoformat())
         try:
             RESULT.setdefault("code_sha", run(["git", "rev-parse", "HEAD"]).stdout.strip())
+            RESULT.setdefault("tool", str(Path(__file__).resolve().relative_to(ROOT)))
+            RESULT.setdefault("tool_sha256", hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
             OUT.parent.mkdir(parents=True, exist_ok=True)
             OUT.write_text(json.dumps(RESULT, indent=2) + "\n")
             OUT.chmod(0o600)

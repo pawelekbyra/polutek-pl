@@ -54,19 +54,19 @@ Trzy paginowane metody storage teraz odrzucają `IsTruncated` bez nowego tokenu 
 
 `deploy-release.mjs` ogranicza teraz `docker inspect/pull` do wybranego profilu: `app` = cztery obrazy aplikacji, `admin` = sam panel. Celowany test procesu **6/6 PASS**, ESLint i diff check PASS; Docker był atrapą, bez registry/serwera. [Dowód](evidence/k06-scope-image-consumption-2026-11-07.json). K06 częściowe; następny krok to pozytywny pełny release/rollback acceptance z rzeczywistymi obrazami i niezależnym odbiorem, bez wdrażania w tej gałęzi.
 
-## K32 — inwentarz odtwarzania, 7 listopada 2026
+## K32 — inwentarz i syntetyczny restore, 7 listopada 2026
 
-Gotowy jest repo-only inwentarz zasobów i udokumentowanych granic backup/restore: [K32-RECOVERY-INVENTORY.md](K32-RECOVERY-INVENTORY.md). Przygotowano narzędzie [synthetic restore acceptance](tools/k32-synthetic-restore-acceptance.py), lecz dwa uruchomienia nie osiągnęły gotowości Postgresa. Diagnostyka wykazała `/dev/sda1` 100% (75G, 0 wolnego); żadne migracje ani asercje akceptacyjne nie ruszyły. Własne kontenery próbne usunięto. Narzędzie jest WIP i wymaga pełnego uruchomienia oraz poprawek wynikających z wyniku. [Dowód blokady](evidence/k32-synthetic-restore-2026-11-07.json). Następny krok po zwolnieniu miejsca przez operatora:
+Repo-only inwentarz zasobów i granic backup/restore: [K32-RECOVERY-INVENTORY.md](K32-RECOVERY-INVENTORY.md). Lokalny acceptance przeszedł **7/7 kontroli** na PostgreSQL 17.11 w jednorazowym kontenerze loopback z danymi/scratch w tmpfs: 84/84 migracje Prisma, seed syntetycznych relacji, `pg_dump`/`pg_restore`, zgodność snapshotu i historii migracji, odczyt relacji przez Prisma oraz odmowa błędnego FK i duplikatu członkostwa. [Dowód](evidence/k32-synthetic-restore-tmpfs-final-2026-11-07.json), [narzędzie](tools/k32-synthetic-restore-acceptance.py). Wcześniejsze próby i ich błędy pozostają zapisane osobno; nie nadpisują udanego przebiegu.
 
-Przed próbą narzędzie samo sprawdzi Docker root i wymaga co najmniej 2 GiB wolnego miejsca.
+Następny krok: uzyskać decyzje właściciela o RPO/RTO, zakresie mediów i obsłudze kolejek/sesji; następnie zaprojektować i przeprowadzić odizolowany offsite-only restore z niezależnym dostępem do klucza, bez dotykania produkcji i bez płatnych zasobów bez osobnej zgody. Nadal brakuje dowodu odzyskania konfiguracji, Support, mediów/originals/HLS, klucza, uzgodnienia płatności oraz pomiarów RPO/RTO; K32 pozostaje częściowe.
+
+Polecenie powtórzenia lokalnego testu syntetycznego:
 
 ```bash
 cd /opt/codex/polutek-pl/.worktrees/platform-audit
 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/k32-synthetic-restore-acceptance.py
 git status --short
 ```
-
-Pełne domknięcie K32 nadal wymaga decyzji właściciela o RPO/RTO i mediach oraz zewnętrznych dowodów offsite/klucza.
 
 ## K37 — syntetyczny baseline kosztu eksportu, 7 listopada 2026
 
