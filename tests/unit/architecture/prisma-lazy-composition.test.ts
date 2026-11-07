@@ -14,7 +14,7 @@ describe("lazy Prisma composition", () => {
         console.log("REAL_PRISMA_FACADE_OK");
       })().catch((error) => { console.error(error); process.exitCode = 1; });
     `;
-    const env = { ...process.env, NODE_ENV: "test" };
+    const env: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: "test" };
     delete env.DATABASE_URL;
     delete env.DATABASE_URL_UNPOOLED;
 

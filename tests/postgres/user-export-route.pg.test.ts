@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
 import { prisma as appPrisma } from "@/lib/prisma";
 
 const authState = vi.hoisted(() => ({ actor: { type: "guest" as "guest" | "user", userId: "" } }));
@@ -80,7 +79,7 @@ afterAll(async () => {
 describe("K27 self-service export route (PostgreSQL)", () => {
   it("returns only account-owned records from real PostgreSQL as a no-store JSON download", async () => {
     authState.actor = { type: "user", userId };
-    const response = await exportGet(new NextRequest("https://www.pawelperfect.com/api/user/export"));
+    const response = await exportGet();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
@@ -109,7 +108,7 @@ describe("K27 self-service export route (PostgreSQL)", () => {
     expect(JSON.stringify(body)).not.toContain("own-ip-hash");
     expect(JSON.stringify(body)).not.toContain(`${RUN}-payment`);
 
-    const repeated = await exportGet(new NextRequest("https://www.pawelperfect.com/api/user/export"));
+    const repeated = await exportGet();
     expect(repeated.status).toBe(200);
     expect((await repeated.json()).comments).toEqual(body.comments);
   });
@@ -117,7 +116,7 @@ describe("K27 self-service export route (PostgreSQL)", () => {
   it("rejects guest access before invoking the rate limiter", async () => {
     authState.actor = { type: "guest", userId: "" };
     rateLimitMock.mockClear();
-    const response = await exportGet(new NextRequest("https://www.pawelperfect.com/api/user/export"));
+    const response = await exportGet();
 
     expect(response.status).toBe(401);
     expect(rateLimitMock).not.toHaveBeenCalled();

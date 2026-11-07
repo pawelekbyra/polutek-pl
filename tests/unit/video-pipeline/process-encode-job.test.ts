@@ -74,7 +74,7 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
   const uploaded: string[] = [];
   const hls = {
     bucket: "polutek-hls",
-    verifyOutput: vi.fn(async () => ({ complete: true, objectCount: 5, reason: null })),
+    verifyOutput: vi.fn(async (_assetKey: string): ReturnType<ProcessorPorts["hls"]["verifyOutput"]> => ({ complete: true, objectCount: 5, reason: null })),
     putFile: vi.fn(async (key: string) => { uploaded.push(key); events.push(`put:${key.split("/").slice(4).join("/")}`); return 1; }),
     exists: vi.fn(async () => true),
     countPrefix: vi.fn(async () => uploaded.length),
@@ -89,7 +89,7 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
     }),
   };
   const finalizer = {
-    findExisting: vi.fn(async () => null),
+    findExisting: vi.fn(async (_job: VideoEncodeJob, _assetKey: string): ReturnType<ProcessorPorts["finalizer"]["findExisting"]> => null),
     finalize: vi.fn(async () => { events.push("finalize"); return { assetId: "asset-1" }; }),
   };
   const audit = vi.fn(async (action: string) => { events.push(`audit:${action}`); });

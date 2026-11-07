@@ -101,7 +101,7 @@ describe("K18 finalizer audit boundary (PostgreSQL)", () => {
   it("reconciles a committed route when the transaction acknowledgement is lost", async () => {
     const { video, job } = await fixture("ack-lost");
     const originalActivate = VideoPlaybackRouteService.prototype.activateRoute;
-    vi.spyOn(VideoPlaybackRouteService.prototype, "activateRoute").mockImplementation(async function (input, ctx) {
+    vi.spyOn(VideoPlaybackRouteService.prototype, "activateRoute").mockImplementation(async function (this: VideoPlaybackRouteService, input, ctx) {
       await originalActivate.call(this, input, ctx);
       throw new Error("injected lost COMMIT acknowledgement");
     });

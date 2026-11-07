@@ -48,7 +48,7 @@ function prismaStub(video: Record<string, unknown>, existingAsset: { id: string 
     videoPlaybackRoute: { findFirst: vi.fn(async () => activeRoute) },
     videoEncodeJob: { findFirst: vi.fn(async () => ({ id: "job-1", channelId: "channel-1", video: { creatorId: "channel-1" } })) },
     video: { findUnique: vi.fn(async () => video), updateMany: vi.fn(async () => ({ count: 1 })) },
-  } as unknown as PrismaClient & { videoAsset: { create: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> }; video: { updateMany: ReturnType<typeof vi.fn> } };
+  } as unknown as PrismaClient & { videoAsset: { create: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> }; videoPlaybackRoute: { findFirst: ReturnType<typeof vi.fn> }; video: { updateMany: ReturnType<typeof vi.fn> } };
 }
 
 const input = (extra = {}) => ({ job, assetKey: "videos/v1/v/v3", hlsBucket: "polutek-hls", posterPath, meta: { source: { durationSeconds: 125 } }, totalBytes: 5000, ...extra });

@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-07",
+  "package": "K03",
+  "finding": "R08/R37",
+  "status": "PARTIAL_REPO_TYPECHECK_AND_BUILD_PASS",
+  "baseRevision": "47f90ff9",
+  "changeScope": "test-only type corrections; no product logic or behavior changes",
+  "files": [
+    "tests/postgres/finalize-audit-boundary.pg.test.ts",
+    "tests/postgres/user-export-route.pg.test.ts",
+    "tests/unit/architecture/prisma-lazy-composition.test.ts",
+    "tests/unit/modules/users/export-own-data.test.ts",
+    "tests/unit/video-pipeline/finalize-self-hls.test.ts",
+    "tests/unit/video-pipeline/process-encode-job.test.ts",
+    "tests/unit/video-pipeline/r2-storage-delete.test.ts",
+    "tests/unit/workers/pp-watchdog-delivery.test.ts"
+  ],
+  "verification": {
+    "repoTypecheck": {
+      "command": "npx tsc --noEmit --pretty false",
+      "exitCode": 0
+    },
+    "eslint": {
+      "files": 8,
+      "exitCode": 0
+    },
+    "unit": {
+      "files": 6,
+      "passed": 50,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "postgres": {
+      "files": 2,
+      "passed": 5,
+      "failed": 0,
+      "migrations": 84,
+      "postgres": "17.x",
+      "isolation": "fresh temporary loopback-only container with tmpfs, removed after tests",
+      "exitCode": 0
+    },
+    "nextBuild": {
+      "command": "npm run build",
+      "next": "16.4.5",
+      "bundler": "Turbopack",
+      "exitCode": 0
+    },
+    "gitDiffCheck": "PASS"
+  },
+  "before": "Next build and whole-repo TypeScript reported diagnostics from test fixtures and mocks; no application typecheck error was reported.",
+  "remaining": [
+    "full repository unit baseline was not run",
+    "K03 restore acceptance and real email delivery remain open"
+  ],
+  "sourceSha256": {
+    "tests/postgres/finalize-audit-boundary.pg.test.ts": "0af327df5c9f36bcf300a4674d8de390176cbc311a32eeecf2a4969796c4c0e8",
+    "tests/postgres/user-export-route.pg.test.ts": "d03ce7d87e690d8158910dec406127d2594ec7bb3787f9dda60ab980a6721221",
+    "tests/unit/architecture/prisma-lazy-composition.test.ts": "8aed73cd11ecce88355dc1b9f58eea2694d9ff4c002b90eb8c90ca81fcdb948e",
+    "tests/unit/modules/users/export-own-data.test.ts": "ddd2400b07bceba048484c5720c007ee8231a3bb8661f9e9e5b6a2019c205760",
+    "tests/unit/video-pipeline/finalize-self-hls.test.ts": "ea2d4165903edd64f3491dc3c5d98e8f5c2496d1824b83b7370849346b0c6319",
+    "tests/unit/video-pipeline/process-encode-job.test.ts": "75a4815b1b461b5f5e4e7a0863427caadf2e88e2ac9309753bf3a3fc9771bb7a",
+    "tests/unit/video-pipeline/r2-storage-delete.test.ts": "07a37f94a61c9ac47e8ef725f4f7f5c728a3822104b7ca80b17282f3b4363cec",
+    "tests/unit/workers/pp-watchdog-delivery.test.ts": "a8e7281bb5706ea169f4ed7a48a919978ac9b4772cff95c202ade563301b582f"
+  }
+}

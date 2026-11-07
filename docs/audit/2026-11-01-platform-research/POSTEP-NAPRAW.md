@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K03 — pełne typecheck i zielony build po naprawie testów, 7 listopada 2026
+
+Pełny `npx tsc --noEmit --pretty false` wcześniej blokowały błędy typów fixture’ów w ośmiu testach. Skorygowano typy mocków, nullowalne wyniki, sygnaturę mockowanego `this`, argumenty handlera GET oraz AWS `send`; bez zmiany asercji produktu ani logiki aplikacji. Pełny typecheck: **exit 0**. Osiem plików przeszło ESLint; sześć suite unit **50/50 PASS**; dwa testy PostgreSQL na świeżej bazie po 84 migracjach **5/5 PASS**. Następnie Next 16.4.5/Turbopack `npm run build`: **exit 0**, łącznie z repo-wide TypeScript i generowaniem stron. K03 nadal częściowe: pełny baseline całej suite i pozostałe odbiory restore/e-mail nie są wykonane. [Dowód](program-audytu/evidence/k03-repo-types-build-2026-11-07.json).
+
 ## K10 — macierz ról przez lokalny HTTP, 7 listopada 2026
 
 Nowy test `tests/postgres/k10-hidden-premiere-http.pg.test.ts` uruchamia rzeczywisty lokalny Next dev server, Better Auth z podpisanymi cookies i PostgreSQL 17 po 84 migracjach. **2/2 PASS**: gość i niezwiązany zalogowany użytkownik znający ID filmu `REMOVED` otrzymują `UNAVAILABLE/VIDEO_NOT_FOUND` bez tytułu, posteru, daty ani źródła/tokena; właściciel kanału dostaje działający plan draftu z podpisanym adresem SELF_HLS; legalna premiera z gotowym syntetycznym assetem pozostaje widoczna, ale gość nie dostaje źródła, a zalogowany obcy otrzymuje `COMING_SOON` bez tokena/sesji przed czasem. ESLint i `git diff --check` PASS; baza działała w jednorazowym kontenerze z tmpfs i została usunięta. Pełne `npx tsc --noEmit` nadal kończy się błędami w istniejących, innych testach (m.in. `finalize-audit-boundary`, `user-export-route`, architektura, eksport i worker); nowy plik K10 nie występuje w diagnostyce. Nie pobierano manifestu HLS ani segmentów; niezależny review pozostaje otwarty, zatem K10 pozostaje częściowe. [Dowód](program-audytu/evidence/k10-http-role-matrix-2026-11-07.json).

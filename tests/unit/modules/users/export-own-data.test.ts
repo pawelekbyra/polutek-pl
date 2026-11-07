@@ -21,11 +21,11 @@ function fakeCtx() {
     videoProgress: find([{ videoId: "v1", positionSeconds: 120, durationSeconds: 600, updatedAt: new Date(0) }]),
     creator: { findMany: vi.fn(async () => [{ id: "ch1", slug: "owned", name: "Own channel", publicContactEmail: "public@example.com" }]) },
     channelMember: { findMany: vi.fn(async () => [{ channelId: "ch2", role: "EDITOR", acceptedAt: new Date(0), createdAt: new Date(0) }]) },
-    notificationPreference: { findUnique: vi.fn(async () => ({ patronEnabled: false, commentEnabled: true, systemEnabled: true, newVideoInApp: false, newVideoEmail: false, moderationEnabled: true, updatedAt: new Date(0) })) },
+    notificationPreference: { findUnique: vi.fn(async (): Promise<{ patronEnabled: boolean; commentEnabled: boolean; systemEnabled: boolean; newVideoInApp: boolean; newVideoEmail: boolean; moderationEnabled: boolean; updatedAt: Date } | null> => ({ patronEnabled: false, commentEnabled: true, systemEnabled: true, newVideoInApp: false, newVideoEmail: false, moderationEnabled: true, updatedAt: new Date(0) })) },
     notification: { findMany: vi.fn(async () => [{ kind: "NEW_VIDEO", read: true, createdAt: new Date(0) }]) },
     patronGrant: { findMany: vi.fn(async () => [{ source: "STRIPE_TIP", createdAt: new Date(0), revokedAt: null }]) },
     appSetting: { findUnique: vi.fn(async () => ({ value: null as string | null })) },
-    userAvatar: { findUnique: vi.fn(async () => ({ mime: "image/png", data: Buffer.from([0x89, 0x50, 0x4e, 0x47]) })) },
+    userAvatar: { findUnique: vi.fn(async (): Promise<{ mime: string; data: Buffer } | null> => ({ mime: "image/png", data: Buffer.from([0x89, 0x50, 0x4e, 0x47]) })) },
     channelBanner: { findMany: vi.fn(async () => [{ channelId: "ch1", mime: "image/webp", data: Buffer.from("RIFFdataWEBP") }]) },
   };
   return { prisma, ctx: { prisma, now: () => new Date("2026-10-05T10:00:00Z") } as never };

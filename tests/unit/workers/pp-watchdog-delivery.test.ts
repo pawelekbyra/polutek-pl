@@ -140,7 +140,7 @@ describe('pp-watchdog durable alert delivery', () => {
     await run(DB);
     const recovery = [...DB.deliveries.values()].find((row) => row.kind === 'RECOVERY');
     expect(recovery).toMatchObject({ status: 'PENDING', attempts: 1, last_error: 'http-503' });
-    expect(DB.states.get('www').ok).toBe(1);
+    expect(DB.states.get('www')?.ok).toBe(1);
 
     vi.setSystemTime(new Date('2026-11-06T10:11:00Z'));
     network.setMailStatus(200);
@@ -161,7 +161,7 @@ describe('pp-watchdog durable alert delivery', () => {
     await run(DB);
     const recovery = [...DB.deliveries.values()].find((row) => row.kind === 'RECOVERY');
     expect(recovery).toMatchObject({ status: 'PENDING', attempts: 1, last_error: 'daily-limit' });
-    expect(DB.states.get('www').ok).toBe(1);
+    expect(DB.states.get('www')?.ok).toBe(1);
 
     vi.setSystemTime(new Date('2026-11-07T00:00:00Z'));
     mockFetch();

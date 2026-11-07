@@ -10,12 +10,12 @@
     "GHSA-2464-fhr4-w9xw.html": "fb1fa051ab1d077bbead51da2eee9be77e10866c6e2bd3daf4d44e2fdde782d3",
     "GHSA-mrhx-c7xc-m3w5.html": "8a3438097c7fa67e8ebbfd37d4a4a4c37ee75fe65ebe6da77571e705ad9aabf8",
     "GHSA-wq5f-xc86-pv6w.html": "e4c0a5830bdd72a1644763317e08be1f8fe3f4cd66a5bf10de8844464724014b",
-    "KOLEJNOSC-NAPRAW.csv": "5cbbff7346277fd9c9dc3913051431bd793b03e505e0e780f0a34a20fd3884f5",
+    "KOLEJNOSC-NAPRAW.csv": "b5fbcb0f67410a0d6828badc95f479ef239e49357c6efb2861ef5dfd020fcecc",
     "PLAN-WDROZENIA-NAPRAW.md": "4179df729dc75d1f55b53b2f38b4fdf1bd9d22c1581864b5c451c59f213b8dc1",
     "PLAN-WERYFIKACJI.md": "8c97ea0f95c463c521432fa2e75ad5dc6035e9b411af8ed70388cbaf238c34d9",
     "POMINIETE-ARTEFAKTY.md": "b1ad39a6b44e4fac8ae8135e861060223b1c2da176b2e74133a220b20911561e",
     "POROWNANIE-WSTEPNE.md": "eb4cd574aa6b1097f6509906b30f31021d81c948b2d520122a3b062814d2b19a",
-    "POSTEP-NAPRAW.md": "42f457b2b64ffa4ca075ae9a0efc8d73449233a4f6468e3bd9a3186628cb6909",
+    "POSTEP-NAPRAW.md": "ea85e4cf18c21b519a88a27e6ad93b07cf66f1aaf221e7cdc1150303b159b1c2",
     "RAPORT.md": "8c1939b7ba4a1fbba6de18efaf7aa432a0fedecb38e2b4c1e0819176e9c93399",
     "README.md": "3ded193eeaf73dc431201df958769d22d17e57e0c159d4cdfc46503be11adede",
     "ROADMAPA-NAPRAW.md": "9bda0ad1c0f34e251281fadc2da23b83eef890633454ac885ffb766174e398e1",
@@ -61,7 +61,7 @@
     "program-audytu/SCENARIUSZE-WDROZENIA.csv": "4e67d47429bc70d6ea3cde439ee2e043dea4d39b5f0a1f99c3a23ce61d0a0dd8",
     "program-audytu/SCENARIUSZE-WEJSCIA.csv": "b1f629c120a931fb518d90a6cafa96fd1137deca4b4b247296357b31d82be92c",
     "program-audytu/SOURCES.md": "eec2a422f868981256d46d4f361f30a3295f6f9155a744694888dcaf47e479e8",
-    "program-audytu/STAN.md": "0f06d36366c0fde64c976e4a7e8307b8ee23b0c90fe98d1f6f25079c7516bbfb",
+    "program-audytu/STAN.md": "1bd85ac02364aeb2a5d97475a52d81cf21db25d105462acc80a04ba15310e3b2",
     "program-audytu/TESTY-INWENTARZ.csv": "2566b13c29d3a4018ff09a4116f0259bd62083197bfe76f9c747d6b249439a11",
     "program-audytu/USTALENIA.json": "1a0e8e97d6fca4fae1cb31bd29be7e741b2d97c43f6e7011e13adeb8ad04225f",
     "program-audytu/WARSTWY-TESTOW.csv": "017cff9d9ece98e2eddff5f8db143e6db6d0da140c7a70ffd8cf2d2e8f11b5f6",
@@ -412,7 +412,7 @@
     "program-audytu/evidence/h1-release-core-2026-11-02/wrong-base-ancestry.log": "ddf39345e3cc5756669b403f6448ed6462b6497c439f6a2af050e417cd40d2ea",
     "program-audytu/evidence/h1-release-core-2026-11-02/wrong-base-images.json": "09e53197568abebe3bee9f9ab61afa0c02e7628c126ffc507b75d7b67d38c3d8",
     "program-audytu/evidence/h1-release-core-2026-11-02/wrong-revision.log": "b26146b430ea18e37fd7737e2db1f2626d75aa8aa1d7c76f8f27fc90292e4735",
-    "program-audytu/evidence/h1-status.json": "588441f853f4e08f6962192d17155997e791c0dad3c4d4d529385b9e4775be46",
+    "program-audytu/evidence/h1-status.json": "a7c4a9af22c6e69d935dcdd93b8bb848682c0f53bae928992dcf3d86b5bd4b54",
     "program-audytu/evidence/h1-validation.json": "0aa50e414ff1e0bb95b5c58175512b5bfe66533b2c550aaefb63eacb44e19955",
     "program-audytu/evidence/hotspot-guard-batch12.log": "dbe54611034b886eaffed2d33a07f85d31af2aea35378d1ad75bd10ca28b4052",
     "program-audytu/evidence/i18n-catalog-measurement.json": "82feffff2de72049940a0adc9728de4b186b6e114c3c085d7cc85579db76ee4f",
@@ -917,6 +917,7 @@
     "program-audytu/K05-PROFIL-PRODUKTU.md": "f718bd50fe3e4c8e72186f935d7144227296fcdb89e7af3bceeae00ccf1facc0",
     "program-audytu/evidence/k38-bounded-body-probe-2026-11-07.json": "6209a64f7e8695bc38a70f60b1090a41774bddd1aa7433c6212d5771115b7827",
     "program-audytu/evidence/k10-http-role-matrix-2026-11-07.json": "4143ed9f6338263b9d29236030ad4722ff6eec52c527621f9498fecdd136cd02",
-    "program-audytu/evidence/k03-critical-path-post-k01-2026-11-07.json": "1b5c8d356e629e92967615385404792410872b3bb6afac6927980bb2fd59d38c"
+    "program-audytu/evidence/k03-critical-path-post-k01-2026-11-07.json": "1b5c8d356e629e92967615385404792410872b3bb6afac6927980bb2fd59d38c",
+    "program-audytu/evidence/k03-repo-types-build-2026-11-07.json": "637b36cc00af7bdb180fb2f74d992f0a433637cf0395da2271e0efbeef85ebfd"
   }
 }
