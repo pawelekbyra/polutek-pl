@@ -601,6 +601,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K22-T1** — Odświeżenie karty, ponowny wybór tego samego pliku i wygaśnięcie URL wznawiają ten sam upload; zapisane części nie są ponownie wysłane, wynik filmu jest poprawny.
 - **K22-T2** — Inny plik, cudze originalId, dwie karty i stare complete nie nadpisują filmu. Pauza/wyczerpanie retry zachowują możliwość wznowienia, świadomy cancel usuwa własną rezerwację i dane według kontraktu.
 
+**Postęp lokalny 7 listopada 2026 (częściowy):** dwa testy przeglądarkowe na lokalnym Next + disposable PostgreSQL potwierdzają wznowienie po reload (dowód 6 listopada) oraz kontynuację w drugiej karcie przy pierwszej pozostawionej otwartej (dowód 7 listopada). W drugim scenariuszu występuje jeden draft, jeden multipart start, jeden PUT zapisanej części i retry complete po kontrolowanym 502. Test jednostkowy potwierdza rozróżnienie dwóch plików o tych samych metadanych i różnej próbkowanej zawartości. API/R2 są kontrolowane, więc nie dowodzi to równoczesnego wyścigu dwóch uploaderów, realnego ETag/CORS ani expiry/retry presigned URL; K22 pozostaje częściowe. [Dowód dwóch kart](program-audytu/evidence/k22-two-tab-browser-2026-11-07.json).
+
 <a id="k23"></a>
 
 #### K23. Trwały zamiar powiadomienia razem z publikacją

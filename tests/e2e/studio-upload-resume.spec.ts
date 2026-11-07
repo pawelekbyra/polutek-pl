@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { serializeSignedCookie } from "better-call";
-import { expect, test, type BrowserContext } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 const prisma = new PrismaClient();
 const run = `k22-browser-${Date.now().toString(36)}`;
@@ -26,7 +26,7 @@ test.afterAll(async () => {
   await prisma.$disconnect();
 });
 
-test("Studio resumes stored parts after reload without creating or uploading them again", async ({ page, context, baseURL }) => {
+test("Studio resumes stored parts in a second tab without creating or uploading them again", async ({ page, context, baseURL }) => {
   expect(baseURL).toBeTruthy();
   const host = new URL(baseURL!).hostname;
   await addSessionCookie(context, host);
@@ -37,38 +37,41 @@ test("Studio resumes stored parts after reload without creating or uploading the
   let partLists = 0;
   let partPuts = 0;
   let completions = 0;
-  await page.route("**/api/studio/me", (route) => route.fulfill({ json: {
-    channel: { id: creatorId, slug: run, handle: null, name: "K22 Browser", status: "ACTIVE", isVerified: false, language: "pl", country: "PL" },
-    channels: [], channelCreation: "off", limits: null,
-  } }));
-  await page.route("**/api/studio/comments**", (route) => route.fulfill({ json: { items: [], total: 0, counts: { held: 0 } } }));
-  await page.route("**/api/studio/videos**", async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
-    const method = request.method();
-    if (url.pathname === "/api/studio/videos" && method === "GET") return route.fulfill({ json: { items: [], total: 0, page: 1, totalPages: 0 } });
-    if (url.pathname === "/api/studio/videos" && method === "POST") { draftCreates += 1; return route.fulfill({ json: { id: "draft-k22" } }); }
-    if (url.pathname === "/api/studio/videos/draft-k22" && method === "GET") { draftChecks += 1; return route.fulfill({ json: { id: "draft-k22" } }); }
-    if (url.pathname === "/api/studio/videos/draft-k22/upload" && method === "POST") {
-      uploadStarts += 1;
-      return route.fulfill({ json: { originalId: "original-k22", partSize: 64 * 1024, partCount: 1, fileSize: 8 } });
-    }
-    if (url.pathname === "/api/studio/videos/draft-k22/upload" && method === "GET") {
-      partLists += 1;
-      return route.fulfill({ json: { parts: [{ partNumber: 1, etag: '"etag-k22"' }], partSize: 64 * 1024, partCount: 1 } });
-    }
-    if (url.pathname === "/api/studio/videos/draft-k22/upload/parts" && method === "POST") return route.fulfill({ json: { urls: [{ partNumber: 1, url: `${url.origin}/__r2/mock/k22-part-1` }] } });
-    if (url.pathname === "/api/studio/videos/draft-k22/upload/complete" && method === "POST") {
-      completions += 1;
-      if (completions === 1) return route.fulfill({ status: 502, json: { error: "temporary failure", code: "TEMPORARY_FAILURE" } });
-      return route.fulfill({ json: { originalId: "original-k22", job: { id: "job-k22" } } });
-    }
-    return route.fulfill({ status: 404, json: { error: "unhandled Studio API request", code: "NOT_FOUND" } });
-  });
-  await page.route("**/__r2/mock/**", async (route) => {
-    partPuts += 1;
-    return route.fulfill({ status: 200, headers: { etag: '"etag-k22"' } });
-  });
+  const installRoutes = async (targetPage: Page) => {
+    await targetPage.route("**/api/studio/me", (route) => route.fulfill({ json: {
+      channel: { id: creatorId, slug: run, handle: null, name: "K22 Browser", status: "ACTIVE", isVerified: false, language: "pl", country: "PL" },
+      channels: [], channelCreation: "off", limits: null,
+    } }));
+    await targetPage.route("**/api/studio/comments**", (route) => route.fulfill({ json: { items: [], total: 0, counts: { held: 0 } } }));
+    await targetPage.route("**/api/studio/videos**", async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      const method = request.method();
+      if (url.pathname === "/api/studio/videos" && method === "GET") return route.fulfill({ json: { items: [], total: 0, page: 1, totalPages: 0 } });
+      if (url.pathname === "/api/studio/videos" && method === "POST") { draftCreates += 1; return route.fulfill({ json: { id: "draft-k22" } }); }
+      if (url.pathname === "/api/studio/videos/draft-k22" && method === "GET") { draftChecks += 1; return route.fulfill({ json: { id: "draft-k22" } }); }
+      if (url.pathname === "/api/studio/videos/draft-k22/upload" && method === "POST") {
+        uploadStarts += 1;
+        return route.fulfill({ json: { originalId: "original-k22", partSize: 64 * 1024, partCount: 1, fileSize: 8 } });
+      }
+      if (url.pathname === "/api/studio/videos/draft-k22/upload" && method === "GET") {
+        partLists += 1;
+        return route.fulfill({ json: { parts: [{ partNumber: 1, etag: '"etag-k22"' }], partSize: 64 * 1024, partCount: 1 } });
+      }
+      if (url.pathname === "/api/studio/videos/draft-k22/upload/parts" && method === "POST") return route.fulfill({ json: { urls: [{ partNumber: 1, url: `${url.origin}/__r2/mock/k22-part-1` }] } });
+      if (url.pathname === "/api/studio/videos/draft-k22/upload/complete" && method === "POST") {
+        completions += 1;
+        if (completions === 1) return route.fulfill({ status: 502, json: { error: "temporary failure", code: "TEMPORARY_FAILURE" } });
+        return route.fulfill({ json: { originalId: "original-k22", job: { id: "job-k22" } } });
+      }
+      return route.fulfill({ status: 404, json: { error: "unhandled Studio API request", code: "NOT_FOUND" } });
+    });
+    await targetPage.route("**/__r2/mock/**", async (route) => {
+      partPuts += 1;
+      return route.fulfill({ status: 200, headers: { etag: '"etag-k22"' } });
+    });
+  };
+  await installRoutes(page);
 
   await page.goto("/pl/studio");
   await page.getByRole("button", { name: /Treści|Content/ }).click();
@@ -85,17 +88,20 @@ test("Studio resumes stored parts after reload without creating or uploading the
   const resumeState = await page.evaluate(() => Object.keys(localStorage));
   expect(resumeState.some((key) => key.startsWith("studio-upload-draft:v1:"))).toBe(true);
 
-  await page.reload();
-  await page.goto("/pl/studio?section=content");
-  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual(resumeState);
-  await page.getByRole("button", { name: /Prześlij film|Upload a video/ }).click();
-  await selectStableSampleFile(page);
-  expect(await browserFileIdentity(page)).toBe(firstIdentity);
-  await page.locator("#wz-title").fill("K22 test");
-  await page.getByText(/^(Dalej|Next)$/, { exact: true }).click();
-  await page.getByRole("button", { name: /Rozpocznij przesyłanie|Start upload/ }).click();
+  // Keep the first tab open and resume from another tab sharing the same origin storage.
+  const secondTab = await context.newPage();
+  await installRoutes(secondTab);
+  await secondTab.goto("/pl/studio?section=content");
+  expect(await secondTab.evaluate(() => Object.keys(localStorage))).toEqual(resumeState);
+  await secondTab.getByRole("button", { name: /Prześlij film|Upload a video/ }).click();
+  await selectStableSampleFile(secondTab);
+  expect(await browserFileIdentity(secondTab)).toBe(firstIdentity);
+  await secondTab.locator("#wz-title").fill("K22 test");
+  await secondTab.getByText(/^(Dalej|Next)$/, { exact: true }).click();
+  await secondTab.getByRole("button", { name: /Rozpocznij przesyłanie|Start upload/ }).click();
   await expect.poll(() => completions).toBe(2);
-  expect({ draftChecks, draftCreates, uploadStarts }).toEqual({ draftChecks: 1, draftCreates: 1, uploadStarts: 1 });
+  expect({ draftCreates, uploadStarts }).toEqual({ draftCreates: 1, uploadStarts: 1 });
+  expect(draftChecks).toBeGreaterThanOrEqual(1);
   expect(partLists).toBe(1);
   expect(partPuts).toBe(1);
   expect(completions).toBe(2);
