@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-07T23:26:40.445Z",
+  "date": "2026-11-07T23:29:02.373Z",
   "method": "TypeScript transpileModule ESNext output; static imports/re-exports and literal require only; TypeScript Bundler resolver; SCC over lib/modules files only.",
   "scope": "Current tracked and untracked .ts/.tsx source files below lib/modules, excluding .d.ts; node_modules internals, dynamic imports and computed imports are not followed.",
   "files": 447,
@@ -67,7 +67,6 @@
       "lib/modules/video/application/publish-after-asset-ready.use-case.ts",
       "lib/modules/video/application/record-playback-event.use-case.ts",
       "lib/modules/video/application/reorder-admin-videos.use-case.ts",
-      "lib/modules/video/application/resync-admin-video-stats.use-case.ts",
       "lib/modules/video/application/unlist-admin-video.use-case.ts",
       "lib/modules/video/application/unpublish-admin-video.use-case.ts",
       "lib/modules/video/application/update-admin-video.use-case.ts",
@@ -86,7 +85,7 @@
     "lib/modules/notifications/application/user-notifications.use-cases.ts",
     "lib/modules/notifications/domain/notification-video.ts",
     "lib/modules/video/index.ts",
-    "lib/modules/video/application/resync-admin-video-stats.use-case.ts",
+    "lib/modules/video/application/update-admin-video.use-case.ts",
     "lib/modules/channel/index.ts"
   ],
   "source_sha256": {
@@ -506,7 +505,7 @@
     "lib/modules/video/application/ready-visibility.ts": "a3e2ff22665f10051fcf7b882ffd48c9d7de333fe6c42c1773c70ddb07054e1b",
     "lib/modules/video/application/record-playback-event.use-case.ts": "68d28f5e7295c8aa0fd3be49c2f8a282d1b01ca627da94d7c7b5a6bf5859936f",
     "lib/modules/video/application/reorder-admin-videos.use-case.ts": "302e511a394da4c48bcc279739901c3b484611fc3ab5926b4b6435bfaf8e9755",
-    "lib/modules/video/application/resync-admin-video-stats.use-case.ts": "168fa37fea54de1ad0fcb9fb572eece734746316831c50e77aaa9e453bafce67",
+    "lib/modules/video/application/resync-admin-video-stats.use-case.ts": "3becd31c96d060d80e8c07d61feb35359e9bfd62bb2dee2238d868bae889b64b",
     "lib/modules/video/application/sync-public-thumbnail.service.ts": "97b1c75063c2757a9be4b870d8d3f2b0cf0557d4dea05e7cdbe763dfe58bcd93",
     "lib/modules/video/application/unlist-admin-video.use-case.ts": "22239db0285d73a10e8f1a17a41c28acc909a5169bd08fcf1f45a11232a0e5f4",
     "lib/modules/video/application/unpublish-admin-video.use-case.ts": "600faf7ed19e559e20a9d23f2a1b03375d19228c1c3cd5cc6990e7849aab1f55",
@@ -538,6 +537,6 @@
     "lib/modules/watch-progress/domain/progress-rules.ts": "a2ee1ece4c213805cd78738eb46ddca66bda5547ca287857542feabb33c86cfa",
     "lib/modules/watch-progress/index.ts": "b16f964d579d537b9f5c6ae2709cc5cb439b4cc18514664c842b351d084c5e3e"
   },
-  "base_commit": "3ea4a8926059e1c9b4e7bda9f142b674049f44d4",
+  "base_commit": "70bb56427d9da54b6fe6e1a510319854f384b9e3",
   "probe_sha256": "3d8bfa9f194e107d9ec69b39292a4d7e45db6cf5e48ee3ee182627767dd945b3"
 }

@@ -33,6 +33,9 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/video/application/get-admin-video-list.use-case.ts': {
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
   },
+  'lib/modules/video/application/resync-admin-video-stats.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
   'lib/modules/video/infrastructure/video-content.service.ts': {
     'channel/application/main-channel.service': 'This adapter needs the channel service, not the public index; the index re-exports channel use cases that depend on this adapter.',
     'channel/domain/channel.policy': 'The video read adapter needs only the shared public-visibility query policy, not the channel service barrel.',
