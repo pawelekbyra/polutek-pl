@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K03 — ponowna kontrola CLI i guarda, 7 listopada 2026
+
+Na `cd5f4f4e57fe49d71a255a22c6acd88259764a60` uruchomiono ponownie `npx vitest run tests/unit/operations/verify-restored-database-process.test.ts tests/unit/operations/critical-path-runner.test.ts --reporter=dot`: **2 pliki, 47/47 PASS**, exit 0; ESLint trzech plików również PASS. Proces CLI potwierdza niezerowe kody błędnych przypadków i brak markera SUCCESS. Testy korzystają z syntetycznej granicy Prisma — bez PostgreSQL, restore, workera, storage i produkcji. [Dowód](program-audytu/evidence/k03-cli-regression-2026-11-07.json). Nie zmienia to statusu live weekly restore.
+
 ## K02 — przegląd źródłowych advisory, 7 listopada 2026
 
 Oficjalne wydanie Next 16.4.5 z 3 listopada wymienia siedem naprawionych advisory; lokalne `next`, `eslint-config-next` i lockfile mają wersję 16.4.5. Oficjalne advisory sharp wskazuje 0.35.5 jako wersję naprawioną dla podatności librsvg; lokalny sharp i lockfile mają 0.35.5, a istniejący izolowany runtime image udokumentowano osobno. Zapisano [zakres, wersje, komendy, źródła i ograniczenia](program-audytu/evidence/k02-upstream-review-2026-11-07.json). Nie uruchamiano `npm audit` ani instalacji. Jest to przegląd wskazanych advisory K02, nie pełny przegląd wszystkich zależności. K02 pozostaje otwarte do kontrolowanego audytu transitive dependencies oraz inspekcji rzeczywistych obrazów aplikacji.
