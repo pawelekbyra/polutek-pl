@@ -68,6 +68,10 @@ git status --short
 
 Pełne domknięcie K32 nadal wymaga decyzji właściciela o RPO/RTO i mediach oraz zewnętrznych dowodów offsite/klucza.
 
+## K37 — syntetyczny baseline kosztu eksportu, 7 listopada 2026
+
+Uruchomiono rzeczywisty `ExportOwnDataUseCase` i dokładne formatowanie JSON route'u w czterech świeżych procesach Node z syntetycznymi delegate'ami Prisma. Przy 100k rekordów na kategorię dla comments/views/playbackSessions/playbackEvents (400k łącznie) powstało 143,934,427 B JSON w 4.14 s, a peak RSS procesu wyniósł ~641 MiB; 50k/kategoria: ~68.6 MiB i ~395 MiB peak. To baseline warstwy aplikacji, bez PostgreSQL, HTTP/Next, produkcyjnych danych, współbieżności ani zatwierdzonego profilu. K37 pozostaje otwarte do ustalenia progu, pomiaru z DB i ewentualnej optymalizacji dopiero gdy wynik tego wymaga. [Wynik](evidence/k37-export-memory-baseline-2026-11-07.json), [reprodukowalny probe](tools/k37-export-memory-probe.mjs).
+
 ## K12/R32 — suma wpłat niezależna od kolejności sporu i refundu, 7 listopada 2026
 
 RED na disposable PostgreSQL: refund po przegranym sporze dawał 600 zamiast 1000 przy oczekiwanym A=0, B=1000; współbieżna kolejność schodziła do 0. Po wspólnym `FOR UPDATE` i ponownym odczycie wiersza w ścieżkach refund/dispute oraz pominięciu drugiego odjęcia wkładu z `CHARGEBACK_LOST`, bazowy przebieg miał **20/20** testów PG i **31/31** testów unit PASS; scenariusz współbieżny przeszedł jeszcze **5/5** osobnych uruchomień. Następny przebieg objął spór otwarty → refund częściowy → spór wygrany oraz powtórzenia równoległe: **21/21** testów PG PASS. ESLint i repo typecheck PASS. Sprawdzono refund partial/full, replay oraz odrębne PLN/USD. DB miała 84 migracje; baza i kontener używały danych tymczasowych. [Dowód RED/GREEN, SHA kodu i ograniczenia](evidence/k12-refund-dispute-ordering-2026-11-07.json). K12-T1 częściowo pokryte; pełne K12-T2, przegląd i zależność polityki K11 pozostają otwarte.

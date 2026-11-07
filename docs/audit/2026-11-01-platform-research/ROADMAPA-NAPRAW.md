@@ -975,6 +975,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Do weryfikacji przed zamknięciem:** Materializowanie historii jest potwierdzone, wyczerpanie pamięci produkcji nie. Najpierw uzgodnić i zmierzyć próg.
 
+**Syntetyczny punkt odniesienia, 7 listopada 2026:** rzeczywisty `ExportOwnDataUseCase` i route-equivalent `JSON.stringify(data, null, 2)` uruchomiono w czterech odrębnych procesach Node z syntetycznymi delegate'ami Prisma. Dla każdej z czterech dużych kategorii (komentarze, view history, playback sessions, playback events) użyto 0/10k/50k/100k wierszy. Przy 100k na kategorię (400k łącznie) JSON miał 143,934,427 B (~137 MiB), serializacja/use case 4.14 s, a peak RSS procesu ~641 MiB; 50k na kategorię dało ~68.6 MiB i ~395 MiB peak RSS. To syntetyczny app-side baseline bez DB/network/Next/produkcji, nie profil konta ani zaakceptowany próg. Wyniki i ograniczenia: [K37 baseline](program-audytu/evidence/k37-export-memory-baseline-2026-11-07.json); reprodukcja: [probe](program-audytu/tools/k37-export-memory-probe.mjs). Nie podejmować paginacji/async ani nie deklarować limitu przed pomiarem DB i decyzją o progu.
+
 **Testy odbioru:**
 
 - **K37-T1** — Duża własna historia o uzgodnionym rozmiarze eksportuje wszystkie kategorie/rekordy bez pominięć i duplikatów, przy zmierzonym limicie RAM/czasu. Zmiany w trakcie eksportu mają wynik zgodny z polityką snapshotu.
