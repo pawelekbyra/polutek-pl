@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K32 — inwentarz odtwarzania, 7 listopada 2026
+
+Spisano z dokumentacji repo zakres kopii DB, konfiguracji/sekretów, Support, kodu/obrazów, mediów, Cloudflare, płatności i Redis oraz granice `restore-test.sh`. Brak testu offsite-only, zmierzonego pełnego RTO, potwierdzonej niezależnej kopii klucza age i kopii oryginałów/HLS/miniatur. To przegląd dokumentów; nie łączono się z serwerem ani usługami. K32 pozostaje częściowe: potrzebne są decyzje właściciela o RPO/RTO i kopii mediów oraz syntetyczny, odizolowany restore acceptance. [Inwentarz](program-audytu/K32-RECOVERY-INVENTORY.md).
+
 ## K12/R32 — kolejność refundu i przegranego sporu, 7 listopada 2026
 
 Test RED na PostgreSQL 17.11 odtworzył podwójne odjęcie: przy A=1000 gr, B=1000 gr po utracie sporu A i późniejszej refundacji A=400 gr w totalu zostawało 600 zamiast 1000; współbieżne zdarzenia schodziły do 0. Naprawa blokuje ten sam wiersz płatności i ponownie go odczytuje w transakcjach refund/dispute; refund po `CHARGEBACK_LOST` zapisuje kwotę, ale nie odejmuje już wkładu z agregatu. Pełny `payments.pg.test.ts`: **20/20 PASS** (w tym obie kolejności, równoległość/replay, full refund i osobne PLN/USD); scenariusz współbieżny przeszedł dodatkowo **5/5** osobnych procesów. Trzy suite unit **31/31 PASS**, ESLint i repo typecheck PASS. Testowa DB miała 84 migracje, testowe rekordy wyczyszczono, kontenery usunięto. [Dowód RED/GREEN, hashe, polecenia i zakres](program-audytu/evidence/k12-refund-dispute-ordering-2026-11-07.json). Nie wykonano żadnego charge/refund ani korekty historii. K12 pozostaje częściowe do pełnego kontraktu T2, review i K11/K05.

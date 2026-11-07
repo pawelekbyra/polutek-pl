@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K32 — inwentarz odtwarzania, 7 listopada 2026
+
+Gotowy jest repo-only inwentarz zasobów i udokumentowanych granic backup/restore: [K32-RECOVERY-INVENTORY.md](K32-RECOVERY-INVENTORY.md). Nie uruchamiano testów ani nie łączono się z serwerem/usługami. K32 jest częściowe; następny krok lokalny to zaprojektowanie odizolowanego syntetycznego acceptance, a pełne domknięcie wymaga decyzji właściciela o RPO/RTO i mediach oraz zewnętrznych dowodów offsite/klucza.
+
 ## K12/R32 — suma wpłat niezależna od kolejności sporu i refundu, 7 listopada 2026
 
 RED na disposable PostgreSQL: refund po przegranym sporze dawał 600 zamiast 1000 przy oczekiwanym A=0, B=1000; współbieżna kolejność schodziła do 0. Po wspólnym `FOR UPDATE` i ponownym odczycie wiersza w ścieżkach refund/dispute oraz pominięciu drugiego odjęcia wkładu z `CHARGEBACK_LOST`, bazowy przebieg miał **20/20** testów PG i **31/31** testów unit PASS; scenariusz współbieżny przeszedł jeszcze **5/5** osobnych uruchomień. Następny przebieg objął spór otwarty → refund częściowy → spór wygrany oraz powtórzenia równoległe: **21/21** testów PG PASS. ESLint i repo typecheck PASS. Sprawdzono refund partial/full, replay oraz odrębne PLN/USD. DB miała 84 migracje; baza i kontener używały danych tymczasowych. [Dowód RED/GREEN, SHA kodu i ograniczenia](evidence/k12-refund-dispute-ordering-2026-11-07.json). K12-T1 częściowo pokryte; pełne K12-T2, przegląd i zależność polityki K11 pozostają otwarte.

@@ -838,6 +838,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Do weryfikacji przed zamknięciem:** Lokalny raw SQL restore wybranych danych działał; polityki chmury/role/media/Prisma/offsite i rzeczywiste RPO/RTO nie są dowiedzione. Dla profilu bez płatności K11/K12 nie są warunkiem próby, ale po ich włączeniu wymagany ponowny drill uzgodnienia.
 
+**Inwentarz lokalny, 7 listopada 2026:** zapisano źródłowy spis DB, konfiguracji/sekretów, kodu/obrazów, R2 media, Cloudflare, płatności i Redis wraz z dowodami z repo oraz granicami istniejącego `restore-test.sh`. Potwierdza on brak offsite-only restore, niezmierzone RTO, niezweryfikowaną niezależną kopię klucza age i brak rutynowej kopii oryginałów/HLS/miniatur. Zawiera listę decyzji właściciela i brakujących testów, nie przypisuje samodzielnie wartości docelowych. [Inwentarz K32](program-audytu/K32-RECOVERY-INVENTORY.md).
+
 **Testy odbioru:**
 
 - **K32-T1** — Przy założonej utracie pierwotnego hosta odzyskać na czystych własnych zasobach konto, kanał, uprawnienia i odtwarzalny film z samej kopii offsite oraz niezależnie dostępnego klucza. Zweryfikować role, schemat/historię Prisma i spójność DB/storage.
