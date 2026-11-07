@@ -1,0 +1,27 @@
+{
+  "package": "K04/R34",
+  "date": "2026-11-07",
+  "scenario": "Real MainChannelService and ChannelRepository use the Prisma client injected into createAppContext against PostgreSQL.",
+  "command": "DATABASE_URL=<disposable-postgres-17> DATABASE_URL_UNPOOLED=<disposable-postgres-17> npx vitest run --config vitest.postgres.config.ts tests/postgres/k04-channel-context.pg.test.ts --reporter=dot",
+  "environment": {
+    "database": "Disposable PostgreSQL 17.11, tmpfs, all 84 migrations applied",
+    "prisma": "Generated Prisma Client 6.19.3",
+    "testBoundary": "Real PostgreSQL and application service; explicit PrismaClient injection; no production or external services"
+  },
+  "result": {
+    "tests": "4/4 PASS",
+    "visibleActiveChannel": "Returned the row read through the injected client.",
+    "suspendedChannel": "404 CHANNEL_NOT_FOUND",
+    "softDeletedChannel": "404 CHANNEL_NOT_FOUND",
+    "missingChannel": "404 CHANNEL_NOT_FOUND",
+    "fixtureRowsAfterCleanup": "0 users, 0 creators",
+    "eslint": "PASS",
+    "repoTypecheck": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limits": [
+    "This covers one injected service/repository cycle, not every application composition root or module import cycle.",
+    "The test uses one process and does not prove production bundler behavior or full HTTP composition.",
+    "Independent review remains outstanding."
+  ]
+}

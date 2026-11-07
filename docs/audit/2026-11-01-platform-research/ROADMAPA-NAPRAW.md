@@ -192,6 +192,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Postęp lokalny:** pierwotny probe wykazał 0 konstrukcji domyślnego klienta przy czystych importach i DB injection, oraz 1 przy pierwszym domyślnym transakcyjnym użyciu. Dodatkowy child-process test używa prawdziwego wygenerowanego PrismaClient przez `lib/prisma.ts`: delegat `user` i `$transaction` dostępne, `$disconnect` kończy się poprawnie bez DATABASE_URL lub połączenia do DB (**1/1 PASS**). Osobny test rzeczywistego `MainChannelService.getPubliclyVisibleById` i `ChannelRepository` potwierdza użycie przekazanego `createAppContext` delegata (`creator.findUnique`) (**1/1 PASS**; fake adapter, bez PostgreSQL). Repo typecheck/ESLint i granice architektury PASS. Nie jest to build docelowym bundlerem ani pełny test use case z DB; pełny zakres K04 i niezależny przegląd pozostają otwarte. [Probe i dowód injection](program-audytu/evidence/architecture-import-probe.json), [test injection](program-audytu/evidence/k04-injected-use-case-2026-11-07/result.json).
 
+**Uzupełnienie lokalne 7 listopada:** rzeczywisty serwis i repozytorium wykonano z wstrzykniętym wygenerowanym Prisma Client na disposable PostgreSQL 17.11 po 84 migracjach. ACTIVE zwrócił rekord; SUSPENDED, soft-deleted i brakujący zwróciły ten sam 404 (**4/4 PASS**). Test używa syntetycznych kont i nie obejmuje HTTP, innych composition rootów ani pełnego grafu importów. [Dowód PostgreSQL](program-audytu/evidence/k04-injected-context-postgres-2026-11-07.json).
+
 <a id="k05"></a>
 
 #### K05. Jednoznaczny profil produktu i decyzje właściciela
