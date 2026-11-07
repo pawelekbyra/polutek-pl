@@ -40,10 +40,9 @@ test.afterAll(async () => {
 test("Studio playlist delete keeps busy focus contained, retries, and calls the real DELETE route", async ({ page, context, baseURL }) => {
   expect(baseURL).toBeTruthy();
   await addSessionCookie(context, new URL(baseURL!).hostname);
+  await page.addInitScript((id) => localStorage.setItem(`polutek:email-consent-prompt-dismissed:${id}`, "true"), userId);
   page.on("pageerror", (error) => console.log(`[K34] page error: ${error.message}`));
   await page.goto("/pl/studio?section=playlists");
-  await expect(page.getByText("Czy chcesz subskrybować?")).toBeVisible();
-  await page.getByRole("button", { name: /^nie$/i }).click();
   await page.getByRole("button", { name: "Playlisty", exact: true }).click();
   await page.getByRole("button", { name: "Edytuj" }).click();
   await expect(page.getByLabel("Tytuł")).toHaveValue("K34 delete flow");
@@ -65,6 +64,13 @@ test("Studio playlist delete keeps busy focus contained, retries, and calls the 
   await page.getByRole("button", { name: "Usuń playlistę" }).click();
   let dialog = page.getByRole("alertdialog", { name: "Usunąć playlistę?" });
   await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Usuń playlistę" })).toBeFocused();
+
+  await page.getByRole("button", { name: "Usuń playlistę" }).click();
+  dialog = page.getByRole("alertdialog", { name: "Usunąć playlistę?" });
+  await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Usuń playlistę" }).click();
   await expect(page.getByText("Błąd serwera. Spróbuj ponownie.")).toBeVisible();
   await expect(dialog).toHaveCount(0);
@@ -76,6 +82,8 @@ test("Studio playlist delete keeps busy focus contained, retries, and calls the 
   await expect(dialog).toHaveAttribute("aria-busy", "true");
   await expect(dialog.getByRole("status")).toContainText("Operacja w toku.");
 
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible();
   await page.keyboard.press("Tab");
   await expect.poll(() => dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Shift+Tab");

@@ -15,10 +15,10 @@
     "PLAN-WERYFIKACJI.md": "8c97ea0f95c463c521432fa2e75ad5dc6035e9b411af8ed70388cbaf238c34d9",
     "POMINIETE-ARTEFAKTY.md": "b1ad39a6b44e4fac8ae8135e861060223b1c2da176b2e74133a220b20911561e",
     "POROWNANIE-WSTEPNE.md": "eb4cd574aa6b1097f6509906b30f31021d81c948b2d520122a3b062814d2b19a",
-    "POSTEP-NAPRAW.md": "8ce11ab46f15a42ca211c0b01a17c6f53accdcffdd14c07a5ab5a32eb44d0993",
+    "POSTEP-NAPRAW.md": "4a2ae3184d03280d0d2657cc759f9fce6868f749b01748ade832956c1e7424e5",
     "RAPORT.md": "8c1939b7ba4a1fbba6de18efaf7aa432a0fedecb38e2b4c1e0819176e9c93399",
     "README.md": "3ded193eeaf73dc431201df958769d22d17e57e0c159d4cdfc46503be11adede",
-    "ROADMAPA-NAPRAW.md": "534954f6e673fc42839b76ec21f737739fa87c34029a8692b6cf436ba5ea9426",
+    "ROADMAPA-NAPRAW.md": "98ee9eba2af8dda020e8c595cb55cbe8f7eafca94beebf6b8a1aa0f86089b4bc",
     "advisory-fetch.json": "46a33168f54966e8bee20f3a80ffdec5ff15f641c37c8de16f4c9525823ba6fa",
     "architecture.log": "a2a6ceeedf261ee197a748f230eb19a6e6cb8d7758e30ddfaf4a903723f0e005",
     "checks.json": "8da53565706a70b84a58d2d64bad94676eda8a6957819543bd095ddf05fb7641",
@@ -61,7 +61,7 @@
     "program-audytu/SCENARIUSZE-WDROZENIA.csv": "4e67d47429bc70d6ea3cde439ee2e043dea4d39b5f0a1f99c3a23ce61d0a0dd8",
     "program-audytu/SCENARIUSZE-WEJSCIA.csv": "b1f629c120a931fb518d90a6cafa96fd1137deca4b4b247296357b31d82be92c",
     "program-audytu/SOURCES.md": "eec2a422f868981256d46d4f361f30a3295f6f9155a744694888dcaf47e479e8",
-    "program-audytu/STAN.md": "498cc19bfbc832bcd431c7f1483b086af7c75d264895a31dac689ea1bc1c308a",
+    "program-audytu/STAN.md": "874954d81ccedcc9cee02eac453f1891cd3be4410a0bf77af3172c911d8bad78",
     "program-audytu/TESTY-INWENTARZ.csv": "2566b13c29d3a4018ff09a4116f0259bd62083197bfe76f9c747d6b249439a11",
     "program-audytu/USTALENIA.json": "1a0e8e97d6fca4fae1cb31bd29be7e741b2d97c43f6e7011e13adeb8ad04225f",
     "program-audytu/WARSTWY-TESTOW.csv": "017cff9d9ece98e2eddff5f8db143e6db6d0da140c7a70ffd8cf2d2e8f11b5f6",
@@ -879,6 +879,6 @@
     "program-audytu/evidence/k23-http-crash-cron-2026-11-07/result.json": "98984774eece827aa8e153bb90725b75e0ba8213f5550cc6f95970964973d910",
     "program-audytu/evidence/k23-premiere-postgres-2026-11-07/result.json": "aab1874c99b6d59c1b4fc118af8d426c5eb82865a08209df72172afc105f7223",
     "program-audytu/evidence/k04-injected-use-case-2026-11-07/result.json": "56860e9348299fc68febd397597e6aba9f566db7e2a7a33934503bdcf2c55f95",
-    "program-audytu/evidence/k34-studio-delete-2026-11-07/result.json": "d5cd6a11a2ec1a3a01a960d5771b3252ce21a300a8055c3de1db33de29d75734"
+    "program-audytu/evidence/k34-studio-delete-2026-11-07/result.json": "13948823bf146e09053844607fb4a023cad3a669f3c2799b72d5d220beee0b86"
   }
 }
