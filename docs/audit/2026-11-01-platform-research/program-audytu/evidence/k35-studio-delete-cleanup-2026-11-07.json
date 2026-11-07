@@ -1,0 +1,29 @@
+{
+  "package": "K35-T1 Studio video deletion and durable local storage cleanup",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "60cc9238246100fd7cc7d4b1e7b1df2c3f6812db",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped after test",
+    "flow": [
+      "Studio DELETE removes the video and cascaded originals, assets and playback routes",
+      "the same transaction persists a STORAGE_CLEANUP durable job with a manifest of two HLS assets and two originals",
+      "the local cleanup runner marks the job DONE",
+      "all original and HLS objects for the video are absent from the loopback S3-shaped fixture"
+    ],
+    "repo_typecheck": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "lib/modules/video-pipeline/application/output-cleanup.use-cases.ts": "dad3ff17c30c00b41b6843094875252e4dbdcd837a4618610a284d560f39404c",
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "a2eb35385cd64d8084ae5c9433d4b276ff4ddeae14c44c9c9b092507cff7b1d3"
+  },
+  "limitations": [
+    "All storage operations used the loopback S3-shaped test fixture; no Cloudflare R2 or deployed Worker was contacted.",
+    "Browser playback is verified for version 1; version 2 is verified by Studio API, worker, DB and active route, not a second browser session.",
+    "This covers deletion of this synthetic video, not a broad role/state matrix, payment profiles or independent review; K35 remains partial."
+  ]
+}

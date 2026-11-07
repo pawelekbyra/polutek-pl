@@ -52,3 +52,4 @@ K35-T1-browser-hls-payload-correction,e91ce1b1,tests/postgres/k01-video-worker-l
 K35-T2-cross-channel-complete,83c48249,tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k35-cross-channel-complete-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K35-T2-complete-retry,e83124a6,tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k35-complete-retry-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K35-T1-original-replacement,ea204127,tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k35-original-replacement-local-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K35-T1-studio-delete-cleanup,60cc9238,lib/modules/video-pipeline/application/output-cleanup.use-cases.ts;tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k35-studio-delete-cleanup-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO

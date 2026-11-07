@@ -417,3 +417,7 @@ To wyłącznie lokalny fixture i Worker module: nie dowodzi Cloudflare R2, deplo
 ## K35-T1 — wymiana oryginału przez pełną ścieżkę lokalną, 7 listopada 2026
 
 Po potwierdzonym Chromium playback v1 test przeprowadza przez Studio multipart upload i worker wersję v2. PostgreSQL potwierdza v1 `SUPERSEDED`, v2 `READY`, nowy aktywny oryginał i dokładnie jedną aktywną trasę HLS wskazującą attempt-scoped asset v2; endpoint pipeline pokazuje version 2. Integration PostgreSQL 17.11/84 migracje **1/1 PASS**, typecheck/ESLint/diff check PASS. [Dowód](program-audytu/evidence/k35-original-replacement-local-2026-11-07.json). Browser playback samego v2, usunięcie filmu, rzeczywiste R2 i niezależny review pozostają otwarte.
+
+## K35-T1 — delete filmu i trwałe sprzątanie storage, 7 listopada 2026
+
+Test usuwa przez Studio API syntetyczny film z dwiema wersjami HLS. Kaskada usuwa wiersze DB, a transakcja pozostawia `STORAGE_CLEANUP` z manifestem dwóch assetów i dwóch oryginałów; loopbackowy runner kończy job jako `DONE` i usuwa wszystkie obiekty z fixture. PostgreSQL 17.11/84 migracje, integration **1/1 PASS**, repo typecheck, ESLint i diff check PASS. [Dowód](program-audytu/evidence/k35-studio-delete-cleanup-2026-11-07.json). Poprzedni test przeprowadził upload v2 przez Studio i worker; playback Chromium potwierdzono dla v1, a v2 tylko przez API/DB/aktywną trasę. Rzeczywiste R2/deployed Worker i niezależny review pozostają otwarte.
