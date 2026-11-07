@@ -2,7 +2,7 @@
   "date": "2026-11-07",
   "package": "K03",
   "finding": "R08/R37",
-  "status": "KNOWN_FULL_SUITE_FAILURES_FIXED_TARGETED_GREEN_FULL_RERUN_OPEN",
+  "status": "LOCAL_K03_ACCEPTANCE_GREEN_FULL_QUALITY_PASS",
   "baselineRevision": "83b9c654",
   "fullSuiteBeforeFixes": {
     "command": "npm run quality",
@@ -44,9 +44,25 @@
     "files": 6,
     "exitCode": 0
   },
-  "fullSuiteAfterFixes": "NOT_RUN; the focused rerun covers all eight files that failed in the full baseline but does not establish a green full-repository suite.",
+  "fullSuiteAfterFixes": {
+    "command": "npm run quality",
+    "vitestFilesPassed": 581,
+    "vitestFilesSkipped": 1,
+    "testsPassed": 5147,
+    "testsSkipped": 2,
+    "exitCode": 0,
+    "durationSeconds": 581.93,
+    "note": "Architecture-boundary check and repo typecheck also passed before Vitest. Full run completed with exit 0."
+  },
   "remaining": [
-    "Rerun full npm run quality when permitted to establish the whole-repository baseline after the fixes.",
-    "K03 restore acceptance and real email delivery remain open."
-  ]
+    "The full quality run includes two skipped tests (one skipped file); they are counted, not treated as passing.",
+    "A live weekly restore remains a separate operational exercise and is not claimed by K03.",
+    "Re-run npm run quality after subsequent code changes."
+  ],
+  "verifiedRevision": "d3554e7d",
+  "restoreAcceptance": {
+    "K03T1": "PASS: process-level CLI witnesses cover successful verification and connection/migration/count failures.",
+    "K03T2": "PASS: process-level CLI witnesses cover preflight refusals, matching/mismatching/malformed manifests, and orphan records.",
+    "scopeLimit": "Synthetic query fixtures exercise the real CLI process; no live weekly restore or production database was run, and this evidence does not claim one."
+  }
 }

@@ -1,8 +1,8 @@
 # Postęp realizacji roadmapy — H1
 
-## K03 — triage pełnej suite, 7 listopada 2026
+## K03 — pełna suite po naprawach, 7 listopada 2026
 
-Pełne `npm run quality` (582 pliki) zakończyło się **5128 PASS, 19 FAIL, 2 SKIP**. Naprawiono znalezione problemy: inwentarz storage, eksport/mocks cleanup, pięć brakujących komunikatów w sześciu katalogach i niekompletne fixture playback. Wszystkie osiem pierwotnie czerwonych plików przechodzi razem: **64/64 PASS**. Nie powtórzono jeszcze całej suite, więc K03 nie jest potwierdzone jako zielone; otwarte pozostają pełny retest oraz odbiory restore/e-mail. [Wynik i ograniczenia](program-audytu/evidence/k03-full-suite-triage-2026-11-07.json).
+Przed naprawami `npm run quality` obejmowało 582 pliki i zakończyło Vitest wynikiem **5128 PASS, 19 FAIL, 2 SKIP**. Poprawiono inwentarz storage, fixture mocków cleanup/transakcji, pięć brakujących komunikatów w sześciu katalogach i niekompletne fixture publicznego playback planu. Wszystkie osiem pierwotnie czerwonych plików przeszło razem **64/64**. Następnie pełne `npm run quality` zakończyło się **exit 0**: architektura i TypeScript PASS; **581 plików Vitest PASS, 1 plik pominięty; 5147 testów PASS, 2 pominięte** (581,93 s). K03 ma zielony baseline repo; osobno trzeba domknąć kryteria weryfikatora restore K03-T1/T2, a dwa skipy pozostawić jawne. [Dowód, lista zmian i ograniczenia](program-audytu/evidence/k03-full-suite-triage-2026-11-07.json).
 
 ## K03 — pełne typecheck i zielony build po naprawie testów, 7 listopada 2026
 

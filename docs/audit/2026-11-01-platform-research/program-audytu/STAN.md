@@ -1,8 +1,10 @@
 # Stan badania i napraw — punkt wznowienia
 
-## K03 — aktualizacja po pełnym baseline i naprawie 19 awarii, 7 listopada 2026
+## K03 — pełny baseline po naprawie 19 awarii, 7 listopada 2026
 
-`npm run quality` wykonał pełną suite (582 pliki): **5128 PASS, 19 FAIL, 2 SKIP**. Usterki objęły niezgodny spis storage, nieaktualne mocki transakcji, brakujące tłumaczenia uploadu i niekompletne fixture planu odtwarzania. Po poprawkach wszystkie osiem pierwotnie czerwonych plików przechodzi razem: **64/64 PASS**. Pełnego `npm run quality` po zmianach jeszcze nie powtórzono; nie uznajemy całej suite za zieloną. Nadal otwarte są odbiory restore i e-mail. [Szczegóły i dokładna komenda](evidence/k03-full-suite-triage-2026-11-07.json).
+`npm run quality` po poprawkach zakończyło się **exit 0**: architektura i repo TypeScript PASS; Vitest **581 plików PASS, 1 pominięty, 5147 testów PASS, 2 pominięte**. Przed zmianą pełna suite wykazała 19 błędów w 8 plikach; wszystkie te pliki przeszły wspólnym retestem **64/64**. Test procesu CLI pokrywa K03-T1/T2 na syntetycznych zapytaniach; K03-T3 ma pełny baseline. Dwa skipy są jawnie policzone, nie zaliczone. Nie wykonywano live weekly restore — to osobne ćwiczenie operacyjne. [Wynik pełnego przebiegu i zakres](evidence/k03-full-suite-triage-2026-11-07.json).
+
+## K03 — repo-wide TypeScript i produkcyjny build, 7 listopada 2026
 
 ## K03 — repo-wide TypeScript i produkcyjny build, 7 listopada 2026
 
