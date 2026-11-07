@@ -143,6 +143,7 @@ async function startNextServer() {
       CLOUDFLARE_R2_ACCESS_KEY_ID: "k01-loopback-only",
       CLOUDFLARE_R2_SECRET_ACCESS_KEY: "k01-loopback-only",
       CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS: ORIGINAL_BUCKET,
+      CLOUDFLARE_R2_BUCKET_HLS: HLS_BUCKET,
       VIDEO_WORKER_TEST_S3_ENDPOINT: endpoint,
       VIDEO_WORKER_TEST_RUNTIME: "true",
     },
@@ -722,5 +723,29 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(replacementVideo.activePlaybackRoute?.asset.objectKey).toBe(hlsAttemptAssetKey(videoId, 2, replacementJob.attemptId));
     expect(activeRoutes).toHaveLength(1);
     expect(replacementPipelineText).toContain('"versionNumber":2');
+
+    const deleteVideoResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}`, {
+      method: "DELETE", headers: { cookie: ownerCookie() },
+    });
+    const deleteVideoText = await deleteVideoResponse.text();
+    expect(deleteVideoResponse.status, `${deleteVideoText}\n${nextOutput}`).toBe(200);
+    expect(await prisma.video.findUnique({ where: { id: videoId } })).toBeNull();
+    expect(await prisma.videoOriginal.count({ where: { videoId } })).toBe(0);
+    expect(await prisma.videoAsset.count({ where: { videoId } })).toBe(0);
+    expect(await prisma.videoPlaybackRoute.count({ where: { videoId } })).toBe(0);
+    const cleanupDeadline = Date.now() + 20_000;
+    let cleanupJob = null;
+    while (Date.now() < cleanupDeadline) {
+      cleanupJob = await prisma.durableJob.findFirst({ where: { kind: "STORAGE_CLEANUP", dedupeKey: videoId } });
+      if (cleanupJob?.status === "DONE" || cleanupJob?.status === "DEAD") break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    expect(cleanupJob?.status, `${JSON.stringify(cleanupJob)}\n${nextOutput}`).toBe("DONE");
+    const cleanupManifest = cleanupJob?.payload as { snapshot?: { assetKeys?: string[]; originals?: unknown[] } } | undefined;
+    expect(cleanupManifest?.snapshot?.assetKeys).toHaveLength(2);
+    expect(cleanupManifest?.snapshot?.originals).toHaveLength(2);
+    expect([...objects.keys()].some((key) => key.startsWith(`${ORIGINAL_BUCKET}/originals/${videoId}/`))).toBe(false);
+    const remainingHlsObjects = [...objects.keys()].filter((key) => key.startsWith(`${HLS_BUCKET}/videos/${videoId}/`));
+    expect(remainingHlsObjects, `remaining HLS objects: ${remainingHlsObjects.join(", ")}\nrequests: ${objectRequests.filter((request) => request.includes(videoId)).join("\n")}`).toHaveLength(0);
   }, 150_000);
 });

@@ -23,7 +23,7 @@ type VideoAssetCleanupPayload = { videoId: string; assetId: string; objectKey: s
 
 function defaultHlsWriter(): HlsWriter | null {
   const credentials = readR2Credentials();
-  return credentials ? new HlsWriter(makeR2Client(credentials), hlsBucketName()) : null;
+  return credentials ? new HlsWriter(makeR2Client(credentials, { testEndpoint: process.env.VIDEO_WORKER_TEST_S3_ENDPOINT }), hlsBucketName()) : null;
 }
 
 /**
