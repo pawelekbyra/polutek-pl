@@ -2,7 +2,7 @@
 
 ## K14 — anulowanie PUT na granicy AWS SDK, 7 listopada 2026
 
-Dodano lokalny HTTP odbiór `HlsWriter.putFile()`: rzeczywisty AWS SDK rozpoczyna transfer do serwera loopback, po anulowaniu `AbortSignal` Promise kończy się `AbortError`. Wraz z testami zatrzymywania puli i cleanup: **29/29 PASS**; ESLint, repo typecheck i diff check PASS. Jest to dowód reakcji klienta, nie stanu obiektu po stronie R2/S3; test dostawcy i niezależny review pozostają otwarte. [Dowód i ograniczenia](program-audytu/evidence/k14-put-abort-sdk-2026-11-07.json).
+Dodano lokalny HTTP odbiór `HlsWriter.putFile()`: rzeczywisty AWS SDK rozpoczyna transfer do loopbacka, po anulowaniu `AbortSignal` kończy się `AbortError`, a odbiorca po wznowieniu odczytu obserwuje przerwane żądanie, bez kolejnego pełnego transferu. Wraz z testami zatrzymywania puli i cleanup: **29/29 PASS**; ESLint, repo typecheck i diff check PASS. To potwierdza anulowanie po stronie klienta wobec lokalnego serwera; trwałość obiektu po stronie R2/S3 nadal nie jest dowiedziona. Sandbox dostawcy i niezależny review pozostają otwarte. [Dowód i ograniczenia](program-audytu/evidence/k14-put-abort-sdk-2026-11-07.json).
 
 ## K13 — odcięcie niepełnej paginacji listy R2, 7 listopada 2026
 

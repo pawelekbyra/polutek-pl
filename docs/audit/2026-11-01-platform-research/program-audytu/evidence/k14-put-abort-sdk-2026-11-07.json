@@ -20,7 +20,8 @@
     "create a sparse 512 MiB synthetic file without populating its contents",
     "start a real AWS SDK PutObject request to a local 127.0.0.1 HTTP server",
     "pause the server after the first received data chunk and abort the caller's AbortSignal",
-    "confirm HlsWriter.putFile rejects the in-flight operation with AbortError"
+    "resume the server-side request stream after abort so the receiver can observe request termination",
+    "confirm HlsWriter.putFile rejects with AbortError and the receiver emits aborted rather than receiving a full body; fail if more than 1 MiB continues after abort"
   ],
   "isolation": {
     "storage": "local HTTP fixture only",
@@ -29,10 +30,10 @@
     "server_or_production": "not accessed"
   },
   "source_sha256": {
-    "tests/unit/video-pipeline/r2-storage-put-http.test.ts": "d5d3431104a115652af54021e937e7d174c73a1dbd8e45d3dce6ee22bdf1a8b7"
+    "tests/unit/video-pipeline/r2-storage-put-http.test.ts": "1e970ddad88336632e958b0307776e83c91cc6378f63fd33dd0dd1432b022d56"
   },
   "limitations": [
-    "the test proves the caller's AWS SDK request promise rejects after abort; it does not prove the remote service stopped writing or removed a partial object",
+    "the test proves a local HTTP receiver sees the AWS SDK request terminate on abort; it does not prove Cloudflare R2 stopped writing or removed a partial object",
     "no Cloudflare R2 or other S3-compatible sandbox was used",
     "K14 remains partial pending provider-backed acceptance and independent review"
   ]
