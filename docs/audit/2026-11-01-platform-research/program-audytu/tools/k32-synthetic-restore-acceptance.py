@@ -68,7 +68,7 @@ def main() -> None:
         ],
     })
 
-    docker("run", "--detach", "--rm", "--name", CONTAINER,
+    docker("run", "--detach", "--name", CONTAINER,
            "--publish", "127.0.0.1::5432", "--env", "POSTGRES_PASSWORD=" + DB_PASSWORD,
            "--env", "POSTGRES_DB=" + SOURCE_DB, IMAGE)
     try:
@@ -83,6 +83,10 @@ def main() -> None:
                            check=False)
             if ready.returncode == 0:
                 break
+            running = docker("inspect", CONTAINER, "--format", "{{.State.Running}}", check=False)
+            if running.returncode != 0 or running.stdout.strip() != "true":
+                logs = docker("logs", CONTAINER, check=False).stdout
+                raise RuntimeError("disposable PostgreSQL exited during startup: " + logs[-3000:])
             time.sleep(1)
         else:
             logs = docker("logs", CONTAINER, check=False).stdout
@@ -122,7 +126,7 @@ const p = new PrismaClient(); const x = process.env.K32_FIXTURE;
                                  "-c", fixture_sql).stdout.strip()
         if not source_snapshot or "null" in source_snapshot:
             raise RuntimeError("synthetic relation snapshot is incomplete")
-        record("synthetic-owner-channel-membership-video-asset", True, "actual generated Prisma client seeded the five-row relationship graph")
+        record("synthetic-owner-channel-membership-video-asset", True, "actual generated Prisma client seeded six rows across the five related models")
 
         docker("exec", CONTAINER, "pg_dump", "-U", "postgres", "-Fc", "-d", SOURCE_DB,
                "--file=/tmp/k32-source.dump")
