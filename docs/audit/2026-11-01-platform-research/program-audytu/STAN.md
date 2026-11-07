@@ -1,6 +1,6 @@
 ## Punkt wznowienia — 7 listopada 2026, K35-T2 cross-channel complete
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `e83124a6`; dokumentacja retry do osobnego commitu.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `ea204127`; dokumentacja podmiany do osobnego commitu.
 
 Lokalny acceptance obejmuje Studio multipart upload → rzeczywisty `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → poprawne playlisty/segment przez kod HLS edge Worker → Chromium odtwarza ponad 0,5 s materiału. PostgreSQL 17.11/84 migracje: integration 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Kontener disposable zatrzymany. [Dowód browser/edge](evidence/k35-browser-hls-local-2026-11-07.json).
 
@@ -8,7 +8,7 @@ Korekta: wcześniejszy fixture S3 zapisywał ramkowanie `aws-chunked` wewnątrz 
 
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
-**Następny krok:** kontynuować K35-T1 od testu wymiany/usunięcia oryginału w pełnym lokalnym Studio/API/DB/storage flow; K35-T2 nadal wymaga dalszych awarii i niezależnego review. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
+**Następny krok:** kontynuować K35-T1 od usunięcia filmu przez Studio i sprawdzenia efektów DB/storage/cleanup; K35-T2 nadal wymaga dalszych awarii i niezależnego review. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
 ## K35-T2 — odmowa cross-channel przy kończeniu uploadu, 7 listopada 2026
 
@@ -508,3 +508,7 @@ Uaktualnić STAN.md, POSTEP-NAPRAW.md, h1-status.json i odpowiednie statusy KOLE
 # K01-T3 — pełny lokalny przepływ multipart → worker → playback HTTP, 7 listopada 2026
 
 Test Next/worker korzysta teraz z pełnego Studio uploadu: start multipart, presigned UploadPart PUT i complete API weryfikujące rozmiar oraz sygnaturę MP4. Ten sam oryginał koduje osobny proces `scripts/video-worker.ts`; sesja kończy się `SUCCEEDED/DONE`, aktywną trasą HLS i odpowiedzią `READY/SELF_HLS` z `/api/media-source`. PostgreSQL 17, 84 migracje: **1/1 integration**, guard loopback **3/3 unit**, repo typecheck, ESLint i diff check PASS. Testowe R2 S3-shaped działało tylko po loopbackie; testowy znacznik nie otwiera endpointu w production. [Dowód i SHA](evidence/k01-multipart-studio-http-2026-11-07.json). Późniejszy lokalny browser flow jest potwierdzony w [K35 browser acceptance](evidence/k35-browser-hls-local-2026-11-07.json); rzeczywiste R2, wdrożony Worker i niezależny review pozostają otwarte.
+
+## K35-T1 — wymiana oryginału przez Studio i worker, 7 listopada 2026
+
+Po pełnym pierwszym uploadzie, kodowaniu i browser playback test wykonuje drugie Studio multipart upload/complete, uruchamia osobny worker i sprawdza atomową zmianę aktywnego oryginału/trasy: v1 `SUPERSEDED`, v2 `READY`, aktywny `originalId` v2, jedna aktywna trasa do HLS assetu attempt-scoped v2; Studio pipeline pokazuje wersję 2. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, repo typecheck, celowany ESLint i diff check PASS. [Dowód i SHA](evidence/k35-original-replacement-local-2026-11-07.json). To nadal loopback storage i lokalny Worker; browser odtworzył v1, nie v2. Usunięcie filmu i sprawdzenie cleanup są kolejnym krokiem.
