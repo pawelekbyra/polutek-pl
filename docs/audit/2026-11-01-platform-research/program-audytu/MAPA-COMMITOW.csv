@@ -55,3 +55,4 @@ K35-T1-original-replacement,ea204127,tests/postgres/k01-video-worker-local.pg.te
 K35-T1-studio-delete-cleanup,60cc9238,lib/modules/video-pipeline/application/output-cleanup.use-cases.ts;tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k35-studio-delete-cleanup-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K35-T1-browser-replacement-v2,194198b4,tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k35-browser-replacement-v2-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K35-T2-lost-complete-response,ed8fa0ae,tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k35-lost-complete-response-recovery-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K35-T2-storage-commit-db-rollback-retry,b5f8d969,tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k35-storage-commit-db-rollback-retry-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO

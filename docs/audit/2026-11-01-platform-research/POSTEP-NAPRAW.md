@@ -429,3 +429,7 @@ Po zastąpieniu oryginału v2 i kodowaniu przez rzeczywisty `scripts/video-worke
 ## K35-T2 — odzyskanie uploadu po utracie odpowiedzi storage, 7 listopada 2026
 
 Test ustawia fixture w stanie po ukończeniu multipart przez storage, lecz przed potwierdzeniem w DB (`UploadId` nie istnieje, poprawny obiekt jest, rekord `UPLOADING`). Właściciel ponawia `complete`; `NoSuchUpload` prowadzi do sprawdzenia istniejącego obiektu, `READY`, jednego joba i kodowania przez rzeczywisty worker do `SUCCEEDED`. PostgreSQL 17.11/84 migracje: **1/1 PASS**, repo typecheck, ESLint i diff check PASS. [Dowód](program-audytu/evidence/k35-lost-complete-response-recovery-2026-11-07.json). To model stanu fixture, a nie wymuszona utrata połączenia z R2; pełna macierz K35 i niezależny review pozostają otwarte.
+
+## K35-T2 — retry po rollbacku DB za udanym multipart storage, 7 listopada 2026
+
+Studio wykonuje pełny multipart na loopback storage. Tymczasowy one-shot trigger PostgreSQL odrzuca promocję oryginału: pierwszy endpoint `complete` zwraca 500, rollback zostawia `UPLOADING`/`uploadId`, bez joba, a obiekt istnieje. Retry obsługuje `NoSuchUpload`, sprawdza istniejące bajty, ustawia `READY`, tworzy job; rzeczywisty entrypoint worker kończy go `SUCCEEDED`. PostgreSQL 17.11/84 migracje: **1/1 PASS**, typecheck/ESLint/diff check PASS. [Dowód](program-audytu/evidence/k35-storage-commit-db-rollback-retry-2026-11-07.json). To nie jest kill procesu ani prawdziwe R2; dalsze awarie/role i niezależny review otwarte.

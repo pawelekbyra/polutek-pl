@@ -1,6 +1,6 @@
 ## Punkt wznowienia — 7 listopada 2026, K35-T2 cross-channel complete
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `ed8fa0ae`; dokumentacja utraty odpowiedzi storage do osobnego commitu.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `b5f8d969`; dokumentacja rollbacku DB po storage do osobnego commitu.
 
 Lokalny acceptance obejmuje Studio multipart upload → rzeczywisty `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → poprawne playlisty/segment przez kod HLS edge Worker → Chromium odtwarza ponad 0,5 s materiału. PostgreSQL 17.11/84 migracje: integration 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Kontener disposable zatrzymany. [Dowód browser/edge](evidence/k35-browser-hls-local-2026-11-07.json).
 
@@ -8,7 +8,7 @@ Korekta: wcześniejszy fixture S3 zapisywał ramkowanie `aws-chunked` wewnątrz 
 
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
-**Następny krok:** rozszerzyć K35-T2 o inne role/stany i awarię workera między uploadem a finalizacją; lokalny test utraty odpowiedzi po commit storage już dodano, ale nie wymusza on prawdziwego resetu połączenia R2. Kontynuować niezależnie od innych otwartych pozycji roadmapy. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
+**Następny krok:** rozszerzyć K35-T2 o inne role/stany i awarię workera między claimem a finalizacją; po commit storage wstrzyknięto już rollback DB i sprawdzono retry. To nadal nie wymusza zabicia procesu ani resetu prawdziwego połączenia R2. Kontynuować niezależnie od innych otwartych pozycji roadmapy. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
 ## K35-T2 — odmowa cross-channel przy kończeniu uploadu, 7 listopada 2026
 
@@ -524,3 +524,7 @@ Po pierwszym playbacku film zostaje podmieniony przez Studio i rzeczywisty worke
 ## K35-T2 — odzyskanie po utracie odpowiedzi CompleteMultipartUpload, 7 listopada 2026
 
 Fixture odtwarza granicę po commit storage i przed aktualizacją bazy: obiekt jest poprawny, multipart `UploadId` zniknął, DB nadal ma `UPLOADING`. Autoryzowany `complete` otrzymuje `NoSuchUpload`, weryfikuje istniejący obiekt, ustawia `READY`, tworzy jeden job, a `scripts/video-worker.ts` kończy go jako `SUCCEEDED`. Test nie zrywa prawdziwego połączenia z R2 — ręcznie przygotowuje stan po utracie odpowiedzi. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, repo typecheck, celowany ESLint i diff check PASS. [Dowód i SHA](evidence/k35-lost-complete-response-recovery-2026-11-07.json). K35-T2 nadal częściowe; prawdziwy R2, kolejne role/awarie i niezależny review otwarte.
+
+## K35-T2 — rollback promocji DB po ukończeniu multipart w storage, 7 listopada 2026
+
+Rzeczywisty Studio multipart HTTP kończy upload w loopback storage. Tymczasowy jednorazowy PostgreSQL trigger rzuca wyjątek podczas `UPLOADING → READY`; API odpowiada 500, transakcja cofa DB (oryginał nadal `UPLOADING`, `uploadId` zachowany, zero jobów), a już ukończony obiekt pozostaje w storage. Retry dostaje `NoSuchUpload`, weryfikuje obiekt, promuje oryginał i uruchamia właściwy worker do `SUCCEEDED`. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, repo typecheck, celowany ESLint i diff check PASS. [Dowód i SHA](evidence/k35-storage-commit-db-rollback-retry-2026-11-07.json). To kontrolowany rollback DB, nie kill procesu ani fault injection na prawdziwym R2; K35-T2 pozostaje częściowe.

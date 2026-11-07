@@ -1,0 +1,30 @@
+{
+  "package": "K35-T2 recover multipart upload after DB rollback following storage commit",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "b5f8d96991ee8daac400b3dbdf26412807b03e7b",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped after test",
+    "injected_failure": "A temporary one-shot PostgreSQL trigger raises inside the UPLOADING -> READY transaction after the loopback S3-compatible server has completed multipart and stored the valid object.",
+    "assertions": [
+      "first Studio complete returns HTTP 500 when promotion transaction fails",
+      "transaction rollback leaves original UPLOADING, retains uploadId, and creates no encode job",
+      "the completed original object remains present in storage",
+      "retry receives NoSuchUpload, verifies existing bytes, promotes original to READY and creates a job",
+      "the real scripts/video-worker.ts processes the recovered original to SUCCEEDED"
+    ],
+    "repo_typecheck": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "94bf9d1fa273bf30eb7ffd78e966c398daf5a5f2e46d2be6aa4016c8733e7f6c"
+  },
+  "limitations": [
+    "Failure injection targets the disposable PostgreSQL promotion transaction after the storage operation; it does not kill a process or sever a real R2 network connection.",
+    "Storage and worker use the loopback S3-shaped fixture; no Cloudflare R2 or deployed Worker was contacted.",
+    "This is one recovery boundary, not the complete K35 role/state/payment matrix or independent review."
+  ]
+}
