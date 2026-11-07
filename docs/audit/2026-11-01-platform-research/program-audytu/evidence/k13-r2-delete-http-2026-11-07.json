@@ -1,0 +1,32 @@
+{
+  "package": "K13",
+  "finding": "R04",
+  "checkedAt": "2026-11-07",
+  "baseRevision": "4d5d57012a54ee366869c7086383bdf0a7e5cb94",
+  "change": "Added local loopback HTTP coverage using the real AWS S3 SDK deserializer and HlsWriter.deletePrefix; no production code changed in this increment.",
+  "testFile": {
+    "path": "tests/unit/video-pipeline/r2-storage-delete-http.test.ts",
+    "sha256": "4ea7a0293b538529a979a503b6ceac1feb6c6c4b0ece8caed94744f5c015a5b9"
+  },
+  "protocolScenarios": [
+    "HTTP 200 DeleteObjects response confirms one key and returns SlowDown for another; the SDK parses per-key XML, retry contains only the failed key, and the paginated next-list request is processed.",
+    "HTTP 200 DeleteObjects response confirms one key and returns AccessDenied for another; HlsWriter throws R2DeleteObjectsError with failedCount=1, removedCount=1 and AccessDenied."
+  ],
+  "verification": {
+    "command": "npx vitest run tests/unit/video-pipeline/r2-storage-delete.test.ts tests/unit/video-pipeline/r2-storage-delete-http.test.ts tests/unit/video-pipeline/output-cleanup.test.ts --reporter=dot",
+    "exitCode": 0,
+    "filesPassed": 3,
+    "testsPassed": 20,
+    "eslintCommand": "npx eslint lib/modules/video-pipeline/infrastructure/r2-storage.ts tests/unit/video-pipeline/r2-storage-delete.test.ts tests/unit/video-pipeline/r2-storage-delete-http.test.ts tests/unit/video-pipeline/output-cleanup.test.ts",
+    "eslintExitCode": 0,
+    "typecheckCommand": "npx tsc --noEmit --pretty false -p tsconfig.typecheck.json",
+    "typecheckExitCode": 0,
+    "diffCheckExitCode": 0
+  },
+  "limits": [
+    "The HTTP peer is a synthetic server on 127.0.0.1 with synthetic XML; this verifies SDK protocol parsing and HlsWriter control flow, not Cloudflare R2 behavior.",
+    "No real S3/R2 credentials, buckets, external network, production storage, or deletion were used.",
+    "An owned S3-compatible sandbox and independent review remain required to close K13-T2 and R04."
+  ],
+  "status": "Local AWS SDK wire-level behavior is now covered; K13 remains partial pending provider sandbox and independent review."
+}

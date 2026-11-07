@@ -142,7 +142,7 @@ Weryfikacja lokalna: 3 celowane pliki **18/18 PASS**, ESLint, repo typecheck i p
 
 Odtworzono R04 testami RED: `DeleteObjects` HTTP 200 z `AccessDenied` był ignorowany, licznik zwracał wszystkie żądane klucze, a `SlowDown` nie było ponawiane. `HlsWriter.deletePrefix()` odczytuje teraz wyniki per klucz, liczy wyłącznie potwierdzone usunięcia, ponawia wyłącznie przejściowe błędy (maks. 3 próby), traktuje brakujący obiekt idempotentnie, a trwałe błędy raportuje przez `R2DeleteObjectsError` po przetworzeniu stron listy.
 
-Weryfikacja lokalna: 2 pliki **14/14 PASS**, ESLint i repo typecheck PASS. Dowody: [K13](program-audytu/evidence/k13-r2-delete-2026-11-06/result.json). K13 pozostaje częściowe: brak sandboxa R2/S3 oraz niezależnego drugiego przeglądu R04.
+Weryfikacja obejmuje teraz także prawdziwy AWS SDK po HTTP loopback: protokół DeleteObjects XML dla HTTP 200, retry wyłącznie `SlowDown` na niepotwierdzonym kluczu, kolejną stronę listowania oraz widoczny `AccessDenied` z prawidłowymi licznikami. Trzy suite: **20/20 PASS**, ESLint, repo typecheck i diff check PASS. Poprzednie dowody RED/GREEN pozostają w [K13](program-audytu/evidence/k13-r2-delete-2026-11-06/result.json); dodatkowy [dowód protokołu SDK](program-audytu/evidence/k13-r2-delete-http-2026-11-07.json). Serwer HTTP działał wyłącznie na `127.0.0.1` z syntetycznym XML; bez Cloudflare R2/S3. K13 pozostaje częściowe do sandboxa dostawcy oraz niezależnego drugiego przeglądu R04.
 
 ## K14 — uploady kończą się przed cleanup (częściowo)
 
