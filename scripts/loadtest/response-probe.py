@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Bounded, one-shot semantic probe for the guest load-test HTML and thumbnail routes."""
 import json
+import re
 import sys
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -9,6 +10,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 MAX_PREFIX_BYTES = 64 * 1024
 TIMEOUT_SECONDS = 5
 USER_AGENT_PREFIX = "pp-loadtest/"
+EXPECTED_HOME_TITLE = "www.pawelperfect.com"
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -41,6 +43,9 @@ def validate_response(endpoint, status, content_type, prefix):
             return "expected HTML content type"
         if b"<html" not in prefix.lower():
             return "HTML document marker missing from bounded prefix"
+        title = re.search(rb"<title\b[^>]*>(.*?)</title\s*>", prefix, flags=re.IGNORECASE | re.DOTALL)
+        if not title or EXPECTED_HOME_TITLE.encode() not in title.group(1).lower():
+            return "expected site title missing from bounded HTML prefix"
         return None
     if endpoint == "thumb":
         if not content_type.startswith("image/"):

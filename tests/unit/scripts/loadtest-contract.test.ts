@@ -40,13 +40,16 @@ describe('load-test response contract', () => {
     const server = createServer((request, response) => {
       if (request.url === '/html') {
         response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        response.end('<!doctype html><html>' + 'x'.repeat(120000));
+        response.end('<!doctype html><html><head><title>www.pawelperfect.com</title></head>' + 'x'.repeat(120000));
       } else if (request.url === '/redirect') {
         response.writeHead(302, { Location: '/html' });
         response.end();
       } else if (request.url === '/bad-html') {
         response.writeHead(200, { 'Content-Type': 'text/html' });
         response.end('<body>proxy error</body>');
+      } else if (request.url === '/wrong-html-title') {
+        response.writeHead(200, { 'Content-Type': 'text/html' });
+        response.end('<!doctype html><html><head><title>Gateway error</title></head><body>try later</body></html>');
       } else if (request.url === '/thumb') {
         response.writeHead(200, { 'Content-Type': 'image/webp' });
         response.end('RIFF\x00\x00\x00\x00WEBP' + 'x'.repeat(120000));
@@ -73,6 +76,9 @@ describe('load-test response contract', () => {
       expect(html.status, `${html.stdout}${html.stderr}`).toBe(0);
       expect(JSON.parse(html.stdout)).toMatchObject({ ok: true, bytes_inspected: 65536, max_prefix_bytes: 65536, truncated: true });
       expect((await run('home', '/bad-html')).status).toBe(1);
+      const wrongTitle = await run('home', '/wrong-html-title');
+      expect(wrongTitle.status).toBe(1);
+      expect(JSON.parse(wrongTitle.stdout)).toMatchObject({ ok: false, error: 'expected site title missing from bounded HTML prefix' });
       expect((await run('home', '/redirect')).status).toBe(1);
       const thumb = await run('thumb', '/thumb');
       expect(thumb.status).toBe(0);
