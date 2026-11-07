@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K14 — anulowanie PUT na granicy AWS SDK, 7 listopada 2026
+
+Dodano lokalny HTTP odbiór `HlsWriter.putFile()`: rzeczywisty AWS SDK rozpoczyna transfer do serwera loopback, po anulowaniu `AbortSignal` Promise kończy się `AbortError`. Wraz z testami zatrzymywania puli i cleanup: **29/29 PASS**; ESLint, repo typecheck i diff check PASS. Jest to dowód reakcji klienta, nie stanu obiektu po stronie R2/S3; test dostawcy i niezależny review pozostają otwarte. [Dowód i ograniczenia](program-audytu/evidence/k14-put-abort-sdk-2026-11-07.json).
+
 ## K13 — odcięcie niepełnej paginacji listy R2, 7 listopada 2026
 
 `HlsWriter` (także `countPrefix` i `verifyOutput`) wykrywa uciętą stronę bez nowego kursora oraz powtórzony kursor. `deletePrefix` sprawdza go przed usuwaniem z bieżącej strony, żeby błędna odpowiedź nie wyglądała na kompletne sprzątanie. Testy AWS SDK przez loopback: brak tokenu i powtórzony token; razem z wcześniejszymi suite K13 **22/22 PASS**. ESLint, pełny repo typecheck i `git diff --check` PASS. Brak prawdziwego R2/S3 i niezależnego review; pakiet pozostaje częściowy. [Dowód](program-audytu/evidence/k13-pagination-fail-closed-2026-11-07.json).

@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-07",
+  "package": "K14/R03",
+  "tested_base_revision": "e79ec25c84b94571e6fc2cd5be18251fd9aaeb43",
+  "change": "wire-level local test for AbortSignal propagation to the AWS SDK S3 PUT",
+  "runtime": {
+    "node": "v22.23.3",
+    "vitest": "4.1.10"
+  },
+  "checks": {
+    "focused_command": "npx vitest run tests/unit/video-pipeline/process-encode-job.test.ts tests/unit/video-pipeline/r2-storage-delete.test.ts tests/unit/video-pipeline/r2-storage-put-http.test.ts",
+    "files_passed": 3,
+    "tests_passed": 29,
+    "failed": 0,
+    "eslint": "PASS",
+    "repo_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "scenario": [
+    "create a sparse 512 MiB synthetic file without populating its contents",
+    "start a real AWS SDK PutObject request to a local 127.0.0.1 HTTP server",
+    "pause the server after the first received data chunk and abort the caller's AbortSignal",
+    "confirm HlsWriter.putFile rejects the in-flight operation with AbortError"
+  ],
+  "isolation": {
+    "storage": "local HTTP fixture only",
+    "credentials": "synthetic loopback-only values",
+    "external_storage": "not contacted",
+    "server_or_production": "not accessed"
+  },
+  "source_sha256": {
+    "tests/unit/video-pipeline/r2-storage-put-http.test.ts": "d5d3431104a115652af54021e937e7d174c73a1dbd8e45d3dce6ee22bdf1a8b7"
+  },
+  "limitations": [
+    "the test proves the caller's AWS SDK request promise rejects after abort; it does not prove the remote service stopped writing or removed a partial object",
+    "no Cloudflare R2 or other S3-compatible sandbox was used",
+    "K14 remains partial pending provider-backed acceptance and independent review"
+  ]
+}
