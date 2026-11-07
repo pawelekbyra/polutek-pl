@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-07",
+  "package": "K06",
+  "finding": "R09",
+  "status": "PARTIAL_LOCAL_BOUNDARY_FIXED",
+  "change": {
+    "summary": "mergedeploy.sh passes the independently approved proof SHA to release-artifact.mjs. Artifact preparation rejects a proof whose hash differs before listing or extracting source.tar.",
+    "files": [
+      "scripts/ops/mergedeploy.sh",
+      "scripts/ops/release-artifact.mjs",
+      "tests/unit/ops/release-artifact.test.ts",
+      "tests/unit/ops/mergedeploy-release.test.ts",
+      "docs/operations/RELEASE-PROOF.md"
+    ]
+  },
+  "verification": {
+    "command": "npx vitest run tests/unit/ops/release-artifact.test.ts tests/unit/ops/mergedeploy-release.test.ts tests/unit/ops/serwerek-scripts.test.ts --reporter=dot",
+    "files": 3,
+    "passed": 53,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0
+  },
+  "additionalChecks": {
+    "eslint": {
+      "files": 3,
+      "exitCode": 0
+    },
+    "bashSyntax": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "limits": [
+    "The mocked SSH and artifact fixture tests do not exercise GitHub Actions, GHCR, real Docker registry behavior, or a server.",
+    "The five production images and a full release/rollback cycle remain unverified."
+  ]
+}

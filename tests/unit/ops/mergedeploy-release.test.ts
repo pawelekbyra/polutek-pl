@@ -105,7 +105,7 @@ describe.skipIf(!enabled)('mergedeploy release transfer (local fixtures only)', 
     });
 
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(4);
-    expect(result.stderr).toContain('hash proofu nie odpowiada');
+    expect(result.stderr).toContain('proof does not match the externally approved hash');
     expect(existsSync(f.sshLog)).toBe(false);
     expect(existsSync(f.tarFile)).toBe(false);
   });

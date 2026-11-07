@@ -5,7 +5,7 @@ import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readF
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { hashJson, readJson, safeSourcePath, validateSnapshot, verifySourceArchive } from './release/source.mjs';
+import { HASH, hashJson, readJson, safeSourcePath, validateSnapshot, verifySourceArchive } from './release/source.mjs';
 
 const fail = message => { throw new Error(message); };
 const regularFile = file => {
@@ -13,9 +13,11 @@ const regularFile = file => {
   if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 4 * 1024 * 1024 * 1024) fail('Release artifact contains an invalid file');
 };
 
-export function prepareReleaseArtifact({ artifact, revision, output }) {
+export function prepareReleaseArtifact({ artifact, revision, approvedProofSha256, output }) {
   if (!/^v22\./.test(process.version) || process.platform === 'win32') fail('Artifact preparation requires Node 22 on POSIX');
-  if (!/^[a-f0-9]{40}$/.test(revision ?? '') || !artifact || !output) fail('Full revision, artifact directory and output directory are required');
+  if (!/^[a-f0-9]{40}$/.test(revision ?? '') || !HASH.test(approvedProofSha256 ?? '') || !artifact || !output) {
+    fail('Full revision, externally approved proof hash, artifact directory and output directory are required');
+  }
   const inputDir = path.resolve(artifact);
   const out = path.resolve(output);
   const sourceTar = path.join(inputDir, 'source.tar');
@@ -26,9 +28,13 @@ export function prepareReleaseArtifact({ artifact, revision, output }) {
   for (const file of [sourceTar, qualityFile, inputsFile, proofFile, resultFile]) regularFile(file);
   if (existsSync(out)) fail('Release output directory already exists');
 
+  const proof = readJson(proofFile);
+  // Check independent approval before listing or extracting the archive. An unapproved artifact
+  // must not be allowed to make the local deploy host process untrusted tar entries.
+  if (hashJson(proof) !== approvedProofSha256) fail('Artifact proof does not match the externally approved hash');
+
   const quality = readJson(qualityFile);
   const inputs = readJson(inputsFile);
-  const proof = readJson(proofFile);
   const result = readJson(resultFile);
   if (proof.revision !== revision || result.revision !== revision || result.published !== true) fail('Artifact revision/status mismatch');
   if (hashJson(proof) !== result.proof_sha256) fail('Artifact proof hash does not match the published result');
@@ -83,10 +89,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     const options = Object.create(null);
     for (const flag of process.argv.slice(2)) {
       const match = /^--([a-z][a-z0-9-]*)=(.+)$/s.exec(flag);
-      if (!match || !['artifact', 'revision', 'out'].includes(match[1]) || Object.hasOwn(options, match[1])) fail('Invalid release artifact option');
+      if (!match || !['artifact', 'revision', 'approved-proof-sha256', 'out'].includes(match[1]) || Object.hasOwn(options, match[1])) fail('Invalid release artifact option');
       options[match[1]] = match[2];
     }
-    const result = prepareReleaseArtifact({ artifact: options.artifact, revision: options.revision, output: options.out });
+    const result = prepareReleaseArtifact({ artifact: options.artifact, revision: options.revision,
+      approvedProofSha256: options['approved-proof-sha256'], output: options.out });
     process.stdout.write(JSON.stringify(result) + '\n');
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : 'Release artifact preparation failed'}\n`);

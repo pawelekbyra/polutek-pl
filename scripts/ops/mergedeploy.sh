@@ -117,7 +117,8 @@ else
   mkdir -p "$artifact"
   gh run download "$run_id" --name "polutek-release-$revision" --dir "$artifact" || { echo "brak artifactu wydania" >&2; exit 4; }
 fi
-prepared=$(node scripts/ops/release-artifact.mjs --artifact="$artifact" --revision="$revision" --out="$bundle") \
+prepared=$(node scripts/ops/release-artifact.mjs --artifact="$artifact" --revision="$revision" \
+  --approved-proof-sha256="$approved_hash" --out="$bundle") \
   || { echo "artifact wydania nie przechodzi walidacji" >&2; exit 4; }
 prepared_hash=$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).proof_sha256)' "$prepared")
 [ "$prepared_hash" = "$approved_hash" ] || { echo "hash proofu nie odpowiada zewnetrznie zatwierdzonemu wynikowi" >&2; exit 4; }

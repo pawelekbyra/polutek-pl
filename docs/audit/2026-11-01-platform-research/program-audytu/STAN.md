@@ -1,10 +1,13 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K06 — approval proof przed ekstrakcją artefaktu, 7 listopada 2026
+
+Transfer lokalny i Actions podają teraz niezależny `RELEASE_PROOF_SHA256` do `release-artifact.mjs`. Hash proofu jest sprawdzany przed `tar -tf` i rozpakowaniem; test z niepoprawnym tar potwierdza wcześniejszą odmowę. **53/53** testów trzech suite, ESLint, `bash -n` i diff check PASS. Dowód ogranicza się do lokalnych fixture i atrapowego SSH; bez GHCR, Actions i serwera. K06 pozostaje częściowe do odbioru obrazów, całego procesu release i rollbacku. [Dowód](evidence/k06-proof-before-extraction-2026-11-07.json).
+
+
 ## K03 — pełny baseline po naprawie 19 awarii, 7 listopada 2026
 
 `npm run quality` po poprawkach zakończyło się **exit 0**: architektura i repo TypeScript PASS; Vitest **581 plików PASS, 1 pominięty, 5147 testów PASS, 2 pominięte**. Przed zmianą pełna suite wykazała 19 błędów w 8 plikach; wszystkie te pliki przeszły wspólnym retestem **64/64**. Test procesu CLI pokrywa K03-T1/T2 na syntetycznych zapytaniach; K03-T3 ma pełny baseline. Dwa skipy są jawnie policzone, nie zaliczone. Nie wykonywano live weekly restore — to osobne ćwiczenie operacyjne. [Wynik pełnego przebiegu i zakres](evidence/k03-full-suite-triage-2026-11-07.json).
-
-## K03 — repo-wide TypeScript i produkcyjny build, 7 listopada 2026
 
 ## K03 — repo-wide TypeScript i produkcyjny build, 7 listopada 2026
 
@@ -12,7 +15,7 @@ Osiem testów z błędami typów otrzymało jawne typy dla mocków/nullable wyni
 
 ## K03 — świeży krytyczny baseline po K01, 7 listopada 2026
 
-`npm run test:critical-path -- --report-json=docs/audit/2026-11-01-platform-research/program-audytu/evidence/k03-critical-path-post-k01-2026-11-07.json` zakończył się exit 0 na czystym SHA `669813390c4cfeb86c3ef353531e4ce27d87f208`: oba wymagane pliki, **37/37 PASS**, zero pominiętych. Runner zapisał revision/fingerprint i liczniki. To krytyczny podzbiór, nie pełny baseline repo; pełne K03 i odbiór restore/email pozostają otwarte. [Dowód](evidence/k03-critical-path-post-k01-2026-11-07.json).
+`npm run test:critical-path -- --report-json=docs/audit/2026-11-01-platform-research/program-audytu/evidence/k03-critical-path-post-k01-2026-11-07.json` zakończył się exit 0 na czystym SHA `669813390c4cfeb86c3ef353531e4ce27d87f208`: oba wymagane pliki, **37/37 PASS**, zero pominiętych. Runner zapisał revision/fingerprint i liczniki. To historyczny krytyczny podzbiór; pełny baseline opisuje aktualizacja K03 powyżej. Nie jest to dowód live weekly restore ani dostarczenia e-maila. [Dowód](evidence/k03-critical-path-post-k01-2026-11-07.json).
 
 ## K10 — rzeczywista macierz HTTP i role, 7 listopada 2026
 
@@ -46,7 +49,7 @@ rg -n 'release-proof|verify|deploy|rollback' scripts/ops .github/workflows
 
 ## K20 — combined PostgreSQL acceptance, 7 listopada 2026
 
-Na checkout SHA `7e277574` oba testy K20 uruchomiono wspólnie na nowej PostgreSQL 17.11 po 84 migracjach: **8/8 PASS**, obejmując siedem przypadków finalizera i zmianę kanału ACTIVE→SUSPENDED na granicy transakcji. ESLint i `npm run typecheck` PASS. Container był odizolowany, dane w tmpfs, automatycznie usunięty. Nie ma odbioru osobnego procesu workera, R2/HLS ani niezależnego review; K20 nadal częściowe. Następny krok: niezależnie zreviewować ownership/status fencing i zaplanować sandboxowy worker/R2 odbiór. [Dowód](evidence/k20-postgres-acceptance-2026-11-07.json).
+Na checkout SHA `7e277574` oba testy K20 uruchomiono wspólnie na nowej PostgreSQL 17.11 po 84 migracjach: **53/53 PASS**, obejmując siedem przypadków finalizera i zmianę kanału ACTIVE→SUSPENDED na granicy transakcji. ESLint i `npm run typecheck` PASS. Container był odizolowany, dane w tmpfs, automatycznie usunięty. Nie ma odbioru osobnego procesu workera, R2/HLS ani niezależnego review; K20 nadal częściowe. Następny krok: niezależnie zreviewować ownership/status fencing i zaplanować sandboxowy worker/R2 odbiór. [Dowód](evidence/k20-postgres-acceptance-2026-11-07.json).
 
 ## K38 — wersjonowany profil load testu, 7 listopada 2026
 
