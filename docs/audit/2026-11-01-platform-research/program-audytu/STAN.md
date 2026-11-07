@@ -8,6 +8,10 @@ Na rewizji `cd5f4f4e57fe49d71a255a22c6acd88259764a60` dwa celowane zestawy przes
 
 W czystym katalogu `node_modules` dedykowanego worktree `npm_config_audit=false npm ci` zakończyło się exit 0 w 59 s: dodano 893 pakiety, postinstall wygenerował Prisma Client 6.19.3; `npm ls` potwierdził zgodne wersje Next, Prisma CLI i klienta. Hash lockfile i schematu, wersje runtime oraz ostrzeżenia zapisano w [dowodzie](evidence/k01-clean-install-2026-11-07.json). To nie był świeży klon, migracje ani test HTTP/workera; K01 pozostaje częściowy.
 
+## K01 — świeży checkout, migracje i klient Prisma, 7 listopada 2026
+
+Tymczasowy detached checkout `7e81993c` przeszedł `npm_config_audit=false npm ci` (893 pakiety; Prisma 6.19.3), `prisma migrate deploy` na disposable PostgreSQL 17.11 (**84/84 migracji**) oraz prawdziwy test Prisma **1/1 PASS**. Repo typecheck PASS, po teście brak fixture rows; kontener tmpfs i checkout usunięte. Pierwsze podejście do migracji bez `DATABASE_URL_UNPOOLED` odmówiło jeszcze przed połączeniem (P1012); powtórzenie z obiema zmiennymi wskazującymi wyłącznie disposable DB przeszło. [Dowód](evidence/k01-fresh-checkout-postgres-2026-11-07.json). K01-T1/T2 mają lokalne dowody; T3 (API/worker/krótki film) nadal otwarte.
+
 ## K06 — approval proof przed ekstrakcją artefaktu, 7 listopada 2026
 
 Transfer lokalny i Actions podają teraz niezależny `RELEASE_PROOF_SHA256` do `release-artifact.mjs`. Hash proofu jest sprawdzany przed `tar -tf` i rozpakowaniem; test z niepoprawnym tar potwierdza wcześniejszą odmowę. **53/53** testów trzech suite, ESLint, `bash -n` i diff check PASS. Dowód ogranicza się do lokalnych fixture i atrapowego SSH; bez GHCR, Actions i serwera. K06 pozostaje częściowe do odbioru obrazów, całego procesu release i rollbacku. [Dowód](evidence/k06-proof-before-extraction-2026-11-07.json).

@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K01 — świeży checkout, migracje i Prisma, 7 listopada 2026
+
+Detached checkout rewizji `7e81993c` zainstalował 893 pakiety poleceniem `npm_config_audit=false npm ci`, wygenerował Prisma Client 6.19.3, a następnie zastosował **84/84** migracje do disposable PostgreSQL 17.11. Test `k01-real-prisma-client.pg.test.ts` przeszedł **1/1**: zapis/odczyt, rollback, P2002 i P2003; repo typecheck PASS. Po sprzątaniu nie pozostały rekordy testowe, kontener tmpfs ani worktree. P1012 przy pierwszym uruchomieniu wynikał z braku wymaganej zmiennej `DATABASE_URL_UNPOOLED`; ponowiono z oboma URL wskazującymi tylko testową bazę. [Wersje, hashe, komendy, wyniki i granice](program-audytu/evidence/k01-fresh-checkout-postgres-2026-11-07.json). K01-T1/T2 mają lokalny dowód; API/workera/filmu (T3) nie testowano.
+
 ## K01 — czysta instalacja lockfile w worktree, 7 listopada 2026
 
 Po czystym usunięciu `node_modules` przez `npm ci`, polecenie `npm_config_audit=false npm ci` zakończyło się exit 0 po 59 s: 893 pakiety, postinstall `prisma generate`, Prisma CLI/Client 6.19.3. `npm ls` potwierdził Next i eslint-config-next 16.4.5 oraz Prisma 6.19.3. Hash lockfile/schema i ostrzeżenia zapisano w [dowodzie](program-audytu/evidence/k01-clean-install-2026-11-07.json). To odtwarzalna instalacja na istniejącym worktree, nie nowy checkout; audyt npm był wyłączony zgodnie z zapisaną instrukcją. Nie wykonywano tu migracji, testu API/workera ani wideo. K01 pozostaje częściowy.
