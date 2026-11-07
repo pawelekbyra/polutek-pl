@@ -553,6 +553,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Aktualizacja lokalna 6 listopada:** `publishAdminVideo` serializuje publikację z moderacją przez `Creator FOR UPDATE` i odczytuje widoczność ponownie w transakcji. Nowy test na disposable PostgreSQL 17 po 84 migracjach zmienia status kanału z `ACTIVE` na `SUSPENDED` między preflight a publikacją; wynik 1/1 PASS, film pozostaje DRAFT. Fixture usunięte i kontener testowy usunięty. Jest to dowód świeżego odczytu na PostgreSQL, nie test dwóch niezależnych procesów. Szczegóły w [dowodach K20](program-audytu/evidence/k20-channel-auto-publish-2026-11-06/result.json); brak niezależnego przeglądu i worker acceptance, więc K20 nadal częściowe.
 
+**Odbiór na aktualnym schemacie, 7 listopada:** istniejący zestaw realnej bazy uruchomiono razem na disposable PostgreSQL 17.11 po wszystkich 84 migracjach: testy finalizera **7/7** i status race **1/1**, łącznie **8/8 PASS**, repo typecheck i ESLint PASS. To wzmacnia K20-T1/T2 na DB dla właściwych odmów i publikacji, lecz nie wykonuje osobnego procesu workera ani prawdziwego zapisu/odtwarzania HLS z R2; niezależny review nadal wymagany. [Dowód](program-audytu/evidence/k20-postgres-acceptance-2026-11-07.json).
+
 <a id="k21"></a>
 
 #### K21. Wąski wspólny kontrakt upload/job/playback

@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K20 — combined PostgreSQL acceptance, 7 listopada 2026
+
+Na checkout SHA `7e277574` oba testy K20 uruchomiono wspólnie na nowej PostgreSQL 17.11 po 84 migracjach: **8/8 PASS**, obejmując siedem przypadków finalizera i zmianę kanału ACTIVE→SUSPENDED na granicy transakcji. ESLint i `npm run typecheck` PASS. Container był odizolowany, dane w tmpfs, automatycznie usunięty. Nie ma odbioru osobnego procesu workera, R2/HLS ani niezależnego review; K20 nadal częściowe. Następny krok: niezależnie zreviewować ownership/status fencing i zaplanować sandboxowy worker/R2 odbiór. [Dowód](evidence/k20-postgres-acceptance-2026-11-07.json).
+
 ## K38 — wersjonowany profil load testu, 7 listopada 2026
 
 `run-steps.sh` i `count-queries.sh` zapisują osobny JSON profilu ze schematem/profile ID, targetem, rate schedule, czasem kroku/przerwy, endpoint mixem, referencją k6 oraz SHA-256 generatora i skryptów cleanup; TSV oraz `queries.tsv` linkują wynik hashem profilu; licznik zapisuje exact N jako fixed count, nie rate; próba nadpisania labela inną konfiguracją jest odrzucana. Podróż = 5 żądań na iterację i nowych gości/s; pojedynczy target = żądania/s. Profil mówi jawnie, że nie mierzy równoczesnych widzów i nie potwierdza cache state. Test kontraktu 35/35 PASS, Python compile, bash syntax, ESLint i diff check PASS. Runner serwerowy i obciążenie nie były uruchamiane. Aktualny read-only workload jest wersjonowany; playback/heartbeat i kontrolowane cold/warm nadal otwarte. [Dowód](evidence/k38-load-profile-metadata-2026-11-07.json).
