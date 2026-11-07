@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K03 — świeży krytyczny baseline po K01, 7 listopada 2026
+
+`npm run test:critical-path -- --report-json=docs/audit/2026-11-01-platform-research/program-audytu/evidence/k03-critical-path-post-k01-2026-11-07.json` zakończył się exit 0 na czystym SHA `669813390c4cfeb86c3ef353531e4ce27d87f208`: oba wymagane pliki, **37/37 PASS**, zero pominiętych. Runner zapisał revision/fingerprint i liczniki. To krytyczny podzbiór, nie pełny baseline repo; pełne K03 i odbiór restore/email pozostają otwarte. [Dowód](evidence/k03-critical-path-post-k01-2026-11-07.json).
+
 ## K10 — rzeczywista macierz HTTP i role, 7 listopada 2026
 
 `tests/postgres/k10-hidden-premiere-http.pg.test.ts` przeszedł **2/2** na świeżym PostgreSQL 17.11 po 84 migracjach i lokalnym Next dev serverze. Prawdziwe podpisane sesje Better Auth potwierdziły odmowę metadanych dla gościa i obcego konta dla REMOVED, działający podpisany token SELF_HLS dla draftu właściciela oraz legalną premierę z gotowym syntetycznym assetem bez tokena/sesji przed czasem dla gościa i obcego konta. Kontener z tmpfs usunięto; źródło i pełne kryteria są w [dowodzie](evidence/k10-http-role-matrix-2026-11-07.json). ESLint i diff check PASS. Globalny `npx tsc --noEmit` zakończył się błędami w innych, istniejących testach; nowy plik nie zgłosił błędu.
