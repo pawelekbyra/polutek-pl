@@ -927,6 +927,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Postęp lokalny, 7 listopada 2026 (K35-T1 częściowo):** po pełnym Studio multipart uploadzie i kodowaniu syntetycznego filmu test wywołuje rzeczywisty `workers/hls-edge/worker.mjs` z podpisanym URL-em oraz bindingiem nad lokalnymi bajtami encoder output. Master i wariant manifestu odpowiadają 200, a wskazany segment fMP4 jest niepusty. Disposable PostgreSQL 17/84 migracje: integration **1/1 PASS**, edge unit **20/20 PASS**, typecheck, ESLint i diff check PASS. [Dowód](program-audytu/evidence/k35-edge-hls-local-2026-11-07.json). Brak browser/decode evidence, prawdziwego Cloudflare R2/deployed Worker, replace/delete, odmowy drugiego konta/kanału i profilu płatnego; K35 pozostaje otwarte.
 
+**Uzupełnienie K35-T2, 7 listopada 2026:** do lokalnej macierzy dodano dwie prawdziwe sesje i dwa kanały. Obie osoby otrzymują 404 dla cudzych odczytów i startu uploadu; druga osoba nie może presignować części cudzego in-progress uploadu. Asercje potwierdzają brak oryginału i wywołań storage po odmowach oraz zachowanie `UPLOADING` po obcej próbie presign. Pozytywna kontrola właściciela przechodzi dalej przez upload, worker i edge playback. Integration PostgreSQL 17/84 migracje **1/1 PASS**, typecheck/ESLint/diff check PASS. [Dowód](program-audytu/evidence/k35-cross-channel-upload-2026-11-07.json). To częściowa macierz API, nie pełny browser/role/replace/delete/crash/retry ani Cloudflare; K35-T2 pozostaje otwarte.
+
 ### E6 — Dostępność, duże dane i udowodniona pojemność
 
 <a id="k36"></a>

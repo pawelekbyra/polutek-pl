@@ -560,3 +560,7 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Test integracyjny przekazuje podpisany playback URL do rzeczywistego `workers/hls-edge/worker.mjs`; binding czyta dokładnie bajty HLS zapisane przez worker encoder.
 - Master/variant manifesty: 200 + `#EXTM3U`; segment z wariantu: 200 + niepuste bajty. PostgreSQL/Next/worker integration **1/1**, edge unit **20/20**, typecheck/ESLint/diff check PASS.
 - Tylko local R2 adapter: brak Cloudflare, prawdziwego R2, browser playback/decode i pozostałej macierzy K35. [Dowód](evidence/k35-edge-hls-local-2026-11-07.json).
+## 2026-11-07 — K35-T2 izolacja kanałów
+
+- Acceptance używa dwóch użytkowników/kanałów i sesji HTTP. Cudze pipeline/read i upload start/presign zwracają 404; po odmowie nie ma oryginału ani requestów do storage, legalny upload właściciela działa.
+- PostgreSQL 17/84 migracje: integration **1/1 PASS**, repo typecheck, ESLint i diff check PASS. Zakres częściowy: brak pełnej macierzy ról, replace/delete, crash/retry i usług live. [Dowód](evidence/k35-cross-channel-upload-2026-11-07.json).

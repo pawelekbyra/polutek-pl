@@ -1,0 +1,30 @@
+{
+  "package": "K35-T2 cross-channel owner and mutation boundary in Studio upload",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "932fbab8766dc9c7450ce3ff9be03375c1b9cd13",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17 after all 84 Prisma migrations; tmpfs container removed",
+    "actors": "two distinct Better Auth sessions, two user records, two creator channels and two videos",
+    "denials": [
+      "owner A cannot read or open an upload for channel B's video (404)",
+      "owner B cannot read or open an upload for channel A's video (404)",
+      "owner B cannot presign parts for owner A's in-progress upload (404)"
+    ],
+    "side_effect_checks": "before the authorized upload, rejected requests leave zero VideoOriginal rows and zero object-store requests; rejected part presign leaves the rightful original UPLOADING",
+    "positive_control": "owner A completes Studio multipart upload, worker encode and playback API/edge fetch on the same video",
+    "repo_typecheck": "PASS",
+    "eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "5155c4251804017fdb796a000ad049135bab14543ec7462aaa4206cf7337aa18"
+  },
+  "limitations": [
+    "This covers Studio API boundaries, not all public/private reads or every role and state transition.",
+    "Replace/delete, crash/retry adversarial cases, browser playback, Cloudflare R2 and a deployed edge Worker remain unverified.",
+    "K35-T2 remains partial; K35-T1/T3 and independent review are open."
+  ]
+}
