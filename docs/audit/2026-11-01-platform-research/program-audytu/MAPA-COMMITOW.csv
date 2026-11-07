@@ -43,3 +43,4 @@ K19-activation-cleanup-reservation,b8921135,prisma/migrations/20261106160000_vid
 K20-channel-auto-publish,7c3ef86c,lib/modules/video-pipeline/application/finalize-self-hls.ts;lib/modules/video/application/publish-after-asset-ready.use-case.ts;tests/postgres/k20-auto-publish-channel.pg.test.ts;program-audytu/evidence/k20-channel-auto-publish-2026-11-06/,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K01-T3-local-worker,cb73238c,program-audytu/evidence/k01-local-worker-ffmpeg-loopback-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K01-T3-worker-entrypoint,67d40a20,program-audytu/evidence/k01-worker-entrypoint-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K01-T3-attempt-playback-http,47de194c,program-audytu/evidence/k01-attempt-playback-http-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
