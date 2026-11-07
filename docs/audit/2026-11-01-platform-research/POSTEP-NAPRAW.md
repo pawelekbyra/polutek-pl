@@ -14,7 +14,7 @@ Naprawiono rozjazd: `deploy-release.mjs --scope=app` odpytuje/pobiera cztery obr
 
 ## K32 — inwentarz odtwarzania, 7 listopada 2026
 
-Spisano z dokumentacji repo zakres kopii DB, konfiguracji/sekretów, Support, kodu/obrazów, mediów, Cloudflare, płatności i Redis oraz granice `restore-test.sh`. Brak testu offsite-only, zmierzonego pełnego RTO, potwierdzonej niezależnej kopii klucza age i kopii oryginałów/HLS/miniatur. To przegląd dokumentów; nie łączono się z serwerem ani usługami. K32 pozostaje częściowe: potrzebne są decyzje właściciela o RPO/RTO i kopii mediów oraz syntetyczny, odizolowany restore acceptance. [Inwentarz](program-audytu/K32-RECOVERY-INVENTORY.md).
+Spisano z dokumentacji repo zakres kopii DB, konfiguracji/sekretów, Support, kodu/obrazów, mediów, Cloudflare, płatności i Redis oraz granice `restore-test.sh`. Przygotowano narzędzie do syntetycznego restore acceptance, ale dwa uruchomienia zatrzymały się przed startem PostgreSQL: `/dev/sda1` jest pełny (75G/75G, 0 wolnego). Kontenery próbne usunięto; nie uruchomiono migracji ani testów odbioru. K32 jest nadal częściowe, a narzędzie pozostaje WIP do uruchomienia i poprawienia po odblokowaniu miejsca. Potrzebne są też decyzje właściciela o RPO/RTO i kopii mediów oraz dowody offsite/klucza. [Inwentarz](program-audytu/K32-RECOVERY-INVENTORY.md), [wynik próby](program-audytu/evidence/k32-synthetic-restore-2026-11-07.json).
 
 ## K12/R32 — kolejność refundu i przegranego sporu, 7 listopada 2026
 

@@ -1,0 +1,30 @@
+{
+  "recorded_at_utc": "2026-11-07",
+  "code_sha": "fa89499a",
+  "status": "blocked_before_acceptance",
+  "scope": "Attempted only a newly created disposable PostgreSQL container; no existing database, application, server, production service or external storage was contacted.",
+  "attempts": [
+    {
+      "action": "Run the acceptance tool with postgres:17, bound to 127.0.0.1 on a dynamically assigned port.",
+      "result": "Container exited during initdb before readiness; no migration or fixture operation ran."
+    },
+    {
+      "action": "Diagnose with a separately named disposable postgres:17 container and inspect its startup log.",
+      "result": "initdb could not create pg_wal because the root filesystem had no space left; the diagnostic container was removed immediately."
+    }
+  ],
+  "host_disk_observation": {
+    "filesystem": "/dev/sda1",
+    "size": "75G",
+    "used": "73G",
+    "available": "0",
+    "utilization": "100%"
+  },
+  "cleanup": "Both disposable containers were removed. No app data or pre-existing container was changed. The acceptance tool itself is committed separately as WIP and has not passed end-to-end validation.",
+  "next_step": "After an operator frees host disk space, rerun the tool using the command in program-audytu/STAN.md; inspect the resulting evidence before treating any K32 acceptance case as passed.",
+  "limitations": [
+    "No Prisma migration, synthetic fixture, pg_dump/pg_restore, relationship comparison or constraint assertion ran.",
+    "This does not prove any backup or recovery capability and does not close K32.",
+    "The acceptance tool has only passed Python syntax parsing; runtime validation remains pending."
+  ]
+}
