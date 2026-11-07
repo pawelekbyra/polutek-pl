@@ -123,6 +123,8 @@ Osiem testów z błędami typów otrzymało jawne typy dla mocków/nullable wyni
 
 Nowy `response-probe.py` sprawdza odpowiedź home i miniatury przez numeryczny loopback: HTTP 200, MIME i ograniczony prefiks (maks. 65536 bajtów plus jeden sentinel) z markerem HTML albo sygnaturą obrazu. `run-steps.sh` i `count-queries.sh` uruchamiają probe przed pomiarem tylko dla endpointów obecnych w profilu i zapisują JSONL; pomiar k6 nadal odrzuca duże body. Profil zapisuje BASE/Host/locale, skrót ID filmu, zastosowanie probe i SHA helpera. Fixed-count ma teraz tę samą tożsamość użytkownika-gościa i blokadę co runner serii, więc sesje z obu trybów można potem objąć kontrolowanym cleanupem. Test syntetyczny **36/36 PASS**, ESLint i składnia PASS. Nie uruchomiono k6, aplikacji, bazy, serwera ani cleanup. K38 jest częściowe; nadal potrzebny pełny non-production acceptance i pozostałe scenariusze obciążenia. [Dowód](evidence/k38-bounded-body-probe-2026-11-07.json).
 
+**Uzupełnienie:** test wykazał i zamknął w probe przypadek 200 HTML z tytułem `Gateway error`: home musi mieć `<html>` oraz tytuł `www.pawelperfect.com` w prefiksie do 64 KiB. Loopback kontrakt **36/36 PASS**, ESLint, Python compile i diff check PASS. To weryfikuje tylko preflight odpowiedź przed testem, nie odpowiedzi HTML w każdym k6 żądaniu. [Dowód](evidence/k38-home-title-contract-2026-11-07.json).
+
 **Następny krok K38:** odbiór w non-production po stronie operatora, następnie pełny mix/playback/heartbeat i kontrolowany cleanup; nie uruchamiać na produkcji.
 
 ## K05 — profil produktu, 7 listopada 2026
