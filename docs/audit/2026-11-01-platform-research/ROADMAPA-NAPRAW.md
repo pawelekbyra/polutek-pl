@@ -865,6 +865,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Weryfikacja lokalna 7 listopada 2026:** komponentowy eksperyment Chromium 149 przeszedł 16 obserwacji. Pełny lokalny Studio DELETE na disposable PostgreSQL 17 po 84 migracjach przeszedł 1/1: kontrolowany błąd/retry, rzeczywisty DELETE, soft delete, jeden wpis audytu, containment klawiatury i Escape przed/w trakcie busy, fokus na opener lub głównym nagłówku po jego usunięciu. [Dowód](program-audytu/evidence/k34-studio-delete-2026-11-07/result.json). **Pozostaje przed zamknięciem:** sprawdzić pozostałe dialogi, inne docelowe przeglądarki, screen reader oraz niezależny review.
 
+**Uzupełnienie 7 listopada 2026:** pełny Studio DELETE przeszedł także w Firefox 151 (1/1; [dowód](program-audytu/evidence/k34-studio-delete-firefox-2026-11-07/result.json)). Izolowany eksperyment komponentów przeszedł 16 obserwacji w Firefox, obejmując `ConfirmDialog`, `ReportDialog` i `DeleteCommentDialog` ([dowód](program-audytu/evidence/ux-browser-experiment-firefox-2026-11-07.json)). To nie testuje `VideoChaptersEditor` z dialogiem zamiany rozdziałów ani czytnika ekranu. Nadal wymagane: ten dialog, screen reader i niezależny review.
+
 **Testy odbioru:**
 
 - **K34-T1** — Przed busy i podczas dowolnie długiego busy Tab/Shift+Tab pozostają w dialogu, Enter nie uruchamia tła. Screen reader otrzymuje nazwę i stan oczekiwania.
