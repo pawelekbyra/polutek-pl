@@ -484,6 +484,19 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     });
     const completeText = await completeResponse.text();
     expect(completeResponse.status, `${completeText}\n${nextOutput}`).toBe(200);
+    const firstCompletion = JSON.parse(completeText) as { originalId: string; job: { id: string } };
+    const storageRequestsAfterCompletion = objectRequests.length;
+    const retryCompleteResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/complete`, {
+      method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId, parts: completedParts, publishAfterReady: true }),
+    });
+    const retryCompleteText = await retryCompleteResponse.text();
+    expect(retryCompleteResponse.status, `${retryCompleteText}\n${nextOutput}`).toBe(200);
+    const retriedCompletion = JSON.parse(retryCompleteText) as { originalId: string; job: { id: string } };
+    expect(retriedCompletion).toMatchObject({ originalId, job: { id: firstCompletion.job.id } });
+    expect(objectRequests).toHaveLength(storageRequestsAfterCompletion);
+    expect(await prisma.videoEncodeJob.count({ where: { videoId, originalId } })).toBe(1);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: originalId }, select: { status: true } })).toMatchObject({ status: "READY" });
     expect(objectRequests.some((entry) => entry.startsWith("POST ") && entry.includes("uploads"))).toBe(true);
     expect(objectRequests.some((entry) => entry.startsWith("PUT ") && entry.includes("partNumber"))).toBe(true);
     expect(objectRequests.some((entry) => entry.startsWith("POST ") && entry.includes("uploadId"))).toBe(true);
