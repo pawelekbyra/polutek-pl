@@ -220,6 +220,35 @@ describe('refunds keep the per-user total and the status consistent', () => {
       { currency: 'USD', amountMinor: 700 },
     ]);
   });
+
+  it('keeps partial-refund aggregates stable through an open and won dispute, without mixing currencies', async () => {
+    await resetUser();
+    const disputed = await newPayment();
+    await fulfillPayment(fulfillInput(disputed), ctx());
+    const sameCurrency = await newPayment();
+    await fulfillPayment(fulfillInput(sameCurrency), ctx());
+    const otherCurrency = await newPayment({ amountMinor: 700, currency: 'USD' });
+    await fulfillPayment(fulfillInput(otherCurrency, { amountMinor: 700, currency: 'usd' }), ctx());
+    expect(await prisma.userPaymentTotal.findMany({ where: { userId }, orderBy: { currency: 'asc' } })).toMatchObject([
+      { currency: 'PLN', amountMinor: 2000 },
+      { currency: 'USD', amountMinor: 700 },
+    ]);
+
+    await handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_open_win`, status: 'needs_response' }, ctx());
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).status).toBe('DISPUTED');
+    await handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 400 }, ctx());
+    await handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_open_win`, status: 'won' }, ctx());
+    await Promise.all([
+      handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 400 }, ctx()),
+      handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_open_win`, status: 'won' }, ctx()),
+    ]);
+
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).status).toBe('PARTIALLY_REFUNDED');
+    expect(await prisma.userPaymentTotal.findMany({ where: { userId }, orderBy: { currency: 'asc' } })).toMatchObject([
+      { currency: 'PLN', amountMinor: 1600 },
+      { currency: 'USD', amountMinor: 700 },
+    ]);
+  });
 });
 
 describe('admin refund against the real ledger (Stripe replaced)', () => {

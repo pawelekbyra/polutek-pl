@@ -7,7 +7,7 @@
   "sourceFiles": {
     "lib/modules/payments/application/handle-refund.use-case.ts": "fc1a4402f5b094d1d13b9b741afa37525afd879b878c7d4a7c3d04557be8c342",
     "lib/modules/payments/application/handle-dispute.use-case.ts": "95b99a0c2a3ccb7a948890ddea9411d398e111e518e055a8340ecc8a18475293",
-    "tests/postgres/payments.pg.test.ts": "87317593b3ed7be963b84803ebb3a7c1756bdc5dfb02bff6bf9948faf30f3837"
+    "tests/postgres/payments.pg.test.ts": "5862eccf6fe2d6a34daae23d76710536d71ce01f267a22b1f3452b00cfdc4507"
   },
   "reproductionBeforeFix": {
     "command": "DATABASE_URL=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/payments.pg.test.ts -t 'keeps the total independent' --reporter=dot",
@@ -54,13 +54,29 @@
       "containerRemoved": true
     }
   },
+  "additionalRegressionRun": {
+    "scenario": "open dispute -> partial refund -> dispute won -> duplicate/concurrent replays",
+    "alsoChecks": "PLN total is 1600 after a 400 partial refund; independent USD total remains 700",
+    "database": "disposable PostgreSQL 17.11 with 84 migrations applied",
+    "targetedCommand": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/payments.pg.test.ts -t 'open and won dispute' --reporter=dot",
+    "targetedExitCode": 0,
+    "targetedTestsPassed": 1,
+    "wholeFileCommand": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/payments.pg.test.ts --reporter=dot",
+    "wholeFileExitCode": 0,
+    "wholeFileTestsPassed": 21,
+    "eslintExitCode": 0,
+    "typecheckExitCode": 0,
+    "containerRemoved": true,
+    "fixtureUsersRemaining": 0
+  },
   "scenarios": [
     "refund after lost dispute",
     "lost dispute after refund",
     "concurrent refund and lost-dispute transitions",
     "duplicate deliveries after the transition",
     "full refund after lost dispute",
-    "PLN and USD totals remain isolated"
+    "PLN and USD totals remain isolated",
+    "open then won dispute around a partial refund with duplicate concurrent replays"
   ],
   "cleanup": {
     "fixtureUsersRemaining": 0,
