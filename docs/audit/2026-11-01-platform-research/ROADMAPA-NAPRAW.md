@@ -744,6 +744,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Odbiór route/DB:** rzeczywisty handler eksportu wykonano przeciw świeżej PostgreSQL 17 z 84 migracjami; odpowiedź pobrania/no-store, zakres własnego konta, odmowa gościa i ponowny eksport przeszły **2/2**. Auth i limiter były kontrolowane; nie uruchomiono Next przez socket HTTP ani prawdziwej sesji. Dowód i ograniczenia: [K27 route/DB](program-audytu/evidence/k27-route-postgres-2026-11-06/result.json).
 
+**Pełna macierz kategorii przez HTTP, 7 listopada 2026:** rozszerzony test uruchamia Next dev, prawdziwy Better Auth i handler na loopbackie przeciw disposable PostgreSQL 17.11 po 84 migracjach. Sprawdza wszystkie pola kontraktu `schemaVersion: 4` z syntetycznego konta mającego własny kanał i rolę EDITOR w cudzym kanale; odpowiedź zawiera oczekiwane dane własne, a obcy rekord, hashe, payloady, prywatne treści i wewnętrzne referencje pozostają poza JSON. Gość i cofnięta sesja dostają 401; właściciel 200/no-store; ponowny eksport ma identyczne dane poza zmiennym `exportedAt`. **1/1 PASS**, typecheck, ESLint i diff check PASS. [Dowód](program-audytu/evidence/k27-http-categories-postgres-2026-11-07/result.json), [test](../../../tests/postgres/user-export-http.pg.test.ts). Test zwiększa lokalny dowód K27-T1/T2, lecz nie rozstrzyga polityki ani prawnej kompletności, dostawców/reverse proxy, K37 ani niezależnego review; pakiet pozostaje częściowy.
+
 <a id="k28"></a>
 
 #### K28. Polityka cofania sesji WWW i krytyczne operacje
