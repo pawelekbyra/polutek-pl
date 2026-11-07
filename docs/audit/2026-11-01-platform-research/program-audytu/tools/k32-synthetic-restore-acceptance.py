@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import shutil
 import subprocess
 import sys
 import time
@@ -51,6 +52,16 @@ def record(name: str, passed: bool, detail: str) -> None:
 
 
 def main() -> None:
+    docker_root = Path(docker("info", "--format", "{{.DockerRootDir}}").stdout.strip())
+    docker_free = shutil.disk_usage(docker_root).free
+    RESULT["docker_storage_preflight"] = {
+        "root": str(docker_root),
+        "available_bytes": docker_free,
+        "required_bytes": 2 * 1024**3,
+    }
+    if docker_free < 2 * 1024**3:
+        raise RuntimeError(f"Docker storage has {docker_free} free bytes; at least 2 GiB is required")
+
     image = docker("image", "inspect", IMAGE, "--format", "{{.Id}}\t{{.RepoDigests}}")
     image_id, _, repo_digests = image.stdout.strip().partition("\t")
     RESULT.update({
