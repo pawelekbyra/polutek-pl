@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K13 — odcięcie niepełnej paginacji listy R2, 7 listopada 2026
+
+`HlsWriter` (także `countPrefix` i `verifyOutput`) wykrywa uciętą stronę bez nowego kursora oraz powtórzony kursor. `deletePrefix` sprawdza go przed usuwaniem z bieżącej strony, żeby błędna odpowiedź nie wyglądała na kompletne sprzątanie. Testy AWS SDK przez loopback: brak tokenu i powtórzony token; razem z wcześniejszymi suite K13 **22/22 PASS**. ESLint, pełny repo typecheck i `git diff --check` PASS. Brak prawdziwego R2/S3 i niezależnego review; pakiet pozostaje częściowy. [Dowód](program-audytu/evidence/k13-pagination-fail-closed-2026-11-07.json).
+
 ## K06 — respektowanie zakresu obrazów przy weryfikacji wdrożenia, 7 listopada 2026
 
 Naprawiono rozjazd: `deploy-release.mjs --scope=app` odpytuje/pobiera cztery obrazy aplikacji, a `--scope=admin` tylko obraz panelu; wcześniej oba tryby dotykały wszystkich pięciu. Test procesu obejmuje cache app, pull przy innym ID oraz odmowę dostępu do niepowiązanych obrazów dla admin: **6/6 PASS**. ESLint i `git diff --check` PASS. Użyto wyłącznie atrapy Dockera i fixture; bez GHCR, Actions, SSH, serwera czy publikacji. K06 pozostaje częściowe do pełnego pozytywnego acceptance release/rollback i rzeczywistych obrazów. [Dowód](program-audytu/evidence/k06-scope-image-consumption-2026-11-07.json).

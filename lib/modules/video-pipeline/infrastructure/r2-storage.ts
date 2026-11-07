@@ -46,6 +46,14 @@ function isNotFound(err: unknown): boolean {
   return e?.name === "NoSuchKey" || e?.name === "NotFound" || e?.$metadata?.httpStatusCode === 404;
 }
 
+function nextPageToken(isTruncated: boolean | undefined, nextToken: string | undefined, currentToken: string | undefined): string | undefined {
+  if (!isTruncated) return undefined;
+  if (!nextToken || nextToken === currentToken) {
+    throw new Error("R2 returned a truncated object list without a new continuation token");
+  }
+  return nextToken;
+}
+
 const DELETE_OBJECT_MAX_ATTEMPTS = 3;
 const TRANSIENT_DELETE_CODES = new Set([
   "InternalError",
@@ -191,7 +199,7 @@ export class HlsWriter {
     do {
       const r = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
       count += r.KeyCount ?? 0;
-      token = r.IsTruncated ? r.NextContinuationToken : undefined;
+      token = nextPageToken(r.IsTruncated, r.NextContinuationToken, token);
     } while (token);
     return count;
   }
@@ -203,7 +211,7 @@ export class HlsWriter {
     do {
       const page = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
       for (const object of page.Contents ?? []) if (object.Key) objectKeys.push(object.Key);
-      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+      token = nextPageToken(page.IsTruncated, page.NextContinuationToken, token);
     } while (token);
 
     return verifyHlsOutput(prefix, objectKeys, async (key) => {
@@ -228,13 +236,14 @@ export class HlsWriter {
     let token: string | undefined;
     do {
       const list = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
+      const nextToken = nextPageToken(list.IsTruncated, list.NextContinuationToken, token);
       const keys = (list.Contents ?? []).map((o) => o.Key).filter((k): k is string => Boolean(k));
       if (keys.length > 0) {
         const result = await deleteKeysWithRetry(this.client, this.bucket, keys);
         removed += result.removed;
         failures.push(...result.failures);
       }
-      token = list.IsTruncated ? list.NextContinuationToken : undefined;
+      token = nextToken;
     } while (token);
     if (failures.length > 0) throw new R2DeleteObjectsError(failures.length, [...new Set(failures)], removed);
     return removed;

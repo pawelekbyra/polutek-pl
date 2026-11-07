@@ -394,6 +394,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K13-T1** — HTTP 200 z jednym AccessDenied nie kończy strict purge jako SUCCESS i nie nalicza tego klucza jako usuniętego; trwały błąd jest widoczny z ID zadania.
 - **K13-T2** — Mieszany sukces/błąd przejściowy ponawia tylko właściwe klucze, brakujący już obiekt jest idempotentny. Własny bucket/S3 sandbox potwierdza zgodność listowania i kolejnych stron.
 
+**Dodatkowy przyrost lokalny, 7 listopada 2026:** paginowane odczyty odmawiają niepełnego wyniku, gdy strona jest oznaczona jako ucięta, ale nie ma nowego tokenu albo powtarza poprzedni. W `deletePrefix()` walidacja tokenu następuje przed usuwaniem obiektów z danej strony. Regresja przez prawdziwy AWS SDK na loopbackie sprawdza brak tokenu i powtórzony token; łącznie trzy suite K13: **22/22 PASS**, ESLint, typecheck i diff check PASS. Nie użyto R2 ani zewnętrznego bucketu. [Dowód](program-audytu/evidence/k13-pagination-fail-closed-2026-11-07.json). K13 pozostaje częściowe do odbioru sandboxa S3/R2 i niezależnego przeglądu.
+
 <a id="k14"></a>
 
 #### K14. Zatrzymanie i zakończenie transferów przed cleanup
