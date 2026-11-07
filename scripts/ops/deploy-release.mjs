@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Verify an immutable release before deploy scripts can migrate or activate it.
 import { spawnSync } from 'node:child_process';
-import { existsSync, lstatSync, mkdirSync, chmodSync, cpSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, chmodSync, cpSync, writeFileSync, mkdtempSync, renameSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 const kinds = ['app', 'migrator', 'worker', 'collector', 'admin'];
@@ -45,6 +45,52 @@ function main(argv) {
     `--inputs=${inputsFile}`, `--scope=${opts.scope}`]);
   const preflight = JSON.parse(preflightResult);
   if (preflight.preflight !== true || preflight.revision !== opts.revision) fail('Release preflight returned an invalid result');
+
+  // Retain an immutable release snapshot before touching Docker. Re-verify an existing snapshot too:
+  // its source/proof/inputs are later consumed by rollback and operator actions.
+  const stateRoot = path.resolve('.release-state');
+  mkdirSync(stateRoot, { recursive: true, mode: 0o700 });
+  const rootStat = lstatSync(stateRoot);
+  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) fail('Release state root must be a real directory');
+  chmodSync(stateRoot, 0o700);
+  const stateDir = path.join(stateRoot, opts.revision);
+  const stateSource = path.join(stateDir, 'source');
+  const stateProof = path.join(stateDir, 'proof.json');
+  const stateInputs = path.join(stateDir, 'inputs.json');
+  const stateHash = path.join(stateDir, 'proof.sha256');
+  if (existsSync(stateDir)) {
+    const stateStat = lstatSync(stateDir);
+    if (!stateStat.isDirectory() || stateStat.isSymbolicLink()) fail('Release state path must be a real directory');
+    chmodSync(stateDir, 0o700);
+    for (const [file, label] of [[stateSource, 'Stored release source'], [stateProof, 'Stored release proof'],
+      [stateInputs, 'Stored release inputs'], [stateHash, 'Stored release hash']]) {
+      if (!existsSync(file)) fail(`${label} is missing`);
+      const stat = lstatSync(file);
+      const validType = label === 'Stored release source' ? stat.isDirectory() : stat.isFile();
+      if (!validType || stat.isSymbolicLink()) fail(`${label} has an invalid filesystem type`);
+    }
+    const savedHash = run(process.execPath, ['-e', 'process.stdout.write(require("node:fs").readFileSync(process.argv[1], "utf8").trim())', stateHash]);
+    if (savedHash !== opts['proof-sha256']) fail('Stored release state has a different proof hash');
+  } else {
+    const stagingDir = mkdtempSync(path.join(stateRoot, `.${opts.revision}.tmp-`));
+    try {
+      cpSync(source, path.join(stagingDir, 'source'), { recursive: true });
+      cpSync(proofFile, path.join(stagingDir, 'proof.json'));
+      cpSync(inputsFile, path.join(stagingDir, 'inputs.json'));
+      writeFileSync(path.join(stagingDir, 'proof.sha256'), `${opts['proof-sha256']}\n`, { flag: 'wx', mode: 0o600 });
+      renameSync(stagingDir, stateDir);
+    } catch (error) {
+      rmSync(stagingDir, { recursive: true, force: true });
+      throw error;
+    }
+  }
+  const storedPreflight = JSON.parse(run(process.execPath, [verifier, 'preflight', `--proof=${stateProof}`,
+    `--proof-sha256=${opts['proof-sha256']}`, `--revision=${opts.revision}`, `--source=${stateSource}`,
+    `--inputs=${stateInputs}`, `--scope=${opts.scope}`]));
+  if (storedPreflight.preflight !== true || storedPreflight.revision !== opts.revision) {
+    fail('Stored release state failed proof preflight');
+  }
+
   // Reuse an installed digest only when its immutable config ID still matches the proof. Otherwise fetch the exact digest.
   // This lets proof checks for operator actions work while the registry is unavailable, without trusting a mutable tag.
   for (const [kind, ref] of refs) {
@@ -53,37 +99,12 @@ function main(argv) {
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     if (cached.status !== 0 || cached.stdout.trim() !== expectedId) run('docker', ['pull', ref]);
   }
-  const result = run(process.execPath, [verifier, 'verify', `--proof=${proofFile}`,
-    `--proof-sha256=${opts['proof-sha256']}`, `--revision=${opts.revision}`, `--source=${source}`,
-    `--inputs=${inputsFile}`, `--scope=${opts.scope}`]);
+  const result = run(process.execPath, [verifier, 'verify', `--proof=${stateProof}`,
+    `--proof-sha256=${opts['proof-sha256']}`, `--revision=${opts.revision}`, `--source=${stateSource}`,
+    `--inputs=${stateInputs}`, `--scope=${opts.scope}`]);
   const verified = JSON.parse(result);
   if (verified.verified !== true || verified.revision !== opts.revision) fail('Release verifier returned an invalid result');
   const selected = opts.scope === 'admin' ? ['admin'] : kinds.filter(kind => kind !== 'admin');
-  const stateRoot = path.resolve('.release-state');
-  mkdirSync(stateRoot, { recursive: true, mode: 0o700 });
-  const rootStat = lstatSync(stateRoot);
-  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) fail('Release state root must be a real directory');
-  chmodSync(stateRoot, 0o700);
-  const stateDir = path.join(stateRoot, opts.revision);
-  mkdirSync(stateDir, { recursive: true, mode: 0o700 });
-  const stateStat = lstatSync(stateDir);
-  if (!stateStat.isDirectory() || stateStat.isSymbolicLink()) fail('Release state path must be a real directory');
-  chmodSync(stateDir, 0o700);
-  const stateSource = path.join(stateDir, 'source');
-  if (existsSync(stateSource)) {
-    const sourceStat = lstatSync(stateSource);
-    if (!sourceStat.isDirectory() || sourceStat.isSymbolicLink()) fail('Stored release source must be a real directory');
-    const hashPath = path.join(stateDir, 'proof.sha256');
-    const hashStat = lstatSync(hashPath);
-    if (!hashStat.isFile() || hashStat.isSymbolicLink()) fail('Stored release hash must be a regular file');
-    const savedHash = run(process.execPath, ['-e', 'process.stdout.write(require("node:fs").readFileSync(process.argv[1], "utf8").trim())', hashPath]);
-    if (savedHash !== opts['proof-sha256']) fail('Stored release state has a different proof hash');
-  } else {
-    cpSync(source, stateSource, { recursive: true });
-    cpSync(proofFile, path.join(stateDir, 'proof.json'));
-    cpSync(inputsFile, path.join(stateDir, 'inputs.json'));
-    writeFileSync(path.join(stateDir, 'proof.sha256'), `${opts['proof-sha256']}\n`, { flag: 'wx', mode: 0o600 });
-  }
   for (const kind of selected) {
     const id = verified.images?.[kind];
     if (!/^sha256:[a-f0-9]{64}$/.test(id ?? '')) fail(`Verifier did not return image ID: ${kind}`);

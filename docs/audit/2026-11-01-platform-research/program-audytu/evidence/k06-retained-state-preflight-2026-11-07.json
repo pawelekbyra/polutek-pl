@@ -1,0 +1,29 @@
+{
+  "package": "K06 retained release state integrity preflight",
+  "date": "2026-11-07",
+  "base_commit": "2cf485fb5b0006c25c56f9432a33869f52cea959",
+  "finding": "deploy-release previously preflighted the incoming artifact but trusted an existing .release-state/<revision>/source after checking only that the directory existed and the stored proof hash matched. Retained source corruption could therefore go undetected by this consumer.",
+  "change": "Create new retained state as an atomic same-filesystem directory rename. Before any Docker inspect/pull, check retained state file types and approval hash, then run proof preflight against retained proof.json, inputs.json, and source. Full image verification now uses the retained snapshot that later operations consume.",
+  "regression": {
+    "command": "npx vitest run tests/unit/ops/deploy-release.test.ts --reporter=dot",
+    "result": "5/5 PASS",
+    "red_green": "A synthetic tampered retained source is rejected by state preflight before the fake Docker executable is invoked."
+  },
+  "related_release_suites": {
+    "command": "npx vitest run tests/unit/ops/deploy-release.test.ts tests/unit/ops/serwerek-scripts.test.ts tests/unit/ops/mergedeploy-release.test.ts tests/unit/ops/release-artifact.test.ts tests/unit/ops/release-proof-process.test.ts tests/unit/ops/images-workflow-release-gate.test.ts --reporter=dot",
+    "result": "6 files, 71/71 PASS"
+  },
+  "checks": {
+    "eslint_changed_files": "PASS",
+    "git_diff_check": "PASS",
+    "repository_typecheck": "Not rerun; change is JavaScript only. It passed in the previous K06 package."
+  },
+  "source_sha256": {
+    "scripts/ops/deploy-release.mjs": "8ef8b53bf6451c10fc990cb436afe9c65a2d9e348479b458d8a00ff3b14e2dcf",
+    "tests/unit/ops/deploy-release.test.ts": "b06b45dcae01093122399b17be6f8a88d4d20ed66fd3c5d637ac7580d16771f7"
+  },
+  "limits": [
+    "Docker calls were recorded by synthetic executable fixtures; no real images, registry, Actions, SSH, server, migration, or deployment was used.",
+    "K06 still needs positive sandbox acceptance of the complete release and rollback flow with real images."
+  ]
+}

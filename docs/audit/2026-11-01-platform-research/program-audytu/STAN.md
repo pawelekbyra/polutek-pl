@@ -22,7 +22,7 @@ Transfer lokalny i Actions podają teraz niezależny `RELEASE_PROOF_SHA256` do `
 
 ## K06 — preflight przed kontaktem z Docker/rejestrem, 7 listopada 2026
 
-`deploy-release.mjs` uruchamia teraz osobną komendę `release-proof.mjs preflight`, która sprawdza niezależnie podany hash proofu, rewizję, wejścia oraz archiwum źródeł bez Dockera; dopiero potem możliwy jest inspect/pull, a pełne `verify` nadal porównuje digesty/ID/warstwy. **28/28** testów sześciu suite wydania PASS; ESLint, repo typecheck i diff check PASS. Negatywna próba potwierdza zero wywołań Dockera przy odrzuconym proofie. Wszystkie dane syntetyczne; bez GHCR/Actions/SSH/serwera. [Dowód i SHA plików](evidence/k06-preflight-before-image-pull-2026-11-07.json). K06 nadal częściowe: bez pozytywnego odbioru pełnego wydania, pięciu rzeczywistych obrazów i rollbacku.
+`deploy-release.mjs` uruchamia `release-proof.mjs preflight`, który sprawdza zewnętrznie podany hash proofu, rewizję, wejścia i archiwum źródeł przed Dockerem. Retained state jest teraz kopiowany atomowo i ponownie preflightowany przed image inspect/pull; próba z podmienionym retained source kończy odmową i bez wywołania Docker. Sześć suite wydania **71/71 PASS**, ESLint i diff check PASS; bez GHCR/Actions/SSH/serwera. [Pierwszy dowód](evidence/k06-preflight-before-image-pull-2026-11-07.json), [retained state](evidence/k06-retained-state-preflight-2026-11-07.json). K06 nadal częściowe: bez pozytywnego odbioru pełnego wydania, pięciu rzeczywistych obrazów i rollbacku.
 
 ## K04 — bundler głównej aplikacji i admina, 7 listopada 2026
 
