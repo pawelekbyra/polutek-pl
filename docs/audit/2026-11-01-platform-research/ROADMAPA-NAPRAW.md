@@ -859,7 +859,7 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Ryzyko regresji:** Niskie/średnie: Escape, fokus po zamknięciu i izolacja tła.
 
-**Do weryfikacji przed zamknięciem:** Rzeczywisty Chromium i komponent dowiodły wejścia Tab/Enter w tło; backend był syntetyczny, to nie obejście autoryzacji.
+**Weryfikacja lokalna 7 listopada 2026:** komponentowy eksperyment Chromium 149 przeszedł 16 obserwacji. Pełny lokalny Studio DELETE na disposable PostgreSQL 17 po 84 migracjach przeszedł 1/1: kontrolowany błąd/retry, rzeczywisty DELETE, soft delete, jeden wpis audytu, containment klawiatury w busy i fokus na głównym nagłówku po usunięciu opener. [Dowód](program-audytu/evidence/k34-studio-delete-2026-11-07/result.json). **Pozostaje przed zamknięciem:** sprawdzić pełną politykę Escape i pozostałe dialogi, inne docelowe przeglądarki, screen reader oraz niezależny review.
 
 **Testy odbioru:**
 

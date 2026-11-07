@@ -1,0 +1,39 @@
+{
+  "package": "K34/R35",
+  "date": "2026-11-07",
+  "test": "tests/e2e/studio-playlist-delete-confirm.spec.ts",
+  "result": "PASS",
+  "tests": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "chromiumTestDurationSeconds": 16.0,
+    "playwrightRunDurationSeconds": 37.3
+  },
+  "checks": {
+    "eslint": "PASS",
+    "repositoryTypecheck": "PASS",
+    "gitDiffCheck": "PASS",
+    "manifestHashes": "875 entries, 0 mismatches"
+  },
+  "environment": {
+    "next": "16.4.5 dev server, local loopback",
+    "database": "disposable PostgreSQL 17, all 84 Prisma migrations applied",
+    "browser": "Playwright Chromium"
+  },
+  "verified": [
+    "The real Studio page, session, playlist list/detail endpoints and DELETE route were used.",
+    "The first DELETE returned a controlled HTTP 500; the dialog closed and exposed the error for retry.",
+    "The retry called the real DELETE endpoint and returned HTTP 200.",
+    "While the real response was delayed, the alert dialog exposed aria-busy and its live status; Tab and Shift+Tab kept focus inside, and Enter did not activate the background.",
+    "The playlist was soft-deleted, exactly one PLAYLIST_DELETED audit row was written, and the empty list appeared.",
+    "After the opener was removed with the editor, focus moved to the Studio main heading."
+  ],
+  "limits": [
+    "The initial failure was simulated at the browser network boundary; the successful retry used the real application route and database.",
+    "No screen reader or browser other than Chromium was tested.",
+    "Escape policy, unrelated dialogs and broader keyboard flows remain for acceptance.",
+    "No independent review was performed."
+  ],
+  "testCommand": "DATABASE_URL=<fresh disposable PostgreSQL 17> DATABASE_URL_UNPOOLED=<same> BETTER_AUTH_SECRET=<synthetic> BETTER_AUTH_URL=http://localhost:<port> NEXT_PUBLIC_APP_URL=http://localhost:<port> PORT=<port> npx playwright test tests/e2e/studio-playlist-delete-confirm.spec.ts --project=chromium"
+}

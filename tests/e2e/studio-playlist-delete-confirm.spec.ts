@@ -15,6 +15,7 @@ test.beforeAll(async () => {
   await prisma.user.create({ data: { id: userId, email: `${run}@example.test`, emailVerified: true, name: "K34 Studio" } });
   const creator = await prisma.creator.create({ data: { userId, slug: run, name: "K34 Studio", status: "ACTIVE" } });
   creatorId = creator.id;
+  await prisma.appSetting.create({ data: { key: "main_channel_id", value: creatorId } });
   await prisma.channelMember.create({ data: { channelId: creatorId, userId, role: "OWNER", acceptedAt: new Date() } });
   await prisma.playlist.create({
     data: { channelId: creatorId, title: "K34 delete flow", slug: `${run}-playlist`, visibility: "PRIVATE" },
@@ -29,6 +30,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   // AuditLog is append-only; this E2E uses a disposable PostgreSQL database that is dropped after the run.
   if (creatorId) await prisma.creator.deleteMany({ where: { id: creatorId } });
+  await prisma.appSetting.deleteMany({ where: { key: "main_channel_id", value: creatorId } });
   await prisma.session.deleteMany({ where: { userId } });
   await prisma.user.deleteMany({ where: { id: userId } });
   cookieValue = "";
@@ -38,11 +40,16 @@ test.afterAll(async () => {
 test("Studio playlist delete keeps busy focus contained, retries, and calls the real DELETE route", async ({ page, context, baseURL }) => {
   expect(baseURL).toBeTruthy();
   await addSessionCookie(context, new URL(baseURL!).hostname);
+  page.on("pageerror", (error) => console.log(`[K34] page error: ${error.message}`));
   await page.goto("/pl/studio?section=playlists");
+  await expect(page.getByText("Czy chcesz subskrybować?")).toBeVisible();
+  await page.getByRole("button", { name: /^nie$/i }).click();
+  await page.getByRole("button", { name: "Playlisty", exact: true }).click();
   await page.getByRole("button", { name: "Edytuj" }).click();
-  await expect(page.getByRole("heading", { name: "K34 delete flow" })).toBeVisible();
+  await expect(page.getByLabel("Tytuł")).toHaveValue("K34 delete flow");
 
   let deleteCalls = 0;
+  let actualDeleteStatus: number | null = null;
   await page.route(`**/api/studio/playlists/${playlistId}`, async (route) => {
     deleteCalls += 1;
     if (deleteCalls === 1) {
@@ -50,6 +57,7 @@ test("Studio playlist delete keeps busy focus contained, retries, and calls the 
       return;
     }
     const response = await route.fetch();
+    actualDeleteStatus = response.status();
     await page.waitForTimeout(1_000);
     await route.fulfill({ response });
   });
@@ -74,10 +82,10 @@ test("Studio playlist delete keeps busy focus contained, retries, and calls the 
   await expect.poll(() => dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Enter");
   await expect(dialog).toBeVisible();
-  expect(deleteCalls).toBe(2);
+  expect({ deleteCalls, actualDeleteStatus }).toEqual({ deleteCalls: 2, actualDeleteStatus: 200 });
 
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Edytuj" })).toBeVisible();
+  await expect(page.getByText(/Nie masz jeszcze playlist/)).toBeVisible();
   await expect.poll(async () => (await prisma.playlist.findUnique({ where: { id: playlistId } }))?.deletedAt).toBeInstanceOf(Date);
   await expect.poll(() => prisma.auditLog.count({ where: { action: "PLAYLIST_DELETED", targetId: playlistId, channelId: creatorId } })).toBe(1);
   await expect.poll(() => page.evaluate(() => {

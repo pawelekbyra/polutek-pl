@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { Dialog, DialogOverlay, DialogPopup, DialogPortal } from "@/components/ui/dialog";
 import { buttonClass, dangerButtonClass, ghostButtonClass } from "./ui";
 import { useOptionalTx } from "@/lib/i18n/language-context";
@@ -31,6 +31,19 @@ export default function ConfirmDialog({
 
   useLayoutEffect(() => {
     openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }, []);
+
+  useEffect(() => () => {
+    // A successful delete can unmount the dialog together with its opener, so the modal's normal close path
+    // never gets a chance to apply finalFocus. Restore focus after the DOM commit in that case.
+    if (openerRef.current?.isConnected) return;
+    const fallback = document.querySelector<HTMLElement>("main h1, [role='main'] h1, main, [role='main']");
+    if (!fallback) return;
+    fallback.tabIndex = 0;
+    fallback.focus({ preventScroll: true });
+    requestAnimationFrame(() => {
+      if (fallback.isConnected && document.activeElement === fallback) fallback.tabIndex = -1;
+    });
   }, []);
 
   useLayoutEffect(() => {
