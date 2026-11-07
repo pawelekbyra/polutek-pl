@@ -1,12 +1,16 @@
-## Punkt wznowienia — 7 listopada 2026, K01-T3/K35-T1
+## Punkt wznowienia — 7 listopada 2026, K35-T2 cross-channel complete
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni testowy commit: `e91ce1b1`; dokumentacja i korekta dowodów są przygotowywane do osobnego commitu.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `83c48249`; dokumentacja bieżącego dowodu do osobnego commitu.
 
 Lokalny acceptance obejmuje Studio multipart upload → rzeczywisty `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → poprawne playlisty/segment przez kod HLS edge Worker → Chromium odtwarza ponad 0,5 s materiału. PostgreSQL 17.11/84 migracje: integration 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Kontener disposable zatrzymany. [Dowód browser/edge](evidence/k35-browser-hls-local-2026-11-07.json).
 
 Korekta: wcześniejszy fixture S3 zapisywał ramkowanie `aws-chunked` wewnątrz obiektów. Stare asercje `contains(#EXTM3U)` i niepustego segmentu były za słabe; dowód K35 edge jest oznaczony jako superseded dla poprawności payloadu. Nowy fixture dekoduje payload i browser playback przechodzi. K01-T3/K35 pozostają częściowe: prawdziwe R2, wdrożony Worker, pełna macierz ról/stanów i niezależny review pozostają otwarte. Bez wdrożenia/push/PR.
 
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
+
+## K35-T2 — odmowa cross-channel przy kończeniu uploadu, 7 listopada 2026
+
+Rozszerzono macierz dwóch właścicieli: właściciel A nie może zakończyć multipart uploadu należącego do kanału B, a właściciel B nie może zakończyć uploadu właściciela A. Oba żądania zwracają 404, nie ujawniają obcego `originalId`, nie wywołują storage i pozostawiają oryginał w `UPLOADING`. Test PostgreSQL 17.11/84 migracje: **1/1 PASS**, repo typecheck, celowany ESLint i `git diff --check` PASS. [Dowód i SHA](evidence/k35-cross-channel-complete-2026-11-07.json). Nadal lokalna częściowa weryfikacja Studio API; pełna macierz K35, R2/deployed Worker i niezależny review są otwarte.
 
 ---
 

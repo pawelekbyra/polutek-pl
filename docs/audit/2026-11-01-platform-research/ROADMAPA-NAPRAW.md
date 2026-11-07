@@ -1114,3 +1114,5 @@ PeerTube pozostaje użyteczną referencją testów pełnego filmu, wspólnego up
 ## 9. Wynik i następna decyzja
 
 Następny krok to **zatwierdzenie roadmapy v1 oraz proponowanego harmonogramu W01–W07/H0–H6** z [PLAN-WDROZENIA-NAPRAW.md](PLAN-WDROZENIA-NAPRAW.md). Do tego czasu audyt jest tymczasowo wstrzymany i nie rozpoczynamy napraw. Zatwierdzenie planu nie oznacza zgody na produkcyjne migracje, zmiany danych, koszty zewnętrznych zasobów, wdrożenie ani scalanie.
+
+**Uzupełnienie K35-T2 — granica complete, 7 listopada 2026:** test dwóch kanałów próbuje zakończyć multipart upload drugiego właściciela w obu kierunkach. Oba żądania zwracają 404 bez ujawnienia obcego `originalId` ani żądania do storage; oryginały pozostają `UPLOADING`. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, typecheck, celowany ESLint i diff check PASS. [Dowód i SHA](program-audytu/evidence/k35-cross-channel-complete-2026-11-07.json). K35-T2 pozostaje częściowe; pełna macierz ról/stanów, replace/delete, awarie, rzeczywiste R2 i niezależny review są otwarte.

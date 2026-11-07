@@ -1,0 +1,28 @@
+{
+  "package": "K35-T2 cross-channel multipart completion boundary",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "83c482496dccc74659a70d13d6fb28d680be5521",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped after test",
+    "scenarios": [
+      "channel A owner submits channel B originalId to A's upload/complete endpoint",
+      "channel B owner submits channel A originalId to B's upload/complete endpoint"
+    ],
+    "denials": "Both complete requests return 404 and do not disclose the foreign originalId.",
+    "side_effect_checks": "Neither rejected request causes an object-storage request; both legitimate originals remain UPLOADING.",
+    "repo_typecheck": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "4144eefd1c52aae5c9dc8f2f2335f53be76350d81ce21e903daf8ebb73646161"
+  },
+  "limitations": [
+    "This is local verification against a loopback S3-shaped fixture, not real Cloudflare R2 or a deployed edge Worker.",
+    "Only the multipart completion boundary was added; the full K35 role/state matrix, replace/delete and adversarial crash/retry cases remain open.",
+    "K35-T2 and K01-T3 remain partial; independent review remains open."
+  ]
+}
