@@ -47,3 +47,4 @@ K01-T3-attempt-playback-http,47de194c,program-audytu/evidence/k01-attempt-playba
 K01-T3-multipart-studio-http,a10761c2,program-audytu/evidence/k01-multipart-studio-http-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K35-T1-edge-hls-local,7faf909e,program-audytu/evidence/k35-edge-hls-local-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
 K35-T2-cross-channel-upload,932fbab8,program-audytu/evidence/k35-cross-channel-upload-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO
+K01-T3-published-playback-api,c4d8d9ae,tests/postgres/k01-video-worker-local.pg.test.ts;program-audytu/evidence/k01-publish-public-playback-api-2026-11-07.json,LOKALNIE_ZWERYFIKOWANE_CZESCIOWO

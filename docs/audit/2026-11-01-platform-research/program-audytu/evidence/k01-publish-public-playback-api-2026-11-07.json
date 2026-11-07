@@ -1,0 +1,30 @@
+{
+  "package": "K01-T3 published video playback API after Studio multipart upload",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "c4d8d9aee607a953f33a17fbb7272f3714e74045",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped and removed",
+    "flow": [
+      "owner starts Studio multipart upload and uploads source through signed part PUT",
+      "complete endpoint validates uploaded MP4 and requests publish-after-ready",
+      "actual scripts/video-worker.ts encodes the uploaded source and finalizes SELF_HLS",
+      "video reaches PUBLISHED and has one active playback route and READY SELF_HLS asset",
+      "guest media-source API returns READY with access allowed and SELF_HLS source",
+      "local edge worker returns master/variant manifests and a non-empty segment from encoded objects"
+    ],
+    "repo_typecheck": "PASS (npm run typecheck)",
+    "eslint": "PASS (targeted test file)",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "382ff87455815b72e5e04c70412e6d8cb8bbb16c79fb2b55c811870b093f1f37"
+  },
+  "limitations": [
+    "The S3-compatible object store is a loopback fixture, not Cloudflare R2; the Worker is invoked locally, not deployed.",
+    "A Chromium attempt did not produce usable browser playback evidence: the local Next page did not attach a video element during the attempt, and browser requests showed ERR_NETWORK_CHANGED. The attempted browser assertions were removed; no claim of browser playback or decode is made.",
+    "Full K01-T3/K35 role/state matrix, other browsers, live provider, operational rollout and independent review remain open."
+  ]
+}

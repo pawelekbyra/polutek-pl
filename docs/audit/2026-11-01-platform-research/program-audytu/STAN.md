@@ -1,3 +1,15 @@
+## Punkt wznowienia — 7 listopada 2026, K01-T3
+
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni testowy commit: `c4d8d9ae`; dokumentacja i dowód są przygotowane do osobnego commitu.
+
+Ukończono lokalny acceptance: Studio multipart upload → prawdziwy `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → master/variant/segment z lokalnego kodu HLS edge Worker. PostgreSQL 17.11/84 migracje: 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Baza i kontener disposable usunięte. Szczegóły: [`k01-publish-public-playback-api-2026-11-07.json`](evidence/k01-publish-public-playback-api-2026-11-07.json).
+
+Próba Chromium nie dała dowodu odtwarzania (`ERR_NETWORK_CHANGED`, brak `<video>` w DOM); nieudane asercje usunięto. Nie twierdzić, że browser playback/decode działa. K01-T3 i K35 nadal częściowe: prawdziwe R2, wdrożony Worker, stabilny browser acceptance, pełne macierze ról/stanów i niezależny review pozostają otwarte. Nie wdrażać, nie pushować, nie tworzyć PR.
+
+**Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
+
+---
+
 ## K01-T3 — HTTP playback i poprawka prefiksu próby, 7 listopada 2026
 
 Next HTTP test po lokalnym kodowaniu wykrył `ERROR` w planie playback: signer nie akceptował attempt-scoped `VideoAsset.objectKey`, a Worker szukał w legacy prefixie. Delivery version zawiera teraz `~<attemptId>` podpisane HMAC; Worker mapuje URL do konkretnego prefiksu R2. Guest Studio=401/playback=403; właściciel Studio=200, playback=`READY/SELF_HLS`. PostgreSQL 17.11/84 migracje: **1/1 integration**; unit **62/62**, typecheck i ESLint bez błędów. [Dowód](evidence/k01-attempt-playback-http-2026-11-07.json). Nadal bez HTTP uploadu, prawdziwego R2/Worker i niezależnego review; Worker-first rollout jest wymagany.

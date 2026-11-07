@@ -564,3 +564,9 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 
 - Acceptance używa dwóch użytkowników/kanałów i sesji HTTP. Cudze pipeline/read i upload start/presign zwracają 404; po odmowie nie ma oryginału ani requestów do storage, legalny upload właściciela działa.
 - PostgreSQL 17/84 migracje: integration **1/1 PASS**, repo typecheck, ESLint i diff check PASS. Zakres częściowy: brak pełnej macierzy ról, replace/delete, crash/retry i usług live. [Dowód](evidence/k35-cross-channel-upload-2026-11-07.json).
+
+## 2026-11-07 — K01-T3 publikacja i publiczne API playbacku
+
+- `c4d8d9ae` rozszerza lokalny acceptance przez `publishAfterReady: true`; po Studio multipart uploadzie i kodowaniu sprawdza `PUBLISHED`, aktywną trasę/asset i guest `READY/SELF_HLS`.
+- Integration PostgreSQL 17.11/84 migracje **1/1 PASS**, repo typecheck, ESLint i diff check PASS. [Dowód](evidence/k01-publish-public-playback-api-2026-11-07.json).
+- Browser playback pozostaje bez dowodu: próba Chromium napotkała `ERR_NETWORK_CHANGED` i nie zaobserwowała elementu `<video>`. Lokalny S3-shaped adapter i lokalny kod Worker; Cloudflare R2, deployed Worker i niezależny review są otwarte.
