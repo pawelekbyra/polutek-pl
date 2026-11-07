@@ -14,7 +14,7 @@
       "owner B cannot presign parts for owner A's in-progress upload (404)"
     ],
     "side_effect_checks": "before the authorized upload, rejected requests leave zero VideoOriginal rows and zero object-store requests; rejected part presign leaves the rightful original UPLOADING",
-    "positive_control": "owner A completes Studio multipart upload, worker encode and playback API/edge fetch on the same video",
+    "positive_control": "owner A completes Studio multipart upload, worker encode and playback API; historical edge fetch returned 200 but its payload validity is superseded by the corrected local browser proof.",
     "repo_typecheck": "PASS",
     "eslint": "PASS",
     "git_diff_check": "PASS"
@@ -25,6 +25,7 @@
   "limitations": [
     "This covers Studio API boundaries, not all public/private reads or every role and state transition.",
     "Replace/delete, crash/retry adversarial cases, browser playback, Cloudflare R2 and a deployed edge Worker remain unverified.",
-    "K35-T2 remains partial; K35-T1/T3 and independent review are open."
+    "K35-T2 remains partial; K35-T1/T3 and independent review are open.",
+    "Prior edge bytes used the test fixture aws-chunked framing; cross-channel denial assertions are unaffected, HLS content validity is proved by k35-browser-hls-local-2026-11-07.json."
   ]
 }

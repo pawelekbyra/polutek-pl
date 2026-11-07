@@ -570,3 +570,10 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - `c4d8d9ae` rozszerza lokalny acceptance przez `publishAfterReady: true`; po Studio multipart uploadzie i kodowaniu sprawdza `PUBLISHED`, aktywną trasę/asset i guest `READY/SELF_HLS`.
 - Integration PostgreSQL 17.11/84 migracje **1/1 PASS**, repo typecheck, ESLint i diff check PASS. [Dowód](evidence/k01-publish-public-playback-api-2026-11-07.json).
 - Browser playback pozostaje bez dowodu: próba Chromium napotkała `ERR_NETWORK_CHANGED` i nie zaobserwowała elementu `<video>`. Lokalny S3-shaped adapter i lokalny kod Worker; Cloudflare R2, deployed Worker i niezależny review są otwarte.
+
+## 2026-11-07 — K35-T1 poprawione bajty i Chromium playback
+
+- `e91ce1b1` dekoduje AWS `aws-chunked` w lokalnym S3 fixture przed zapisem obiektu. Master/variant zaczynają się od `#EXTM3U`, fMP4 segment zawiera `moof`.
+- Chromium przechodzi przez stronę Next i lokalny `workers/hls-edge/worker.mjs`, pobiera master/variant/init/media segment, osiąga `currentTime > 0.5` oraz `readyState > 1`. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**; typecheck, ESLint i diff check PASS. [Dowód](evidence/k35-browser-hls-local-2026-11-07.json).
+- Korekta wcześniejszego K35 edge dowodu: fake S3 zachowywał ramki `aws-chunked`; dawne sprawdzenie `#EXTM3U` wewnątrz tekstu i niepustego segmentu było niewystarczające. Dowód oznaczono jako superseded dla zawartości HLS; odmowy cross-channel pozostają ważne.
+- Tylko lokalny Chromium/Worker/S3 fixture; R2, wdrożony Worker, inne przeglądarki, pełna macierz K35 i niezależny review pozostają otwarte.

@@ -1,7 +1,7 @@
 {
   "package": "K35-T1 local edge playback of encoder-produced manifest and segment",
   "date": "2026-11-07",
-  "status": "partial-local-verification",
+  "status": "superseded-limited-local-verification",
   "commit": "7faf909ef7c80324e31221cc92df74a138597930",
   "result": {
     "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
@@ -23,6 +23,7 @@
   "limitations": [
     "This invokes the actual Worker module locally but does not deploy it to Cloudflare or use a real R2 binding.",
     "No browser playback, decoded-frame/time progression, replace/delete matrix, second user/channel, paid profile or independent review was tested.",
-    "K35-T1 is partial; K35-T2/T3 remain open. K01-T3 remains partial pending real provider and rollout acceptance."
+    "K35-T1 is partial; K35-T2/T3 remain open. K01-T3 remains partial pending real provider and rollout acceptance.",
+    "Correction: the fixture stored aws-chunked framing in uploaded object bytes. contains-#EXTM3U and nonempty-segment checks did not prove valid HLS content/playback. Superseded for payload validity by k35-browser-hls-local-2026-11-07.json; worker invocation and HTTP status observations remain historical."
   ]
 }

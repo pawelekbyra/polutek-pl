@@ -1,10 +1,10 @@
-## Punkt wznowienia — 7 listopada 2026, K01-T3
+## Punkt wznowienia — 7 listopada 2026, K01-T3/K35-T1
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni testowy commit: `c4d8d9ae`; dokumentacja i dowód są przygotowane do osobnego commitu.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni testowy commit: `e91ce1b1`; dokumentacja i korekta dowodów są przygotowywane do osobnego commitu.
 
-Ukończono lokalny acceptance: Studio multipart upload → prawdziwy `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → master/variant/segment z lokalnego kodu HLS edge Worker. PostgreSQL 17.11/84 migracje: 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Baza i kontener disposable usunięte. Szczegóły: [`k01-publish-public-playback-api-2026-11-07.json`](evidence/k01-publish-public-playback-api-2026-11-07.json).
+Lokalny acceptance obejmuje Studio multipart upload → rzeczywisty `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → poprawne playlisty/segment przez kod HLS edge Worker → Chromium odtwarza ponad 0,5 s materiału. PostgreSQL 17.11/84 migracje: integration 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Kontener disposable zatrzymany. [Dowód browser/edge](evidence/k35-browser-hls-local-2026-11-07.json).
 
-Próba Chromium nie dała dowodu odtwarzania (`ERR_NETWORK_CHANGED`, brak `<video>` w DOM); nieudane asercje usunięto. Nie twierdzić, że browser playback/decode działa. K01-T3 i K35 nadal częściowe: prawdziwe R2, wdrożony Worker, stabilny browser acceptance, pełne macierze ról/stanów i niezależny review pozostają otwarte. Nie wdrażać, nie pushować, nie tworzyć PR.
+Korekta: wcześniejszy fixture S3 zapisywał ramkowanie `aws-chunked` wewnątrz obiektów. Stare asercje `contains(#EXTM3U)` i niepustego segmentu były za słabe; dowód K35 edge jest oznaczony jako superseded dla poprawności payloadu. Nowy fixture dekoduje payload i browser playback przechodzi. K01-T3/K35 pozostają częściowe: prawdziwe R2, wdrożony Worker, pełna macierz ról/stanów i niezależny review pozostają otwarte. Bez wdrożenia/push/PR.
 
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
@@ -16,9 +16,9 @@ Next HTTP test po lokalnym kodowaniu wykrył `ERROR` w planie playback: signer n
 
 # Stan badania i napraw — punkt wznowienia
 
-## K35-T1 — lokalny manifest i segment przez kod edge Worker, 7 listopada 2026
+## K35-T1 — lokalny Chromium playback przez edge Worker, 7 listopada 2026
 
-Po Studio multipart uploadzie i rzeczywistym kodowaniu FFmpeg acceptance przekazuje podpisany URL playback do `workers/hls-edge/worker.mjs`. Local R2-binding adapter czyta dokładne bajty encoder output: master i variant manifesty zwracają 200 i `#EXTM3U`, a wskazany segment fMP4 jest niepusty. Disposable PostgreSQL 17 po 84 migracjach: integration **1/1**, worker unit **20/20**, typecheck, ESLint i diff check PASS. [Dowód i SHA](evidence/k35-edge-hls-local-2026-11-07.json). To nie jest browser decode, Cloudflare/R2 ani pełna macierz K35; T1 częściowe, T2/T3 otwarte.
+Po Studio multipart uploadzie i rzeczywistym kodowaniu FFmpeg acceptance przechodzi przez poprawnie dekodujący aws-chunked S3 fixture. Chromium pobiera master/variant, init MP4 i fMP4 segment przez `workers/hls-edge/worker.mjs`, po czym odtwarza film (`currentTime > 0.5`, `readyState > 1`). Disposable PostgreSQL 17.11 po 84 migracjach: integration **1/1 PASS**, repo typecheck, celowany ESLint i diff check PASS. [Aktualny dowód](evidence/k35-browser-hls-local-2026-11-07.json). Wcześniejszy [dowód edge](evidence/k35-edge-hls-local-2026-11-07.json) zachowano, lecz oznaczono jako superseded dla poprawności bajtów: stary fixture zapisywał framing `aws-chunked`. To nadal nie jest Cloudflare/R2/deployed Worker ani pełna macierz K35; T1 częściowe, T2/T3 otwarte.
 
 ## K35-T2 — izolacja dwóch kanałów w Studio upload API, 7 listopada 2026
 
@@ -497,4 +497,4 @@ H1 około 80%, całość 5–10%; podawać po każdej turze. Nie scalać, nie wd
 Uaktualnić STAN.md, POSTEP-NAPRAW.md, h1-status.json i odpowiednie statusy KOLEJNOSC-NAPRAW.csv. Zachować poprzednie dowody, przypisać nowe wyniki do dokładnego SHA i opisać granice atrap/pominięć. Dopisać ZMIANY.md i odświeżyć GITHUB-MANIFEST.json. Nie nadpisywać kanonicznych pokryć ani USTALENIA.json bez nowych dowodów i właściwego przeglądu. Commit/push na gałęzi kodu i osobno `docs/polutek-platform-audit`, potem sprawdzić zdalne SHA. Nie scalać ani wdrażać.
 # K01-T3 — pełny lokalny przepływ multipart → worker → playback HTTP, 7 listopada 2026
 
-Test Next/worker korzysta teraz z pełnego Studio uploadu: start multipart, presigned UploadPart PUT i complete API weryfikujące rozmiar oraz sygnaturę MP4. Ten sam oryginał koduje osobny proces `scripts/video-worker.ts`; sesja kończy się `SUCCEEDED/DONE`, aktywną trasą HLS i odpowiedzią `READY/SELF_HLS` z `/api/media-source`. PostgreSQL 17, 84 migracje: **1/1 integration**, guard loopback **3/3 unit**, repo typecheck, ESLint i diff check PASS. Testowe R2 S3-shaped działało tylko po loopbackie; testowy znacznik nie otwiera endpointu w production. [Dowód i SHA](evidence/k01-multipart-studio-http-2026-11-07.json). K01-T3/K35 nadal częściowe: rzeczywiste R2, wdrożony Worker, browser flow i niezależny review pozostają otwarte.
+Test Next/worker korzysta teraz z pełnego Studio uploadu: start multipart, presigned UploadPart PUT i complete API weryfikujące rozmiar oraz sygnaturę MP4. Ten sam oryginał koduje osobny proces `scripts/video-worker.ts`; sesja kończy się `SUCCEEDED/DONE`, aktywną trasą HLS i odpowiedzią `READY/SELF_HLS` z `/api/media-source`. PostgreSQL 17, 84 migracje: **1/1 integration**, guard loopback **3/3 unit**, repo typecheck, ESLint i diff check PASS. Testowe R2 S3-shaped działało tylko po loopbackie; testowy znacznik nie otwiera endpointu w production. [Dowód i SHA](evidence/k01-multipart-studio-http-2026-11-07.json). Późniejszy lokalny browser flow jest potwierdzony w [K35 browser acceptance](evidence/k35-browser-hls-local-2026-11-07.json); rzeczywiste R2, wdrożony Worker i niezależny review pozostają otwarte.
