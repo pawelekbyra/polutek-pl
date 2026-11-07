@@ -1,5 +1,7 @@
 /** K20 verifies channel ownership through the real database-backed Self-HLS finalizer. */
 import { randomUUID } from "node:crypto";
+import { spawn } from "node:child_process";
+import path from "node:path";
 import { PrismaClient, type Video, type VideoEncodeJob } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -12,6 +14,7 @@ const RUN = `k20-${Date.now().toString(36)}`;
 let userIds: string[] = [];
 let creatorIds: string[] = [];
 const videoIds: string[] = [];
+const PROCESS_TIMEOUT_MS = 30_000;
 let previousMainChannelSetting: string | null = null;
 let hadMainChannelSetting = false;
 
@@ -88,6 +91,40 @@ async function finalize(video: Video, job: VideoEncodeJob) {
   });
 }
 
+function finalizeInWorkerProcess(jobId: string): Promise<void> {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error("DATABASE_URL is required for K20 worker-process test");
+  const env: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH,
+    NODE_ENV: "test",
+    DATABASE_URL: databaseUrl,
+    DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED || databaseUrl,
+    K20_JOB_ID: jobId,
+  };
+  const child = spawn(process.execPath, [
+    path.join(process.cwd(), "node_modules/tsx/dist/cli.mjs"),
+    path.join(process.cwd(), "tests/helpers/k20-finalize-self-hls-process.ts"),
+  ], { cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe"] });
+
+  return new Promise((resolve, reject) => {
+    let stderr = "";
+    const timeout = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error(`K20 worker process timed out for job ${jobId}`));
+    }, PROCESS_TIMEOUT_MS);
+    child.stderr.on("data", (chunk: Buffer | string) => { stderr += chunk.toString(); });
+    child.once("error", (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    child.once("close", (code) => {
+      clearTimeout(timeout);
+      if (code !== 0) return reject(new Error(`K20 worker process failed (${code}): ${stderr.slice(-1200)}`));
+      resolve();
+    });
+  });
+}
+
 describe("K20 auto-publish channel context (PostgreSQL)", () => {
   it.each([
     ["public", "PUBLISHED", "PUBLISHED"],
@@ -98,6 +135,21 @@ describe("K20 auto-publish channel context (PostgreSQL)", () => {
     expect(result.status).toBe(expected);
     expect(result.creatorId).toBe(creatorIds[1]);
     expect(result.activePlaybackRoute?.videoId).toBe(video.id);
+    expect(result.activePlaybackRoute?.asset.videoId).toBe(video.id);
+    expect(result.activePlaybackRoute?.asset.objectKey).toBe(hlsAttemptAssetKey(video.id, job.versionNumber, job.attemptId));
+    expect(result.publishAfterAssetReadyCompletedAt).not.toBeNull();
+  });
+
+  it("resolves the non-main channel and auto-publishes in a separate worker process", async () => {
+    const { video, job } = await fixture("separate-worker", 1, "UNLISTED");
+    await finalizeInWorkerProcess(job.id);
+
+    const result = await prisma.video.findUniqueOrThrow({
+      where: { id: video.id },
+      include: { activePlaybackRoute: { include: { asset: true } } },
+    });
+    expect(result.status).toBe("UNLISTED");
+    expect(result.creatorId).toBe(creatorIds[1]);
     expect(result.activePlaybackRoute?.asset.videoId).toBe(video.id);
     expect(result.activePlaybackRoute?.asset.objectKey).toBe(hlsAttemptAssetKey(video.id, job.versionNumber, job.attemptId));
     expect(result.publishAfterAssetReadyCompletedAt).not.toBeNull();

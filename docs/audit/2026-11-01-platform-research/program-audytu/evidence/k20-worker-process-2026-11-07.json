@@ -1,0 +1,33 @@
+{
+  "package": "K20 separate worker-process finalizer acceptance",
+  "date": "2026-11-07",
+  "base_commit": "0ff620293cff91dd4d6d0bdff4dd67e8b9190a83",
+  "scope": "A separate Node/tsx process reads a real RUNNING VideoEncodeJob from disposable PostgreSQL 17.11 and invokes the production Self-HLS finalizer.",
+  "database": {
+    "version": "PostgreSQL 17.11",
+    "migrations_applied": 84,
+    "container": "tmpfs, loopback-only port 55445; removed after the test",
+    "fixture_cleanup": "Test afterAll verified zero K20 user fixtures before removing the disposable database."
+  },
+  "test": {
+    "command": "DATABASE_URL=<disposable PostgreSQL 17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/k20-auto-publish-channel.pg.test.ts",
+    "result": "8/8 PASS",
+    "new_case": "The child process reads a real job row, invokes createSelfHlsFinalizer, and auto-publishes a non-main creator's video as UNLISTED. Parent process confirms creatorId, active route, asset.videoId, expected attempt object key, and publishAfterAssetReadyCompletedAt.",
+    "existing_cases": "PUBLIC/UNLISTED on non-main channel, suspended/deleted channel refusals, mismatched job channel, main channel, and stale attempt fencing."
+  },
+  "other_checks": {
+    "eslint_test_and_helper": "PASS",
+    "repository_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "limits": [
+    "This child process runs the actual database-backed finalizer, not the complete encoder worker loop.",
+    "Encoder output, poster path, and HLS objects are synthetic; no real R2/S3 was used.",
+    "No deployed process, production service, or external system was used."
+  ],
+  "source_sha256": {
+    "tests/postgres/k20-auto-publish-channel.pg.test.ts": "ec027b054cdef8f30cfc6b096e23583216d5e213c7904bdc546ff7177e941ab9",
+    "tests/helpers/k20-finalize-self-hls-process.ts": "6ae60a1e8ee32a202f82b430d46ece4c9a5cf030df9b68bb1aeb7ea20c807613"
+  },
+  "remaining": "K20 remains partial pending independent review and non-production acceptance with the full encoder worker and real R2/HLS."
+}
