@@ -3,7 +3,7 @@
  * private R2 bucket (binding HLS). Deployed on the Free plan, see
  * docs/architecture/self-hosted-hls.md and docs/operations/HLS-SELF-HOSTED.md.
  *
- * URL:  https://video.pawelperfect.com/h/<exp>.<sig>/<videoId>/<version>/<file>
+ * URL:  https://video.pawelperfect.com/h/<exp>.<sig>/<videoId>/<version>[~<attemptId>]/<file>
  *   exp  unix seconds (token expiry)
  *   sig  base64url(HMAC-SHA256(HLS_TOKEN_SECRET, "<videoId>/<version>/<exp>"))
  * A PUBLIC video's token is "<exp>.<sig>.pub" with sig over "<videoId>/<version>/<exp>/pub".
@@ -16,7 +16,8 @@
  * re-encode keeps them; the version in the URL only has to match the token). Mirror of
  * lib/modules/media/domain/protected-caption.ts. Deploy this Worker BEFORE the app issues caption URLs.
  *
- * One token covers every file of one video version (playlists, init, segments,
+ * Attempt-scoped versions include the signed encode UUID and map to that exact R2 prefix; legacy versions
+ * without the suffix map to the historical prefix. One token covers every file of one asset (playlists, init, segments,
  * poster), so the playlists only need RELATIVE URIs and both hls.js and native
  * Safari HLS simply inherit "/h/<exp>.<sig>/<videoId>/<version>/" - no headers,
  * cookies or manifest rewriting. The token is issued by PlaybackService only
@@ -31,7 +32,7 @@
  */
 
 const ID_RE = /^[A-Za-z0-9-]{8,64}$/;
-const VERSION_RE = /^[A-Za-z0-9_-]{1,32}$/;
+const VERSION_RE = /^(?:[A-Za-z0-9_-]{1,32}|[A-Za-z0-9_-]{1,32}~[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
 /** Caption files: "captions/<lang>-<sha256>.vtt" (anything else below "captions/" is not served). */
 const CAPTION_REST_RE = /^captions\/([a-z]{2,8}-[0-9a-f]{64}\.vtt)$/;
 const REST_RE = /^[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*\.[A-Za-z0-9]{2,5}$/;
@@ -143,6 +144,14 @@ export function parsePath(pathname) {
   return { token, videoId, version, rest, ext, captionFile: null };
 }
 
+/** Maps a signed delivery version to its storage prefix, including the owning encode attempt when present. */
+export function objectPrefix(videoId, deliveryVersion) {
+  const attempt = /^([A-Za-z0-9_-]{1,32})~([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/.exec(deliveryVersion);
+  return attempt
+    ? `videos/${videoId}/v/${attempt[1]}/attempts/${attempt[2]}`
+    : `videos/${videoId}/v/${deliveryVersion}`;
+}
+
 function corsHeaders(request, env) {
   const origin = request.headers.get('Origin');
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -196,7 +205,7 @@ export default {
       cacheStatus = 'MISS';
       const objectKey = parsed.captionFile
         ? `videos/${parsed.videoId}/captions/${parsed.captionFile}`
-        : `videos/${parsed.videoId}/v/${parsed.version}/${parsed.rest}`;
+        : `${objectPrefix(parsed.videoId, parsed.version)}/${parsed.rest}`;
       const fillCache = async () => {
         const object = await env.HLS.get(objectKey);
         if (object) await cache.put(new Request(cacheUrl, { method: 'GET' }), new Response(object.body, { status: 200, headers: objectHeaders(parsed, object) }));

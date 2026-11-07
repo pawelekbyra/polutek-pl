@@ -1,3 +1,7 @@
+## K01-T3 — HTTP playback i poprawka prefiksu próby, 7 listopada 2026
+
+Next HTTP test po lokalnym kodowaniu wykrył `ERROR` w planie playback: signer nie akceptował attempt-scoped `VideoAsset.objectKey`, a Worker szukał w legacy prefixie. Delivery version zawiera teraz `~<attemptId>` podpisane HMAC; Worker mapuje URL do konkretnego prefiksu R2. Guest Studio=401/playback=403; właściciel Studio=200, playback=`READY/SELF_HLS`. PostgreSQL 17.11/84 migracje: **1/1 integration**; unit **62/62**, typecheck i ESLint bez błędów. [Dowód](evidence/k01-attempt-playback-http-2026-11-07.json). Nadal bez HTTP uploadu, prawdziwego R2/Worker i niezależnego review; Worker-first rollout jest wymagany.
+
 # Stan badania i napraw — punkt wznowienia
 
 ## K01-T3 — prawdziwy entrypoint workera, 7 listopada 2026

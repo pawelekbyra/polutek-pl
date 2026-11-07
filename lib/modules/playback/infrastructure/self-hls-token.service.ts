@@ -3,7 +3,7 @@ import { createHmac } from 'node:crypto';
 /**
  * Short-lived delivery tokens for our own HLS (workers/hls-edge/worker.mjs).
  *
- * URL: <base>/h/<exp>.<sig>[.pub]/<videoId>/<version>/master.m3u8
+ * URL: <base>/h/<exp>.<sig>[.pub]/<videoId>/<version>[~<attemptId>]/master.m3u8
  *   sig = base64url(HMAC-SHA256(secret, "<videoId>/<version>/<exp>"))            (protected, the original format)
  *   sig = base64url(HMAC-SHA256(secret, "<videoId>/<version>/<exp>/pub"))  + ".pub"  (PUBLIC video)
  *
@@ -12,7 +12,7 @@ import { createHmac } from 'node:crypto';
  * token-bounded cache headers, and only a ".pub" token with the long public ones (audit S09).
  * Token lifetime (audit S08): protected videos get a short TTL, capped at the end of the grant.
 
- * One token covers every file of one video version. Issue it only after the
+ * One token covers every file of one video asset/attempt. Issue it only after the
  * access decision and the premiere gate (CLAUDE.md 4.3 / 4.15); a denied plan
  * must never carry a URL. The algorithm is mirrored by the Worker's verifyToken.
  */
@@ -28,7 +28,7 @@ export const SELF_HLS_MIN_TTL_SECONDS = 30;
 export const SELF_HLS_DEFAULT_BASE_URL = 'https://video.pawelperfect.com';
 
 const ID_RE = /^[A-Za-z0-9-]{8,64}$/;
-const VERSION_RE = /^[A-Za-z0-9_-]{1,32}$/;
+const VERSION_RE = /^(?:[A-Za-z0-9_-]{1,32}|[A-Za-z0-9_-]{1,32}~[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
 
 export type SelfHlsSignInput = {
   videoId: string;

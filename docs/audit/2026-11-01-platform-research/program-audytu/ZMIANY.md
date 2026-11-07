@@ -1,3 +1,9 @@
+## 2026-11-07 — K01-T3 routing attempt-scoped playback
+
+- Next HTTP acceptance dla własnego filmu wykazał `ERROR` playback po sukcesie kodowania: plan i edge Worker nie mapowały assetów `/attempts/<uuid>`.
+- Signed delivery version niesie teraz `<wersja>~<UUID>`; Cloudflare Worker mapuje ją do dokładnego prefiksu próby, a stare wersje URL zachowują historyczne mapowanie. Player zachowuje identyfikator próby przy odświeżeniu tokenu.
+- Integration PostgreSQL/Next/worker **1/1 PASS**, jednostkowe **62/62 PASS**, typecheck PASS. Worker musi być wdrożony przed app. Dowód: `evidence/k01-attempt-playback-http-2026-11-07.json`; K01-T3 nadal częściowe do HTTP upload, rzeczywistej dostawy/R2 i niezależnego review.
+
 ## 2026-11-07 — K01-T3 prawdziwy worker entrypoint
 
 - Test integracyjny uruchamia `scripts/video-worker.ts` w osobnym procesie i kontrolowanie kończy go przez SIGTERM po kodowaniu.
