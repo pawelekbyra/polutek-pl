@@ -31,6 +31,7 @@ response times degrade. Results and method: `docs/operations/LOAD-TEST.md`.
   > 900 MiB (`APP_MEM_FUSE_MIB`; the container limit is 1 GiB). It exits by itself after `GUARD_MAX_SECONDS`
   (1 h). k6 itself aborts at > 2% 5xx/timeouts; `run-steps.sh` ends a series at the first saturated step or
   p95 > `STOP_P95_MS` (default 2000 ms) and waits (up to 2 min) for the host to calm down between series.
+- Each `run-steps.sh` series writes `<LABEL>-profile.json` with its profile version, target, exact rate schedule, duration/rest, endpoint mix, k6 image reference and SHA-256 hashes of the generator and cleanup scripts. `results.tsv` records that profile hash on every row. An existing label cannot be reused for a different profile; choose a new `LABEL` or `OUT_DIR`. For `journey`, rate means new guest journeys per second (five requests per iteration); single-endpoint targets mean requests per second. Neither is a count of concurrent viewers. The label does not prove cache state; the profile records cache state as unspecified.
 
 ## Run
 

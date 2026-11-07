@@ -84,6 +84,50 @@ describe('load-test response contract', () => {
     expect(k6).toContain('values: { count: 0, rate: 0 }');
   });
 
+  it('writes a versioned profile that distinguishes guest journeys from concurrent viewers', () => {
+    const output = path.join(temp, 'journey-profile.json');
+    const profileScript = path.join(root, 'scripts/loadtest/profile-metadata.py');
+    const result = spawnSync('python3', [profileScript, output, 'journey', '2', '8', '60', '30', '2000', 'warm-check', 'grafana/k6:1.3.0', path.join(root, 'scripts/loadtest')], { encoding: 'utf8' });
+    expect(result.status).toBe(0);
+    const profile = JSON.parse(readFileSync(output, 'utf8')) as {
+      profile_id: string; rate_metric: string; iteration_unit: string; requests_per_iteration: number;
+      rate_schedule_per_second: number[]; viewer_concurrency_measured: boolean; interpretation: string;
+      cache_state: string; source_sha256: Record<string, string>;
+    };
+    expect(profile.profile_id).toBe('polutek-guest-read-only-v1');
+    expect(profile.rate_metric).toBe('new_guest_journeys_per_second');
+    expect(profile.iteration_unit).toBe('new_guest_journey');
+    expect(profile.requests_per_iteration).toBe(5);
+    expect(profile.rate_schedule_per_second).toEqual([2, 4, 8]);
+    expect(profile.viewer_concurrency_measured).toBe(false);
+    expect(profile.interpretation).toContain('not concurrent viewers');
+    expect(profile.cache_state).toContain('does not prove cache state');
+    expect(Object.keys(profile.source_sha256)).toContain('k6-guest.js');
+  });
+
+  it('labels single-endpoint profiles as requests per second rather than viewers', () => {
+    const output = path.join(temp, 'comments-profile.json');
+    const profileScript = path.join(root, 'scripts/loadtest/profile-metadata.py');
+    const result = spawnSync('python3', [profileScript, output, 'comments', '32', '64', '60', '30', '1000', 'comments-warm', 'grafana/k6:1.3.0', path.join(root, 'scripts/loadtest')], { encoding: 'utf8' });
+    expect(result.status).toBe(0);
+    const profile = JSON.parse(readFileSync(output, 'utf8')) as { rate_metric: string; routes: Array<{ route: string }>; interpretation: string };
+    expect(profile.rate_metric).toBe('single_endpoint_requests_per_second');
+    expect(profile.routes[0].route).toBe('/api/comments');
+    expect(profile.interpretation).toContain('not viewers');
+  });
+
+  it('refuses to overwrite a profile hash target with different run parameters', () => {
+    const output = path.join(temp, 'immutable-profile.json');
+    const profileScript = path.join(root, 'scripts/loadtest/profile-metadata.py');
+    const args = [profileScript, output, 'home', '4', '16', '60', '30', '2000', 'same-label', 'grafana/k6:1.3.0', path.join(root, 'scripts/loadtest')];
+    expect(spawnSync('python3', args, { encoding: 'utf8' }).status).toBe(0);
+    const original = readFileSync(output, 'utf8');
+    const conflict = spawnSync('python3', [...args.slice(0, 4), '32', ...args.slice(5)], { encoding: 'utf8' });
+    expect(conflict.status).toBe(2);
+    expect(conflict.stderr).toContain('choose a new LABEL or OUT_DIR');
+    expect(readFileSync(output, 'utf8')).toBe(original);
+  });
+
   it('accepts a complete healthy summary', () => {
     const result = runSummary(summary());
     expect(result.status).toBe(0);
@@ -116,6 +160,9 @@ describe('load-test response contract', () => {
     expect(runner).toContain('14) echo "invalid result: incomplete k6 summary" >&2; exit 14 ;;');
     expect(runner).toContain('*) echo "invalid result: summarizer failed (exit $code)" >&2; exit "$code" ;;');
     expect(runner).toContain('incompatible results.tsv header; select a fresh OUT_DIR or archive the previous results');
+    expect(runner).toContain('invalid LABEL; use only letters, digits, dot, underscore or hyphen');
+    expect(runner).toContain('profile-metadata.py');
+    expect(runner).toContain('profile_sha256');
   });
 
   it('derives cleanup identity with the same HMAC protocol as playback sessions', () => {

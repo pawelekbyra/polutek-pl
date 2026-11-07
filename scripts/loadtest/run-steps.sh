@@ -13,6 +13,7 @@ OUT="${OUT_DIR:-/tmp/pp-loadtest/out}"
 STEP="${STEP_SECONDS:-60}"; REST="${REST_SECONDS:-30}"; STOP_P95="${STOP_P95_MS:-2000}"
 K6_IMAGE="${K6_IMAGE:-grafana/k6:1.3.0}"
 LABEL="${LABEL:-$TARGET}"
+[[ "$LABEL" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "invalid LABEL; use only letters, digits, dot, underscore or hyphen" >&2; exit 6; }
 : "${VIDEO_ID:?VIDEO_ID is required}"
 mkdir -p "$OUT"; chmod 777 "$OUT"
 LOCK="$OUT/.run-lock"
@@ -28,6 +29,10 @@ LOADTEST_USER_AGENT="$(cat "$UA_FILE")"
 [[ "$LOADTEST_USER_AGENT" =~ ^pp-loadtest/[0-9a-f-]{36}$ ]] || { echo "invalid load-test identity file" >&2; exit 8; }
 RESULTS="$OUT/results.tsv"
 HEADER="target\trate\titer_per_s\treq_per_s\treqs\tdropped\tp50\tp95\tp99\tmax\terr5xx_pct\tnon200\twrong_content\tper_endpoint_p50/p95/p99_ms\tlabel\tstarted"
+HEADER+="\tprofile_id\tprofile_sha256"
+PROFILE_FILE="$OUT/${LABEL}-profile.json"
+python3 "$DIR/profile-metadata.py" "$PROFILE_FILE" "$TARGET" "$START" "$MAX" "$STEP" "$REST" "$STOP_P95" "$LABEL" "$K6_IMAGE" "$DIR" || exit 14
+PROFILE_SHA256="$(sha256sum "$PROFILE_FILE" | awk '{print $1}')"
 if [ ! -s "$RESULTS" ]; then
   printf '%s\n' "$HEADER" > "$RESULTS"
 elif [ "$(head -n 1 "$RESULTS")" != "$HEADER" ]; then
@@ -49,7 +54,7 @@ while awk -v r="$rate" -v m="$MAX" 'BEGIN{exit !(r<=m)}'; do
     -e OUT="/out/$name.json" "$K6_IMAGE" run -q --no-usage-report /scripts/k6-guest.js >/dev/null 2>"$OUT/$name.log"
   if [ ! -s "$OUT/$name.json" ]; then echo "no summary (k6 killed?)"; tail -3 "$OUT/$name.log"; exit 5; fi
   row="$(python3 "$DIR/summarize.py" "$OUT/$name.json" "$TARGET" "$rate" "$STOP_P95")"; code=$?
-  printf "%s\t%s\t%s\n" "$row" "$LABEL" "$started" >> "$RESULTS"
+  printf "%s\t%s\t%s\tpolutek-guest-read-only-v1\t%s\n" "$row" "$LABEL" "$started" "$PROFILE_SHA256" >> "$RESULTS"
   echo "$row"
   [ -f "$OUT/ABORT" ] && { echo "ABORT: $(tail -1 "$OUT/ABORT")"; exit 4; }
   case "$code" in
