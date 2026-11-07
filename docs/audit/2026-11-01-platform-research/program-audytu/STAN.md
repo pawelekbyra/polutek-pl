@@ -1,5 +1,9 @@
 # Stan badania i napraw — punkt wznowienia
 
+## K01-T3 — lokalny worker z FFmpeg i syntetycznym HLS, 7 listopada 2026
+
+Osobny Node/tsx uruchomił rzeczywisty `runWorkerLoop` i worker pipeline na PostgreSQL 17.11 po 84 migracjach; FFmpeg 8.0.1 zakodował syntetyczny film 6 s, AWS SDK przesłał obiekty do loopbackowego S3-shaped HTTP fixture, a prawdziwy finalizer utworzył aktywną trasę i asset. **1/1 PASS**, repo typecheck, ESLint, diff check PASS. Test potwierdza attempt-scoped key, playlisty, segment fMP4, poster i `SUCCEEDED/DONE`. Fixture’y usunięte, tmpfs container zatrzymany. [Dowód](evidence/k01-local-worker-ffmpeg-loopback-2026-11-07.json). To lokalny dowód workera, nie Next HTTP/API ani R2; K01-T3/K35 pozostaje częściowe.
+
 ## K14 — lokalny test anulowania PUT, 7 listopada 2026
 
 Nowy test uruchamia prawdziwy AWS SDK PUT do loopbacka, wstrzymuje odczyt po pierwszym fragmencie i anuluje sygnał; `putFile()` kończy się `AbortError`, a po wznowieniu odczytu odbiorca widzi przerwane żądanie zamiast dalszego pełnego uploadu. Trzy celowane pliki testów: **29/29 PASS**, ESLint, repo typecheck i diff check PASS. [Dowód](evidence/k14-put-abort-sdk-2026-11-07.json). To dowód anulowania wobec lokalnego HTTP, nie trwałego efektu w R2; K14 otwarte do sandboxa S3/R2 i niezależnego review.

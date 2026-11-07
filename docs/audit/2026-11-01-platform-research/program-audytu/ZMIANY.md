@@ -1,3 +1,8 @@
+## 7 listopada 2026 — K01-T3: lokalny worker z FFmpeg
+
+- Osobny proces Node/tsx uruchamia `runWorkerLoop`, rzeczywisty claim Prisma, FFmpeg 8.0.1, AWS SDK storage adaptery i finalizer na PostgreSQL 17.11 po 84 migracjach. Syntetyczny film 6 s kończy `SUCCEEDED/DONE`, a aktywny asset ma attempt-scoped key i zweryfikowany HLS graph. **1/1 PASS**, typecheck, ESLint i diff check PASS.
+- Obiekty idą do loopbackowego S3-shaped fixture; bez Next HTTP, produkcyjnego worker entrypointu i Cloudflare R2. K01-T3/K35 częściowe. [Dowód](evidence/k01-local-worker-ffmpeg-loopback-2026-11-07.json).
+
 # Historia programu badania
 
 ## 7 listopada 2026 — K25/R26: limit playlists z dwóch procesów Node
