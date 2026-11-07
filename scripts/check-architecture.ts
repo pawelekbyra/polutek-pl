@@ -24,6 +24,9 @@ const VISIBILITY_HELPER_REASON =
 // Allowlist for cross-module internal imports where extracting to shared would cause circular deps.
 // Key: file path; value: map of "module/subPath" → reason string.
 const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, string>> = {
+  'lib/modules/video/application/get-public-video-list.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; importing the channel barrel creates a video → channel → channel-layout → video cycle.',
+  },
   'lib/modules/channel/application/home-content.loader.ts': {
     'video/infrastructure/video-content.service': 'VideoContentService is an infra service; exporting via video index causes channel↔video circular dep through MainChannelService.',
   },
