@@ -33,6 +33,12 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/video/application/archive-admin-video.use-case.ts': {
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
   },
+  'lib/modules/video/application/delete-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/reorder-admin-videos.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
   'lib/modules/video/application/unpublish-admin-video.use-case.ts': {
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
   },
@@ -40,6 +46,9 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
   },
   'lib/modules/video/application/get-admin-video-by-id.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/get-hero-video.use-case.ts': {
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
   },
   'lib/modules/video/application/get-admin-video-list.use-case.ts': {
