@@ -173,6 +173,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — @hono/node-server:** lockfile podnosi 1.19.17 do 2.1.6; wersja 2 jest dopuszczona przez peer range MCP SDK. Czysta instalacja i inspekcja drzewa przeszły; dotyczy wyłącznie developerskiego `shadcn`/MCP. [Dowód](program-audytu/evidence/k02-hono-node-server-update-2026-11-08.json).
 
+**Uzupełnienie 8 listopada 2026 — systeminformation:** lockfile podnosi 5.31.13 do 5.33.19; czysta instalacja i inspekcja drzewa zależności przeszły. Obecna ścieżka prowadzi tylko przez developerskie `shadcn`/`@dotenvx/dotenvx`; obrazów runtime nie sprawdzono. [Dowód](program-audytu/evidence/k02-systeminformation-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore

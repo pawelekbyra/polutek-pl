@@ -102,6 +102,8 @@ Oficjalne wydanie Next 16.4.5 z 3 listopada wymienia siedem naprawionych advisor
 
 **Kontynuacja 8 listopada 2026 — @hono/node-server:** override podnosi 1.19.17 do poprawionej 2.1.6. Oficjalny zakres peer dependency `@modelcontextprotocol/sdk@1.31.0` akceptuje `^1.19.9 || ^2.0.5`; czysta instalacja i `npm ls` przeszły. Pakiet jest wyłącznie w drzewie developerskiego `shadcn`/MCP. [Dowód](program-audytu/evidence/k02-hono-node-server-update-2026-11-08.json). Nie sprawdzano obrazów aplikacji.
 
+**Kontynuacja 8 listopada 2026 — systeminformation:** override aktualizuje 5.31.13 do poprawionej 5.33.19. Czysta instalacja i `npm ls systeminformation --all` potwierdzają wersję pod developerskim `shadcn → @dotenvx/dotenvx`; nie jest to dowód obecności w obrazach runtime. [Dowód](program-audytu/evidence/k02-systeminformation-update-2026-11-08.json).
+
 ## K06 — proof approval przed przetworzeniem archiwum, 7 listopada 2026
 
 `mergedeploy.sh` przekazuje zewnętrznie zatwierdzony SHA do `release-artifact.mjs`; konsument porównuje go z proofem przed listowaniem/rozpakowaniem `source.tar`. Chroni to maszynę uruchamiającą transfer przed przetworzeniem archiwum z niezatwierdzonego artefaktu. Regresja używa błędnego archiwum i hash mismatch, potwierdzając odmowę przed odczytem tar. `release-artifact` + `mergedeploy-release`: **53/53 PASS**; ESLint 3 plików, `bash -n` i `git diff --check` PASS. Brak Actions/GHCR/SSH/Docker/serwera; rzeczywiste obrazy, cykl release i rollback nadal otwarte. [Dowód](program-audytu/evidence/k06-proof-before-extraction-2026-11-07.json).
