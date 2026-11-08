@@ -153,6 +153,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K02-T1** — Lockfile i zbudowany obraz zawierają poprawione wersje, faktycznie ładowane zależności nie należą do potwierdzonych dotkniętych zakresów; zachować metadane wersji i digest.
 - **K02-T2** — Legalne miniatury i obrazy działają; niedozwolony format/źródło pozostają odrzucone. Typy, wymagane testy i build obu aplikacji przechodzą na tym samym SHA. Do czasu usunięcia blokad K01 wynik pozostaje kandydatem, bez zgody na publikację.
 
+**Stan 8 listopada 2026:** bieżący full-lockfile audit zgłosił 31 pakietów; widok `--omit=dev` zgłosił 11, ale nie potwierdza zawartości standalone images. Next 16.4.5 i sharp 0.35.5 pozostają w poprawionych zakresach z poprzedniego rechecku. Próba `npm audit fix --package-lock-only --dry-run` zatrzymała się na konflikcie peer dependencies Better Auth; szczegóły i advisory URL: [pełny audit](program-audytu/evidence/k02-npm-audit-2026-11-08.json), [omit=dev](program-audytu/evidence/k02-npm-audit-production-2026-11-08.json). Nie zastosowano wymuszonych zmian. Dalsze wykonanie wymaga przywrócenia `node_modules`, uzgodnienia kompatybilnego zestawu Better Auth/passkey/fetch, regresji i budowy/inspekcji obu obrazów; K02 pozostaje otwarte.
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore
