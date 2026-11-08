@@ -157,6 +157,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — Nodemailer:** oba transporty SMTP są na 10.4.0; Node 22 spełnia wymaganie Node 20+, a nowe `originalCode` zachowuje identyfikację błędów gniazda. Testy własnego SMTP i SES **20/20 PASS**, repo typecheck PASS. Używane są typy dostarczane przez Nodemailer, `@types/nodemailer` usunięto. [Dowód](program-audytu/evidence/k02-nodemailer-update-2026-11-08.json). Wysłanie prawdziwego maila nie było częścią weryfikacji.
 
+**Uzupełnienie 8 listopada 2026 — proxy-addr:** lockfile wymusza poprawioną wersję 2.0.8. `npm ls --all` umiejscawia ją tylko pod developerskim `shadcn → @modelcontextprotocol/sdk → express`; bez budowy i inspekcji standalone nie należy wnioskować o zawartości runtime. [Dowód](program-audytu/evidence/k02-proxy-addr-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore
