@@ -88,6 +88,8 @@ Oficjalne wydanie Next 16.4.5 z 3 listopada wymienia siedem naprawionych advisor
 
 **Kontynuacja 8 listopada 2026 — proxy-addr:** lockfile przypina `proxy-addr` 2.0.8 przez npm override, czyli wersję naprawioną względem 2.0.7 wskazanego w raporcie. Czysta instalacja przeszła; `npm ls proxy-addr --all` pokazuje wyłącznie ścieżkę `shadcn → @modelcontextprotocol/sdk → express → proxy-addr`, a więc narzędzie developerskie. To nie jest dowód zawartości obrazu produkcyjnego. [Dowód](program-audytu/evidence/k02-proxy-addr-update-2026-11-08.json). Nie uruchamiano ponownie npm audit ani nie wysyłano grafu zależności.
 
+**Kontynuacja 8 listopada 2026 — undici:** override podnosi wersję 6.x z 6.29.0 do poprawionego 6.29.1. Czysta `npm ci` i `npm ls undici --all` przeszły; lockfile pokazuje tę wersję pod `shadcn` i `@dotenvx/dotenvx` (narzędzia developerskie). Brak dowodu, że pakiet trafia do obrazów aplikacji. [Dowód](program-audytu/evidence/k02-undici-update-2026-11-08.json). Nie wysyłano grafu npm audit.
+
 ## K06 — proof approval przed przetworzeniem archiwum, 7 listopada 2026
 
 `mergedeploy.sh` przekazuje zewnętrznie zatwierdzony SHA do `release-artifact.mjs`; konsument porównuje go z proofem przed listowaniem/rozpakowaniem `source.tar`. Chroni to maszynę uruchamiającą transfer przed przetworzeniem archiwum z niezatwierdzonego artefaktu. Regresja używa błędnego archiwum i hash mismatch, potwierdzając odmowę przed odczytem tar. `release-artifact` + `mergedeploy-release`: **53/53 PASS**; ESLint 3 plików, `bash -n` i `git diff --check` PASS. Brak Actions/GHCR/SSH/Docker/serwera; rzeczywiste obrazy, cykl release i rollback nadal otwarte. [Dowód](program-audytu/evidence/k06-proof-before-extraction-2026-11-07.json).

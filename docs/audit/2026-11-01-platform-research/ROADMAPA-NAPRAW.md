@@ -159,6 +159,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — proxy-addr:** lockfile wymusza poprawioną wersję 2.0.8. `npm ls --all` umiejscawia ją tylko pod developerskim `shadcn → @modelcontextprotocol/sdk → express`; bez budowy i inspekcji standalone nie należy wnioskować o zawartości runtime. [Dowód](program-audytu/evidence/k02-proxy-addr-update-2026-11-08.json).
 
+**Uzupełnienie 8 listopada 2026 — undici:** lockfile podnosi 6.29.0 do 6.29.1; czysta instalacja i inspekcja drzewa potwierdzają wersję. W tym repo występuje ona pod developerskim `shadcn` i `@dotenvx/dotenvx`; obecność w obrazie runtime wymaga osobnej inspekcji. [Dowód](program-audytu/evidence/k02-undici-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore
