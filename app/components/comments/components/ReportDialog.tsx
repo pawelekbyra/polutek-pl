@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useId, useLayoutEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -47,7 +47,7 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
   const dialogRef = useRef<HTMLDivElement>(null);
   const tx = useOptionalTx(language);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isSubmitting) dialogRef.current?.focus({ preventScroll: true });
   }, [isSubmitting]);
 

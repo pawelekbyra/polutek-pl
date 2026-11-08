@@ -1,6 +1,6 @@
 {
   "date": "2026-11-08",
-  "repository_head_sha": "4b5fac3a731e454fe34b8ee24eb6b53890683b45",
+  "repository_head_sha": "4609a71e39df58023b17a62367ec7a25762cb9cd",
   "sources_changed_since_research_baseline": [
     "lib/i18n/routing.ts",
     "components/ui/dialog.tsx",
@@ -11,6 +11,8 @@
   ],
   "working_tree_changes": [
     "app/components/comments/components/ReportDialog.tsx",
+    "app/components/comments/components/DeleteCommentDialog.tsx",
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-harness.tsx",
     "docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs"
   ],
   "browser": "149.0.7827.55",
@@ -33,8 +35,8 @@
     "components/ui/label.tsx": "7f19b8476658d25ff197c84030e58cd7395059d876a54630e025951e474ebdae",
     "components/ui/textarea.tsx": "58b58d84fc54ba5f4ca46937870c619349fd9eccc4d494250ac7bc73a94e05e9",
     "app/components/comments/comment-errors.ts": "db95c7c7a28313e77998123e9406dbd2bbffdeabe554a25083ca13e4f169944e",
-    "app/components/comments/components/ReportDialog.tsx": "9ef21cf7b9476a466ae4e73e975e1ba69cea37b26fffec847d47448d2a7588d2",
-    "app/components/comments/components/DeleteCommentDialog.tsx": "5908a0efec411cfc90f489a4bc82aebe1726f558533a308ff687e2c5a53abbf0",
+    "app/components/comments/components/ReportDialog.tsx": "597b2676160075b3f00b8504eb248921ad2a3f930d7a18fb7027d5c6a4f7ce97",
+    "app/components/comments/components/DeleteCommentDialog.tsx": "eb59e96dc5148885b7de57903d1db7ee5defd54a794dfc56fa4cb4b19022b830",
     "app/components/language-switcher/languages.ts": "534c7ccef87d78ec5206f36939bee4099990331adee59fcc4c117a16058697d7",
     "app/components/language-switcher/LanguageFlag.tsx": "06999b030db168ca936bda09cda57f95bec87ad5179bb7dcde9a180348f64492",
     "app/components/language-switcher/useLanguagePicker.ts": "31919f4f8f076ff32ea109740eeeb461df8894c52e35b75e87cd7e02fa55a987",
@@ -424,6 +426,30 @@
         "focusGuard": false,
         "ariaHidden": null
       }
+    },
+    {
+      "case": "delete_comment_unmount_restores_main",
+      "active": {
+        "id": "research-main",
+        "tag": "MAIN",
+        "text": "Local component research — synthetic dataNo application API, account, payment or database is connected.Background action",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "events": [
+        {
+          "event": "close",
+          "mode": "delete-comment"
+        },
+        {
+          "event": "delete_comment"
+        },
+        {
+          "event": "close",
+          "mode": "delete-comment"
+        }
+      ]
     },
     {
       "case": "language_listbox_focus_home_end",

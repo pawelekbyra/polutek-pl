@@ -18,6 +18,7 @@ function Harness() {
   const params = new URLSearchParams(location.search);
   const mode = params.get('mode') ?? 'confirm';
   const [open, setOpen] = useState(false);
+  const [commentDeleted, setCommentDeleted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [language, setLanguage] = useState<Locale>('pl');
   const [catalog, setCatalog] = useState<Catalog | null>(null);
@@ -56,8 +57,8 @@ function Harness() {
         window.researchEvents.push({event:'report',reason,note});
         throw new Error('Synthetic report service unavailable');
       }} />}
-      {mode==='delete-comment' && <DeleteCommentDialog isOpen={open} onClose={close} language={language}
-        onConfirm={()=>window.researchEvents.push({event:'delete_comment'})} />}
+      {mode==='delete-comment' && !commentDeleted && <DeleteCommentDialog isOpen={open} onClose={close} language={language}
+        onConfirm={()=>{window.researchEvents.push({event:'delete_comment'});window.removeResearchOpener?.();setCommentDeleted(true);}} />}
     </main>
   </LanguageContext.Provider>;
 }

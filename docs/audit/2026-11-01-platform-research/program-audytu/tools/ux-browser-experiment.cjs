@@ -129,6 +129,13 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
   await page.getByRole('button',{name:'Anuluj',exact:true}).focus();await page.keyboard.press('Space');
   assert(!(await page.evaluate(()=>window.researchEvents)).some(e=>e.event==='delete_comment'),'Delete cancel does not invoke action');
   observations.push({case:'delete_comment_cancel_no_action',events:await page.evaluate(()=>window.researchEvents),active:await active()});
+  await page.locator('#opener').click();await page.getByRole('dialog').waitFor();
+  await page.getByRole('button',{name:'Usuń',exact:true}).focus();await page.keyboard.press('Enter');
+  await page.getByRole('dialog').waitFor({state:'detached'});
+  await page.waitForFunction(()=>['H1','MAIN'].includes(document.activeElement?.tagName),null,{timeout:2000});
+  const deleteFocus=await active();
+  assert(deleteFocus.tag==='H1'||deleteFocus.tag==='MAIN','DeleteCommentDialog did not restore focus to the main content after deleting its opener: '+JSON.stringify(deleteFocus));
+  observations.push({case:'delete_comment_unmount_restores_main',active:deleteFocus,events:await page.evaluate(()=>window.researchEvents)});
   await visit('language');const trigger=page.getByRole('button',{name:/Zmień język/});await trigger.focus();await page.keyboard.press('Enter');
   const list=page.getByRole('listbox');await list.waitFor();
   const before=await list.getAttribute('aria-activedescendant');await page.keyboard.press('End');const end=await list.getAttribute('aria-activedescendant');
@@ -146,7 +153,7 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
   await page.screenshot({path:path.join(base,'evidence/ux-language-320.png')});
   assert(errors.length===0,'Browser page error: '+errors.join(';'));
   const changedSinceResearch=Object.keys(sourceHashes).filter(rel=>inventory[rel]&&cp.spawnSync('git',['diff','--quiet','c397b9e548ca2c628e21457ac69d66e54b12ddbd','HEAD','--',rel]).status!==0);
-  const result={date:'2026-11-08',repository_head_sha:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sources_changed_since_research_baseline:changedSinceResearch,working_tree_changes:['app/components/comments/components/ReportDialog.tsx','docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs'],browser:await browser.version(),browser_executable:chromium.executablePath(),viewport_initial:{width:1280,height:900},reduced_motion:'reduce',actual_bundle_source_sha256:sourceHashes,observations,
+  const result={date:'2026-11-08',repository_head_sha:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sources_changed_since_research_baseline:changedSinceResearch,working_tree_changes:['app/components/comments/components/ReportDialog.tsx','app/components/comments/components/DeleteCommentDialog.tsx','docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-harness.tsx','docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs'],browser:await browser.version(),browser_executable:chromium.executablePath(),viewport_initial:{width:1280,height:900},reduced_motion:'reduce',actual_bundle_source_sha256:sourceHashes,observations,
    original_CSS_compiled:true,synthetic_callbacks_only:true,real_API_requests:0,blocked_external_requests:blocked,browser_page_errors:errors,
    limitations:['Isolated real React components plus original compiled global/CSS module styles, not Next/full application','Harness provider/local state replaces page shell and navigation; callbacks never perform real delete/report','Fonts/media/production auth/Prisma/payment and mobile hardware not reproduced','Chromium desktop only; no Safari/Firefox/screen reader/actual touch or WCAG certification'],cleanup:'Browser/context/server closed and temporary bundle directory removed in finally'};
   fs.writeFileSync(path.join(base,'evidence/ux-browser-experiment-2026-11-08.json'),JSON.stringify(result,null,2)+'\n');
