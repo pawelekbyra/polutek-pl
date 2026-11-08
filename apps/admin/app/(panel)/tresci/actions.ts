@@ -33,7 +33,7 @@ const baseFields = {
   titleEn: optional(200),
   description: optional(5000),
   descriptionEn: optional(5000),
-  tier: z.enum(["PUBLIC", "LOGGED_IN"], { errorMap: () => ({ message: "Wybierz poziom dostępu." }) }),
+  tier: z.enum(["PUBLIC", "LOGGED_IN"], { error: () => "Wybierz poziom dostępu." }),
 };
 
 const fieldsOf = (fd: FormData, keys: string[]) => Object.fromEntries(keys.map((k) => [k, String(fd.get(k) ?? "")]));

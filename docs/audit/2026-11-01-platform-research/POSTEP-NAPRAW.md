@@ -499,3 +499,5 @@ Studio wykonuje pełny multipart na loopback storage. Tymczasowy one-shot trigge
 ## K35-T2 — odmowy wznowienia/anulowania między kanałami, 7 listopada 2026
 
 W obie strony przetestowano GET listy części do wznowienia i DELETE anulowania cudzego uploadu. Wszystkie odpowiedzi to 404; nie pojawia się żaden request storage, a właścicielskie oryginały pozostają `UPLOADING`. PostgreSQL 17.11/84 migracje, integration **1/1 PASS**, typecheck/ESLint/diff check PASS. [Dowód](program-audytu/evidence/k35-cross-channel-resume-abort-2026-11-07.json). Pozostała macierz ról/states, provider i niezależny review są otwarte.
+
+**K02 — Zod 4 i shadcn, 8 listopada:** bezpośredni Zod podniesiono do 4.6.7, a `shadcn` do 4.23.0; po czystej instalacji `npm ls zod --all` nie znajduje już Zod 3. Dostosowano typy issue, opcje komunikatów walidacji i sygnaturę `z.record`. Repo typecheck i lint zmienionych plików PASS; sześć suite kontraktów i panelu admina **44/44 PASS**. [Dowód](program-audytu/evidence/k02-zod4-shadcn-update-2026-11-08.json). Nie wykonano pełnej suite, buildów aplikacji ani inspekcji obrazów; K02 pozostaje otwarte.
