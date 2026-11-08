@@ -167,6 +167,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — qs:** lockfile aktualizuje 6.16.0 do 6.17.1; czysta instalacja i drzewo zależności przeszły. Występuje pod developerskim `shadcn`/Express. `body-parser` w tej samej gałęzi pozostaje do naprawy osobno; obrazy runtime wymagają inspekcji. [Dowód](program-audytu/evidence/k02-qs-update-2026-11-08.json).
 
+**Uzupełnienie 8 listopada 2026 — body-parser:** lockfile aktualizuje 2.3.0 do poprawionej 2.4.0; czysta instalacja i `npm ls --all` przeszły. Ścieżka jest pod developerskim `shadcn`/Express; zawartość obrazów aplikacji wymaga osobnego sprawdzenia. [Dowód](program-audytu/evidence/k02-body-parser-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore

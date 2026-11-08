@@ -96,6 +96,8 @@ Oficjalne wydanie Next 16.4.5 z 3 listopada wymienia siedem naprawionych advisor
 
 **Kontynuacja 8 listopada 2026 — qs:** override podnosi 6.16.0 do 6.17.1. Czysta instalacja i `npm ls qs --all` potwierdzają wersję pod developerskim `shadcn → @modelcontextprotocol/sdk → express`; obok w tym drzewie pozostaje osobny advisory `body-parser`, który wymaga własnej aktualizacji. [Dowód](program-audytu/evidence/k02-qs-update-2026-11-08.json). Nie wysyłano grafu npm audit.
 
+**Kontynuacja 8 listopada 2026 — body-parser:** override podnosi 2.3.0 do poprawionej 2.4.0. Czysta instalacja i `npm ls body-parser --all` potwierdzają tę wersję pod developerskim `shadcn → @modelcontextprotocol/sdk → express`; nie dowodzi to obecności w obrazie produkcyjnym. [Dowód](program-audytu/evidence/k02-body-parser-update-2026-11-08.json). Nie wysyłano nowego grafu npm audit.
+
 ## K06 — proof approval przed przetworzeniem archiwum, 7 listopada 2026
 
 `mergedeploy.sh` przekazuje zewnętrznie zatwierdzony SHA do `release-artifact.mjs`; konsument porównuje go z proofem przed listowaniem/rozpakowaniem `source.tar`. Chroni to maszynę uruchamiającą transfer przed przetworzeniem archiwum z niezatwierdzonego artefaktu. Regresja używa błędnego archiwum i hash mismatch, potwierdzając odmowę przed odczytem tar. `release-artifact` + `mergedeploy-release`: **53/53 PASS**; ESLint 3 plików, `bash -n` i `git diff --check` PASS. Brak Actions/GHCR/SSH/Docker/serwera; rzeczywiste obrazy, cykl release i rollback nadal otwarte. [Dowód](program-audytu/evidence/k06-proof-before-extraction-2026-11-07.json).
