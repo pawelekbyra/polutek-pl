@@ -106,6 +106,8 @@ Oficjalne wydanie Next 16.4.5 z 3 listopada wymienia siedem naprawionych advisor
 
 **Kontynuacja 8 listopada 2026 — MCP TypeScript SDK:** override aktualizuje 1.31.0 do 1.32.2, poza wskazanym zakresem advisory `<1.32.0`. Czysta instalacja, `npm ls` i `npx shadcn --version` (4.13.0) przeszły; SDK występuje wyłącznie pod developerskim `shadcn`. [Dowód](program-audytu/evidence/k02-mcp-sdk-update-2026-11-08.json). Nie testowano osobno protokołu MCP ani obrazów runtime.
 
+**Kontynuacja 8 listopada 2026 — postcss-selector-parser:** rozdzielone override zachowują główne wersje zależne: 6.0.10→6.1.5 dla `@tailwindcss/typography` i 7.1.4→7.1.7 dla `shadcn`. Czysta instalacja i `npm ls --all` potwierdzają obie wersje poza wskazanymi podatnymi zakresami. [Dowód](program-audytu/evidence/k02-postcss-selector-parser-update-2026-11-08.json). Nie budowano aplikacji ani obrazów.
+
 ## K06 — proof approval przed przetworzeniem archiwum, 7 listopada 2026
 
 `mergedeploy.sh` przekazuje zewnętrznie zatwierdzony SHA do `release-artifact.mjs`; konsument porównuje go z proofem przed listowaniem/rozpakowaniem `source.tar`. Chroni to maszynę uruchamiającą transfer przed przetworzeniem archiwum z niezatwierdzonego artefaktu. Regresja używa błędnego archiwum i hash mismatch, potwierdzając odmowę przed odczytem tar. `release-artifact` + `mergedeploy-release`: **53/53 PASS**; ESLint 3 plików, `bash -n` i `git diff --check` PASS. Brak Actions/GHCR/SSH/Docker/serwera; rzeczywiste obrazy, cykl release i rollback nadal otwarte. [Dowód](program-audytu/evidence/k06-proof-before-extraction-2026-11-07.json).

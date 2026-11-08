@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_POSTCSS_SELECTOR_PARSER_TRANSITIVE_OVERRIDES",
+  "base_commit": "91df986ef86f74d1652166f332a78ebc362a6e9e",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "440999813d2002b3f7d11e45dd831cba1ae2e6475139812c3496523a8f7fcdc8",
+    "package-lock.json": "c165d48035b7e78d4bdb2fc298b2fd89db60381a5917b6668c92baab683a1733"
+  },
+  "change": {
+    "overrides": {
+      "postcss-selector-parser@6.0.10": "6.1.5",
+      "postcss-selector-parser@7.1.4": "7.1.7"
+    },
+    "paths": {
+      "6.x": "@tailwindcss/typography",
+      "7.x": "shadcn"
+    }
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls postcss-selector-parser --all": {
+      "exit": 0,
+      "resolved": [
+        "6.1.5",
+        "7.1.7"
+      ]
+    }
+  },
+  "limitations": [
+    "No new npm audit graph upload.",
+    "No application builds or runtime image inspection.",
+    "No full K02 acceptance."
+  ]
+}
