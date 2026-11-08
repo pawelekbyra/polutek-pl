@@ -5,7 +5,7 @@ import { normalizePaymentTotals } from "../domain/payment-totals";
 import { PatronDiagnosticsReadModel, buildPatronDiagnosticsReadModel } from "./patron-read-model";
 
 import { UserRepository } from "../infrastructure/user.repository";
-import { getUserPayments } from "@/lib/modules/payments";
+import { getUserPayments } from "@/lib/modules/payments/application/get-user-payments.use-case";
 import { getUserSubscriptions } from "@/lib/modules/subscriptions";
 import { getAuditLogs } from "@/lib/modules/audit";
 

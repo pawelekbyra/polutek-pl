@@ -21,6 +21,11 @@ vi.mock('../../lib/modules/channel', () => ({
     getRequired: vi.fn(async (ctx: any) => ({ id: ctx.channelId ?? 'main-channel-id', status: 'ACTIVE', deletedAt: null })),
   },
 }));
+vi.mock('../../lib/modules/channel/application/main-channel.service', () => ({
+  MainChannelService: {
+    getRequired: vi.fn(async (ctx: any) => ({ id: ctx.channelId ?? 'main-channel-id', status: 'ACTIVE', deletedAt: null })),
+  },
+}));
 
 const readyRouteVideo = {
   id: 'placeholder',
@@ -217,7 +222,7 @@ describe('attemptPublishAfterAssetReady is readiness-driven', () => {
       publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: null,
       publishAfterAssetReadyVisibility: 'PUBLISHED',
     });
-    const { MainChannelService } = await import('../../lib/modules/channel');
+    const { MainChannelService } = await import('../../lib/modules/channel/application/main-channel.service');
     vi.mocked(MainChannelService.getRequired).mockResolvedValueOnce({ id: 'creator-channel-2', status: 'SUSPENDED', deletedAt: null } as any);
 
     await expect(attemptPublishAfterAssetReady('video-suspended', channelCtx)).resolves.toBe('refused');

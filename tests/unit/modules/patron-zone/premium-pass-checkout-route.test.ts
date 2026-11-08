@@ -15,8 +15,15 @@ vi.mock("@/lib/modules/payments", () => ({
   createCheckoutIntent: (...args: unknown[]) => createCheckoutIntent(...args),
   isPremiumPassPayment: (metadata: unknown) => (metadata as { purpose?: unknown } | null)?.purpose === "premium_pass",
 }));
+vi.mock("@/lib/modules/payments/application/create-checkout-intent.use-case", () => ({
+  createCheckoutIntent: (...args: unknown[]) => createCheckoutIntent(...args),
+}));
+vi.mock("@/lib/modules/payments/domain/payment.purpose", () => ({
+  isPremiumPassPayment: (metadata: unknown) => (metadata as { purpose?: unknown } | null)?.purpose === "premium_pass",
+}));
 const recordTermsAcceptance = vi.fn(async () => undefined);
 vi.mock("@/lib/modules/users", () => ({ recordTermsAcceptance: (...args: unknown[]) => recordTermsAcceptance(...(args as [])) }));
+vi.mock("@/lib/modules/users/application/record-terms-acceptance.use-case", () => ({ recordTermsAcceptance: (...args: unknown[]) => recordTermsAcceptance(...(args as [])) }));
 
 const store = new Map<string, string>();
 const payments = new Map<string, { id: string; userId: string; status: string; metadata: Record<string, unknown> }>();

@@ -4,6 +4,7 @@ const sendNotification = vi.fn();
 const sendModerationDecisionEmail = vi.fn();
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 vi.mock("@/lib/modules/notifications", () => ({ sendNotification: (...args: unknown[]) => sendNotification(...args) }));
+vi.mock("@/lib/modules/notifications/application/send-notification.use-case", () => ({ sendNotification: (...args: unknown[]) => sendNotification(...args) }));
 vi.mock("@/lib/modules/email", () => ({ sendModerationDecisionEmail: (...args: unknown[]) => sendModerationDecisionEmail(...args) }));
 
 import { createAppContext } from "@/lib/modules/shared/app-context";

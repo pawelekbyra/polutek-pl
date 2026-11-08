@@ -2,7 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { logger } from "@/lib/logger";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
-import { MainChannelService } from "@/lib/modules/channel";
+import { MainChannelService } from "@/lib/modules/channel/application/main-channel.service";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoPolicy } from "../domain/video.policy";
 import { unlistAdminVideo } from "./unlist-admin-video.use-case";

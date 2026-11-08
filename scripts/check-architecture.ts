@@ -73,6 +73,9 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
     'media/domain/r2-thumbnail': 'This adapter needs only the public thumbnail URL resolver; importing the media barrel reaches channel services.',
     'patron-zone/domain/config': 'This adapter needs only the pure Premium Pass visibility predicate; importing the patron-zone barrel reaches checkout, payments and channels.',
   },
+  'lib/modules/media/infrastructure/thumbnail-response.service.ts': {
+    'media/domain/media.policy': 'This HTTP adapter needs only the media DTO safety policy; importing the media barrel also loads the adapter itself.',
+  },
   'lib/modules/video/infrastructure/video.repository.ts': {
     'channel/domain/channel.policy': 'The video repository needs only the public channel visibility predicate; the channel barrel pulls moderation and notification paths back through video.',
   },
@@ -110,7 +113,14 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class (the one rule for a publicly visible channel); the video domain needs only that predicate, not the channel barrel with its services.',
   },
   'lib/modules/video/application/publish-after-asset-ready.use-case.ts': {
+    'channel/application/main-channel.service': 'This worker needs only MainChannelService; importing the channel barrel pulls moderation and notification code back into video.',
     'channel/domain/channel.policy': 'The pipeline worker needs only the pure channel visibility policy; the channel barrel would pull layout and video services back into this worker dependency path.',
+  },
+  'lib/modules/notifications/domain/notification-video.ts': {
+    'video/domain/public-visibility': 'The notification preview needs only the video visibility predicate; importing the video barrel loads publication and channel workflows.',
+  },
+  'lib/modules/channel/infrastructure/moderation-notice.ts': {
+    'notifications/application/send-notification.use-case': 'This adapter needs only notification delivery; the notifications barrel re-exports video-dependent notification reads.',
   },
   'lib/modules/syndication/domain/embed-eligibility.ts': {
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
@@ -137,6 +147,21 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
     'video/domain/premiere': PREMIERE_HELPER_REASON,
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class; many tests narrowly mock the whole @/lib/modules/channel barrel for MainChannelService only, and routing this through it would force every such test to also mock MainChannelPolicy.',
+    'patron-zone/application/pass-access': 'The access use case needs only the viewer pass gate; importing the patron-zone barrel also loads checkout and payments.',
+  },
+  'lib/modules/users/application/get-admin-user-details.use-case.ts': {
+    'payments/application/get-user-payments.use-case': 'This read model needs only the user payment query; importing the payments barrel reaches fulfillment and patron grants that depend on the users index.',
+  },
+  'lib/modules/users/application/account-deletion-cleanup.use-case.ts': {
+    'payments/application/stripe-customer-anonymization.use-case': 'This cleanup needs only the Stripe customer anonymization functions; importing the payments barrel reaches fulfillment and patron grants that depend on users.',
+  },
+  'lib/modules/patron-zone/application/patron-checkout.use-case.ts': {
+    'payments/application/create-checkout-intent.use-case': 'This use case needs only checkout creation; the payments barrel includes fulfillment and grants that cycle back through patron-zone.',
+    'payments/domain/payment.purpose': 'This use case needs only the pure payment-purpose predicate; the payments barrel includes fulfillment and grants that cycle back through patron-zone.',
+    'users/application/record-terms-acceptance.use-case': 'This use case needs only recording accepted terms; the users barrel includes export and cleanup flows that cycle back through patron-zone.',
+  },
+  'lib/modules/patron-zone/application/preview-payment-methods.use-case.ts': {
+    'payments/infrastructure/stripe-client': 'This probe needs only the Stripe client; the payments barrel pulls fulfillment and grants back into patron-zone.',
   },
 };
 

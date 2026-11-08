@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 import type { AppContext } from "@/lib/modules/shared/app-context";
-import { sendNotification } from "@/lib/modules/notifications";
+import { sendNotification } from "@/lib/modules/notifications/application/send-notification.use-case";
 import { describeDecisionAction, isAlwaysNotifiedAction, isAppealOutcomeAction } from "../domain/moderation-appeal.policy";
 
 /**
