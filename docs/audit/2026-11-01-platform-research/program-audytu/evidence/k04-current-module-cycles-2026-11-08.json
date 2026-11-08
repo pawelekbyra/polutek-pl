@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-07T23:29:02.373Z",
+  "date": "2026-11-08T08:17:03.094Z",
   "method": "TypeScript transpileModule ESNext output; static imports/re-exports and literal require only; TypeScript Bundler resolver; SCC over lib/modules files only.",
   "scope": "Current tracked and untracked .ts/.tsx source files below lib/modules, excluding .d.ts; node_modules internals, dynamic imports and computed imports are not followed.",
   "files": 447,
@@ -58,18 +58,12 @@
       "lib/modules/users/application/get-admin-user-details.use-case.ts",
       "lib/modules/users/application/get-own-role-badge.ts",
       "lib/modules/users/index.ts",
-      "lib/modules/video/application/archive-admin-video.use-case.ts",
-      "lib/modules/video/application/cancel-auto-publish.use-case.ts",
-      "lib/modules/video/application/create-admin-video.use-case.ts",
       "lib/modules/video/application/delete-admin-video.use-case.ts",
       "lib/modules/video/application/get-hero-video.use-case.ts",
-      "lib/modules/video/application/publish-admin-video.use-case.ts",
       "lib/modules/video/application/publish-after-asset-ready.use-case.ts",
       "lib/modules/video/application/record-playback-event.use-case.ts",
       "lib/modules/video/application/reorder-admin-videos.use-case.ts",
       "lib/modules/video/application/unlist-admin-video.use-case.ts",
-      "lib/modules/video/application/unpublish-admin-video.use-case.ts",
-      "lib/modules/video/application/update-admin-video.use-case.ts",
       "lib/modules/video/index.ts"
     ],
     [
@@ -85,7 +79,7 @@
     "lib/modules/notifications/application/user-notifications.use-cases.ts",
     "lib/modules/notifications/domain/notification-video.ts",
     "lib/modules/video/index.ts",
-    "lib/modules/video/application/update-admin-video.use-case.ts",
+    "lib/modules/video/application/delete-admin-video.use-case.ts",
     "lib/modules/channel/index.ts"
   ],
   "source_sha256": {
@@ -485,9 +479,9 @@
     "lib/modules/video-pipeline/infrastructure/r2-storage.ts": "3f77834b2f180bff23090e0aa877dcbbb713d919af66e1a44302ea963e151a16",
     "lib/modules/video/application/admin-video-payload.ts": "768f19e0f58a8f7fdc4d048620424a55100f7c27e598f676daa458407e3548c8",
     "lib/modules/video/application/announce-published-video.ts": "558677d2737641434be6369553e5514773f71177188ae97a459ec637e5066c99",
-    "lib/modules/video/application/archive-admin-video.use-case.ts": "a8af35e54a4852db32f6aea688fede3621b6576071bbba00e9284d6b6123f519",
-    "lib/modules/video/application/cancel-auto-publish.use-case.ts": "8571933f87790c3681d01acac0c0af54945eefd589e17a7bf0d2ea13e7553f41",
-    "lib/modules/video/application/create-admin-video.use-case.ts": "b74aa460f2f775048759a90ecf85b8d6018d50f6d78053a12eae6ccb0c591433",
+    "lib/modules/video/application/archive-admin-video.use-case.ts": "6fe5a814ae6143105ab24e8cbc62883700d6d9d9c20c7e204e38db45d6751b4f",
+    "lib/modules/video/application/cancel-auto-publish.use-case.ts": "0196572a744ccc1594b1dfea55374b34f0f948067d761bcad05ec05a1c76edc0",
+    "lib/modules/video/application/create-admin-video.use-case.ts": "0f8e065fc6f34f1d40d6053c57e9abb37d13a8fe0db7a14cb2dc8b882161fd71",
     "lib/modules/video/application/delete-admin-video.use-case.ts": "223786588c54fff136e9acb6eeae727b4c1f52622e4e092f6a5072d0cbbfdfda",
     "lib/modules/video/application/get-admin-video-by-id.use-case.ts": "aa492bd7231aeeed8aedfa5429615ce42b4e1b641b42a520a395c72446b7517a",
     "lib/modules/video/application/get-admin-video-details.use-case.ts": "2db80bbc1faafb8f1ee1079ddcc9eb7d55d0ff6fc7c5c9fefe3f3d87aafd479a",
@@ -500,7 +494,7 @@
     "lib/modules/video/application/get-public-video-list.use-case.ts": "37398a803828e13484ff1f9528e1c152c691ae08b866592143ca56f8746ef0c2",
     "lib/modules/video/application/prune-stale-playback-sessions.use-case.ts": "6204b63f4f61fc7b35493ed4d6673635115994b4af1bdb690b0760472dff7dbd",
     "lib/modules/video/application/public-search.service.ts": "5cb03334009f7970584143ba0169921a0b77576ba3ee3626fcc4df72e6c0b950",
-    "lib/modules/video/application/publish-admin-video.use-case.ts": "3b8ae81b78fbc22390fad052c19be764cd30c6369d50df6a36f9b7a5a33fb034",
+    "lib/modules/video/application/publish-admin-video.use-case.ts": "c26201cd9b283dc228f2caea8f3c244bd7026f9119e7a6a41c51067938138a29",
     "lib/modules/video/application/publish-after-asset-ready.use-case.ts": "cee4f6cd40adcb1ce977dafadc1f98138b59c15a869297d9d3bd189452ab1040",
     "lib/modules/video/application/ready-visibility.ts": "a3e2ff22665f10051fcf7b882ffd48c9d7de333fe6c42c1773c70ddb07054e1b",
     "lib/modules/video/application/record-playback-event.use-case.ts": "68d28f5e7295c8aa0fd3be49c2f8a282d1b01ca627da94d7c7b5a6bf5859936f",
@@ -508,8 +502,8 @@
     "lib/modules/video/application/resync-admin-video-stats.use-case.ts": "3becd31c96d060d80e8c07d61feb35359e9bfd62bb2dee2238d868bae889b64b",
     "lib/modules/video/application/sync-public-thumbnail.service.ts": "97b1c75063c2757a9be4b870d8d3f2b0cf0557d4dea05e7cdbe763dfe58bcd93",
     "lib/modules/video/application/unlist-admin-video.use-case.ts": "22239db0285d73a10e8f1a17a41c28acc909a5169bd08fcf1f45a11232a0e5f4",
-    "lib/modules/video/application/unpublish-admin-video.use-case.ts": "600faf7ed19e559e20a9d23f2a1b03375d19228c1c3cd5cc6990e7849aab1f55",
-    "lib/modules/video/application/update-admin-video.use-case.ts": "911ab58aea949df021f8903fef7c8f4f2c97870fda664937044c5885ddbc37ef",
+    "lib/modules/video/application/unpublish-admin-video.use-case.ts": "3ecc60389357b39bce40e67532300036b3093eddef55961ab70e1b984ca27e09",
+    "lib/modules/video/application/update-admin-video.use-case.ts": "7d0a855ed8a7a7c8bb0d8107ab798af319784d24d500f5b0117bc899f9317c93",
     "lib/modules/video/application/video-playback-route.service.ts": "2590e36954bc10e4de69b880de17559f14d111c45214ec4f495077024e66733e",
     "lib/modules/video/application/video-search.service.ts": "3d37571032db84fff577a19da9d846a36c68f7cd30149a6ee90b2b744d838fec",
     "lib/modules/video/domain/asset-size.ts": "03ee14f1dcef09805e9223f00f0d2dcc47c7d7465f64a27e2c1b997c6963d855",
@@ -537,6 +531,6 @@
     "lib/modules/watch-progress/domain/progress-rules.ts": "a2ee1ece4c213805cd78738eb46ddca66bda5547ca287857542feabb33c86cfa",
     "lib/modules/watch-progress/index.ts": "b16f964d579d537b9f5c6ae2709cc5cb439b4cc18514664c842b351d084c5e3e"
   },
-  "base_commit": "70bb56427d9da54b6fe6e1a510319854f384b9e3",
+  "base_commit": "2c82eea8d324e1db431585591aa1bdb75f90f29d",
   "probe_sha256": "3d8bfa9f194e107d9ec69b39292a4d7e45db6cf5e48ee3ee182627767dd945b3"
 }

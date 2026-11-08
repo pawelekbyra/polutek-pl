@@ -16,6 +16,12 @@ vi.mock('../../lib/modules/channel', () => ({
   MainChannelPolicy: { isPubliclyVisible: (channel: { status?: string; deletedAt?: Date | null }) => (channel.status === 'ACTIVE' || channel.status === 'LIMITED') && !channel.deletedAt },
 }));
 
+vi.mock('../../lib/modules/channel/application/main-channel.service', () => ({
+  MainChannelService: {
+    getRequired: vi.fn().mockResolvedValue({ id: 'main-channel-id' })
+  }
+}));
+
 vi.mock('../../lib/modules/audit', () => ({
   recordAuditEvent: vi.fn().mockResolvedValue({}),
   recordAuditEventSafe: vi.fn().mockResolvedValue(undefined)

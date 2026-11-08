@@ -27,6 +27,18 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/video/application/get-public-video-list.use-case.ts': {
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; importing the channel barrel creates a video → channel → channel-layout → video cycle.',
   },
+  'lib/modules/video/application/create-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/archive-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/unpublish-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/cancel-auto-publish.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
   'lib/modules/video/application/get-admin-video-by-id.use-case.ts': {
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
   },
@@ -35,6 +47,14 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   },
   'lib/modules/video/application/resync-admin-video-stats.use-case.ts': {
     'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/update-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/publish-admin-video.use-case.ts': {
+    'channel/domain/channel.errors': 'This use case needs only channel errors; importing the channel barrel pulls notification/video services into the publish path.',
+    'channel/domain/channel.policy': 'This use case needs only the pure channel visibility policy; importing the channel barrel pulls notification/video services into the publish path.',
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; importing the channel barrel pulls notification/video services into the publish path.',
   },
   'lib/modules/video/infrastructure/video-content.service.ts': {
     'channel/application/main-channel.service': 'This adapter needs the channel service, not the public index; the index re-exports channel use cases that depend on this adapter.',
