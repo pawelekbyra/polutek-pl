@@ -181,7 +181,7 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — Vite:** lockfile aktualizuje 8.1.3 do 8.3.6, poza zgłoszonym zakresem do 8.1.5. Czysta instalacja, `npm ls` i test kontrolny **12/12 PASS**; pojawiło się ostrzeżenie o istniejącym loaderze konfiguracji Vitest, bez zmiany jego ustawień. Buildy obu aplikacji i pełne suite pozostają otwarte. [Dowód](program-audytu/evidence/k02-vite-update-2026-11-08.json).
 
-**Uzupełnienie 8 listopada 2026 — minimatch:** wpisy 10.2.5 podniesiono do 11.0.5, zachowując osobny 3.1.5. Instalacja, inwentarz zależności, `shadcn --version` i typecheck przeszły. Repo lint nadal kończy się błędem na czterech `react-hooks/refs` w `useNotificationFeed.ts`; to otwarty problem repo, więc K02 lint acceptance nie jest zielony. [Dowód](program-audytu/evidence/k02-minimatch-update-2026-11-08.json).
+**Uzupełnienie 8 listopada 2026 — minimatch:** wpisy 10.2.5 podniesiono do 11.0.5, zachowując osobny 3.1.5. Instalacja, inwentarz zależności, `shadcn --version` i typecheck przeszły. Początkowe błędy lint w `useNotificationFeed.ts` naprawiono osobno; pełny lint przeszedł z 0 błędami i 101 ostrzeżeniami. [Dowód minimatch](program-audytu/evidence/k02-minimatch-update-2026-11-08.json), [dowód lint fix](program-audytu/evidence/k02-notification-feed-lint-fix-2026-11-08.json).
 
 <a id="k03"></a>
 

@@ -110,7 +110,9 @@ Oficjalne wydanie Next 16.4.5 z 3 listopada wymienia siedem naprawionych advisor
 
 **Kontynuacja 8 listopada 2026 — Vite:** override aktualizuje 8.1.3 do 8.3.6, poza advisory obejmującymi Vite do 8.1.5. Czysta instalacja, `npm ls vite --all` i smoke test Vitest (`auth-config`, **12/12 PASS**) przeszły. Narzędzie wypisało istniejące ostrzeżenie o `configLoader: native` i CommonJS `vitest.config.ts`; nie zmieniano konfiguracji. [Dowód](program-audytu/evidence/k02-vite-update-2026-11-08.json). Pełne suite/buildy K02 pozostają otwarte.
 
-**Kontynuacja 8 listopada 2026 — minimatch:** override ograniczony do starych wpisów 10.2.5 podnosi je do naprawionej 11.0.5; główny `minimatch` 3.1.5 pozostał bez zmian. Czysta instalacja, `npm ls minimatch --all`, `shadcn --version` (4.13.0) i repo typecheck PASS. `npm run lint` **FAIL**: 4 błędy reguły `react-hooks/refs` w niezmienionym `app/components/notifications/useNotificationFeed.ts` (linie 46–48, 111), plus 101 ostrzeżeń; błąd poza plikami tej zależności i wymagający osobnej naprawy, więc ogólny lint K02 nie jest zielony. [Dowód](program-audytu/evidence/k02-minimatch-update-2026-11-08.json). Nie budowano aplikacji ani obrazów.
+**Kontynuacja 8 listopada 2026 — minimatch:** override ograniczony do starych wpisów 10.2.5 podnosi je do naprawionej 11.0.5; główny `minimatch` 3.1.5 pozostał bez zmian. Czysta instalacja, `npm ls minimatch --all`, `shadcn --version` (4.13.0) i repo typecheck PASS. Pierwszy pełny lint wskazał cztery błędy `react-hooks/refs` w hooku powiadomień; poprawiono je osobną małą zmianą poniżej. [Dowód aktualizacji minimatch](program-audytu/evidence/k02-minimatch-update-2026-11-08.json).
+
+**Naprawa bramki lint — hook powiadomień:** refs synchronizują się teraz w `useLayoutEffect`, a nie podczas renderu. Test `notification-feed` **8/8 PASS**, typecheck PASS, pełny `npm run lint` PASS (**0 błędów, 101 ostrzeżeń**). [Dowód](program-audytu/evidence/k02-notification-feed-lint-fix-2026-11-08.json). Nie budowano aplikacji ani obrazów.
 
 ## K06 — proof approval przed przetworzeniem archiwum, 7 listopada 2026
 
