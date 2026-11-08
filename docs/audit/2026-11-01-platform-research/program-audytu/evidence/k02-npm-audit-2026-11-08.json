@@ -1624,6 +1624,19 @@
       "Registry advisory match is not proof of exploitability in this application.",
       "The omit=dev result includes devOptional/shared package entries and does not establish package presence in the actual Next standalone images.",
       "Application image build/inspection was not possible with 960 MB free disk; global Docker state was left unchanged."
-    ]
+    ],
+    "codeReachabilityReview": {
+      "inspectedFiles": [
+        "lib/modules/email/infrastructure/own-mail.transport.ts",
+        "lib/modules/email/infrastructure/ses-email.transport.ts",
+        "lib/auth/auth.ts",
+        "apps/admin/lib/auth/auth.ts",
+        "tailwind.config.ts"
+      ],
+      "nodemailer": "Direct runtime dependency used by own-mail and SES transports. own-mail explicitly sets secure:false and ignoreTLS:true; SES defaults to port 587 with requireTLS and only uses implicit TLS when configured on port 465. The DNS SNI advisory GHSA-6vj9-mwq6-2f5v describes a conditional direct-SMTPS/multiple-servername case; reviewed callsites do not establish that condition. Other Nodemailer parser/recipient advisories still require input-flow review; no broad non-exploitability claim.",
+      "betterAuth": "Direct runtime auth dependency in public app and admin, with passkey integration in both; update needs a coherent package set and auth regression coverage.",
+      "zod": "Direct runtime dependency used across request, configuration, telemetry, payment and admin schemas; compatibility requires broad tests.",
+      "tailwindTypography": "Direct dependency is loaded by tailwind.config.ts; npm fix suggestion is a downgrade to 0.5.4 and should not be applied without checking its transitive parser version and CSS output."
+    }
   }
 }
