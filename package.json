@@ -146,7 +146,8 @@
     "@modelcontextprotocol/sdk": "1.32.2",
     "postcss-selector-parser@6.0.10": "6.1.5",
     "postcss-selector-parser@7.1.4": "7.1.7",
-    "vite": "8.3.6"
+    "vite": "8.3.6",
+    "minimatch@10.2.5": "11.0.5"
   },
   "engines": {
     "node": "22.x"
