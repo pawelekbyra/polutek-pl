@@ -161,6 +161,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — undici:** lockfile podnosi 6.29.0 do 6.29.1; czysta instalacja i inspekcja drzewa potwierdzają wersję. W tym repo występuje ona pod developerskim `shadcn` i `@dotenvx/dotenvx`; obecność w obrazie runtime wymaga osobnej inspekcji. [Dowód](program-audytu/evidence/k02-undici-update-2026-11-08.json).
 
+**Uzupełnienie 8 listopada 2026 — fast-uri:** lockfile podnosi 3.1.8 do poprawionej 3.1.9; czysta instalacja i drzewo zależności przeszły. Bieżące ścieżki prowadzą przez developerskie `shadcn`/`@dotenvx/dotenvx`; wymagane pozostaje sprawdzenie obrazów. [Dowód](program-audytu/evidence/k02-fast-uri-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore
