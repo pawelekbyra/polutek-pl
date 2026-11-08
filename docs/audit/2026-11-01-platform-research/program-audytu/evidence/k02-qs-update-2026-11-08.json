@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_QS_TRANSITIVE_OVERRIDE",
+  "base_commit": "60447278a72a2f94a349b54c11c5e8cf16bb3687",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "91344687cc80b543dc727e0e2123cb66880527f95823f775c523f57f1894091a",
+    "package-lock.json": "56a68068e4a27c4d7373f00735000529c1f003a489778048f0eb9f2201ac9a4a"
+  },
+  "change": {
+    "previous_resolved": "6.16.0",
+    "current_resolved": "6.17.1",
+    "override": "package.json#overrides.qs",
+    "path": "shadcn -> @modelcontextprotocol/sdk -> express -> qs",
+    "scope": "development dependency path in npm ls output"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls qs --all": {
+      "exit": 0,
+      "resolved": "6.17.1"
+    }
+  },
+  "limitations": [
+    "body-parser remains a separate open finding in this development dependency path.",
+    "No new npm audit request or graph upload.",
+    "No application runtime image inspection or full K02 acceptance."
+  ]
+}

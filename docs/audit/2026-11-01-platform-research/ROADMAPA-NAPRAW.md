@@ -165,6 +165,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — ip-address:** lockfile aktualizuje 10.7.2 do 10.7.6; czysta instalacja i inspekcja drzewa przeszły. Ścieżka występuje pod developerskim `shadcn`/`express-rate-limit`; inspekcja obrazów runtime nadal otwarta. [Dowód](program-audytu/evidence/k02-ip-address-update-2026-11-08.json).
 
+**Uzupełnienie 8 listopada 2026 — qs:** lockfile aktualizuje 6.16.0 do 6.17.1; czysta instalacja i drzewo zależności przeszły. Występuje pod developerskim `shadcn`/Express. `body-parser` w tej samej gałęzi pozostaje do naprawy osobno; obrazy runtime wymagają inspekcji. [Dowód](program-audytu/evidence/k02-qs-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore
