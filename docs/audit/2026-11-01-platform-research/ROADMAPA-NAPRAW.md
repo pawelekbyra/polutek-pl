@@ -175,6 +175,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — systeminformation:** lockfile podnosi 5.31.13 do 5.33.19; czysta instalacja i inspekcja drzewa zależności przeszły. Obecna ścieżka prowadzi tylko przez developerskie `shadcn`/`@dotenvx/dotenvx`; obrazów runtime nie sprawdzono. [Dowód](program-audytu/evidence/k02-systeminformation-update-2026-11-08.json).
 
+**Uzupełnienie 8 listopada 2026 — MCP TypeScript SDK:** lockfile podnosi 1.31.0 do 1.32.2, poza raportowany zakres `<1.32.0`. Czysta instalacja i polecenie `shadcn --version` przeszły; pakiet występuje w developerskim drzewie `shadcn`. Nie wykonano osobnego testu protokołu ani inspekcji obrazów. [Dowód](program-audytu/evidence/k02-mcp-sdk-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore

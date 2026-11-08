@@ -142,7 +142,8 @@
     "qs": "^6.17.1",
     "body-parser": "2.4.0",
     "@hono/node-server": "2.1.6",
-    "systeminformation": "5.33.19"
+    "systeminformation": "5.33.19",
+    "@modelcontextprotocol/sdk": "1.32.2"
   },
   "engines": {
     "node": "22.x"
