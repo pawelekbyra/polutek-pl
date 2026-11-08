@@ -1,0 +1,328 @@
+{
+  "reportTabs": [
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Nękanie",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "_r_0_-note",
+      "tag": "TEXTAREA",
+      "text": "Synthetic note retained on failure",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Anuluj",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Zgłoś",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "×",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Nękanie",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "_r_0_-note",
+      "tag": "TEXTAREA",
+      "text": "Synthetic note retained on failure",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Anuluj",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Zgłoś",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "×",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Nękanie",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    },
+    {
+      "id": "_r_0_-note",
+      "tag": "TEXTAREA",
+      "text": "Synthetic note retained on failure",
+      "insideDialog": true,
+      "focusGuard": false,
+      "ariaHidden": null
+    }
+  ],
+  "backgroundReached": false,
+  "observationsBefore": [
+    {
+      "case": "confirm_opens_on_safe_cancel",
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Cancel",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "dialogName": "confirm-dialog-title"
+    },
+    {
+      "case": "confirm_normal_tab_wrap",
+      "backward": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Delete playlist",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "forward": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Cancel",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_escape_restores_opener",
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_busy_tab_stays_in_modal",
+      "busyStart": {
+        "id": "_r_2_",
+        "tag": "DIV",
+        "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "tabSequence": [
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        }
+      ],
+      "backgroundIsolation": [
+        {
+          "tag": "BUTTON",
+          "id": "background",
+          "inert": false,
+          "ariaHidden": null
+        },
+        {
+          "tag": "MAIN",
+          "id": "research-main",
+          "inert": false,
+          "ariaHidden": null
+        },
+        {
+          "tag": "DIV",
+          "id": "root",
+          "inert": false,
+          "ariaHidden": "true"
+        },
+        {
+          "tag": "BODY",
+          "id": "",
+          "inert": false,
+          "ariaHidden": null
+        },
+        {
+          "tag": "HTML",
+          "id": "",
+          "inert": false,
+          "ariaHidden": null
+        }
+      ],
+      "backgroundRoleCount": 0,
+      "ariaBusy": "true"
+    },
+    {
+      "case": "confirm_busy_escape_blocked_and_retry_enabled",
+      "events": [
+        {
+          "event": "close",
+          "mode": "confirm"
+        },
+        {
+          "event": "confirm"
+        },
+        {
+          "event": "synthetic_operation_failed_retry_available"
+        }
+      ],
+      "active": {
+        "id": "_r_2_",
+        "tag": "DIV",
+        "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Cance",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_escape_restores_opener_after_retry",
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_removed_opener_focuses_main_region",
+      "active": {
+        "id": "research-main",
+        "tag": "MAIN",
+        "text": "Local component research — synthetic dataNo application API, account, payment or database is connected.Background action",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "report_radio_arrow_home_end_navigation",
+      "navigation": [
+        {
+          "key": "ArrowRight",
+          "selected": "Mowa nienawiści",
+          "tabStops": 1
+        },
+        {
+          "key": "ArrowUp",
+          "selected": "Nękanie",
+          "tabStops": 1
+        },
+        {
+          "key": "Home",
+          "selected": "Spam",
+          "tabStops": 1
+        },
+        {
+          "key": "End",
+          "selected": "Inne",
+          "tabStops": 1
+        },
+        {
+          "key": "ArrowDown",
+          "selected": "Spam",
+          "tabStops": 1
+        }
+      ],
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Spam",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "tabStopCount": 1
+    },
+    {
+      "case": "report_failure_keeps_note_and_announces_error",
+      "noteRetained": true,
+      "error": "Nie udało się wysłać zgłoszenia.",
+      "events": [
+        {
+          "event": "report",
+          "reason": "HARASSMENT",
+          "note": "Synthetic note retained on failure"
+        }
+      ]
+    }
+  ]
+}

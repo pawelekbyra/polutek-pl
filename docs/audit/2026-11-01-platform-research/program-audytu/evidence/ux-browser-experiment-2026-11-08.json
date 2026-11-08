@@ -1,0 +1,492 @@
+{
+  "date": "2026-11-08",
+  "repository_head_sha": "4b5fac3a731e454fe34b8ee24eb6b53890683b45",
+  "sources_changed_since_research_baseline": [
+    "lib/i18n/routing.ts",
+    "components/ui/dialog.tsx",
+    "app/components/studio/ConfirmDialog.tsx",
+    "app/components/comments/comment-errors.ts",
+    "app/components/comments/components/ReportDialog.tsx",
+    "lib/i18n/dictionary.ts"
+  ],
+  "working_tree_changes": [
+    "app/components/comments/components/ReportDialog.tsx",
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs"
+  ],
+  "browser": "149.0.7827.55",
+  "browser_executable": "/root/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome",
+  "viewport_initial": {
+    "width": 1280,
+    "height": 900
+  },
+  "reduced_motion": "reduce",
+  "actual_bundle_source_sha256": {
+    "lib/i18n/ui.ts": "c2f67ad27e3636117af86a80fd4a90076697856ae3a284a16e5ba0b7862735f1",
+    "lib/utils.ts": "41fdb079540e328d49dccd9c343028af0d05386ea378fea6c9b445139cc3587d",
+    "components/ui/button.tsx": "6e91c5a02cd0798e27fb604fccda6e44e2fb2c86f10a950a965ffbd6333b3fd3",
+    "components/ui/close-button.tsx": "99c28cce32046de0c88fee3231d6fb24d13209631c29d83a4b1f1bbae0150dc5",
+    "lib/i18n/routing.ts": "208258f97018f00e7cd7bccc415277307a522322f807fdc322681691e844fa87",
+    "lib/i18n/language-context.ts": "ae35c0b8170d1ea0e35ea15ab1679de3e251385ec14daf2497ee04cc1c34ea32",
+    "components/ui/dialog.tsx": "1c7343c50a593860de16326a3a50f7a29d6ac42797525511fdf39c83ff0573f1",
+    "app/components/studio/ui.tsx": "ccef38ea6ed37247ee094a0f3b9d700a18fb094a0a20832ad36f90c6739234ab",
+    "app/components/studio/ConfirmDialog.tsx": "c071877589611c8c424c61eadc9bbcc1d0fc4b824988718943fbb0accecddad9",
+    "components/ui/label.tsx": "7f19b8476658d25ff197c84030e58cd7395059d876a54630e025951e474ebdae",
+    "components/ui/textarea.tsx": "58b58d84fc54ba5f4ca46937870c619349fd9eccc4d494250ac7bc73a94e05e9",
+    "app/components/comments/comment-errors.ts": "db95c7c7a28313e77998123e9406dbd2bbffdeabe554a25083ca13e4f169944e",
+    "app/components/comments/components/ReportDialog.tsx": "9ef21cf7b9476a466ae4e73e975e1ba69cea37b26fffec847d47448d2a7588d2",
+    "app/components/comments/components/DeleteCommentDialog.tsx": "5908a0efec411cfc90f489a4bc82aebe1726f558533a308ff687e2c5a53abbf0",
+    "app/components/language-switcher/languages.ts": "534c7ccef87d78ec5206f36939bee4099990331adee59fcc4c117a16058697d7",
+    "app/components/language-switcher/LanguageFlag.tsx": "06999b030db168ca936bda09cda57f95bec87ad5179bb7dcde9a180348f64492",
+    "app/components/language-switcher/useLanguagePicker.ts": "31919f4f8f076ff32ea109740eeeb461df8894c52e35b75e87cd7e02fa55a987",
+    "app/components/language-switcher/LanguageSwitcher.module.css": "229325950f1bc75f15bda0321bfff439b5b9b1d401c16c9f6ee203485e945e4f",
+    "app/components/LanguageSwitcher.tsx": "a3f83e00ceca9f56076e13aafd9519e302da417ff545d8ec4be1e725d2529815",
+    "lib/i18n/catalog/de.json": "ee191dc2699b9d06d558cff58da6872cdc408cb3c67d69eb02a4003cf5284582",
+    "lib/i18n/catalog/es.json": "2765bfaad4eb4a33b59d4cd17cfb39a2488109476eb1bf8ce081947a42e9ca1d",
+    "lib/i18n/catalog/fr.json": "cac7a8732f021a41fa8a0b22f75ee240f4a5d11627036c5362160b35960b45cf",
+    "lib/i18n/catalog/it.json": "8e33156f060c1b4a6ba0629c28df0abc437b7e816ae475162ad4192be4cee44f",
+    "lib/i18n/catalog/pt.json": "8f64859479a498d1ecf7830ea16d329d16c3edb9663053a6e93c8dea6f22694e",
+    "lib/i18n/catalog/zh.json": "b9f77d73c3cb869182127074df17b62dda6e28d68747453d18a0b0e141be4f2d",
+    "lib/i18n/catalog/premium-pass/de.json": "5f145c6bdebac67ffc29d4a1b771d80a0135ddd084035721239c3cb07611ef60",
+    "lib/i18n/catalog/premium-pass/es.json": "e3575f6ed499081d00988813e890993df20c109daaaf77e99ef6155c8bd9898f",
+    "lib/i18n/catalog/premium-pass/fr.json": "be918ea35bb509e0fe72010b26bf7fc774af4dfe7b9e86193ae37bc72b839da8",
+    "lib/i18n/catalog/premium-pass/it.json": "703f1c814d92876170ac116c2f67e2eefe62b5d9ecaeeff57f636fbe5f71363f",
+    "lib/i18n/catalog/premium-pass/pt.json": "7a4d159770ab3158db9fbcc37da420f5749bea7e131f8a6e58b39da9e5176196",
+    "lib/i18n/catalog/premium-pass/zh.json": "f45b6a688c47529ae28c564e8c8e27b381c8831bdc48ddba1e6ffec4d586900f",
+    "lib/i18n/catalog/index.ts": "951446f192c257a6ee724c2290db8f4580de70affd1f1c2c061abd6c5e5643fa",
+    "lib/constants.ts": "56c6227e7f522a8eaa077cc2637890a6a2fcd15b75ba3aa34c13125421d1ddde",
+    "lib/i18n/dictionary.ts": "ef35da5ebdb4d8c0010fbc8920abb7ccafe7bffd0f253fb0b859a3ec5a7c3a6f",
+    "app/globals.css": "16c1da33c42e0f7ad387acbc24fb97406ac67a6aefa9e66b73fe1b5374fc4104",
+    "tailwind.config.ts": "357873866942705b9b1c597f3eddb8b077ecc8d2de02d66d19f55ba90d8edc91"
+  },
+  "observations": [
+    {
+      "case": "confirm_opens_on_safe_cancel",
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Cancel",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "dialogName": "confirm-dialog-title"
+    },
+    {
+      "case": "confirm_normal_tab_wrap",
+      "backward": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Delete playlist",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "forward": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Cancel",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_escape_restores_opener",
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_busy_tab_stays_in_modal",
+      "busyStart": {
+        "id": "_r_2_",
+        "tag": "DIV",
+        "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "tabSequence": [
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_2_",
+          "tag": "DIV",
+          "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Opera",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        }
+      ],
+      "backgroundIsolation": [
+        {
+          "tag": "BUTTON",
+          "id": "background",
+          "inert": false,
+          "ariaHidden": null
+        },
+        {
+          "tag": "MAIN",
+          "id": "research-main",
+          "inert": false,
+          "ariaHidden": null
+        },
+        {
+          "tag": "DIV",
+          "id": "root",
+          "inert": false,
+          "ariaHidden": "true"
+        },
+        {
+          "tag": "BODY",
+          "id": "",
+          "inert": false,
+          "ariaHidden": null
+        },
+        {
+          "tag": "HTML",
+          "id": "",
+          "inert": false,
+          "ariaHidden": null
+        }
+      ],
+      "backgroundRoleCount": 0,
+      "ariaBusy": "true"
+    },
+    {
+      "case": "confirm_busy_escape_blocked_and_retry_enabled",
+      "events": [
+        {
+          "event": "close",
+          "mode": "confirm"
+        },
+        {
+          "event": "confirm"
+        },
+        {
+          "event": "synthetic_operation_failed_retry_available"
+        }
+      ],
+      "active": {
+        "id": "_r_2_",
+        "tag": "DIV",
+        "text": "Delete synthetic playlist?The playlist will disappear; its videos remain. This callback deliberately stays pending.Cance",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_escape_restores_opener_after_retry",
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "confirm_removed_opener_focuses_main_region",
+      "active": {
+        "id": "research-main",
+        "tag": "MAIN",
+        "text": "Local component research — synthetic dataNo application API, account, payment or database is connected.Background action",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "report_radio_arrow_home_end_navigation",
+      "navigation": [
+        {
+          "key": "ArrowRight",
+          "selected": "Mowa nienawiści",
+          "tabStops": 1
+        },
+        {
+          "key": "ArrowUp",
+          "selected": "Nękanie",
+          "tabStops": 1
+        },
+        {
+          "key": "Home",
+          "selected": "Spam",
+          "tabStops": 1
+        },
+        {
+          "key": "End",
+          "selected": "Inne",
+          "tabStops": 1
+        },
+        {
+          "key": "ArrowDown",
+          "selected": "Spam",
+          "tabStops": 1
+        }
+      ],
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Spam",
+        "insideDialog": true,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "tabStopCount": 1
+    },
+    {
+      "case": "report_failure_keeps_note_and_announces_error",
+      "noteRetained": true,
+      "error": "Nie udało się wysłać zgłoszenia.",
+      "events": [
+        {
+          "event": "report",
+          "reason": "HARASSMENT",
+          "note": "Synthetic note retained on failure"
+        }
+      ]
+    },
+    {
+      "case": "report_baseui_tab_avoids_background",
+      "tabSequence": [
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Nękanie",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_0_-note",
+          "tag": "TEXTAREA",
+          "text": "Synthetic note retained on failure",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Anuluj",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Zgłoś",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "×",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Nękanie",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_0_-note",
+          "tag": "TEXTAREA",
+          "text": "Synthetic note retained on failure",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Anuluj",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Zgłoś",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "×",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "",
+          "tag": "BUTTON",
+          "text": "Nękanie",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        },
+        {
+          "id": "_r_0_-note",
+          "tag": "TEXTAREA",
+          "text": "Synthetic note retained on failure",
+          "insideDialog": true,
+          "focusGuard": false,
+          "ariaHidden": null
+        }
+      ],
+      "backgroundReached": false
+    },
+    {
+      "case": "report_escape_closes",
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "events": [
+        {
+          "event": "report",
+          "reason": "HARASSMENT",
+          "note": "Synthetic note retained on failure"
+        },
+        {
+          "event": "close",
+          "mode": "report"
+        }
+      ]
+    },
+    {
+      "case": "delete_comment_cancel_no_action",
+      "events": [
+        {
+          "event": "close",
+          "mode": "delete-comment"
+        }
+      ],
+      "active": {
+        "id": "opener",
+        "tag": "BUTTON",
+        "text": "Open research dialog",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      }
+    },
+    {
+      "case": "language_listbox_focus_home_end",
+      "optionCount": 8,
+      "before": "_r_0_-PL",
+      "end": "_r_0_-ZH",
+      "home": "_r_0_-PL",
+      "listFocused": true
+    },
+    {
+      "case": "language_typeahead_selects_de",
+      "typed": "_r_0_-DE",
+      "htmlLang": "de",
+      "events": [
+        {
+          "event": "language",
+          "locale": "de"
+        }
+      ],
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "DE",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "listClosed": true
+    },
+    {
+      "case": "language_escape_returns_trigger",
+      "active": {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "DE",
+        "insideDialog": false,
+        "focusGuard": false,
+        "ariaHidden": null
+      },
+      "listClosed": true
+    },
+    {
+      "case": "language_at_320_component_only",
+      "viewport": 320,
+      "documentWidth": 310,
+      "listRect": {
+        "left": 9,
+        "right": 301,
+        "width": 292
+      },
+      "full_page_reflow_proof": false
+    }
+  ],
+  "original_CSS_compiled": true,
+  "synthetic_callbacks_only": true,
+  "real_API_requests": 0,
+  "blocked_external_requests": [],
+  "browser_page_errors": [],
+  "limitations": [
+    "Isolated real React components plus original compiled global/CSS module styles, not Next/full application",
+    "Harness provider/local state replaces page shell and navigation; callbacks never perform real delete/report",
+    "Fonts/media/production auth/Prisma/payment and mobile hardware not reproduced",
+    "Chromium desktop only; no Safari/Firefox/screen reader/actual touch or WCAG certification"
+  ],
+  "cleanup": "Browser/context/server closed and temporary bundle directory removed in finally"
+}
