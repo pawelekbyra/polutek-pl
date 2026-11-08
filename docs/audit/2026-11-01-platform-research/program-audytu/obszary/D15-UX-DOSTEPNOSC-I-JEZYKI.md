@@ -52,7 +52,7 @@ ReportDialog używa wspólnego [Dialog/Base UI](https://github.com/pawelekbyra/p
 
 Po syntetycznej awarii zgłoszenia notatka pozostała w polu, okno zostało otwarte, a role=alert zawierał przetłumaczony komunikat. Klawiaturą wybrano Nękanie przez Space, callback dostał HARASSMENT oraz notatkę. Nie wysłano zgłoszenia do moderatora ani nie zbadano odczytu alertu przez screen reader.
 
-Sześć powodów ma role=radio, ale wszystkie sześć jest w kolejności Tab, a ArrowDown na Spam nie zmienia wyboru/fokusu. To rozbieżność względem wzorca APG radio group. **Nie oznacza całkowitego braku obsługi klawiatury:** Tab/Space w tej próbie pozwoliły wybrać powód i wysłać callback. Zapisano obserwację i kierunek poprawy, bez tworzenia nowego ID ani automatycznego ogłoszenia niezgodności całego WCAG.
+W pierwotnym przebiegu sześć powodów miało `role=radio`, ale wszystkie sześć było w kolejności Tab, a ArrowDown nie zmieniał wyboru/fokusu — rozbieżność względem wzorca APG radio group. **Uzupełnienie 8 listopada:** `ReportDialog` ma teraz roving tabindex, strzałki zmieniają wybór i fokus (z zawijaniem), Home/End wybierają skrajne pozycje. Test komponentu potwierdza jeden stopień Tab oraz nawigację **4/4 suite PASS**. Nie jest to odczyt z prawdziwym screen readerem; ocena pozostałych kryteriów WCAG pozostaje otwarta.
 
 Anulowanie DeleteCommentDialog nie wywołało syntetycznej akcji usuwania. Snapshot wykonano w trakcie obsługi zamknięcia/animacji; nie uznano go za osobne potwierdzenie końcowego restore focus. Istniejący test jednostkowy potwierdza wywołanie onConfirm dopiero po przycisku usunięcia, nie prawdziwe kasowanie.
 

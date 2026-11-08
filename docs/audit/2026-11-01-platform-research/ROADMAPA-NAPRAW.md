@@ -909,7 +909,7 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Weryfikacja historycznego R35, 7 listopada 2026:** ponowiono komponent `ConfirmDialog`/Base UI w Chromium 149 i Firefox 151, odczytując busy focus natychmiast (bez dwuklatkowego helpera): pięć kolejnych Tabów pozostało w panelu, Enter nie uruchomił syntetycznej akcji tła; 16 obserwacji PASS w każdej przeglądarce, bez błędów JS i żądań zewnętrznych. Historyczne `ux-browser-focus-fast.json` zachowano, bo jego harness/timing nie zostały odtworzone. [Chromium](program-audytu/evidence/k34-r35-current-chromium-retest-2026-11-07.json), [Firefox](program-audytu/evidence/k34-r35-current-firefox-retest-2026-11-07.json). To nie obejmuje screen readera, pełnego Studio shell ani niezależnego review; K34 pozostaje częściowe.
 
-**Uzupełnienie 8 listopada — ReportDialog:** podczas wysyłania zgłoszenia modal ma `aria-busy`, ogłasza status oczekiwania, przenosi fokus do panelu i nie zamyka się Escape do końca żądania. Test komponentu **3/3 PASS**, pełny repo typecheck i ESLint zmienionych plików PASS. Nie wykonano odczytu z prawdziwym screen readerem; K34 nadal częściowe.
+**Uzupełnienie 8 listopada — ReportDialog:** podczas wysyłania zgłoszenia modal ma `aria-busy`, ogłasza status oczekiwania, przenosi fokus do panelu i nie zamyka się Escape do końca żądania. Powody zgłoszenia używają roving tabindex: jeden stopień Tab, strzałki wybierają sąsiedni powód z zawijaniem, Home/End wybierają pierwszy/ostatni. Test komponentu **4/4 PASS**, pełny repo typecheck i ESLint zmienionych plików PASS. Nie wykonano odczytu z prawdziwym screen readerem; K34 nadal częściowe.
 
 **Testy odbioru:**
 

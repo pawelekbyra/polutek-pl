@@ -12,6 +12,33 @@ vi.mock('@/lib/i18n/language-context', () => ({ useOptionalTx: () => txFor('pl')
 afterEach(cleanup);
 
 describe('report dialog', () => {
+  it('uses roving radio focus and arrow/Home/End navigation to choose a reason', () => {
+    render(<ReportDialog isOpen onClose={vi.fn()} onSubmit={vi.fn()} language="pl" />);
+    const radios = screen.getAllByRole('radio');
+    expect(radios).toHaveLength(6);
+    expect(radios.filter((radio) => radio.tabIndex === 0)).toHaveLength(1);
+    expect(radios[0]).toHaveAttribute('aria-checked', 'true');
+
+    radios[0].focus();
+    fireEvent.keyDown(radios[0], { key: 'ArrowDown' });
+    expect(radios[1]).toHaveFocus();
+    expect(radios[1]).toHaveAttribute('aria-checked', 'true');
+    expect(radios.filter((radio) => radio.tabIndex === 0)).toEqual([radios[1]]);
+
+    fireEvent.keyDown(radios[1], { key: 'ArrowRight' });
+    expect(radios[2]).toHaveFocus();
+    fireEvent.keyDown(radios[2], { key: 'ArrowUp' });
+    expect(radios[1]).toHaveFocus();
+    fireEvent.keyDown(radios[1], { key: 'Home' });
+    expect(radios[0]).toHaveFocus();
+    fireEvent.keyDown(radios[0], { key: 'End' });
+    expect(radios[5]).toHaveFocus();
+    expect(radios[5]).toHaveAttribute('aria-checked', 'true');
+
+    fireEvent.keyDown(radios[5], { key: 'ArrowDown' });
+    expect(radios[0]).toHaveFocus();
+  });
+
   it('lists every reason at once and sends the chosen one', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<ReportDialog isOpen onClose={vi.fn()} onSubmit={onSubmit} language="pl" />);

@@ -36,6 +36,7 @@ const REASON_LABELS: Record<CommentReportReasonDto, (tx: Tx) => string> = {
   SPOILER: (tx) => tx("Spoiler", "Spoiler"),
   OTHER: (tx) => tx("Inne", "Other"),
 };
+const REPORT_REASONS = Object.keys(REASON_LABELS) as CommentReportReasonDto[];
 
 export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDialogProps) {
   const [reason, setReason] = useState<CommentReportReasonDto>("SPAM");
@@ -84,7 +85,7 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
               {tx("Powód", "Reason")}
             </legend>
             <div role="radiogroup" aria-label={tx("Powód", "Reason")} className="grid gap-1">
-              {(Object.keys(REASON_LABELS) as CommentReportReasonDto[]).map((value) => {
+              {REPORT_REASONS.map((value) => {
                 const selected = value === reason;
                 return (
                   <button
@@ -92,7 +93,34 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
                     type="button"
                     role="radio"
                     aria-checked={selected}
+                    tabIndex={selected ? 0 : -1}
                     onClick={() => setReason(value)}
+                    onKeyDown={(event) => {
+                      const currentIndex = REPORT_REASONS.indexOf(value);
+                      let nextIndex: number;
+                      switch (event.key) {
+                        case "ArrowDown":
+                        case "ArrowRight":
+                          nextIndex = (currentIndex + 1) % REPORT_REASONS.length;
+                          break;
+                        case "ArrowUp":
+                        case "ArrowLeft":
+                          nextIndex = (currentIndex + REPORT_REASONS.length - 1) % REPORT_REASONS.length;
+                          break;
+                        case "Home":
+                          nextIndex = 0;
+                          break;
+                        case "End":
+                          nextIndex = REPORT_REASONS.length - 1;
+                          break;
+                        default:
+                          return;
+                      }
+                      event.preventDefault();
+                      setReason(REPORT_REASONS[nextIndex]);
+                      const radios = event.currentTarget.closest('[role="radiogroup"]')?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
+                      radios?.[nextIndex]?.focus();
+                    }}
                     disabled={isSubmitting}
                     className={
                       "flex min-h-11 items-center gap-3 rounded-xl border px-3 text-left text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
