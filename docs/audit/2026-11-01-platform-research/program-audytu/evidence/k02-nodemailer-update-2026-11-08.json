@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_NODEMAILER_MAJOR_UPDATE",
+  "base_commit": "bba19112b195194843da5176a3ddcfba74e1679e",
+  "node": "v22.23.3",
+  "registry_release": "nodemailer@10.4.0",
+  "runtime_requirements": "Node >=20; project Node 22",
+  "official_release_notes": "https://github.com/nodemailer/nodemailer/releases",
+  "file_sha256": {
+    "package.json": "e80f82cc8f74c40cca8c58e7e5306560b460d48604cd7cb8bfa81de1e0987eb5",
+    "package-lock.json": "48dec699fc00d6e4f95bdffff01c6677117bdaca20652faedf150f72a500dd2d",
+    "lib/modules/email/infrastructure/own-mail.transport.ts": "8be8e72d08bf561c1f4163dff166b173a6f43b9344db1772991e1c35205d937b",
+    "lib/modules/email/infrastructure/ses-email.transport.ts": "01895c5767d6616826ed7d49428827f2d8bcf9f38e71fe688bdd37dc1a9b49e0",
+    "tests/unit/modules/email/own-mail.test.ts": "893a3fb7b687cd8d8f0e3bd725a038b616ae3de5aa1292a3d08c2a6f93bb2d70",
+    "tests/unit/modules/email/ses.test.ts": "65963910e18ccf200ae02a795cdd864762150a64d9b822dac20546e06373eb34"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages",
+      "postinstall": "Prisma Client 6.19.3"
+    },
+    "npm ls nodemailer --depth=0": {
+      "exit": 0,
+      "resolved": "10.4.0"
+    },
+    "npx vitest run tests/unit/modules/email/own-mail.test.ts tests/unit/modules/email/ses.test.ts --testTimeout=120000 --hookTimeout=120000": {
+      "exit": 0,
+      "files": 2,
+      "passed": 20,
+      "failed": 0
+    },
+    "npm run typecheck": {
+      "exit": 0
+    }
+  },
+  "behavior": {
+    "ownSmtpErrorCode": "originalCode is preferred over generic code; ECONNREFUSED remains observable",
+    "sesErrorCode": "originalCode is preferred over generic code; ETIMEDOUT remains observable"
+  },
+  "limitations": [
+    "No actual SMTP delivery was performed.",
+    "No app image builds or standalone runtime inspection were performed.",
+    "Full K02 acceptance remains open."
+  ]
+}
