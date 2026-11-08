@@ -5,7 +5,7 @@ import { appealDeadline, checkAppealText, isAppealWindowOpen, isDecisionVisibleT
 
 vi.mock("@/lib/modules/audit", () => ({ recordAuditEvent: vi.fn(), recordAuditEventSafe: vi.fn() }));
 vi.mock("@/lib/modules/notifications", () => ({ sendNotification: vi.fn(async () => ({})) }));
-vi.mock("@/lib/modules/email", () => ({ sendModerationDecisionEmail: vi.fn(async () => ({})), sendReporterOutcomeEmail: vi.fn(async () => ({})) }));
+vi.mock("@/lib/modules/email/application/send-moderation-email", () => ({ sendModerationDecisionEmail: vi.fn(async () => ({})), sendReporterEmail: vi.fn(async () => ({})) }));
 
 const NOW = new Date("2026-10-15T10:00:00Z");
 const decision = { id: "d1", channelId: "c1", action: "VIDEO_REMOVED", createdAt: new Date("2026-09-01T00:00:00Z") };

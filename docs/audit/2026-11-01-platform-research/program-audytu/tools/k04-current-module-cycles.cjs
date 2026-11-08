@@ -41,7 +41,9 @@ function runtimeSpecifiers(sourceFile) {
       && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
       values.push(node.moduleSpecifier.text);
     } else if (ts.isCallExpression(node) && node.arguments.length === 1 && ts.isStringLiteral(node.arguments[0])) {
-      if (ts.isIdentifier(node.expression) && node.expression.text === 'require') values.push(node.arguments[0].text);
+      const isRequire = ts.isIdentifier(node.expression) && node.expression.text === 'require';
+      const isDynamicImport = node.expression.kind === ts.SyntaxKind.ImportKeyword;
+      if (isRequire || isDynamicImport) values.push(node.arguments[0].text);
     }
     ts.forEachChild(node, visit);
   }
@@ -123,8 +125,8 @@ const walkCycle = (file, route) => {
 for (const file of files) if (largestComponent.has(file) && !done.has(file) && walkCycle(file, [])) break;
 const result = {
   date: new Date().toISOString(),
-  method: 'TypeScript transpileModule ESNext output; static imports/re-exports and literal require only; TypeScript Bundler resolver; SCC over lib/modules files only.',
-  scope: 'Current tracked and untracked .ts/.tsx source files below lib/modules, excluding .d.ts; node_modules internals, dynamic imports and computed imports are not followed.',
+  method: 'TypeScript transpileModule ESNext output; static imports/re-exports, literal require, and literal dynamic imports; TypeScript Bundler resolver; SCC over lib/modules files only.',
+  scope: 'Current tracked and untracked .ts/.tsx source files below lib/modules, excluding .d.ts; node_modules internals and computed imports are not followed.',
   files: files.length,
   parse_diagnostics: parseDiagnostics,
   file_cycles: orderedCycles,

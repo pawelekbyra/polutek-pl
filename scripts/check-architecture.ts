@@ -121,6 +121,7 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   },
   'lib/modules/channel/infrastructure/moderation-notice.ts': {
     'notifications/application/send-notification.use-case': 'This adapter needs only notification delivery; the notifications barrel re-exports video-dependent notification reads.',
+    'email/application/send-moderation-email': 'This adapter lazily loads only moderation mail; the email barrel pulls the transactional sender, subscriptions and channel workflows into a dynamic-import cycle.',
   },
   'lib/modules/syndication/domain/embed-eligibility.ts': {
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
@@ -200,7 +201,7 @@ function checkModules() {
     const moduleMatch = relativePath.match(/lib\/modules\/([^/]+)/);
     if (moduleMatch) {
       const currentModule = moduleMatch[1];
-      const importMatches = content.matchAll(/from ['"]@\/lib\/modules\/([^/'"]+)\/([^'"]+)['"]/g);
+      const importMatches = content.matchAll(/(?:from\s+|import\(\s*)['"]@\/lib\/modules\/([^/'"]+)\/([^'"]+)['"]/g);
       for (const match of importMatches) {
         const importedModule = match[1];
         const subPath = match[2];

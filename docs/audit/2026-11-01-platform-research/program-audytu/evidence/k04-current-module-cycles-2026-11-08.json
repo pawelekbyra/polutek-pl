@@ -1,7 +1,7 @@
 {
-  "date": "2026-11-08T08:29:00.222Z",
-  "method": "TypeScript transpileModule ESNext output; static imports/re-exports and literal require only; TypeScript Bundler resolver; SCC over lib/modules files only.",
-  "scope": "Current tracked and untracked .ts/.tsx source files below lib/modules, excluding .d.ts; node_modules internals, dynamic imports and computed imports are not followed.",
+  "date": "2026-11-08T08:41:36.829Z",
+  "method": "TypeScript transpileModule ESNext output; static imports/re-exports, literal require, and literal dynamic imports; TypeScript Bundler resolver; SCC over lib/modules files only.",
+  "scope": "Current tracked and untracked .ts/.tsx source files below lib/modules, excluding .d.ts; node_modules internals and computed imports are not followed.",
   "files": 447,
   "parse_diagnostics": [],
   "file_cycles": [],
@@ -119,7 +119,7 @@
     "lib/modules/channel/index.ts": "c887281ddc9674d292d78167acd9c190c1a9a5ea564f06017aba585f1e829307",
     "lib/modules/channel/infrastructure/channel.repository.ts": "d315a0ea7a2dc7d4a2b733664a6064253e0c94168ada97bd5bc7222467f1c541",
     "lib/modules/channel/infrastructure/creator-content.service.ts": "fbe44d2e92911a8177a4f1ea99b2135521446ba52946ab4837f2bbe76a2b46d4",
-    "lib/modules/channel/infrastructure/moderation-notice.ts": "382a8f381910e385abda96bd5e5a5ecab59fac97146e23aeae21d6e0c6f40bd5",
+    "lib/modules/channel/infrastructure/moderation-notice.ts": "90b7c8dd7a586038cf79911622af19b6731fce5ffe60793234f8589908ed8f4d",
     "lib/modules/comments/application/approve-held-comment.use-case.ts": "2e5e42bb385b6b803f7612096980a6138775ae00113b6f51fed0225ef521390c",
     "lib/modules/comments/application/authorize-comments.ts": "9de6a7ca34bb353de9d7ab72605acbb0f151b9982e4e88dc0d7836c95dc6b824",
     "lib/modules/comments/application/channel-ban.use-cases.ts": "1885ea37b355c8d2711a2c9963df0c96d4ec4725e79b808c5e92baf14e17b59d",
@@ -454,7 +454,5 @@
     "lib/modules/watch-progress/domain/continue-watching.ts": "b64f55894627f38a4abff734e3c71dda3831ba96330904ea5cd77e0cde31c38b",
     "lib/modules/watch-progress/domain/progress-rules.ts": "a2ee1ece4c213805cd78738eb46ddca66bda5547ca287857542feabb33c86cfa",
     "lib/modules/watch-progress/index.ts": "b16f964d579d537b9f5c6ae2709cc5cb439b4cc18514664c842b351d084c5e3e"
-  },
-  "base_commit": "82fa24963cee9d628afcd9a1010faae8f4e4c81d",
-  "probe_sha256": "3d8bfa9f194e107d9ec69b39292a4d7e45db6cf5e48ee3ee182627767dd945b3"
+  }
 }

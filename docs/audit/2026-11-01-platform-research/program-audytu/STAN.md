@@ -1,6 +1,8 @@
-## Punkt wznowienia — 7 listopada 2026, K35-T2 cross-channel complete
+## Punkt wznowienia — 8 listopada 2026, K04 dynamic imports
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Ostatni commit testu: `7828a4ec`; dokumentacja odmów resume/abort do osobnego commitu.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Zmiana K04 wykryła i usunęła cykl 19 plików przez zastąpienie dynamicznego importu publicznego barrel e-maili wąskim importem sendera moderacyjnego; strażnik pilnuje teraz także dynamicznych deep importów z uzasadnieniem. Dwie suite: 14/14 PASS; architektura PASS; pełny typecheck PASS; końcowy probe 447 plików: zero cykli i błędów parsera. Dowód: `evidence/k04-current-module-cycles-2026-11-08.json`. Zmiany oczekują na commit; bez push/PR/merge/deploy.
+
+**Następny krok:** po zapisaniu pakietu K04 kontynuować otwarte zadania roadmapy; review composition root i niezależny przegląd pozostają potrzebne do zamknięcia K04. Komenda wznowienia: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
 Lokalny acceptance obejmuje Studio multipart upload → rzeczywisty `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → poprawne playlisty/segment przez kod HLS edge Worker → Chromium odtwarza ponad 0,5 s materiału. PostgreSQL 17.11/84 migracje: integration 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Kontener disposable zatrzymany. [Dowód browser/edge](evidence/k35-browser-hls-local-2026-11-07.json).
 
@@ -558,3 +560,6 @@ Rzeczywisty Studio multipart HTTP kończy upload w loopback storage. Tymczasowy 
 ## K35-T2 — odmowa wznowienia i anulowania cudzego uploadu, 7 listopada 2026
 
 Właściciel A próbuje GET resume i DELETE abort na uploadie B; właściciel B robi to samo wobec uploadu A. Cztery żądania kończą się 404, bez requestów storage; oryginały pozostają `UPLOADING`. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**, repo typecheck, celowany ESLint i diff check PASS. [Dowód i SHA](evidence/k35-cross-channel-resume-abort-2026-11-07.json). To rozszerza lokalną granicę Studio API; pełna macierz K35, R2/deployed Worker i niezależny review pozostają otwarte.
+## Aktualizacja K04 — cykl dynamicznego importu e-maili moderacyjnych, 8 listopada 2026
+
+Rozszerzenie probe na literalne `import()` ujawniło statycznie niewidoczny cykl 19 plików: `moderation-notice` → publiczny barrel e-maili → sender transakcyjny → subskrypcje → barrel kanału → moderacja. Adapter ładuje teraz wąski `email/application/send-moderation-email`; strażnik architektury kontroluje także dynamiczne importy modułów i wymaga jawnego uzasadnienia dla wyjątku. Dwie suite powiązane: **14/14 PASS**, `npm run quality:architecture-boundaries` PASS; końcowy probe 447 TS/TSX: zero cykli i diagnostyk parsera. [Dowód i hashe](evidence/k04-current-module-cycles-2026-11-08.json), [narzędzie](tools/k04-current-module-cycles.cjs). Ograniczenia: importy obliczane, node_modules, źródła poza `lib/modules`, bundler i runtime nie są objęte. Pełny typecheck po zmianie przeszedł (exit 0); K04 nadal częściowe do review composition root i niezależnego przeglądu.
