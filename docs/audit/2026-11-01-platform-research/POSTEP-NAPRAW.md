@@ -92,6 +92,8 @@ Oficjalne wydanie Next 16.4.5 z 3 listopada wymienia siedem naprawionych advisor
 
 **Kontynuacja 8 listopada 2026 — fast-uri:** override podnosi 3.1.8 do poprawionej wersji 3.1.9. Czysta instalacja oraz `npm ls fast-uri --all` potwierdzają jedną wersję w drzewie pod narzędziami developerskimi `shadcn`/`@dotenvx/dotenvx`. Nie dowodzi to obecności w obrazach aplikacji. [Dowód](program-audytu/evidence/k02-fast-uri-update-2026-11-08.json). Nie wysyłano nowego grafu npm audit.
 
+**Kontynuacja 8 listopada 2026 — ip-address:** override podnosi 10.7.2 do aktualnej poprawionej 10.7.6. Czysta instalacja oraz `npm ls ip-address --all` potwierdzają tę wersję pod developerskim `shadcn → @modelcontextprotocol/sdk → express-rate-limit`; nie jest to dowód obecności w obrazach aplikacji. [Dowód](program-audytu/evidence/k02-ip-address-update-2026-11-08.json). Nie wysyłano grafu npm audit.
+
 ## K06 — proof approval przed przetworzeniem archiwum, 7 listopada 2026
 
 `mergedeploy.sh` przekazuje zewnętrznie zatwierdzony SHA do `release-artifact.mjs`; konsument porównuje go z proofem przed listowaniem/rozpakowaniem `source.tar`. Chroni to maszynę uruchamiającą transfer przed przetworzeniem archiwum z niezatwierdzonego artefaktu. Regresja używa błędnego archiwum i hash mismatch, potwierdzając odmowę przed odczytem tar. `release-artifact` + `mergedeploy-release`: **53/53 PASS**; ESLint 3 plików, `bash -n` i `git diff --check` PASS. Brak Actions/GHCR/SSH/Docker/serwera; rzeczywiste obrazy, cykl release i rollback nadal otwarte. [Dowód](program-audytu/evidence/k06-proof-before-extraction-2026-11-07.json).

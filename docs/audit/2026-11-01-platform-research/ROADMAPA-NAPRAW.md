@@ -163,6 +163,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — fast-uri:** lockfile podnosi 3.1.8 do poprawionej 3.1.9; czysta instalacja i drzewo zależności przeszły. Bieżące ścieżki prowadzą przez developerskie `shadcn`/`@dotenvx/dotenvx`; wymagane pozostaje sprawdzenie obrazów. [Dowód](program-audytu/evidence/k02-fast-uri-update-2026-11-08.json).
 
+**Uzupełnienie 8 listopada 2026 — ip-address:** lockfile aktualizuje 10.7.2 do 10.7.6; czysta instalacja i inspekcja drzewa przeszły. Ścieżka występuje pod developerskim `shadcn`/`express-rate-limit`; inspekcja obrazów runtime nadal otwarta. [Dowód](program-audytu/evidence/k02-ip-address-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore
