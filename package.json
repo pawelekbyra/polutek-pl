@@ -145,7 +145,8 @@
     "systeminformation": "5.33.19",
     "@modelcontextprotocol/sdk": "1.32.2",
     "postcss-selector-parser@6.0.10": "6.1.5",
-    "postcss-selector-parser@7.1.4": "7.1.7"
+    "postcss-selector-parser@7.1.4": "7.1.7",
+    "vite": "8.3.6"
   },
   "engines": {
     "node": "22.x"
