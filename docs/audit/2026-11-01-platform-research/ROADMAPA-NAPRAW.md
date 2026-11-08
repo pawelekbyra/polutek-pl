@@ -171,6 +171,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Uzupełnienie 8 listopada 2026 — hono:** lockfile aktualizuje 4.12.25 do 4.13.17, a czysta instalacja i `npm ls --all` potwierdzają wersję. Pakiet występuje wyłącznie w rozwiniętym drzewie developerskiego `shadcn`/MCP; `@hono/node-server` nadal wymaga osobnego rozstrzygnięcia, a obrazy runtime — inspekcji. [Dowód](program-audytu/evidence/k02-hono-update-2026-11-08.json).
 
+**Uzupełnienie 8 listopada 2026 — @hono/node-server:** lockfile podnosi 1.19.17 do 2.1.6; wersja 2 jest dopuszczona przez peer range MCP SDK. Czysta instalacja i inspekcja drzewa przeszły; dotyczy wyłącznie developerskiego `shadcn`/MCP. [Dowód](program-audytu/evidence/k02-hono-node-server-update-2026-11-08.json).
+
 <a id="k03"></a>
 
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore
