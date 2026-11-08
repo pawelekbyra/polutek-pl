@@ -1,8 +1,8 @@
-## Punkt wznowienia — 8 listopada 2026, K04 dynamic imports
+## Punkt wznowienia — 8 listopada 2026, K34 ReportDialog
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. Zmiana K04 wykryła i usunęła cykl 19 plików przez zastąpienie dynamicznego importu publicznego barrel e-maili wąskim importem sendera moderacyjnego; strażnik pilnuje teraz także dynamicznych deep importów z uzasadnieniem. Dwie suite: 14/14 PASS; architektura PASS; pełny typecheck PASS; końcowy probe 447 plików: zero cykli i błędów parsera. Dowód: `evidence/k04-current-module-cycles-2026-11-08.json`. Zmiany oczekują na commit; bez push/PR/merge/deploy.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. K04: cykl 19 plików z dynamicznego importu został usunięty i jest zapisany w commicie `59c4cd1d`; typecheck, architektura, 14/14 testów i końcowy probe 447 plików (zero SCC) PASS. K34: ReportDialog ogłasza stan oczekiwania, utrzymuje fokus i blokuje zamknięcie podczas requestu; komponent 3/3 PASS, pełny repo typecheck, ESLint i diff check PASS. Bieżąca zmiana K34 oczekuje na commit; bez push/PR/merge/deploy.
 
-**Następny krok:** po zapisaniu pakietu K04 kontynuować otwarte zadania roadmapy; review composition root i niezależny przegląd pozostają potrzebne do zamknięcia K04. Komenda wznowienia: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
+**Następny krok:** zapisać K34 jako mały commit, potem kontynuować otwarte zadania roadmapy. Screen reader i niezależny review pozostają potrzebne do zamknięcia K34; review composition root także pozostaje otwarty dla K04. Komenda wznowienia: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`.
 
 Lokalny acceptance obejmuje Studio multipart upload → rzeczywisty `scripts/video-worker.ts` i FFmpeg → `PUBLISHED` → publiczne API `READY/SELF_HLS` → poprawne playlisty/segment przez kod HLS edge Worker → Chromium odtwarza ponad 0,5 s materiału. PostgreSQL 17.11/84 migracje: integration 1/1 PASS, `npm run typecheck`, celowany ESLint i `git diff --check` PASS. Kontener disposable zatrzymany. [Dowód browser/edge](evidence/k35-browser-hls-local-2026-11-07.json).
 

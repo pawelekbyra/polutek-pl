@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useId, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +43,12 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const idPrefix = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const tx = useOptionalTx(language);
+
+  useEffect(() => {
+    if (isSubmitting) dialogRef.current?.focus({ preventScroll: true });
+  }, [isSubmitting]);
 
   const close = () => {
     setError(null);
@@ -66,8 +71,8 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && close()}>
+      <DialogContent ref={dialogRef} tabIndex={-1} aria-busy={isSubmitting} className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
             {tx("Zgłoś komentarz", "Report comment")}
@@ -132,6 +137,9 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
               {error}
             </p>
           )}
+          <p role="status" aria-live="polite" className="sr-only">
+            {isSubmitting ? tx("Operacja w toku.", "Operation in progress.") : ""}
+          </p>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={close} disabled={isSubmitting}>

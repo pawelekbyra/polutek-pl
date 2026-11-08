@@ -44,6 +44,8 @@ Demonstracja nie wymagała programowego fokusowania przycisku tła: po przejści
 
 To nadal fixture komponentu: nie uruchamiano Next/Studia, prawdziwego DELETE, Safari/Firefox ani czytnika ekranu; niezależny review oczekuje. K34 pozostaje częściowe do pełnego odbioru serwerowego i niezależnego przeglądu. Escape i kliknięcie tła podczas busy są celowo ignorowane; po zakończeniu lub błędzie użytkownik może zamknąć okno albo ponowić operację.
 
+**Uzupełnienie 8 listopada — ReportDialog:** w czasie wysyłania zgłoszenia panel dostaje `aria-busy`, fokus jest przenoszony na panel, a `role=status` ogłasza „Operacja w toku”; Escape i zamknięcie są ignorowane do zakończenia requestu. Test komponentu potwierdza busy/status, fokus, blokadę Escape i zamknięcie po sukcesie (**3/3 PASS**), pełny repo typecheck i ESLint zmienionych plików PASS. To nie jest test z czytnikiem ekranu ani pełnego przepływu HTTP; retry po błędzie zachowuje dotychczasowe zachowanie.
+
 ## Dialog zgłoszenia: działające kontrole i ograniczenie wzorca radio
 
 ReportDialog używa wspólnego [Dialog/Base UI](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/components/ui/dialog.tsx). W finalnym pomiarze, po ustaleniu fokusu przez dwie klatki przeglądarki, 12 kolejnych Tab nie dotarło do kontrolek tła. Escape zamknął okno i przywrócił opener. Nie uogólniamy R35 na każdy dialog projektu.

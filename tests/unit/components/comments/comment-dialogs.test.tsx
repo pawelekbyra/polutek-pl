@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import { ReportDialog } from '@/app/components/comments/components/ReportDialog';
 import { DeleteCommentDialog } from '@/app/components/comments/components/DeleteCommentDialog';
@@ -24,6 +24,26 @@ describe('report dialog', () => {
     expect(screen.getByRole('radio', { name: 'Nękanie' })).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'Zgłoś' }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('HARASSMENT', undefined));
+  });
+
+  it('announces pending submission and keeps the dialog open until it settles', async () => {
+    let resolveSubmit: (() => void) | undefined;
+    const onSubmit = vi.fn(() => new Promise<void>((resolve) => { resolveSubmit = resolve; }));
+    const onClose = vi.fn();
+    render(<ReportDialog isOpen onClose={onClose} onSubmit={onSubmit} language="pl" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Zgłoś' }));
+    const dialog = screen.getByRole('dialog', { name: 'Zgłoś komentarz' });
+    expect(dialog).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('Operacja w toku.');
+    expect(screen.getByRole('button', { name: 'Anuluj' })).toBeDisabled();
+    await waitFor(() => expect(dialog).toHaveFocus());
+
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+
+    await act(async () => { resolveSubmit?.(); });
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 });
 
