@@ -2,7 +2,7 @@
 
 Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-audit`** w repozytorium `pawelekbyra/polutek-pl`. Właściciel 1 listopada 2026 polecił zachowywać tutaj także poprzednie badanie i dopisywać kolejne wnioski na tej samej gałęzi.
 
-**Roadmapa wznowiona na polecenie właściciela 6 listopada 2026.** Punkt bazowy to lokalny merge aktualnego `origin/main` (`e2d33e0e`), commit `7e6f5335`; pełne `npm run quality` przeszło na tym drzewie. K13/R04–K19/R29 mają lokalne, częściowo zweryfikowane zmiany; następny jest K20. Żaden pakiet nie jest formalnie zamknięty. [Bieżący stan i komenda wznowienia](program-audytu/STAN.md), [postęp i dowody](POSTEP-NAPRAW.md), [mapa commitów](program-audytu/MAPA-COMMITOW.csv). Bez push, PR, merge do main, wdrożenia ani produkcji.
+**Roadmapa wznowiona na polecenie właściciela 6 listopada 2026.** Punkt bazowy to lokalny merge aktualnego `origin/main` (`e2d33e0e`), commit `7e6f5335`; pełne `npm run quality` przeszło na tym drzewie. Pakiety K01–K40 są w różnym stopniu częściowo zweryfikowane; żaden nie jest formalnie zamknięty. Ostatni zapisany krok: K20 helper procesu workera poprawiony po błędzie TypeScript wykrytym przez build publicznej aplikacji; oba buildy przechodzą. Następnie wrócić do brakujących dowodów K02 (obrazy runtime) i kolejnych otwartych pakietów według zależności. [Bieżący stan i komenda wznowienia](program-audytu/STAN.md), [postęp i dowody](POSTEP-NAPRAW.md), [mapa commitów](program-audytu/MAPA-COMMITOW.csv). Bez push, PR, merge do main, wdrożenia ani produkcji.
 
 ## Zacznij tutaj
 

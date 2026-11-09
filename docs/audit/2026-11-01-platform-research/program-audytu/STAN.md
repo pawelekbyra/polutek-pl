@@ -1,4 +1,12 @@
-## Punkt wznowienia — 8 listopada 2026, K34 fokus dialogów
+## Punkt wznowienia — 9 listopada 2026, K20 helper procesu workera / K02 buildy
+
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. K20: po świeżej instalacji TypeScript buildu wykrył niezgodny czwarty argument `hlsAttemptAssetKey` w helperze procesu workera; poprawiono zgodnie z API. Publiczny `npm run build` i panelowy `npm run admin:build` przechodzą, w tym TypeScript. `npm ci --no-audit --no-fund` dodał 833 pakiety i wygenerował Prisma Client 6.19.3; Zod ma jedną wersję 4.6.7. Nie ustawiono `DATABASE_URL`, więc nie uruchamiano testu PostgreSQL K20. K20 pozostaje częściowe do testu DB i niezależnego review.
+
+K02: oba buildy aplikacji przechodzą na bieżącym SHA. Pozostaje inspekcja rzeczywistych obrazów runtime i regresje obrazów/miniatur; poprzednio brak miejsca blokował Docker build, obecnie host pokazuje ok. 8,2 GB wolnego, ale nie uruchomiono buildów obrazów ze względu na współdzielony host z aktywnymi kontenerami. Nie usuwano cache ani wolumenów. Bez push/PR/merge/deploy/produkcji.
+
+**Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`. Następnie dokończyć K20 testem tylko na świeżej bazie disposable; równolegle wrócić do brakującej inspekcji K02, bez użycia produkcyjnej bazy lub hostowego Docker cleanup.
+
+## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów
 
 Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. K04: cykl 19 plików z dynamicznego importu usunięty w commicie `59c4cd1d`; typecheck, architektura, 14/14 testów i probe 447 plików (zero SCC) PASS. K34: ReportDialog ogłasza busy, utrzymuje fokus i blokuje zamknięcie podczas requestu; radio powodów ma nawigację klawiaturową. DeleteCommentDialog po usunięciu openera przywraca fokus do landmarku `main`. Test dialogów 4/4, repo typecheck PASS; Chromium 149 harness 17 obserwacji, 0 page errors i 0 żądań zewnętrznych. Dowód: `evidence/ux-browser-experiment-2026-11-08.json`. K34 zapisany lokalnie w `cdcbe77b`; bez push/PR/merge/deploy.
 
