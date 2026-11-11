@@ -452,6 +452,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Dodatkowy przyrost lokalny, 7 listopada 2026:** paginowane odczyty odmawiają niepełnego wyniku, gdy strona jest oznaczona jako ucięta, ale nie ma nowego tokenu albo powtarza poprzedni. W `deletePrefix()` walidacja tokenu następuje przed usuwaniem obiektów z danej strony. Regresja przez prawdziwy AWS SDK na loopbackie sprawdza brak tokenu i powtórzony token; łącznie trzy suite K13: **22/22 PASS**, ESLint, typecheck i diff check PASS. Nie użyto R2 ani zewnętrznego bucketu. [Dowód](program-audytu/evidence/k13-pagination-fail-closed-2026-11-07.json). K13 pozostaje częściowe do odbioru sandboxa S3/R2 i niezależnego przeglądu.
 
+**Retest lokalny, 11 listopada 2026:** dwie suite obsługi odpowiedzi `DeleteObjects` oraz loopbackowego protokołu AWS SDK przeszły **10/10**; celowany ESLint i diff check PASS. Sprawdzono per-object errors, ponawianie błędów przejściowych i kontrakt HTTP 200 z odpowiedzią S3. [Dowód i hashe](program-audytu/evidence/k13-delete-retest-2026-11-11.json). To nie potwierdza zgodności Cloudflare R2 ani kolejnych stron na providerze; K13 pozostaje częściowe.
+
 <a id="k14"></a>
 
 #### K14. Zatrzymanie i zakończenie transferów przed cleanup

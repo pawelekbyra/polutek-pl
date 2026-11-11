@@ -616,6 +616,10 @@ Aktualna suite `tests/unit/scripts/loadtest-contract.test.ts`: **36/36 PASS**. `
 ## K07 — retest ograniczonych czytników body, 11 listopada 2026
 
 Celowana suite `tests/unit/utils/request-body.test.ts`: **13/13 PASS**; ESLint i diff check PASS. Testy potwierdzają wczesną odmowę po deklarowanym i rzeczywistym przekroczeniu, także przy brakującym/zaniżonym `Content-Length`, liczenie części multipart przed natywnym parserem oraz legalny payload 10 000 części poniżej limitu proxy-safe. [Dowód i hashe](evidence/k07-request-body-retest-2026-11-11.json). To lokalne syntetyczne strumienie Request; nie obejmuje zewnętrznego reverse proxy/Cloudflare Tunnel ani pomiaru równoległych żądań w pełnym stosie. K07 pozostaje otwarte na tę bramkę i niezależny przegląd.
+
+## K13 — retest usuwania obiektów, 11 listopada 2026
+
+Dwie suite `r2-storage-delete` i `r2-storage-delete-http`: **10/10 PASS**; celowany ESLint i diff check PASS. Obejmują per-object błędy `DeleteObjects`, ponawianie transient failures i protokół rzeczywistego AWS SDK na loopbackie. [Dowód i hashe](evidence/k13-delete-retest-2026-11-11.json). Brak prawdziwego R2/S3 sandboxa, więc zgodność dostawcy i niezależny review pozostają otwarte.
 ## Aktualizacja K04 — cykl dynamicznego importu e-maili moderacyjnych, 8 listopada 2026
 
 Rozszerzenie probe na literalne `import()` ujawniło statycznie niewidoczny cykl 19 plików: `moderation-notice` → publiczny barrel e-maili → sender transakcyjny → subskrypcje → barrel kanału → moderacja. Adapter ładuje teraz wąski `email/application/send-moderation-email`; strażnik architektury kontroluje także dynamiczne importy modułów i wymaga jawnego uzasadnienia dla wyjątku. Dwie suite powiązane: **14/14 PASS**, `npm run quality:architecture-boundaries` PASS; końcowy probe 447 TS/TSX: zero cykli i diagnostyk parsera. [Dowód i hashe](evidence/k04-current-module-cycles-2026-11-08.json), [narzędzie](tools/k04-current-module-cycles.cjs). Ograniczenia: importy obliczane, node_modules, źródła poza `lib/modules`, bundler i runtime nie są objęte. Pełny typecheck po zmianie przeszedł (exit 0); K04 nadal częściowe do review composition root i niezależnego przeglądu.
