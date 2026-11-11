@@ -365,7 +365,7 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Ryzyko regresji:** Niskie/średnie: zachowanie legalnego podglądu przyszłej premiery.
 
-**Do weryfikacji przed zamknięciem:** Potwierdzony komponentowy łańcuch; potrzebne prawdziwe HTTP z rolami.
+**Do weryfikacji przed zamknięciem:** Podstawowa macierz HTTP z prawdziwymi podpisanymi sesjami i PostgreSQL jest już wykonana (dowód poniżej). Pozostaje niezależny review; wygenerowanie podpisanego adresu nie dowodzi, że Worker/HLS akceptuje właściwe tokeny ani chroni obiekty.
 
 **Testy odbioru:**
 
@@ -373,6 +373,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 - **K10-T2** — Własny uprawniony podgląd i publiczna legalna premiera nadal działają, a odtwarzanie przed czasem pozostaje zabronione.
 
 **Postęp lokalny 6 listopada 2026 (częściowy):** wspólny sanitizer planu publicznego dodatkowo czyści metadane dla `NOT_FOUND`/`VIDEO_NOT_FOUND`, nawet jeśli caller poda DTO z załadowanym filmem. Route-handler regresja dla gościa i obcego użytkownika pokrywa tytuł, poster, termin, ofertę, rozdziały, napisy, źródło/token, asset diagnostics i sesję. Wraz z testem gate **19/19 PASS**, ESLint i repo typecheck PASS. Nie uruchamiano osobnego serwera HTTP ani rzeczywistej sesji/DB; pełny odbiór HTTP i niezależny review pozostają otwarte. [Dowód](program-audytu/evidence/k10-public-redaction-2026-11-06/result.json).
+
+**Rzeczywista macierz HTTP i role, 7 listopada 2026:** Next dev + Better Auth z podpisanymi sesjami + PostgreSQL 17.11/84 migracje: **2/2 PASS**. Gość i obce konto nie dostają metadanych `REMOVED`; właściciel dostaje plan draftu i podpisany SELF_HLS; przed czasem legalna premiera ujawnia komunikat, ale nie źródło ani sesję. Nie żądano manifestu ani segmentów, więc Worker/HLS pozostaje poza dowodem. [Dowód](program-audytu/evidence/k10-http-role-matrix-2026-11-07.json). K10 nadal częściowe do niezależnego review i oddzielnej weryfikacji ochrony obiektów w Workerze.
 
 ### E2 — Poprawność pieniędzy i płatnych uprawnień
 
