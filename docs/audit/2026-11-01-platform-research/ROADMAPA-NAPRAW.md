@@ -492,6 +492,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Wynik lokalny 6 listopada 2026:** odtworzono błąd RED: spóźniony retry ze snapshotem `READY` cofał aktywny wskaźnik i próbował zlecić starszy oryginał. Complete i READY replay mają teraz wspólną transakcyjną blokadę per video, odczyt statusu/wersji pod blokadą i CAS; wersja aktywna, statusy oryginałów oraz zadanie kolejki są atomowe. READY replay naprawia historyczny brak joba tylko dla nadal zwycięskiej wersji. Trzy testy przez rzeczywistą trasę Studio z prawdziwymi transakcjami Prisma/PostgreSQL 17 i barierą: **3/3 PASS** (v1 retry po v2, recovery i idempotentny replay, spóźniony upload v1); dodatkowo 28/28 celowanych unit, ESLint i repo typecheck PASS ([dowody](program-audytu/evidence/k15-monotonic-original-2026-11-06/result.json)). Sesja Studio i R2 są kontrolowanymi atrapami; brak sandboxa R2 i niezależnego przeglądu, więc K15 częściowe.
 
+**Uzupełnienie 11 listopada 2026:** rzeczywiste dwa równoległe complete żądania przechodzą przez handler Studio na PostgreSQL; powtórka otrzymuje ten sam job. Dodatkowy test opóźnia retry v1 aż po aktywacji v2 i potwierdza, że v1 odpowiada `409 UPLOAD_NOT_OPEN`, pozostaje `SUPERSEDED`, a aktywny wskaźnik nadal wskazuje v2. Plik integracyjny **7/7 PASS**, typecheck i ESLint PASS; [dowód współbieżności](program-audytu/evidence/k22-concurrent-complete-postgres-2026-11-11.json), [dowód spóźnionego retry](program-audytu/evidence/k22-stale-replay-race-postgres-2026-11-11.json). R2 i niezależny review pozostają otwarte.
+
 <a id="k16"></a>
 
 #### K16. Tożsamość próby i odrębne prefiksy kodowania

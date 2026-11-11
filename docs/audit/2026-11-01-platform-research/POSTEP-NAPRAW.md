@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — synchronizacja rejestru R27/K15
+
+Rejestr oznaczał R27 jako nierozpoczęte, mimo że K15 zawiera już rzeczywiste handlery Studio i transakcje PostgreSQL. Uaktualniono R27 na częściowe i podpięto dowód wyścigu dwóch complete requestów oraz test opóźnionego retry v1 po aktywacji v2 (**7/7 PASS**). Stara wersja pozostaje SUPERSEDED i nie cofa aktywnego wskaźnika. R2 i niezależny review pozostają otwarte.
+
 ## 11 listopada 2026 — synchronizacja rejestru R03/K14
 
 Rejestr `KOLEJNOSC-NAPRAW.csv` nadal oznaczał R03 jako nierozpoczęte, choć K14 ma już dowody naprawy: po awarii zatrzymuje nowe PUT-y i czeka na rozpoczęte transfery przed cleanup, a klient AWS SDK przerywa żądanie na loopbackie. Podpięto istniejące wyniki **29/29 PASS**. Status pozostaje częściowy do sandboxa R2/S3 i niezależnego review; nie powtarzano testów ani nie zmieniano kodu.

@@ -16,6 +16,8 @@ K34: test regresji dialogów asertywnie sprawdza dostępną nazwę i opis Delete
 
 K24: test z prawdziwym PostgreSQL sprawdza wyścig ABA i odmowę autoryzacji niepowiązanego użytkownika bez efektów (**4/4 PASS**). Test Server Action sprawdza walidację, bramkę i mapowanie odmowy/konfliktu (**3/3 PASS**); typecheck/ESLint PASS. Dowody: [wyścig](evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json), [autoryzacja](evidence/k24-appeal-authorization-postgres-2026-11-11.json), [Server Action](evidence/k24-admin-appeal-action-2026-11-11.json). Nadal brakuje HTTP/admin session, realnych notyfikacji i niezależnego review.
 
+R27/K15: rejestr napraw zsynchronizowany z istniejącym odbiorem Studio/PostgreSQL oraz nowymi testami K22: równoległy `complete` zwraca ten sam job, a spóźniony retry v1 po aktywacji v2 nie reaktywuje v1 (**7/7 PASS**). [Dowody](evidence/k22-concurrent-complete-postgres-2026-11-11.json), [dowód ochrony v2](evidence/k22-stale-replay-race-postgres-2026-11-11.json). R2 i niezależny review nadal otwarte.
+
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów
