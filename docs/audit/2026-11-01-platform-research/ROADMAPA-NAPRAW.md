@@ -667,6 +667,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Nowy odbiór równoległego `complete`, 11 listopada 2026:** dwie rzeczywiste odpowiedzi Studio HTTP równocześnie finalizują tę samą rezerwację. Po tym jak jedno żądanie wygrywa multipart completion, drugie dostaje od storage `NoSuchUpload`; obie odpowiedzi API zwracają jednak `200` i ten sam job. Poprawka powtórnie sprawdza pod blokadą, że ten konkretny oryginał nadal jest najnowszy i aktywny, a następnie odzyskuje idempotentny job. PostgreSQL 17.11/84 migracje, **6/6 PASS**, jeden aktywny oryginał i jeden job; pełne quality **5167 PASS / 2 skipped**, ESLint i typecheck PASS. [Dowód](program-audytu/evidence/k22-concurrent-complete-postgres-2026-11-11.json). To test prawdziwej bazy i handlera z kontrolowanym storage, nie R2 ani równoległe procesy produkcyjne. K22 nadal częściowe do R2 ETag/CORS, wygasania URL, cancel/obcego oryginału i niezależnego review.
 
+**Ochrona przed odtworzeniem przestarzałej wersji, 11 listopada 2026:** dodatkowy test wymusza kolejność, w której retry v1 czeka, v1 najpierw zostaje aktywne, a potem v2 kończy upload i przejmuje wskaźnik. Po wznowieniu retry v1 dostaje `409 UPLOAD_NOT_OPEN`; nie cofa aktywnego v2. PostgreSQL 17.11/84 migracje, plik integracyjny **7/7 PASS**, typecheck i ESLint PASS. [Dowód](program-audytu/evidence/k22-stale-replay-race-postgres-2026-11-11.json). K22 pozostaje częściowe do realnego R2/CORS/expiry, cancel i niezależnego review.
+
 <a id="k23"></a>
 
 #### K23. Trwały zamiar powiadomienia razem z publikacją

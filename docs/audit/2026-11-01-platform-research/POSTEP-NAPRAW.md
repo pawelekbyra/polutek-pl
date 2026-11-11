@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — K22 retry starej wersji po przejęciu przez nowszą
+
+Rozszerzono macierz wyścigu: retry v1 zostaje wstrzymany po odczycie danych storage, pierwsze complete aktywuje v1, następnie v2 kończy się poprawnie, a dopiero potem retry v1 wraca do transakcji. Spóźniony request otrzymuje `409 UPLOAD_NOT_OPEN`; aktywny pozostaje v2, a wersje mają po jednym jobie. Disposable PostgreSQL 17.11, 84 migracje, cały plik integracyjny **7/7 PASS**, typecheck i ESLint PASS; kontener usunięty. [Dowód i hash](program-audytu/evidence/k22-stale-replay-race-postgres-2026-11-11.json). K22 nadal czeka na R2/CORS/expiry i niezależny review.
+
 ## 11 listopada 2026 — K22 równoległe zakończenie uploadu
 
 Dodano compare/re-read po utracie wyścigu `complete`: jeśli drugie żądanie Studio dostało `NoSuchUpload`, ale pod blokadą potwierdziło ten sam READY, najnowszy, aktywny oryginał, zwraca istniejący job zamiast fałszywego `409`. Starsza wersja nie zostanie przywrócona, gdy aktywny jest nowszy plik. Test uruchomił dwa równoległe rzeczywiste handlery HTTP na PostgreSQL 17.11 po 84 migracjach; oba otrzymały `200` z identycznym ID joba, baza ma jeden aktywny oryginał i jeden job. Plik testów PostgreSQL: **6/6 PASS**, pełne quality **5167 PASS / 2 skipped**, ESLint/typecheck PASS. [Dowód i hashe](program-audytu/evidence/k22-concurrent-complete-postgres-2026-11-11.json). Pozostają R2, ETag/CORS i expiry oraz pełna macierz dwóch kart.
