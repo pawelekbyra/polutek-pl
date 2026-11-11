@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — K11 refund tylko własnego wkładu Premium
+
+Test na PostgreSQL 17.11 (84 migracje) tworzy dwa syntetyczne zakupy `ACCESS_30D`. Pełny zwrot A usuwa A z historii wkładów, ale zachowuje aktywne 30 dni B; zwrot ostatniego zakupu kończy dostęp i sprowadza sumę do zera. Testy płatności **22/22 PASS**, typecheck i ESLint PASS. [Dowód i hash](program-audytu/evidence/k11-premium-refund-contribution-postgres-2026-11-11.json). Żaden request nie szedł do Stripe. K11 nadal częściowe do współbieżności, legacy/backfill, decyzji polityki i niezależnego review.
+
 ## 11 listopada 2026 — pełne quality aktualnej gałęzi
 
 Na czystym SHA `d3f25025` uruchomiono `npm run quality`: architektura i typecheck PASS; Vitest **585 plików PASS / 1 skipped, 5170 testów PASS / 2 skipped**. [Raport i dokładny SHA](program-audytu/evidence/full-quality-2026-11-11-branch-acceptance.json). Zmiany testowe K22/K24/K34 są w pełnym zestawie. Test nie obejmuje live R2, produkcji ani niezależnego review.

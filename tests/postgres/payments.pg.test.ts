@@ -62,6 +62,7 @@ async function resetUser() {
   await prisma.patronGrant.deleteMany({ where: { userId } });
   await prisma.userPaymentTotal.deleteMany({ where: { userId } });
   await prisma.payment.deleteMany({ where: { userId } });
+  await prisma.appSetting.deleteMany({ where: { key: `xp.premium_pass:${userId}` } });
 }
 
 /** Default Stripe fakes: list reads stripeRefunds; create appends a succeeded refund. */
@@ -111,6 +112,39 @@ describe('fulfilment is exactly-once under concurrency', () => {
 });
 
 describe('refunds keep the per-user total and the status consistent', () => {
+  it('refunds only the refunded Premium payment contribution while another payment remains active', async () => {
+    await resetUser();
+    const first = await newPayment({
+      amountMinor: 1499,
+      metadata: { purpose: 'premium_pass', productId: 'ACCESS_30D', consents: { termsVersion: 'test-v1', waiverAt: new Date().toISOString() } },
+    });
+    const second = await newPayment({
+      amountMinor: 1499,
+      metadata: { purpose: 'premium_pass', productId: 'ACCESS_30D', consents: { termsVersion: 'test-v1', waiverAt: new Date().toISOString() } },
+    });
+    await fulfillPayment(fulfillInput(first, { amountMinor: 1499 }), ctx());
+    await fulfillPayment(fulfillInput(second, { amountMinor: 1499 }), ctx());
+
+    const key = `xp.premium_pass:${userId}`;
+    const before = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(before.paymentIds).toEqual([first.id, second.id]);
+    expect(Date.parse(before.expiresAt)).toBeGreaterThan(Date.now() + 58 * 24 * 60 * 60 * 1000);
+
+    await handleRefund({ paymentId: first.id, reportedRefundedMinor: 1499 }, ctx());
+    const afterFirstRefund = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(afterFirstRefund.paymentIds).toEqual([second.id]);
+    expect(Date.parse(afterFirstRefund.expiresAt)).toBeGreaterThan(Date.now() + 28 * 24 * 60 * 60 * 1000);
+    expect(Date.parse(afterFirstRefund.expiresAt)).toBeLessThan(Date.now() + 32 * 24 * 60 * 60 * 1000);
+    expect(await total()).toBe(1499);
+    expect(await activeGrants()).toBe(0); // Premium Pass is not a tip/supporter grant.
+
+    await handleRefund({ paymentId: second.id, reportedRefundedMinor: 1499 }, ctx());
+    const afterLastRefund = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(afterLastRefund.paymentIds).toEqual([]);
+    expect(Date.parse(afterLastRefund.expiresAt)).toBeLessThanOrEqual(Date.now() + 1_000);
+    expect(await total()).toBe(0);
+  });
+
   it('partial then full refund, replays and a stale (smaller) event never move the total the wrong way', async () => {
     await resetUser();
     const payment = await newPayment();

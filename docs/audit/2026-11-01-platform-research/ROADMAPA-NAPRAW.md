@@ -392,6 +392,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Do weryfikacji przed zamknięciem:** Komponenty: refund starego A usuwa prawa z nowego B; dwie wpłaty lifetime także tracą niezależność. Wymagany rzeczywisty Prisma/DB i operator wyłącznie test-mode.
 
+**Przyrost lokalny, 11 listopada 2026:** do testu płatności z rzeczywistym PostgreSQL dodano dwa syntetyczne zakupy `ACCESS_30D`, a następnie pełny zwrot pierwszego i drugiego. Refund A usuwa tylko A z `paymentIds`, odejmuje 30 dni z końca okresu i pozostawia B z ok. 30 dniami aktywnego dostępu; refund ostatniego wkładu wygasza dostęp i zeruje agregat. Suite `payments.pg.test.ts` **22/22 PASS** na PostgreSQL 17.11/84 migracje, typecheck i ESLint PASS. [Dowód](program-audytu/evidence/k11-premium-refund-contribution-postgres-2026-11-11.json). Bez Stripe/test-mode requestów. Nie zamyka to kolejności współbieżnego zakupu/refundu, lifetime/legacy/backfill ani decyzji polityki i review; K11 pozostaje częściowe.
+
 **Testy odbioru:**
 
 - **K11-T1** — Po zakupie A 30 dni, wygaśnięciu A i zakupie B refund A nie usuwa dostępu z B; refund jednej z dwóch aktywnych wpłat lifetime pozostawia wkład drugiej. Refund ostatniego skutecznego wkładu daje wynik według polityki.
