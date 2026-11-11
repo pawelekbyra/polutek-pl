@@ -12,6 +12,8 @@ K02, 11 listopada: Vitest 4.1.12 naprawił dwie moderate podatności, z których
 
 K22: dwa równoległe requesty `complete` do prawdziwego handlera Studio na PostgreSQL 17.11/84 migracjach przechodzą z `200` i jednym jobem, także gdy drugi multipart call dostaje `NoSuchUpload`; [raport](evidence/k22-concurrent-complete-postgres-2026-11-11.json). Dodatkowy wyścig sprawdza, że retry v1 nie odtwarza jej po aktywacji v2; cały plik PostgreSQL **7/7 PASS**, typy i ESLint PASS; [raport](evidence/k22-stale-replay-race-postgres-2026-11-11.json). Poprawka ma zielone pełne quality z poprzedniego pakietu; R2 expiry/CORS i niezależny review pozostają otwarte.
 
+K34: test regresji dialogów asertywnie sprawdza dostępną nazwę i opis DeleteCommentDialog, suite **4/4 PASS**, TypeScript/ESLint PASS; [dowód](evidence/k34-comment-dialog-accessible-name-2026-11-11.json). To weryfikacja DOM. Screen reader, pełny kontekst aplikacji i niezależny review pozostają otwarte.
+
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów

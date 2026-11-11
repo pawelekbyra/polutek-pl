@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, act, within } from '@testing-library/react';
 import React from 'react';
 import { ReportDialog } from '@/app/components/comments/components/ReportDialog';
 import { DeleteCommentDialog } from '@/app/components/comments/components/DeleteCommentDialog';
@@ -79,9 +79,10 @@ describe('delete comment dialog', () => {
     const onConfirm = vi.fn();
     const onClose = vi.fn();
     render(<DeleteCommentDialog isOpen onClose={onClose} onConfirm={onConfirm} language="pl" />);
-    expect(screen.getByText('Usunąć komentarz?')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'Usunąć komentarz?' });
+    expect(dialog).toHaveAccessibleDescription('Komentarz zniknie z rozmowy.');
     expect(onConfirm).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Usuń' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Usuń' }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalled();
   });

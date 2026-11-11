@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-11-11",
+  "baseCommit": "c3d1f1d8",
+  "workingTreeClean": false,
+  "files": {
+    "tests/unit/components/comments/comment-dialogs.test.tsx": "d00eb8118a2b757470cb4c7b0dfd5d4f309598a5ce8a8ec7718694349a43cfb6"
+  },
+  "command": "npx vitest run tests/unit/components/comments/comment-dialogs.test.tsx",
+  "result": {
+    "filesPassed": 1,
+    "testsPassed": 4,
+    "failed": 0,
+    "skipped": 0
+  },
+  "assertions": [
+    "Delete-comment dialog is discoverable by its accessible name.",
+    "Dialog exposes its explanatory text as accessible description.",
+    "Delete action remains explicit and invokes confirmation once."
+  ],
+  "additionalChecks": {
+    "typecheck": "PASS",
+    "eslint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limitations": [
+    "DOM assertions do not replace acceptance with a screen reader or review in full application context.",
+    "K34 remains partial pending the other dialogs, screen-reader acceptance, and independent review."
+  ]
+}

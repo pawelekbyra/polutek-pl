@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — K34 nazwa i opis dialogu usuwania komentarza
+
+Test dialogów sprawdza teraz kontrakt dostępności z perspektywy użytkownika technologii asystujących: dialog ma dostępną nazwę i opis, a jawny przycisk Usuń wywołuje potwierdzenie tylko raz. Suite **4/4 PASS**, typecheck, ESLint i diff check PASS. [Dowód i hash](program-audytu/evidence/k34-comment-dialog-accessible-name-2026-11-11.json). To test DOM, nie test czytnika ekranu; K34 pozostaje częściowe.
+
 ## 11 listopada 2026 — K22 retry starej wersji po przejęciu przez nowszą
 
 Rozszerzono macierz wyścigu: retry v1 zostaje wstrzymany po odczycie danych storage, pierwsze complete aktywuje v1, następnie v2 kończy się poprawnie, a dopiero potem retry v1 wraca do transakcji. Spóźniony request otrzymuje `409 UPLOAD_NOT_OPEN`; aktywny pozostaje v2, a wersje mają po jednym jobie. Disposable PostgreSQL 17.11, 84 migracje, cały plik integracyjny **7/7 PASS**, typecheck i ESLint PASS; kontener usunięty. [Dowód i hash](program-audytu/evidence/k22-stale-replay-race-postgres-2026-11-11.json). K22 nadal czeka na R2/CORS/expiry i niezależny review.

@@ -957,6 +957,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Uzupełnienie 8 listopada — ReportDialog i DeleteCommentDialog:** podczas wysyłania zgłoszenia modal ma `aria-busy`, ogłasza status oczekiwania, przenosi fokus do panelu i nie zamyka się Escape do końca żądania. Powody mają roving tabindex: jeden stopień Tab, strzałki z zawijaniem oraz Home/End. Przy usunięciu komentarza, gdy odmontują się dialog i opener, fokus wraca do landmarku `main`. Test komponentów dialogów **4/4 PASS**, repo typecheck i ESLint zmienionych plików PASS. Chromium **149.0.7827.55**: **17 obserwacji** izolowanego harnessu, w tym fokus w `main` po usunięciu openera; 0 błędów strony i 0 zewnętrznych żądań. [Dowód](program-audytu/evidence/ux-browser-experiment-2026-11-08.json). Próba nie obejmuje screen readera ani pełnego Next/HTTP; K34 pozostaje częściowe.
 
+**Uzupełnienie 11 listopada:** test DeleteCommentDialog wyszukuje modal po nazwie dostępnej i asercją semantyczną sprawdza jego opis; kontrola potwierdza jawne wywołanie akcji. Celowany suite **4/4 PASS**, typecheck/ESLint PASS. [Dowód](program-audytu/evidence/k34-comment-dialog-accessible-name-2026-11-11.json). To wzmacnia automat DOM, lecz nie zastępuje NVDA/VoiceOver i niezależnego review.
+
 **Testy odbioru:**
 
 - **K34-T1** — Przed busy i podczas dowolnie długiego busy Tab/Shift+Tab pozostają w dialogu, Enter nie uruchamia tła. Screen reader otrzymuje nazwę i stan oczekiwania.
