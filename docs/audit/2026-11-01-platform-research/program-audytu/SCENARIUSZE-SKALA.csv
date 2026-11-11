@@ -20,3 +20,8 @@ SCL-018,summary_all_unexpected_429_accepted,ACTUAL_SCRIPT_OR_HASH_HELPER_SYNTHET
 SCL-019,summary_server_error_rejected,ACTUAL_SCRIPT_OR_HASH_HELPER_SYNTHETIC_INPUT,evidence/loadtest-summary-probe.json,R11,NIEWYKONANE
 SCL-020,summary_slow_p95_rejected,ACTUAL_SCRIPT_OR_HASH_HELPER_SYNTHETIC_INPUT,evidence/loadtest-summary-probe.json,R11,NIEWYKONANE
 SCL-021,cleanup_plain_sha_differs_from_current_hmac,ACTUAL_SCRIPT_OR_HASH_HELPER_SYNTHETIC_INPUT,evidence/search-sql-capture.json,R11,NIEWYKONANE
+SCL-022,unexpected_status_and_invalid_json_body_rejected,LOCAL_SYNTHETIC_CONTRACT_PASS,evidence/k38-local-contract-retest-2026-11-11.json,R11,NIEWYKONANE
+SCL-023,bounded_home_html_and_thumbnail_signature_probe,LOCAL_LOOPBACK_FIXTURE_PASS,evidence/k38-local-contract-retest-2026-11-11.json,R11,NIEWYKONANE
+SCL-024,load_profile_hash_and_fixed_count_semantics,LOCAL_SYNTHETIC_CONTRACT_PASS,evidence/k38-local-contract-retest-2026-11-11.json,R11,NIEWYKONANE
+SCL-025,cleanup_requires_exact_identity_and_no_active_run,LOCAL_SYNTHETIC_CONTRACT_PASS,evidence/k38-local-contract-retest-2026-11-11.json,R11,NIEWYKONANE
+SCL-026,load_summary_fails_closed_on_missing_metrics_or_thresholds,LOCAL_SYNTHETIC_CONTRACT_PASS,evidence/k38-local-contract-retest-2026-11-11.json,R11,NIEWYKONANE
