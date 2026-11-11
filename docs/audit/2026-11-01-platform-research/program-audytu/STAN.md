@@ -24,7 +24,7 @@ Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/plat
 
 K20: świeży PostgreSQL 17 (`postgres:17-alpine`), 84/84 migracje i test `k20-auto-publish-channel.pg.test.ts` **8/8 PASS**, z osobnym child Node/tsx. Baza była w tmpfs, port dostępny wyłącznie przez loopback, kontener usunięto. Ten test potwierdza właściwe decyzje finalizera i kontekst kanału, ale nie wykonuje FFmpeg ani prawdziwego R2/HLS; niezależny review nadal otwarty.
 
-K21/K15: na kodzie SHA `601e998e` świeży PostgreSQL 17, 84/84 migracje, dwa test files **6/6 PASS** (`original-upload.pg.test.ts` 5/5; `k21-media-source-contract.pg.test.ts` 1/1). Potwierdzono kontrakt odpowiedzi i kompatybilność generycznego klienta przy kontrolowanym storage/auth. To nie jest pełny Next HTTP ani R2; niezależny review otwarty.
+K21/K15: na kodzie SHA `601e998e` świeży PostgreSQL 17, 84/84 migracje, dwa pliki **6/6 PASS** (legacy Studio client i media-source contract). Dodatkowo K01-T3 na nowszym kodzie sprawdził multipart Studio, pipeline/media-source i playback przez prawdziwy lokalny Next HTTP/Chromium (**1/1 PASS**). To łączy handlerowy legacy contract z aktualnym HTTP runtime, ale nie osobny legacy-client HTTP E2E; real R2 i niezależny review są nadal otwarte.
 
 K03/K32: po aktualizacji do Vitest 4.1.12 critical-path runner na czystym SHA `253959a7` **37/37 PASS**, pełne SHA, fingerprint, clean worktree i liczniki w [raporcie](evidence/k03-critical-path-vitest-4.1.12-2026-11-11.json). Dodatkowo rzeczywisty weryfikator restore uruchomiony przez Prisma przeciw bazie po `pg_restore`: poprawny manifest PASS, błędny manifest niezerowy exit, **9/9 PASS** na disposable PostgreSQL 17.11/tmpfs; [raport](evidence/k03-real-restore-verifier-2026-11-11.json). K03 nadal nie dowodzi odzyskania backupu produkcyjnego/offsite ani uzgodnionego RPO/RTO.
 
@@ -42,7 +42,7 @@ R28/K18 i R29/K19: rejestr zsynchronizowany z lokalnym dowodem PostgreSQL. K18 *
 
 R23/K20 i R26/K25: rejestr zsynchronizowany z istniejącymi dowodami. K20: PostgreSQL 17.11/84 migracje, finalizer + kanał **8/8**, osobny proces workera dodatkowo potwierdzony; brak pełnego FFmpeg/R2/HLS i review. K25: dwa procesy Next HTTP sprawdziły limit, zwolnienie slotu przez DELETE i odmowę obcego zasobu; wdrożone instancje i review otwarte.
 
-R21/K21: rejestr zsynchronizowany ze schematami odpowiedzi runtime, walidacją klienta i rzeczywistymi handlerami/Prisma; PostgreSQL **6/6 PASS** po 84 migracjach. Pełny Next HTTP, R2 i niezależny review pozostają otwarte.
+R21/K21: runtime schemas, legacy client, prawdziwe handlery/Prisma **6/6 PASS**; lokalny Next HTTP multipart/upload/playback pokrywa K01-T3 **1/1 PASS**. Osobny legacy-client HTTP E2E, live R2 i niezależny review pozostają otwarte.
 
 R34/K04: rejestr zsynchronizowany z wcześniejszym wąskim refaktorem: wybrany cykl 19 plików usunięty, rozszerzony probe 447 TS/TSX wykrywa zero SCC; injection serwisu na PostgreSQL **4/4 PASS**. Pełny composition root/bundler, pozostały historyczny graf i niezależny review nadal otwarte.
 

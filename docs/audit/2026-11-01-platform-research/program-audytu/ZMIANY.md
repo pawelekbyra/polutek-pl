@@ -1,3 +1,9 @@
+## 2026-11-12 — K21 pokrycie przez lokalny Next HTTP z K01
+
+- K01-T3 **1/1 PASS** obejmuje rzeczywisty Next HTTP dla multipart Studio, pipeline, media-source oraz browser playback przez lokalny Worker.
+- Uzupełnia lokalne HTTP K21; starszy klient nadal nie jest sprawdzony jako osobny pełny request/browser E2E.
+- R2/deployed Worker i niezależny review pozostają otwarte. [Dowód K01](evidence/k01-studio-worker-browser-acceptance-2026-11-11.json).
+
 ## 2026-11-12 — K02 sprawdzenie sugestii `shadcn@1.0.0`
 
 - Registry metadane: wersja 1.0.0 z lipca 2024 nie ma binarki CLI ani zależności; projekt używa 4.23.0.

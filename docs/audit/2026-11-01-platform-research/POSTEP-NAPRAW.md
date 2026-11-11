@@ -1,3 +1,7 @@
+## 12 listopada 2026 — K21 uzupełnienie rzeczywistego Next HTTP
+
+K01-T3 przeszedł lokalny full-stack test na prawdziwym Next HTTP: Studio multipart start/complete, pipeline API, media-source, lokalny HLS Worker w Chromium, wymiana i cleanup (**1/1 PASS**). To uzupełnia K21 o rzeczywistą granicę HTTP w aktualnej aplikacji. Stary klient jest nadal sprawdzony przez kontrakt handlera/PostgreSQL, ale nie jako osobny end-to-end przez serwer; storage pozostaje loopback, więc real R2 i niezależny review pozostają otwarte. [K01 evidence](program-audytu/evidence/k01-studio-worker-browser-acceptance-2026-11-11.json), [K21 evidence](program-audytu/evidence/k21-local-acceptance-2026-11-11.json).
+
 ## 12 listopada 2026 — K02 ocena sugerowanego downgrade’u shadcn
 
 Sprawdziłem metadane `shadcn@1.0.0`: opublikowany 9 lipca 2024, bez binarki CLI i bez zależności; projekt używa `shadcn@4.23.0`. Sugestia `npm audit fix` nie jest kompatybilną aktualizacją narzędzia. Nie zmieniam lockfile; trzy pozycje low zostają jawnie ograniczone do dev-only CLI, a aktualny audyt produkcyjny nadal wynosi 0. [Dowód i metadane](program-audytu/evidence/k02-npm-audit-retest-2026-11-11.json); [oficjalna dokumentacja CLI](https://ui.shadcn.com/docs/cli).
@@ -25,7 +29,7 @@ R34 nadal miał status „nierozpoczęte” mimo wcześniejszego zawężenia wyb
 
 ## 11 listopada 2026 — synchronizacja rejestru R21/K21
 
-R21 pozostawał oznaczony jako nierozpoczęty, choć K21 ma już runtime Zod kontrakty, obsługę wadliwych 200 JSON i testy prawdziwych handlerów/Prisma. Podpięto dowód PostgreSQL 17.11/84 migracji: dwa pliki **6/6 PASS**, legacy Studio client i media-source route contract. Odbiór pełnego Next HTTP, live R2 i niezależny review są nadal otwarte.
+R21 pozostawał oznaczony jako nierozpoczęty, choć K21 ma już runtime Zod kontrakty, obsługę wadliwych 200 JSON i testy prawdziwych handlerów/Prisma. Podpięto dowód PostgreSQL 17.11/84 migracji: dwa pliki **6/6 PASS**, legacy Studio client i media-source route contract. Lokalny pełny Next HTTP dla upload/pipeline/media-source/playback został później pokryty testem K01; osobny legacy-client HTTP E2E, live R2 i niezależny review pozostają otwarte.
 
 ## 11 listopada 2026 — K11 refund tylko własnego wkładu Premium
 
