@@ -1,10 +1,10 @@
-## Punkt wznowienia — 9 listopada 2026, K20 helper procesu workera / K02 buildy
+## Punkt wznowienia — 11 listopada 2026, K20 PostgreSQL / K02 obrazy runtime
 
-Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`. K20: po świeżej instalacji TypeScript buildu wykrył niezgodny czwarty argument `hlsAttemptAssetKey` w helperze procesu workera; poprawiono zgodnie z API. Publiczny `npm run build` i panelowy `npm run admin:build` przechodzą, w tym TypeScript. `npm ci --no-audit --no-fund` dodał 833 pakiety i wygenerował Prisma Client 6.19.3; Zod ma jedną wersję 4.6.7. Nie ustawiono `DATABASE_URL`, więc nie uruchamiano testu PostgreSQL K20. K20 pozostaje częściowe do testu DB i niezależnego review.
+Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`; punkt kontrolny kodu `9d1f9021`. K20: świeży PostgreSQL 17 (`postgres:17-alpine`), 84/84 migracje i test `k20-auto-publish-channel.pg.test.ts` **8/8 PASS**, z osobnym child Node/tsx. Baza była w tmpfs, port dostępny wyłącznie przez loopback, kontener usunięto. Ten test potwierdza właściwe decyzje finalizera i kontekst kanału, ale nie wykonuje FFmpeg ani prawdziwego R2/HLS; niezależny review nadal otwarty.
 
-K02: oba buildy aplikacji przechodzą na bieżącym SHA. Pozostaje inspekcja rzeczywistych obrazów runtime i regresje obrazów/miniatur; poprzednio brak miejsca blokował Docker build, obecnie host pokazuje ok. 8,2 GB wolnego, ale nie uruchomiono buildów obrazów ze względu na współdzielony host z aktywnymi kontenerami. Nie usuwano cache ani wolumenów. Bez push/PR/merge/deploy/produkcji.
+K02: `npm ci --no-audit --no-fund`, `npm run build` i `npm run admin:build` przechodziły na tym checkout; `npm ls zod --all` wykazał jedną wersję 4.6.7. Nadal otwarte są inspekcja rzeczywistych obrazów runtime i regresje obrazów/miniatur. Nie uruchomiono Docker buildów: host ma 7,4 GB wolnego i równolegle działa na nim wiele usług; nie czyszczono Docker cache, obrazów ani wolumenów. Bez push/PR/merge/deploy/produkcji.
 
-**Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`. Następnie dokończyć K20 testem tylko na świeżej bazie disposable; równolegle wrócić do brakującej inspekcji K02, bez użycia produkcyjnej bazy lub hostowego Docker cleanup.
+**Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`. Następnie kontynuować niezależne pakiety lokalne według zależności; zewnętrzny odbiór K20/R2, K02 obrazów i inne wymagające operatora bramki pozostają jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów
 

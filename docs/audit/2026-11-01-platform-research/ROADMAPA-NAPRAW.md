@@ -609,6 +609,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Odbiór na aktualnym schemacie, 7 listopada:** istniejący zestaw realnej bazy uruchomiono razem na disposable PostgreSQL 17.11 po wszystkich 84 migracjach: testy finalizera **7/7** i status race **1/1**, łącznie **8/8 PASS**, repo typecheck i ESLint PASS. To wzmacnia K20-T1/T2 na DB dla właściwych odmów i publikacji, lecz nie wykonuje osobnego procesu workera ani prawdziwego zapisu/odtwarzania HLS z R2; niezależny review nadal wymagany. [Dowód](program-audytu/evidence/k20-postgres-acceptance-2026-11-07.json).
 
+**Retest na bieżącym SHA, 11 listopada:** świeży PostgreSQL 17 (`postgres:17-alpine`) zastosował 84/84 migracje; `k20-auto-publish-channel.pg.test.ts` przeszedł 8/8 wraz z child Node/tsx wykonującym rzeczywisty finalizer. Kontener z tmpfs i loopbackowym portem usunięto. [Dowód](program-audytu/evidence/k20-postgres-acceptance-2026-11-11.json). Nadal brak FFmpeg→R2→HLS w tym teście oraz niezależnego review; K20 częściowe.
+
 <a id="k21"></a>
 
 #### K21. Wąski wspólny kontrakt upload/job/playback

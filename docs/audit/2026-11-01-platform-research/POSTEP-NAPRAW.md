@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K20 — retest procesu workera na świeżej bazie, 11 listopada 2026
+
+Na bieżącym SHA `9d1f9021` zastosowano **84/84 migracje** na nowym PostgreSQL 17 w kontenerze z tmpfs, opublikowanym wyłącznie na loopback. Test `tests/postgres/k20-auto-publish-channel.pg.test.ts` przeszedł **8/8**; obejmuje PUBLIC/UNLISTED dla non-main, odmowy dla kanałów suspended/deleted i niespójnego job→video, kanał main, fencing oraz osobny proces Node/tsx finalizujący job. Kontener usunięto po teście. [Dowód](program-audytu/evidence/k20-postgres-acceptance-2026-11-11.json). Nadal nie uruchamia to FFmpeg ani R2; K20 pozostaje częściowe do niezależnego review i pełnej granicy HLS/storage.
+
 ## K20 — poprawka helpera testu procesu workera, 9 listopada 2026
 
 Świeża instalacja `npm ci --no-audit --no-fund` zakończyła się poprawnie (833 pakiety, Prisma Client 6.19.3); `npm ls zod --all` potwierdza jedną wersję Zod 4.6.7. Pierwszy `npm run build` ujawnił, że helper `tests/helpers/k20-finalize-self-hls-process.ts` przekazywał nieobsługiwany czwarty argument do `hlsAttemptAssetKey`; skorygowano go zgodnie z API i istniejącym helperem K17. Po poprawce `npm run build` oraz `npm run admin:build` przeszły wraz ze sprawdzaniem TypeScript. Nie uruchamiano bazy ani testu PostgreSQL K20, bo `DATABASE_URL` nie był ustawiony. Buildy lokalne nie są inspekcją obrazów runtime; K02 pozostaje otwarte. [Zmiana](../../../tests/helpers/k20-finalize-self-hls-process.ts).
