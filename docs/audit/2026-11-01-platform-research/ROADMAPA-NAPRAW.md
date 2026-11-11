@@ -213,6 +213,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 **Odbiór realnego pg_dump/pg_restore przez weryfikator K03, 11 listopada:** rozszerzono istniejący lokalny helper K32, aby po odtworzeniu bazy na świeżym PostgreSQL wywoływał także rzeczywisty `scripts/verify-restored-database.ts` z wygenerowanym klientem Prisma. Na 84 migracjach helper utworzył dump, odtworzył go do pustej bazy i porównał dane oraz historię migracji; weryfikator zaakceptował wszystkie 12 agregatów i integralność danych, a następnie odmówił błędnego oczekiwanego count przez niezerowy exit bez komunikatu SUCCESS. Całość: **9/9 kontroli PASS**, PostgreSQL 17.11, dane i katalog tymczasowy w tmpfs, port wyłącznie loopback, kontener usunięty. [Raport](program-audytu/evidence/k03-real-restore-verifier-2026-11-11.json). To silniejszy lokalny dowód K03/K32, ale nadal syntetyczne dane, nie backup produkcyjny/offsite; polityka RPO/RTO, inne relacje i niezależny review nie są zamknięte.
 
+Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SHA `253959a77a4dfc054cd62195e5b7f8a3a2d5e428`: **37/37 PASS**, 0 skipped, Vitest 4.1.12, fingerprint `f40fdba4…7635cda`; [raport](program-audytu/evidence/k03-critical-path-vitest-4.1.12-2026-11-11.json).
+
 <a id="k04"></a>
 
 #### K04. Wąskie importy i jawne składanie infrastruktury
