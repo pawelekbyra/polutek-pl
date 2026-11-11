@@ -1,9 +1,16 @@
+## 2026-11-11 — K01-T3 lokalny pełny przebieg po zimnej kompilacji Next
+
+- Request diagnostyczny wykazał `GET /pl` bez nagłówków przez ponad 35 s, z `Compiling /[locale] ...` w logu Next.
+- Jawny limit zimnej nawigacji 90 s pozwolił ukończyć lokalny scenariusz upload → worker/FFmpeg → HLS/Chromium → wymiana → cleanup: **1/1 PASS**.
+- PostgreSQL 17/84 migracje, S3 loopback; bez Cloudflare/R2. ESLint i diff check PASS.
+- K01 pozostaje częściowe do real R2/deployed Worker, kolejki/Redis, e-mail i niezależnego review. [Dowód](evidence/k01-studio-worker-browser-acceptance-2026-11-11.json).
+
 ## 2026-11-11 — K01-T3 zintegrowany retest zatrzymany na nawigacji Chromium
 
 - Upload Studio, worker/FFmpeg i lokalne API/Worker osiągnęły krok przeglądarki na disposable PostgreSQL (84 migracje) i loopback S3.
 - `page.goto(/pl)` przekroczyło 30 s przed `domcontentloaded`. Test otrzymał diagnostykę, a powtórzenie przekroczyło 30 s już na `commit`, bez odpowiedzi HTTP (`about:blank`); log Next zawiera odczyty Prisma bez wyjątku. Przyczyna nierozpoznana. Oddzielny dowód Chromium z 2026-11-07 pozostaje aktualny.
 - Kontener i wygenerowane zmiany konfiguracji Next posprzątano. Bez produkcji, Cloudflare i zewnętrznego R2.
-- Dowód: `evidence/k01-studio-worker-browser-timeout-2026-11-11.json`; K01 pozostaje częściowe. Następny krok: dodać pomiar czasu requestu Next, aby oddzielić kompilację od SSR. ESLint/diff check testu PASS; sama suite pozostaje 0/1.
+- Dowód: `evidence/k01-studio-worker-browser-acceptance-2026-11-11.json`; K01 pozostaje częściowe. Następny krok: dodać pomiar czasu requestu Next, aby oddzielić kompilację od SSR. ESLint/diff check testu PASS; sama suite pozostaje 0/1.
 
 ## 2026-11-11 — aktualizacja lokalnych bramek K07/K10/K13/K38
 

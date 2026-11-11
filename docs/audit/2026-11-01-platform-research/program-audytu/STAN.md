@@ -1,6 +1,6 @@
-## Punkt wznowienia — 11 listopada 2026, K01-T3 timeout przeglądarki
+## Punkt wznowienia — 11 listopada 2026, K01-T3 pełny lokalny odbiór
 
-Gałąź `docs/polutek-platform-audit`, HEAD `7addcfd21487e111b9e9fe1baa829dd060e198ce`. Ostatnia próba pełnego K01-T3 użyła disposable PostgreSQL 17 (84 migracje, tmpfs), loopback S3, worker/FFmpeg i Chromium. Upload, enkodowanie i lokalne API/Worker doszły do nawigacji Chromium. Dwa przebiegi przekroczyły 30 s; diagnostyczny `waitUntil: commit` nie otrzymał odpowiedzi HTTP, strona została na `about:blank`, a log Next pokazał odczyty Prisma bez wyjątku lub zakończenia requestu. Test zapisuje teraz szczegóły błędu. Przyczyna pozostaje nieustalona. [Dowód](evidence/k01-studio-worker-browser-timeout-2026-11-11.json). Stan testowego checkoutu posprzątany; brak kontenera K01. **Następny krok:** dodać pomiar początku/końca requestu w lokalnym Next, by rozdzielić czas kompilacji od SSR, przed ponowną pełną akceptacją. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && npx vitest run --config vitest.postgres.config.ts tests/postgres/k01-video-worker-local.pg.test.ts --testTimeout=120000 --hookTimeout=120000`.
+Gałąź `docs/polutek-platform-audit`, HEAD `278e11b7ff76a50c9da0fac65fbed67aec5efc40`. Ostatnia próba pełnego K01-T3 użyła disposable PostgreSQL 17 (84 migracje, tmpfs), loopback S3, worker/FFmpeg i Chromium. Diagnostyka serwera ustaliła przyczynę praktyczną poprzednich timeoutów: Next nadal kompilował trasę `/[locale]` po 35 s, więc nie wysłał nagłówków. Po limicie 90 s na zimną nawigację połączony upload/worker/HLS/Chromium, wymiana wideo i cleanup przeszły **1/1 PASS**. [Dowód](evidence/k01-studio-worker-browser-acceptance-2026-11-11.json). Stan testowego checkoutu posprzątany; brak kontenera K01. **Następny krok:** kontynuować pozostałe bramki K01: rzeczywisty R2/deployed Worker, kolejka/Redis, e-mail i niezależny review. Dowód nie obejmuje tych usług. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && npx vitest run --config vitest.postgres.config.ts tests/postgres/k01-video-worker-local.pg.test.ts --testTimeout=240000 --hookTimeout=240000`.
 
 ## Weryfikacja aktualnej gałęzi — 11 listopada 2026
 
@@ -366,7 +366,7 @@ git status --short
 git log -5 --oneline
 sed -n '520,550p' docs/audit/2026-11-01-platform-research/ROADMAPA-NAPRAW.md
 rg -n 'K20|K21|K22|K23|Następny krok' docs/audit/2026-11-01-platform-research/POSTEP-NAPRAW.md docs/audit/2026-11-01-platform-research/program-audytu/STAN.md
-npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts --testTimeout=120000 --hookTimeout=120000
+npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts --testTimeout=240000 --hookTimeout=240000
 cat docs/audit/2026-11-01-platform-research/program-audytu/evidence/k21-contract-boundary-2026-11-06/result.json
 ```
 
