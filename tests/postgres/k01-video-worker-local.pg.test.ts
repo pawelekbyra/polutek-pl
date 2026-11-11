@@ -717,7 +717,14 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
         pendingCacheWrites.length = 0;
       });
       const videoUrl = `${baseUrl}/pl?v=${encodeURIComponent(`${RUN}-video`)}`;
-      await page.goto(videoUrl, { waitUntil: "domcontentloaded" });
+      let navigationResponse: Awaited<ReturnType<typeof page.goto>> = null;
+      try {
+        navigationResponse = await page.goto(videoUrl, { waitUntil: "commit" });
+        await page.waitForLoadState("domcontentloaded", { timeout: 30_000 });
+      } catch (error) {
+        const pageState = await page.evaluate(() => ({ readyState: document.readyState, title: document.title, bodyText: document.body.innerText.slice(0, 500) })).catch(() => null);
+        throw new Error(`K01 browser navigation did not reach DOMContentLoaded: ${error instanceof Error ? error.message : String(error)}\nHTTP status: ${navigationResponse?.status() ?? "no response"}\nURL: ${page.url()}\nPage state: ${JSON.stringify(pageState)}\nBrowser errors: ${JSON.stringify(browserErrors)}\nNext output: ${nextOutput}`);
+      }
       const attachDeadline = Date.now() + 12_000;
       while (Date.now() < attachDeadline && await page.locator("video").count() === 0) {
         await new Promise((resolve) => setTimeout(resolve, 250));
