@@ -247,6 +247,9 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Uzupełnienie lokalne 7 listopada:** rzeczywisty serwis i repozytorium wykonano z wstrzykniętym wygenerowanym Prisma Client na disposable PostgreSQL 17.11 po 84 migracjach. ACTIVE zwrócił rekord; SUSPENDED, soft-deleted i brakujący zwróciły ten sam 404 (**4/4 PASS**). Test używa syntetycznych kont i nie obejmuje HTTP, innych composition rootów ani pełnego grafu importów. [Dowód PostgreSQL](program-audytu/evidence/k04-injected-context-postgres-2026-11-07.json).
 
+
+**Retest lokalny 12 listopada 2026:** aktualny TypeScript probe przeszedł 447 plików w `lib/modules`: 0 diagnostyki parsera i 0 cykli SCC. `npm run quality:architecture-boundaries` także zakończył się exit 0: zero tras importujących Prisma/services, 166 plików admina i 34 use case sprawdzone (32 jawne wyjątki). [Wynik i hashe 447 plików](program-audytu/evidence/k04-current-module-cycles-2026-11-12.json). To nie obejmuje importów obliczanych, całego composition root, produkcyjnego bundlera/runtime ani niezależnego review; K04 pozostaje częściowe.
+
 <a id="k05"></a>
 
 #### K05. Jednoznaczny profil produktu i decyzje właściciela

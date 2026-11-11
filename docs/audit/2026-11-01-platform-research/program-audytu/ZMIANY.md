@@ -1,3 +1,9 @@
+## 2026-11-12 — K04 statyczny graf i strażnik architektury
+
+- Probe 447 plików `lib/modules`: 0 SCC, 0 błędów parsera.
+- `npm run quality:architecture-boundaries`: PASS; 166 plików admina, 34 use case sprawdzone, 32 jawne wyjątki.
+- Pełny composition root/bundler/runtime i niezależne review pozostają otwarte. [Dowód](evidence/k04-current-module-cycles-2026-11-12.json).
+
 ## 2026-11-11 — K02 aktualny audit lockfile
 
 - Node 22.23.3/npm 10.9.9: `npm audit --omit=dev` 0 podatności; pełny audit 3 low, 0 moderate/high/critical.

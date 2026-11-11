@@ -1,3 +1,7 @@
+## 12 listopada 2026 — K04 aktualny probe grafu i granic
+
+Probe 447 plików `lib/modules`: **0 cykli SCC, 0 błędów parsera**. `npm run quality:architecture-boundaries`: exit 0, brak importu Prisma/services w trasach i brak legacy access references; checker objął 166 plików admina oraz 34 use case (32 jawne wyjątki). [Dowód i hashe](program-audytu/evidence/k04-current-module-cycles-2026-11-12.json). Wynik jest ograniczony do statycznych importów w tym drzewie; composition root, pełny bundler/runtime i niezależny review pozostają otwarte.
+
 ## 11 listopada 2026 — K02 aktualny audit zależności
 
 Na Node 22.23.3/npm 10.9.9 `npm audit --omit=dev` zakończył się **0 podatności**. Pełny audit wykazał **3 low, 0 moderate/high/critical**, wyłącznie w toolchainie deweloperskim `shadcn@4.23.0` → `@shadcn/registry@0.2.1` → `deepmerge@4.3.1`; npm proponuje `shadcn@1.0.0` jako zmianę semver-major, więc nie zmieniałem zależności. [Dowód, hashe i ograniczenia](program-audytu/evidence/k02-npm-audit-retest-2026-11-11.json). K02 pozostaje częściowe: trzeba ocenić kompatybilność aktualizacji CLI i sprawdzić rzeczywiste obrazy runtime; audit lockfile nie dowodzi ich zawartości.
