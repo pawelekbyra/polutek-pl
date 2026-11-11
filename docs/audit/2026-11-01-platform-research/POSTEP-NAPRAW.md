@@ -1,5 +1,13 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — K03 świeży baseline na aktualnym SHA
+
+Na czystym commitcie `36225105c242be0df01348977765b051fa6d5fa2` ponowiono `npm run test:critical-path`: **37/37 PASS, 0 failed/skipped**, exit 0. Evidence zapisuje pełny revision, fingerprint `19d1b03a1d5487a921495f0249686d9e757257b63234a2fb1a7132ed1dc07300`, 3409 śledzonych plików oraz osobne liczniki 32/32 dla procesu weryfikatora restore i 5/5 dla launch candidate. Na tym samym SHA pełne `npm run quality` przeszło architekturę, TypeScript i 5167 testów (2 skip). [Raport](program-audytu/evidence/k03-critical-path-acceptance-2026-11-11.json). To wiarygodny aktualny baseline; K03 nadal częściowe, bo nie stanowi dowodu odtworzenia rzeczywistego backupu i nie obejmuje wszystkich odbiorów restore/runtime.
+
+## 11 listopada 2026 — weryfikator uruchomiony na rzeczywiście odtworzonej bazie
+
+Rozszerzono helper K32 o dwie próby rzeczywistego `scripts/verify-restored-database.ts` po `pg_dump`/`pg_restore`: poprawny manifest przechodzi na bazie docelowej, manifest z błędnym count kończy się niezerowo i nie emituje SUCCESS. PostgreSQL 17.11, 84/84 migracje, Prisma Client 6.19.3; cały przebieg **9/9 PASS**, tmpfs/loopback i automatyczne usunięcie kontenera. [Raport i ograniczenia](program-audytu/evidence/k03-real-restore-verifier-2026-11-11.json). To lokalnie potwierdza K03-T1/T2 dla prawdziwego procesu i bazy. Zostały rzeczywisty backup spoza laboratorium, RPO/RTO oraz niezależny review; nie podnoszę K03 do CLOSED.
+
 ## 11 listopada 2026 — naprawa regresji suite po K04 i harnessu sporów
 
 Pełne `npm run quality` przeszło strażnik architektury i TypeScript, po czym ujawniło **17/5169** błędów testów w 5 plikach. Cztery testy mockowały eksport przez barrel `@/lib/modules/channel`, podczas gdy kod po K04 importuje bezpośrednio `channel/application/main-channel.service`; dlatego uruchamiał się prawdziwy `PrismaClient` bez `DATABASE_URL`. Poprawiono mocki w testach widoczności, sitemap, szczegółów admina i UNLISTED. Piąty plik integracyjny miał atrapę DB bez `$queryRaw` wymaganej przez blokadę wiersza w obsłudze sporu; dodano metodę do harnessa, dzięki czemu istniejący scenariusz naprawdę przechodzi ścieżkę sporu zamiast ignorować błąd use case. Celowana regresja po poprawkach: **5 plików, 36/36 PASS**. Ponowiony pełny `npm run quality`: architektura PASS, typecheck PASS, **584 pliki testowe PASS / 1 skipped; 5167 testów PASS / 2 skipped**. Zmiany są testowe; nie zmieniają logiki produkcyjnej. Następny krok: kontynuować otwarte pakiety roadmapy; stan i ograniczenia opisuje `program-audytu/STAN.md`.

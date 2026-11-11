@@ -16,6 +16,7 @@ import secrets
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[5]
@@ -190,6 +191,32 @@ const p = new PrismaClient(); const x = process.env.K32_FIXTURE;
         if "RESTORED_PRISMA_RELATIONS_OK" not in prisma_check.stdout:
             raise RuntimeError("restored database was not readable through generated Prisma client")
         record("restored-generated-prisma-client", True, "Prisma traversed Video → Creator → User/Members and loaded VideoAsset")
+
+        expected_counts = {
+            "User": 2, "Creator": 1, "Video": 1, "VideoAsset": 1, "Payment": 0,
+            "UserPaymentTotal": 0, "PatronGrant": 0, "StripeEvent": 0, "Comment": 0,
+            "CommentReport": 0, "Subscription": 0, "AuditLog": 0,
+        }
+        verifier_env = dict(os.environ, DATABASE_URL=url, DATABASE_URL_UNPOOLED=url,
+                            RESTORE_DATABASE_URL=restore_url, ALLOW_RESTORE_VERIFICATION="true")
+        with tempfile.TemporaryDirectory(prefix="k32-restore-manifest-") as manifest_dir:
+            manifest_path = Path(manifest_dir) / "expected.json"
+            manifest_path.write_text(json.dumps({"counts": expected_counts}) + "\n")
+            verifier_env["RESTORE_EXPECTED_MANIFEST_PATH"] = str(manifest_path)
+            verifier = run(["node_modules/.bin/tsx", "scripts/verify-restored-database.ts"],
+                           env=verifier_env, timeout=120)
+            if "VERIFICATION SUCCESSFUL" not in verifier.stdout or DB_PASSWORD in verifier.stdout:
+                raise RuntimeError("restore verifier did not pass cleanly on the restored database or leaked credentials")
+            record("restore-verifier-real-restored-database", True,
+                   "actual CLI + generated Prisma client verified all 12 aggregate counts and integrity checks on pg_restore target")
+
+            manifest_path.write_text(json.dumps({"counts": {"User": 999}}) + "\n")
+            mismatch = run(["node_modules/.bin/tsx", "scripts/verify-restored-database.ts"],
+                           env=verifier_env, check=False, timeout=120)
+            if mismatch.returncode == 0 or "VERIFICATION SUCCESSFUL" in mismatch.stdout or DB_PASSWORD in mismatch.stdout:
+                raise RuntimeError("restore verifier accepted an incorrect real-database manifest or leaked credentials")
+            record("restore-verifier-real-manifest-mismatch", True,
+                   "actual CLI exited nonzero for an incorrect expected count and did not print success")
 
         invalid_fk = ("INSERT INTO \"VideoAsset\" (id,\"videoId\",provider,\"objectKey\",\"updatedAt\") "
                       "VALUES ('" + FIXTURE + "-bad-fk','missing-video','SELF_HLS','synthetic-only','now()')")

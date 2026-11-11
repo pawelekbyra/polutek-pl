@@ -6,6 +6,8 @@ K20: świeży PostgreSQL 17 (`postgres:17-alpine`), 84/84 migracje i test `k20-a
 
 K21/K15: na kodzie SHA `601e998e` świeży PostgreSQL 17, 84/84 migracje, dwa test files **6/6 PASS** (`original-upload.pg.test.ts` 5/5; `k21-media-source-contract.pg.test.ts` 1/1). Potwierdzono kontrakt odpowiedzi i kompatybilność generycznego klienta przy kontrolowanym storage/auth. To nie jest pełny Next HTTP ani R2; niezależny review otwarty.
 
+K03/K32: critical-path runner na SHA `36225105` **37/37 PASS**, z pełnym SHA, fingerprintem, clean-worktree i licznikami zapisanymi w [raporcie](evidence/k03-critical-path-acceptance-2026-11-11.json). Dodatkowo rzeczywisty weryfikator restore uruchomiony przez Prisma przeciw bazie po prawdziwym `pg_restore`: poprawny manifest PASS, błędny manifest niezerowy exit, cały odbiór **9/9 PASS** na disposable PostgreSQL 17.11/tmpfs; [raport](evidence/k03-real-restore-verifier-2026-11-11.json). K03 nadal nie dowodzi odzyskania backupu produkcyjnego/offsite ani uzgodnionego RPO/RTO.
+
 K02: `npm ci --no-audit --no-fund`, `npm run build` i `npm run admin:build` przechodziły na tym checkout; `npm ls zod --all` wykazał jedną wersję 4.6.7. Nadal otwarte są inspekcja rzeczywistych obrazów runtime i regresje obrazów/miniatur. Nie uruchomiono Docker buildów: host ma 7,4 GB wolnego i równolegle działa na nim wiele usług; nie czyszczono Docker cache, obrazów ani wolumenów. Bez push/PR/merge/deploy/produkcji.
 
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
