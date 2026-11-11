@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "date": "2026-11-07",
+  "date": "2026-11-11",
   "scope": "OWNER_APPROVED_H1",
   "audit_parent_sha": "35466051eb27c6957854532bba231b5e13a6bca7",
   "audit_branch": "docs/polutek-platform-audit",
@@ -15,8 +15,10 @@
     "K03": "POST_K01_CRITICAL_37_PASS_REPO_WIDE_TSC_AND_NEXT_BUILD_PASS_FULL_BASELINE_RESTORE_AND_EMAIL_OPEN",
     "K05": "OWNER_PROFILE_AND_DP01_DP09_REGISTERED_PAID_ACCESS_CONFLICT_AND_RUNTIME_OPEN",
     "K06": "COMMON_PROOF_VALIDATOR_SEALER_TESTED_PRODUCER_AND_ALL_PUBLISH_ACTIVATE_PATHS_NOT_YET_CONNECTED",
-    "K38": "BOUNDED_HTML_THUMBNAIL_PROBE_FIXED_COUNT_IDENTITY_LOCK_36_PASS_NONPRODUCTION_ACCEPTANCE_OPEN",
-    "K10": "HIDDEN_PREMIERE_HTTP_REAL_BETTER_AUTH_PG_ROLE_MATRIX_2_PASS_HLS_AND_INDEPENDENT_REVIEW_OPEN"
+    "K38": "SEMANTIC_API_HTML_THUMB_PROFILE_36_RETEST_PASS_NONPRODUCTION_LOAD_AND_CLEANUP_OPEN",
+    "K10": "HTTP_TO_WORKER_TOKEN_SYNTHETIC_R2_2_PASS_LIVE_R2_AND_REVIEW_OPEN",
+    "K07": "REQUEST_BODY_LIMITS_13_RETEST_PASS_EXTERNAL_PROXY_AND_FULL_STACK_BUDGET_OPEN",
+    "K13": "DELETEOBJECTS_LOOPBACK_10_RETEST_PASS_R2_SANDBOX_AND_REVIEW_OPEN"
   },
   "acceptance": {
     "K02_existing_tests": {
@@ -1574,5 +1576,34 @@
     "k6_load_or_app_used": false,
     "package_closed": false,
     "evidence": "program-audytu/evidence/k38-bounded-body-probe-2026-11-07.json"
+  },
+  "latest_local_retests": {
+    "date": "2026-11-11",
+    "code_under_test_sha": "2f31bda3cb30933ca3a3f436453601988ee73bc0",
+    "K07": {
+      "passed": 13,
+      "failed": 0,
+      "evidence": "program-audytu/evidence/k07-request-body-retest-2026-11-11.json",
+      "remaining": "external proxy and full-stack resource budget"
+    },
+    "K10": {
+      "passed": 2,
+      "failed": 0,
+      "environment": "Next HTTP + Better Auth + disposable PostgreSQL 17/84 migrations + synthetic Worker R2/cache",
+      "evidence": "program-audytu/evidence/k10-http-worker-token-contract-2026-11-11.json",
+      "remaining": "real Cloudflare/R2, browser segment playback, independent review"
+    },
+    "K13": {
+      "passed": 10,
+      "failed": 0,
+      "evidence": "program-audytu/evidence/k13-delete-retest-2026-11-11.json",
+      "remaining": "provider sandbox and independent review"
+    },
+    "K38": {
+      "passed": 36,
+      "failed": 0,
+      "evidence": "program-audytu/evidence/k38-local-contract-retest-2026-11-11.json",
+      "remaining": "non-production app/database runner, playback/heartbeat mix and cleanup"
+    }
   }
 }

@@ -1,3 +1,11 @@
+## 2026-11-11 — aktualizacja lokalnych bramek K07/K10/K13/K38
+
+- K07: bounded request readers **13/13 PASS**, w tym brak/zaniżony Content-Length, odmowa przed parserem i legalny payload 10 000 części; proxy pozostaje nieodebrane.
+- K10: rzeczywisty Next HTTP/Better Auth na disposable PostgreSQL (84 migracje) przekazuje dokładny URL aplikacji do kodu HLS Workera; poprawny token pobiera syntetyczny master, a zmieniony token otrzymuje 403 po zapełnieniu cache. **2/2 PASS**; bez Cloudflare/R2.
+- K13: retest obsługi `DeleteObjects` i loopback AWS SDK **10/10 PASS**; bez dostawcy R2.
+- K38: aktualny kontrakt generatora **36/36 PASS**, łącznie z semantycznym probe HTML/miniatur, JSON API, profilem i warunkami cleanup. Pełny runner/cleanup wymaga non-production.
+- Dowody i stan pakietów dopięto do `h1-status.json`, `KOLEJNOSC-NAPRAW.csv` i `GITHUB-MANIFEST.json`; formalne bramki live-provider, non-production i niezależnego review pozostają otwarte. Bez push, PR, merge ani deploy.
+
 ## 2026-11-07 — K01-T3 routing attempt-scoped playback
 
 - Next HTTP acceptance dla własnego filmu wykazał `ERROR` playback po sukcesie kodowania: plan i edge Worker nie mapowały assetów `/attempts/<uuid>`.
