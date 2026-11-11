@@ -102,8 +102,8 @@
     "@types/react-dom": "19.2.3",
     "@types/sanitize-html": "^2.16.1",
     "@vitejs/plugin-react-swc": "^4.3.1",
-    "@vitest/coverage-v8": "^4.1.7",
-    "@vitest/ui": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.12",
+    "@vitest/ui": "^4.1.12",
     "esbuild": "^0.28.1",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
@@ -112,7 +112,7 @@
     "prisma": "^6.19.3",
     "shadcn": "^4.23.0",
     "tsx": "^4.22.4",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.12"
   },
   "overrides": {
     "magicast": "0.5.3",
