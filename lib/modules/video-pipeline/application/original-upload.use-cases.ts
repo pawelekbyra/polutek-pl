@@ -341,7 +341,26 @@ export async function completeOriginalMultipart(
       const job = await enqueueWithinTransaction(video.id, original.id, ctx, tx);
       return { kind: "promoted" as const, job };
     });
-    if (!promoted) return fail(new AppError("Ten upload nie jest otwarty (zakończony, przerwany albo odrzucony).", 409, "UPLOAD_NOT_OPEN"));
+    if (!promoted) {
+      // Two Studio tabs may submit complete for the same upload at once. Both can read UPLOADING
+      // before either calls R2; one completes the multipart upload and promotes it, while R2
+      // answers NoSuchUpload to the other. If that second request then loses the DB lock, return
+      // the already-created job only when this exact original is still the latest active version.
+      // A genuinely stale completion must never revive an older original.
+      const replayed = await ctx.db.writeTransaction(async (tx) => {
+        await lockOriginalCompletion(tx, video.id);
+        const current = await tx.videoOriginal.findFirst({ where: { id: original.id, videoId: video.id } });
+        if (!current || current.status !== "READY") return null;
+        const [latestVersion, currentVideo] = await Promise.all([
+          latestReadyVersion(tx, video.id),
+          tx.video.findFirst({ where: { id: video.id }, select: { activeOriginalId: true } }),
+        ]);
+        if (current.version !== latestVersion || currentVideo?.activeOriginalId !== current.id) return null;
+        return enqueueWithinTransaction(video.id, current.id, ctx, tx);
+      });
+      if (replayed) return ok({ originalId: original.id, job: replayed });
+      return fail(new AppError("Ten upload nie jest otwarty (zakończony, przerwany albo odrzucony).", 409, "UPLOAD_NOT_OPEN"));
+    }
     if (promoted.kind === "superseded") {
       await storage.deleteObject(original.objectKey).catch(() => undefined);
       return fail(new AppError("Nowsza wersja pliku zastąpiła ten upload.", 409, "UPLOAD_SUPERSEDED"));
