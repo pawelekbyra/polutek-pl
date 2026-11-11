@@ -20,6 +20,8 @@ R27/K15: rejestr napraw zsynchronizowany z istniejącym odbiorem Studio/PostgreS
 
 R28/K18 i R29/K19: rejestr zsynchronizowany z lokalnym dowodem PostgreSQL. K18 **4/4 integracyjne** dla transakcyjnej aktywacji/audytu i ochrony retry; K19 **4/4**, **8/8** wraz z regresjami K17/K18 dla rezerwacji cleanup. Storage nie jest R2; wymagane są sandbox, drain starych procesów (K19) i niezależny review.
 
+R23/K20 i R26/K25: rejestr zsynchronizowany z istniejącymi dowodami. K20: PostgreSQL 17.11/84 migracje, finalizer + kanał **8/8**, osobny proces workera dodatkowo potwierdzony; brak pełnego FFmpeg/R2/HLS i review. K25: dwa procesy Next HTTP sprawdziły limit, zwolnienie slotu przez DELETE i odmowę obcego zasobu; wdrożone instancje i review otwarte.
+
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów

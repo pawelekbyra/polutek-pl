@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — synchronizacja rejestru R23/K20 i R26/K25
+
+Uaktualniono statusy błędnie oznaczone jako nierozpoczęte. K20 ma PostgreSQL 17.11/84 migracje i **8/8 PASS**, w tym child process finalizera oraz wyścig zmiany statusu kanału; realne FFmpeg→R2/HLS i niezależny review pozostają otwarte. K25 ma lokalne testy Studio HTTP oraz dwóch procesów Next przez HTTP, w tym POST/DELETE, limit 100 i odmowę obcego zasobu; wdrożone instancje i niezależny review pozostają otwarte. Podpięto raporty istniejących przebiegów.
+
 ## 11 listopada 2026 — synchronizacja rejestru R28/K18 i R29/K19
 
 Rejestr oznaczał R28/R29 jako nierozpoczęte, chociaż roadmapa zawierała lokalne odbiory z PostgreSQL. Uaktualniono R28 na częściowe po K18: audyt aktywacji jest atomowy, a retry zachowuje pliki przy niepewnym COMMIT (**4/4 integracyjne**, kontrolowane storage). R29 jest częściowe po K19: aktywacja i cleanup rezerwują wspólny stan (**4/4 K19, 8/8 z K17/K18**). Podpięto istniejące raporty. R2 i niezależny review, a dla K19 też drain starych procesów, pozostają otwarte.
