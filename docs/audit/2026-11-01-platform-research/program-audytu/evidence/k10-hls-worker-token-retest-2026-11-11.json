@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-11",
+  "repository_head_sha": "776c60691d1cf57eae42410afc947c7cd99a4233",
+  "package": "K10 companion component test",
+  "finding": "R30 and the protected HLS delivery boundary",
+  "status": "passed_component_contract",
+  "source_sha256": {
+    "workers/hls-edge/worker.mjs": "ff47e8d667cd30eafcac29028bd77be11c268135bad29c0c629618ddefceb198",
+    "tests/unit/hls/hls-edge-worker.test.ts": "cd5ba23bece48ea9a9f96781ef4c3f8a96f5ae353ed9cd09f6c35400092f5a2c"
+  },
+  "command": "npx vitest run tests/unit/hls/hls-edge-worker.test.ts",
+  "result": { "files": 1, "passed": 20, "failed": 0 },
+  "covered": [
+    "app-signed token verification and rejection for modified, expired, or differently scoped tokens",
+    "valid token reads from R2 and cache",
+    "invalid token receives 403 even when the object is cached",
+    "protected cache headers are bounded by token lifetime"
+  ],
+  "limitations": [
+    "This is a unit/component suite with synthetic R2 and does not combine the K10 HTTP response's generated token with a Worker request.",
+    "No Cloudflare deployment, real R2, manifest, or segment was requested.",
+    "Independent review remains open; K10 is not closed by this evidence."
+  ]
+}
