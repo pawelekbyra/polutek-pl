@@ -21,6 +21,12 @@ const appealIds: string[] = [];
 let tick = Date.now();
 const ctx = () => createAppContext({ actor: { type: "user", userId }, prisma, now: () => new Date(++tick) });
 
+function deferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
 beforeAll(async () => {
   userId = `${RUN}-user`;
   const user = await prisma.user.create({ data: { id: userId, email: `${RUN}@example.test` } });
@@ -88,5 +94,52 @@ describe("K24 appeal decision identity (PostgreSQL)", () => {
     expect(currentSuccesses).toHaveLength(1);
     expect(currentSuccesses[0]).toMatchObject({ data: { reverted: true } });
     expect(await prisma.video.findUniqueOrThrow({ where: { id: videoId } })).toMatchObject({ moderationStatus: "VISIBLE", moderationDecisionId: null });
+  });
+
+  it("does not reverse a newer channel decision committed after the appeal read", async () => {
+    await setChannelStatus(ctx(), { channelId: creatorId, status: "SUSPENDED", reason: "decyzja A race" });
+    const decisionA = await prisma.moderationDecision.findFirstOrThrow({ where: { targetId: creatorId, action: "CHANNEL_SUSPENDED" }, orderBy: { createdAt: "desc" } });
+    const appealId = await createAppeal(decisionA.id);
+    const reachedDecisionRead = deferred();
+    const resumeAppeal = deferred();
+    const appealCtx = ctx();
+    appealCtx.db.writeTransaction = async (fn) => prisma.$transaction(async (tx) => {
+      let paused = false;
+      const txWithBarrier = new Proxy(tx, {
+        get(target, property, receiver) {
+          const model = Reflect.get(target, property, receiver);
+          if (property !== "creator") return model;
+          return new Proxy(model, {
+            get(creatorModel, method, modelReceiver) {
+              const original = Reflect.get(creatorModel, method, modelReceiver);
+              if (method !== "findUnique") return original;
+              return async (...args: Parameters<typeof original>) => {
+                const result = await original(...args);
+                if (!paused && args[0]?.where?.id === creatorId) {
+                  paused = true;
+                  reachedDecisionRead.resolve();
+                  await resumeAppeal.promise;
+                }
+                return result;
+              };
+            },
+          });
+        },
+      });
+      return fn(txWithBarrier as typeof tx);
+    });
+
+    const staleAppeal = resolveModerationAppeal(appealCtx, {
+      appealId, outcome: "UPHELD", reasonPublic: "Spóźnione odwołanie nie cofa nowej decyzji.",
+    });
+    await reachedDecisionRead.promise;
+    await setChannelStatus(ctx(), { channelId: creatorId, status: "ACTIVE", reason: "decyzja B race active" });
+    await setChannelStatus(ctx(), { channelId: creatorId, status: "SUSPENDED", reason: "decyzja C race" });
+    const decisionC = await prisma.moderationDecision.findFirstOrThrow({ where: { targetId: creatorId, action: "CHANNEL_SUSPENDED" }, orderBy: { createdAt: "desc" } });
+    resumeAppeal.resolve();
+
+    const result = await staleAppeal;
+    expect(result).toMatchObject({ ok: true, data: { reverted: false } });
+    expect(await prisma.creator.findUniqueOrThrow({ where: { id: creatorId } })).toMatchObject({ status: "SUSPENDED", statusDecisionId: decisionC.id });
   });
 });

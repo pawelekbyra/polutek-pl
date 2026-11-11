@@ -14,6 +14,8 @@ K22: dwa równoległe requesty `complete` do prawdziwego handlera Studio na Post
 
 K34: test regresji dialogów asertywnie sprawdza dostępną nazwę i opis DeleteCommentDialog, suite **4/4 PASS**, TypeScript/ESLint PASS; [dowód](evidence/k34-comment-dialog-accessible-name-2026-11-11.json). To weryfikacja DOM. Screen reader, pełny kontekst aplikacji i niezależny review pozostają otwarte.
 
+K24: test z prawdziwym PostgreSQL zatrzymuje stare odwołanie po odczycie, zapisuje decyzję C w cyklu ABA i sprawdza, że warunkowy zapis A nie cofa C; testy K24 **3/3 PASS**, typecheck/ESLint PASS; [raport](evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json). Nadal brakuje odbioru tras/rol i niezależnego review.
+
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów

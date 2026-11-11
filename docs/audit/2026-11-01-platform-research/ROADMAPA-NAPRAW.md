@@ -713,6 +713,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 - **K24-T1** — Dla kanału SUSPENDED→ACTIVE→SUSPENDED i komentarza REMOVED→VISIBLE→REMOVED uznanie odwołania A nie cofa decyzji B.
 - **K24-T2** — Odwołanie od aktualnej A bez B działa; dwie kolejności i równoczesne decyzje/replay mają spójną historię, cudza rola/odwołanie odmawia bez skutku.
 
+**Uzupełnienie lokalne, 11 listopada 2026:** do istniejących testów PostgreSQL dla ABA kanału/filmu i idempotencji rozpatrzenia dodano kontrolowany wyścig na prawdziwej bazie. Transakcja odwołania A zatrzymuje się po odczycie decyzji A; niezależna transakcja zmienia kanał SUSPENDED→ACTIVE→SUSPENDED i zapisuje decyzję C; po wznowieniu CAS starego odwołania nie cofa C. PostgreSQL 17.11/84 migracje, suite **3/3 PASS**, typecheck i ESLint PASS. [Dowód](program-audytu/evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json). To use case z kontrolowanym authz/notyfikacjami, bez HTTP. K24 pozostaje częściowe do testów tras/roli i niezależnego przeglądu.
+
 <a id="k25"></a>
 
 #### K25. Limit playlist odporny na współbieżność

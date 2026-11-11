@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — K24 wyścig starego odwołania z nową decyzją
+
+Nowy test PostgreSQL zatrzymuje rozpatrzenie odwołania A po odczycie, zapisuje niezależnie cykl SUSPENDED→ACTIVE→SUSPENDED i wznawia stary request. Warunkowy zapis nie cofa decyzji C; kanał pozostaje zawieszony z ID decyzji C. PostgreSQL 17.11/84 migracje, suite **3/3 PASS**, typecheck, ESLint i diff check PASS. [Dowód i hash](program-audytu/evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json). To bezpośredni use case z kontrolowanymi authz/notyfikacjami; HTTP, role i niezależny review pozostają otwarte.
+
 ## 11 listopada 2026 — K34 nazwa i opis dialogu usuwania komentarza
 
 Test dialogów sprawdza teraz kontrakt dostępności z perspektywy użytkownika technologii asystujących: dialog ma dostępną nazwę i opis, a jawny przycisk Usuń wywołuje potwierdzenie tylko raz. Suite **4/4 PASS**, typecheck, ESLint i diff check PASS. [Dowód i hash](program-audytu/evidence/k34-comment-dialog-accessible-name-2026-11-11.json). To test DOM, nie test czytnika ekranu; K34 pozostaje częściowe.
