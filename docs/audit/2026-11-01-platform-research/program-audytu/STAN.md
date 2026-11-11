@@ -1,3 +1,7 @@
+## Punkt wznowienia — 12 listopada 2026, K04 przegląd composition
+
+Statyczny skan 447 plików znalazł 125 konstrukcji repo/serwisów/use case w 84 plikach, dwa `deps.ts` i siedem plików warstwy app importujących ścieżki wewnętrzne. Nie ma jednego widocznego composition root; `lib/prisma.ts` jest leniwą fasadą, `shared/db.ts` tylko typami. To dług, nie dowód awarii. K21 lokalnie jest odbierany bez szerokiego refaktoru, więc nie zaczynamy go bez uzasadnionego celu. [Dowód i ograniczenia skanu](evidence/k04-composition-static-review-2026-11-12.json). **Następny krok K04:** pozostaje uzasadnienie konkretnej potrzeby runtime/bundla i niezależne review; nie uruchamiano kontenera ani builda.
+
 ## Punkt wznowienia — 12 listopada 2026, K02 decyzja o narzędziu shadcn
 
 Pozostawiono `shadcn@4.23.0` jako developerskie narzędzie do komponentów: projekt ma `components.json`, CLI nie jest używane przez skrypty/CI, a sugerowane `shadcn@1.0.0` nie jest CLI. Audit produkcyjny pozostaje czysty; 3 low są tylko w drzewie developerskim. [Uzasadnienie i zakres](evidence/k02-shadcn-tool-retention-2026-11-12.json). **Następny krok K02:** obejrzeć/uruchomić finalne obrazy app/admin i zapisać bazowe digesty; nie budowano obrazów w tej sesji.

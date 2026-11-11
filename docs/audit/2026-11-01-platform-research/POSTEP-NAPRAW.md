@@ -1,3 +1,7 @@
+## 12 listopada 2026 — K04 statyczny przegląd composition
+
+Skan 447 modułów: 125 konstrukcji repo/serwisów/use case w 84 plikach; dwa jawne `deps.ts`; siedem plików app importuje ścieżki wewnętrzne. Nie znaleziono jednego composition root. To dług architektoniczny, bez dowodu awarii; K21 lokalnie nie wymaga szerokiego refaktoru. [Dowód](program-audytu/evidence/k04-composition-static-review-2026-11-12.json). K04 pozostaje otwarte na konkretną potrzebę runtime/bundla i niezależne review.
+
 ## 12 listopada 2026 — K02 decyzja o shadcn
 
 Pozostawiono przypięte `shadcn@4.23.0` jako dev-only: repo ma `components.json`, CLI nie jest odpalane przez skrypty/CI, a npm-owe `1.0.0` nie jest CLI. Pełny lockfile ma 3 niskie alerty developerskie, audit produkcyjny zero. [Uzasadnienie](program-audytu/evidence/k02-shadcn-tool-retention-2026-11-12.json). Następny krok: inspekcja i uruchomienie finalnych obrazów app/admin; nie wykonywano builda Docker.

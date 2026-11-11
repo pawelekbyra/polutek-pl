@@ -256,6 +256,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Retest lokalny 12 listopada 2026:** aktualny TypeScript probe przeszedł 447 plików w `lib/modules`: 0 diagnostyki parsera i 0 cykli SCC. `npm run quality:architecture-boundaries` także zakończył się exit 0: zero tras importujących Prisma/services, 166 plików admina i 34 use case sprawdzone (32 jawne wyjątki). [Wynik i hashe 447 plików](program-audytu/evidence/k04-current-module-cycles-2026-11-12.json). To nie obejmuje importów obliczanych, całego composition root, produkcyjnego bundlera/runtime ani niezależnego review; K04 pozostaje częściowe.
 
+**Przegląd composition 12 listopada 2026:** w 447 źródłach modułów statyczny skan znalazł 125 linii konstruujących repozytoria/serwisy/use case w 84 plikach; tylko dwa pliki `deps.ts` składają jawne zestawy zależności. `lib/prisma.ts` jest leniwą singletonową fasadą, a `shared/db.ts` zawiera typy. Siedem plików warstwy app importuje wewnętrzne ścieżki application/infrastructure. To rozproszona kompozycja i dług architektoniczny, lecz sam wynik nie dowodzi awarii ani zbyt dużego bundla. Nie rozpoczynamy szerokiego refaktoru: K21 lokalnie działa bez niego; K04 pozostaje częściowe do ewentualnej, uzasadnionej potrzeby runtime/bundla i niezależnego review. [Zakres, liczby i ograniczenia](program-audytu/evidence/k04-composition-static-review-2026-11-12.json).
+
 <a id="k05"></a>
 
 #### K05. Jednoznaczny profil produktu i decyzje właściciela

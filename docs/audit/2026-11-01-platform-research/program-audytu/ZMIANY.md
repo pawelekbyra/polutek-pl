@@ -1,3 +1,8 @@
+## 2026-11-12 — K04 przegląd statyczny composition
+
+- W 447 modułach: 125 konstrukcji repo/serwisów/use case w 84 plikach, dwa jawne `deps.ts`, siedem app/page/component plików z wewnętrznymi importami. Brak wspólnego application composition root w zbadanym kodzie.
+- Nie rozpoczęto szerokiego refaktoru: jest to dług, a nie dowód awarii; lokalny odbiór K21 go nie wymaga. K04 nadal częściowe, brak produkcyjnego bundlera/runtime i niezależnego review. [Dowód](evidence/k04-composition-static-review-2026-11-12.json).
+
 ## 2026-11-12 — K02 decyzja o CLI shadcn
 
 - Zostawiono `shadcn@4.23.0` przypięte jako dev-only: `components.json` jest częścią projektu, CLI nie jest w skryptach/CI, a proponowane `1.0.0` nie dostarcza CLI.

@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-12",
+  "repository_head_sha": "48308217adf06ff40bff5f27bcfa6367121638f6",
+  "scope": "Static source review of module dependency construction and app-layer imports; no test or build executed.",
+  "source_sha256": {
+    "lib/prisma.ts": "2950dd040c108fb08c765f7aa3795327302d7661916b4d4940d91a478f1e70b0",
+    "lib/modules/shared/db.ts": "9e7cb95bd7baaca620b0f4b330f6254a4d18a6438ceeee568d0567e89147f694",
+    "scripts/check-architecture.ts": "8d8890544ec14bcb26e882b39d486e059467df470c549377cd1701db97f43ea1"
+  },
+  "findings": {
+    "module_source_files": 447,
+    "repository_service_or_usecase_constructor_lines": 125,
+    "constructor_source_files": 84,
+    "explicit_deps_provider_files": [
+      "lib/modules/admin-analytics/application/deps.ts",
+      "lib/modules/admin-overview/application/deps.ts"
+    ],
+    "app_layer_files_importing_internal_application_or_infrastructure_paths": [
+      "app/[locale]/(home)/page.tsx",
+      "app/[locale]/channel/[slug]/page.tsx",
+      "app/[locale]/search/page.tsx",
+      "app/components/home/HomeExperience.tsx",
+      "app/components/premium-pass/PassOfferPage.tsx",
+      "app/components/subscriptions/MySubscriptionsView.tsx",
+      "app/sitemap.ts"
+    ],
+    "prisma_facade": "lib/prisma.ts lazily creates one global PrismaClient when first accessed; lib/modules/shared/db.ts provides DB types, not an application-wide composition root."
+  },
+  "assessment": "Composition is distributed across use cases and app-layer callers; there is no single application-wide assembly point visible in this review. This is architectural debt, not evidence by itself of a runtime failure or bundle-size regression. Existing architecture-boundary guard reports zero route imports of Prisma/services, but the 7 listed app/page/component files import module internals directly.",
+  "decision": "Do not introduce a broad composition-root refactor in this audit step. Keep K04 partial and defer the refactor until a measured isolation/runtime need or a bounded use case justifies it; K21 local HTTP acceptance does not require this refactor.",
+  "limitations": [
+    "Counts come from a bounded regex/source scan, not a TypeScript AST or runtime instrumentation.",
+    "No dynamic import graph, production bundle, container, or independent architectural review was evaluated.",
+    "This review does not prove that all 125 constructor sites are undesirable or should be replaced by dependency injection."
+  ]
+}
