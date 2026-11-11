@@ -1,9 +1,9 @@
 ## 2026-11-11 — K01-T3 zintegrowany retest zatrzymany na nawigacji Chromium
 
 - Upload Studio, worker/FFmpeg i lokalne API/Worker osiągnęły krok przeglądarki na disposable PostgreSQL (84 migracje) i loopback S3.
-- `page.goto(/pl)` przekroczyło 30 s przed `domcontentloaded` (0/1 PASS); przyczyna nierozpoznana. Oddzielny dowód Chromium z 2026-11-07 pozostaje aktualny.
+- `page.goto(/pl)` przekroczyło 30 s przed `domcontentloaded`. Test otrzymał diagnostykę, a powtórzenie przekroczyło 30 s już na `commit`, bez odpowiedzi HTTP (`about:blank`); log Next zawiera odczyty Prisma bez wyjątku. Przyczyna nierozpoznana. Oddzielny dowód Chromium z 2026-11-07 pozostaje aktualny.
 - Kontener i wygenerowane zmiany konfiguracji Next posprzątano. Bez produkcji, Cloudflare i zewnętrznego R2.
-- Dowód: `evidence/k01-studio-worker-browser-timeout-2026-11-11.json`; K01 pozostaje częściowe. Następny krok: zebrać diagnostykę requestu SSR/nawigacji przed ponownym przebiegiem.
+- Dowód: `evidence/k01-studio-worker-browser-timeout-2026-11-11.json`; K01 pozostaje częściowe. Następny krok: dodać pomiar czasu requestu Next, aby oddzielić kompilację od SSR. ESLint/diff check testu PASS; sama suite pozostaje 0/1.
 
 ## 2026-11-11 — aktualizacja lokalnych bramek K07/K10/K13/K38
 
