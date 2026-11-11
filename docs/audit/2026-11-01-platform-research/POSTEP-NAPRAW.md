@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — naprawa regresji suite po K04 i harnessu sporów
+
+Pełne `npm run quality` przeszło strażnik architektury i TypeScript, po czym ujawniło **17/5169** błędów testów w 5 plikach. Cztery testy mockowały eksport przez barrel `@/lib/modules/channel`, podczas gdy kod po K04 importuje bezpośrednio `channel/application/main-channel.service`; dlatego uruchamiał się prawdziwy `PrismaClient` bez `DATABASE_URL`. Poprawiono mocki w testach widoczności, sitemap, szczegółów admina i UNLISTED. Piąty plik integracyjny miał atrapę DB bez `$queryRaw` wymaganej przez blokadę wiersza w obsłudze sporu; dodano metodę do harnessa, dzięki czemu istniejący scenariusz naprawdę przechodzi ścieżkę sporu zamiast ignorować błąd use case. Celowana regresja po poprawkach: **5 plików, 36/36 PASS**. Ponowiony pełny `npm run quality`: architektura PASS, typecheck PASS, **584 pliki testowe PASS / 1 skipped; 5167 testów PASS / 2 skipped**. Zmiany są testowe; nie zmieniają logiki produkcyjnej. Następny krok: kontynuować otwarte pakiety roadmapy; stan i ograniczenia opisuje `program-audytu/STAN.md`.
+
 ## K21 — retest kontraktów upload/playback, 11 listopada 2026
 
 Na bieżącym SHA `601e998e` świeża baza PostgreSQL 17 przeszła **84/84 migracje**; dwa celowane pliki K15/K21 zaliczyły **6/6 testów**. Testy potwierdzają rzeczywiste wiersze Prisma i handlery Studio przy kontrolowanym storage, zgodność starszego klienta z dodatkowymi polami oraz poprawność odpowiedzi media-source względem `PlaybackPlanResponseSchema`. Baza była w tmpfs, dostępna tylko przez loopback, a kontener usunięto. [Dowód i ograniczenia](program-audytu/evidence/k21-local-acceptance-2026-11-11.json). To nie jest Next HTTP server ani real R2; K21 pozostaje częściowe do pełnego HTTP/multipart i niezależnego review.

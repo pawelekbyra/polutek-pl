@@ -3,10 +3,13 @@ import { AccessTier, VideoStatus } from '@prisma/client';
 import { buildPublicVideoWhere } from '@/lib/modules/video/infrastructure/video-content.service';
 import { MainChannelService } from '@/lib/modules/channel';
 
-vi.mock('@/lib/modules/channel', () => ({
+vi.mock('@/lib/modules/channel/application/main-channel.service', () => ({
   MainChannelService: {
     getOptional: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/modules/channel/domain/channel.policy', () => ({
   publiclyVisibleChannelWhere: () => ({ status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null }),
 }));
 

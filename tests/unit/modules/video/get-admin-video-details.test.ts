@@ -5,7 +5,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { VideoStatus, AccessTier } from '@prisma/client';
 import { MainChannelService } from '@/lib/modules/channel';
 
-vi.mock('@/lib/modules/channel', () => ({
+vi.mock('@/lib/modules/channel/application/main-channel.service', () => ({
   MainChannelService: {
     getRequired: vi.fn(),
   },

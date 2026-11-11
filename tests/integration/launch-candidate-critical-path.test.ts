@@ -171,6 +171,7 @@ function createHarness() {
 
   const db: any = {
     $transaction: async (fn: any) => fn(db),
+    $queryRaw: async () => [],
     $executeRaw: async (_strings: TemplateStringsArray, userId: string, currency: string, amountMinor: number) => {
       const key = `${userId}:${currency}`;
       const existing = state.totals.get(key);
