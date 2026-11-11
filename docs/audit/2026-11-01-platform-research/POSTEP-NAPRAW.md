@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — synchronizacja rejestru R21/K21
+
+R21 pozostawał oznaczony jako nierozpoczęty, choć K21 ma już runtime Zod kontrakty, obsługę wadliwych 200 JSON i testy prawdziwych handlerów/Prisma. Podpięto dowód PostgreSQL 17.11/84 migracji: dwa pliki **6/6 PASS**, legacy Studio client i media-source route contract. Odbiór pełnego Next HTTP, live R2 i niezależny review są nadal otwarte.
+
 ## 11 listopada 2026 — K11 refund tylko własnego wkładu Premium
 
 Test na PostgreSQL 17.11 (84 migracje) tworzy dwa syntetyczne zakupy `ACCESS_30D`. Zwrot A zachowuje aktywne 30 dni B; zwrot ostatniego zakupu kończy dostęp. Dodatkowo dwa fulfillmenty i oba refundy przechodzą równolegle bez utraty wkładu, a ich retry nie zmienia sumy. Suite płatności **23/23 PASS**, typecheck i ESLint PASS. [Pierwszy dowód](program-audytu/evidence/k11-premium-refund-contribution-postgres-2026-11-11.json), [współbieżność](program-audytu/evidence/k11-premium-concurrent-refund-postgres-2026-11-11.json). Żaden request nie szedł do Stripe. K11 nadal częściowe do lifetime/legacy/backfill, decyzji polityki i niezależnego review.

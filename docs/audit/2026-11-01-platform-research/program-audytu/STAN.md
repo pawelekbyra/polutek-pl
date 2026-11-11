@@ -30,6 +30,8 @@ R28/K18 i R29/K19: rejestr zsynchronizowany z lokalnym dowodem PostgreSQL. K18 *
 
 R23/K20 i R26/K25: rejestr zsynchronizowany z istniejącymi dowodami. K20: PostgreSQL 17.11/84 migracje, finalizer + kanał **8/8**, osobny proces workera dodatkowo potwierdzony; brak pełnego FFmpeg/R2/HLS i review. K25: dwa procesy Next HTTP sprawdziły limit, zwolnienie slotu przez DELETE i odmowę obcego zasobu; wdrożone instancje i review otwarte.
 
+R21/K21: rejestr zsynchronizowany ze schematami odpowiedzi runtime, walidacją klienta i rzeczywistymi handlerami/Prisma; PostgreSQL **6/6 PASS** po 84 migracjach. Pełny Next HTTP, R2 i niezależny review pozostają otwarte.
+
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów
