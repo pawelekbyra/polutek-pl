@@ -2,7 +2,7 @@
 
 ## 11 listopada 2026 — K11 refund tylko własnego wkładu Premium
 
-Test na PostgreSQL 17.11 (84 migracje) tworzy dwa syntetyczne zakupy `ACCESS_30D`. Pełny zwrot A usuwa A z historii wkładów, ale zachowuje aktywne 30 dni B; zwrot ostatniego zakupu kończy dostęp i sprowadza sumę do zera. Testy płatności **22/22 PASS**, typecheck i ESLint PASS. [Dowód i hash](program-audytu/evidence/k11-premium-refund-contribution-postgres-2026-11-11.json). Żaden request nie szedł do Stripe. K11 nadal częściowe do współbieżności, legacy/backfill, decyzji polityki i niezależnego review.
+Test na PostgreSQL 17.11 (84 migracje) tworzy dwa syntetyczne zakupy `ACCESS_30D`. Zwrot A zachowuje aktywne 30 dni B; zwrot ostatniego zakupu kończy dostęp. Dodatkowo dwa fulfillmenty i oba refundy przechodzą równolegle bez utraty wkładu, a ich retry nie zmienia sumy. Suite płatności **23/23 PASS**, typecheck i ESLint PASS. [Pierwszy dowód](program-audytu/evidence/k11-premium-refund-contribution-postgres-2026-11-11.json), [współbieżność](program-audytu/evidence/k11-premium-concurrent-refund-postgres-2026-11-11.json). Żaden request nie szedł do Stripe. K11 nadal częściowe do lifetime/legacy/backfill, decyzji polityki i niezależnego review.
 
 ## 11 listopada 2026 — pełne quality aktualnej gałęzi
 

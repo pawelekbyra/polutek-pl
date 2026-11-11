@@ -112,6 +112,42 @@ describe('fulfilment is exactly-once under concurrency', () => {
 });
 
 describe('refunds keep the per-user total and the status consistent', () => {
+  it('serializes concurrent Premium fulfilments and refunds without losing a payment contribution', async () => {
+    await resetUser();
+    const metadata = {
+      purpose: 'premium_pass', productId: 'ACCESS_30D',
+      consents: { termsVersion: 'test-v1', waiverAt: new Date().toISOString() },
+    };
+    const first = await newPayment({ amountMinor: 1499, metadata });
+    const second = await newPayment({ amountMinor: 1499, metadata });
+
+    await Promise.all([
+      fulfillPayment(fulfillInput(first, { amountMinor: 1499 }), ctx()),
+      fulfillPayment(fulfillInput(second, { amountMinor: 1499 }), ctx()),
+    ]);
+    const key = `xp.premium_pass:${userId}`;
+    const granted = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(granted.paymentIds).toHaveLength(2);
+    expect(granted.paymentIds).toEqual(expect.arrayContaining([first.id, second.id]));
+    expect(Date.parse(granted.expiresAt)).toBeGreaterThan(Date.now() + 58 * 24 * 60 * 60 * 1000);
+
+    await Promise.all([
+      handleRefund({ paymentId: first.id, reportedRefundedMinor: 1499 }, ctx()),
+      handleRefund({ paymentId: second.id, reportedRefundedMinor: 1499 }, ctx()),
+    ]);
+    const refunded = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(refunded.paymentIds).toEqual([]);
+    expect(Date.parse(refunded.expiresAt)).toBeLessThanOrEqual(Date.now() + 1_000);
+    expect(await total()).toBe(0);
+
+    await Promise.all([
+      handleRefund({ paymentId: first.id, reportedRefundedMinor: 1499 }, ctx()),
+      handleRefund({ paymentId: second.id, reportedRefundedMinor: 1499 }, ctx()),
+    ]);
+    expect(JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value)).toMatchObject(refunded);
+    expect(await total()).toBe(0);
+  });
+
   it('refunds only the refunded Premium payment contribution while another payment remains active', async () => {
     await resetUser();
     const first = await newPayment({

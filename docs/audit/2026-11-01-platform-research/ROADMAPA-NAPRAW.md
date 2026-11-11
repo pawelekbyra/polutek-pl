@@ -394,6 +394,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Przyrost lokalny, 11 listopada 2026:** do testu płatności z rzeczywistym PostgreSQL dodano dwa syntetyczne zakupy `ACCESS_30D`, a następnie pełny zwrot pierwszego i drugiego. Refund A usuwa tylko A z `paymentIds`, odejmuje 30 dni z końca okresu i pozostawia B z ok. 30 dniami aktywnego dostępu; refund ostatniego wkładu wygasza dostęp i zeruje agregat. Suite `payments.pg.test.ts` **22/22 PASS** na PostgreSQL 17.11/84 migracje, typecheck i ESLint PASS. [Dowód](program-audytu/evidence/k11-premium-refund-contribution-postgres-2026-11-11.json). Bez Stripe/test-mode requestów. Nie zamyka to kolejności współbieżnego zakupu/refundu, lifetime/legacy/backfill ani decyzji polityki i review; K11 pozostaje częściowe.
 
+**Współbieżność, 11 listopada 2026:** dwa synthetic `ACCESS_30D` fulfillmenty wykonane równolegle zachowują oba ID i obie długości; równoległy pełny refund obu pozycji pozostawia pusty ledger wkładów, dostęp wygasły i sumę wpłat równą zero. Powtórzenie obu refundów nie zmienia wyniku. Cały plik `payments.pg.test.ts` **23/23 PASS**, typecheck/ESLint PASS na PostgreSQL 17.11/84 migracje; [dowód](program-audytu/evidence/k11-premium-concurrent-refund-postgres-2026-11-11.json). To lokalne use case’y, bez Stripe API; K11 nadal częściowe do przypadków lifetime/legacy, backfill, decyzji polityki i niezależnego review.
+
 **Testy odbioru:**
 
 - **K11-T1** — Po zakupie A 30 dni, wygaśnięciu A i zakupie B refund A nie usuwa dostępu z B; refund jednej z dwóch aktywnych wpłat lifetime pozostawia wkład drugiej. Refund ostatniego skutecznego wkładu daje wynik według polityki.

@@ -4,6 +4,8 @@ Na czystym SHA `d3f25025bfbefac267da0b9fb3dbae89f4f2b23f` pełne `npm run qualit
 
 Po tym przebiegu dodano K11 test-only regression: `payments.pg.test.ts` **22/22 PASS** z realnym PostgreSQL 17.11/84 migracje, typecheck/ESLint PASS; [dowód refundu Premium](evidence/k11-premium-refund-contribution-postgres-2026-11-11.json). Pełny quality powyżej poprzedza ten test; brak zmiany produkcyjnego kodu w tym pakiecie.
 
+K11 rozszerzono dalej: **23/23 PASS**, w tym równoległe fulfillment dwóch wpłat, równoległy refund obu i idempotentny replay; brak wywołań Stripe. [Dowód współbieżności](evidence/k11-premium-concurrent-refund-postgres-2026-11-11.json). Typecheck i ESLint PASS; pełny quality nie był ponawiany po tej zmianie test-only.
+
 ## Punkt wznowienia — 11 listopada 2026, suite regresji i K20/K21
 
 Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`; baza `32afa4bf`, bieżący pakiet test/doc zapisano osobnym commitem. Celowany retest: **5 plików, 36/36 PASS**. Pełne `npm run quality`: architektura PASS, TypeScript PASS, **584 pliki PASS / 1 skipped; 5167 testów PASS / 2 skipped**. Pierwszy przebieg wykrył 17 błędów testów: 16 wynikało z mockowania barrelu zamiast bezpośredniego modułu kanału po K04; ostatni z harnessa sporu bez `$queryRaw` wymaganej po dodaniu blokady wiersza. Po poprawce cały zestaw jest zielony.
