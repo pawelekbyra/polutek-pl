@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## K21 — retest kontraktów upload/playback, 11 listopada 2026
+
+Na bieżącym SHA `601e998e` świeża baza PostgreSQL 17 przeszła **84/84 migracje**; dwa celowane pliki K15/K21 zaliczyły **6/6 testów**. Testy potwierdzają rzeczywiste wiersze Prisma i handlery Studio przy kontrolowanym storage, zgodność starszego klienta z dodatkowymi polami oraz poprawność odpowiedzi media-source względem `PlaybackPlanResponseSchema`. Baza była w tmpfs, dostępna tylko przez loopback, a kontener usunięto. [Dowód i ograniczenia](program-audytu/evidence/k21-local-acceptance-2026-11-11.json). To nie jest Next HTTP server ani real R2; K21 pozostaje częściowe do pełnego HTTP/multipart i niezależnego review.
+
 ## K20 — retest procesu workera na świeżej bazie, 11 listopada 2026
 
 Na bieżącym SHA `9d1f9021` zastosowano **84/84 migracje** na nowym PostgreSQL 17 w kontenerze z tmpfs, opublikowanym wyłącznie na loopback. Test `tests/postgres/k20-auto-publish-channel.pg.test.ts` przeszedł **8/8**; obejmuje PUBLIC/UNLISTED dla non-main, odmowy dla kanałów suspended/deleted i niespójnego job→video, kanał main, fencing oraz osobny proces Node/tsx finalizujący job. Kontener usunięto po teście. [Dowód](program-audytu/evidence/k20-postgres-acceptance-2026-11-11.json). Nadal nie uruchamia to FFmpeg ani R2; K20 pozostaje częściowe do niezależnego review i pełnej granicy HLS/storage.

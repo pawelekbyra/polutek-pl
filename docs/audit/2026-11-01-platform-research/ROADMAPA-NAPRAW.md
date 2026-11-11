@@ -632,6 +632,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 - **K21-T1** — Prawdziwy serwer zwraca zgodny kontrakt dla upload/job/playback; legalny starszy obsługiwany klient działa według opisanej zgodności.
 - **K21-T2** — 200 z null/złą strukturą, niedozwolony enum, błędny status i uszkodzony JSON dają kontrolowany błąd bez kolejnego niepoprawnego żądania/zmiany stanu. Kontrakt nie importuje infrastruktury.
 
+**Retest lokalny, 11 listopada 2026:** dwa pliki K15/K21 na bieżącym SHA przeszły **6/6** na disposable PostgreSQL 17 po 84 migracjach. Dodatkowe pola odpowiedzi pozostają zgodne ze starszym klientem, a media-source plan przechodzi schemat response. Storage/auth są kontrolowane; brak pełnego Next HTTP, R2, prawdziwego multipart storage i niezależnego review. K21 pozostaje częściowe. [Dowód](program-audytu/evidence/k21-local-acceptance-2026-11-11.json).
+
 <a id="k22"></a>
 
 #### K22. Wznowienie uploadu w Studio z istniejącego silnika

@@ -1,10 +1,12 @@
-## Punkt wznowienia — 11 listopada 2026, K20 PostgreSQL / K02 obrazy runtime
+## Punkt wznowienia — 11 listopada 2026, K20/K21 PostgreSQL / K02 obrazy runtime
 
 Gałąź: `docs/polutek-platform-audit` w `/opt/codex/polutek-pl/.worktrees/platform-audit`; punkt kontrolny kodu `9d1f9021`. K20: świeży PostgreSQL 17 (`postgres:17-alpine`), 84/84 migracje i test `k20-auto-publish-channel.pg.test.ts` **8/8 PASS**, z osobnym child Node/tsx. Baza była w tmpfs, port dostępny wyłącznie przez loopback, kontener usunięto. Ten test potwierdza właściwe decyzje finalizera i kontekst kanału, ale nie wykonuje FFmpeg ani prawdziwego R2/HLS; niezależny review nadal otwarty.
 
+K21/K15: na kodzie SHA `601e998e` świeży PostgreSQL 17, 84/84 migracje, dwa test files **6/6 PASS** (`original-upload.pg.test.ts` 5/5; `k21-media-source-contract.pg.test.ts` 1/1). Potwierdzono kontrakt odpowiedzi i kompatybilność generycznego klienta przy kontrolowanym storage/auth. To nie jest pełny Next HTTP ani R2; niezależny review otwarty.
+
 K02: `npm ci --no-audit --no-fund`, `npm run build` i `npm run admin:build` przechodziły na tym checkout; `npm ls zod --all` wykazał jedną wersję 4.6.7. Nadal otwarte są inspekcja rzeczywistych obrazów runtime i regresje obrazów/miniatur. Nie uruchomiono Docker buildów: host ma 7,4 GB wolnego i równolegle działa na nim wiele usług; nie czyszczono Docker cache, obrazów ani wolumenów. Bez push/PR/merge/deploy/produkcji.
 
-**Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`. Następnie kontynuować niezależne pakiety lokalne według zależności; zewnętrzny odbiór K20/R2, K02 obrazów i inne wymagające operatora bramki pozostają jawnie otwarte.
+**Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short && git log -5 --oneline`. Następnie kontynuować niezależne pakiety lokalne według zależności; zewnętrzny odbiór K20/K21 z R2, K02 obrazów i inne wymagające operatora bramki pozostają jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów
 
