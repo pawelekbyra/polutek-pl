@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 
-vi.mock("@/lib/modules/authz", () => ({ authorize: vi.fn(async () => null) }));
 vi.mock("@/lib/modules/channel/infrastructure/moderation-notice", () => ({
   notifyChannelOwnerOfDecision: vi.fn(async () => undefined),
   notifyReporterOfDecision: vi.fn(async () => undefined),
@@ -19,7 +18,7 @@ let creatorId = "";
 let videoId = "";
 const appealIds: string[] = [];
 let tick = Date.now();
-const ctx = () => createAppContext({ actor: { type: "user", userId }, prisma, now: () => new Date(++tick) });
+const ctx = () => createAppContext({ actor: { type: "admin", userId }, prisma, now: () => new Date(++tick) });
 
 function deferred() {
   let resolve!: () => void;
@@ -56,6 +55,20 @@ async function createAppeal(decisionId: string) {
 }
 
 describe("K24 appeal decision identity (PostgreSQL)", () => {
+  it("denies an unrelated user without resolving the appeal or changing channel state", async () => {
+    await setChannelStatus(ctx(), { channelId: creatorId, status: "SUSPENDED", reason: "decyzja authz" });
+    const decision = await prisma.moderationDecision.findFirstOrThrow({ where: { targetId: creatorId, action: "CHANNEL_SUSPENDED" }, orderBy: { createdAt: "desc" } });
+    const appealId = await createAppeal(decision.id);
+    const denied = await resolveModerationAppeal(
+      createAppContext({ actor: { type: "user", userId: `${RUN}-outsider` }, prisma }),
+      { appealId, outcome: "UPHELD", reasonPublic: "Użytkownik nie jest moderatorem." },
+    );
+
+    expect(denied).toMatchObject({ ok: false, error: { statusCode: 403, code: "FORBIDDEN" } });
+    expect(await prisma.moderationAppeal.findUniqueOrThrow({ where: { id: appealId } })).toMatchObject({ status: "PENDING", outcomeDecisionId: null });
+    expect(await prisma.creator.findUniqueOrThrow({ where: { id: creatorId } })).toMatchObject({ status: "SUSPENDED", statusDecisionId: decision.id });
+  });
+
   it("does not reverse channel SUSPENDED→ACTIVE→SUSPENDED for an appeal of the first decision", async () => {
     await setChannelStatus(ctx(), { channelId: creatorId, status: "SUSPENDED", reason: "decyzja A suspend" });
     const decisionA = await prisma.moderationDecision.findFirstOrThrow({ where: { targetId: creatorId, action: "CHANNEL_SUSPENDED" }, orderBy: { createdAt: "desc" } });

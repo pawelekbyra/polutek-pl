@@ -1,0 +1,36 @@
+{
+  "recordedAt": "2026-11-11",
+  "baseCommit": "c6817ee5",
+  "workingTreeClean": false,
+  "files": {
+    "tests/postgres/moderation-appeal-decision-identity.pg.test.ts": "f3bfc8e6641994ae96c138e3255b1fb7a702f563731283d47b0a0dbe3b57c745"
+  },
+  "environment": {
+    "postgres": "17-alpine (PostgreSQL 17.11)",
+    "migrations": "84/84",
+    "container": "disposable, tmpfs data, port bound to 127.0.0.1; removed after test",
+    "authorization": "real authorize() policy, no authz mock",
+    "moderationNotices": "controlled mock"
+  },
+  "test": {
+    "command": "npx vitest run --config vitest.postgres.config.ts tests/postgres/moderation-appeal-decision-identity.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+    "file": "tests/postgres/moderation-appeal-decision-identity.pg.test.ts",
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0
+  },
+  "newScenario": {
+    "actor": "unrelated authenticated user",
+    "result": "403 FORBIDDEN",
+    "sideEffects": "appeal remains PENDING, channel state and decision identity remain unchanged"
+  },
+  "additionalChecks": {
+    "typecheck": "PASS",
+    "eslint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limitations": [
+    "Direct use-case integration, not the admin HTTP/server-action boundary.",
+    "Moderation notices are mocked and independent review remains open."
+  ]
+}

@@ -715,6 +715,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Uzupełnienie lokalne, 11 listopada 2026:** do istniejących testów PostgreSQL dla ABA kanału/filmu i idempotencji rozpatrzenia dodano kontrolowany wyścig na prawdziwej bazie. Transakcja odwołania A zatrzymuje się po odczycie decyzji A; niezależna transakcja zmienia kanał SUSPENDED→ACTIVE→SUSPENDED i zapisuje decyzję C; po wznowieniu CAS starego odwołania nie cofa C. PostgreSQL 17.11/84 migracje, suite **3/3 PASS**, typecheck i ESLint PASS. [Dowód](program-audytu/evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json). To use case z kontrolowanym authz/notyfikacjami, bez HTTP. K24 pozostaje częściowe do testów tras/roli i niezależnego przeglądu.
 
+**Uzupełnienie autoryzacji, 11 listopada 2026:** wyłączono mock `authorize()` w tej suite i dodano przypadek niepowiązanego zalogowanego użytkownika. Otrzymuje `403 FORBIDDEN`; odwołanie zostaje `PENDING`, a kanał i ID decyzji nie zmieniają się. Wraz z wyścigiem ABA suite **4/4 PASS** na PostgreSQL 17.11/84 migracje; typecheck i ESLint PASS. [Dowód](program-audytu/evidence/k24-appeal-authorization-postgres-2026-11-11.json). Notyfikacje pozostają kontrolowane, a wejście admina/HTTP i niezależny przegląd są nadal otwarte.
+
 <a id="k25"></a>
 
 #### K25. Limit playlist odporny na współbieżność

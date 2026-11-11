@@ -2,7 +2,7 @@
 
 ## 11 listopada 2026 — K24 wyścig starego odwołania z nową decyzją
 
-Nowy test PostgreSQL zatrzymuje rozpatrzenie odwołania A po odczycie, zapisuje niezależnie cykl SUSPENDED→ACTIVE→SUSPENDED i wznawia stary request. Warunkowy zapis nie cofa decyzji C; kanał pozostaje zawieszony z ID decyzji C. PostgreSQL 17.11/84 migracje, suite **3/3 PASS**, typecheck, ESLint i diff check PASS. [Dowód i hash](program-audytu/evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json). To bezpośredni use case z kontrolowanymi authz/notyfikacjami; HTTP, role i niezależny review pozostają otwarte.
+Test PostgreSQL zatrzymuje rozpatrzenie odwołania A po odczycie, zapisuje niezależnie cykl SUSPENDED→ACTIVE→SUSPENDED i wznawia stary request. Warunkowy zapis nie cofa decyzji C; kanał pozostaje zawieszony z ID decyzji C. Potem usunięto mock autoryzacji i sprawdzono odmowę niepowiązanego użytkownika: `403 FORBIDDEN`, odwołanie i kanał bez zmian. PostgreSQL 17.11/84 migracje, suite **4/4 PASS**, typecheck, ESLint i diff check PASS. [Dowód wyścigu](program-audytu/evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json), [dowód autoryzacji](program-audytu/evidence/k24-appeal-authorization-postgres-2026-11-11.json). Notyfikacje są kontrolowane; HTTP/admin i niezależny review pozostają otwarte.
 
 ## 11 listopada 2026 — K34 nazwa i opis dialogu usuwania komentarza
 
