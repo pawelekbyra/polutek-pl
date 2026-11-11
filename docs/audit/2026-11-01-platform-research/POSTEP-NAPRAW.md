@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — synchronizacja rejestru R34/K04
+
+R34 nadal miał status „nierozpoczęte” mimo wcześniejszego zawężenia wybranego cyklu importów, probe 447 modułów bez SCC i PostgreSQL testu wstrzykniętego MainChannelService/ChannelRepository **4/4 PASS**. Rejestr uaktualniono na częściowe i podpięto istniejące dowody. Nadal brakuje pełnego composition root/bundlera, pomiaru reszty historycznego grafu i niezależnego review; nie deklaruję usunięcia wszystkich cykli.
+
 ## 11 listopada 2026 — synchronizacja rejestru R21/K21
 
 R21 pozostawał oznaczony jako nierozpoczęty, choć K21 ma już runtime Zod kontrakty, obsługę wadliwych 200 JSON i testy prawdziwych handlerów/Prisma. Podpięto dowód PostgreSQL 17.11/84 migracji: dwa pliki **6/6 PASS**, legacy Studio client i media-source route contract. Odbiór pełnego Next HTTP, live R2 i niezależny review są nadal otwarte.

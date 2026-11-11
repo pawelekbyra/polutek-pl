@@ -32,6 +32,8 @@ R23/K20 i R26/K25: rejestr zsynchronizowany z istniejącymi dowodami. K20: Postg
 
 R21/K21: rejestr zsynchronizowany ze schematami odpowiedzi runtime, walidacją klienta i rzeczywistymi handlerami/Prisma; PostgreSQL **6/6 PASS** po 84 migracjach. Pełny Next HTTP, R2 i niezależny review pozostają otwarte.
 
+R34/K04: rejestr zsynchronizowany z wcześniejszym wąskim refaktorem: wybrany cykl 19 plików usunięty, rozszerzony probe 447 TS/TSX wykrywa zero SCC; injection serwisu na PostgreSQL **4/4 PASS**. Pełny composition root/bundler, pozostały historyczny graf i niezależny review nadal otwarte.
+
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów
