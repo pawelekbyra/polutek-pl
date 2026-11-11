@@ -376,6 +376,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Rzeczywista macierz HTTP i role, 7 listopada 2026:** Next dev + Better Auth z podpisanymi sesjami + PostgreSQL 17.11/84 migracje: **2/2 PASS**. Gość i obce konto nie dostają metadanych `REMOVED`; właściciel dostaje plan draftu i podpisany SELF_HLS; przed czasem legalna premiera ujawnia komunikat, ale nie źródło ani sesję. Nie żądano manifestu ani segmentów, więc Worker/HLS pozostaje poza dowodem. [Dowód](program-audytu/evidence/k10-http-role-matrix-2026-11-07.json). K10 nadal częściowe do niezależnego review i oddzielnej weryfikacji ochrony obiektów w Workerze.
 
+**Połączenie HTTP z Workerem, 11 listopada 2026:** zintegrowany retest przekazuje dokładny URL podpisany przez aplikację do rzeczywistego kodu HLS Workera. Właścicielski draft zwrócił syntetyczny master playlist; zmiana podpisu po zapełnieniu cache nadal dała 403. Next/Better Auth + disposable PostgreSQL 17/84 migracje, **2/2 PASS**, syntetyczne R2/cache; kontener usunięty. [Dowód](program-audytu/evidence/k10-http-worker-token-contract-2026-11-11.json). Pozostają prawdziwe R2/Cloudflare, przeglądarkowe odtworzenie segmentów i niezależny review.
+
 ### E2 — Poprawność pieniędzy i płatnych uprawnień
 
 <a id="k11"></a>

@@ -5,6 +5,7 @@ import net from "node:net";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import hlsWorker from "../../workers/hls-edge/worker.mjs";
 
 const prisma = new PrismaClient();
 const RUN = `k10-http-${Date.now().toString(36)}`;
@@ -185,6 +186,49 @@ describe("K10 hidden premiere (real local Next HTTP, Better Auth and PostgreSQL)
     expect(previewPlan).toMatchObject({ status: "READY", access: { allowed: true }, source: { provider: "SELF_HLS" } });
     expect(previewPlan.source?.playbackUrl).toContain(`/h/`);
     expect(previewPlan.source?.playbackUrl).toContain(draftVideoId);
+
+    // Carry the exact app-issued URL through the real Worker code with a synthetic R2/cache.
+    // This catches drift between the plan's token format and the edge verifier without contacting Cloudflare.
+    const originalCaches = (globalThis as unknown as { caches?: unknown }).caches;
+    const edgeCache = new Map<string, Response>();
+    (globalThis as unknown as { caches: unknown }).caches = { default: {
+      async match(request: Request) { return edgeCache.get(new URL(request.url).pathname)?.clone(); },
+      async put(request: Request, response: Response) { edgeCache.set(new URL(request.url).pathname, response.clone()); },
+    } };
+    const pending: Promise<unknown>[] = [];
+    const edgeEnv = {
+      HLS_TOKEN_SECRET: hlsSecret,
+      ALLOWED_ORIGINS: "https://www.pawelperfect.com",
+      HLS: {
+        async get(key: string) {
+          if (key !== `videos/${draftVideoId}/v/v1/master.m3u8`) return null;
+          const body = "#EXTM3U\n# synthetic fixture\n";
+          return { body, httpEtag: '"k10"', size: new TextEncoder().encode(body).byteLength };
+        },
+      },
+    };
+    try {
+      const edgeFetch = (request: Request) => (hlsWorker as unknown as {
+        fetch(request: Request, env: typeof edgeEnv, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<Response>;
+      }).fetch(request, edgeEnv, { waitUntil: (promise) => pending.push(promise) });
+      const validEdgeResponse = await edgeFetch(new Request(previewPlan.source!.playbackUrl));
+      expect(validEdgeResponse.status).toBe(200);
+      expect(await validEdgeResponse.text()).toContain("#EXTM3U");
+      await Promise.all(pending);
+
+      const tamperedUrl = new URL(previewPlan.source!.playbackUrl);
+      const pathParts = tamperedUrl.pathname.split("/");
+      const tokenParts = pathParts[2].split(".");
+      tokenParts[1] = `${tokenParts[1][0] === "A" ? "B" : "A"}${tokenParts[1].slice(1)}`;
+      pathParts[2] = tokenParts.join(".");
+      tamperedUrl.pathname = pathParts.join("/");
+      const deniedEdgeResponse = await edgeFetch(new Request(tamperedUrl));
+      expect(deniedEdgeResponse.status).toBe(403);
+      expect(edgeCache.size).toBe(1);
+    } finally {
+      if (originalCaches === undefined) delete (globalThis as unknown as { caches?: unknown }).caches;
+      else (globalThis as unknown as { caches: unknown }).caches = originalCaches;
+    }
 
     const guestPremiere = await getPlan(upcomingVideoId);
     expect(guestPremiere.response.status).toBe(403);
