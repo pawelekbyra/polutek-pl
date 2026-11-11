@@ -1,3 +1,7 @@
+## Punkt wznowienia — 11 listopada 2026, K01-T3 timeout przeglądarki
+
+Gałąź `docs/polutek-platform-audit`, HEAD `9c7b33a24ac361caa128e99931c8e48d3e6cf3bd`. Ostatnia próba pełnego K01-T3 użyła disposable PostgreSQL 17 (84 migracje, tmpfs), loopback S3, worker/FFmpeg i Chromium. Upload, enkodowanie i lokalne API/Worker doszły do przeglądarki, lecz nawigacja `/pl` przekroczyła 30 s przed `domcontentloaded`; przebieg niezaliczony i przyczyna nieustalona. [Dowód](evidence/k01-studio-worker-browser-timeout-2026-11-11.json). Stan testowego checkoutu posprzątany; brak kontenera K01. **Następny krok:** odtworzyć i zdiagnozować odpowiedź/logi strony `/pl` przed ponowną pełną akceptacją. Wznowienie: `cd /opt/codex/polutek-pl/.worktrees/platform-audit && npx vitest run --config vitest.postgres.config.ts tests/postgres/k01-video-worker-local.pg.test.ts --testTimeout=120000 --hookTimeout=120000`.
+
 ## Weryfikacja aktualnej gałęzi — 11 listopada 2026
 
 Na czystym SHA `d3f25025bfbefac267da0b9fb3dbae89f4f2b23f` pełne `npm run quality` przeszło: architektura/typecheck PASS, **585 plików PASS / 1 skipped; 5170 testów PASS / 2 skipped**. [Raport](evidence/full-quality-2026-11-11-branch-acceptance.json). To lokalna bramka kodu; nie zastępuje odbioru R2, produkcji, niezależnego review ani pozostałych bramek z roadmapy.

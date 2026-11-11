@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — K01-T3: nieudany retest nawigacji Chromium
+
+Po 84/84 migracjach na jednorazowym PostgreSQL i przejściu lokalnych asercji uploadu, workera oraz HLS, `page.goto(/pl?v=<synthetic-id>)` przekroczyło limit 30 s oczekiwania na `domcontentloaded`. To wynik **niejednoznaczny**, nie dowód awarii produkcyjnej ani zaliczenia odtwarzania. Osobne testy HTTP/Chromium z 7 listopada pozostają ważne; ten przebieg ich nie zastępuje. Kontener PostgreSQL został zatrzymany, zmiany konfiguracyjne Next cofnięte. [Dowód i ograniczenia](program-audytu/evidence/k01-studio-worker-browser-timeout-2026-11-11.json). Następny krok: odtworzyć wyłącznie lokalny timeout z diagnozą logów/odpowiedzi strony, bez zwiększania timeoutu jako substytutu znalezienia przyczyny.
+
 ## 11 listopada 2026 — kontynuacja lokalnych pakietów K07/K10/K13/K38
 
 Na gałęzi `docs/polutek-platform-audit` odświeżono celowane dowody lokalne. K07: ograniczone czytniki body **13/13 PASS**, w tym legalne 10 000 części; reverse proxy nadal nieodebrane. K10: zintegrowany Next HTTP/Better Auth + PostgreSQL 17 (84 migracje) z dokładnym tokenem z odpowiedzi aplikacji przekazanym do rzeczywistego modułu HLS Worker: **2/2 PASS**; błędny podpis zwrócił 403 po zapełnieniu cache. Użyto wyłącznie syntetycznego R2/cache, bez Cloudflare. K13: dwie suite usuwania S3 **10/10 PASS**, loopback only. K38: kontrakt generatora **36/36 PASS**, a scenariusze i D13 zaktualizowano; pełny runner i cleanup wymagają non-production. Dowody: `program-audytu/evidence/k07-request-body-retest-2026-11-11.json`, `k10-http-worker-token-contract-2026-11-11.json`, `k13-delete-retest-2026-11-11.json`, `k38-local-contract-retest-2026-11-11.json`. Małe commity są zapisane lokalnie; bez push, PR, merge, deploy ani kontaktu z produkcją. Otwarte bramki dostawców, właściciela i niezależnego review nadal blokują formalne zamknięcie całości.

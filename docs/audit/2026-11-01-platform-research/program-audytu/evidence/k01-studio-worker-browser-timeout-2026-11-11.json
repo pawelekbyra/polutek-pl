@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-11",
+  "repository_head_sha": "9c7b33a24ac361caa128e99931c8e48d3e6cf3bd",
+  "package": "K01-T3 combined Studio upload, worker, HLS and Chromium retest",
+  "finding": "R08 end-to-end runtime evidence",
+  "status": "inconclusive_browser_navigation_timeout",
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "1d329f16ec0d33eb90ebd2f9f6804c7c86e95384df846ea5e3fd4c40e10e584c"
+  },
+  "command": "npx vitest run --config vitest.postgres.config.ts tests/postgres/k01-video-worker-local.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+  "environment": {
+    "database": "disposable PostgreSQL 17, 84 migrations, tmpfs",
+    "storage": "synthetic S3-compatible loopback fixture",
+    "worker": "local FFmpeg and application worker",
+    "browser": "local Playwright Chromium",
+    "external_services_contacted": false
+  },
+  "result": {
+    "exit": 1,
+    "files": 1,
+    "passed": 0,
+    "failed": 1,
+    "failure": "page.goto(/pl?v=<synthetic-id>) exceeded its 30000 ms navigation timeout while waiting for domcontentloaded",
+    "observed_before_failure": "Upload, worker/encoding and local HLS API/Worker assertions reached the browser navigation step; this run does not establish that the page rendered or playback worked."
+  },
+  "limitations": [
+    "The timeout alone does not identify whether Next page rendering, local scheduling/resource contention, or another browser navigation dependency caused the stall.",
+    "This failed combined retest does not supersede the separate passing K01/K35 local HTTP and Chromium evidence dated 2026-11-07.",
+    "K01 remains partial; diagnose the navigation stall before claiming this combined acceptance. No production, Cloudflare, live R2, or external endpoint was contacted."
+  ],
+  "cleanup": "Disposable PostgreSQL container stopped by the test command cleanup trap; generated Next config edits were reverted; no K01 disposable container remains."
+}
