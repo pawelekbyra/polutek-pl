@@ -1,3 +1,9 @@
+## 2026-11-12 — K03 aktualny critical path
+
+- Czysty SHA `6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b`, 3434 tracked files, source fingerprint `5526216e…d99dbc95`.
+- Dwie wymagane suite: **37/37 PASS**, 0 failed/skipped (restore CLI 32/32; launch candidate 5/5).
+- Pełne quality i odtworzenie realnego backupu/offsite pozostają otwarte. [Dowód](evidence/k03-critical-path-acceptance-2026-11-12.json).
+
 ## 2026-11-12 — K21 pokrycie przez lokalny Next HTTP z K01
 
 - K01-T3 **1/1 PASS** obejmuje rzeczywisty Next HTTP dla multipart Studio, pipeline, media-source oraz browser playback przez lokalny Worker.

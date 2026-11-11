@@ -1,3 +1,7 @@
+## 12 listopada 2026 — K03 świeży krytyczny baseline
+
+`npm run test:critical-path` na czystym SHA `6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b` przeszedł **37/37**, bez błędów i skipów: 32 testy procesu weryfikatora restore oraz 5 testów launch candidate. Fingerprint źródeł `5526216e…d99dbc95`, 3434 śledzone pliki. [Raport](program-audytu/evidence/k03-critical-path-acceptance-2026-11-12.json). To nie jest pełne `npm run quality` ani ćwiczenie odtworzenia z rzeczywistej kopii poza serwerem; K03 pozostaje częściowe.
+
 ## 12 listopada 2026 — K21 uzupełnienie rzeczywistego Next HTTP
 
 K01-T3 przeszedł lokalny full-stack test na prawdziwym Next HTTP: Studio multipart start/complete, pipeline API, media-source, lokalny HLS Worker w Chromium, wymiana i cleanup (**1/1 PASS**). To uzupełnia K21 o rzeczywistą granicę HTTP w aktualnej aplikacji. Stary klient jest nadal sprawdzony przez kontrakt handlera/PostgreSQL, ale nie jako osobny end-to-end przez serwer; storage pozostaje loopback, więc real R2 i niezależny review pozostają otwarte. [K01 evidence](program-audytu/evidence/k01-studio-worker-browser-acceptance-2026-11-11.json), [K21 evidence](program-audytu/evidence/k21-local-acceptance-2026-11-11.json).

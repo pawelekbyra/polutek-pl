@@ -222,6 +222,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SHA `253959a77a4dfc054cd62195e5b7f8a3a2d5e428`: **37/37 PASS**, 0 skipped, Vitest 4.1.12, fingerprint `f40fdba4…7635cda`; [raport](program-audytu/evidence/k03-critical-path-vitest-4.1.12-2026-11-11.json).
 
+**K03 retest 12 listopada 2026:** guarded critical path na czystym SHA `6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b` — **2 suite, 37/37 PASS, 0 skipped**, 3434 śledzone pliki i fingerprint `5526216e…d99dbc95`. [Raport i zakres](program-audytu/evidence/k03-critical-path-acceptance-2026-11-12.json). Nie zastępuje pełnego quality ani restore rzeczywistego backupu/offsite; K03 pozostaje częściowe.
+
 <a id="k04"></a>
 
 #### K04. Wąskie importy i jawne składanie infrastruktury

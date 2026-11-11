@@ -1,3 +1,7 @@
+## Punkt wznowienia — 12 listopada 2026, K03 krytyczny baseline
+
+Na czystym SHA `6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b` `npm run test:critical-path` przeszedł **37/37, 0 skipów** (32 testy weryfikatora restore, 5 launch candidate); source fingerprint `5526216e…d99dbc95`. [Dowód](evidence/k03-critical-path-acceptance-2026-11-12.json). **Następny krok K03:** pełne `quality` po zmianach na ustalonym SHA i niezależnie ćwiczenie odtworzenia z prawdziwej kopii/offsite; obecny dowód obejmuje wyłącznie krytyczny podzbiór i kontrolowane fixtures.
+
 ## Punkt wznowienia — 12 listopada 2026, K04 graf modułów
 
 Na kodowym snapshotcie `ff259c3b` probe 447 plików `lib/modules` wykrył 0 cykli SCC i 0 błędów parsera; `npm run quality:architecture-boundaries` przeszedł. Dokumentacja jest teraz na HEAD `c57f60fe`; od kodowego snapshotu probe’u `ff259c3b` zmieniały się wyłącznie dokumenty i dowody. [Dowód](evidence/k04-current-module-cycles-2026-11-12.json). **Następny krok:** K04 wymaga review composition root i bieżącego produkcyjnego bundlera/runtime; sam probe nie pokrywa importów obliczanych ani kodu poza `lib/modules`.
