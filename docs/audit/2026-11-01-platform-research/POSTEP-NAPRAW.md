@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — kontynuacja lokalnych pakietów K07/K10/K13/K38
+
+Na gałęzi `docs/polutek-platform-audit` odświeżono celowane dowody lokalne. K07: ograniczone czytniki body **13/13 PASS**, w tym legalne 10 000 części; reverse proxy nadal nieodebrane. K10: zintegrowany Next HTTP/Better Auth + PostgreSQL 17 (84 migracje) z dokładnym tokenem z odpowiedzi aplikacji przekazanym do rzeczywistego modułu HLS Worker: **2/2 PASS**; błędny podpis zwrócił 403 po zapełnieniu cache. Użyto wyłącznie syntetycznego R2/cache, bez Cloudflare. K13: dwie suite usuwania S3 **10/10 PASS**, loopback only. K38: kontrakt generatora **36/36 PASS**, a scenariusze i D13 zaktualizowano; pełny runner i cleanup wymagają non-production. Dowody: `program-audytu/evidence/k07-request-body-retest-2026-11-11.json`, `k10-http-worker-token-contract-2026-11-11.json`, `k13-delete-retest-2026-11-11.json`, `k38-local-contract-retest-2026-11-11.json`. Małe commity są zapisane lokalnie; bez push, PR, merge, deploy ani kontaktu z produkcją. Otwarte bramki dostawców, właściciela i niezależnego review nadal blokują formalne zamknięcie całości.
+
 ## 11 listopada 2026 — synchronizacja rejestru R34/K04
 
 R34 nadal miał status „nierozpoczęte” mimo wcześniejszego zawężenia wybranego cyklu importów, probe 447 modułów bez SCC i PostgreSQL testu wstrzykniętego MainChannelService/ChannelRepository **4/4 PASS**. Rejestr uaktualniono na częściowe i podpięto istniejące dowody. Nadal brakuje pełnego composition root/bundlera, pomiaru reszty historycznego grafu i niezależnego review; nie deklaruję usunięcia wszystkich cykli.
