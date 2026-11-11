@@ -717,6 +717,8 @@ Po aktualizacji runnera K02 krytyczny baseline został powtórzony na czystym SH
 
 **Uzupełnienie autoryzacji, 11 listopada 2026:** wyłączono mock `authorize()` w tej suite i dodano przypadek niepowiązanego zalogowanego użytkownika. Otrzymuje `403 FORBIDDEN`; odwołanie zostaje `PENDING`, a kanał i ID decyzji nie zmieniają się. Wraz z wyścigiem ABA suite **4/4 PASS** na PostgreSQL 17.11/84 migracje; typecheck i ESLint PASS. [Dowód](program-audytu/evidence/k24-appeal-authorization-postgres-2026-11-11.json). Notyfikacje pozostają kontrolowane, a wejście admina/HTTP i niezależny przegląd są nadal otwarte.
 
+**Granica Server Action, 11 listopada 2026:** dodano unit test `resolveAppealAction`: waliduje i normalizuje wejście, odmawia przed use case przy zamkniętej bramce lub niepoprawnym wyniku i bezpiecznie mapuje konflikt ponownego rozpatrzenia. **3/3 PASS**, typecheck i ESLint PASS ([dowód](program-audytu/evidence/k24-admin-appeal-action-2026-11-11.json)). Test kontroluje gate/use case i nie zastępuje HTTP/admin session; K24 nadal częściowe.
+
 <a id="k25"></a>
 
 #### K25. Limit playlist odporny na współbieżność

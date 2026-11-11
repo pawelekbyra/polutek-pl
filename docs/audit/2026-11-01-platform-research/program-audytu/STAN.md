@@ -14,7 +14,7 @@ K22: dwa równoległe requesty `complete` do prawdziwego handlera Studio na Post
 
 K34: test regresji dialogów asertywnie sprawdza dostępną nazwę i opis DeleteCommentDialog, suite **4/4 PASS**, TypeScript/ESLint PASS; [dowód](evidence/k34-comment-dialog-accessible-name-2026-11-11.json). To weryfikacja DOM. Screen reader, pełny kontekst aplikacji i niezależny review pozostają otwarte.
 
-K24: test z prawdziwym PostgreSQL zatrzymuje stare odwołanie po odczycie, zapisuje decyzję C w cyklu ABA i sprawdza, że warunkowy zapis A nie cofa C. Bez mocka `authorize()` niepowiązany użytkownik dostaje 403 bez skutków; K24 **4/4 PASS**, typecheck/ESLint PASS; [wyścig](evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json), [autoryzacja](evidence/k24-appeal-authorization-postgres-2026-11-11.json). Admin HTTP/action, notyfikacje produkcyjne i niezależny review pozostają otwarte.
+K24: test z prawdziwym PostgreSQL sprawdza wyścig ABA i odmowę autoryzacji niepowiązanego użytkownika bez efektów (**4/4 PASS**). Test Server Action sprawdza walidację, bramkę i mapowanie odmowy/konfliktu (**3/3 PASS**); typecheck/ESLint PASS. Dowody: [wyścig](evidence/k24-concurrent-appeal-decision-postgres-2026-11-11.json), [autoryzacja](evidence/k24-appeal-authorization-postgres-2026-11-11.json), [Server Action](evidence/k24-admin-appeal-action-2026-11-11.json). Nadal brakuje HTTP/admin session, realnych notyfikacji i niezależnego review.
 
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
 
