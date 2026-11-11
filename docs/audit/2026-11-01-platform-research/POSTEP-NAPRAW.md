@@ -1,5 +1,9 @@
 # Postęp realizacji roadmapy — H1
 
+## 11 listopada 2026 — synchronizacja rejestru R28/K18 i R29/K19
+
+Rejestr oznaczał R28/R29 jako nierozpoczęte, chociaż roadmapa zawierała lokalne odbiory z PostgreSQL. Uaktualniono R28 na częściowe po K18: audyt aktywacji jest atomowy, a retry zachowuje pliki przy niepewnym COMMIT (**4/4 integracyjne**, kontrolowane storage). R29 jest częściowe po K19: aktywacja i cleanup rezerwują wspólny stan (**4/4 K19, 8/8 z K17/K18**). Podpięto istniejące raporty. R2 i niezależny review, a dla K19 też drain starych procesów, pozostają otwarte.
+
 ## 11 listopada 2026 — synchronizacja rejestru R27/K15
 
 Rejestr oznaczał R27 jako nierozpoczęte, mimo że K15 zawiera już rzeczywiste handlery Studio i transakcje PostgreSQL. Uaktualniono R27 na częściowe i podpięto dowód wyścigu dwóch complete requestów oraz test opóźnionego retry v1 po aktywacji v2 (**7/7 PASS**). Stara wersja pozostaje SUPERSEDED i nie cofa aktywnego wskaźnika. R2 i niezależny review pozostają otwarte.

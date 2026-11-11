@@ -18,6 +18,8 @@ K24: test z prawdziwym PostgreSQL sprawdza wyścig ABA i odmowę autoryzacji nie
 
 R27/K15: rejestr napraw zsynchronizowany z istniejącym odbiorem Studio/PostgreSQL oraz nowymi testami K22: równoległy `complete` zwraca ten sam job, a spóźniony retry v1 po aktywacji v2 nie reaktywuje v1 (**7/7 PASS**). [Dowody](evidence/k22-concurrent-complete-postgres-2026-11-11.json), [dowód ochrony v2](evidence/k22-stale-replay-race-postgres-2026-11-11.json). R2 i niezależny review nadal otwarte.
 
+R28/K18 i R29/K19: rejestr zsynchronizowany z lokalnym dowodem PostgreSQL. K18 **4/4 integracyjne** dla transakcyjnej aktywacji/audytu i ochrony retry; K19 **4/4**, **8/8** wraz z regresjami K17/K18 dla rezerwacji cleanup. Storage nie jest R2; wymagane są sandbox, drain starych procesów (K19) i niezależny review.
+
 **Komenda wznowienia:** `cd /opt/codex/polutek-pl/.worktrees/platform-audit && git status --short --branch && git log -5 --oneline`. Pełne quality jest zielone; kontynuować niezależne pakiety lokalne według zależności. Zewnętrzny odbiór K20/K21 z R2, K02 obrazów oraz pozostałe wymagające operatora bramki nadal są jawnie otwarte.
 
 ## Historyczny punkt wznowienia — 8 listopada 2026, K34 fokus dialogów
