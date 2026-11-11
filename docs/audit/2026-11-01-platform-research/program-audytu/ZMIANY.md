@@ -1,3 +1,9 @@
+## 2026-11-11 — K02 aktualny audit lockfile
+
+- Node 22.23.3/npm 10.9.9: `npm audit --omit=dev` 0 podatności; pełny audit 3 low, 0 moderate/high/critical.
+- Wszystkie 3 pozycje dotyczą deweloperskiego CLI shadcn/transytywnego deepmerge; proponowany fix to zmiana major, bez zmiany lockfile w tym kroku.
+- Standalone images i kompatybilność CLI pozostają otwarte. [Dowód](evidence/k02-npm-audit-retest-2026-11-11.json).
+
 ## 2026-11-11 — K01-T3 lokalny pełny przebieg po zimnej kompilacji Next
 
 - Request diagnostyczny wykazał `GET /pl` bez nagłówków przez ponad 35 s, z `Compiling /[locale] ...` w logu Next.

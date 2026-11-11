@@ -1,3 +1,7 @@
+## 11 listopada 2026 — K02 aktualny audit zależności
+
+Na Node 22.23.3/npm 10.9.9 `npm audit --omit=dev` zakończył się **0 podatności**. Pełny audit wykazał **3 low, 0 moderate/high/critical**, wyłącznie w toolchainie deweloperskim `shadcn@4.23.0` → `@shadcn/registry@0.2.1` → `deepmerge@4.3.1`; npm proponuje `shadcn@1.0.0` jako zmianę semver-major, więc nie zmieniałem zależności. [Dowód, hashe i ograniczenia](program-audytu/evidence/k02-npm-audit-retest-2026-11-11.json). K02 pozostaje częściowe: trzeba ocenić kompatybilność aktualizacji CLI i sprawdzić rzeczywiste obrazy runtime; audit lockfile nie dowodzi ich zawartości.
+
 # Postęp realizacji roadmapy — H1
 
 ## 11 listopada 2026 — K01-T3: zimna kompilacja Next i pełny lokalny przebieg

@@ -138,6 +138,9 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 #### K02. Pilna aktualizacja zależności objętych advisory
 
+
+**Retest 11 listopada 2026:** `npm audit --omit=dev` **0 podatności**; pełny lockfile: **3 low, 0 moderate/high/critical**, ograniczone do `shadcn@4.23.0` i jego transytywnego `deepmerge@4.3.1`. Npm proponuje `shadcn@1.0.0` (semver-major); zmiany nie wykonano bez oceny zgodności CLI. [Dowód](program-audytu/evidence/k02-npm-audit-retest-2026-11-11.json). To potwierdza czysty graph zależności produkcyjnych, ale nie inspekcję standalone images ani zakończenie K02.
+
 **Ustalenia:** R01. **Rodzaj:** NAPRAWA RYZYKA. **Trudność:** M. **Pozycja proponowanego wykonania:** 1.
 
 **Moduły:** package.json, package-lock.json; konfiguracje Next public/admin, obrazy aplikacji i rzeczywiście ładowane sharp/libvips/librsvg.
