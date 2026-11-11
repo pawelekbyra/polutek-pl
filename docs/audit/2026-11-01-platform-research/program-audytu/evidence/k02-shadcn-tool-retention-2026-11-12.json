@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-12",
+  "package": "K02 shadcn development-tool decision",
+  "repository_head_sha": "b8e26f99",
+  "source_sha256": {
+    "package.json": "ecf4b6d6a6a452d47c4b4c993efb2067d26e26a36cbacda112e08a58f2d3ceca",
+    "components.json": "48890abafb78b0f93f7e702548501e98cef13314debc22f2d8c127cbc5c36509"
+  },
+  "inspection": {
+    "package": "shadcn@4.23.0",
+    "placement": "devDependencies",
+    "npm_scripts_reference_cli": false,
+    "github_workflows_reference_cli": false,
+    "project_has_components_configuration": true,
+    "production_audit": "0 vulnerabilities",
+    "full_lockfile_audit": "3 low; 0 moderate/high/critical",
+    "affected_chain": "shadcn@4.23.0 > @shadcn/registry@0.2.1 > deepmerge@4.3.1"
+  },
+  "decision": "Retain shadcn as a development-only, lockfile-pinned authoring tool. Removing it would discard the project-configured component CLI; npm suggested shadcn@1.0.0 is not a CLI and is not a valid fix. Do not change the dependency until a compatible upstream fix or a validated replacement exists.",
+  "next_gate": "Inspect and run the final app/admin Docker images including base image digests; this is still required for K02 and was not attempted here.",
+  "limitations": [
+    "Static repository inspection only; no package install, audit, build, test, image build, or deployment was run.",
+    "The component configuration is evidence of intended CLI compatibility, not proof that current contributors invoke the CLI."
+  ],
+  "upstream": {
+    "release": "https://github.com/shadcn-ui/ui/releases",
+    "cli_docs": "https://ui.shadcn.com/docs/cli",
+    "observed_release": "shadcn@4.23.0; released 2026-10-27"
+  }
+}

@@ -1,3 +1,7 @@
+## 12 listopada 2026 — K02 decyzja o shadcn
+
+Pozostawiono przypięte `shadcn@4.23.0` jako dev-only: repo ma `components.json`, CLI nie jest odpalane przez skrypty/CI, a npm-owe `1.0.0` nie jest CLI. Pełny lockfile ma 3 niskie alerty developerskie, audit produkcyjny zero. [Uzasadnienie](program-audytu/evidence/k02-shadcn-tool-retention-2026-11-12.json). Następny krok: inspekcja i uruchomienie finalnych obrazów app/admin; nie wykonywano builda Docker.
+
 ## 12 listopada 2026 — K03 świeży krytyczny baseline
 
 `npm run test:critical-path` na czystym SHA `6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b` przeszedł **37/37**, bez błędów i skipów: 32 testy procesu weryfikatora restore oraz 5 testów launch candidate. Fingerprint źródeł `5526216e…d99dbc95`, 3434 śledzone pliki. [Raport](program-audytu/evidence/k03-critical-path-acceptance-2026-11-12.json). To nie jest pełne `npm run quality` ani ćwiczenie odtworzenia z rzeczywistej kopii poza serwerem; K03 pozostaje częściowe.

@@ -1,3 +1,7 @@
+## Punkt wznowienia — 12 listopada 2026, K02 decyzja o narzędziu shadcn
+
+Pozostawiono `shadcn@4.23.0` jako developerskie narzędzie do komponentów: projekt ma `components.json`, CLI nie jest używane przez skrypty/CI, a sugerowane `shadcn@1.0.0` nie jest CLI. Audit produkcyjny pozostaje czysty; 3 low są tylko w drzewie developerskim. [Uzasadnienie i zakres](evidence/k02-shadcn-tool-retention-2026-11-12.json). **Następny krok K02:** obejrzeć/uruchomić finalne obrazy app/admin i zapisać bazowe digesty; nie budowano obrazów w tej sesji.
+
 ## Punkt wznowienia — 12 listopada 2026, K03 krytyczny baseline
 
 Na czystym SHA `6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b` `npm run test:critical-path` przeszedł **37/37, 0 skipów** (32 testy weryfikatora restore, 5 launch candidate); source fingerprint `5526216e…d99dbc95`. [Dowód](evidence/k03-critical-path-acceptance-2026-11-12.json). **Następny krok K03:** pełne `quality` po zmianach na ustalonym SHA i niezależnie ćwiczenie odtworzenia z prawdziwej kopii/offsite; obecny dowód obejmuje wyłącznie krytyczny podzbiór i kontrolowane fixtures.

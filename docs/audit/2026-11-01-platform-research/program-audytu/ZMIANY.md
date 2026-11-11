@@ -1,3 +1,8 @@
+## 2026-11-12 — K02 decyzja o CLI shadcn
+
+- Zostawiono `shadcn@4.23.0` przypięte jako dev-only: `components.json` jest częścią projektu, CLI nie jest w skryptach/CI, a proponowane `1.0.0` nie dostarcza CLI.
+- Akceptowane ograniczenie: 3 low w pełnym dev graph; produkcyjny audit ma zero. Brak zmiany lockfile i brak obrazów Docker; ich inspekcja/uruchomienie to następna bramka. [Dowód](evidence/k02-shadcn-tool-retention-2026-11-12.json).
+
 ## 2026-11-12 — K03 aktualny critical path
 
 - Czysty SHA `6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b`, 3434 tracked files, source fingerprint `5526216e…d99dbc95`.
