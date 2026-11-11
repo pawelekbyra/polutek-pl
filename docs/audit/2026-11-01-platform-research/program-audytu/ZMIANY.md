@@ -1,3 +1,9 @@
+## 2026-11-12 — K02 sprawdzenie sugestii `shadcn@1.0.0`
+
+- Registry metadane: wersja 1.0.0 z lipca 2024 nie ma binarki CLI ani zależności; projekt używa 4.23.0.
+- Odrzucono automatyczny downgrade jako niekompatybilny; bez zmian lockfile, produkcyjny audit nadal 0.
+- Zostają 3 alerty low dev-only do czasu kompatybilnego upstream fixu lub zwalidowanej migracji. [Dowód](evidence/k02-npm-audit-retest-2026-11-11.json).
+
 ## 2026-11-12 — K04 statyczny graf i strażnik architektury
 
 - Probe 447 plików `lib/modules`: 0 SCC, 0 błędów parsera.

@@ -1,3 +1,7 @@
+## 12 listopada 2026 — K02 ocena sugerowanego downgrade’u shadcn
+
+Sprawdziłem metadane `shadcn@1.0.0`: opublikowany 9 lipca 2024, bez binarki CLI i bez zależności; projekt używa `shadcn@4.23.0`. Sugestia `npm audit fix` nie jest kompatybilną aktualizacją narzędzia. Nie zmieniam lockfile; trzy pozycje low zostają jawnie ograniczone do dev-only CLI, a aktualny audyt produkcyjny nadal wynosi 0. [Dowód i metadane](program-audytu/evidence/k02-npm-audit-retest-2026-11-11.json); [oficjalna dokumentacja CLI](https://ui.shadcn.com/docs/cli).
+
 ## 12 listopada 2026 — K04 aktualny probe grafu i granic
 
 Probe 447 plików `lib/modules`: **0 cykli SCC, 0 błędów parsera**. `npm run quality:architecture-boundaries`: exit 0, brak importu Prisma/services w trasach i brak legacy access references; checker objął 166 plików admina oraz 34 use case (32 jawne wyjątki). [Dowód i hashe](program-audytu/evidence/k04-current-module-cycles-2026-11-12.json). Wynik jest ograniczony do statycznych importów w tym drzewie; composition root, pełny bundler/runtime i niezależny review pozostają otwarte.

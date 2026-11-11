@@ -192,6 +192,8 @@ Każdy test poniżej jest **wymaganiem przyszłego odbioru, nie wykonanym wyniki
 
 <a id="k03"></a>
 
+**Weryfikacja fixAvailable, 12 listopada 2026:** `npm audit` sugeruje `shadcn@1.0.0`, lecz registry pokazuje wydanie z 2024 r. bez binarki i zależności. To downgrade do pakietu bez CLI, nie kompatybilna poprawka dla obecnego `shadcn@4.23.0`; nie zastosowano. Zostają 3 alerty low w dev-only toolchain i 0 production audit findings. [Metadane oraz decyzja](program-audytu/evidence/k02-npm-audit-retest-2026-11-11.json); zob. też [oficjalne CLI shadcn](https://ui.shadcn.com/docs/cli).
+
 #### K03. Wiarygodny baseline testów i wynik weryfikatora restore
 
 **Ustalenia:** R08, R37. **Rodzaj:** NAPRAWA NARZĘDZIA I WERYFIKACJA. **Trudność:** M. **Pozycja proponowanego wykonania:** 4.

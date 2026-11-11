@@ -1,10 +1,10 @@
 ## Punkt wznowienia — 12 listopada 2026, K04 graf modułów
 
-Na kodowym snapshotcie `ff259c3b` probe 447 plików `lib/modules` wykrył 0 cykli SCC i 0 błędów parsera; `npm run quality:architecture-boundaries` przeszedł. Dokumentacja jest na HEAD `1b787155` i nie zmieniła kodu od testu. [Dowód](evidence/k04-current-module-cycles-2026-11-12.json). **Następny krok:** K04 wymaga review composition root i bieżącego produkcyjnego bundlera/runtime; sam probe nie pokrywa importów obliczanych ani kodu poza `lib/modules`.
+Na kodowym snapshotcie `ff259c3b` probe 447 plików `lib/modules` wykrył 0 cykli SCC i 0 błędów parsera; `npm run quality:architecture-boundaries` przeszedł. Dokumentacja jest teraz na HEAD `c57f60fe`; od kodowego snapshotu probe’u `ff259c3b` zmieniały się wyłącznie dokumenty i dowody. [Dowód](evidence/k04-current-module-cycles-2026-11-12.json). **Następny krok:** K04 wymaga review composition root i bieżącego produkcyjnego bundlera/runtime; sam probe nie pokrywa importów obliczanych ani kodu poza `lib/modules`.
 
 ## Punkt wznowienia — 11 listopada 2026, K02 audit zależności
 
-Na HEAD `0116bbb4fed05ae5340641db10687d53bc3164be` aktualny `npm audit --omit=dev` daje 0 podatności; pełny audit daje 3 low wyłącznie dla deweloperskiego CLI `shadcn` / `deepmerge`, bez moderate/high/critical. Proponowany fix wymaga zmiany major CLI, więc pozostawiono lockfile bez zmian. [Dowód](evidence/k02-npm-audit-retest-2026-11-11.json). **Następny krok K02:** ocenić zgodność CLI 1.0.0 albo świadomie utrzymać narzędzie jako dev-only, a potem sprawdzić rzeczywiste obrazy runtime; nie utożsamiać audit lockfile z image scan.
+Na HEAD `0116bbb4fed05ae5340641db10687d53bc3164be` aktualny `npm audit --omit=dev` daje 0 podatności; pełny audit daje 3 low wyłącznie dla deweloperskiego CLI `shadcn` / `deepmerge`, bez moderate/high/critical. Sugerowane `shadcn@1.0.0` pochodzi z 2024 r. i nie ma binarki CLI ani zależności; to nie jest zgodny fix dla 4.23.0, więc lockfile pozostaje bez zmian. [Dowód](evidence/k02-npm-audit-retest-2026-11-11.json). **Następny krok K02:** ocenić zgodność CLI 1.0.0 albo świadomie utrzymać narzędzie jako dev-only, a potem sprawdzić rzeczywiste obrazy runtime; nie utożsamiać audit lockfile z image scan.
 
 ## Punkt wznowienia — 11 listopada 2026, K01-T3 pełny lokalny odbiór
 
