@@ -386,7 +386,7 @@ export async function requestChannelDeletion(ctx: AppContext): Promise<UseCaseRe
   await ctx.db.writeTransaction(async (tx: WriteTx) => {
     await tx.creator.update({
       where: { id: channel.id },
-      data: { status: "DELETED", deletedAt: now, deleteAfter, statusChangedAt: now, statusReason: "OWNER_DELETED" },
+      data: { status: "DELETED", deletedAt: now, deleteAfter, statusChangedAt: now, statusReason: "OWNER_DELETED", statusDecisionId: null },
     });
     await recordAuditEvent(ctx, {
       action: "CHANNEL_DELETION_REQUESTED",
@@ -423,7 +423,7 @@ export async function restoreChannel(ctx: AppContext, channelId: string): Promis
   const restored = await ctx.db.writeTransaction(async (tx: WriteTx) => {
     const updated = await tx.creator.update({
       where: { id: row.id },
-      data: { status: "ACTIVE", deletedAt: null, deleteAfter: null, statusChangedAt: now, statusReason: null },
+      data: { status: "ACTIVE", deletedAt: null, deleteAfter: null, statusChangedAt: now, statusReason: null, statusDecisionId: null },
       select: SUMMARY_SELECT,
     });
     await recordAuditEvent(ctx, {

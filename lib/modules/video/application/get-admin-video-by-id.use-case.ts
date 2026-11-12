@@ -3,7 +3,7 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoNotFoundError } from "../domain/video.errors";
-import { MainChannelService } from "@/lib/modules/channel";
+import { MainChannelService } from "@/lib/modules/channel/application/main-channel.service";
 import { authorize } from "@/lib/modules/authz";
 import { AppError } from "@/lib/modules/shared/app-error";
 

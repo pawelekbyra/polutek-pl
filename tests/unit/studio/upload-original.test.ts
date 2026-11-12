@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { uploadOriginal } from "@/app/components/studio/upload-original";
+import { cancelStudioUpload, uploadOriginal } from "@/app/components/studio/upload-original";
 import { StudioApiError, studioApi } from "@/app/components/studio/studio-client";
+import { resumeKey } from "@/lib/video-upload/multipart-uploader";
+import { studioFileIdentity } from "@/lib/video-upload/studio-resume";
 
 type Call = { url: string; method: string; body?: unknown };
 
 /** A fake network: the Studio API answers, and part PUTs return an ETag unless told to fail. */
-function network(opts: { partCount?: number; partSize?: number; failPart?: { n: number; times: number; status?: number } } = {}) {
+function network(opts: { partCount?: number; partSize?: number; heldParts?: Array<{ partNumber: number; etag: string }>; failPart?: { n: number; times: number; status?: number } } = {}) {
   const partCount = opts.partCount ?? 3;
   const partSize = opts.partSize ?? 10;
   const calls: Call[] = [];
@@ -18,6 +20,7 @@ function network(opts: { partCount?: number; partSize?: number; failPart?: { n: 
     const json = (data: unknown, status = 200) =>
       new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
     if (url.endsWith("/upload") && method === "POST") return json({ originalId: "o1", partSize, partCount, fileSize: partCount * partSize });
+    if (url.includes("/upload?originalId=") && method === "GET") return json({ parts: opts.heldParts ?? [], partSize, partCount });
     if (url.endsWith("/upload/parts")) {
       const numbers = (body as { partNumbers: number[] }).partNumbers;
       return json({ urls: numbers.map((n) => ({ partNumber: n, url: `https://r2.example/part/${n}` })), expiresAt: "x" });
@@ -47,12 +50,13 @@ describe("uploadOriginal", () => {
     const progress: number[] = [];
     const result = await uploadOriginal({
       videoId: "v1", file: file(25), fileName: "a.mp4", fetchImpl: net.fetchImpl, wait: noWait,
-      onProgress: (p) => progress.push(p.uploadedBytes),
+      onProgress: (p) => progress.push(p.uploadedBytes), publishAfterReady: true,
     });
     expect(result).toEqual({ originalId: "o1", jobId: "job-9" });
     const complete = net.calls.find((c) => c.url.endsWith("/upload/complete"))!;
     expect(complete.body).toEqual({
       originalId: "o1",
+      publishAfterReady: true,
       parts: [{ partNumber: 1, etag: '"etag-1"' }, { partNumber: 2, etag: '"etag-2"' }, { partNumber: 3, etag: '"etag-3"' }],
     });
     // 25 bytes in 3 parts: 10 + 10 + 5; progress ends at the file size and never goes backwards.
@@ -84,7 +88,7 @@ describe("uploadOriginal", () => {
     await expect(
       uploadOriginal({ videoId: "v1", file: file(25), fileName: "a.mp4", fetchImpl: net.fetchImpl, wait: noWait, attempts: 2 }),
     ).rejects.toBeInstanceOf(StudioApiError);
-    expect(net.calls.some((c) => c.method === "DELETE" && c.url.includes("originalId=o1"))).toBe(true);
+    expect(net.calls.some((c) => c.method === "DELETE" && c.url.includes("originalId=o1"))).toBe(false);
     expect(net.calls.some((c) => c.url.endsWith("/upload/complete"))).toBe(false);
   });
 
@@ -104,6 +108,66 @@ describe("uploadOriginal", () => {
     await uploadOriginal({ videoId: "v1", file: file(120), fileName: "a.mp4", fetchImpl: net.fetchImpl, wait: noWait });
     const batches = net.calls.filter((c) => c.url.endsWith("/upload/parts")).map((c) => (c.body as { partNumbers: number[] }).partNumbers.length);
     expect(batches).toEqual([50, 50, 20]);
+  });
+});
+
+function memoryStorage() {
+  const map = new Map<string, string>();
+  return { map, getItem: (key: string) => map.get(key) ?? null, setItem: (key: string, value: string) => void map.set(key, value), removeItem: (key: string) => void map.delete(key) };
+}
+
+describe("Studio resumable adapter", () => {
+  it("resumes the same original after a retry and skips parts the server already has", async () => {
+    const f = file(25);
+    const storage = memoryStorage();
+    const first = network({ partCount: 3, partSize: 10, failPart: { n: 2, times: 99, status: 400 } });
+    await expect(uploadOriginal({ videoId: "v1", file: f, fileName: "a.mp4", fetchImpl: first.fetchImpl, storage, wait: noWait, concurrency: 1, attempts: 1 }))
+      .rejects.toBeInstanceOf(StudioApiError);
+    expect(first.calls.some((call) => call.method === "DELETE")).toBe(false);
+
+    const resumed = network({ partCount: 3, partSize: 10, heldParts: [{ partNumber: 1, etag: '"etag-1"' }] });
+    const result = await uploadOriginal({ videoId: "v1", file: f, fileName: "a.mp4", fetchImpl: resumed.fetchImpl, storage, wait: noWait, concurrency: 1 });
+    expect(result).toEqual({ originalId: "o1", jobId: "job-9" });
+    expect(resumed.calls[0]).toMatchObject({ method: "GET", url: expect.stringContaining("/api/studio/videos/v1/upload?originalId=o1") });
+    expect(resumed.calls.some((call) => call.method === "POST" && call.url.endsWith("/upload"))).toBe(false);
+    expect(resumed.calls.some((call) => call.url.endsWith("/part/1"))).toBe(false);
+  });
+
+  it("uses a file content fingerprint in addition to name, size and modification time", async () => {
+    const a = new File(["abcdefghij"], "same.mp4", { lastModified: 1 });
+    const b = new File(["abcdEfghij"], "same.mp4", { lastModified: 1 });
+    const first = network({ partCount: 1, partSize: a.size, failPart: { n: 1, times: 99, status: 400 } });
+    const storage = memoryStorage();
+    await expect(uploadOriginal({ videoId: "v1", file: a, fileName: a.name, fetchImpl: first.fetchImpl, storage, wait: noWait, attempts: 1 }))
+      .rejects.toBeInstanceOf(StudioApiError);
+    const second = network({ partCount: 1, partSize: b.size });
+    await uploadOriginal({ videoId: "v1", file: b, fileName: b.name, fetchImpl: second.fetchImpl, storage, wait: noWait });
+    expect(second.calls.some((call) => call.method === "GET")).toBe(false);
+    expect(second.calls.some((call) => call.method === "POST" && call.url.endsWith("/upload"))).toBe(true);
+  });
+
+  it("deletes only the remembered reservation after explicit discard succeeds", async () => {
+    const f = new File(["unfinished"], "discard.mp4", { lastModified: 44 });
+    const storage = memoryStorage();
+    const identity = await studioFileIdentity(f, f.name);
+    const key = resumeKey("v1", f, f.name, identity);
+    storage.setItem(key, "original-1");
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    await cancelStudioUpload({ videoId: "v1", file: f, fileName: f.name, fetchImpl: fetchImpl as unknown as typeof fetch, storage });
+    expect(fetchImpl).toHaveBeenCalledWith("/api/studio/videos/v1/upload?originalId=original-1", expect.objectContaining({ method: "DELETE" }));
+    expect(storage.getItem(key)).toBeNull();
+  });
+
+  it("keeps the resume point when the server refuses to discard the reservation", async () => {
+    const f = new File(["unfinished"], "discard.mp4", { lastModified: 45 });
+    const storage = memoryStorage();
+    const identity = await studioFileIdentity(f, f.name);
+    const key = resumeKey("v1", f, f.name, identity);
+    storage.setItem(key, "original-1");
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ error: "busy", code: "UPLOAD_NOT_OPEN" }), { status: 409 }));
+    await expect(cancelStudioUpload({ videoId: "v1", file: f, fileName: f.name, fetchImpl: fetchImpl as unknown as typeof fetch, storage }))
+      .rejects.toMatchObject({ status: 409, code: "UPLOAD_NOT_OPEN" });
+    expect(storage.getItem(key)).toBe("original-1");
   });
 });
 

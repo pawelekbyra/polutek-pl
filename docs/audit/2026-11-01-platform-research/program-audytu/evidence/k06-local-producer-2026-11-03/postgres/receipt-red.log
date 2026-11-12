@@ -1,0 +1,65 @@
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+ ❯ tests/unit/ops/local-ci-lib.test.ts (37 tests | 9 failed) 65ms
+     × accepts only actual passing assertions in every required suite 13ms
+     × rejects missing mandatory email results even if aggregate counts look green 1ms
+     × rejects empty mandatory email results even if aggregate counts look green 1ms
+     × rejects pending mandatory email results even if aggregate counts look green 1ms
+     × rejects todo mandatory email results even if aggregate counts look green 1ms
+     × rejects failed mandatory email results even if aggregate counts look green 1ms
+     × rejects duplicate mandatory email results even if aggregate counts look green 0ms
+     × rejects different-checkout mandatory email results even if aggregate counts look green 1ms
+     × rejects an empty required-file list or an unsuccessful report 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > accepts only actual passing assertions in every required suite
+TypeError: requiredSuitesPass is not a function
+ ❯ tests/unit/ops/local-ci-lib.test.ts:275:12
+    273|
+    274|   it('accepts only actual passing assertions in every required suite',…
+    275|     expect(requiredSuitesPass({ success: true, testResults: [suite(pos…
+       |            ^
+    276|   });
+    277|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > rejects missing mandatory email results even if aggregate counts look green
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > rejects empty mandatory email results even if aggregate counts look green
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > rejects pending mandatory email results even if aggregate counts look green
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > rejects todo mandatory email results even if aggregate counts look green
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > rejects failed mandatory email results even if aggregate counts look green
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > rejects duplicate mandatory email results even if aggregate counts look green
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > rejects different-checkout mandatory email results even if aggregate counts look green
+TypeError: requiredSuitesPass is not a function
+ ❯ tests/unit/ops/local-ci-lib.test.ts:285:12
+    283|     const report = { success: true, numTotalTests: 75, numPassedTests:…
+    284|       testResults: [suite(postgres), ...emailResults] };
+    285|     expect(requiredSuitesPass(report, required)).toBe(false);
+       |            ^
+    286|   });
+    287|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/unit/ops/local-ci-lib.test.ts > mandatory database suite receipts > rejects an empty required-file list or an unsuccessful report
+TypeError: requiredSuitesPass is not a function
+ ❯ tests/unit/ops/local-ci-lib.test.ts:289:12
+    287|
+    288|   it('rejects an empty required-file list or an unsuccessful report', …
+    289|     expect(requiredSuitesPass({ success: true, testResults: [] }, []))…
+       |            ^
+    290|     expect(requiredSuitesPass({ success: false, testResults: [suite(po…
+    291|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 28 passed (37)
+   Start at  23:49:50
+   Duration  2.73s (transform 885ms, setup 0ms, import 982ms, tests 65ms, environment 0ms)
+

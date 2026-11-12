@@ -29,7 +29,7 @@ export async function unlistAdminVideo(
   if (denied) return fail(denied);
   const repository = new VideoRepository(ctx.prisma);
 
-  const video = await repository.findByIdForMainChannel(videoId, channel.id);
+  const video = await repository.findByIdForChannel(videoId, channel.id);
   if (!video) return fail(new VideoNotFoundError(videoId));
 
   if (video.status === VideoStatus.UNLISTED) return ok(toAdminVideoDto(video));
@@ -44,7 +44,7 @@ export async function unlistAdminVideo(
   }
 
   const now = ctx.now();
-  const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const updated = await ctx.db.writeTransaction(async (tx) => {
     const result = await tx.video.update({
       where: { id: videoId },
       data: {

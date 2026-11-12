@@ -1,0 +1,59 @@
+{
+  "package": "K19/R29",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "codeCommit": "b8921135",
+  "scope": "Serialize HLS cleanup reservation with route activation, block legacy activation in PostgreSQL, and retry object deletion through DurableJob.",
+  "checks": [
+    {
+      "name": "postgres-integration",
+      "command": "DATABASE_URL=<disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx prisma migrate deploy && npx vitest run --config vitest.postgres.config.ts tests/postgres/video-asset-cleanup-race.pg.test.ts tests/postgres/finalize-audit-boundary.pg.test.ts tests/postgres/encode-attempt-fencing.pg.test.ts --reporter=json --outputFile=postgres-vitest.json",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "k19Tests": 4,
+      "raw": ["migrate.log", "postgres-vitest.json"]
+    },
+    {
+      "name": "focused-unit",
+      "command": "npx vitest run tests/unit/video-pipeline/output-cleanup.test.ts tests/unit/modules/video/video-playback-route-service.test.ts tests/unit/admin-app/tresci-actions.test.ts tests/unit/modules/shared/durable-job.test.ts --reporter=dot",
+      "exitCode": 0,
+      "files": 4,
+      "tests": 48,
+      "passed": 48,
+      "failed": 0
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "name": "eslint",
+      "command": "npx eslint lib/modules/shared/durable-job.ts lib/modules/video/application/video-playback-route.service.ts lib/modules/video/domain/video-asset.constants.ts lib/modules/video/infrastructure/video.repository.ts lib/modules/video-pipeline/application/output-cleanup.use-cases.ts lib/modules/admin-content/application/storage-cleanup-job.ts 'apps/admin/app/(panel)/tresci/actions.ts' app/api/cron/premiere-notifications/route.ts tests/unit/video-pipeline/output-cleanup.test.ts tests/unit/modules/video/video-playback-route-service.test.ts tests/postgres/video-asset-cleanup-race.pg.test.ts",
+      "exitCode": 0
+    },
+    {
+      "name": "prisma-validate",
+      "command": "DATABASE_URL='postgresql://codex:codex@127.0.0.1:5432/polutek?schema=public' DATABASE_URL_UNPOOLED='postgresql://codex:codex@127.0.0.1:5432/polutek?schema=public' npx prisma validate",
+      "exitCode": 0
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "design": {
+    "cleanupReservation": "Video.cleanupPendingAt set under Video FOR UPDATE; active draft route disabled in same transaction; queue insert and reservation audit are atomic.",
+    "legacyActivationGuard": "PostgreSQL BEFORE trigger locks Video then VideoAsset and rejects ACTIVE routes to cleanup-reserved assets, including callers using older application code.",
+    "storageRetry": "Durable VIDEO_ASSET_CLEANUP deletes R2 outside DB transaction; asset row and completion audit are removed only after successful idempotent prefix deletion."
+  },
+  "limits": [
+    "No Cloudflare R2/S3 sandbox; storage failures and partial deletion are controlled fakes.",
+    "No full production rollout or old-process drain was performed; migration documentation requires older processes to be drained before enabling deletion requests.",
+    "K19 remains partially verified pending independent review and provider-backed storage acceptance."
+  ]
+}

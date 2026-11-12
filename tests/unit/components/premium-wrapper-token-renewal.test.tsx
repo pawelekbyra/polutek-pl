@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { PlaybackPlan } from "@/lib/modules/playback";
+import type { PublicPlaybackPlan } from "@/lib/modules/playback/application/public-playback-plan";
 
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ isLoaded: true, userId: "u1", sessionId: "s1" }) }));
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
@@ -16,11 +16,12 @@ import { useVideoAccess } from "@/app/components/VideoAccessContext";
 
 const VIDEO_ID = "video-1";
 
-function readyPlan(token: string, expiresInMs: number): PlaybackPlan {
+function readyPlan(token: string, expiresInMs: number): PublicPlaybackPlan {
   return {
     videoId: VIDEO_ID,
     status: "READY",
     canPlay: true,
+    hasAccess: true,
     access: { allowed: true },
     source: {
       provider: "SELF_HLS",

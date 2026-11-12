@@ -1,0 +1,155 @@
+{
+  "package": "K20/R23",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "codeCommit": "7c3ef86c",
+  "scope": "Resolve the video-owning channel from persisted job→video relations during Self-HLS auto-publication, retain authorization and worker fencing, and report the publication outcome.",
+  "checks": [
+    {
+      "name": "publication-channel-state-race-unit",
+      "date": "2026-11-06",
+      "commands": [
+        "npx vitest run tests/unit/video-upload-flow.test.ts tests/unit/modules/video/unlist-admin-video.use-case.test.ts",
+        "npx eslint lib/modules/video/application/publish-admin-video.use-case.ts tests/unit/video-upload-flow.test.ts tests/unit/modules/video/unlist-admin-video.use-case.test.ts",
+        "git diff --check"
+      ],
+      "exitCode": 0,
+      "files": 2,
+      "tests": 26,
+      "passed": 26,
+      "failed": 0,
+      "covers": [
+        "channel suspended after preflight read and before publication transaction",
+        "transaction locks Creator row and rechecks visibility",
+        "no video update when channel is no longer publicly visible"
+      ],
+      "databaseUrlConfigured": false,
+      "postgresRaceTest": "COVERED_BY_SEPARATE_CHECK"
+    },
+    {
+      "name": "publication-channel-state-race-postgresql",
+      "date": "2026-11-06",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/k20-publish-channel-state.pg.test.ts",
+      "exitCode": 0,
+      "status": "PASS",
+      "database": "Fresh disposable PostgreSQL 17 container bound to localhost only; no existing container, server, or production database used.",
+      "migrationsApplied": 84,
+      "testFile": "tests/postgres/k20-publish-channel-state.pg.test.ts",
+      "expectedTests": 1,
+      "passed": 1,
+      "failed": 0,
+      "covers": [
+        "real Prisma preflight read sees ACTIVE",
+        "fixture commits SUSPENDED immediately before publication transaction",
+        "publication transaction takes Creator FOR UPDATE and reads current suspended status",
+        "publication returns CHANNEL_NOT_APPROVED and video remains DRAFT"
+      ],
+      "fixtureCleanup": {
+        "remainingUsers": 0,
+        "remainingCreators": 0,
+        "remainingVideos": 0
+      },
+      "container": "stopped and auto-removed after the test"
+    },
+    {
+      "name": "repository-typecheck-after-race-guard",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "raw-tsc-diagnostic",
+      "command": "npx tsc --noEmit",
+      "exitCode": 2,
+      "status": "FAILED_EXISTING_ERRORS_OUTSIDE_CHANGED_FILES",
+      "errors": [
+        "tests/postgres/finalize-audit-boundary.pg.test.ts",
+        "tests/unit/video-pipeline/finalize-self-hls.test.ts",
+        "tests/unit/video-pipeline/process-encode-job.test.ts",
+        "tests/unit/video-pipeline/r2-storage-delete.test.ts",
+        "tests/unit/workers/pp-watchdog-delivery.test.ts"
+      ],
+      "note": "This was not the repository's npm run typecheck command; run the scoped command before treating typecheck as a K20 regression."
+    },
+    {
+      "name": "focused-unit",
+      "command": "npx vitest run tests/unit/video-publish-idempotency.test.ts tests/unit/video-pipeline/finalize-self-hls.test.ts",
+      "exitCode": 0,
+      "files": 2,
+      "tests": 24,
+      "passed": 24,
+      "failed": 0,
+      "covers": [
+        "main channel",
+        "non-main creator channel",
+        "suspended channel refusal",
+        "job/video channel mismatch",
+        "existing visibility and readiness cases"
+      ]
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "name": "eslint-and-diff-check",
+      "commands": [
+        "npx eslint lib/modules/video/infrastructure/video.repository.ts lib/modules/video/application/publish-admin-video.use-case.ts lib/modules/video/application/unlist-admin-video.use-case.ts lib/modules/video/application/publish-after-asset-ready.use-case.ts lib/modules/video-pipeline/application/finalize-self-hls.ts tests/unit/video-publish-idempotency.test.ts tests/unit/video-pipeline/finalize-self-hls.test.ts",
+        "npx eslint tests/postgres/k20-auto-publish-channel.pg.test.ts",
+        "git diff --check"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "postgres-finalizer-integration",
+      "command": "npx vitest run --config vitest.postgres.config.ts tests/postgres/k20-auto-publish-channel.pg.test.ts",
+      "exitCode": 0,
+      "status": "PASS",
+      "database": "Disposable local PostgreSQL 17 container (isolated port 55492; stopped after test).",
+      "migrationsApplied": 83,
+      "testFile": "tests/postgres/k20-auto-publish-channel.pg.test.ts",
+      "expectedTests": 7,
+      "passed": 7,
+      "failed": 0,
+      "testFileStatus": "EXECUTED_AGAINST_REAL_POSTGRESQL"
+    },
+    {
+      "name": "publication-channel-state-race-postgresql",
+      "date": "2026-11-06",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/k20-publish-channel-state.pg.test.ts",
+      "exitCode": 0,
+      "status": "PASS",
+      "database": "Fresh disposable PostgreSQL 17 container bound to localhost only; no existing container, server, or production database used.",
+      "migrationsApplied": 84,
+      "testFile": "tests/postgres/k20-publish-channel-state.pg.test.ts",
+      "testFileSha256": "f1180d0499b44f97e34da95f5b8ce6e7382a473e9d38618dacb98d718f679fa1",
+      "expectedTests": 1,
+      "passed": 1,
+      "failed": 0,
+      "covers": [
+        "real Prisma preflight read sees ACTIVE",
+        "fixture commits SUSPENDED immediately before publication transaction",
+        "publication transaction takes Creator FOR UPDATE and reads current suspended status",
+        "publication returns CHANNEL_NOT_APPROVED and video remains DRAFT"
+      ],
+      "fixtureCleanup": {
+        "remainingUsers": 0,
+        "remainingCreators": 0,
+        "remainingVideos": 0
+      },
+      "container": "stopped and auto-removed after the test"
+    }
+  ],
+  "design": {
+    "channelSource": "The finalizer re-reads the currently owned RUNNING job with workerId and attemptId and loads its video.creatorId. Publication refuses if the denormalized job.channelId disagrees.",
+    "publicationContext": "The auto-publish use case verifies the AppContext channel against the current video creator, checks that the channel exists and is ACTIVE or LIMITED, and loads the video scoped to that channel.",
+    "authorization": "Publication and unlisting continue through publishAdminVideo/unlistAdminVideo, including authorize(); no request-body channel is accepted.",
+    "outcome": "The use case returns published, unlisted, waiting, skipped, refused, or failed; the worker logs the outcome. An owner-query failure fails closed."
+  },
+  "limits": [
+    "The PostgreSQL test exercises the real database-backed finalizer and a committed channel status change at the publication transaction boundary, but not a complete independent worker process or two competing moderation/publication processes.",
+    "The publication transaction locks and rechecks Creator visibility. Unit and real PostgreSQL boundary tests pass; independent review and server/non-production acceptance remain outstanding."
+  ],
+  "raceGuardCommit": "df154ba1"
+}

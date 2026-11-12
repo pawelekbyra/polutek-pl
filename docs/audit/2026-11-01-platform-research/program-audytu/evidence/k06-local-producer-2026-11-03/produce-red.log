@@ -1,0 +1,26 @@
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+ ❯ tests/unit/ops/release-produce.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/ops/release-produce.test.ts [ tests/unit/ops/release-produce.test.ts ]
+Error: Cannot find module '../../../scripts/ops/release/produce.mjs' imported from /opt/codex/polutek-pl/.worktrees/platform-audit/tests/unit/ops/release-produce.test.ts
+ ❯ tests/unit/ops/release-produce.test.ts:6:1
+      4| import { afterEach, describe, expect, it } from 'vitest';
+      5| import { releaseControl } from '../../fixtures/release-control.mjs';
+      6| import { produceRelease } from '../../../scripts/ops/release/produce.m…
+       | ^
+      7|
+      8| const fixtures: ReturnType<typeof releaseControl>[] = [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  22:52:36
+   Duration  897ms (transform 201ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

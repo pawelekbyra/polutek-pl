@@ -1,4 +1,184 @@
+## 2026-11-12 — K04 przegląd statyczny composition
+
+- W 447 modułach: 125 konstrukcji repo/serwisów/use case w 84 plikach, dwa jawne `deps.ts`, siedem app/page/component plików z wewnętrznymi importami. Brak wspólnego application composition root w zbadanym kodzie.
+- Nie rozpoczęto szerokiego refaktoru: jest to dług, a nie dowód awarii; lokalny odbiór K21 go nie wymaga. K04 nadal częściowe, brak produkcyjnego bundlera/runtime i niezależnego review. [Dowód](evidence/k04-composition-static-review-2026-11-12.json).
+
+## 2026-11-12 — K02 decyzja o CLI shadcn
+
+- Zostawiono `shadcn@4.23.0` przypięte jako dev-only: `components.json` jest częścią projektu, CLI nie jest w skryptach/CI, a proponowane `1.0.0` nie dostarcza CLI.
+- Akceptowane ograniczenie: 3 low w pełnym dev graph; produkcyjny audit ma zero. Brak zmiany lockfile i brak obrazów Docker; ich inspekcja/uruchomienie to następna bramka. [Dowód](evidence/k02-shadcn-tool-retention-2026-11-12.json).
+
+## 2026-11-12 — K03 aktualny critical path
+
+- Czysty SHA `6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b`, 3434 tracked files, source fingerprint `5526216e…d99dbc95`.
+- Dwie wymagane suite: **37/37 PASS**, 0 failed/skipped (restore CLI 32/32; launch candidate 5/5).
+- Pełne quality i odtworzenie realnego backupu/offsite pozostają otwarte. [Dowód](evidence/k03-critical-path-acceptance-2026-11-12.json).
+
+## 2026-11-12 — K21 pokrycie przez lokalny Next HTTP z K01
+
+- K01-T3 **1/1 PASS** obejmuje rzeczywisty Next HTTP dla multipart Studio, pipeline, media-source oraz browser playback przez lokalny Worker.
+- Uzupełnia lokalne HTTP K21; starszy klient nadal nie jest sprawdzony jako osobny pełny request/browser E2E.
+- R2/deployed Worker i niezależny review pozostają otwarte. [Dowód K01](evidence/k01-studio-worker-browser-acceptance-2026-11-11.json).
+
+## 2026-11-12 — K02 sprawdzenie sugestii `shadcn@1.0.0`
+
+- Registry metadane: wersja 1.0.0 z lipca 2024 nie ma binarki CLI ani zależności; projekt używa 4.23.0.
+- Odrzucono automatyczny downgrade jako niekompatybilny; bez zmian lockfile, produkcyjny audit nadal 0.
+- Zostają 3 alerty low dev-only do czasu kompatybilnego upstream fixu lub zwalidowanej migracji. [Dowód](evidence/k02-npm-audit-retest-2026-11-11.json).
+
+## 2026-11-12 — K04 statyczny graf i strażnik architektury
+
+- Probe 447 plików `lib/modules`: 0 SCC, 0 błędów parsera.
+- `npm run quality:architecture-boundaries`: PASS; 166 plików admina, 34 use case sprawdzone, 32 jawne wyjątki.
+- Pełny composition root/bundler/runtime i niezależne review pozostają otwarte. [Dowód](evidence/k04-current-module-cycles-2026-11-12.json).
+
+## 2026-11-11 — K02 aktualny audit lockfile
+
+- Node 22.23.3/npm 10.9.9: `npm audit --omit=dev` 0 podatności; pełny audit 3 low, 0 moderate/high/critical.
+- Wszystkie 3 pozycje dotyczą deweloperskiego CLI shadcn/transytywnego deepmerge; proponowany fix to zmiana major, bez zmiany lockfile w tym kroku.
+- Standalone images i kompatybilność CLI pozostają otwarte. [Dowód](evidence/k02-npm-audit-retest-2026-11-11.json).
+
+## 2026-11-11 — K01-T3 lokalny pełny przebieg po zimnej kompilacji Next
+
+- Request diagnostyczny wykazał `GET /pl` bez nagłówków przez ponad 35 s, z `Compiling /[locale] ...` w logu Next.
+- Jawny limit zimnej nawigacji 90 s pozwolił ukończyć lokalny scenariusz upload → worker/FFmpeg → HLS/Chromium → wymiana → cleanup: **1/1 PASS**.
+- PostgreSQL 17/84 migracje, S3 loopback; bez Cloudflare/R2. ESLint i diff check PASS.
+- K01 pozostaje częściowe do real R2/deployed Worker, kolejki/Redis, e-mail i niezależnego review. [Dowód](evidence/k01-studio-worker-browser-acceptance-2026-11-11.json).
+
+## 2026-11-11 — K01-T3 zintegrowany retest zatrzymany na nawigacji Chromium
+
+- Upload Studio, worker/FFmpeg i lokalne API/Worker osiągnęły krok przeglądarki na disposable PostgreSQL (84 migracje) i loopback S3.
+- `page.goto(/pl)` przekroczyło 30 s przed `domcontentloaded`. Test otrzymał diagnostykę, a powtórzenie przekroczyło 30 s już na `commit`, bez odpowiedzi HTTP (`about:blank`); log Next zawiera odczyty Prisma bez wyjątku. Przyczyna nierozpoznana. Oddzielny dowód Chromium z 2026-11-07 pozostaje aktualny.
+- Kontener i wygenerowane zmiany konfiguracji Next posprzątano. Bez produkcji, Cloudflare i zewnętrznego R2.
+- Dowód: `evidence/k01-studio-worker-browser-acceptance-2026-11-11.json`; K01 pozostaje częściowe. Następny krok: dodać pomiar czasu requestu Next, aby oddzielić kompilację od SSR. ESLint/diff check testu PASS; sama suite pozostaje 0/1.
+
+## 2026-11-11 — aktualizacja lokalnych bramek K07/K10/K13/K38
+
+- K07: bounded request readers **13/13 PASS**, w tym brak/zaniżony Content-Length, odmowa przed parserem i legalny payload 10 000 części; proxy pozostaje nieodebrane.
+- K10: rzeczywisty Next HTTP/Better Auth na disposable PostgreSQL (84 migracje) przekazuje dokładny URL aplikacji do kodu HLS Workera; poprawny token pobiera syntetyczny master, a zmieniony token otrzymuje 403 po zapełnieniu cache. **2/2 PASS**; bez Cloudflare/R2.
+- K13: retest obsługi `DeleteObjects` i loopback AWS SDK **10/10 PASS**; bez dostawcy R2.
+- K38: aktualny kontrakt generatora **36/36 PASS**, łącznie z semantycznym probe HTML/miniatur, JSON API, profilem i warunkami cleanup. Pełny runner/cleanup wymaga non-production.
+- Dowody i stan pakietów dopięto do `h1-status.json`, `KOLEJNOSC-NAPRAW.csv` i `GITHUB-MANIFEST.json`; formalne bramki live-provider, non-production i niezależnego review pozostają otwarte. Bez push, PR, merge ani deploy.
+
+## 2026-11-07 — K01-T3 routing attempt-scoped playback
+
+- Next HTTP acceptance dla własnego filmu wykazał `ERROR` playback po sukcesie kodowania: plan i edge Worker nie mapowały assetów `/attempts/<uuid>`.
+- Signed delivery version niesie teraz `<wersja>~<UUID>`; Cloudflare Worker mapuje ją do dokładnego prefiksu próby, a stare wersje URL zachowują historyczne mapowanie. Player zachowuje identyfikator próby przy odświeżeniu tokenu.
+- Integration PostgreSQL/Next/worker **1/1 PASS**, jednostkowe **62/62 PASS**, typecheck PASS. Worker musi być wdrożony przed app. Dowód: `evidence/k01-attempt-playback-http-2026-11-07.json`; K01-T3 nadal częściowe do HTTP upload, rzeczywistej dostawy/R2 i niezależnego review.
+
+## 2026-11-07 — K01-T3 prawdziwy worker entrypoint
+
+- Test integracyjny uruchamia `scripts/video-worker.ts` w osobnym procesie i kontrolowanie kończy go przez SIGTERM po kodowaniu.
+- Testowy endpoint AWS SDK jest ograniczony do HTTP loopback i `NODE_ENV=test`; **2/2 guard unit PASS** dla endpointu zewnętrznego i trybu production.
+- PostgreSQL 17.11 po 84 migracjach: integration **1/1 PASS**, ESLint, repo typecheck i diff check PASS. Dowód: `evidence/k01-worker-entrypoint-2026-11-07.json`.
+- K01-T3 pozostaje częściowe do testu upload/playback HTTP, Cloudflare R2 i niezależnego review.
+
+## 7 listopada 2026 — K01-T3: lokalny worker z FFmpeg
+
+- Osobny proces Node/tsx uruchamia `runWorkerLoop`, rzeczywisty claim Prisma, FFmpeg 8.0.1, AWS SDK storage adaptery i finalizer na PostgreSQL 17.11 po 84 migracjach. Syntetyczny film 6 s kończy `SUCCEEDED/DONE`, a aktywny asset ma attempt-scoped key i zweryfikowany HLS graph. **1/1 PASS**, typecheck, ESLint i diff check PASS.
+- Obiekty idą do loopbackowego S3-shaped fixture; bez Next HTTP, produkcyjnego worker entrypointu i Cloudflare R2. K01-T3/K35 częściowe. [Dowód](evidence/k01-local-worker-ffmpeg-loopback-2026-11-07.json).
+
 # Historia programu badania
+
+## 7 listopada 2026 — K25/R26: limit playlists z dwóch procesów Node
+
+- Rozszerzono test PostgreSQL tak, by przy 99 aktywnych playlistach dwa niezależne procesy Node równolegle wykonywały rzeczywisty `createPlaylist` i autoryzację na wspólnej bazie.
+- Po 84 migracjach: **2/2 PASS** w pliku; końcowy licznik 100, jeden sukces, jedna odmowa `PLAYLIST_LIMIT`, dokładnie jeden audit row. ESLint i repo typecheck PASS. Kontener disposable usunięty.
+- Pozostaje Studio HTTP/deployed multi-server acceptance i niezależny review. [Dowód](evidence/k25-playlist-limit-2026-11-06/result.json).
+
+## 7 listopada 2026 — K04/R34: jawna baza w rzeczywistym serwisie
+
+- Nowy test przechodzi przez prawdziwy `MainChannelService` i `ChannelRepository`, używając delegate `creator.findUnique` przekazanego przez `createAppContext`; 1/1 PASS.
+- Repo typecheck i ESLint PASS. Fake adapter dowodzi składu/injection, nie PostgreSQL. Dotychczasowy constructor probe i real generated Prisma smoke nadal dokumentują lazy facade.
+- K04 pozostaje częściowy do niezależnego przeglądu facade/composition root oraz sprawdzenia bundlera po K01. [Dowód](evidence/k04-injected-use-case-2026-11-07/result.json).
+
+## 7 listopada 2026 — K20/R23: uzupełnienie odbioru DB i publikacji
+
+- Uporządkowano ROADMAPĘ po uruchomieniu wcześniejszych lokalnych prób: realny PostgreSQL finalizera **7/7** po 83 migracjach oraz wyścig statusu kanału/publication **1/1** po 84 migracjach, oprócz celowanych unit **26/26** i repo typecheck/ESLint PASS.
+- Dowody potwierdzają właściwy kanał, PUBLIC/UNLISTED, fencing próby, odmowę dla kanału zawieszonego/usuniętego i odmowę publikacji po zmianie statusu ACTIVE→SUSPENDED przed transakcją.
+- Nie ma jeszcze odbioru osobnego procesu całego encodera/workera ani niezależnego review; K20 zostaje częściowe. [Dowody](evidence/k20-channel-auto-publish-2026-11-06/result.json).
+
+## 7 listopada 2026 — K23/R05: crash po publikacji i odzyskanie przez cron HTTP
+
+- Dodano `tests/postgres/k23-publish-crash-cron-http.pg.test.ts`: Studio publikuje przez rzeczywisty lokalny Next HTTP, proces dostaje SIGKILL po COMMIT, a nowy proces obsługuje cron HTTP i domyka trwały fan-out.
+- Disposable PostgreSQL 17 po 84 migracjach: **1/1 PASS**; ponowny cron nie dubluje powiadomienia. ESLint i repo typecheck PASS; syntetyczne rekordy usunięte, brak zmian produkcyjnych.
+- Rozszerzono PostgreSQL test intentu publikacji o rzeczywisty due-premiere producer i fan-out: drugi tick utrzymuje jeden job, runner emituje właściwy template raz, a po oznaczeniu wysłania nie ma kolejnego kandydata. **3/3 PASS** w pliku (premiere, idempotentny intent, rollback), ESLint/typecheck PASS. [Dowód](evidence/k23-premiere-postgres-2026-11-07/result.json).
+- Testowa dzierżawa zapewnia deterministyczną utratę kicka; HLS/subskrybent są syntetyczne. K23 pozostaje częściowe do niezależnego review i pozostałych scenariuszy premiere/provider. [Dowód](evidence/k23-http-crash-cron-2026-11-07/result.json).
+
+## 6 listopada 2026 — K20/R23: właściwy kanał automatycznej publikacji
+
+- Worker ponownie odczytuje aktualny job z tokenem próby i relację do filmu; `video.creatorId` jest źródłem kontekstu kanału, a rozbieżny `job.channelId` blokuje publikację. Auto-publish zwraca jawny wynik i worker go loguje; publikacja nadal idzie przez autoryzowane use case'y.
+- Dwa celowane pliki testów: **24/24 PASS**, ESLint i repo typecheck PASS. Przygotowano siedmioprzypadkowy test PostgreSQL finalizera (typy i lint PASS), ale brak `DATABASE_URL`, więc nie wykonano go ani pełnego workera; K20 pozostaje częściowe. [Dowody](evidence/k20-channel-auto-publish-2026-11-06/).
+
+## 6 listopada 2026 — K19/R29: rezerwacja aktywacji i cleanupu HLS
+
+- Asset otrzymuje `cleanupPendingAt` pod blokadą wiersza filmu współdzieloną z aktywacją. Transakcja wyłącza aktywną trasę szkicu, zapisuje audyt i kolejkuje `VIDEO_ASSET_CLEANUP`; trigger DB blokuje też stare klienty. Runner wykonuje idempotentne DeleteObjects poza transakcją i kasuje wiersz dopiero po potwierdzeniu storage.
+- PostgreSQL 17 + 83 migracje: K19 **4/4**, regresje K17/K18 **8/8 razem**; unit **48/48**, ESLint/typecheck/Prisma validate PASS. Fake R2, bez drainu i niezależnego przeglądu; K19 częściowe. Dowody: `evidence/k19-activation-cleanup-2026-11-06/`.
+- Kod: `b8921135` (`fix(video): reserve HLS cleanup before deletion`).
+
+## 6 listopada 2026 — K18/R28: bezpieczny wynik finalizacji HLS
+
+- Obowiązkowy audyt zmiany trasy jest teraz w tej samej transakcji co jej aktywacja. Finalizer uzgadnia utracone potwierdzenie COMMIT; przy niedostępnej bazie proces zachowuje output HLS i przechodzi do retry. Ponowienie potwierdza obecność mastera, zagnieżdżonych playlist, URI z tagów i segmentów przed sukcesem.
+- PostgreSQL 17 po 82 migracjach: integracja K18+K17 **4/4**; unit **52/52**; ESLint i typecheck PASS. Bez fizycznego R2 i dwóch niezależnych workerów; K18 częściowe. Dowody: `evidence/k18-finalizer-audit-2026-11-06/`.
+- Kod: `dcfe8dde` (`fix(video): make HLS finalization recoverable`).
+
+## 6 listopada 2026 — K17/R02: fencing po przejęciu próby
+
+- Commit `f85504f3`: aktywacja route blokuje i weryfikuje aktualny token próby w transakcji; postęp, statusy terminalne/retry, anulowanie i release także porównują `attemptId`. Aktywne assety z prefiksu dowolnej próby tej generacji można odzyskać po przerwaniu.
+- RED na PostgreSQL odtworzył, że A po finalizacji B podmienił trasę. Po poprawce K17 i repo PostgreSQL 17: **12/12 PASS**, unit **34/34**, ESLint i typecheck PASS.
+- Odbiór używa kontrolowanej sekwencji, nie dwóch żywych workerów; brak fizycznego R2 i drugiego przeglądu. K17 częściowe; K18 sprawdza post-COMMIT i awarię audytu. Dowody: `evidence/k17-stale-worker-fencing-2026-11-06/`.
+
+## 6 listopada 2026 — K16/R02: odrębne prefiksy prób kodowania
+
+- Commit `6975a492`: claim nadaje UUID próby; proces, lokalny katalog roboczy, HLS output, finalizer, logi i cleanup przenoszą tę samą tożsamość. Dodatkowa migracja blokuje stare claimy bez `attemptId`, ale pozwala już działającemu legacy jobowi kontynuować heartbeat.
+- PostgreSQL 17 z kompletem 82 migracji: stary claim odrzucony; dwie próby dostały rozłączne UUID/prefiksy; wygasły legacy job został odzyskany z nowym ID bez zmiany `activeOriginalId`. Integracja 1/1, testy unit 53/53, ESLint, Prisma validate i typecheck PASS.
+- K16 pozostaje częściowe: nie wykonano kontrolowanego wygaszenia workerów w środowisku ani odbioru R2 i drugiego przeglądu; K17 musi jeszcze odgrodzić skutki starego ownera. Dowody: `evidence/k16-attempt-isolation-2026-11-06/`.
+
+## 6 listopada 2026 — K15/R27: monotoniczne ukończenie wersji oryginału
+
+- Commit `05c2b44d`: wspólna transakcyjna blokada per video, świeży odczyt statusu/wersji i CAS; aktywacja wskaźnika oraz utworzenie joba są atomowe. Spóźniony retry nie może reaktywować zastąpionej wersji; retry READY naprawia brakujący job tylko dla nadal zwycięskiej wersji.
+- Regresja RED odtworzyła cofnięcie wskaźnika. Test endpointu Studio na PostgreSQL 17: **3/3 PASS**, testy jednostkowe **28/28 PASS**, ESLint i repo typecheck PASS.
+- R2 i sesja były kontrolowane; brak sandboxa R2/S3, niezależnego przeglądu i pełnego buildu. K15 częściowe, otwarte. Dowody: `evidence/k15-monotonic-original-2026-11-06/`.
+
+## 6 listopada 2026 — K14/R03: zakończenie rozpoczętych uploadów przed cleanup
+
+- `e55f1f1c`: po pierwszym błędzie pula uploadów nie przydziela dalszych plików, sygnał anuluje rozpoczęte PUT, a proces czeka na ich ustanie przed cleanup. Sygnał transferu oddzielono od sygnału anulowania joba, zachowując retry po błędach sieciowych.
+- Test regresyjny RED potwierdził wcześniejszy cleanup przed zakończeniem opóźnionego PUT. Po zmianie dwa pliki testów przeszły 23/23; ESLint i repo typecheck PASS.
+- Brak sandboxa Cloudflare R2/S3, niezależnego przeglądu i pomiaru zachowania providerowego abort. K14 pozostaje częściowe, K16 wymaga osobnego odbioru. Dowody: `evidence/k14-upload-cleanup-2026-11-06/`.
+
+## 6 listopada 2026 — K13/R04: per-object błędy usuwania R2
+
+- RED: HTTP 200 z `AccessDenied` był ignorowany, a licznik zgłaszał wszystkie żądane klucze; `SlowDown` nie uruchamiał ponowienia.
+- `HlsWriter.deletePrefix()` używa odpowiedzi per obiekt, liczy tylko potwierdzone `Deleted`, ponawia przejściowe błędy wyłącznie dla nieudanych kluczy (maks. 3 próby), uznaje `NoSuchKey` za idempotentne i rzuca `R2DeleteObjectsError` dla trwałych/wyczerpanych błędów. 2 pliki testów 14/14 PASS, ESLint i typecheck PASS.
+- K13 pozostaje częściowe: nie wykonano Cloudflare R2/S3 sandbox ani drugiego przeglądu R04. [Dowody](evidence/k13-r2-delete-2026-11-06/result.json).
+
+## 6 listopada 2026 — K10/R30: ukryta przyszła premiera
+
+- Czerwony test odtworzył ujawnienie: gość dostawał `LOGIN_REQUIRED`, zalogowany obcy `COMING_SOON` dla filmu `REMOVED`; tytuł i termin przechodziły do planu.
+- `PlaybackService` rozstrzyga teraz `NOT_FOUND` przed bramką premiery. Trzy celowane pliki testów 18/18 PASS; ESLint, typecheck repo i publiczny build PASS. Legalna premiera nadal przechodzi dotychczasową ścieżkę. [Dowody](evidence/k10-hidden-premiere-2026-11-06/result.json).
+- Brak testu rzeczywistego HTTP z macierzą ról/sesji; K10 pozostaje częściowe.
+
+## 6 listopada 2026 — K07: pamięć czytnika body
+
+- Kontynuacja zapisana commitami `c3c2c6c1` i `1f467577`: kompletny multipart ma limit 6 MiB (10 000 części zajmuje 4 299 010 B w skrajnym legalnym payloadzie), a Next proxy ma jawny bufor 7 MiB. Powód: domyślny bufor Next 16.4.5 wynosi 10 MiB i przy nadmiarze może przekazać trasie obcięte body.
+- Lokalny test regresyjny odtworzył błędne 303 dla 13 MiB+1 przy tymczasowym limicie aplikacji 13 MiB, następnie 413 przy limicie 6 MiB. Zoptymalizowany lokalny Next z konfiguracją 7 MiB również zwrócił 413. 9 plików testów 111/111 PASS, typecheck, ESLint i public/admin build PASS.
+- Node-only benchmark 16 żądań 6 MiB+1: 16/16 413; pojedyncza para pomiarów RSS +137 420 800 → +127 262 720 B i czasu 578 → 286 ms. Zewnętrzny proxy i współbieżność przez pełny Next niezweryfikowane; K07 pozostaje otwarte.
+- Lokalna zoptymalizowana instancja Next 16.4.5 z tymczasową fixture trasą odebrała 16 równoległych chunked body 6 MiB+1 B bez `Content-Length`: **16/16 odpowiedzi 413**, RSS procesu +136 695 808 B, 1 398 ms. [Surowy wynik](evidence/k07-body-limits-2026-11-06/next-concurrent-6mb.json). Fixture usunięto; zewnętrzny Cloudflare Tunnel pozostaje niezmierzony, więc K07 jest otwarte.
+
+- Commit `3dc8fb29` zastępuje bufor z wielokrotnym realokowaniem porcjami stałych slabów 64 KiB; dodano regresję przekraczającą granicę slaba. 9 plików testów: 111/111 PASS; repo typecheck, lint zmienionych plików i `git diff --check` PASS.
+- Odtwarzalny benchmark Node-only dla 16 równoległych chunked multipart żądań +1 byte powyżej limitu 13 MiB: 16/16 odpowiedzi 413. Jedna para pomiarów: przyrost RSS 261 791 744 → 246 124 544 B, czas 951 → 500 ms. Równoległy test HTTP lokalnego Next 16.4.5 na trasie 16 KiB zwrócił 16/16 odpowiedzi 413 w 1,091 ms. Build publiczny/admin PASS po zmianie. Pomiar HTTP nie obciąża trasy 13 MiB; Node-only benchmark nie obejmuje Next, Cloudflare ani proxy.
+- K07 nadal otwarte. Konfiguracji Cloudflare Tunnel nie ma w repo; nie zmierzono dużych body przez Next/proxy. Harness i surowe wyniki: `program-audytu/tools/k07-body-memory-benchmark.mjs` oraz `program-audytu/evidence/k07-body-limits-2026-11-06/`.
+
+## 6 listopada 2026 — wznowienie roadmapy i aktualizacja bazy
+
+- Na polecenie właściciela wznowiono pełną roadmapę po wcześniejszym STOP. Gałąź audytu lokalnie scalono z `origin/main` (`e2d33e0e`) commitem `7e6f5335`, aby naprawy odnosiły się do aktualnego kodu.
+- Pełne `npm run quality` na scalonym drzewie: architektura/typecheck PASS, Vitest 564 pliki PASS/1 skipped i 4980 testów PASS/2 skipped, exit 0. Nie jest to zamknięcie pakietu ani wydania.
+- Następny zakres: wznowienie K06 i sprawdzenie wszystkich konsumentów wydania przed dalszymi pakietami. K02 ma poprawiony zakres Next, ale nadal wymaga świeżego dowodu zależności/obrazu.
+
+## 6 listopada 2026 — K06: pierwsza ścieżka GHCR
+
+- `images.yml` zastępuje bezpośrednie build/push pełnym producentem, weryfikacją przed logowaniem oraz publikacją pięciu ID i kontroli registry digestów. Dodano walidowany generator publicznych inputs oraz przypięte manifesty amd64.
+- Testy helperów/workflow 6/6, typy, lint i parsowanie YAML PASS; digesty sprawdzone w registry. Nie uruchamiano Actions ani publikacji. Deploy, migrator, admin i rollback nadal wymagają proof verification.
 
 ## 1 listopada 2026 — v1.0
 
@@ -288,3 +468,174 @@ Zapis domknięty 2 listopada: pierwszą walidację zatrzymał przed wykonaniem l
 - Dowody h1-release-core-2026-11-02; stare obrazy na9824 i wszystkie wcześniejsze dane zachowane. H1 ~80%,całość 5–10%;0 zamkniętych ustaleń/pakietów,bez ASVS PASS/merge/deploy/produkcji/kosztów.
 
 - Uzupełnienie weryfikacji: bezpośrednie Git/REST potwierdziły remote i draft PR; alternatywny odczyt przez pomocniczy proces/GraphQL zwracał401. Bez zmian poświadczeń i konfiguracji; działające metody zapisane w STAN.
+
+## 3 listopada 2026 — lokalne przejęcie K06: budowanie przypiętych obrazów
+
+- Rdzeń K06 przeniesiony czterema cherry-pickami do gałęzi audytu, bez nowszych zmian wyglądu. Historyczne dowody pozostają przypisane do wcześniejszych SHA.
+- Dodano `build`: kolejno pięć obrazów z przypiętych baz, pełnych argumentów i etykiet, ID z `--iidfile`, kontrola źródeł i seal. Bez publikacji.
+- 82/82 celowane, lint PASS, whole tsc exit 2 poza zmienionymi ścieżkami; bez zielonego całego repo i bez realnego Dockera w tej partii. Dowody `k06-local-producer-2026-11-03`.
+- Dalej producent pełnych kontroli i wszyscy konsumenci. H1 historycznie ~80%, całość 5–10%; bez zamknięcia K06/ustaleń/ASVS, PR, merge, deploy ani produkcji.
+
+## 3 listopada 2026 — K06: producent pełnych kontroli
+
+- Nowy producent wymaga czystego dokładnego SHA, sam uruchamia pełne ścisłe CI z jednym slotem, odrzuca stary raport przez losowy runId, archiwizuje Git i sprawdza źródła przed budową.
+- 121/121 testów (w tym local-ci-lib), lint i skupione strict types PASS; rzeczywisty Git/tar i jawne porty CI/Dockera. Nie uruchomiono pełnej bramki audit ani produktu. H1 nadal ~80%, całość 5–10%, K06 otwarte.
+- Następne: granica faktycznego użycia przypiętych baz w Dockerfile, brakujące zależności H1 i wszyscy konsumenci. Bez publikacji i produkcji.
+
+## 3 listopada 2026 — K06: Dockerfile musi używać zadeklarowanych baz
+
+- Dwie rzeczywiście czerwone próby akceptacji ruchomego FROM i zewnętrznego COPY; preflight teraz odrzuca oba przed wywołaniem Dockera. Przejrzany ograniczony kontrakt, bez ogólnej deklaracji powtarzalności buildów.
+- 124/124 celowane, lint i skupione strict types PASS; aktualne oba Dockerfile akceptowane. Nie wykonano prawdziwego builda ani odbioru produktu.
+- K06/H1 otwarte, szacunki ~80% / 5–10% bez zmiany. Dalej brakujące zależności H1 i konsumenci.
+
+## 3 listopada 2026 — zależności K03 w lokalnym worktree
+
+- Weryfikator i strażnik critical przeniesione z historycznych commitów. Ponowiony rzeczywisty RED: 26/31 błędów; GREEN: 31/31. Strażnik 13/13 na prawdziwym Vitest, właściwe critical 36/36 w obu plikach, bez skip.
+- Lint i focused types PASS, DB/providerzy nadal syntetyczni; brak dowodu prawdziwego restore i dostarczenia powiadomień. K03/K06 otwarte. Bez zmian produkcji/schematu/danych/polityki.
+
+## 3 listopada 2026 — K06: rzeczywiste bramkowanie typów przy budowie
+
+- Przywrócono `ignoreBuildErrors=false` obu aplikacji z wcześniejszego H1. Sześć nowych izolowanych buildów rzeczywistego Next 16.3.8: baseline akceptował dwa celowe błędy, poprawka oba odrzuca i oba legalne warianty przyjmuje. Dokładny komunikat TypeScript sprawdzony, lint PASS.
+- To nie są buildy całego produktu ani dowód patched runtime K02. H1/K06 otwarte, ~80% / 5–10% bez zmiany, bez produkcji/publikacji.
+
+## 3 listopada 2026 — K02: patched runtime na lokalnej gałęzi
+
+- Przeniesiono patch `989682ff`, Next/eslint-config-next16.4.1, sharp0.35.5. Normalne npm ci i prawdziwe Prisma generate, bez npm audit. Nodemailer/zod major bez zmian.
+- RED wersji sharp0.35.4 → GREEN0.35.5/librsvg2.63.2/vips8.18.7, rzeczywisty loopback HTTP (PNG200, pozostałe trzy400),170/170 testów, lint PASS. Cztery dodatkowe rzeczywiste małe buildy aktualnego Next sprawdzają odmowy i legalne warianty.
+- Bez nowych obrazów aplikacji/produkcji/świeżego npm audit, K02/H1 nadal otwarte; szacunki bez zmiany.
+
+## 3 listopada 2026 — baseline K03: pełne typy, unit i lint lokalnej gałęzi
+
+- Przeniesiono pięć poprzednich poprawek fixture/typów/lint, zachowując obecny UI przy konfliktach. Bez zmiany wykonywanej autoryzacji, ról i ustawień użytkownika.
+- Typecheck całego repo 82 wcześniejsze diagnostyki → 0; full unit przez partial local-CI 4729 PASS/0 FAIL/3skip w540 plikach, sourceStable=true. Lint po trzech leksykalnych poprawkach helperów:0 błędów/100 ostrzeżeń.
+- Dwa pominięte e-mail DB i jeden HDR nadal otwarte. Jawnie częściowe CI, bez grafu audit i gotowości do wydania; źródła/dowody z atrybucją. Mapa zakończonych części w MAPA-COMMITOW.csv.
+- Następne: własny PG/e-mail i HDR, pozostałe H1 i konsumenci K06. Zero formalnych zamknięć, H1 historycznie~80%, całość5–10%.
+
+## 3 listopada 2026 — HDR: brak pominięć w obowiązkowym encoder smoke
+
+- Strict gate potwierdził RED przy 2 PASS/1 skip mimo Vitest exit0. Przywrócono fixture z `a2708f00`, jawne VUI HLG i niezależne ffprobe zamiast dynamicznego skip.
+- GREEN:3/3 rzeczywistych encode, brak skip, lint i focused types PASS. Enkoder i polityka dostępu bez zmian. Pełny pipeline/obrazy K01 nadal otwarte.
+- Następne własny PG i oba e-mail DB; dostępny obraz17-alpine, bez pobierania/produkcji. H1~80%, całość5–10%, bez formalnego zamknięcia całych pakietów.
+
+## 3 listopada 2026 — realny PostgreSQL i oba przypadki e-mail DB
+
+- Nowe własne kontenery na niezmiennym ID lokalnego obrazu17-alpine; PostgreSQL17.11, autentyczny Prisma i81 migracji. RED64/75+11fail w dwóch starych fixture → GREEN77/77 w13 plikach, bez skip, z oboma e-mail DB.
+- Fixture z8dce5f94 nie zmieniają migracji/retencji. Guard wszystkich plików PG/e-mail:9RED→48/48 z istniejącymi procesowymi regresjami kompilatora. Lint i focused types PASS, oba własne kontenery po testach nie istnieją.
+- Providerzy częściowo kontrolowani, pełny produkt nadal otwarty. Nie podmieniono raw unit, trzy jego pominięcia mają osobne dowody. Dalej pozostałe H1 i konsumenci K06. Bez produkcji/publikacji/nowych ASVS PASS; szacunki bez zmiany.
+
+## 4 listopada2026 — końcowy zielony pakiet i STOP właściciela
+
+- `2d081d7f`:61/61 transakcji/powiązanych,253/253 komponentów/Studia/i18n, typy aplikacji/architektura/hotspots/strict-escapes PASS, lint0/12ostrzeżeń. Cztery wcześniejsze refaktory H1 przywrócone bez zmiany budżetów i wyglądu. Starsze pełne wyniki zachowują własną atrybucję.
+- Po poleceniu STOP przy1% limitu dokończono wyłącznie bieżący lint i zapis. Osobny checkpoint WIP opisuje nieukończone K06/H1 i komendę wznowienia. Publikator rejestru nie rozpoczęty. Nie pozostawiono niezapisanych zmian kodu, własnych kontenerów ani działających testów.
+- Nie wznawiać automatycznie. Bez nowych pakietów/heavy tests, PR/push/merge/deploy/produkcji. Całość5–10%, bez formalnego zamknięcia całych pakietów i bez release_ready.
+
+## 6 listopada 2026 — wznowienie K06 i proof-aware konsumenci
+
+- Właściciel wznowił roadmapę. Ukończono lokalnie integrację producer/publisher z deploy/app/admin/rollback i transferem proof bundle; preflight release inputs biegnie przed GitHub CLI, compose nie ma fallbacków `:current`, a jednorazowe akcje operatora sprawdzają proof aktywnego release.
+- Hermetyczne testy transferu obejmują wariant lokalny i Actions, poprawne przekazanie do atrapowego SSH oraz odmowę błędnego proofu, rewizji, workflow run/head i brakującego artifactu. Konsument wykorzystuje cache tylko przy zgodnym ID obrazu.
+- Wyniki: handoff 6/6, release consumers/artifact 9/9, skrypty serwera 29/29, actions-lib 48/48; lint, `bash -n`, YAML parser i diff check PASS. Brak rzeczywistego Actions/GHCR/SSH, pięciu obrazów produktu, pełnej bramki audit, serwera lub runtime odbioru.
+- K06 pozostaje otwarte. Runbooki opisują granicę między starym stanem produkcji i niewdrożonym kandydatem. Szczegóły commitów są w `MAPA-COMMITOW.csv`; punkt wznowienia w `STAN.md` i `POSTEP-NAPRAW.md`.
+
+## 6 listopada 2026 — rollback i aktywny proof K06
+
+- Dodano zachowanie testów rollbacku dla app/admin: stary proof jest ponownie weryfikowany przed aktywacją, a niezgodny zewnętrzny hash odmawia bez uruchomienia obrazu. Active-proof preflight jest sprawdzony dla rewizji aplikacji i panelu.
+- Telemetria: błędny zachowany proof lub błąd `verify-active-release.sh` nie przechodzi do Docker/DB i nie zmienia `app.env`/`collector.env`.
+- Pięć skupionych pakietów testów: **95/95 PASS**; skrypty serwera **38/38**, release artifact/consumer **9/9**, handoff jest wliczony, operator actions **48/48**. To testy z atrapami/integracyjne lokalnie, nie odbiór prawdziwego serwera.
+- K06 nadal blokuje brak pełnego producer gate `audit`, prawdziwych pięciu obrazów i całego runtime. Nie uruchomiono workflow, GHCR, SSH ani produkcji.
+
+## 6 listopada 2026 — osobny deploy panelu admina
+
+- `6aacd4b5`: dwa testy integracyjne atrapowego deployera potwierdzają, że poprawny proof pozwala uruchomić wyłącznie panel admina, a błąd weryfikacji odmawia przed wywołaniem Dockera.
+- Pięć skupionych zestawów przeszło **100/100**; same skrypty serwera **43/43**. ESLint, `bash -n` i `git diff --check` PASS. Pełny zestaw: komenda z `POSTEP-NAPRAW.md`; bez ciężkiego quality.
+- To dowód ścieżki w sandboxie, nie wdrożenie ani odbiór na serwerze. K06 pozostaje otwarte.
+
+## 6 listopada 2026 — pozytywna ścieżka włączenia telemetrii
+
+- `c58586d8`: test atrapowego `telemetry-enable.sh` przechodzi przez aktywną weryfikację proofu, symuluje istniejącą rolę telemetryczną i potwierdza ograniczone uruchomienie collectora oraz app, a także zmianę konfiguracji dopiero w tej ścieżce.
+- Pięć skupionych zestawów przeszło **101/101**; skrypty serwera **44/44**. ESLint, `bash -n` i `git diff --check` PASS.
+- Odmowę złego hash i odmowę aktywnego proofu obejmują istniejące testy. Dowody pozostają sandboxowe; bez GHCR, prawdziwego serwera i produkcji.
+
+## 6 listopada 2026 — odrzucenie cache obrazu o innym ID
+
+- `8224f010`: test `deploy-release` potwierdza, że przy różnym lokalnym ID pobierane są wszystkie pięć dokładnych, zatwierdzonych digestów przed retagowaniem obrazów do wdrożenia. Poprzedni test pokrywa reuse wyłącznie zgodnego cache'u.
+- Pięć skupionych zestawów przeszło **102/102**; `deploy-release`/artifact/handoff **10/10**. ESLint i `git diff --check` PASS.
+- Test używa atrapowego Dockera; nie pobierano obrazów z GHCR. K06 nadal wymaga rzeczywistego odbioru i pełnej bramki wydania.
+
+## 6 listopada 2026 — odświeżony lokalny runtime K02 na Next 16.4.4
+
+- Po wykryciu niezgodności starego `node_modules` z lockfile przywrócono instalację i zweryfikowano aktualne pakiety oraz obrazy natywne. Rzeczywisty izolowany Next dev: **PASS**, PNG 200; SVG, błędne wejście i obcy host 400. [Wynik i granice](evidence/k02-runtime-2026-11-06/result.json).
+- `npm ci` domyślnie wykonało automatyczne żądanie audit i wyświetliło podsumowanie. Nie jest ono reviewed, nie zaliczono nim R01/K02 i nie powtarzać takiej operacji. Przyszłe instalacje wymagają `npm_config_audit=false`, aż polityka grafu będzie jawnie rozwiązana.
+- K02 pozostaje częściowe: brak reviewed audit oraz obrazu aplikacji zawierającego poprawione zależności. Nie uruchamiano pełnego quality, Docker build ani GHCR.
+- Uzupełnienie po tej partii: na SHA `d6f0d33c` dziewięć plików testów K02 zaliczyło 179/179, typecheck i oba buildy aplikacji zakończyły się exit 0. Build ujawnił cztery błędne typy fixture’ów, poprawione w `d6f0d33c`, a następne buildy przeszły. Szczegóły i pełne logi: [build-result](evidence/k02-runtime-2026-11-06/build-result.json).
+- Pierwszy build admina zgłosił dynamiczne śledzenie repo. W `7d97d067` dodano komentarz `turbopackIgnore` dla ścieżki host mount; standalone build przeszedł bez warningu i `apps/admin` tree w artefakcie nie zawiera `.ts/.tsx/.md`. [Porównanie/logi](evidence/admin-standalone-trace-2026-11-06/result.json). Nadal nie jest to build obrazu Docker ani GHCR.
+- K02 pozostaje otwarte: brak reviewed audit i dowodu zależności w docelowym obrazie. `npm ci` automatycznie wywołało audit, który jest nieprzejrzany; nie powtarzać go i używać `npm_config_audit=false` przy przyszłej instalacji.
+
+
+## 6 listopada 2026 — K02: aktualizacja i pełne lokalne bramki na Next 16.4.5
+
+- Oficjalne [wydanie Next.js 16.4.5](https://github.com/vercel/next.js/releases/tag/v16.4.5) zawiera poprawki bezpieczeństwa opublikowane 3 listopada. Podniesiono `next` oraz `eslint-config-next` z 16.4.4 do 16.4.5 w `e2cb87d9`; `npm install` uruchomiono jawnie z `npm_config_audit=false`. sharp 0.35.5, librsvg 2.63.2 i vips 8.18.7 pozostały bez zmian.
+- Izolowany Next image runtime: **PASS** (PNG 200; SVG, niepoprawny obraz i niezatwierdzony host 400). Dziewięć celowanych plików: **179/179 PASS**, zero pominięć. Repo typecheck, public build i admin standalone build: PASS. Build admina nie zgłosił wcześniejszego whole-project tracing warningu.
+- Surowe wyniki i logi: [dowody](evidence/k02-runtime-2026-11-06-next-16.4.5/result.json). Nie wykonano reviewed `npm audit`, obrazu Docker aplikacji ani GHCR. K02 pozostaje otwarte do czasu przeglądu zależności i potwierdzenia wersji w docelowym obrazie. Poprzednie dowody 16.4.4 zachowano.
+
+## 6 listopada 2026 — K07: limity rzeczywistego body przed parserem
+
+- Commit `b8b5d4dd`: dodano bounded byte reader dla JSON/FormData, enforcement rzeczywistych bajtów streamu niezależnie od `Content-Length`, limit części multipart przed natywnym parserem, mapowanie błędów na 400/413 i zastosowanie do tras Studio, panelu admina oraz wskazanych tras API. Limit complete to 13 MiB, zachowujący legalne complete z 10 000 części; limity zwykłego JSON zachowują opisane duże wejście avatara.
+- Na finalnym kodzie 9 plików testów, **110/110 PASS**, typecheck, ESLint zmienionych plików i `git diff --check` PASS. Lokalny produkcyjny Next 16.4.5 potwierdził 413 dla za dużego multipart z `Content-Length` i bez niego oraz dla nadmiaru części. [Surowe wyniki](evidence/k07-body-limits-2026-11-06/).
+- To weryfikacja bez reverse proxy. Repozytorium nie zawiera Cloudflare Tunnel ingressu; dokumentacja mówi, że jest zarządzany zdalnie. Cloudflare/ingress i pamięć/czas przy równoległych odrzuceniach niezmierzone. Buildy public/admin na wcześniejszym kodzie pakietu nie zostały powtórzone po końcowej korekcie walidacji duplikatu pliku. K07 pozostaje częściowe i otwarte; nie ogłaszać ochrony DoS ani pełnego acceptance.
+
+## 6 listopada 2026 — K06: awarie deployera w sandboxie
+
+- W fake-Docker harness dodano sterowaną awarię dumpu przed wdrożeniem i regresję: częściowy zrzut usunięty, bieżący obraz zachowany, migracja i aktywacja pominięte.
+- Pełny `tests/unit/ops/serwerek-scripts.test.ts` przeszedł **45/45 PASS, zero skip**. Cztery scenariusze przeszły **4/4 PASS**: błąd dumpu, błąd migracji, błąd uruchomienia aplikacji i rollback, błąd panelu i rollback po sprawdzeniu zachowanego proofu. [Wynik](evidence/k06-deployer-failures-2026-11-06/).
+- Adapter symuluje Docker, dump/migrator i filesystem; nie użyto prawdziwej bazy, obrazów, GHCR, SSH ani serwera. To weryfikacja częściowa; K06 pozostaje otwarte.
+
+## 6 listopada 2026 — K27: podpisana sesja eksportu danych
+
+- Dodano test PostgreSQL z rzeczywistą konfiguracją Better Auth: aktywny podpisany cookie, mapowanie aktora z DB, błędny podpis i cofnięta sesja. PostgreSQL 17 po 84 migracjach; 1/1 PASS, typecheck, ESLint i diff check PASS.
+- Test jest bezpośrednim wywołaniem granicy auth, nie Next HTTP; route test eksportu nadal ma atrapę auth/rate limitera. K27 pozostaje otwarte. Dowód: `evidence/k27-session-postgres-2026-11-06/result.json`.
+
+## 6 listopada 2026 — K27: rzeczywiste Next HTTP z cofnięciem sesji
+
+- Test PostgreSQL uruchomił lokalny Next dev na loopback i wywołał pełny route HTTP z rzeczywistym Better Auth: gość 401, podpisany właściciel 200/no-store z tylko własnym komentarzem, cofnięta sesja 401. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
+- Store limitów był rzeczywistym in-memory store development; brak proxy, Redis/Cloudflare i produkcji. Kontener jednorazowy usunięty, fixture User count 0. K27 częściowe; K37 oraz zależności polityki/review otwarte. [Dowód](evidence/k27-http-postgres-2026-11-06/result.json).
+
+## 6 listopada 2026 — K17/R02: przejęcie joba w rzeczywistym wyścigu PostgreSQL
+
+- Dwa niezależne połączenia DB wymusiły blokadę: finalizer A czekał na job row lock, gdy B trzymał niezatwierdzone przejęcie. Po COMMIT A został odrzucony, a tylko B aktywował asset. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
+- To dwa połączenia w jednym procesie, nie dwa worker procesy; brak prawdziwego R2/S3 i niezależnego review. R02/K17 częściowe. [Dowód](evidence/k17-two-session-race-2026-11-06/result.json).
+
+## 6 listopada 2026 — K23/R05: procesowy odzysk trwałego intentu
+
+- Rzeczywisty `publishAdminVideo` utworzył atomowy intent na PostgreSQL. Post-commit kick zasymulowano jako utracony; świeży proces OS uruchomił durable worker i dostarczył subskrybentowi jedno powiadomienie. Retry/reopen i drugi run nie dublują wpisu. 1/1 PASS po 84 migracjach; typecheck, ESLint i diff check PASS.
+- Nie zabito HTTP procesu po commitcie ani nie wywołano cron HTTP; HLS syntetyczne, bez R2/S3 i niezależnego review. K23/R05 pozostają częściowe. [Dowód](evidence/k23-process-recovery-2026-11-06/result.json).
+## 7 listopada 2026 — K17/R02: dwa osobne procesy workera
+
+- Test PostgreSQL uruchamia osobny proces A ze starym snapshotem oraz osobny proces B po przejęciu próby. A czeka na blokadzie wiersza joba, po COMMIT B jest odrzucony; tylko B aktywuje asset i trasę. **1/1 PASS**, 84 migracje, PostgreSQL 17.11; ESLint/typecheck/diff check PASS. Fixture’y usunięte, kontener disposable zatrzymany.
+- K17/R02 nadal częściowe: bez R2/S3, pełnego worker lifecycle i niezależnego review. [Dowód](evidence/k17-two-worker-processes-2026-11-07.json).
+## 2026-11-07 — K01-T3 Studio multipart acceptance
+
+- `a10761c2` rozszerza test K01 z ręcznie wstawionego oryginału na prawdziwe Studio API: multipart start, presigned PUT, complete i weryfikację oryginału, po której ten sam worker koduje film.
+- Testowy endpoint storage działa w Next dev tylko z jawnym znacznikiem i loopback URL; `production` nadal odrzuca injection. Guard **3/3**, integration PostgreSQL/Next/worker **1/1**, repo typecheck, ESLint i diff check PASS.
+- Dowód: `evidence/k01-multipart-studio-http-2026-11-07.json`. To lokalny S3-shaped fixture; Cloudflare R2, browser, deployed Worker i niezależny review są otwarte.
+## 2026-11-07 — K35-T1 lokalny edge playback
+
+- Test integracyjny przekazuje podpisany playback URL do rzeczywistego `workers/hls-edge/worker.mjs`; binding czyta dokładnie bajty HLS zapisane przez worker encoder.
+- Master/variant manifesty: 200 + `#EXTM3U`; segment z wariantu: 200 + niepuste bajty. PostgreSQL/Next/worker integration **1/1**, edge unit **20/20**, typecheck/ESLint/diff check PASS.
+- Tylko local R2 adapter: brak Cloudflare, prawdziwego R2, browser playback/decode i pozostałej macierzy K35. [Dowód](evidence/k35-edge-hls-local-2026-11-07.json).
+## 2026-11-07 — K35-T2 izolacja kanałów
+
+- Acceptance używa dwóch użytkowników/kanałów i sesji HTTP. Cudze pipeline/read i upload start/presign zwracają 404; po odmowie nie ma oryginału ani requestów do storage, legalny upload właściciela działa.
+- PostgreSQL 17/84 migracje: integration **1/1 PASS**, repo typecheck, ESLint i diff check PASS. Zakres częściowy: brak pełnej macierzy ról, replace/delete, crash/retry i usług live. [Dowód](evidence/k35-cross-channel-upload-2026-11-07.json).
+
+## 2026-11-07 — K01-T3 publikacja i publiczne API playbacku
+
+- `c4d8d9ae` rozszerza lokalny acceptance przez `publishAfterReady: true`; po Studio multipart uploadzie i kodowaniu sprawdza `PUBLISHED`, aktywną trasę/asset i guest `READY/SELF_HLS`.
+- Integration PostgreSQL 17.11/84 migracje **1/1 PASS**, repo typecheck, ESLint i diff check PASS. [Dowód](evidence/k01-publish-public-playback-api-2026-11-07.json).
+- Browser playback pozostaje bez dowodu: próba Chromium napotkała `ERR_NETWORK_CHANGED` i nie zaobserwowała elementu `<video>`. Lokalny S3-shaped adapter i lokalny kod Worker; Cloudflare R2, deployed Worker i niezależny review są otwarte.
+
+## 2026-11-07 — K35-T1 poprawione bajty i Chromium playback
+
+- `e91ce1b1` dekoduje AWS `aws-chunked` w lokalnym S3 fixture przed zapisem obiektu. Master/variant zaczynają się od `#EXTM3U`, fMP4 segment zawiera `moof`.
+- Chromium przechodzi przez stronę Next i lokalny `workers/hls-edge/worker.mjs`, pobiera master/variant/init/media segment, osiąga `currentTime > 0.5` oraz `readyState > 1`. PostgreSQL 17.11/84 migracje: integration **1/1 PASS**; typecheck, ESLint i diff check PASS. [Dowód](evidence/k35-browser-hls-local-2026-11-07.json).
+- Korekta wcześniejszego K35 edge dowodu: fake S3 zachowywał ramki `aws-chunked`; dawne sprawdzenie `#EXTM3U` wewnątrz tekstu i niepustego segmentu było niewystarczające. Dowód oznaczono jako superseded dla zawartości HLS; odmowy cross-channel pozostają ważne.
+- Tylko lokalny Chromium/Worker/S3 fixture; R2, wdrożony Worker, inne przeglądarki, pełna macierz K35 i niezależny review pozostają otwarte.

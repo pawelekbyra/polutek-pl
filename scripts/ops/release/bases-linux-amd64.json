@@ -1,0 +1,5 @@
+{
+  "node": "docker.io/library/node@sha256:aaa4b5baf1ecff3b283486bb1f90405cdda225a3e6f79660d2c559fa510a7292",
+  "ffmpeg": "docker.io/mwader/static-ffmpeg@sha256:9a4bf2b7915ef1c4d725a176159438146b68485cc613bf6662e2786c661cd16d",
+  "collector": "docker.io/library/node@sha256:947e5454e08bfe0b8ddda604915ad76275276c774f47da90d0137252c793a778"
+}

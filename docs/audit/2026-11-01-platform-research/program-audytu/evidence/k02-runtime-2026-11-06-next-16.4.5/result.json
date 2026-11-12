@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-06",
+  "commit": "e2cb87d9",
+  "next": "16.4.5",
+  "eslint_config_next": "16.4.5",
+  "sharp": "0.35.5",
+  "librsvg": "2.63.2",
+  "vips": "8.18.7",
+  "dependency_update": "PASS",
+  "targeted_tests": {"passed": 179, "failed": 0, "pending": 0, "suites": 34},
+  "image_runtime": "PASS",
+  "typecheck": "PASS",
+  "public_build": "PASS",
+  "admin_standalone_build": "PASS",
+  "admin_standalone_tracing_warning": false,
+  "npm_audit": "NOT_RUN; all dependency installation commands used npm_config_audit=false",
+  "limitations": [
+    "No reviewed dependency audit was performed.",
+    "No Docker application image or GHCR artifact was built or inspected.",
+    "Isolated image runtime does not constitute full production application acceptance."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "package": "K34/R35",
+  "date": "2026-11-07",
+  "result": "PASS",
+  "browser": "firefox",
+  "browserVersion": "151.0",
+  "repositoryHead": "38047d8ae2ec0255f6237410a93773e52ce30200",
+  "workingTreeFiles": [
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/k34-chapters-import-browser.cjs",
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/k34-chapters-import-harness.tsx"
+  ],
+  "sourceSha256": {
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/k34-chapters-import-browser.cjs": "3a8d527052ec24115de265100099a6f7450d253e43fb42905121e195536b8d18",
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/k34-chapters-import-harness.tsx": "c3207faa7d8b53baa26117c1b084f15ac98b52152cc1b943ad5a287b0dbf8495",
+    "app/components/studio/VideoChaptersEditor.tsx": "c7552223596a4285696db35b488d8aca579b7c09fd1b27d60c476612a49ab9f9",
+    "app/components/studio/ConfirmDialog.tsx": "c071877589611c8c424c61eadc9bbcc1d0fc4b824988718943fbb0accecddad9",
+    "app/components/studio/chapters-form.ts": "5ecc208063b9b6bdf8417e90d89791a1e1da282588e1833037d5c148afc5f6aa",
+    "components/ui/dialog.tsx": "1c7343c50a593860de16326a3a50f7a29d6ac42797525511fdf39c83ff0573f1",
+    "lib/video-chapters.ts": "764e41e779585eba8acf672e3cf6cef043c8f93682ace80ed0f0a5f04d39cff9",
+    "app/globals.css": "16c1da33c42e0f7ad387acbc24fb97406ac67a6aefa9e66b73fe1b5374fc4104",
+    "tailwind.config.ts": "357873866942705b9b1c597f3eddb8b077ecc8d2de02d66d19f55ba90d8edc91"
+  },
+  "observations": [
+    "The replacement dialog has an accessible alertdialog name, modal state, and description.",
+    "Focus is within the dialog and remains within it after Tab.",
+    "Escape cancels replacement, preserves the original chapter list, and restores focus to the import button.",
+    "Confirm replaces the prior chapters with the parsed Polish description and restores focus to the import button."
+  ],
+  "checks": {
+    "pageErrors": 0,
+    "blockedExternalRequests": 0
+  },
+  "limitations": [
+    "Actual VideoChaptersEditor and ConfirmDialog with project CSS; static local harness, not Next or the Studio page.",
+    "Callbacks use synthetic local React state; no API, account, database, screen reader, or mobile hardware."
+  ],
+  "testCommand": "K34_BROWSER=firefox node docs/audit/2026-11-01-platform-research/program-audytu/tools/k34-chapters-import-browser.cjs"
+}

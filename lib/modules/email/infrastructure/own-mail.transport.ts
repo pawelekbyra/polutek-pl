@@ -103,8 +103,8 @@ export function extractQueueId(response: unknown): string | null {
 }
 
 export function mapOwnMailError(error: unknown): EmailSendError {
-  const e = (error && typeof error === "object" ? error : {}) as { code?: unknown; responseCode?: unknown; message?: unknown };
-  const code = typeof e.code === "string" ? e.code : "";
+  const e = (error && typeof error === "object" ? error : {}) as { code?: unknown; originalCode?: unknown; responseCode?: unknown; message?: unknown };
+  const code = typeof e.originalCode === "string" ? e.originalCode : typeof e.code === "string" ? e.code : "";
   const smtp = typeof e.responseCode === "number" ? e.responseCode : null;
   const message = (typeof e.message === "string" ? e.message : String(error)).slice(0, 300);
   // Connection-level failures carry no status: the caller treats them as "own path unavailable".

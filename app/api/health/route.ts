@@ -17,7 +17,9 @@ export async function GET(req: NextRequest) {
     const ctx = createAppContext({ requestId: requestId || undefined, actor });
     const result = await checkHealth(ctx, token);
 
-    return handleApiResponse(result);
+    // Without the diagnostic token this is liveness only. The authorized readiness response
+    // must use a failing HTTP status when a dependency check fails, so external probes can detect it.
+    return handleApiResponse(result, result.ok ? 200 : 503);
   } catch (error) {
     scopedLogger.error("[HEALTH_CHECK_ERROR]", error);
     return handleApiError(error);

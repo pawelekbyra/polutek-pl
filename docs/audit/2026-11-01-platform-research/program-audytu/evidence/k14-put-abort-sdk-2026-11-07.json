@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-07",
+  "package": "K14/R03",
+  "tested_base_revision": "e79ec25c84b94571e6fc2cd5be18251fd9aaeb43",
+  "change": "wire-level local test for AbortSignal propagation to the AWS SDK S3 PUT",
+  "runtime": {
+    "node": "v22.23.3",
+    "vitest": "4.1.10"
+  },
+  "checks": {
+    "focused_command": "npx vitest run tests/unit/video-pipeline/process-encode-job.test.ts tests/unit/video-pipeline/r2-storage-delete.test.ts tests/unit/video-pipeline/r2-storage-put-http.test.ts",
+    "files_passed": 3,
+    "tests_passed": 29,
+    "failed": 0,
+    "eslint": "PASS",
+    "repo_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "scenario": [
+    "create a sparse 512 MiB synthetic file without populating its contents",
+    "start a real AWS SDK PutObject request to a local 127.0.0.1 HTTP server",
+    "pause the server after the first received data chunk and abort the caller's AbortSignal",
+    "resume the server-side request stream after abort so the receiver can observe request termination",
+    "confirm HlsWriter.putFile rejects with AbortError and the receiver emits aborted rather than receiving a full body; fail if more than 1 MiB continues after abort"
+  ],
+  "isolation": {
+    "storage": "local HTTP fixture only",
+    "credentials": "synthetic loopback-only values",
+    "external_storage": "not contacted",
+    "server_or_production": "not accessed"
+  },
+  "source_sha256": {
+    "tests/unit/video-pipeline/r2-storage-put-http.test.ts": "1e970ddad88336632e958b0307776e83c91cc6378f63fd33dd0dd1432b022d56"
+  },
+  "limitations": [
+    "the test proves a local HTTP receiver sees the AWS SDK request terminate on abort; it does not prove Cloudflare R2 stopped writing or removed a partial object",
+    "no Cloudflare R2 or other S3-compatible sandbox was used",
+    "K14 remains partial pending provider-backed acceptance and independent review"
+  ]
+}

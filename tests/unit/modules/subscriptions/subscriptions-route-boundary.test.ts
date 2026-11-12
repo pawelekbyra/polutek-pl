@@ -51,7 +51,8 @@ describe('subscriptions route behavior', () => {
         subscribersCount: 10,
         creatorId: 'c1',
         creatorSlug: 'p1',
-        purpose: 'EMAIL_NOTIFICATIONS'
+        purpose: 'EMAIL_NOTIFICATIONS',
+        notify: true,
       });
 
       const req = new NextRequest('http://localhost/api/subscriptions');

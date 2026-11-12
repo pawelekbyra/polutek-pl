@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-06",
+  "package": "K31/R36 partial implementation",
+  "base_commit": "92092f686a0fd30fdbac7564093ee8dd92db8825",
+  "source_sha256": {
+    "workers/pp-watchdog/worker.mjs": "702f789c6081c67ab946dcf98669383453f443b7acdc3323e9ed0c1b8244f2bb",
+    "tests/unit/workers/pp-watchdog.test.ts": "beef690ff7a501427ff19a9022e785ed8906241a8cb5460c8c668dd9a401608d",
+    "tests/unit/workers/pp-watchdog-delivery.test.ts": "ef30f618a7aed46217bc29f8bd43eaee3304cb617ed5cbad6d6ebafcb748dba6",
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/k31-watchdog-sqlite-check.mjs": "4cc841e66079c9ac29555547297473fd41240092dddf5e341aa0e7b7fe6c7961"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/workers/pp-watchdog.test.ts tests/unit/workers/pp-watchdog-delivery.test.ts",
+      "result": "PASS",
+      "files": 2,
+      "tests": 6
+    },
+    {
+      "command": "npm run quality:architecture-boundaries",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npx eslint workers/pp-watchdog/worker.mjs tests/unit/workers/pp-watchdog.test.ts tests/unit/workers/pp-watchdog-delivery.test.ts",
+      "result": "0 errors, 1 warning on existing anonymous default export in worker.mjs"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "node docs/audit/2026-11-01-platform-research/program-audytu/tools/k31-watchdog-sqlite-check.mjs",
+      "result": "PASS",
+      "sqlite": "3.51.3",
+      "scope": "Actual unchanged Worker.fetch/runChecks/deliverPending code; local in-memory SQLite adapter; two concurrent /run requests; all fetch targets stubbed.",
+      "observed": {
+        "concurrent_runs": 2,
+        "provider_stub_calls": 1,
+        "delivery_status": "SENT",
+        "daily_sent_count": 1,
+        "update_returning_supported": true
+      }
+    }
+  ],
+  "observed_cases": [
+    "Recovery event remains pending after provider HTTP 503 and is retried after backoff.",
+    "Recovery event remains pending at the UTC daily email cap and is delivered after the quota day resets.",
+    "A thrown provider request leaves the event pending for a later retry.",
+    "Two simultaneous runs claim one due event and submit a single provider request.",
+    "Retries send a stable Resend Idempotency-Key for the same delivery event."
+  ],
+  "boundaries": [
+    "Local SQLite 3.51.3 accepted the schema/queries and one concurrent claim; Cloudflare D1 runtime, deployed schema, isolate restart, Resend, and inbox delivery were not exercised.",
+    "A provider acceptance followed by failure to persist SENT remains an ambiguous outcome; idempotency limits duplicate requests but does not prove exactly-once inbox delivery.",
+    "No Cloudflare credentials, production Worker, D1 database, Resend endpoint, or real recipient was contacted.",
+    "No Worker deploy was performed."
+  ],
+  "independent_review": "PENDING"
+}

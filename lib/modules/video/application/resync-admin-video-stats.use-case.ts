@@ -1,6 +1,6 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
-import { MainChannelService } from "@/lib/modules/channel";
+import { MainChannelService } from "@/lib/modules/channel/application/main-channel.service";
 import { authorize } from "@/lib/modules/authz";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { VideoNotOnMainChannelError, VideoNotFoundError } from "../domain/video.errors";

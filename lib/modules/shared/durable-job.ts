@@ -17,7 +17,7 @@ export const DURABLE_JOB_MAX_ATTEMPTS = 8;
 /** One runner invocation (cron tick or post-publish kick) works for at most this long, then hands over. */
 export const DURABLE_JOB_RUN_BUDGET_MS = 45_000;
 
-export type DurableJobKind = "NEW_VIDEO_FANOUT" | "STORAGE_CLEANUP";
+export type DurableJobKind = "NEW_VIDEO_FANOUT" | "STORAGE_CLEANUP" | "VIDEO_ASSET_CLEANUP";
 
 export type ClaimedJob = {
   id: string;

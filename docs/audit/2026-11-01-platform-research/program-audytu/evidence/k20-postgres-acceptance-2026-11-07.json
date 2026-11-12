@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-07",
+  "package": "K20/R23",
+  "tested_git_sha": "7e277574299965ee259ed86151b31aeba2087d31",
+  "database": {
+    "image": "postgres:17",
+    "image_id": "sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f",
+    "repo_digest": "postgres@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f",
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "successful_migrations": 84,
+    "disposable_container": "ephemeral, loopback-published, tmpfs data directory"
+  },
+  "commands": [
+    "npx prisma migrate deploy",
+    "npx vitest run --config vitest.postgres.config.ts tests/postgres/k20-auto-publish-channel.pg.test.ts tests/postgres/k20-publish-channel-state.pg.test.ts",
+    "npx eslint tests/postgres/k20-auto-publish-channel.pg.test.ts tests/postgres/k20-publish-channel-state.pg.test.ts",
+    "npm run typecheck"
+  ],
+  "results": {
+    "postgres_files": "2/2 PASS",
+    "postgres_tests": "8/8 PASS",
+    "migration_deploy": "84 applied; success",
+    "eslint": "PASS",
+    "repo_typecheck": "PASS",
+    "fixture_cleanup": "all fixtures scoped to fresh disposable database; container auto-removed; no task container remained"
+  },
+  "coverage": [
+    "PUBLIC and UNLISTED auto-publish to the correct non-main channel",
+    "main channel remains supported",
+    "SUSPENDED and DELETED channel refusal",
+    "persisted job/video channel mismatch refusal",
+    "stale attempt fencing",
+    "channel changes ACTIVE to SUSPENDED at the transaction boundary; publish refused and video stays DRAFT"
+  ],
+  "limitations": [
+    "finalizer/use cases ran directly in test process, not a separately running encoder worker",
+    "storage objects and HLS media were synthetic; no R2/S3",
+    "no independent reviewer",
+    "K20 remains partial"
+  ],
+  "source_sha256": {
+    "tests/postgres/k20-auto-publish-channel.pg.test.ts": "9e2df30223c9cd3a4c9d3478a77ba6f06c168948e8fbb9dcced741254214482a",
+    "tests/postgres/k20-publish-channel-state.pg.test.ts": "f1180d0499b44f97e34da95f5b8ce6e7382a473e9d38618dacb98d718f679fa1",
+    "lib/modules/video-pipeline/application/finalize-self-hls.ts": "2fa40aed8644f6bf6a9a78c33bdaf11d5715df13ba6f2f33bb93973e80539805",
+    "lib/modules/video/application/publish-admin-video.use-case.ts": "3b8ae81b78fbc22390fad052c19be764cd30c6369d50df6a36f9b7a5a33fb034"
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildMorningReport, histFromValues, morningReportConfig, runMorningReport } from "@/lib/modules/admin-analytics";
+import { buildMorningReport, histFromValues, morningReportConfig, runMorningReport, type MorningMailer } from "@/lib/modules/admin-analytics";
 import { tokenAuthorised } from "@admin/lib/jobs-auth";
 import { deps, fakeApp, fakeTelemetry, playbackDay, VIDEO_A } from "./fakes";
 
@@ -29,7 +29,7 @@ describe("morning report", () => {
   });
 
   it("sends once with an idempotency key per day when explicitly enabled (mocked transport)", async () => {
-    const mailer = vi.fn(async () => ({ ok: true }));
+    const mailer = vi.fn<MorningMailer>(async () => ({ ok: true }));
     const r = await runMorningReport(deps(telemetry(), app()), { env: { ADMIN_MORNING_REPORT: "on", ADMIN_MORNING_REPORT_TO: "owner@example.com" }, mailer });
     expect(r.status).toBe("sent");
     expect(mailer).toHaveBeenCalledTimes(1);

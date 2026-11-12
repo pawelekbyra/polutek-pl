@@ -18,6 +18,9 @@ vi.mock("@/lib/modules/payments", () => ({
   createCheckoutIntent: vi.fn(),
   isPremiumPassPayment: vi.fn(),
 }));
+vi.mock("@/lib/modules/payments/infrastructure/stripe-client", () => ({ getStripeClient: (keySet?: string) => getStripeClient(keySet) }));
+vi.mock("@/lib/modules/payments/application/create-checkout-intent.use-case", () => ({ createCheckoutIntent: vi.fn() }));
+vi.mock("@/lib/modules/payments/domain/payment.purpose", () => ({ isPremiumPassPayment: vi.fn() }));
 
 const prismaWrites = vi.fn();
 const prisma = new Proxy({}, { get: () => new Proxy({}, { get: () => prismaWrites }) });

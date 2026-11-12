@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { assertAuthorized } from "@/lib/modules/authz";
-import { invalidateDefaultThumbnailCache } from "@/lib/modules/media";
+import { invalidateDefaultThumbnailCache } from "@/lib/modules/media/application/default-thumbnail.service";
 import { ADMIN_CHANNEL_CREATOR_SELECT } from "./get-admin-channel-settings.use-case";
 
 export interface UpdateAdminChannelSettingsInput {

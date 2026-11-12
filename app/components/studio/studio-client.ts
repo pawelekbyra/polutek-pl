@@ -3,6 +3,8 @@
  * errors carry the server's message and code so the UI can show them as they are.
  */
 import type { Chapter } from "@/lib/video-chapters";
+import { ApiContractError, parseApiContract } from "@/lib/video-api-contracts/contracts";
+import type { ZodType } from "zod";
 
 export class StudioApiError extends Error {
   constructor(
@@ -31,10 +33,25 @@ export async function studioApi<T>(path: string, init: RequestInit = {}, fetchIm
     body = null;
   }
   if (!response.ok) {
-    const e = body as { error?: string; code?: string } | null;
-    throw new StudioApiError(e?.error ?? "Nie udało się wykonać operacji.", response.status, e?.code);
+    const errorBody = body && typeof body === "object" ? body as Record<string, unknown> : null;
+    throw new StudioApiError(
+      typeof errorBody?.error === "string" ? errorBody.error : "Nie udało się wykonać operacji.",
+      response.status,
+      typeof errorBody?.code === "string" ? errorBody.code : undefined,
+    );
   }
   return body as T;
+}
+
+/** Use on upload/job/playback endpoints whose JSON contract is enforced at runtime. */
+export async function studioApiContract<T>(path: string, contract: ZodType<T>, init: RequestInit = {}, fetchImpl: StudioFetch = fetch): Promise<T> {
+  const body = await studioApi<unknown>(path, init, fetchImpl);
+  try {
+    return parseApiContract(contract, body, path);
+  } catch (error) {
+    if (error instanceof ApiContractError) throw new StudioApiError(error.message, error.status, error.code);
+    throw error;
+  }
 }
 
 export const jsonBody = (value: unknown): RequestInit => ({ body: JSON.stringify(value) });

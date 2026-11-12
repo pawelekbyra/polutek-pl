@@ -28,6 +28,32 @@ Oryginał trafia z przeglądarki admina do prywatnego R2 `polutek`, kolejka w Po
 - Token nie jest związany z widzem: zalogowany widz może skopiować URL i pobrać pliki na czas TTL. To kontrola dostępu, nie DRM. Przy treściach darmowych po zalogowaniu (§4.4) akceptowalne.
 - Jeden sekret `HLS_TOKEN_SECRET` (Worker, `app.env`, `.ai-secrets`); rotacja unieważnia naraz wszystkie trwające odtworzenia (odtwarzacz odnowi token sam przy 403).
 
+## Monotoniczna aktywacja oryginału
+
+`completeOriginalMultipart()` oraz retry dla wiersza `READY` używają tej samej blokady transakcyjnej per video. W transakcji ponownie odczytywany jest status i wersja; starszy `READY` nie może zastąpić nowszego aktywnego oryginału. Ukończenie zapisuje `READY`, `SUPERSEDED`, `Video.activeOriginalId` i `VideoEncodeJob` atomowo. Retry `READY` naprawia historyczny brak zadania, ale najpierw sprawdza, czy ta wersja nadal wygrywa. Testy HTTP z dwiema równoległymi ścieżkami na PostgreSQL są udokumentowane w K15 w roadmapie audytu.
+
+## Prefiksy prób kodowania
+
+Każdy nowy claim dostaje UUID zapisany w `VideoEncodeJob.attemptId`. Pliki, wpis `VideoAsset`, finalizer, logi i cleanup używają tego samego prefiksu `videos/<videoId>/v/v<version>/attempts/<attemptId>/`; katalog roboczy także zawiera ID próby. Proces usuwa wyłącznie swój prefiks. Starsze aktywne rekordy z `attemptId = NULL` pozostają mapowane na historyczny `videos/<videoId>/v/v<version>` aż do ich wygaszenia.
+
+Token planu odtwarzania wiąże się z konkretnym assetem: segment ścieżki dostarczania to `v<version>~<attemptId>` dla nowych prób, a historyczne assety pozostają przy `v<version>`. Worker HLS weryfikuje cały segment w HMAC i mapuje UUID do tego samego prefiksu R2; nie wyszukuje „najnowszej” próby. Wdrożenie kodu Workera obsługującego ten format musi poprzedzić aplikację, która zaczyna go wydawać.
+
+Migracja blokuje przejście zadania do `RUNNING`, jeśli claim nie wpisał `attemptId`, więc binarny stary worker nie może pobrać nowego zadania. Heartbeat już działającego legacy zadania jest dozwolony. Przed migracją i startem nowych workerów wdrożenie musi kontrolowanie wygasić stare workery; lokalny test nie zastępuje tej procedury ani fencing skutków starego workera, które jest osobnym K17.
+
+Przed aktywacją finalizer blokuje w transakcji wiersz joba i potwierdza `RUNNING`, `workerId` oraz `attemptId`; równocześnie odświeża heartbeat. Wszystkie zapisy postępu/końcowego statusu/retry/anulowania/zwolnienia claimu używają tego samego tokenu. Aktywacja trasy, wybór primary assetu i obowiązkowy wpis audytu są jedną transakcją. Po utracie potwierdzenia COMMIT finalizer uzgadnia aktywną trasę; gdy baza nie pozwala rozstrzygnąć wyniku, worker zachowuje prefiks HLS do retry. Retry potwierdza cały graf playlist i segmentów przed uznaniem aktywnego wyniku; niekompletny graf nie jest sukcesem. Lokalna weryfikacja K17/K18 nie dowodzi zachowania dwóch realnych workerów ani fizycznego R2; odbiór pozostaje otwarty.
+
+Po finalizacji worker ponownie odczytuje job tylko dla aktualnego `RUNNING + workerId + attemptId`, łączy go z `video.creatorId` i wymaga zgodności z zapisanym `job.channelId`. Z tego `creatorId` tworzy `AppContext.channelId`; nie korzysta z kanału głównego ani z danych żądania. Auto-publish sprawdza, czy kanał istnieje i ma status `ACTIVE`/`LIMITED`, wyszukuje film w tym kanale, a publikację lub unlist wykonuje przez istniejące use case'y z `authorize()`. Wynik jest jawny (`published`, `unlisted`, `waiting`, `skipped`, `refused`, `failed`) i logowany przez worker. Testy komponentowe obejmują twórcę spoza main, niedostępny kanał oraz niezgodność relacji job–video; pełne potwierdzenie na PostgreSQL i workerze pozostaje otwarte.
+
+## Rezerwacja i sprzątanie assetu HLS
+
+Usunięcie wersji HLS najpierw blokuje wiersz `Video`, tak samo jak aktywacja trasy. W jednej transakcji odłącza aktywną trasę szkicu (PUBLISHED/UNLISTED z aktywnym assetem są chronione), zapisuje `VideoAsset.cleanupPendingAt`, oznacza asset jako nieaktywny i tworzy `VIDEO_ASSET_CLEANUP`. Trigger PostgreSQL blokuje aktywowanie zarezerwowanego assetu także przez starszy kod aplikacji. Wdrożenie migracji wymaga wygaszenia starszych procesów przed wznowieniem żądań usuwania, ponieważ ich wersja usuwała obiekty synchronicznie.
+
+Runner usuwa prefiks R2 poza transakcją, a dopiero po potwierdzonym usunięciu kasuje wiersz assetu i zapisuje audyt. Awaria po częściowym DeleteObjects zostawia rezerwację i zadanie trwałe; retry jest idempotentne. Dla aktywnego assetu szkicu route jest wyłączana w tej samej transakcji co rezerwacja, więc nie wskazuje plików podczas cleanupu.
+
+## Sprzątanie obiektów
+
+`HlsWriter.deletePrefix()` odczytuje odpowiedź `DeleteObjects` per obiekt (`Quiet: false`), liczy tylko potwierdzone `Deleted` i ponawia wyłącznie przejściowe błędy do trzech prób. `NoSuchKey`/`NotFound` jest idempotentne i nie zwiększa licznika. Trwałe błędy lub wyczerpane próby rzucają `R2DeleteObjectsError`, więc strict purge/durable job nie może oznaczyć częściowego usunięcia jako sukcesu. Testy komponentów są zielone, ale brak jeszcze odbioru na sandboxie Cloudflare R2/S3; zachowanie dostawcy i cały przebieg purge pozostają niepotwierdzone.
+
 ## Koszt i limity
 
 Każdy plik HLS to jedno wywołanie Workera, także trafienie w cache. Plan Free: **twarde 100 000 żądań na dobę**, potem do 00:00 UTC wideo nie gra. Odtworzenie 3 min ≈ 35 żądań, godzina ≈ 600; każde wejście na stronę główną z autoodtwarzaniem hero ≈ 6-10 żądań, więc limit wyczerpuje już ok. 10-15 tys. wejść dziennie. Workers Paid: 5 USD/mies. z 10 mln żądań w cenie. R2: kilkadziesiąt filmów to 1-3 GB (w darmowych 10 GB), transfer 0 USD. `caches.default` działa per centrum danych (bez Tiered Cache): każde PoP przy pierwszym chybieniu czyta R2 (klasa B, pomijalne przy obecnym ruchu).

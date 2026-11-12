@@ -12,7 +12,7 @@
 //  - the reply carries the method NAMES only (the same names the client gets after the real intent).
 // The canceled probe produces a `payment_intent.canceled` webhook that the handler ignores (no known payment).
 import { z } from "zod";
-import { getStripeClient } from "@/lib/modules/payments";
+import { getStripeClient } from "@/lib/modules/payments/infrastructure/stripe-client";
 import { logger } from "@/lib/logger";
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { PATRON_CURRENCIES, patronPrice, patronProduct, premiumPassFor } from "../domain/config";

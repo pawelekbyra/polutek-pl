@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAdminVideoById } from '@/lib/modules/video/application/get-admin-video-by-id.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { VideoNotFoundError } from '@/lib/modules/video/domain/video.errors';
-import { MainChannelService } from '@/lib/modules/channel';
+import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
 
-vi.mock('@/lib/modules/channel', () => ({
+vi.mock('@/lib/modules/channel/application/main-channel.service', () => ({
   MainChannelService: {
     getRequired: vi.fn(),
   },

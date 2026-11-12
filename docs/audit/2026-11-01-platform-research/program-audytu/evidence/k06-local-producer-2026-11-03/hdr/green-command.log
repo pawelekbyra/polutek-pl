@@ -1,0 +1,28 @@
+Lokalne CI: docs/polutek-platform-audit @ d72dc0e5ec28 (+ niezatwierdzone zmiany), baza origin/main (c397b9e548ca)
+Zmienione pliki: 811 (+1 usunietych), sloty CPU: 1, Node v22.23.3
+Logi bramek: .claude/local-ci-logs/
+
+> encode-smoke: start (encode-smoke (ffmpeg))
++ encode-smoke: PASS 27.1 s
+
+bramka          wynik  czas    przyczyna
+--------------  -----  ------  ---------
+prisma          SKIP   -       pominieta (--skip)
+ci-parity       SKIP   -       nie wybrana (--only)
+migrations      SKIP   -       nie wybrana (--only)
+unit            SKIP   -       nie wybrana (--only)
+critical-path   SKIP   -       nie wybrana (--only)
+typecheck       SKIP   -       nie wybrana (--only)
+typecheck-all   SKIP   -       nie wybrana (--only)
+lint            SKIP   -       nie wybrana (--only)
+architecture    SKIP   -       nie wybrana (--only)
+hotspots        SKIP   -       nie wybrana (--only)
+strict-escapes  SKIP   -       nie wybrana (--only)
+env             SKIP   -       nie wybrana (--only)
+audit           SKIP   -       nie wybrana (--only)
+postgres        SKIP   -       nie wybrana (--only)
+encode-smoke    PASS   27.1 s  prawdziwy ffmpeg: 3 wykonane przypadki
+build           SKIP   -       nie wybrana (--only)
+admin-build     SKIP   -       nie wybrana (--only)
+
+WYNIK: PASS, 27.7 s. Raport: .claude/local-ci-last.json

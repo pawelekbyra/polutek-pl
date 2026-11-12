@@ -1,0 +1,42 @@
+{
+  "package": "K01-T3 local worker slice",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "result": {
+    "test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "worker_process": "separate Node/tsx process; actual runWorkerLoop and EncodeJobRepository claim",
+    "pipeline": "real six-second synthetic MP4; FFmpeg 8.0.1; OriginalsReader/HlsWriter with AWS SDK; HLS verification; Prisma finalizer and PostgreSQL route/asset/job writes",
+    "object_storage": "in-memory S3-shaped loopback HTTP fixture; 127.0.0.1 only",
+    "database": "disposable PostgreSQL 17.11; 84/84 Prisma migrations",
+    "eslint": "PASS",
+    "repo_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "assertions": [
+    "Only the requested queued job was eligible before the worker ran.",
+    "The job reached SUCCEEDED/DONE at 100 percent with a generated attemptId.",
+    "The database has exactly one active route and one READY SELF_HLS asset for the fixture video.",
+    "The asset key is scoped to the generated attemptId.",
+    "The loopback store contains master and variant playlists, an fMP4 segment, and poster; HlsWriter verified playlist references before finalization."
+  ],
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "c276f8cd662ed2465a402fcd3eccfbf6e161e4704531e9e89cfe1ca9fc8387f9",
+    "tests/helpers/k01-video-worker-process.ts": "a820e4e19ce95d9bb5f4a6d50b1e418abb6a542b3fb6eb46695eb3bd5585df6e"
+  },
+  "cleanup": {
+    "fixture_users": 0,
+    "fixture_creators": 0,
+    "fixture_videos": 0,
+    "fixture_encode_jobs": 0,
+    "temporary_postgres_container_stopped": true,
+    "worker_temp_directory_removed": true,
+    "loopback_object_store_memory_cleared": true
+  },
+  "limitations": [
+    "Does not call Next.js upload or playback HTTP routes and is not a browser test.",
+    "The helper assembles production worker-loop components but does not launch scripts/video-worker.ts itself.",
+    "The loopback S3-shaped fixture is not Cloudflare R2 and proves no provider semantics, durability, ETag/CORS, or edge playback.",
+    "K01-T3 and K35 remain partial; real R2 acceptance and independent review remain open."
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "package": "K25/R26",
+  "date": "2026-11-07",
+  "branch": "docs/polutek-platform-audit",
+  "status": "PARTIAL",
+  "scope": "Make the 100 active-playlist-per-channel cap safe under concurrent creates and deletes without serializing other channels.",
+  "implementation": [
+    "PlaylistRepository exposes a transaction-scoped PostgreSQL advisory lock keyed by channel id.",
+    "createPlaylist acquires the channel lock before COUNT and holds it through INSERT and audit in the same transaction.",
+    "deletePlaylist acquires the same channel lock before its scoped lookup and soft delete, so freeing a slot serializes with creates."
+  ],
+  "checks": [
+    {
+      "name": "playlist-unit",
+      "command": "npx vitest run tests/unit/modules/playlists/playlist-manage.test.ts",
+      "exitCode": 0,
+      "files": 1,
+      "tests": 18,
+      "passed": 18,
+      "failed": 0
+    },
+    {
+      "name": "postgres-concurrent-count-protocol",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx prisma migrate deploy && npx vitest run --config vitest.postgres.config.ts tests/postgres/playlist-limit-concurrency.pg.test.ts",
+      "migrationsApplied": 84,
+      "exitCode": 0,
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "covers": [
+        "at 99 active playlists, two simultaneous creates yield one success, one PLAYLIST_LIMIT refusal and a final count of 100",
+        "successful creation writes exactly one audit row",
+        "soft delete frees a slot for a replacement playlist",
+        "a foreign-channel playlist id is refused without deletion",
+        "a transaction holding one channel's advisory lock does not block a create in another channel"
+      ],
+      "separate_process_followup": {
+        "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/playlist-limit-concurrency.pg.test.ts",
+        "test_file": "tests/postgres/playlist-limit-concurrency.pg.test.ts",
+        "helper": "tests/helpers/k25-create-playlist-process.ts",
+        "migrationsApplied": 84,
+        "exitCode": 0,
+        "tests": 2,
+        "passed": 2,
+        "failed": 0,
+        "parallelChildProcesses": 2,
+        "covers": [
+          "two independent Node processes run actual createPlaylist and actual authorization concurrently against the same PostgreSQL at 99 active rows",
+          "exactly one process commits a playlist and audit row; the other receives PLAYLIST_LIMIT; final count is 100",
+          "existing PG checks continue to verify slot reuse after soft delete, foreign-channel refusal and no lock coupling between channels"
+        ],
+        "typecheckCommand": "npx tsc --noEmit -p tsconfig.typecheck.json",
+        "typecheckExitCode": 0,
+        "eslintCommand": "npx eslint tests/postgres/playlist-limit-concurrency.pg.test.ts tests/helpers/k25-create-playlist-process.ts",
+        "eslintExitCode": 0,
+        "disposableContainer": "removed after test; synthetic DB destroyed"
+      }
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "name": "eslint-and-diff-check",
+      "command": "npx eslint <touched TypeScript files> && git diff --check",
+      "exitCode": 0,
+      "eslintErrors": 0
+    }
+  ],
+  "limits": [
+    "The follow-up invokes real use cases and authorization from two separate Node processes against a disposable PostgreSQL 17 database; it does not call the Studio HTTP route or exercise deployed server processes.",
+    "Production database isolation/configuration, full Studio POST/DELETE acceptance and independent review have not been verified; K25 remains partial."
+  ],
+  "handoff": "Claude: on non-production, exercise Studio POST and DELETE endpoints from separate server processes at 99 active playlists, confirm final count <=100, one success and one PLAYLIST_LIMIT response, then delete and create to confirm slot reuse and exactly one audit row per committed mutation. Verify two different channels can write independently."
+}

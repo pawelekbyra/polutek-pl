@@ -1,3 +1,13 @@
+import {
+  ApiContractError,
+  MultipartCompleteResponseSchema,
+  MultipartPartsResponseSchema,
+  MultipartPresignResponseSchema,
+  MultipartStartResponseSchema,
+  parseApiContract,
+} from "@/lib/video-api-contracts/contracts";
+import type { z } from "zod";
+
 /**
  * Browser-side resumable multipart uploader for the own video pipeline.
  * Talks to <apiBase>/[id]/original-upload/multipart{,/parts,/complete} (admin panel apps/admin: /api/videos) and PUTs parts
@@ -21,15 +31,21 @@ export type PartPutter = (url: string, body: Blob, opts: { signal: AbortSignal; 
 
 export interface UploaderOptions {
   videoId: string;
-  file: File;
+  file: File | Blob;
+  fileName?: string;
+  contentType?: string;
+  resumeIdentity?: string;
   publishAfterReady?: boolean;
   signal: AbortSignal;
   onProgress?: (p: UploadProgress) => void;
   concurrency?: number;
+  attempts?: number;
   fetchFn?: typeof fetch;
   putPart?: PartPutter;
   storage?: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
   sleep?: (ms: number) => Promise<void>;
+  /** Override the per-video upload route while keeping the multipart protocol shared. */
+  uploadPath?: (videoId: string) => string;
   /** Prefix of the video API; defaults to "/api/videos" (the apps/admin panel). */
   apiBase?: string;
 }
@@ -41,6 +57,7 @@ export class UploadError extends Error {
     message: string,
     readonly code: string,
     readonly retryable = false,
+    readonly status?: number,
   ) {
     super(message);
     this.name = "UploadError";
@@ -50,8 +67,11 @@ export class UploadError extends Error {
 const BATCH = 50;
 const MAX_PART_ATTEMPTS = 4;
 
-export function resumeKey(videoId: string, file: File): string {
-  return `video-upload:${videoId}:${file.name}:${file.size}:${file.lastModified}`;
+export function resumeKey(videoId: string, file: File | Blob, fileName?: string, resumeIdentity?: string): string {
+  const identity = file as File;
+  const name = "name" in file ? file.name : fileName;
+  const base = `video-upload:${videoId}:${name ?? "upload"}:${file.size}:${identity.lastModified ?? 0}`;
+  return resumeIdentity ? `${base}:${resumeIdentity}` : base;
 }
 
 function safeStorage(storage: UploaderOptions["storage"]): Pick<Storage, "getItem" | "setItem" | "removeItem"> | null {
@@ -86,11 +106,24 @@ export const xhrPutPart: PartPutter = (url, body, { signal, onProgress }) =>
     xhr.send(body);
   });
 
-async function api<T>(f: typeof fetch, url: string, init: RequestInit): Promise<T> {
+async function api<T>(f: typeof fetch, url: string, init: RequestInit, schema: z.ZodType<T>): Promise<T> {
   const res = await f(url, init);
-  const payload = (await res.json().catch(() => null)) as { error?: string; code?: string } | null;
-  if (!res.ok) throw new UploadError(payload?.error ?? `Błąd serwera (HTTP ${res.status}).`, payload?.code ?? `HTTP_${res.status}`, res.status >= 500);
-  return payload as T;
+  const payload: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const errorBody = payload && typeof payload === "object" ? payload as Record<string, unknown> : null;
+    throw new UploadError(
+      typeof errorBody?.error === "string" ? errorBody.error : `Błąd serwera (HTTP ${res.status}).`,
+      typeof errorBody?.code === "string" ? errorBody.code : `HTTP_${res.status}`,
+      res.status >= 500,
+      res.status,
+    );
+  }
+  try {
+    return parseApiContract(schema, payload, url);
+  } catch (error) {
+    if (error instanceof ApiContractError) throw new UploadError(error.message, error.code, false);
+    throw error;
+  }
 }
 
 const json = (body: unknown, signal: AbortSignal): RequestInit => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
@@ -101,8 +134,9 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   const putPart = opts.putPart ?? xhrPutPart;
   const store = safeStorage(opts.storage);
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
-  const base = `${opts.apiBase ?? DEFAULT_UPLOAD_API_BASE}/${encodeURIComponent(opts.videoId)}/original-upload/multipart`;
-  const key = resumeKey(opts.videoId, opts.file);
+  const maxAttempts = Math.max(1, opts.attempts ?? MAX_PART_ATTEMPTS);
+  const base = opts.uploadPath?.(opts.videoId) ?? `${opts.apiBase ?? DEFAULT_UPLOAD_API_BASE}/${encodeURIComponent(opts.videoId)}/original-upload/multipart`;
+  const key = resumeKey(opts.videoId, opts.file, opts.fileName, opts.resumeIdentity);
   const { file, signal } = opts;
 
   let originalId: string | null = null;
@@ -113,7 +147,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   const saved = store?.getItem(key) ?? null;
   if (saved) {
     try {
-      const listed = await api<{ parts: Array<{ partNumber: number; etag: string }>; partSize: number; partCount: number }>(f, `${base}?originalId=${encodeURIComponent(saved)}`, { signal });
+      const listed = await api(f, `${base}?originalId=${encodeURIComponent(saved)}`, { signal }, MultipartPartsResponseSchema);
       if (listed.partSize * (listed.partCount - 1) < file.size && listed.partSize * listed.partCount >= file.size) {
         originalId = saved;
         partSize = listed.partSize;
@@ -122,11 +156,14 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
       }
     } catch (error) {
       if (signal.aborted) throw error;
+      if (!(error instanceof UploadError) || !["ORIGINAL_NOT_FOUND", "UPLOAD_NOT_OPEN"].includes(error.code)) throw error;
       store?.removeItem(key); // the old upload is gone (409/404): start over
     }
   }
   if (!originalId) {
-    const started = await api<{ originalId: string; partSize: number; partCount: number }>(f, base, json({ fileName: file.name, fileSize: file.size, contentType: file.type || "application/octet-stream" }, signal));
+    const fileName = opts.fileName ?? ("name" in file ? file.name : "video");
+    const contentType = opts.contentType ?? (("type" in file ? file.type : "") || "application/octet-stream");
+    const started = await api(f, base, json({ fileName, fileSize: file.size, contentType }, signal), MultipartStartResponseSchema);
     originalId = started.originalId;
     partSize = started.partSize;
     partCount = started.partCount;
@@ -163,7 +200,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   const pending = Array.from({ length: partCount }, (_, i) => i + 1).filter((n) => !etags.has(n));
   const urls = new Map<number, string>();
   const presign = async (numbers: number[]) => {
-    const res = await api<{ urls: Array<{ partNumber: number; url: string }> }>(f, `${base}/parts`, json({ originalId: id, partNumbers: numbers }, signal));
+    const res = await api(f, `${base}/parts`, json({ originalId: id, partNumbers: numbers }, signal), MultipartPresignResponseSchema);
     for (const u of res.urls) urls.set(u.partNumber, u.url);
   };
 
@@ -195,7 +232,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
         inFlight.delete(n);
         if (signal.aborted || (error as { name?: string }).name === "AbortError") throw error;
         const retryable = error instanceof UploadError ? error.retryable : true;
-        if (!retryable || attempt >= MAX_PART_ATTEMPTS) throw error;
+        if (!retryable || attempt >= maxAttempts) throw error;
         urls.delete(n); // a fresh URL also covers an expired one
         await sleep(500 * 2 ** (attempt - 1));
       }
@@ -219,17 +256,18 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   if (failure) throw failure;
 
   const parts = [...etags.entries()].sort((a, b) => a[0] - b[0]).map(([partNumber, etag]) => ({ partNumber, etag }));
-  const done = await api<{ originalId: string; job: { id: string } }>(f, `${base}/complete`, json({ originalId: id, parts, publishAfterReady: Boolean(opts.publishAfterReady) }, signal));
+  const done = await api(f, `${base}/complete`, json({ originalId: id, parts, ...(opts.publishAfterReady !== undefined ? { publishAfterReady: opts.publishAfterReady } : {}) }, signal), MultipartCompleteResponseSchema);
   store?.removeItem(key);
   return { originalId: done.originalId, jobId: done.job.id };
 }
 
 /** Cancels the upload for good (server aborts the multipart upload) and forgets the resume point. */
-export async function cancelUpload(videoId: string, file: File, fetchFn: typeof fetch = fetch.bind(globalThis), storage?: UploaderOptions["storage"], apiBase: string = DEFAULT_UPLOAD_API_BASE): Promise<void> {
+export async function cancelUpload(videoId: string, file: File, fetchFn: typeof fetch = fetch.bind(globalThis), storage?: UploaderOptions["storage"], apiBase: string = DEFAULT_UPLOAD_API_BASE, uploadPath?: (videoId: string) => string): Promise<void> {
   const store = safeStorage(storage);
   const key = resumeKey(videoId, file);
   const originalId = store?.getItem(key);
   store?.removeItem(key);
   if (!originalId) return;
-  await fetchFn(`${apiBase}/${encodeURIComponent(videoId)}/original-upload/multipart?originalId=${encodeURIComponent(originalId)}`, { method: "DELETE" }).catch(() => undefined);
+  const base = uploadPath?.(videoId) ?? `${apiBase}/${encodeURIComponent(videoId)}/original-upload/multipart`;
+  await fetchFn(`${base}?originalId=${encodeURIComponent(originalId)}`, { method: "DELETE" }).catch(() => undefined);
 }

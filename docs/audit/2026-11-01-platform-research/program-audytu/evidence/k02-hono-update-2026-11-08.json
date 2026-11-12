@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_HONO_TRANSITIVE_OVERRIDE",
+  "base_commit": "8d898d3f6c7bf97ac83d4425ebcae3cdf6f0fe2b",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "d6c28612f323a516cf2f2231b3dfbf20e05bb5cab0f593d38634678fb6ee2a49",
+    "package-lock.json": "01260c5560d743a8871b0c6d7345cb0739b0c99afc946cfadfb48a6399749110"
+  },
+  "change": {
+    "previous_resolved": "4.12.25",
+    "current_resolved": "4.13.17",
+    "override": "package.json#overrides.hono",
+    "path": "shadcn -> @modelcontextprotocol/sdk -> @hono/node-server -> hono",
+    "scope": "development dependency path in npm ls output"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls hono --all": {
+      "exit": 0,
+      "resolved": "4.13.17"
+    }
+  },
+  "limitations": [
+    "@hono/node-server remains a separate unresolved advisory.",
+    "No new npm audit request or graph upload.",
+    "No application runtime image inspection or full K02 acceptance."
+  ]
+}

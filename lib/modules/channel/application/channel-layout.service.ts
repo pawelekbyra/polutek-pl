@@ -2,12 +2,12 @@ import { prisma } from '@/lib/prisma';
 import { VideoStatus } from '@prisma/client';
 import { toVideoAccessTier, type VideoAccessTier } from '@/lib/access-tier';
 import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
-import { compareSidebarItems } from '@/lib/modules/video';
+import { compareSidebarItems } from '@/lib/modules/video/pure';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
+import { resolvePublicThumbnailSrc } from '@/lib/modules/media/domain/r2-thumbnail';
 // Deep import allowlisted in scripts/check-architecture.ts (pure helper).
 import { effectivePublishedAt, isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
-import { premiumPassViewerFacts } from '@/lib/modules/patron-zone'; // patron zone (docs/architecture/patron-zone.md)
+import { premiumPassViewerFacts } from '@/lib/modules/patron-zone/application/pass-access'; // patron zone (docs/architecture/patron-zone.md)
 
 // Whether someone tipped never reaches public data (owner decision 2026-10-04): no PATRON state.
 export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "ADMIN";

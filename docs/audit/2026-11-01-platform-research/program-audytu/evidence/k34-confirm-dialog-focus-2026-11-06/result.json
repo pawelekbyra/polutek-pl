@@ -1,0 +1,38 @@
+{
+  "package": "K34/R35",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "status": "PARTIAL",
+  "scope": "Keep keyboard focus and accessible context inside Studio confirmation dialogs while actions are pending, including retry and opener removal.",
+  "implementation": [
+    "ConfirmDialog now uses the existing Base UI modal primitive for portal rendering, focus trapping, background accessibility isolation, and normal focus restoration.",
+    "While busy, the dialog panel receives focus, exposes aria-busy and a Polish/English live status, and keeps confirm/cancel disabled.",
+    "Escape and outside dismissal are ignored while busy; when the operation fails and busy clears, retry/cancel are available again.",
+    "If the opener has been removed, focus returns to the main page region. Existing mobile bottom-sheet and desktop-centered visual placement are preserved."
+  ],
+  "checks": [
+    {
+      "name": "real-chromium-component-experiment",
+      "command": "node docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs",
+      "exitCode": 0,
+      "browser": "Chromium 149.0.7827.55 (Playwright-managed)",
+      "observations": 16,
+      "pageErrors": 0,
+      "externalRequests": 0,
+      "k34Cases": [
+        "initial focus chooses safe Cancel; normal Tab and Shift+Tab wrap between controls",
+        "during busy, focus remains in alertdialog with no enabled buttons; background is aria-hidden and absent from the accessible role tree",
+        "aria-busy and translated live status are exposed while pending",
+        "Escape and Enter do not close or activate background/confirm while busy",
+        "after synthetic failure, retry becomes enabled; Escape closes and restores the opener",
+        "if the opener is removed, focus returns to the page main region"
+      ]
+    }
+  ],
+  "sourceEvidence": "The browser bundle and original app/global styles are compiled from the current working tree; exact source hashes and observation details are recorded in ../ux-browser-experiment.json.",
+  "limits": [
+    "This is an isolated React component harness with synthetic callbacks, not the full Next Studio or a real playlist DELETE request.",
+    "Chromium desktop only; no Safari, Firefox, screen reader, mobile hardware, or independent review. K34 remains partial."
+  ],
+  "handoff": "Claude: verify the dialog in the full non-production Studio during a genuinely pending playlist delete, then test failure/retry, success, Escape policy, and removed opener with the supported browsers and at least one screen reader. Confirm the page background remains unavailable to keyboard and accessibility-tree navigation."
+}

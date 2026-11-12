@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from "next/server";
 import { getCorrelationId } from "@/lib/utils/correlation";
@@ -24,7 +25,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as { language?: unknown } | null;
+  const body = (await readRequestJsonOrNullWithLimit(req)) as { language?: unknown } | null;
   const language = body?.language;
   if (!isLocale(language)) {
     return NextResponse.json({ error: "Invalid language" }, { status: 400 });

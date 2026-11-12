@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-07",
+  "package": "K13/R04",
+  "tested_base_revision": "cc6cfa9df8cd4e8acd7c7c014eab1e945839120e",
+  "change": "fail closed on truncated storage listings without a new cursor or with a repeated cursor",
+  "checks": {
+    "focused_suites": [
+      "tests/unit/video-pipeline/r2-storage-delete.test.ts",
+      "tests/unit/video-pipeline/output-cleanup.test.ts",
+      "tests/unit/video-pipeline/r2-storage-delete-http.test.ts"
+    ],
+    "files_passed": 3,
+    "tests_passed": 22,
+    "failed": 0,
+    "eslint": "PASS",
+    "repo_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "assertions": [
+    "an HTTP 200 truncated listing with no continuation token rejects before any DeleteObjects request; the real AWS SDK returns UnknownError for the malformed response",
+    "a repeated continuation token rejects instead of looping or reporting successful completion",
+    "deletePrefix validates the next cursor before deleting keys from that response page",
+    "countPrefix and verifyOutput use the same cursor validation"
+  ],
+  "isolation": {
+    "aws_sdk": "real @aws-sdk/client-s3 against local 127.0.0.1 HTTP fixture",
+    "credentials": "synthetic loopback-only values",
+    "cloudflare_r2_or_other_external_storage": "not contacted",
+    "production_or_server": "not accessed"
+  },
+  "source_sha256": {
+    "lib/modules/video-pipeline/infrastructure/r2-storage.ts": "924e49e4e7bafd2a011b0b40f0be2c98c2f472bd5af4cdd4d231082578db342a",
+    "tests/unit/video-pipeline/r2-storage-delete-http.test.ts": "3310d721597a26eb1918af1653743e408572daa6e00bbdf61e1480036c914a00"
+  },
+  "limitations": [
+    "local protocol fixture is not a Cloudflare R2 or independent S3-provider acceptance",
+    "K13 remains partial pending non-production bucket validation and independent review"
+  ]
+}

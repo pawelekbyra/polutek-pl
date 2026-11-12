@@ -1,0 +1,53 @@
+{
+  "package": "K23",
+  "finding": "R05",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "base_revision": "d480a4bc",
+  "test_file": "tests/postgres/published-video-notification-restart.pg.test.ts",
+  "recovery_helper": "tests/helpers/k23-recover-notification-job.ts",
+  "database": {
+    "engine": "PostgreSQL 17 (postgres:17-alpine)",
+    "migrations_applied": 84,
+    "disposable_container": true,
+    "container_removed": true,
+    "synthetic_users_after_cleanup": 0,
+    "synthetic_fanout_jobs_after_cleanup": 0
+  },
+  "scenario": [
+    "The real publishAdminVideo use case publishes a ready synthetic SELF_HLS video through PostgreSQL.",
+    "The real enqueuePublishedVideoAnnouncement writes the durable NEW_VIDEO_FANOUT job in the publication transaction.",
+    "The post-commit announcePublishedVideo kick is verified as called, but replaced with a no-op to model losing the request process before it can start work.",
+    "A separate Node/tsx process starts the actual runNewVideoFanOutJobs worker and completes the persisted job.",
+    "An actual subscription receives exactly one NEW_VIDEO notification.",
+    "A repeated enqueue reopens the completed job; a second runner pass leaves the subscriber with exactly one notification."
+  ],
+  "checks": {
+    "vitest": {
+      "command": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/published-video-notification-restart.pg.test.ts",
+      "files_passed": 1,
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "duration_seconds": 7.05,
+      "exit_code": 0
+    },
+    "repository_typecheck": {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exit_code": 0
+    },
+    "eslint": {
+      "command": "npx eslint tests/postgres/published-video-notification-restart.pg.test.ts tests/helpers/k23-recover-notification-job.ts",
+      "exit_code": 0
+    },
+    "diff_check": {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  },
+  "scope_limits": [
+    "The request-side publish use case runs in the Vitest process and its post-commit kick is replaced with a no-op; the HTTP server process is not killed after COMMIT.",
+    "The recovery worker is a fresh OS process; the actual scheduled cron HTTP endpoint was not called after restart.",
+    "HLS asset and active route are synthetic; no external R2/S3 provider or independent review was involved.",
+    "K23-T1/T2 and R05 remain partial until the HTTP crash/cron acceptance and remaining provider/review boundaries are verified."
+  ]
+}

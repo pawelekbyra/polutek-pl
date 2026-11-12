@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-11",
+  "repository_head_sha": "d04f15ccbfd855cf47b6d9fbe63d8726155d5cae",
+  "status": "passed",
+  "finding": "K38 local load-test contract retest",
+  "source_sha256": {
+    "scripts/loadtest/response-probe.py": "33ee1f82bcb3061990d8102ebb2bdf82c09dfad622f422064da91f283c62444b",
+    "tests/unit/scripts/loadtest-contract.test.ts": "7ec20f3a6ded79621bea0c0e1ea3ef7d47b9587056eb4465d5f8156efb1c9bc3",
+    "scripts/loadtest/run-steps.sh": "ed70083b57023840f76214d0597424f60502cc742264d7ea1b316f6e71fb1521",
+    "scripts/loadtest/count-queries.sh": "1eff53bd205ed7810a97ab25fac89009ff8975383214d7e03b51e94e4372bf12",
+    "scripts/loadtest/k6-guest.js": "7f81f509af604574cc1fe2b0304f924493ad0f559ec840e98738c4847f537b7d",
+    "scripts/loadtest/response-contract.mjs": "9a92a9752747f764683a3fced4ef60615213e89b8065e7765929c3606266f067",
+    "scripts/loadtest/summarize.py": "f16c04f5faae6d36f965003f3360b1447a07d79412222968f4293db0b534965a",
+    "scripts/loadtest/profile-metadata.py": "86e2335ad18934c9e17fe90928a17c16fe06e86de1baee43188590c5ec9fb6dc",
+    "scripts/loadtest/cleanup.sh": "3a5692922dc7311d55e908779f423ddd6236708ba2f8c95ecd597e79cd10db1d"
+  },
+  "commands": [
+    "npx vitest run tests/unit/scripts/loadtest-contract.test.ts",
+    "python3 -m py_compile scripts/loadtest/response-probe.py",
+    "npx eslint tests/unit/scripts/loadtest-contract.test.ts"
+  ],
+  "results": {
+    "targeted_test_file": "1 passed",
+    "tests": "36 passed, 0 failed",
+    "python_compile": "passed",
+    "targeted_eslint": "passed"
+  },
+  "limitations": [
+    "All tests use local/synthetic fixtures; no application endpoint or database was started.",
+    "No k6 load, server runner, production target, real session cleanup, or external service was used.",
+    "This is contract evidence, not a capacity measurement or complete K38 acceptance."
+  ]
+}

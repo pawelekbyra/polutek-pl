@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_IP_ADDRESS_TRANSITIVE_OVERRIDE",
+  "base_commit": "db3d37662372fcf8b55836468cd7fa3f903676f9",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "c4d28aeddadecdf5bf953d303f6f832850d5ecb0af0d1fcdaa83986758b69ae6",
+    "package-lock.json": "3962de42f0ca3a7707fa7d06ff77f18a594378220181cd24f906ab18c17eb403"
+  },
+  "change": {
+    "previous_resolved": "10.7.2",
+    "current_resolved": "10.7.6",
+    "override": "package.json#overrides.ip-address",
+    "path": "shadcn -> @modelcontextprotocol/sdk -> express-rate-limit -> ip-address",
+    "scope": "development dependency path in npm ls output"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls ip-address --all": {
+      "exit": 0,
+      "resolved": "10.7.6"
+    }
+  },
+  "limitations": [
+    "No new npm audit request or package graph upload.",
+    "No application image inspection.",
+    "No application source change or full K02 acceptance."
+  ]
+}

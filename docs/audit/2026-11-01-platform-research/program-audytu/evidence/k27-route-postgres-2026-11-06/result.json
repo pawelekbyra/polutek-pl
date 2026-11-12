@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-06",
+  "package": "K27/R16 partial: export route against disposable PostgreSQL",
+  "base_commit": "e8c165f0",
+  "source_sha256": {
+    "tests/postgres/user-export-route.pg.test.ts": "5ba763e950f147fb76827d5599831ed343213214c8a630cd17b683ad4e804cf7"
+  },
+  "database": {
+    "engine": "PostgreSQL 17 Alpine",
+    "disposable_container": "codex-k27-export-pg-20261106-r3",
+    "bind": "127.0.0.1:55442 only",
+    "migrations_applied": 84,
+    "cleanup": "Synthetic records were deleted by test teardown; disposable container was stopped and removed. No existing Polutek container or database was used."
+  },
+  "checks": [
+    {
+      "command": "DATABASE_URL=<disposable-local-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx prisma migrate deploy",
+      "result": "PASS",
+      "migrations": 84
+    },
+    {
+      "command": "DATABASE_URL=<disposable-local-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/user-export-route.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 2
+    },
+    {
+      "command": "npx eslint tests/postgres/user-export-route.pg.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run quality:architecture-boundaries",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "route_observations": [
+    "Real GET route handler returned 200 JSON download with Cache-Control no-store and Content-Disposition.",
+    "Exported rows came from the synthetic actor's own account; foreign user's comment, creator, views, sessions, and events were absent.",
+    "Playback IP/UA hashes and event metadata/error text were absent; owned avatar/banner, channel membership, patron grant, and notification categories were returned.",
+    "An invalid account pass setting became null; a repeat export returned 200 with the same own comment rows.",
+    "Guest actor was rejected with 401 before the rate limiter ran."
+  ],
+  "controlled_boundaries": [
+    "The actual Next route handler and PostgreSQL-backed Prisma queries were used, but auth identity and rate limiter were mocked.",
+    "The test invoked the handler directly; it did not start a Next HTTP server or validate a real session cookie.",
+    "No R2, email provider, payment provider, production data, or remote server was used."
+  ],
+  "limitations": [
+    "K27-T1/T2 remain partial until full Next HTTP with a real signed/revoked session, broader seeded categories, and independent review.",
+    "K37 export size/streaming is still open; account policy dependencies K05/K11/K26 remain."
+  ]
+}

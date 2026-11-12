@@ -234,8 +234,13 @@ describe('remote plumbing', () => {
     const b64 = encodeParams({ op: 'comment.inspect', commentId: COMMENT_ID, reason: "x'; rm -rf / #" });
     expect(b64).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(decodeParams(b64).reason).toBe("x'; rm -rf / #");
-    expect(buildAppRunCommand(b64)).toContain('docker compose run --rm --no-deps -T --entrypoint sh app');
-    expect(buildAppRunCommand(b64)).not.toContain('rm -rf');
+    const command = buildAppRunCommand(b64);
+    expect(command).toContain('RELEASE_REVISION="$rev" RELEASE_PROOF_SHA256="$proof" ./verify-active-release.sh app');
+    expect(command).toContain('img="polutek-worker:$rev"');
+    expect(command).toContain('docker compose run --rm --no-deps -T --entrypoint sh app');
+    expect(command.indexOf('verify-active-release.sh app')).toBeLessThan(command.indexOf('docker compose run'));
+    expect(command).not.toContain('.current-worker-image');
+    expect(command).not.toContain('rm -rf');
     expect(() => buildAppRunCommand("abc' ; reboot")).toThrow();
     expect(() => buildSupportRunCommand('a b')).toThrow();
   });
@@ -471,8 +476,7 @@ describe('role change', () => {
     const r = await setRoleAction(parseRoleArgs([`--user=${OTHER.id}`, '--role=USER', '--reason=decyzja właściciela']), { runApp, record: vi.fn() });
     expect(calls.map((c) => c.op)).toEqual(['user.inspect']);
     expect(r.ok).toBe(true);
-    expect(r.preview?.admini_po_zmianie).toHaveLength(1);
-    expect(r.preview?.admini_po_zmianie[0]).toContain(OWNER.id);
+    expect(r.preview).toEqual(expect.objectContaining({ admini_po_zmianie: [expect.stringContaining(OWNER.id)] }));
     expect(JSON.stringify(r.preview)).not.toContain('owner@example.com');
     expect(r.next).toContain('--role=USER');
   });

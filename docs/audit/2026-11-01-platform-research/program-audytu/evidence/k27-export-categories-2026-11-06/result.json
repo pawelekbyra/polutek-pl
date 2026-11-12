@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-06",
+  "package": "K27/R16 partial: export missing own account categories",
+  "base_commit": "b4242f50",
+  "source_sha256": {
+    "lib/modules/users/application/export-own-data.use-case.ts": "7667ad2b46303255c44fa44d43aeab79f6b21929d455aa88b6588e8d949a5480",
+    "tests/unit/modules/users/export-own-data.test.ts": "7d4476648e3899150196017eb379788cfdfd3a7a00168716c6215f758e485b3b"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/modules/users/export-own-data.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 3
+    },
+    {
+      "command": "npx eslint lib/modules/users/application/export-own-data.use-case.ts tests/unit/modules/users/export-own-data.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "added_categories": [
+    "account-owned Creator profiles (selected non-moderation fields)",
+    "the user's own ChannelMember roles and timestamps",
+    "NotificationPreference fields, with absent row represented as null",
+    "PatronGrant source and lifecycle timestamps, without internal or provider identifiers"
+  ],
+  "scope": "Synthetic Prisma use-case tests only. No HTTP server, real database, production data, or provider was used.",
+  "limitations": [
+    "Binary avatar/banner payloads and other audit-matrix categories remain out of this step.",
+    "Marketplace orders/entitlements are not added because the product profile is conditional and K05/K11/K26 remain open.",
+    "K27 requires full HTTP/DB coverage and independent review before closure."
+  ]
+}

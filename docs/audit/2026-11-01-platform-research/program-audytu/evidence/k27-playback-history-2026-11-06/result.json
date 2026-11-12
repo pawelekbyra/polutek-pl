@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-06",
+  "package": "K27/R16 partial: export own view and playback history",
+  "base_commit": "351120c7",
+  "source_sha256": {
+    "lib/modules/users/application/export-own-data.use-case.ts": "ae5389df9494a630309af6f56b0b65055d55aad4b52641c23f9c906a83cbcec6",
+    "tests/unit/modules/users/export-own-data.test.ts": "be79592225e61f5b2a31e5f96194a87b3c79bb8b86672abd43c6c880b030eccb"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/modules/users/export-own-data.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 6
+    },
+    {
+      "command": "npm run quality:architecture-boundaries",
+      "result": "PASS"
+    },
+    {
+      "command": "npx eslint lib/modules/users/application/export-own-data.use-case.ts tests/unit/modules/users/export-own-data.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "included_categories": [
+    "VideoView rows filtered to exporting userId, selecting videoId and createdAt only",
+    "VideoPlaybackSession rows filtered to userId, selecting explicitly typed playback, progress, source/access, and error-code fields",
+    "VideoPlaybackEvent rows filtered to userId, selecting explicitly typed playback interaction and timing fields"
+  ],
+  "excluded_fields": ["ipHash", "userAgentHash", "sessionId", "database IDs", "arbitrary metadata", "free-text error messages"],
+  "contract_version": 3,
+  "scope": "Synthetic Prisma use-case test only. No HTTP server, real database, or production data was used.",
+  "limitations": [
+    "K37 aggregate export size and streaming are still open.",
+    "No full HTTP/DB export flow or independent review; K27 remains partial."
+  ]
+}

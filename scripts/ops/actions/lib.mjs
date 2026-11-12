@@ -570,7 +570,11 @@ export function buildAppRunCommand(paramsB64) {
   const inner = 'mkdir -p /tmp/ops && cat > /tmp/ops/runner.ts && cd /app && exec node_modules/.bin/tsx /tmp/ops/runner.ts "$1"';
   return [
     `cd ${APP_DIR}`,
-    'img="$(cat .current-worker-image 2>/dev/null || docker inspect -f "{{.Config.Image}}" polutek-encoder-1)"',
+    'rev="$(cat .current-release-revision 2>/dev/null || true)"',
+    'proof="$(cat ".release-state/$rev/proof.sha256" 2>/dev/null || true)"',
+    'RELEASE_REVISION="$rev" RELEASE_PROOF_SHA256="$proof" ./verify-active-release.sh app >/dev/null',
+    'img="polutek-worker:$rev"',
+    'docker image inspect "$img" >/dev/null',
     `APP_IMAGE="$img" docker compose run --rm --no-deps -T --entrypoint sh app -c '${inner}' sh ${paramsB64}`,
   ].join(' && ');
 }

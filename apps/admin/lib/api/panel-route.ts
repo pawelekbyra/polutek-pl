@@ -8,6 +8,14 @@ import type { UseCaseResult } from "@/lib/modules/shared/result";
 import { errorMessage } from "@admin/lib/actions/panel";
 import { adminFromRequest } from "@admin/lib/auth/api-guard";
 import { isDevFixturesEnabled } from "@admin/lib/config";
+import {
+  DEFAULT_JSON_BODY_MAX_BYTES,
+  MalformedFormDataBodyError,
+  readRequestFormDataWithLimit,
+  readRequestJsonWithLimit,
+  RequestBodyTooLargeError,
+  TooManyFormEntriesError,
+} from "@/lib/utils/request-body";
 
 const NO_STORE = { "cache-control": "private, no-store" };
 
@@ -42,8 +50,18 @@ export function resultResponse<T>(result: UseCaseResult<T, unknown>): Response {
 }
 
 /** Reads and validates a JSON body; a malformed body is 400, never treated as empty. */
-export async function readJson<T>(request: Request, schema: { safeParse: (v: unknown) => { success: true; data: T } | { success: false } }): Promise<{ ok: true; data: T } | { ok: false; response: Response }> {
-  const raw = await request.json().catch(() => undefined);
+export async function readJson<T>(
+  request: Request,
+  schema: { safeParse: (v: unknown) => { success: true; data: T } | { success: false } },
+  maxBytes = DEFAULT_JSON_BODY_MAX_BYTES,
+): Promise<{ ok: true; data: T } | { ok: false; response: Response }> {
+  let raw: unknown;
+  try {
+    raw = await readRequestJsonWithLimit(request, maxBytes);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) return { ok: false, response: jsonError(413, "Żądanie jest za duże.", "PAYLOAD_TOO_LARGE") };
+    raw = undefined;
+  }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) return { ok: false, response: jsonError(400, "Niepoprawne żądanie.", "BAD_REQUEST") };
   return { ok: true, data: parsed.data };
@@ -51,10 +69,18 @@ export async function readJson<T>(request: Request, schema: { safeParse: (v: unk
 
 /** Reads the raw bytes of a single uploaded file from multipart/form-data, capped at `maxBytes`. */
 export async function readUploadedFile(request: Request, field: string, maxBytes: number): Promise<{ ok: true; bytes: Uint8Array; name: string } | { ok: false; response: Response }> {
-  const declared = Number(request.headers.get("content-length") ?? "0");
-  if (declared > maxBytes + 64 * 1024) return { ok: false, response: jsonError(413, `Plik jest za duży (limit ${Math.round(maxBytes / 1024 / 1024)} MB).`, "FILE_TOO_LARGE") };
-  const form = await request.formData().catch(() => null);
-  const file = form?.get(field);
+  const totalBytes = maxBytes + 64 * 1024;
+  let form: FormData;
+  try {
+    form = await readRequestFormDataWithLimit(request, totalBytes, 8);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) return { ok: false, response: jsonError(413, `Plik lub formularz jest za duży (limit ${Math.round(maxBytes / 1024 / 1024)} MB plus narzut).`, "FILE_TOO_LARGE") };
+    if (error instanceof TooManyFormEntriesError) return { ok: false, response: jsonError(413, "Formularz zawiera za dużo części.", "TOO_MANY_PARTS") };
+    if (error instanceof MalformedFormDataBodyError) return { ok: false, response: jsonError(400, "Niepoprawny formularz.", "BAD_REQUEST") };
+    return { ok: false, response: jsonError(400, "Niepoprawny formularz.", "BAD_REQUEST") };
+  }
+  const files = form.getAll(field);
+  const file = files.length === 1 ? files[0] : null;
   if (!file || typeof file === "string") return { ok: false, response: jsonError(400, "Nie wybrano pliku.", "FILE_MISSING") };
   if (file.size > maxBytes) return { ok: false, response: jsonError(413, `Plik jest za duży (limit ${Math.round(maxBytes / 1024 / 1024)} MB).`, "FILE_TOO_LARGE") };
   return { ok: true, bytes: new Uint8Array(await file.arrayBuffer()), name: file.name };

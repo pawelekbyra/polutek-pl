@@ -74,6 +74,12 @@ describe("POST /api/videos/[id]/progress", () => {
     expect(mocks.saveVideoProgress).not.toHaveBeenCalled();
   });
 
+  it("rejects a body over 128 KiB before calling the write use case", async () => {
+    const response = await post(JSON.stringify({ positionSeconds: 30, padding: "x".repeat(128 * 1024) }));
+    expect(response.status).toBe(413);
+    expect(mocks.saveVideoProgress).not.toHaveBeenCalled();
+  });
+
   it("is rate limited per viewer", async () => {
     mocks.rateLimit.mockResolvedValue({ success: false });
     const response = await post({ positionSeconds: 30 });

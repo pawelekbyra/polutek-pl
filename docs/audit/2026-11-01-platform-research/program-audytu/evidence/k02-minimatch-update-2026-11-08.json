@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_MINIMATCH_TRANSITIVE_OVERRIDE",
+  "base_commit": "fd95130933b24157c12c5181d2a3124055411624",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "f5c102f3c78e62bb13b4ffcd3b68cac57705285558be112e7d603d21d32c6108",
+    "package-lock.json": "e7d2132c1c86c32d40f48e1ac7596407f7714d1a09a7b99b41413327515c8d70"
+  },
+  "change": {
+    "old_10x_resolved": "10.2.5",
+    "new_10x_resolved": "11.0.5",
+    "untouched_3x_resolved": "3.1.5",
+    "override": "package.json#overrides.minimatch@10.2.5",
+    "paths": [
+      "eslint-config-next -> typescript-eslint -> @typescript-eslint/typescript-estree -> minimatch",
+      "shadcn -> ts-morph -> @ts-morph/common -> minimatch"
+    ],
+    "eslint_plugin_react_hooks_before_and_after_lock": "7.1.1"
+  },
+  "validation": {
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls minimatch --all": {
+      "exit": 0,
+      "versions": [
+        "11.0.5",
+        "3.1.5"
+      ]
+    },
+    "npx shadcn --version": {
+      "exit": 0,
+      "version": "4.13.0"
+    },
+    "npm run typecheck": {
+      "exit": 0
+    },
+    "npm run lint": {
+      "exit": 1,
+      "errors": 4,
+      "warnings": 101,
+      "error_rule": "react-hooks/refs",
+      "file": "app/components/notifications/useNotificationFeed.ts",
+      "lines": [
+        46,
+        47,
+        48,
+        111
+      ],
+      "changed_by_this_package": false
+    }
+  },
+  "limitations": [
+    "Full lint gate remains red on unrelated source.",
+    "No app builds or runtime image inspection; full K02 acceptance remains open.",
+    "No new npm audit graph upload."
+  ]
+}

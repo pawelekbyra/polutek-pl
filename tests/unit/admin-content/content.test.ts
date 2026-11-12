@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const m = vi.hoisted(() => ({
   video: { deleteAdminVideo: vi.fn(), getAdminVideoDetails: vi.fn(), getAdminVideoList: vi.fn(), reorderAdminVideos: vi.fn(), updateAdminVideo: vi.fn() },
   pipeline: {
+    VIDEO_ASSET_CLEANUP_KIND: "VIDEO_ASSET_CLEANUP",
+    createVideoAssetCleanupHandler: vi.fn(() => vi.fn(async () => "done")),
     getPipelineState: vi.fn(),
     purgeVideoStorageStrict: vi.fn(async () => ({ hlsObjects: 0, originals: 0 })),
     snapshotVideoStorageInTx: vi.fn(async () => ({ assetKeys: ["videos/v1/v/v1"], originals: [] })),
@@ -10,7 +12,7 @@ const m = vi.hoisted(() => ({
   audit: { recordAuditEventSafe: vi.fn(async () => undefined) },
   deletePublic: vi.fn(async () => undefined),
 }));
-vi.mock("@/lib/prisma", () => ({ prisma: {} }));
+vi.mock("@/lib/prisma", () => ({ prisma: { $queryRaw: vi.fn(async () => []) } }));
 vi.mock("@/lib/modules/video", () => m.video);
 vi.mock("@/lib/modules/video-pipeline", () => m.pipeline);
 vi.mock("@/lib/modules/audit", () => m.audit);

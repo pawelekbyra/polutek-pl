@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { resyncAdminVideoStats } from '@/lib/modules/video/application/resync-admin-video-stats.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { VideoNotFoundError, VideoNotOnMainChannelError } from '@/lib/modules/video/domain/video.errors';
-import { MainChannelService } from '@/lib/modules/channel';
+import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
 import { recordAuditEvent } from '@/lib/modules/audit';
 
-vi.mock('@/lib/modules/channel', () => ({
+vi.mock('@/lib/modules/channel/application/main-channel.service', () => ({
   MainChannelService: {
     getRequired: vi.fn(),
   },

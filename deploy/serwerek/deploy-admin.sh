@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy ONLY the admin panel (apps/admin) on serwerek: build image -> start container (profile "admin") ->
+# Deploy ONLY the admin panel (apps/admin) on serwerek from a verified release proof -> start container (profile "admin") ->
 # wait for health -> roll back to the previous panel image on failure. The public app is never touched.
 # Runs ON THE SERVER in /opt/serwerek/apps/polutek next to docker-compose.yml. Runbook: docs/operations/ADMIN-PANEL.md.
 #
@@ -14,7 +14,7 @@
 # Lock: .deploy.lock (flock), shared with deploy.sh; a second deploy exits 75 at once (DEPLOY_LOCK_HELD=1: lock inherited on fd 9).
 # State: .current-admin-image / .previous-admin-image.
 set -euo pipefail
-cd "$(dirname "$(readlink -f "$0")")"
+cd "${DEPLOY_APP_DIR:-$(dirname "$(readlink -f "$0")")}"
 
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-120}"
 KEEP_IMAGES="${KEEP_IMAGES:-3}"
@@ -38,9 +38,13 @@ if [[ "$mode" == "--stop" ]]; then
   exit 0
 fi
 
+revision="${RELEASE_REVISION:-}"
+proof_hash="${RELEASE_PROOF_SHA256:-}"
+[[ "$revision" =~ ^[a-f0-9]{40}$ && "$proof_hash" =~ ^[a-f0-9]{64}$ ]] || die "RELEASE_REVISION and externally approved RELEASE_PROOF_SHA256 are required"
+
 [[ -f admin.env ]] || die "missing admin.env (see docs/operations/ADMIN-PANEL.md)"
 [[ "$(stat -c %a admin.env)" == "600" ]] || die "admin.env must be chmod 600"
-mkdir -p /var/lib/serwerek/host-status
+mkdir -p "${ADMIN_HOST_STATUS_DIR:-/var/lib/serwerek/host-status}"
 
 new_image="polutek-admin:$tag"
 prev_image="$(cat .current-admin-image 2>/dev/null || true)"
@@ -60,21 +64,29 @@ wait_healthy() {
 start_admin() { ADMIN_IMAGE="$1" compose up -d --no-deps admin; }
 
 if [[ "$mode" == "--rollback" ]]; then
-  prev="$(cat .previous-admin-image 2>/dev/null || true)"; [[ -n "$prev" ]] || die "no previous panel image recorded"
+  prev_revision="$(cat .previous-admin-release-revision 2>/dev/null || true)"
+  [[ "$prev_revision" == "$revision" ]] || die "rollback revision must match .previous-admin-release-revision"
+  state_dir=".release-state/$prev_revision"
+  [[ -r "$state_dir/proof.sha256" ]] || die "verified panel proof for rollback release is missing"
+  [[ "$(cat "$state_dir/proof.sha256")" == "$proof_hash" ]] || die "rollback proof hash must match the externally approved hash"
+  verify_output="$(node "$state_dir/source/scripts/ops/deploy-release.mjs" \
+    "--release-dir=$state_dir" "--revision=$prev_revision" "--proof-sha256=$proof_hash" --scope=admin "--tag=$tag")" || die "rollback panel proof verification failed"
+  prev="polutek-admin:$tag"
   log "rollback to $prev"
   { start_admin "$prev" && wait_healthy "$prev"; } || die "previous panel image is not healthy either"
   printf '%s' "$prev" > .current-admin-image
+  cp .current-admin-release-revision .rolled-back-admin-release-revision 2>/dev/null || true
+  printf '%s' "$prev_revision" > .current-admin-release-revision
+  printf '%s' "$revision" > .previous-admin-release-revision
   exit 0
 fi
 
-if docker image inspect "$new_image" >/dev/null 2>&1; then
-  log "image $new_image already built"
-else
-  [[ -d src ]] || die "missing ./src (git archive of the commit to deploy)"
-  log "building $new_image"
-  # nice: a second Next.js build on a 2-vCPU server must not starve the running site.
-  nice -n 10 docker build -f src/deploy/serwerek/Dockerfile.admin --target admin -t "$new_image" src
-fi
+release_dir=".release-artifacts/$revision"
+[[ -d "$release_dir/source" ]] || die "missing verified release bundle at $release_dir (source/, proof.json, inputs.json)"
+log "verifying panel release $revision before activation"
+verify_output="$(node "$release_dir/source/scripts/ops/deploy-release.mjs" \
+  "--release-dir=$release_dir" "--revision=$revision" "--proof-sha256=$proof_hash" --scope=admin "--tag=$tag")" || die "panel release proof verification failed"
+prev_revision="$(cat .current-admin-release-revision 2>/dev/null || true)"
 
 log "starting panel on $new_image"
 # A failing "compose up" itself must reach the rollback below, so it is part of the condition.
@@ -82,6 +94,10 @@ if start_admin "$new_image" && wait_healthy "$new_image"; then
   if [[ "$prev_image" != "$new_image" ]]; then
     [[ -n "$prev_image" ]] && printf '%s' "$prev_image" > .previous-admin-image
     printf '%s' "$new_image" > .current-admin-image
+  fi
+  if [[ "$prev_revision" != "$revision" ]]; then
+    [[ -n "$prev_revision" ]] && printf '%s' "$prev_revision" > .previous-admin-release-revision
+    printf '%s' "$revision" > .current-admin-release-revision
   fi
   docker images polutek-admin --format '{{.Tag}}' | grep -v '^current$' | tail -n +$((KEEP_IMAGES + 1)) | while read -r t; do
     [[ "polutek-admin:$t" == "$new_image" || "polutek-admin:$t" == "$prev_image" ]] && continue
@@ -95,6 +111,14 @@ fi
 log "panel failed to start or did not become healthy in ${HEALTH_TIMEOUT}s; last logs:"
 compose logs --tail 40 admin >&2 || true
 if [[ -n "$prev_image" ]] && docker image inspect "$prev_image" >/dev/null 2>&1; then
+  rollback_revision="$(cat .current-admin-release-revision 2>/dev/null || true)"
+  rollback_state=".release-state/$rollback_revision"
+  [[ "$rollback_revision" =~ ^[a-f0-9]{40}$ && -r "$rollback_state/proof.sha256" ]] || die "panel deploy FAILED; previous image has no retained release proof, automatic rollback refused"
+  rollback_hash="$(cat "$rollback_state/proof.sha256")"
+  rollback_tag="${prev_image#*:}"
+  node "$rollback_state/source/scripts/ops/deploy-release.mjs" \
+    "--release-dir=$rollback_state" "--revision=$rollback_revision" "--proof-sha256=$rollback_hash" --scope=admin "--tag=$rollback_tag" \
+    || die "panel deploy FAILED; previous release proof verification failed, automatic rollback refused"
   log "rolling back to $prev_image"
   if start_admin "$prev_image" && wait_healthy "$prev_image"; then die "panel deploy of $tag FAILED, rolled back to $prev_image"; fi
   die "panel deploy FAILED and rollback is NOT healthy"

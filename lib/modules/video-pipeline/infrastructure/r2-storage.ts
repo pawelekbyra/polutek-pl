@@ -11,6 +11,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { DEFAULT_HLS_BUCKET } from "../domain/keys";
+import { verifyHlsOutput, type HlsOutputVerification } from "../domain/verify-hls-output";
 
 export interface R2Credentials {
   accountId: string;
@@ -27,12 +28,39 @@ export function readR2Credentials(env: NodeJS.ProcessEnv = process.env): R2Crede
   return { accountId, accessKeyId, secretAccessKey };
 }
 
-export function makeR2Client(credentials: R2Credentials): S3Client {
+export function makeR2Client(credentials: R2Credentials, options: { testEndpoint?: string } = {}): S3Client {
+  let endpoint = `https://${credentials.accountId}.r2.cloudflarestorage.com`;
+  let forcePathStyle = false;
+  let maxAttempts = 5;
+  if (options.testEndpoint !== undefined) {
+    let parsed: URL;
+    try {
+      parsed = new URL(options.testEndpoint);
+    } catch {
+      throw new Error("The video worker test endpoint must be a loopback HTTP URL");
+    }
+    const testRuntime = process.env.NODE_ENV === "test"
+      || (process.env.NODE_ENV === "development" && process.env.VIDEO_WORKER_TEST_RUNTIME === "true");
+    if (!testRuntime
+      || parsed.protocol !== "http:"
+      || !["127.0.0.1", "[::1]", "localhost"].includes(parsed.hostname)
+      || parsed.username !== ""
+      || parsed.password !== ""
+      || parsed.pathname !== "/"
+      || parsed.search !== ""
+      || parsed.hash !== "") {
+      throw new Error("The video worker test endpoint must be a loopback HTTP URL in a test runtime");
+    }
+    endpoint = parsed.origin;
+    forcePathStyle = true;
+    maxAttempts = 1;
+  }
   return new S3Client({
     region: "auto",
-    endpoint: `https://${credentials.accountId}.r2.cloudflarestorage.com`,
+    endpoint,
+    forcePathStyle,
     credentials: { accessKeyId: credentials.accessKeyId, secretAccessKey: credentials.secretAccessKey },
-    maxAttempts: 5,
+    maxAttempts,
   });
 }
 
@@ -43,6 +71,80 @@ export function hlsBucketName(env: NodeJS.ProcessEnv = process.env): string {
 function isNotFound(err: unknown): boolean {
   const e = err as { name?: string; $metadata?: { httpStatusCode?: number } };
   return e?.name === "NoSuchKey" || e?.name === "NotFound" || e?.$metadata?.httpStatusCode === 404;
+}
+
+function nextPageToken(isTruncated: boolean | undefined, nextToken: string | undefined, currentToken: string | undefined): string | undefined {
+  if (!isTruncated) return undefined;
+  if (!nextToken || nextToken === currentToken) {
+    throw new Error("R2 returned a truncated object list without a new continuation token");
+  }
+  return nextToken;
+}
+
+const DELETE_OBJECT_MAX_ATTEMPTS = 3;
+const TRANSIENT_DELETE_CODES = new Set([
+  "InternalError",
+  "OperationAborted",
+  "RequestTimeout",
+  "ServiceUnavailable",
+  "SlowDown",
+  "Throttling",
+  "ThrottlingException",
+]);
+
+export class R2DeleteObjectsError extends Error {
+  constructor(readonly failedCount: number, readonly errorCodes: string[], readonly removedCount: number) {
+    super(`R2 DeleteObjects failed for ${failedCount} object(s) after confirming ${removedCount} removal(s): ${errorCodes.join(", ") || "unknown error"}`);
+    this.name = "R2DeleteObjectsError";
+  }
+}
+
+async function deleteKeysWithRetry(client: S3Client, bucket: string, keys: string[]) {
+  let pending = keys;
+  let removed = 0;
+  const failures: string[] = [];
+
+  for (let attempt = 1; pending.length > 0 && attempt <= DELETE_OBJECT_MAX_ATTEMPTS; attempt += 1) {
+    const requested = new Set(pending);
+    const result = await client.send(new DeleteObjectsCommand({
+      Bucket: bucket,
+      Delete: { Objects: pending.map((Key) => ({ Key })), Quiet: false },
+    }));
+    const deleted = new Set<string>();
+    for (const item of result.Deleted ?? []) {
+      if (!item.Key || !requested.has(item.Key) || deleted.has(item.Key)) {
+        throw new Error("R2 DeleteObjects returned an invalid Deleted entry");
+      }
+      deleted.add(item.Key);
+    }
+
+    const errors = new Map<string, string>();
+    for (const item of result.Errors ?? []) {
+      const code = item.Code || "Unknown";
+      if (!item.Key || !requested.has(item.Key) || errors.has(item.Key) || deleted.has(item.Key)) {
+        throw new Error("R2 DeleteObjects returned an invalid Errors entry");
+      }
+      errors.set(item.Key, code);
+    }
+
+    const retry: string[] = [];
+    for (const key of pending) {
+      if (deleted.has(key)) {
+        removed += 1;
+        continue;
+      }
+      const code = errors.get(key);
+      if (!code) throw new Error("R2 DeleteObjects returned no result for a requested object");
+      if (code === "NoSuchKey" || code === "NotFound") continue; // already absent is idempotent, but not counted as removed
+      if (TRANSIENT_DELETE_CODES.has(code) && attempt < DELETE_OBJECT_MAX_ATTEMPTS) retry.push(key);
+      else failures.push(code);
+    }
+
+    pending = retry;
+    if (pending.length > 0) await new Promise((resolve) => setTimeout(resolve, 25 * 2 ** (attempt - 1)));
+  }
+
+  return { removed, failures };
 }
 
 /** Streams objects of the PRIVATE originals bucket to local disk. */
@@ -87,18 +189,24 @@ export class HlsWriter {
     readonly bucket: string,
   ) {}
 
-  async putFile(key: string, filePath: string, contentType: string, cacheControl?: string): Promise<number> {
+  async putFile(key: string, filePath: string, contentType: string, signal?: AbortSignal, cacheControl?: string): Promise<number> {
     const { size } = await stat(filePath);
-    await this.client.send(
-      new PutObjectCommand({
+    const body = createReadStream(filePath);
+    try {
+      await this.client.send(
+        new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
-        Body: createReadStream(filePath),
+        Body: body,
         ContentLength: size,
         ContentType: contentType,
         ...(cacheControl ? { CacheControl: cacheControl } : {}),
-      }),
-    );
+        }),
+        signal ? { abortSignal: signal } : undefined,
+      );
+    } finally {
+      body.destroy();
+    }
     return size;
   }
 
@@ -118,9 +226,31 @@ export class HlsWriter {
     do {
       const r = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
       count += r.KeyCount ?? 0;
-      token = r.IsTruncated ? r.NextContinuationToken : undefined;
+      token = nextPageToken(r.IsTruncated, r.NextContinuationToken, token);
     } while (token);
     return count;
+  }
+
+  async verifyOutput(assetKey: string): Promise<HlsOutputVerification> {
+    const prefix = `${assetKey}/`;
+    const objectKeys: string[] = [];
+    let token: string | undefined;
+    do {
+      const page = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
+      for (const object of page.Contents ?? []) if (object.Key) objectKeys.push(object.Key);
+      token = nextPageToken(page.IsTruncated, page.NextContinuationToken, token);
+    } while (token);
+
+    return verifyHlsOutput(prefix, objectKeys, async (key) => {
+      try {
+        const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+        if (!result.Body) return null;
+        return result.Body.transformToString();
+      } catch (error) {
+        if (isNotFound(error)) return null;
+        throw error;
+      }
+    });
   }
 
   /** Deletes every object under `prefix` (must end with "/"). Returns how many were removed. */
@@ -129,16 +259,20 @@ export class HlsWriter {
       throw new Error(`Refusing to delete a too-broad prefix: ${prefix}`);
     }
     let removed = 0;
+    const failures: string[] = [];
     let token: string | undefined;
     do {
       const list = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
+      const nextToken = nextPageToken(list.IsTruncated, list.NextContinuationToken, token);
       const keys = (list.Contents ?? []).map((o) => o.Key).filter((k): k is string => Boolean(k));
       if (keys.length > 0) {
-        await this.client.send(new DeleteObjectsCommand({ Bucket: this.bucket, Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true } }));
-        removed += keys.length;
+        const result = await deleteKeysWithRetry(this.client, this.bucket, keys);
+        removed += result.removed;
+        failures.push(...result.failures);
       }
-      token = list.IsTruncated ? list.NextContinuationToken : undefined;
+      token = nextToken;
     } while (token);
+    if (failures.length > 0) throw new R2DeleteObjectsError(failures.length, [...new Set(failures)], removed);
     return removed;
   }
 }

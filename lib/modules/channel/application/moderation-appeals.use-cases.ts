@@ -302,29 +302,32 @@ async function revertDecisionEffect(
   const { action } = decision;
   if (decision.targetType === "CHANNEL" && action.startsWith("CHANNEL_") && RESTORABLE_CHANNEL.includes(action.slice(8))) {
     const decided = action.slice(8) as ChannelStatus;
-    const channel = await tx.creator.findUnique({ where: { id: decision.targetId }, select: { id: true, status: true } });
+    const channel = await tx.creator.findUnique({ where: { id: decision.targetId }, select: { id: true, status: true, statusDecisionId: true } });
     if (!channel) return { reverted: false, note: "Kanał już nie istnieje." };
-    if (channel.status !== decided) return { reverted: false, note: `Status kanału zmienił się od tamtej decyzji (teraz: ${channel.status}); nic nie cofnięto.` };
+    if (channel.status !== decided || channel.statusDecisionId !== decision.id) return { reverted: false, note: `Status kanału zmienił się od tamtej decyzji (teraz: ${channel.status}); nic nie cofnięto.` };
     const meta = await auditFor(tx, decision.id, ["CHANNEL_STATUS_CHANGED"]);
     const prev = meta?.before?.status as ChannelStatus | undefined;
     const target: ChannelStatus = prev && CHANNEL_STATUSES.includes(prev) && prev !== decided ? prev : "ACTIVE";
     const { count } = await tx.creator.updateMany({
-      where: { id: channel.id, status: decided },
-      data: { status: target, statusReason: "Odwołanie uwzględnione", statusChangedAt: ctx.now(), statusChangedById: adminId },
+      where: { id: channel.id, status: decided, statusDecisionId: decision.id },
+      data: { status: target, statusReason: "Odwołanie uwzględnione", statusChangedAt: ctx.now(), statusChangedById: adminId, statusDecisionId: null },
     });
     return count > 0 ? { reverted: true, note: `Status kanału: ${decided} -> ${target}.` } : { reverted: false, note: "Status kanału zmienił się w międzyczasie; nic nie cofnięto." };
   }
 
   if (decision.targetType === "VIDEO" && action.startsWith("VIDEO_") && VIDEO_STATES.includes(action.slice(6))) {
     const decided = action.slice(6);
-    const video = await tx.video.findUnique({ where: { id: decision.targetId }, select: { id: true, moderationStatus: true } });
+    const video = await tx.video.findUnique({ where: { id: decision.targetId }, select: { id: true, moderationStatus: true, moderationDecisionId: true } });
     if (!video) return { reverted: false, note: "Film już nie istnieje." };
-    if (String(video.moderationStatus) !== decided) return { reverted: false, note: `Moderacja filmu zmieniła się od tamtej decyzji (teraz: ${video.moderationStatus}); nic nie cofnięto.` };
+    if (String(video.moderationStatus) !== decided || video.moderationDecisionId !== decision.id) return { reverted: false, note: `Moderacja filmu zmieniła się od tamtej decyzji (teraz: ${video.moderationStatus}); nic nie cofnięto.` };
     const meta = await auditFor(tx, decision.id, ["VIDEO_MODERATION_CHANGED", "CONTENT_REPORT_RESOLVED"]);
     const prev = meta?.before?.moderationStatus;
     const target = prev && VIDEO_STATES.includes(prev) && prev !== decided ? prev : "VISIBLE";
     // Conditional on the status still being the decided one: a newer decision made between the read and this write wins.
-    const { count } = await tx.video.updateMany({ where: { id: video.id, moderationStatus: decided as never }, data: { moderationStatus: target as never } });
+    const { count } = await tx.video.updateMany({
+      where: { id: video.id, moderationStatus: decided as never, moderationDecisionId: decision.id },
+      data: { moderationStatus: target as never, moderationDecisionId: null, moderationChangedAt: ctx.now() },
+    });
     return count > 0 ? { reverted: true, note: `Moderacja filmu: ${decided} -> ${target}.` } : { reverted: false, note: "Moderacja filmu zmieniła się w międzyczasie; nic nie cofnięto." };
   }
 

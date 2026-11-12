@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_SYSTEMINFORMATION_TRANSITIVE_OVERRIDE",
+  "base_commit": "a7e245529e32d8055457958a5cbfa7c29ac4c313",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "129862065434a21464ccf4d99e8a329d57dd363fece631b1d820139250719048",
+    "package-lock.json": "29ec6072d9f2638f2561f2f613d3c28d55ef444ee7d18a31ff41df40d7af42ad"
+  },
+  "change": {
+    "previous_resolved": "5.31.13",
+    "current_resolved": "5.33.19",
+    "override": "package.json#overrides.systeminformation",
+    "path": "shadcn -> @dotenvx/dotenvx -> systeminformation",
+    "scope": "development dependency path in npm ls output"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls systeminformation --all": {
+      "exit": 0,
+      "resolved": "5.33.19"
+    }
+  },
+  "limitations": [
+    "No new npm audit request or graph upload.",
+    "No application runtime image inspection or full K02 acceptance."
+  ]
+}

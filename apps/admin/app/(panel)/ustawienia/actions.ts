@@ -93,7 +93,7 @@ const money = (currency: (typeof SUPPORTED_CURRENCIES)[number]) =>
     .string()
     .trim()
     .transform((v) => Number(v.replace(/\s/g, "").replace(",", ".")))
-    .pipe(z.number({ invalid_type_error: "Podaj kwotę, np. 10 albo 10,50." }).finite("Podaj kwotę, np. 10 albo 10,50.").min(1, "Minimum to 1.").max(MAX_PAYMENT_BY_CURRENCY[currency], `Nie więcej niż maksimum ${MAX_PAYMENT_BY_CURRENCY[currency]}.`))
+    .pipe(z.number({ error: "Podaj kwotę, np. 10 albo 10,50." }).finite("Podaj kwotę, np. 10 albo 10,50.").min(1, "Minimum to 1.").max(MAX_PAYMENT_BY_CURRENCY[currency], `Nie więcej niż maksimum ${MAX_PAYMENT_BY_CURRENCY[currency]}.`))
     .refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, "Najwyżej dwa miejsca po przecinku.");
 
 const paymentsSchema = z.object(Object.fromEntries(SUPPORTED_CURRENCIES.map((c) => [c, money(c)])) as Record<(typeof SUPPORTED_CURRENCIES)[number], ReturnType<typeof money>>).strict();

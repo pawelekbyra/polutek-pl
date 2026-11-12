@@ -1,0 +1,34 @@
+{
+  "package": "K03-prerequisite-restoration",
+  "source_parent": "b80527be",
+  "imports": {
+    "restore": "7b2b341b",
+    "critical_guard": "03115f0f",
+    "selectors": "e79ec89c"
+  },
+  "source_hashes": {
+    "scripts/verify-restored-database.ts": "1ce08557866dd56918bc587cb9942fafb7c55c02f0af1f539ceb5388262e2ca9",
+    "scripts/test-critical-path.mjs": "c83bdd6d424272d78c5e8276dca8882bbca5b8b7786a89ca94c34cf88a854d8c",
+    "tests/fixtures/restore-verifier-process.mjs": "8bc3636e8a48f51d83aae1a39758a744323ec069500952e3df4e787b463b62c0",
+    "tests/unit/operations/verify-restored-database-process.test.ts": "cb2071a86d94601af8a6b01e1feb5ffc77c76391cc59c2bcddf3034d2788bf95",
+    "tests/unit/operations/critical-path-runner.test.ts": "aac2745c13b2c1d20882cea54b23835434f11fb0709886df014fa00ec3e9f797"
+  },
+  "restore_red": {
+    "failed": 26,
+    "passed": 5
+  },
+  "guards_green": {
+    "passed": 44,
+    "failed": 0
+  },
+  "actual_critical_command": {
+    "exit": 0,
+    "passed": 36,
+    "files": 2,
+    "skipped": 0
+  },
+  "lint_exit": 0,
+  "focused_strict_types_exit": 0,
+  "limits": "Real processes and Vitest; DB/provider ports synthetic. Critical integration logs known missing notification fixture errors that do not fail its assertions; notification delivery is not verified. No actual database, restore or product readiness.",
+  "release_ready": false
+}

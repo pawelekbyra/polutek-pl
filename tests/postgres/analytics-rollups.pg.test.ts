@@ -1,7 +1,6 @@
 /**
- * Analytics rollups on a real Postgres (CI job "integration-postgres", after `prisma migrate deploy`). NOT run in the
- * environment where this was written (no local Postgres): written to the pattern of telemetry.pg.test.ts and reviewed
- * by hand. Covers the wrapper around telemetry.rollup_day, Warsaw day boundaries, hourly rows, the startup histogram
+ * Analytics rollups on a real Postgres (CI job "integration-postgres", after `prisma migrate deploy`).
+ * Covers the wrapper around telemetry.rollup_day, Warsaw day boundaries, hourly rows, the startup histogram
  * (SQL buckets must equal the TypeScript ones), scores, idempotency and the read-only role.
  */
 import { afterAll, describe, expect, it } from 'vitest';
@@ -96,16 +95,25 @@ describe('analytics rollups', () => {
   });
 
   it('assigns a beacon just after Warsaw midnight to the Warsaw day, not the UTC day', async () => {
-    // 22:30 UTC on a summer date is 00:30 the next day in Warsaw (UTC+2).
-    const at = new Date('2026-07-01T22:30:00Z');
+    // A recent Warsaw 00:30 is on the previous UTC day in both winter and summer.
+    // Historical fixed dates eventually fall outside the 120-day hourly retention window.
+    const [{ at, day, prior_day: priorDay }] = await sql<{ at: Date; day: string; prior_day: string }[]>`
+      select (((current_timestamp at time zone 'Europe/Warsaw')::date - 1)::timestamp
+                at time zone 'Europe/Warsaw') + interval '30 minutes' as at,
+             ((current_timestamp at time zone 'Europe/Warsaw')::date - 1)::text as day,
+             ((current_timestamp at time zone 'Europe/Warsaw')::date - 2)::text as prior_day`;
+    expect(warsawDay(at)).toBe(day);
+    expect(at.toISOString().slice(0, 10)).toBe(priorDay);
     await insertRows(sql, rows({ v: 1, playback: [{ attempt: '00000000000000c1', videoId: VIDEO, started: true, startupMs: 800, watchMs: 11000 }] }, '198.51.100.21', at));
-    await sql`select telemetry.rollup_analytics_day('2026-07-02'::date)`;
-    await sql`select telemetry.rollup_analytics_day('2026-07-01'::date)`;
-    const [next] = await sql`select views from telemetry.r_video_qoe_daily where day = '2026-07-02'::date and video_id = ${VIDEO}`;
+    await sql`select telemetry.rollup_analytics_day(${day}::date)`;
+    await sql`select telemetry.rollup_analytics_day(${priorDay}::date)`;
+    const [next] = await sql`select views from telemetry.r_video_qoe_daily where day = ${day}::date and video_id = ${VIDEO}`;
     expect(next?.views).toBe(1);
-    const same = await sql`select views from telemetry.r_video_qoe_daily where day = '2026-07-01'::date and video_id = ${VIDEO}`;
+    const same = await sql`select views from telemetry.r_video_qoe_daily where day = ${priorDay}::date and video_id = ${VIDEO}`;
     expect(same).toHaveLength(0);
-    const [h] = await sql`select hour from telemetry.r_video_hourly where video_id = ${VIDEO} and hour = '2026-07-01T22:00:00Z'`;
+    const utcHour = new Date(at);
+    utcHour.setUTCMinutes(0, 0, 0);
+    const [h] = await sql`select hour from telemetry.r_video_hourly where video_id = ${VIDEO} and hour = ${utcHour}`;
     expect(h).toBeDefined();
   });
 

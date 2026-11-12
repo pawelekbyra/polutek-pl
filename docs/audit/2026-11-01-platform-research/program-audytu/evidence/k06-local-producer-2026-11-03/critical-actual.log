@@ -1,0 +1,71 @@
+
+> kraufanding@0.1.0 test:critical-path
+> node scripts/test-critical-path.mjs --maxWorkers=1 --report-json=.claude/audit-k06/critical-actual.json
+
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+stderr | tests/integration/launch-candidate-critical-path.test.ts > LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal > Scenario A: qualifying one-time support creates one payment-linked active grant and resolves own-HLS playback only after access/readiness
+[SEND_NOTIFICATION_ERROR] TypeError: Cannot read properties of undefined (reading 'findUnique')
+    at isNotificationAllowed (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/notifications/application/send-notification.use-case.ts:47:48)
+    at sendNotification (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/notifications/application/send-notification.use-case.ts:61:52)
+    at sendSupportThanksNotification (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/patron/application/grant-patron.use-case.ts:24:9)
+    at thankPayer (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/payments/application/fulfill-payment.use-case.ts:152:11)
+    at Module.fulfillPayment (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/payments/application/fulfill-payment.use-case.ts:129:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /opt/codex/polutek-pl/.worktrees/platform-audit/tests/integration/launch-candidate-critical-path.test.ts:469:19
+    at file:///opt/codex/polutek-pl/.worktrees/platform-audit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/integration/launch-candidate-critical-path.test.ts > LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal > Scenario B/C/D: payments and patron signals never change access — guests are asked to sign in with zero playback side effects, signed-in users play regardless of grants
+[SEND_NOTIFICATION_ERROR] TypeError: Cannot read properties of undefined (reading 'findUnique')
+    at isNotificationAllowed (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/notifications/application/send-notification.use-case.ts:47:48)
+    at sendNotification (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/notifications/application/send-notification.use-case.ts:61:52)
+    at sendSupportThanksNotification (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/patron/application/grant-patron.use-case.ts:24:9)
+    at thankPayer (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/payments/application/fulfill-payment.use-case.ts:152:11)
+    at Module.fulfillPayment (/opt/codex/polutek-pl/.worktrees/platform-audit/lib/modules/payments/application/fulfill-payment.use-case.ts:129:13)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /opt/codex/polutek-pl/.worktrees/platform-audit/tests/integration/launch-candidate-critical-path.test.ts:514:19
+    at file:///opt/codex/polutek-pl/.worktrees/platform-audit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/integration/launch-candidate-critical-path.test.ts (5 tests) 131ms
+ ✓ tests/unit/operations/verify-restored-database-process.test.ts (31 tests) 37448ms
+     ✓ refuses missing target before constructing a client  1204ms
+     ✓ refuses missing permission before constructing a client  1281ms
+     ✓ refuses target equals source before constructing a client  1216ms
+     ✓ completes checks, closes the client and exits successfully without leaking credentials  1327ms
+     ✓ fails and closes the client for connection-failure  1190ms
+     ✓ fails and closes the client for migration-read-failure  1215ms
+     ✓ fails and closes the client for migration-unfinished  1263ms
+     ✓ fails and closes the client for migration-failed  1519ms
+     ✓ allows a rolled-back attempt alongside completed migration history  1282ms
+     ✓ fails when mandatory User count cannot be checked without a manifest  1372ms
+     ✓ fails when mandatory Creator count cannot be checked without a manifest  1435ms
+     ✓ fails when mandatory Video count cannot be checked without a manifest  1231ms
+     ✓ fails when mandatory VideoAsset count cannot be checked without a manifest  1245ms
+     ✓ fails when mandatory Payment count cannot be checked without a manifest  1235ms
+     ✓ fails when mandatory UserPaymentTotal count cannot be checked without a manifest  1137ms
+     ✓ fails when mandatory PatronGrant count cannot be checked without a manifest  1157ms
+     ✓ fails when mandatory StripeEvent count cannot be checked without a manifest  1181ms
+     ✓ fails when mandatory Comment count cannot be checked without a manifest  1213ms
+     ✓ fails when mandatory CommentReport count cannot be checked without a manifest  1088ms
+     ✓ fails when mandatory Subscription count cannot be checked without a manifest  1120ms
+     ✓ fails when mandatory AuditLog count cannot be checked without a manifest  1094ms
+     ✓ fails when a manifest count has no observed value  1082ms
+     ✓ fails for manifest unknown aggregate  1110ms
+     ✓ fails for manifest different count  1122ms
+     ✓ fails for manifest missing counts object  1095ms
+     ✓ fails for manifest array instead of counts object  1190ms
+     ✓ fails for manifest invalid JSON  1057ms
+     ✓ accepts a matching manifest  1117ms
+     ✓ rejects orphan-user instead of reporting success  1141ms
+     ✓ rejects orphan-payment instead of reporting success  1226ms
+     ✓ rejects orphan-video instead of reporting success  1295ms
+
+ Test Files  2 passed (2)
+      Tests  36 passed (36)
+   Start at  23:03:00
+   Duration  45.70s (transform 5.18s, setup 0ms, import 7.36s, tests 37.58s, environment 1ms)
+
+JSON report written to /tmp/polutek-critical-path-5tJFy4/vitest.json
+Critical-path verified: 2 required suites, 36 tests passed.

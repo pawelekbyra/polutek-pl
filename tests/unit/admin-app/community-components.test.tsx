@@ -29,7 +29,7 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 const comment = (over: Partial<PanelComment> = {}): PanelComment => ({
   id: "c1", text: "Kup tanie zegarki", status: "VISIBLE", deletedReason: null, createdAt: "2026-10-05T08:00:00.000Z", parentId: null,
   video: { id: "v1", title: "Cześć", slug: "czesc" }, author: { id: "u1", name: "spamer", isDeleted: false, isAdmin: false, commentsCount: 2, mutedUntil: null },
-  likesCount: 0, repliesCount: 0, reportsCount: 1, isHearted: false, creatorReplied: false, isQuestion: false,
+  likesCount: 0, repliesCount: 0, reportsCount: 1, isHearted: false, isPinned: false, creatorReplied: false, isQuestion: false,
   pendingReports: [{ id: "r1", reason: "SPAM", note: null, createdAt: "2026-10-05T08:30:00.000Z", reporter: "Ola" }], ...over,
 });
 const RESULT = { changed: [{ commentId: "c1", from: "VISIBLE", to: "HIDDEN" }], unchanged: [], resolvedReports: [{ id: "r1", commentId: "c1" }], batchId: "b" };

@@ -1,0 +1,95 @@
+{
+  "recorded_at_utc": "2026-11-07T09:02:26.238Z",
+  "code_sha": "2bfa1ef6277053bb0942dfc37c71fba96f34ac73",
+  "tool_sha256": "6d6c248a12cfb752ed8db1267c4810f89f574cdfc271dca069cedfe4dcea3738",
+  "source_sha256": "1fd55085fd8582a613bb9abd7b786b6718af9ace75fd7225c84ae710d0580017",
+  "tool": "docs/audit/2026-11-01-platform-research/program-audytu/tools/k37-export-memory-probe.mjs",
+  "method": "Four separate Node processes call the real ExportOwnDataUseCase with synthetic in-memory Prisma delegates, then serialize exactly as the route does. Each large category is populated with the listed row count.",
+  "environment": {
+    "node": "v22.23.3",
+    "database": false,
+    "http": false,
+    "production_data": false,
+    "external_services": false
+  },
+  "samples": [
+    {
+      "rows_per_large_category": 0,
+      "exported_large_category_rows": 0,
+      "exported_categories": [
+        "comments",
+        "videoViews",
+        "playbackSessions",
+        "playbackEvents"
+      ],
+      "json_bytes": 639,
+      "elapsed_ms": 1.49,
+      "before_heap_bytes": 41906232,
+      "after_heap_bytes": 41980000,
+      "before_rss_bytes": 157757440,
+      "after_rss_bytes": 158265344,
+      "process_max_rss_bytes": 158265344,
+      "max_rss_delta_bytes": 507904
+    },
+    {
+      "rows_per_large_category": 10000,
+      "exported_large_category_rows": 40000,
+      "exported_categories": [
+        "comments",
+        "videoViews",
+        "playbackSessions",
+        "playbackEvents"
+      ],
+      "json_bytes": 14374027,
+      "elapsed_ms": 361.22,
+      "before_heap_bytes": 55506920,
+      "after_heap_bytes": 74973152,
+      "before_rss_bytes": 164818944,
+      "after_rss_bytes": 190251008,
+      "process_max_rss_bytes": 204578816,
+      "max_rss_delta_bytes": 39759872
+    },
+    {
+      "rows_per_large_category": 50000,
+      "exported_large_category_rows": 200000,
+      "exported_categories": [
+        "comments",
+        "videoViews",
+        "playbackSessions",
+        "playbackEvents"
+      ],
+      "json_bytes": 71956427,
+      "elapsed_ms": 1796.97,
+      "before_heap_bytes": 128973248,
+      "after_heap_bytes": 220786864,
+      "before_rss_bytes": 250011648,
+      "after_rss_bytes": 342335488,
+      "process_max_rss_bytes": 414294016,
+      "max_rss_delta_bytes": 164282368
+    },
+    {
+      "rows_per_large_category": 100000,
+      "exported_large_category_rows": 400000,
+      "exported_categories": [
+        "comments",
+        "videoViews",
+        "playbackSessions",
+        "playbackEvents"
+      ],
+      "json_bytes": 143934427,
+      "elapsed_ms": 4144.33,
+      "before_heap_bytes": 223719040,
+      "after_heap_bytes": 401637184,
+      "before_rss_bytes": 343609344,
+      "after_rss_bytes": 527933440,
+      "process_max_rss_bytes": 671830016,
+      "max_rss_delta_bytes": 328220672
+    }
+  ],
+  "limitations": [
+    "Synthetic delegates return prebuilt arrays; this excludes PostgreSQL query/network costs and is not a production user profile.",
+    "Peak RSS is a process high-water mark, not an isolated per-request allocator measurement or deployment-container ceiling.",
+    "This is a baseline for export materialization and pretty JSON serialization, not an approved threshold or a test of concurrent exports, timeout, snapshot consistency, download-token lifecycle or cleanup.",
+    "The 100,000-row case is a stress sample, not a recommendation or an agreed customer profile."
+  ]
+}

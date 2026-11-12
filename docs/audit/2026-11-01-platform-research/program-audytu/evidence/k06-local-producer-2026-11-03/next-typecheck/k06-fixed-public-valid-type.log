@@ -1,0 +1,24 @@
+▲ Next.js 16.3.8 (webpack)
+✓ Running next.config.mjs took 45ms
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+- Experiments (use with caution):
+  · cpus: 1
+
+  Running TypeScript ...
+
+  We detected TypeScript in your project and created a tsconfig.json file for you.
+  Finished TypeScript in 4.7s ...
+  Creating an optimized production build ...
+✓ Compiled successfully in 6.7s
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/3) ...
+✓ Generating static pages using 1 worker (3/3) in 76ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (pages)
+┌ ○ /
+└ ○ /404
+
+○  (Static)  prerendered as static content
+

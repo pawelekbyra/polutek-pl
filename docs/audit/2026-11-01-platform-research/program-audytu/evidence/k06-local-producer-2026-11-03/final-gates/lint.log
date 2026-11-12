@@ -1,0 +1,184 @@
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/ChannelHome.tsx
+  230:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/ChannelHome.tsx:230:5
+  228 |   useEffect(() => {
+  229 |     if (!TIP_GATE_ENABLED || !userProfile || !(wantsSupport || isStripeReturn)) return;
+> 230 |     setIsSupportModalOpen(true);
+      |     ^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  231 |     if (wantsSupport) {
+  232 |       try {
+  233 |         const url = new URL(window.location.href);  react-hooks/set-state-in-effect
+  272:5  warning  Error: This value cannot be modified
+
+Modifying a value used previously in an effect function or as an effect dependency is not allowed. Consider moving the modification before calling useEffect().
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/ChannelHome.tsx:272:5
+  270 |     // A deliberate pick moves the keyboard focus to the new video's title (the sidebar item it came from is
+  271 |     // re-rendered); an automatic hand-over (the playlist's next video) never takes the focus.
+> 272 |     focusTitleRef.current = !auto;
+      |     ^^^^^^^^^^^^^ `focusTitleRef` cannot be modified
+  273 |     preloader?.selectVideo(clickedId);
+  274 |     void preloader?.warmVideo(clickedId, { includeComments: true, priority: "critical" });
+  275 |     setSelectionState({                                                                                                                                                                                                                                                                                                                                                                 react-hooks/immutability
+  307:5  warning  Do not use `window.location.assign()` to navigate to internal Next.js pages. Use `redirect()` in the render phase, or `useRouter().push()` in Client Components' event handlers instead. See: https://nextjs.org/docs/messages/no-location-assign-relative-destination                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @next/next/no-location-assign-relative-destination
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/VideoPlayer.tsx
+  251:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/VideoPlayer.tsx:251:9
+  249 |
+  250 |     useEffect(() => {
+> 251 |         setIsMounted(true);
+      |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  252 |     }, []);
+  253 |
+  254 |     useEffect(() => {                                                                                                                                                          react-hooks/set-state-in-effect
+  255:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/VideoPlayer.tsx:255:9
+  253 |
+  254 |     useEffect(() => {
+> 255 |         setHasStartedPlayback(false);
+      |         ^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  256 |         setCanPlay(false);
+  257 |         setHasRenderedFrame(false);
+  258 |         setAutoPlayFailed(false);                                                                        react-hooks/set-state-in-effect
+  288:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/VideoPlayer.tsx:288:9
+  286 |
+  287 |     useEffect(() => {
+> 288 |         setBufferingOverlayTimedOut(false);
+      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  289 |         const timer = setTimeout(() => setBufferingOverlayTimedOut(true), 15000);
+  290 |         return () => clearTimeout(timer);
+  291 |     }, [video.id, streamKey]);  react-hooks/set-state-in-effect
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/premium-pass/PassCheckoutSheet.tsx
+   39:19  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/premium-pass/PassCheckoutSheet.tsx:39:19
+  37 |   // Start the dialog closed even when its host mounts it open, so Base UI runs the entry transition.
+  38 |   const [dialogReady, setDialogReady] = useState(false);
+> 39 |   useEffect(() => setDialogReady(true), []);
+     |                   ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |   const { user } = useUser();
+  41 |   const ids = useId();
+  42 |   const headingRef = useRef<HTMLHeadingElement>(null);  react-hooks/set-state-in-effect
+  110:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/premium-pass/PassCheckoutSheet.tsx:110:5
+  108 |     if (!open) return;
+  109 |     cancelledRef.current = false;
+> 110 |     setBusy(false);
+      |     ^^^^^^^ Avoid calling setState() directly within an effect
+  111 |     setProductId(initialProductId ?? defaultProduct(offer).id);
+  112 |     setCurrency(detectDefaultCurrency(language) as PatronCurrency);
+  113 |     setNotice(null);                                                                                                  react-hooks/set-state-in-effect
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/studio/StudioUploadWizard.tsx
+  82:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/studio/StudioUploadWizard.tsx:82:7
+  80 |   useEffect(() => {
+  81 |     if (!cover) {
+> 82 |       setCoverPreview(null);
+     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  83 |       return;
+  84 |     }
+  85 |     const url = URL.createObjectURL(cover);  react-hooks/set-state-in-effect
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/studio/StudioVideoEditor.tsx
+  54:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/studio/StudioVideoEditor.tsx:54:5
+  52 |
+  53 |   useEffect(() => {
+> 54 |     loadVideo(true).catch((e) => setMessage({ kind: "error", text: errorText(e, tx, tx("Nie udało się wczytać filmu.", "Could not load the video.")) }));
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  55 |   }, [loadVideo, tx]);
+  56 |
+  57 |   // Leaving with unsaved changes asks first (reload and tab close through beforeunload, in-app moves through confirmLeave)  react-hooks/set-state-in-effect
+  87:35  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/studio/StudioVideoEditor.tsx:87:35
+  85 |   const summary = pipeline?.summary;
+  86 |   useEffect(() => {
+> 87 |     if (summary === "READY") void loadVideo(false).catch(() => undefined);
+     |                                   ^^^^^^^^^ Avoid calling setState() directly within an effect
+  88 |   }, [summary, loadVideo]);
+  89 |
+  90 |   const run = async (action: () => Promise<unknown>, success: string, resetForm: boolean) => {                                     react-hooks/set-state-in-effect
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/studio/StudioVideoPreview.tsx
+  41:78  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/opt/codex/polutek-pl/.worktrees/platform-audit/app/components/studio/StudioVideoPreview.tsx:41:78
+  39 |   const linkLive = published || unlisted;
+  40 |   const premiereDate = video.premiereAt ? new Date(video.premiereAt) : null;
+> 41 |   const premiereUpcoming = premiereDate !== null && premiereDate.getTime() > Date.now();
+     |                                                                              ^^^^^^^^^^ Cannot call impure function
+  42 |
+  43 |   return (
+  44 |     <aside aria-label={tx("Podgląd filmu", "Video preview")} className="grid gap-4 lg:sticky lg:top-4">  react-hooks/purity
+
+✖ 12 problems (0 errors, 12 warnings)
+

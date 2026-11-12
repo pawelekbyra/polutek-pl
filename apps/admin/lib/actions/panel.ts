@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { createAppContext, type AppContext } from "@/lib/modules/shared/app-context";
 import { warsawOffsetMinutes } from "@/lib/modules/admin-overview";
 import type { AdminViewer } from "@admin/lib/auth/guard";
+import type { z } from "zod";
 
 export type ActionResult<T = undefined> =
   | { ok: true; message?: string; data?: T }
@@ -84,7 +85,7 @@ export function sampleDataRefusal(): { ok: false; message: string; code: string 
 }
 
 /** Collects the first message per field from a zod error. */
-export function zodFieldErrors(issues: { path: (string | number)[]; message: string }[]): Record<string, string> {
+export function zodFieldErrors(issues: z.ZodIssue[]): Record<string, string> {
   const out: Record<string, string> = {};
   for (const i of issues) {
     const key = String(i.path[0] ?? "_");

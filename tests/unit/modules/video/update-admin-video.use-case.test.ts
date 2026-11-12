@@ -45,9 +45,9 @@ describe('updateAdminVideo use-case', () => {
     }
   });
 
-  it('returns VIDEO_INVALID_HERO if trying to hero a PATRON video', async () => {
+  it('returns VIDEO_INVALID_HERO if trying to hero a LOGGED_IN video', async () => {
     mockPrisma.video.findUnique.mockResolvedValue({ id: 'v1', creatorId: 'c1', tier: 'PUBLIC', status: 'PUBLISHED' });
-    const result = await updateAdminVideo({ id: 'v1', isMainFeatured: true, tier: AccessTier.PATRON }, ctx);
+    const result = await updateAdminVideo({ id: 'v1', isMainFeatured: true, tier: AccessTier.LOGGED_IN }, ctx);
     expect(result.ok).toBe(false);
     if (!result.ok) {
         expect(result.error.code).toBe('VIDEO_INVALID_HERO');

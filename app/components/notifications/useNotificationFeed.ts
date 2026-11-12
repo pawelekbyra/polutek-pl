@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { UserNotificationDTO, UserNotificationPage } from "@/lib/modules/notifications";
 import { NOTIFICATIONS_CHANGED_EVENT, notificationChannelName } from "./notification-events";
 import { mergeNotifications, newestFirst, notificationPage, notificationRequest } from "./notification-feed-client";
@@ -43,9 +43,11 @@ export function useNotificationFeed(open: boolean, language: string, filter: Not
   const itemsRef = useRef(items);
   const openRef = useRef(open);
   const filterRef = useRef(filter);
-  openRef.current = open;
-  filterRef.current = filter;
-  itemsRef.current = items;
+  useLayoutEffect(() => {
+    openRef.current = open;
+    filterRef.current = filter;
+    itemsRef.current = items;
+  }, [open, filter, items]);
   const url = useCallback((extra = "") => `/api/user/notifications?limit=${pageSize}&language=${encodeURIComponent(language)}${filter === "unread" ? "&unread=1" : ""}${extra}`, [language, filter, pageSize]);
   const overlay = useCallback((rows: UserNotificationDTO[]) => rows.map((item) => optimistic.current.has(item.id) ? { ...item, read: optimistic.current.get(item.id)! } : item), []);
 
@@ -108,7 +110,7 @@ export function useNotificationFeed(open: boolean, language: string, filter: Not
     }
   }, [url, overlay, filter]);
   const refreshRef = useRef(refresh);
-  refreshRef.current = refresh;
+  useLayoutEffect(() => { refreshRef.current = refresh; }, [refresh]);
 
   useEffect(() => {
     const onChanged = () => { if (openRef.current) void refreshRef.current(); else void pollCount(); };

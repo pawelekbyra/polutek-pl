@@ -12,6 +12,8 @@ const root = process.cwd();
 const require = createRequire(path.join(root, 'package.json'));
 const sharp = require('sharp');
 const observations = [];
+const output = process.env.POLUTEK_H1_EVIDENCE_DIR || path.join(root, '.claude/audit-k06/k02-runtime');
+await fs.mkdir(output, { recursive: true });
 const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'polutek-k02-'));
 let child;
 let log = '';
@@ -69,7 +71,7 @@ try {
     observations.push({ test: name, status: r.status, expected, contentType: r.headers.get('content-type') });
   }
   const result = { next: require('next/package.json').version, result: 'PASS', observations, scope: 'Isolated Next fixture using the real public Next config and installed native libraries; not the full application, production build or deployed image.' };
-  await fs.writeFile('/workspace/.cloud-setup/k02-image-runtime-results.json', JSON.stringify(result, null, 2) + '\n');
+  await fs.writeFile(path.join(output, 'k02-image-runtime-results.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify(result));
 } catch (error) {
   console.error(error);
@@ -81,6 +83,6 @@ try {
     await Promise.race([exited, pause(5000)]);
     if (child.exitCode === null) child.kill('SIGKILL');
   }
-  await fs.writeFile('/workspace/.cloud-setup/k02-next-runtime.log', log);
+  await fs.writeFile(path.join(output, 'k02-next-runtime.log'), log);
   await fs.rm(directory, { recursive: true, force: true });
 }

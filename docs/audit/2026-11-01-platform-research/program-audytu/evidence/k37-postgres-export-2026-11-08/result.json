@@ -1,0 +1,77 @@
+{
+  "recorded_at_utc": "2026-11-07T23:04:48.299Z",
+  "code_sha": "f0f3d1c80d9aaa1cb68f1ea92833669e950f28e3",
+  "tool": "docs/audit/2026-11-01-platform-research/program-audytu/tools/k37-postgres-export-probe.mjs",
+  "tool_sha256": "387a7295b28a5398bcb329e270c719abecfc4414bf46831e1c96fe634d298b57",
+  "source_sha256": "1fd55085fd8582a613bb9abd7b786b6718af9ace75fd7225c84ae710d0580017",
+  "prior_baseline": "k37-export-memory-baseline-2026-11-07.json",
+  "method": "Seed the four large categories into one disposable PostgreSQL, then in a fresh Node process run the real ExportOwnDataUseCase and the route's exact pretty JSON serialization; report query+serialization elapsed time and process memory.",
+  "environment": {
+    "node": "v22.23.3",
+    "postgres_image": "postgres:17",
+    "postgres_image_id": "sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f",
+    "postgres_repo_digests": "[postgres@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f]",
+    "migrations_applied": 84,
+    "database": "synthetic disposable PostgreSQL; 127.0.0.1 only",
+    "pgdata_and_scratch": "container tmpfs",
+    "rows_per_large_category": 50000,
+    "http": false,
+    "production_data": false,
+    "external_services": false,
+    "container_removed": true
+  },
+  "provisioning_started_at_utc": "2026-11-07T23:03:52.937Z",
+  "seed": {
+    "seeded_rows_per_category": 50000,
+    "counts": {
+      "comments": 50000,
+      "videoViews": 50000,
+      "playbackSessions": 50000,
+      "playbackEvents": 50000
+    }
+  },
+  "result": {
+    "rows_per_large_category": 50000,
+    "exported_large_category_rows": 200000,
+    "exported_categories": [
+      "comments",
+      "videoViews",
+      "playbackSessions",
+      "playbackEvents"
+    ],
+    "counts": {
+      "comments": 50000,
+      "videoViews": 50000,
+      "playbackSessions": 50000,
+      "playbackEvents": 50000
+    },
+    "json_bytes": 75340297,
+    "elapsed_ms": 5450.04,
+    "before_heap_bytes": 36777792,
+    "after_heap_bytes": 325404672,
+    "before_rss_bytes": 185688064,
+    "after_rss_bytes": 926969856,
+    "process_max_rss_bytes": 1002229760,
+    "max_rss_delta_bytes": 816541696
+  },
+  "cleanup": {
+    "synthetic_owner_rows_after_cleanup": 0
+  },
+  "commands": [
+    {
+      "command": "npx prisma migrate deploy",
+      "exit_code": 0,
+      "migrations_applied": 84
+    },
+    {
+      "command": "synthetic seed / verify / cleanup",
+      "exit_code": 0
+    }
+  ],
+  "limitations": [
+    "The four large tables are synthetic and share one synthetic video; this is not a production data distribution or approved capacity threshold.",
+    "The measurement excludes Next HTTP, authentication/rate limiting, network transfer, concurrency, and database backup/restore costs.",
+    "Peak RSS is a process high-water mark for one request in a fresh Node process, not the container memory ceiling or concurrent-request limit.",
+    "No application or external service was contacted; the disposable database and all rows were removed with its container."
+  ]
+}

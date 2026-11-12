@@ -5,8 +5,9 @@
 // WHAT AMOUNT a patron payment may start. It never grants access: access is written by fulfillPayment() once Stripe
 // reports the intent `succeeded` (application/patron-grant.ts), so nothing the browser sends can unlock the zone.
 import { z } from "zod";
-import { createCheckoutIntent, isPremiumPassPayment } from "@/lib/modules/payments";
-import { recordTermsAcceptance } from "@/lib/modules/users";
+import { createCheckoutIntent } from "@/lib/modules/payments/application/create-checkout-intent.use-case";
+import { isPremiumPassPayment } from "@/lib/modules/payments/domain/payment.purpose";
+import { recordTermsAcceptance } from "@/lib/modules/users/application/record-terms-acceptance.use-case";
 import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal/version";
 import { logger } from "@/lib/logger";
 import type { AppContext } from "@/lib/modules/shared/app-context";

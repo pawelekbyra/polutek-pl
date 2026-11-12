@@ -2,23 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { jsonBody, studioApi, type StudioLimits } from "./studio-client";
+import { jsonBody, StudioApiError, studioApi, type StudioLimits } from "./studio-client";
 import { studioErrorText } from "./studio-errors";
-import { uploadOriginal, type UploadProgress } from "./upload-original";
+import { cancelStudioUpload, uploadOriginal, type UploadProgress } from "./upload-original";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
-import { DESCRIPTION_MAX, TITLE_MAX, formatLimitDuration, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
+import { DESCRIPTION_MAX, TITLE_MAX, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
 import VideoMoreOptions from "./VideoMoreOptions";
+import StudioUploadStatus, { type UploadPhase } from "./StudioUploadStatus";
+import StudioUploadFileInfo from "./StudioUploadFileInfo";
 import type { VideoCommentsModeValue } from "@/lib/video-metadata";
-import { Card, CharCounter, Field, Notice, ProgressBar, buttonClass, ghostButtonClass, inputClass } from "./ui";
+import { forgetStudioDraft, rememberStudioDraft, rememberedStudioDraft } from "@/lib/video-upload/studio-resume";
+import { Card, CharCounter, Field, Notice, buttonClass, ghostButtonClass, inputClass } from "./ui";
 
 type Step = 1 | 2 | 3;
-type Phase = "idle" | "creating" | "uploading" | "error";
 type Tier = "PUBLIC" | "LOGGED_IN";
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  return `${Math.max(1, Math.round(bytes / (1024 * 1024)))} MB`;
-}
 
 /**
  * Upload wizard: (1) file and details, (2) visibility, (3) sending. The draft is created when sending starts,
@@ -58,13 +55,14 @@ export default function StudioUploadWizard({
   const [category, setCategory] = useState("");
   const [commentsMode, setCommentsMode] = useState<VideoCommentsModeValue>("ON");
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<UploadPhase>("idle");
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const draftIdRef = useRef<string | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const discardRequestedRef = useRef(false);
 
   const sending = phase === "creating" || phase === "uploading";
 
@@ -148,30 +146,54 @@ export default function StudioUploadWizard({
     setWarning(null);
     setStep(3);
     const controller = new AbortController();
+    discardRequestedRef.current = false;
     abortRef.current = controller;
     try {
       let id = draftIdRef.current;
+      let reusedDraft = false;
       if (!id) {
         setPhase("creating");
-        const draft = await studioApi<{ id: string }>("/api/studio/videos", {
-          method: "POST",
-          ...jsonBody({
-            title: title.trim() || titleFromFileName(file.name) || "Film",
-            description: description.trim() || null,
-            tier,
-            tags,
-            category: category || null,
-            commentsMode,
-            isAdult,
-            publishAfterAssetReady: visibility.fields.publishAfterAssetReady,
-            premiereAt: visibility.fields.premiereAt,
-            ...(visibility.fields.publishAs ? { publishAs: visibility.fields.publishAs } : {}),
-          }),
-        });
-        id = draft.id;
+        id = await rememberedStudioDraft(file);
+        if (id) {
+          try {
+            const existing = await studioApi<{ id: string }>(`/api/studio/videos/${encodeURIComponent(id)}`);
+            if (existing.id !== id) {
+              await forgetStudioDraft(file);
+              id = null;
+            } else {
+              reusedDraft = true;
+            }
+          } catch (error) {
+            if (error instanceof StudioApiError && error.status === 404) {
+              await forgetStudioDraft(file);
+              id = null;
+            } else {
+              throw error;
+            }
+          }
+        }
+        if (!id) {
+          const draft = await studioApi<{ id: string }>("/api/studio/videos", {
+            method: "POST",
+            ...jsonBody({
+              title: title.trim() || titleFromFileName(file.name) || "Film",
+              description: description.trim() || null,
+              tier,
+              tags,
+              category: category || null,
+              commentsMode,
+              isAdult,
+              publishAfterAssetReady: visibility.fields.publishAfterAssetReady,
+              premiereAt: visibility.fields.premiereAt,
+              ...(visibility.fields.publishAs ? { publishAs: visibility.fields.publishAs } : {}),
+            }),
+          });
+          id = draft.id;
+        }
+        await rememberStudioDraft(file, id);
         draftIdRef.current = id;
         setDraftId(id);
-        if (cover) {
+        if (cover && !reusedDraft) {
           try {
             const body = new FormData();
             body.set("file", cover);
@@ -192,13 +214,32 @@ export default function StudioUploadWizard({
         file,
         fileName: file.name,
         contentType: file.type || undefined,
+        publishAfterReady: visibility.fields.publishAfterAssetReady,
         signal: controller.signal,
         onProgress: setProgress,
       });
+      await forgetStudioDraft(file);
       setUnsavedWork(false);
       onFinished(id);
     } catch (e) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        if (discardRequestedRef.current && draftIdRef.current) {
+          discardRequestedRef.current = false;
+          try {
+            await cancelStudioUpload({ videoId: draftIdRef.current, file, fileName: file.name });
+            await forgetStudioDraft(file);
+            draftIdRef.current = null;
+            setDraftId(null);
+            setProgress(null);
+            setError(null);
+            setPhase("error");
+          } catch (discardError) {
+            setError(studioErrorText(discardError, tx, tx("Nie udało się usunąć przesyłania.", "Could not discard the upload.")));
+            setPhase("error");
+          }
+        }
+        return;
+      }
       setError(
         studioErrorText(e, tx, tx("Przesyłanie nie powiodło się. Spróbuj ponownie.", "Upload failed. Please try again.")),
       );
@@ -220,7 +261,26 @@ export default function StudioUploadWizard({
     onCancel();
   };
 
-  const percent = progress && progress.totalBytes > 0 ? (progress.uploadedBytes / progress.totalBytes) * 100 : 0;
+  const discardUpload = async () => {
+    if (!file || !draftIdRef.current) return;
+    if (!window.confirm(tx("Usunąć niedokończone przesyłanie i zapisane części?", "Delete the unfinished upload and its stored parts?"))) return;
+    if (sending) {
+      discardRequestedRef.current = true;
+      abortRef.current?.abort();
+      return;
+    }
+    setError(null);
+    try {
+      await cancelStudioUpload({ videoId: draftIdRef.current, file, fileName: file.name });
+      await forgetStudioDraft(file);
+      draftIdRef.current = null;
+      setDraftId(null);
+      setProgress(null);
+    } catch (error) {
+      setError(studioErrorText(error, tx, tx("Nie udało się usunąć przesyłania.", "Could not discard the upload.")));
+    }
+  };
+
   const steps: { id: Step; label: string }[] = [
     { id: 1, label: tx("Szczegóły", "Details") },
     { id: 2, label: tx("Widoczność", "Visibility") },
@@ -267,26 +327,7 @@ export default function StudioUploadWizard({
               }}
             />
           </Field>
-          {limits && (
-            <p className="text-[13px] text-[var(--chan-muted)]">
-              {tx(
-                "Limit Twojego kanału: film do {0}, plik do {1}.",
-                "Your channel limit: videos up to {0}, files up to {1}.",
-                formatLimitDuration(limits.maxVideoSeconds),
-                formatBytes(limits.maxUploadBytes),
-              )}
-            </p>
-          )}
-          {file && (
-            <p className="text-[13px] text-[var(--chan-muted)]">
-              {file.name} · {formatBytes(file.size)}
-            </p>
-          )}
-          {file && limits && file.size > limits.maxUploadBytes && (
-            <Notice kind="error">
-              {tx("Ten plik jest większy niż limit Twojego kanału ({0}).", "This file is larger than your channel limit ({0}).", formatBytes(limits.maxUploadBytes))}
-            </Notice>
-          )}
+          <StudioUploadFileInfo file={file} limits={limits} />
           <Field label={tx("Tytuł", "Title")} htmlFor="wz-title" counter={<CharCounter id="wz-title-count" value={title} max={TITLE_MAX} />}>
             <input
               id="wz-title"
@@ -442,58 +483,15 @@ export default function StudioUploadWizard({
       )}
 
       {step === 3 && (
-        <div className="grid max-w-2xl gap-4">
-          <dl className="grid gap-1 text-[14px]">
-            <div className="flex flex-wrap gap-2">
-              <dt className="font-semibold text-[var(--chan-ink)]">{tx("Tytuł", "Title")}:</dt>
-              <dd className="text-[var(--chan-muted)]">{title.trim()}</dd>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <dt className="font-semibold text-[var(--chan-ink)]">{tx("Widoczność", "Visibility")}:</dt>
-              <dd className="text-[var(--chan-muted)]">{visibilityLabel[mode]}</dd>
-            </div>
-          </dl>
-          <div className="grid gap-2" aria-live="polite">
-            <ProgressBar value={percent} />
-            <p className="text-[13px] text-[var(--chan-muted)]">
-              {phase === "creating" && tx("Tworzę prywatny szkic…", "Creating a private draft…")}
-              {phase === "uploading" && tx("Przesłano {0}%", "Uploaded {0}%", Math.round(percent))}
-              {phase === "error" && tx("Przesyłanie zatrzymane.", "Upload stopped.")}
-            </p>
-          </div>
-          {sending && (
-            <p className="text-[12px] text-[var(--chan-muted)]">
-              {tx(
-                "Nie zamykaj tej karty. Jeśli przerwiesz, film zostanie prywatnym szkicem.",
-                "Keep this tab open. If you stop, the video stays a private draft.",
-              )}
-            </p>
-          )}
-          {warning && <Notice>{warning}</Notice>}
-          {error && <Notice kind="error">{error}</Notice>}
-          <div className="flex flex-wrap gap-2">
-            {phase === "error" && (
-              <button type="button" className={buttonClass} onClick={start}>
-                {tx("Spróbuj ponownie", "Try again")}
-              </button>
-            )}
-            {phase === "error" && draftId && (
-              <button
-                type="button"
-                className={ghostButtonClass}
-                onClick={() => {
-                  setUnsavedWork(false);
-                  onFinished(draftId);
-                }}
-              >
-                {tx("Przejdź do szkicu", "Go to the draft")}
-              </button>
-            )}
-            <button type="button" className={ghostButtonClass} onClick={cancel}>
-              {sending ? tx("Przerwij", "Cancel") : tx("Wróć do filmów", "Back to videos")}
-            </button>
-          </div>
-        </div>
+        <StudioUploadStatus
+          title={title} visibilityLabel={visibilityLabel[mode]} phase={phase} progress={progress}
+          warning={warning} error={error} draftId={draftId} onRetry={start} onDiscard={discardUpload} onCancel={cancel}
+          onOpenDraft={() => {
+            if (!draftId) return;
+            setUnsavedWork(false);
+            onFinished(draftId);
+          }}
+        />
       )}
     </Card>
   );

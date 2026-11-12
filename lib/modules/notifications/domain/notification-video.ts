@@ -1,5 +1,5 @@
 import { isThumbnailProxyPath, parsePublicThumbnailUrl, resolvePublicThumbnailSrc, type MediaHostEnv } from "@/lib/modules/media";
-import { isVideoPubliclyVisible } from "@/lib/modules/video";
+import { isVideoPubliclyVisible } from "@/lib/modules/video/domain/public-visibility";
 import type { UserNotificationType } from "./user-notifications";
 
 /**

@@ -1,0 +1,69 @@
+
+> kraufanding@0.1.0 admin:build
+> next build apps/admin
+
+▲ Next.js 16.4.4 (Turbopack)
+✓ Running next.config.mjs took 54ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.2s
+  Running TypeScript ...
+  Finished TypeScript in 35.2s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/1) ...
+✓ Generating static pages using 3 workers (1/1) in 245ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /[modul]
+├ ƒ /analityka
+├ ƒ /api/auth/[...all]
+├ ƒ /api/email/preview
+├ ƒ /api/export/audit
+├ ƒ /api/export/payments
+├ ƒ /api/health
+├ ƒ /api/jobs/morning-report
+├ ƒ /api/live
+├ ƒ /api/search
+├ ƒ /api/settings/default-thumbnail
+├ ƒ /api/spolecznosc/uzytkownicy/export
+├ ƒ /api/videos/[id]/cover
+├ ƒ /api/videos/[id]/original-upload/multipart
+├ ƒ /api/videos/[id]/original-upload/multipart/complete
+├ ƒ /api/videos/[id]/original-upload/multipart/parts
+├ ƒ /api/videos/[id]/pipeline
+├ ƒ /api/videos/[id]/subtitles/[lang]
+├ ƒ /api/videos/[id]/thumbnail
+├ ƒ /bezpieczenstwo
+├ ƒ /kanaly
+├ ƒ /kanaly/[id]
+├ ƒ /komunikacja
+├ ƒ /logowanie
+├ ƒ /potwierdz
+├ ƒ /premiera
+├ ƒ /przychody
+├ ƒ /rejestracja
+├ ƒ /spolecznosc
+├ ƒ /spolecznosc/u/[id]
+├ ƒ /system
+├ ƒ /system/r2
+├ ƒ /tlumaczenia
+├ ƒ /tlumaczenia/[slug]
+├ ƒ /tresci
+├ ƒ /tresci/[slug]
+├ ƒ /tresci/[slug]/analityka
+├ ƒ /tresci/[slug]/edycja
+├ ƒ /tresci/[slug]/jakosc
+├ ƒ /tresci/[slug]/komentarze
+├ ƒ /tresci/[slug]/tlumaczenia
+├ ƒ /tresci/nowy
+├ ƒ /tresci/uklad
+└ ƒ /ustawienia
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+

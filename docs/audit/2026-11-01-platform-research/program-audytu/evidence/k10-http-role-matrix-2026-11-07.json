@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-07",
+  "package": "K10",
+  "finding": "R30",
+  "status": "PARTIAL_HTTP_ROLE_MATRIX_PASS",
+  "test": "tests/postgres/k10-hidden-premiere-http.pg.test.ts",
+  "environment": {
+    "http": "actual local Next dev server on numeric loopback",
+    "auth": "Better Auth signed session cookies and real database-backed actors",
+    "database": "disposable PostgreSQL 17.11, all 84 Prisma migrations applied",
+    "isolation": "temporary container with tmpfs; container removed after test",
+    "production_or_external_services": "not used"
+  },
+  "command": "DATABASE_URL=<disposable-loopback-postgres> DATABASE_URL_UNPOOLED=<disposable-loopback-postgres> npx vitest run --config vitest.postgres.config.ts tests/postgres/k10-hidden-premiere-http.pg.test.ts --testTimeout=30000 --hookTimeout=120000",
+  "result": {
+    "exitCode": 0,
+    "files": 1,
+    "passed": 2,
+    "failed": 0,
+    "eslint": "PASS",
+    "gitDiffCheck": "PASS",
+    "repoTypecheck": "FAIL due to existing diagnostics in unrelated tests; no diagnostic referenced this K10 test"
+  },
+  "assertions": [
+    "guest and unrelated signed-in user knowing the ID of a REMOVED upcoming video receive UNAVAILABLE/VIDEO_NOT_FOUND without title, poster, date, source URL, or non-empty playback session, despite a READY synthetic HLS asset",
+    "the channel owner receives a READY preview plan and signed SELF_HLS URL for the unpublished draft through real HTTP",
+    "guest sees legal upcoming-premiere messaging but receives no source URL or playback session despite a READY synthetic HLS asset",
+    "signed-in unrelated user receives COMING_SOON without source URL or playback session before premiere time, despite a READY synthetic HLS asset"
+  ],
+  "limitations": [
+    "synthetic HLS URLs were generated but no Worker, manifest, or media segment was requested",
+    "independent review remains open",
+    "the repository-wide TypeScript check reports pre-existing diagnostics in other test files"
+  ],
+  "source_sha256": {
+    "tests/postgres/k10-hidden-premiere-http.pg.test.ts": "a72f95d1080944bd304f8143c3ae462f975a6d30adbca89d37c801e9867764bc"
+  }
+}

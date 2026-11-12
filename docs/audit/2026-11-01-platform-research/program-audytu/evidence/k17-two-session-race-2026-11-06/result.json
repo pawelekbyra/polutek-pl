@@ -1,0 +1,48 @@
+{
+  "package": "K17",
+  "finding": "R02",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "base_revision": "990cabaf",
+  "test_file": "tests/postgres/encode-attempt-fencing-race.pg.test.ts",
+  "database": {
+    "engine": "PostgreSQL 17 (postgres:17-alpine)",
+    "migrations_applied": 84,
+    "disposable_container": true,
+    "container_removed": true,
+    "synthetic_user_count_after_cleanup": 0
+  },
+  "interleaving": [
+    "An independent PostgreSQL session updates the RUNNING job to attempt B and holds the row lock without committing.",
+    "Stale attempt A runs the production finalizer through a second Prisma client and is observed waiting on its actual VideoEncodeJob FOR UPDATE query while it owns the video activation lock.",
+    "Attempt B commits takeover; attempt A resumes, fails the ownership comparison, and its own unactivated asset is removed.",
+    "Attempt B finalizes successfully; only B's asset remains active and the persisted job retains B's workerId and attemptId."
+  ],
+  "checks": {
+    "vitest": {
+      "command": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/encode-attempt-fencing-race.pg.test.ts",
+      "files_passed": 1,
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "duration_seconds": 5.99,
+      "exit_code": 0
+    },
+    "repository_typecheck": {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exit_code": 0
+    },
+    "eslint": {
+      "command": "npx eslint tests/postgres/encode-attempt-fencing-race.pg.test.ts",
+      "exit_code": 0
+    },
+    "diff_check": {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  },
+  "scope_limits": [
+    "Two database sessions run in one Vitest process; this is not two separately running worker processes.",
+    "No physical R2/S3, full encoder worker runtime, controlled worker drain, or independent review was performed.",
+    "K17 and finding R02 remain partial."
+  ]
+}

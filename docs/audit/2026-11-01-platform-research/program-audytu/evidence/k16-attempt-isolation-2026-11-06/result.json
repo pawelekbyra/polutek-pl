@@ -1,0 +1,45 @@
+{
+  "package": "K16",
+  "finding": "R02",
+  "date": "2026-11-06",
+  "codeCommit": "6975a492",
+  "status": "PARTIAL_LOCAL_VERIFICATION",
+  "change": {
+    "migration": "20261106120000_encode_attempt_isolation adds nullable VideoEncodeJob.attemptId and rejects a transition into RUNNING when attemptId is null; an already RUNNING legacy row can continue heartbeats.",
+    "claim": "Every new claim assigns gen_random_uuid() in the same UPDATE that moves the row to RUNNING.",
+    "ownership": "New attempt UUID is carried by the worker job, distinct local work directory, HLS asset/object prefixes, finalizer lookup, audit metadata, diagnostics and prefix cleanup. Legacy rows with null attemptId continue using the original version prefix until recovered.",
+    "paths": "New: videos/<videoId>/v/v<version>/attempts/<attemptId>/; legacy: videos/<videoId>/v/v<version>/"
+  },
+  "greenVerification": {
+    "postgres": {
+      "command": "DATABASE_URL=<disposable-local-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx prisma migrate deploy && npx vitest run --config vitest.postgres.config.ts tests/postgres/encode-attempt-isolation.pg.test.ts --reporter=json",
+      "migrations": 82,
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "raw": "postgres-vitest.json",
+      "migrationLog": "migrate.log",
+      "scenarios": [
+        "Legacy claim without attemptId is rejected and the row remains QUEUED.",
+        "Two successive claims of one job receive distinct UUIDs and disjoint prefixes.",
+        "An already RUNNING legacy job can heartbeat; after stale recovery it is claimed with a fresh UUID and activeOriginalId is unchanged."
+      ],
+      "environment": "Disposable postgres:17-alpine container removed after the run; all repository migrations applied."
+    },
+    "focusedUnit": {
+      "files": 5,
+      "passed": 53,
+      "failed": 0,
+      "raw": "unit-vitest.json"
+    },
+    "eslint": { "passed": true, "log": "eslint.log" },
+    "repoTypecheck": { "passed": true, "log": "typecheck.log" },
+    "prismaValidate": { "passed": true, "databaseUrl": "temporary placeholder; validation only" },
+    "gitDiffCheck": "PASS"
+  },
+  "limits": [
+    "No controlled shutdown/drain was performed against a running environment. Documentation requires legacy workers to be drained before applying the migration and starting new workers.",
+    "No R2/S3 sandbox or independent review was available.",
+    "K17 is still required to fence activation, job status changes and cleanup side effects from a stale worker that resumes after takeover; K16 does not close R02."
+  ]
+}

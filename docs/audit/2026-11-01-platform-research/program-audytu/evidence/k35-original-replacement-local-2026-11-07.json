@@ -1,0 +1,29 @@
+{
+  "package": "K35-T1 Studio original replacement through encoder and active HLS route",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "ea2041279b490dbf1511a62d6f8d9bcbebcb4962",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped after test",
+    "flow": [
+      "first Studio multipart upload, FFmpeg worker, public playback API, HLS edge fixture and Chromium playback succeed",
+      "owner starts and completes a second multipart upload through Studio HTTP",
+      "separate scripts/video-worker.ts encodes the replacement",
+      "database confirms original v1 SUPERSEDED, original v2 READY and video activeOriginalId points to v2",
+      "exactly one ACTIVE playback route points to v2 attempt-scoped HLS asset and Studio pipeline reports version 2"
+    ],
+    "repo_typecheck": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "d9b1e010f97d3324cd8e8d3a9f20cf94e828623b18b671aa62dd217d56dd7d19"
+  },
+  "limitations": [
+    "Storage is a loopback S3-shaped fixture, not real Cloudflare R2; edge Worker is invoked locally, not deployed.",
+    "Browser playback is proven for the first version; the replacement is verified through API, worker, database and active route, not a second browser playback session.",
+    "Video deletion and durable storage cleanup remain open; K35-T1 remains partial and independent review is open."
+  ]
+}

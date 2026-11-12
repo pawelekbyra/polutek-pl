@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_HONO_NODE_SERVER_TRANSITIVE_OVERRIDE",
+  "base_commit": "aad0cdc7042ee147b395aa690cad1608f2fe06e6",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "compatibility_source": "https://registry.npmjs.org/@modelcontextprotocol%2fsdk/1.31.0",
+  "file_sha256": {
+    "package.json": "b8437b93dbb35318748b5f5736ea3cda37ab6d9f6136864f2ae44e4c40fce458",
+    "package-lock.json": "9e7417d01cac977d91a9fdd5133e12955a78a5c0d987682d2a1159163b7192de"
+  },
+  "change": {
+    "previous_resolved": "1.19.17",
+    "current_resolved": "2.1.6",
+    "override": "package.json#overrides.@hono/node-server",
+    "parent": "@modelcontextprotocol/sdk@1.31.0",
+    "parent_peer_range": "^1.19.9 || ^2.0.5",
+    "scope": "development dependency path under shadcn"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls @hono/node-server --all": {
+      "exit": 0,
+      "resolved": "2.1.6"
+    }
+  },
+  "limitations": [
+    "No direct use of node-server API in application was established.",
+    "No application runtime image inspection or full K02 acceptance.",
+    "No new npm audit graph upload."
+  ]
+}

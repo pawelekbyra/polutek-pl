@@ -24,6 +24,61 @@ const VISIBILITY_HELPER_REASON =
 // Allowlist for cross-module internal imports where extracting to shared would cause circular deps.
 // Key: file path; value: map of "module/subPath" → reason string.
 const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, string>> = {
+  'lib/modules/video/application/get-public-video-list.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; importing the channel barrel creates a video → channel → channel-layout → video cycle.',
+  },
+  'lib/modules/video/application/create-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/archive-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/delete-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/reorder-admin-videos.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/unpublish-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/cancel-auto-publish.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/get-admin-video-by-id.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/get-hero-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/get-admin-video-list.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/resync-admin-video-stats.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/update-admin-video.use-case.ts': {
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; the channel barrel re-exports moderation/notification code that cycles back through video.',
+  },
+  'lib/modules/video/application/publish-admin-video.use-case.ts': {
+    'channel/domain/channel.errors': 'This use case needs only channel errors; importing the channel barrel pulls notification/video services into the publish path.',
+    'channel/domain/channel.policy': 'This use case needs only the pure channel visibility policy; importing the channel barrel pulls notification/video services into the publish path.',
+    'channel/application/main-channel.service': 'This use case needs only MainChannelService; importing the channel barrel pulls notification/video services into the publish path.',
+  },
+  'lib/modules/video/infrastructure/video-content.service.ts': {
+    'channel/application/main-channel.service': 'This adapter needs the channel service, not the public index; the index re-exports channel use cases that depend on this adapter.',
+    'channel/domain/channel.policy': 'The video read adapter needs only the shared public-visibility query policy, not the channel service barrel.',
+    'channel/domain/channel-avatar': 'The video read adapter needs only the pure channel avatar URL resolver, not the channel service barrel.',
+    'media/domain/media.policy': 'This adapter needs only the media DTO safety policy; importing the media barrel reaches channel services.',
+    'media/domain/r2-thumbnail': 'This adapter needs only the public thumbnail URL resolver; importing the media barrel reaches channel services.',
+    'patron-zone/domain/config': 'This adapter needs only the pure Premium Pass visibility predicate; importing the patron-zone barrel reaches checkout, payments and channels.',
+  },
+  'lib/modules/media/infrastructure/thumbnail-response.service.ts': {
+    'media/domain/media.policy': 'This HTTP adapter needs only the media DTO safety policy; importing the media barrel also loads the adapter itself.',
+  },
+  'lib/modules/video/infrastructure/video.repository.ts': {
+    'channel/domain/channel.policy': 'The video repository needs only the public channel visibility predicate; the channel barrel pulls moderation and notification paths back through video.',
+  },
   'lib/modules/channel/application/home-content.loader.ts': {
     'video/infrastructure/video-content.service': 'VideoContentService is an infra service; exporting via video index causes channel↔video circular dep through MainChannelService.',
   },
@@ -44,9 +99,29 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   },
   'lib/modules/channel/application/channel-layout.service.ts': {
     'video/domain/premiere': PREMIERE_HELPER_REASON,
+    'video/pure': 'Narrow, dependency-free video helper entry; avoids importing the video public service barrel and its cycle back through MainChannelService.',
+    'media/domain/r2-thumbnail': 'Channel layout needs only the public thumbnail URL resolver; importing the media barrel reaches this service and loops back to channel.',
+    'patron-zone/application/pass-access': 'Channel layout needs only viewer Premium Pass facts; importing the patron-zone barrel reaches checkout and payments that depend on channel.',
+  },
+  'lib/modules/channel/application/update-admin-channel-settings.use-case.ts': {
+    'media/application/default-thumbnail.service': 'This use case only invalidates the thumbnail cache; importing the media barrel loads a resolver that imports the channel barrel back.',
+  },
+  'lib/modules/media/application/default-thumbnail.service.ts': {
+    'channel/application/main-channel.service': 'The thumbnail resolver needs only the main channel resolver; the channel barrel exports use cases that depend on media.',
   },
   'lib/modules/video/domain/public-visibility.ts': {
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class (the one rule for a publicly visible channel); the video domain needs only that predicate, not the channel barrel with its services.',
+  },
+  'lib/modules/video/application/publish-after-asset-ready.use-case.ts': {
+    'channel/application/main-channel.service': 'This worker needs only MainChannelService; importing the channel barrel pulls moderation and notification code back into video.',
+    'channel/domain/channel.policy': 'The pipeline worker needs only the pure channel visibility policy; the channel barrel would pull layout and video services back into this worker dependency path.',
+  },
+  'lib/modules/notifications/domain/notification-video.ts': {
+    'video/domain/public-visibility': 'The notification preview needs only the video visibility predicate; importing the video barrel loads publication and channel workflows.',
+  },
+  'lib/modules/channel/infrastructure/moderation-notice.ts': {
+    'notifications/application/send-notification.use-case': 'This adapter needs only notification delivery; the notifications barrel re-exports video-dependent notification reads.',
+    'email/application/send-moderation-email': 'This adapter lazily loads only moderation mail; the email barrel pulls the transactional sender, subscriptions and channel workflows into a dynamic-import cycle.',
   },
   'lib/modules/syndication/domain/embed-eligibility.ts': {
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
@@ -73,6 +148,21 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
     'video/domain/premiere': PREMIERE_HELPER_REASON,
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class; many tests narrowly mock the whole @/lib/modules/channel barrel for MainChannelService only, and routing this through it would force every such test to also mock MainChannelPolicy.',
+    'patron-zone/application/pass-access': 'The access use case needs only the viewer pass gate; importing the patron-zone barrel also loads checkout and payments.',
+  },
+  'lib/modules/users/application/get-admin-user-details.use-case.ts': {
+    'payments/application/get-user-payments.use-case': 'This read model needs only the user payment query; importing the payments barrel reaches fulfillment and patron grants that depend on the users index.',
+  },
+  'lib/modules/users/application/account-deletion-cleanup.use-case.ts': {
+    'payments/application/stripe-customer-anonymization.use-case': 'This cleanup needs only the Stripe customer anonymization functions; importing the payments barrel reaches fulfillment and patron grants that depend on users.',
+  },
+  'lib/modules/patron-zone/application/patron-checkout.use-case.ts': {
+    'payments/application/create-checkout-intent.use-case': 'This use case needs only checkout creation; the payments barrel includes fulfillment and grants that cycle back through patron-zone.',
+    'payments/domain/payment.purpose': 'This use case needs only the pure payment-purpose predicate; the payments barrel includes fulfillment and grants that cycle back through patron-zone.',
+    'users/application/record-terms-acceptance.use-case': 'This use case needs only recording accepted terms; the users barrel includes export and cleanup flows that cycle back through patron-zone.',
+  },
+  'lib/modules/patron-zone/application/preview-payment-methods.use-case.ts': {
+    'payments/infrastructure/stripe-client': 'This probe needs only the Stripe client; the payments barrel pulls fulfillment and grants back into patron-zone.',
   },
 };
 
@@ -111,7 +201,7 @@ function checkModules() {
     const moduleMatch = relativePath.match(/lib\/modules\/([^/]+)/);
     if (moduleMatch) {
       const currentModule = moduleMatch[1];
-      const importMatches = content.matchAll(/from ['"]@\/lib\/modules\/([^/'"]+)\/([^'"]+)['"]/g);
+      const importMatches = content.matchAll(/(?:from\s+|import\(\s*)['"]@\/lib\/modules\/([^/'"]+)\/([^'"]+)['"]/g);
       for (const match of importMatches) {
         const importedModule = match[1];
         const subPath = match[2];

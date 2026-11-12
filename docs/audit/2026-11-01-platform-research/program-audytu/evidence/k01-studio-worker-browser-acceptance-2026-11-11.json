@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-11",
+  "repository_head_sha": "278e11b7ff76a50c9da0fac65fbed67aec5efc40",
+  "package": "K01-T3 combined Studio upload, worker, HLS and Chromium retest",
+  "finding": "R08 end-to-end runtime evidence",
+  "status": "passed_local_synthetic_full_stack_after_cold_compile_timeout_adjustment",
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "3c4e627aa1cdc27dac193f7d3fe4d9a839c8839c50a64499bee5887c5b14b2f6"
+  },
+  "command": "npx vitest run --config vitest.postgres.config.ts tests/postgres/k01-video-worker-local.pg.test.ts --testTimeout=240000 --hookTimeout=240000",
+  "environment": {
+    "database": "disposable PostgreSQL 17, 84 migrations, tmpfs",
+    "storage": "synthetic S3-compatible loopback fixture",
+    "worker": "local FFmpeg and application worker",
+    "browser": "local Playwright Chromium",
+    "external_services_contacted": false
+  },
+  "result": {
+    "exit": 0,
+    "files": 1,
+    "passed": 1,
+    "failed": 0,
+    "failure": "page.goto(/pl?v=<synthetic-id>) timed out after 30000 ms waiting for waitUntil=commit; Chromium received no response and stayed at about:blank.",
+    "observed_before_failure": "Upload, worker/encoding and local HLS API/Worker assertions reached the browser navigation step; this run does not establish that the page rendered or playback worked.",
+    "attempts": [
+      {
+        "attempt": 1,
+        "result": "failed after 30000 ms waiting for domcontentloaded; cause not surfaced by Playwright."
+      },
+      {
+        "attempt": 2,
+        "result": "failed after 30000 ms waiting for commit; no response, page remained about:blank."
+      },
+      {
+        "attempt": 3,
+        "result": "HTTP server diagnostics showed GET /pl entered Next with status 200 but headers_sent=false; after 35.5 s still pending. Next output explicitly showed Compiling /[locale] ...; compilation had not finished at the 30 s browser deadline."
+      },
+      {
+        "attempt": 4,
+        "result": "passed 1/1 after cold navigation timeout was set to 90000 ms. Full flow completed including Studio multipart upload, actual local worker/FFmpeg, local HLS edge playback in Chromium, replacement playback and cleanup."
+      }
+    ],
+    "next_output_observation": "Next dev output contains successful Prisma reads for homepage metadata/content and ends with the metadataBase warning; no Next exception or request completion was captured. This narrows the stall to local response/SSR startup but does not identify a root cause.",
+    "cold_navigation_timeout_ms": 90000,
+    "eslint": "passed",
+    "diff_check": "passed",
+    "diagnosis": "Cold Next dev compilation of /[locale] was still in progress at 30 seconds. With the explicit 90-second cold-navigation allowance, the same integrated test passed. The exact successful compile duration was not recorded."
+  },
+  "limitations": [
+    "Storage is a synthetic S3-compatible loopback fixture; this does not verify Cloudflare R2 or a deployed HLS Worker.",
+    "The test uses Next dev and a cold route compile, not a production image or deployed environment.",
+    "Earlier attempts timed out at 30 seconds; server diagnostics identified compilation in progress rather than an application exception.",
+    "K01 remains partial pending real-provider/deployed integration, queue/Redis/email acceptance, and independent review."
+  ],
+  "cleanup": "Disposable PostgreSQL container stopped by the test command cleanup trap; generated Next config edits were reverted; no K01 disposable container remains."
+}

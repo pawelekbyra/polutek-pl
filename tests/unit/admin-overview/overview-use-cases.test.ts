@@ -11,6 +11,7 @@ import {
   getTodayOverview,
   parseHostStatus,
   parseMeminfo,
+  probePublicApp,
   probeHlsWorker,
   probeRedis,
   type EncodeJobRow,
@@ -213,6 +214,26 @@ describe("probes", () => {
     const stale = await cachedProbe("k", run, Date.now() + 120_000);
     expect(stale.detail).toBe("x");
     expect(run).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([200, 204])("accepts public app health HTTP %i", async (status) => {
+    const fetcher = vi.fn(async () => new Response(null, { status }));
+    await expect(probePublicApp("http://app:3000/", fetcher as unknown as typeof fetch)).resolves.toMatchObject({
+      ok: true,
+      detail: `HTTP ${status}`,
+    });
+    expect(fetcher).toHaveBeenCalledWith(
+      "http://app:3000/api/health",
+      expect.objectContaining({ cache: "no-store" }),
+    );
+  });
+
+  it.each([401, 404, 500, 503])("rejects public app health HTTP %i", async (status) => {
+    const fetcher = async () => new Response(null, { status });
+    await expect(probePublicApp("http://app:3000", fetcher as unknown as typeof fetch)).resolves.toMatchObject({
+      ok: false,
+      detail: `HTTP ${status}`,
+    });
   });
 
   it("reads Redis PONG and treats a Worker 404 as alive", async () => {

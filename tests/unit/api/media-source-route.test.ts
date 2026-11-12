@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 import { PlaybackService } from '@/lib/modules/playback';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { rateLimit } from '@/lib/rate-limit';
+import { PlaybackPlanResponseSchema } from '@/lib/video-api-contracts/contracts';
 
 vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
@@ -55,7 +56,7 @@ describe('Media-Source Route Access', () => {
     expect(JSON.stringify(data)).not.toContain('amazonaws');
   });
 
-  it('does not redact the signed own-HLS delivery URL of a playable plan', async () => {
+  it('does not redact the signed own-HLS delivery URL and returns the playback contract', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
@@ -66,18 +67,22 @@ describe('Media-Source Route Access', () => {
         provider: 'SELF_HLS',
         kind: 'self_hls',
         playbackUrl: 'https://video.pawelperfect.com/h/1790000000.sig/v1/v1/master.m3u8',
+        isSignedUrl: true,
         asset: {
           provider: 'SELF_HLS',
           processingState: 'READY',
+          isPrimary: true,
         }
       },
-      diagnostics: { warnings: [] },
-      tracking: { playbackSessionId: 's-cf-1' }
+      player: { autoplayAllowed: false, mutedAutoplay: false, controls: true, poster: '', title: 'Film' },
+      diagnostics: { warnings: [], sourceConfidence: 'HIGH', providerResolutionAllowed: false, providerResolutionAttempted: true },
+      tracking: { playbackSessionId: 's-cf-1', heartbeatIntervalSeconds: 15 }
     });
 
     const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     expect(res.status).toBe(200);
     const data = await res.json();
+    expect(PlaybackPlanResponseSchema.safeParse(data).success).toBe(true);
     expect(data.access.allowed).toBe(true);
     expect(data.canPlay).toBe(true);
     expect(data.source.provider).toBe('SELF_HLS');
@@ -122,6 +127,41 @@ describe('Media-Source Route Access', () => {
     expect(data.hasAccess).toBe(false);
     expect(data.source).toBeUndefined();
     expect(data.playbackUrl).toBeUndefined();
+  });
+
+  it.each([
+    ['guest', { type: 'guest' }],
+    ['signed-in stranger', { type: 'user', userId: 'stranger-1' }],
+  ] as const)('redacts hidden premiere metadata from the HTTP response for a %s', async (_label, actor) => {
+    (getActorFromAuth as any).mockResolvedValue(actor);
+    (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
+      videoId: 'hidden-video-id',
+      status: 'UNAVAILABLE',
+      canPlay: false,
+      premiereAt: '2026-12-24T18:00:00.000Z',
+      access: { allowed: false, reason: 'VIDEO_NOT_FOUND', offer: { price: 999 } },
+      source: { provider: 'SELF_HLS', kind: 'self_hls', playbackUrl: 'https://video.pawelperfect.com/secret-token/master.m3u8', isSignedUrl: true },
+      player: { autoplayAllowed: false, mutedAutoplay: false, controls: true, poster: 'Secret poster', title: 'Secret premiere title', textTracks: [{ src: '/secret.vtt', label: 'Secret', language: 'pl', kind: 'subtitles' }], chapters: [{ title: 'Secret chapter', start: 0 }] },
+      diagnostics: { warnings: ['Secret premiere title'], sourceConfidence: 'HIGH', providerResolutionAllowed: true, providerResolutionAttempted: true, sourceMode: 'PROVIDER_ASSET', asset: { provider: 'SELF_HLS', processingState: 'READY', isPrimary: true } },
+      tracking: { playbackSessionId: 'secret-session', heartbeatIntervalSeconds: 15 },
+    });
+
+    const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'hidden-video-id' }) });
+    expect(res.status).toBe(403);
+    const body = await res.text();
+    expect(body).not.toContain('Secret premiere title');
+    expect(body).not.toContain('Secret poster');
+    expect(body).not.toContain('2026-12-24T18:00:00.000Z');
+    expect(body).not.toContain('secret-token');
+    expect(body).not.toContain('secret-session');
+    expect(body).not.toContain('Secret chapter');
+    expect(body).not.toContain('/secret.vtt');
+    const data = JSON.parse(body);
+    expect(data.player.title).toBe('');
+    expect(data.player.poster).toBe('');
+    expect(data.access).toEqual({ allowed: false, reason: 'VIDEO_NOT_FOUND' });
+    expect(data.premiereAt).toBeUndefined();
+    expect(data.tracking.playbackSessionId).toBe('');
   });
 
   it('derives compatibility URLs only from allowed READY playable plans', async () => {

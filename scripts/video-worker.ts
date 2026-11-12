@@ -32,11 +32,15 @@ function log(message: string, extra: Record<string, unknown> = {}) {
 async function main() {
   const credentials = readR2Credentials();
   if (!credentials) throw new Error("R2 credentials are missing (CLOUDFLARE_R2_ACCOUNT_ID / _ACCESS_KEY_ID / _SECRET_ACCESS_KEY).");
+  const testEndpoint = process.env.VIDEO_WORKER_TEST_S3_ENDPOINT;
+  if (testEndpoint && process.env.NODE_ENV !== "test") {
+    throw new Error("VIDEO_WORKER_TEST_S3_ENDPOINT is permitted only in NODE_ENV=test");
+  }
   const workRoot = process.env.VIDEO_WORKER_WORK_DIR || "/work";
   await mkdir(workRoot, { recursive: true });
 
   const workerId = `${os.hostname()}-${randomUUID().slice(0, 8)}`;
-  const client = makeR2Client(credentials);
+  const client = makeR2Client(credentials, testEndpoint ? { testEndpoint } : undefined);
   const originals = new OriginalsReader(client);
   const hls = new HlsWriter(client, hlsBucketName());
   const store = new EncodeJobRepository(prisma);
@@ -76,6 +80,7 @@ async function main() {
       finalizer,
       hls: {
         bucket: hls.bucket,
+        verifyOutput: (assetKey) => hls.verifyOutput(assetKey),
         putFile: (key, file, type) => hls.putFile(key, file, type),
         exists: (key) => hls.exists(key),
         countPrefix: (prefix) => hls.countPrefix(prefix),

@@ -1,5 +1,6 @@
 /** CSV injection, segment filters, export (audit, cap, formula-safe cells), "view as" explanation, device labels. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AccessTier } from '@prisma/client';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { csvNumber, csvText, deviceLabel, exportUsersCsv, explainAccess, panelUserWhere, toCsv, USERS_EXPORT_MAX_ROWS, viewAsPerson } from '@/lib/modules/admin-community';
 
@@ -73,7 +74,8 @@ describe('exportUsersCsv', () => {
 
 describe('explainAccess and viewAsPerson', () => {
   const subject = { isDeleted: false, emailVerified: true, onboardingPending: false, commentMutedUntil: null, role: 'USER' as const };
-  const films = [{ id: 'v1', slug: 'a', title: 'A', tier: 'PUBLIC' as const }, { id: 'v2', slug: 'b', title: 'B', tier: 'LOGGED_IN' as const }, { id: 'v3', slug: 'c', title: 'C', tier: 'PATRON' as const }];
+  // Simulate a legacy database value outside today's enum at this one deliberate input boundary.
+  const films = [{ id: 'v1', slug: 'a', title: 'A', tier: 'PUBLIC' as const }, { id: 'v2', slug: 'b', title: 'B', tier: 'LOGGED_IN' as const }, { id: 'v3', slug: 'c', title: 'C', tier: 'PATRON' as AccessTier }];
   it('two access levels, a leftover PATRON tier counts as logged-in, a tip unlocks nothing', () => {
     const e = explainAccess(subject, films, NOW);
     expect(e.films.map((f) => [f.tier, f.canWatch])).toEqual([['PUBLIC', true], ['LOGGED_IN', true], ['LOGGED_IN', true]]);

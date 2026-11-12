@@ -16,7 +16,10 @@ beforeEach(() => {
   mocks.push.mockClear();
   window.matchMedia = vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() });
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
-  vi.stubGlobal('fetch', vi.fn((url: string, options?: RequestInit) => Promise.resolve(options?.method === 'POST' ? json({ updated: 1, unreadCount: 1 }) : url.includes('unread-count') ? json({ unreadCount: 2 }) : json({ items: [item('like', 'comment_like'), item('reply', 'comment_reply', null)], unreadCount: 2, nextCursor: null, snapshotAt: '2026-10-28T11:00:00.000Z' }))));
+  vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL, options?: RequestInit) => {
+    const url = String(input);
+    return Promise.resolve(options?.method === 'POST' ? json({ updated: 1, unreadCount: 1 }) : url.includes('unread-count') ? json({ unreadCount: 2 }) : json({ items: [item('like', 'comment_like'), item('reply', 'comment_reply', null)], unreadCount: 2, nextCursor: null, snapshotAt: '2026-10-28T11:00:00.000Z' }));
+  }));
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
@@ -31,7 +34,7 @@ describe('notification bell interactions', () => {
     expect(link.closest('ul')!.querySelector('[data-notification-type="comment_reply"] svg')).not.toBeNull();
     const viewAll = await screen.findByRole('link', { name: 'Zobacz wszystkie' });
     expect(viewAll).toHaveAttribute('href', '/powiadomienia');
-    expect(vi.mocked(fetch).mock.calls.some(([url]) => url.includes('limit=5'))).toBe(true);
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('limit=5'))).toBe(true);
     expect(link).toHaveAttribute('href', '/watch/first#comment-c1');
     fireEvent.click(link);
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/watch/first#comment-c1', { scroll: false }));

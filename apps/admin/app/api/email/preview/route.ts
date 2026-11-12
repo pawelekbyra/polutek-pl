@@ -1,5 +1,6 @@
 import { previewEmailTemplate } from "@/lib/modules/email";
 import { panelRouteContext, unauthorizedJson } from "@admin/lib/api/panel-route";
+import { MalformedFormDataBodyError, readRequestFormDataWithLimit, RequestBodyTooLargeError, TooManyFormEntriesError } from "@/lib/utils/request-body";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,15 @@ const field = (fd: FormData, key: string, max: number) => {
 export async function POST(request: Request) {
   const ctx = await panelRouteContext(request);
   if (!ctx) return unauthorizedJson();
-  const fd = await request.formData().catch(() => null);
-  if (!fd) return new Response("Bad request", { status: 400 });
+  let fd: FormData;
+  try {
+    fd = await readRequestFormDataWithLimit(request, 1024 * 1024, 8);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) return new Response("Payload too large", { status: 413 });
+    if (error instanceof TooManyFormEntriesError) return new Response("Too many form fields", { status: 413 });
+    if (error instanceof MalformedFormDataBodyError) return new Response("Bad request", { status: 400 });
+    return new Response("Bad request", { status: 400 });
+  }
   const language = field(fd, "language", 2) === "en" ? "en" : "pl";
   const preview = previewEmailTemplate({
     slug: field(fd, "slug", 80),

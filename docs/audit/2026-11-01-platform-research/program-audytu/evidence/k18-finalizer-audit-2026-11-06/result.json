@@ -1,0 +1,49 @@
+{
+  "package": "K18/R28",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "codeCommit": "dcfe8dde",
+  "scope": "Transactional route audit; recover ambiguous COMMIT; preserve HLS when reconciliation is unavailable; verify active HLS playlist graph before retry reuse.",
+  "checks": [
+    {
+      "name": "postgres-integration",
+      "command": "DATABASE_URL=<disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx prisma migrate deploy && npx vitest run --config vitest.postgres.config.ts tests/postgres/finalize-audit-boundary.pg.test.ts tests/postgres/encode-attempt-fencing.pg.test.ts --reporter=json --outputFile=postgres-vitest-final.json",
+      "exitCode": 0,
+      "migrationsApplied": 82,
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "raw": ["migrate-final.log", "postgres-vitest-final.json"]
+    },
+    {
+      "name": "focused-unit",
+      "command": "npx vitest run tests/unit/modules/video/video-playback-route-service.test.ts tests/unit/video-pipeline/process-encode-job.test.ts tests/unit/video-pipeline/finalize-self-hls.test.ts tests/unit/video-pipeline/encode-job-repository.test.ts tests/unit/video-pipeline/verify-hls-output.test.ts --reporter=json --outputFile=unit-vitest.json",
+      "exitCode": 0,
+      "files": 13,
+      "tests": 52,
+      "passed": 52,
+      "failed": 0,
+      "raw": "unit-vitest.json"
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "name": "eslint",
+      "command": "npx eslint lib/modules/video-pipeline/application/finalize-self-hls.ts lib/modules/video-pipeline/application/process-encode-job.ts lib/modules/video-pipeline/infrastructure/r2-storage.ts lib/modules/video-pipeline/domain/verify-hls-output.ts lib/modules/video-pipeline/domain/route-activation-outcome-unknown.ts lib/modules/video/application/video-playback-route.service.ts scripts/video-worker.ts tests/unit/modules/video/video-playback-route-service.test.ts tests/unit/video-pipeline/finalize-self-hls.test.ts tests/unit/video-pipeline/process-encode-job.test.ts tests/unit/video-pipeline/verify-hls-output.test.ts tests/postgres/finalize-audit-boundary.pg.test.ts",
+      "exitCode": 0
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "limits": [
+    "No Cloudflare R2/S3 sandbox or physical HLS object test.",
+    "No two independent live worker processes; K17 regression is a controlled PostgreSQL takeover sequence.",
+    "K18 remains partially verified and requires independent review and provider-backed acceptance."
+  ]
+}

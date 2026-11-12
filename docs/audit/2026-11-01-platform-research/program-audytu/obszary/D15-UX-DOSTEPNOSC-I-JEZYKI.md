@@ -38,13 +38,21 @@ Demonstracja nie wymagała programowego fokusowania przycisku tła: po przejści
 
 **Ocena:** P2 dostępności i spójności interakcji, potwierdzone dla komponentu, niezależny przegląd PENDING. To nie luka autoryzacji. **Poprawa:** zachować fokus w panelu również bez aktywnych przycisków, odizolować tło i ogłaszać oczekiwanie; można wykorzystać wspólny prymityw dialogu już obecny w repo. Uzgodnić, czy wolno anulować podczas operacji. **Odbiór:** Tab/Shift+Tab nie wychodzi do tła w normalnym i busy, Enter nie wywołuje tła; sukces, błąd i usunięty opener kończą w logicznym miejscu. Dopiero osobna próba pełnego Studia rozliczy integrację z DELETE.
 
+### K34 — implementacja i lokalny odbiór komponentu (częściowo, 2026-11-06)
+
+`ConfirmDialog` korzysta teraz z istniejącego modalnego prymitywu Base UI. W Chromium 149 sprawdzono prawdziwy komponent React i skompilowane style projektu: fokus początkowy i zawijanie Tab, stan busy bez aktywnych kontrolek, odcięcie tła od drzewa dostępności, ogłoszenie `aria-busy`/statusu PL+EN, zablokowane Escape/Enter podczas operacji, retry po syntetycznym błędzie, przywrócenie fokusu do openera oraz fallback do `main` po usunięciu openera. Całe badanie przeszło **16/16 obserwacji**, zero błędów strony i zero zewnętrznych żądań. [Dowód](../evidence/k34-confirm-dialog-focus-2026-11-06/result.json), [pełny wynik Chromium](../evidence/ux-browser-experiment.json).
+
+To nadal fixture komponentu: nie uruchamiano Next/Studia, prawdziwego DELETE, Safari/Firefox ani czytnika ekranu; niezależny review oczekuje. K34 pozostaje częściowe do pełnego odbioru serwerowego i niezależnego przeglądu. Escape i kliknięcie tła podczas busy są celowo ignorowane; po zakończeniu lub błędzie użytkownik może zamknąć okno albo ponowić operację.
+
+**Uzupełnienie 8 listopada — ReportDialog:** w czasie wysyłania zgłoszenia panel dostaje `aria-busy`, fokus jest przenoszony na panel, a `role=status` ogłasza „Operacja w toku”; Escape i zamknięcie są ignorowane do zakończenia requestu. Test komponentu potwierdza busy/status, fokus, blokadę Escape i zamknięcie po sukcesie (**3/3 PASS**), pełny repo typecheck i ESLint zmienionych plików PASS. To nie jest test z czytnikiem ekranu ani pełnego przepływu HTTP; retry po błędzie zachowuje dotychczasowe zachowanie.
+
 ## Dialog zgłoszenia: działające kontrole i ograniczenie wzorca radio
 
 ReportDialog używa wspólnego [Dialog/Base UI](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/components/ui/dialog.tsx). W finalnym pomiarze, po ustaleniu fokusu przez dwie klatki przeglądarki, 12 kolejnych Tab nie dotarło do kontrolek tła. Escape zamknął okno i przywrócił opener. Nie uogólniamy R35 na każdy dialog projektu.
 
 Po syntetycznej awarii zgłoszenia notatka pozostała w polu, okno zostało otwarte, a role=alert zawierał przetłumaczony komunikat. Klawiaturą wybrano Nękanie przez Space, callback dostał HARASSMENT oraz notatkę. Nie wysłano zgłoszenia do moderatora ani nie zbadano odczytu alertu przez screen reader.
 
-Sześć powodów ma role=radio, ale wszystkie sześć jest w kolejności Tab, a ArrowDown na Spam nie zmienia wyboru/fokusu. To rozbieżność względem wzorca APG radio group. **Nie oznacza całkowitego braku obsługi klawiatury:** Tab/Space w tej próbie pozwoliły wybrać powód i wysłać callback. Zapisano obserwację i kierunek poprawy, bez tworzenia nowego ID ani automatycznego ogłoszenia niezgodności całego WCAG.
+W pierwotnym przebiegu sześć powodów miało `role=radio`, ale wszystkie sześć było w kolejności Tab, a ArrowDown nie zmieniał wyboru/fokusu — rozbieżność względem wzorca APG radio group. **Uzupełnienie 8 listopada:** `ReportDialog` ma teraz roving tabindex, strzałki zmieniają wybór i fokus (z zawijaniem), Home/End wybierają skrajne pozycje. Test komponentu **4/4 PASS**; dodatkowy Chromium browser harness przeszedł **16 obserwacji**, w tym ArrowDown/Up/Right, Home/End, wrap i dokładnie jeden Tab stop, bez błędów strony i prób zewnętrznej sieci. [Dowód](../evidence/ux-browser-experiment-2026-11-08.json). Nie jest to odczyt z prawdziwym screen readerem; ocena pozostałych kryteriów WCAG pozostaje otwarta.
 
 Anulowanie DeleteCommentDialog nie wywołało syntetycznej akcji usuwania. Snapshot wykonano w trakcie obsługi zamknięcia/animacji; nie uznano go za osobne potwierdzenie końcowego restore focus. Istniejący test jednostkowy potwierdza wywołanie onConfirm dopiero po przycisku usunięcia, nie prawdziwe kasowanie.
 

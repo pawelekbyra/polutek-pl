@@ -1,0 +1,28 @@
+Lokalne CI: docs/polutek-platform-audit @ d72dc0e5ec28, baza origin/main (c397b9e548ca)
+Zmienione pliki: 810 (+1 usunietych), sloty CPU: 1, Node v22.23.3
+Logi bramek: .claude/local-ci-logs/
+
+> encode-smoke: start (encode-smoke (ffmpeg))
+X encode-smoke: FAIL 22.4 s (Duration  21.19s (transform 206ms, setup 0ms, import 596ms, tests 20.26s, environment 0ms) | JSON report written to /opt/codex/polutek-pl/.worktrees/platform-audit/.claude/local-ci-logs/encode-smoke.vitest.json)
+
+bramka          wynik  czas    przyczyna
+--------------  -----  ------  ---------
+prisma          SKIP   -       pominieta (--skip)
+ci-parity       SKIP   -       nie wybrana (--only)
+migrations      SKIP   -       nie wybrana (--only)
+unit            SKIP   -       nie wybrana (--only)
+critical-path   SKIP   -       nie wybrana (--only)
+typecheck       SKIP   -       nie wybrana (--only)
+typecheck-all   SKIP   -       nie wybrana (--only)
+lint            SKIP   -       nie wybrana (--only)
+architecture    SKIP   -       nie wybrana (--only)
+hotspots        SKIP   -       nie wybrana (--only)
+strict-escapes  SKIP   -       nie wybrana (--only)
+env             SKIP   -       nie wybrana (--only)
+audit           SKIP   -       nie wybrana (--only)
+postgres        SKIP   -       nie wybrana (--only)
+encode-smoke    FAIL   22.4 s  Duration  21.19s (transform 206ms, setup 0ms, import 596ms, tests 20.26s, environment 0ms) | JSON report written to /opt/codex/polutek-pl/.worktrees/platform-audit/.claude/local-ci-logs/encode-smoke.vitest.json
+build           SKIP   -       nie wybrana (--only)
+admin-build     SKIP   -       nie wybrana (--only)
+
+WYNIK: FAIL (encode-smoke), 23.1 s. Raport: .claude/local-ci-last.json

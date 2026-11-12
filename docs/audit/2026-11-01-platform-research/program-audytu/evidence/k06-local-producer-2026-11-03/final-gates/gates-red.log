@@ -1,0 +1,40 @@
+Lokalne CI: docs/polutek-platform-audit @ 1aaef1910d38, baza origin/main (c397b9e548ca)
+Zmienione pliki: 843 (+1 usunietych), sloty CPU: 1, Node v22.23.3
+Logi bramek: .claude/local-ci-logs/
+
+> ci-parity: start (zgodnosc z ci.yml)
+> migrations: start (migracje (UTF-8 bez BOM, addytywne, rosnace znaczniki))
+> typecheck: start (typecheck (tsconfig.typecheck.json))
++ ci-parity: PASS 78 ms
++ migrations: PASS 77 ms
++ typecheck: PASS 1 min 44 s
+> architecture: start (architecture boundaries)
++ architecture: PASS 3.2 s
+> hotspots: start (hotspots)
+X hotspots: FAIL 1.4 s (- app/components/studio/StudioUploadWizard.tsx: 501 lines > 450 (client-component) | - app/components/studio/StudioVideoEditor.tsx: 515 lines > 450 (client-component))
+> strict-escapes: start (strict escapes)
+X strict-escapes: FAIL 1.4 s (- lib/modules/playback/application/playback.service.ts:486 [explicit any annotation] accessTier: tier as any, | - lib/modules/playback/application/playback.service.ts:598 [explicit any annotation] accessTier: tier as any,)
+> env: start (environment validation)
++ env: PASS 1.3 s
+
+bramka          wynik  czas        przyczyna
+--------------  -----  ----------  ---------
+prisma          SKIP   -           pominieta (--skip)
+ci-parity       PASS   78 ms       21 zmiennych env z ci.yml, wszystkie kroki odwzorowane
+migrations      PASS   77 ms       81 migracji, nowych: 0
+unit            SKIP   -           nie wybrana (--only)
+critical-path   SKIP   -           nie wybrana (--only)
+typecheck       PASS   1 min 44 s  0 bledow
+typecheck-all   SKIP   -           nie wybrana (--only)
+lint            SKIP   -           nie wybrana (--only)
+architecture    PASS   3.2 s       0 naruszen
+hotspots        FAIL   1.4 s       - app/components/studio/StudioUploadWizard.tsx: 501 lines > 450 (client-component) | - app/components/studio/StudioVideoEditor.tsx: 515 lines > 450 (client-component)
+strict-escapes  FAIL   1.4 s       - lib/modules/playback/application/playback.service.ts:486 [explicit any annotation] accessTier: tier as any, | - lib/modules/playback/application/playback.service.ts:598 [explicit any annotation] accessTier: tier as any,
+env             PASS   1.3 s       env z ci.yml przechodzi walidacje produkcyjna
+audit           SKIP   -           nie wybrana (--only)
+postgres        SKIP   -           nie wybrana (--only)
+encode-smoke    SKIP   -           nie wybrana (--only)
+build           SKIP   -           nie wybrana (--only)
+admin-build     SKIP   -           nie wybrana (--only)
+
+WYNIK: FAIL (hotspots, strict-escapes), 1 min 53 s. Raport: .claude/local-ci-last.json

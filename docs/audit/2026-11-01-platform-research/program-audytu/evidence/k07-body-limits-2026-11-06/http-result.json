@@ -1,0 +1,23 @@
+{
+  "directNextProductionServer": true,
+  "nextVersion": "16.4.5",
+  "reverseProxyIncluded": false,
+  "smallValidForm": {
+    "status": 400,
+    "body": "{\"ok\":false}"
+  },
+  "tooManyParts": {
+    "status": 413,
+    "body": "{\"error\":\"TOO_MANY_FORM_FIELDS\"}"
+  },
+  "multipartDeclaredBytes": {
+    "size": 16484,
+    "status": 413,
+    "body": "{\"error\":\"PAYLOAD_TOO_LARGE\"}"
+  },
+  "multipartChunkedNoLength": {
+    "size": 16484,
+    "status": 413,
+    "body": "{\"error\":\"PAYLOAD_TOO_LARGE\"}"
+  }
+}

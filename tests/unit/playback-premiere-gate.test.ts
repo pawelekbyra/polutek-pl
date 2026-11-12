@@ -96,6 +96,32 @@ describe('PlaybackService premiere gate', () => {
     }
   });
 
+  it.each<Actor>([{ type: 'guest' }, { type: 'user', userId: 'stranger-1' }])(
+    'does not reveal metadata for a hidden upcoming premiere to %#',
+    async (actor) => {
+      vi.mocked(checkVideoAccess).mockResolvedValue({
+        ok: true,
+        data: { hasAccess: false, reason: 'NOT_FOUND', videoId: 'video-0001', premiereAt: undefined },
+      } as never);
+      prisma.video.findUnique.mockResolvedValue(video({ moderationStatus: 'REMOVED' }));
+
+      const result = await PlaybackService.createPlaybackPlanWithContext(
+        'video-0001',
+        createAppContext({ actor, prisma: prisma as never }),
+      );
+
+      expect(result.status).toBe('UNAVAILABLE');
+      expect(result.premiereAt).toBeUndefined();
+      expect(result.player.title).toBe('');
+      expect(result.player.poster).toBe('');
+      expect(result.source).toBeUndefined();
+      expect(result.tracking.playbackSessionId).toBe('');
+      expect(JSON.stringify(result)).not.toContain('Premiere film');
+      expect(JSON.stringify(result)).not.toContain(premiereAt.toISOString());
+      expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+    },
+  );
+
   it('cannot be skipped by asking for the slug (SEC-10)', async () => {
     // The slug resolves (in checkVideoAccess) to the premiere's row; the service loads that row.
     vi.mocked(checkVideoAccess).mockResolvedValue({

@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-06",
+  "package": "K27/R16 partial: export account-scoped Premium Pass data",
+  "base_commit": "34795159",
+  "source_sha256": {
+    "lib/modules/users/application/export-own-data.use-case.ts": "e1c3077c00a13ecaea433486f872e641db14366d33b9c48c3a111d0665651d42",
+    "lib/modules/patron-zone/application/export-own-pass-data.ts": "95c04e63d16a9aa1c11515fdce4a0aac0995c2c82a4ae88ebc212acd38e61210",
+    "lib/modules/patron-zone/index.ts": "dbe54b1441887b5cb39064c23fe82a63fa20e05a6b0a1330eba04fc0bac870e5",
+    "tests/unit/modules/users/export-own-data.test.ts": "98460a4edb7b6784c71665405a7d2896a029379b2329d67f401ded98267b98cb"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/modules/users/export-own-data.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 6
+    },
+    {
+      "command": "npm run quality:architecture-boundaries",
+      "result": "PASS"
+    },
+    {
+      "command": "npx eslint lib/modules/users/application/export-own-data.use-case.ts lib/modules/patron-zone/application/export-own-pass-data.ts lib/modules/patron-zone/index.ts tests/unit/modules/users/export-own-data.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "included_fields": [
+    "provider, productId, priceMinor, totalMinor, currency, method",
+    "grantedAt, expiresAt, and consent termsVersion/waiverAt"
+  ],
+  "excluded_fields": ["ref", "requestId", "paymentIds", "global daily counters"],
+  "account_scope": "The patron-zone store reads only xp.premium_pass:<userId>; invalid or absent records produce an explicit null category.",
+  "contract_version": 2,
+  "scope": "Synthetic Prisma use-case test only. No HTTP server, real database, production data, provider, or browser was used.",
+  "limitations": [
+    "No full HTTP/DB export flow or independent review.",
+    "K05/K11/K26 policy and account lifecycle dependencies remain open; K27 remains partial."
+  ]
+}

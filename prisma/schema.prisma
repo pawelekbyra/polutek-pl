@@ -455,6 +455,8 @@ model Creator {
   statusChangedAt         DateTime?
   /// AdminUser.id of the staff member who changed the status (null = the system or the owner).
   statusChangedById       String?
+  /// Stable identity of the latest moderation decision that set this status; prevents stale appeals from reversing a later decision.
+  statusDecisionId        String?
   /// Storage value of the channel avatar (same rule as Video.thumbnailUrl: never a derived address).
   avatarUrl               String?
   /// Set when the channel has a banner (ChannelBanner row); the public address carries it as the cache version.
@@ -831,6 +833,8 @@ model Video {
   commentsMode                      VideoCommentsMode @default(ON)
   /// Platform moderation state, separate from publication status: a REMOVED video is never public whatever `status` says.
   moderationStatus                  VideoModerationStatus @default(VISIBLE)
+  /// Stable identity of the latest moderation decision that set moderationStatus; prevents stale appeals from reversing a later decision.
+  moderationDecisionId              String?
   /// Declared by the creator: adult content, signed-in viewers only (same effect as moderationStatus AGE_RESTRICTED).
   isAdult                           Boolean     @default(false)
   moderationReason                  String?
@@ -994,6 +998,8 @@ model VideoAsset {
   objectKey         String
   bucket            String?
   processingState   VideoAssetProcessingState @default(READY)
+  /// Non-null while a durable cleanup owns the HLS prefix; route-activation trigger blocks even legacy workers.
+  cleanupPendingAt  DateTime?
   isPrimary         Boolean                   @default(true)
   failureReason     String?
   processingEndedAt DateTime?
@@ -1079,6 +1085,8 @@ model VideoEncodeJob {
   progressPercent Int                  @default(0)
   etaSeconds      Int?
   attemptCount    Int                  @default(0)
+  /// Fresh UUID assigned atomically on every claim; null only for a legacy in-flight claim.
+  attemptId       String?
   maxAttempts     Int                  @default(3)
   cancelRequested Boolean              @default(false)
   failureCode     String?
@@ -1835,7 +1843,7 @@ enum DurableJobStatus {
 /// e-mail broadcast queue, see lib/modules/shared/durable-job.ts.
 model DurableJob {
   id          String           @id @default(uuid())
-  /// "NEW_VIDEO_FANOUT" | "STORAGE_CLEANUP" (free text on purpose: a new kind needs no migration).
+  /// "NEW_VIDEO_FANOUT" | "STORAGE_CLEANUP" | "VIDEO_ASSET_CLEANUP" (free text on purpose: a new kind needs no migration).
   kind        String
   /// What the job is about (a video id); enqueueing the same (kind, dedupeKey) again does not create a second job.
   dedupeKey   String

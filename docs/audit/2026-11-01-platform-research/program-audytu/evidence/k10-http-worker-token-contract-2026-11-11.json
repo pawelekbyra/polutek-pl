@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-11",
+  "repository_head_sha": "37677b70d105f5d6a3b0566c4309e3d696a77eae",
+  "package": "K10 HTTP-to-HLS-Worker local integration",
+  "finding": "R30: hidden-premiere metadata and protected media boundary",
+  "status": "passed_local_synthetic_integration",
+  "source_sha256": {
+    "tests/postgres/k10-hidden-premiere-http.pg.test.ts": "7b20de8408707873ec9db78daa5628f54441118ccb75a464719e3f645c1a4bbf",
+    "workers/hls-edge/worker.mjs": "ff47e8d667cd30eafcac29028bd77be11c268135bad29c0c629618ddefceb198"
+  },
+  "environment": {
+    "database": "disposable PostgreSQL 17-alpine on loopback, 84/84 Prisma migrations",
+    "http": "actual local Next dev server",
+    "auth": "Better Auth signed session cookies with DB-backed users",
+    "edge": "actual Worker module with synthetic R2 and cache bindings",
+    "production_or_external_services": "not used"
+  },
+  "command": "npx vitest run --config vitest.postgres.config.ts tests/postgres/k10-hidden-premiere-http.pg.test.ts --testTimeout=30000 --hookTimeout=120000",
+  "result": { "files": 1, "passed": 2, "failed": 0 },
+  "assertions": [
+    "guest and unrelated user receive no metadata or source for a removed video",
+    "owner draft preview returns the signed playback URL over real HTTP",
+    "that exact app-issued URL is accepted by the HLS Worker and returns the synthetic master playlist",
+    "after cache fill, a modified signature on that URL receives 403 and does not reveal the cached object",
+    "guest and unrelated user cannot obtain a playback URL or session before a legal premiere"
+  ],
+  "cleanup": "The disposable PostgreSQL container used tmpfs and was automatically removed; fixture rows were removed by test teardown.",
+  "limitations": [
+    "Synthetic R2/cache only; no Cloudflare deployment or real R2 was contacted.",
+    "The master playlist is a synthetic fixture; no manifest segment graph or browser playback was exercised.",
+    "Independent review and production Worker configuration remain open."
+  ]
+}

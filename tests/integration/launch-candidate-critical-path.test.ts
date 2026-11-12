@@ -16,8 +16,9 @@ import { getPatronStatus, grantPatron, revokePatron } from '@/lib/modules/patron
 import { PlaybackService } from '@/lib/modules/playback';
 import { recordPlaybackEventUseCase } from '@/lib/modules/video/application/record-playback-event.use-case';
 
-const { rateLimitLocks } = vi.hoisted(() => ({
+const { rateLimitLocks, mockNotificationCreate } = vi.hoisted(() => ({
   rateLimitLocks: new Map<string, string>(),
+  mockNotificationCreate: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: 'notification-1', ...data })),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -47,6 +48,9 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     paymentCurrencySetting: { findMany: vi.fn(async () => []) },
     auditLog: { create: vi.fn(async ({ data }) => ({ id: 'audit-global', ...data })) },
+    notificationPreference: { findUnique: vi.fn(async () => null) },
+    notificationTemplate: { findUnique: vi.fn(async () => null) },
+    notification: { create: mockNotificationCreate },
   },
 }));
 
@@ -167,6 +171,7 @@ function createHarness() {
 
   const db: any = {
     $transaction: async (fn: any) => fn(db),
+    $queryRaw: async () => [],
     $executeRaw: async (_strings: TemplateStringsArray, userId: string, currency: string, amountMinor: number) => {
       const key = `${userId}:${currency}`;
       const existing = state.totals.get(key);
@@ -414,7 +419,7 @@ function createHarness() {
       slug: id,
       videoUrl: 'https://legacy.example.test/private.mp4?signature=secret',
       thumbnailUrl: '/thumb.jpg',
-      tier: AccessTier.PATRON,
+      tier: AccessTier.LOGGED_IN,
       status: VideoStatus.PUBLISHED,
       publishedAt: new Date('2026-06-01T00:00:00Z'),
       views: 0,
@@ -471,6 +476,9 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(harness.state.payments.get('pay_a')?.status).toBe(PaymentStatus.SUCCEEDED);
     expect(harness.activeGrants('user_a')).toHaveLength(1);
     expect(harness.activeGrants('user_a')[0].paymentId).toBe('pay_a');
+    expect(mockNotificationCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ userId: 'user_a', kind: 'PATRON', templateKey: 'support_thanks' }),
+    }));
 
     const patronStatus = await getPatronStatus('user_a', harness.ctx('user_a'));
     expect(patronStatus.ok && patronStatus.data.isPatron).toBe(true);

@@ -1,0 +1,19 @@
+
+$ /usr/bin/node /opt/codex/polutek-pl/.worktrees/platform-audit/node_modules/vitest/vitest.mjs run tests/unit/hls/encode-hls.ffmpeg.test.ts --maxWorkers=1 --reporter=dot --reporter=json --outputFile.json=/opt/codex/polutek-pl/.worktrees/platform-audit/.claude/local-ci-logs/encode-smoke.vitest.json
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+··stderr | tests/unit/hls/encode-hls.ffmpeg.test.ts > encode-hls with real ffmpeg > tone-maps an HLG (HDR) source to BT.709 SDR instead of rejecting it
+[encode-hls.ffmpeg] skipping the HLG tone-mapping test: this libx264 build does not write the HLG colour tags
+
+-
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 1 skipped (3)
+   Start at  23:41:22
+   Duration  21.19s (transform 206ms, setup 0ms, import 596ms, tests 20.26s, environment 0ms)
+
+JSON report written to /opt/codex/polutek-pl/.worktrees/platform-audit/.claude/local-ci-logs/encode-smoke.vitest.json
+
+[exit 0]

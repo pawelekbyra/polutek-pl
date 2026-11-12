@@ -365,6 +365,21 @@ export function parseVitestJson(json) {
   };
 }
 
+/** Aggregate green counts cannot stand in for a missing/empty/skipped mandatory suite. */
+export function requiredSuitesPass(report, requiredFiles) {
+  if (!report || report.success !== true || !Array.isArray(report.testResults)
+    || !Array.isArray(requiredFiles) || requiredFiles.length === 0
+    || requiredFiles.some(file => typeof file !== 'string' || !file)) return false;
+  const paths = requiredFiles.map(toPosix);
+  if (new Set(paths).size !== paths.length) return false;
+  return paths.every(file => {
+    const matches = report.testResults.filter(result => result && typeof result.name === 'string' && toPosix(result.name) === file);
+    return matches.length === 1 && Array.isArray(matches[0].assertionResults)
+      && matches[0].assertionResults.length > 0
+      && matches[0].assertionResults.every(assertion => assertion && assertion.status === 'passed');
+  });
+}
+
 /** Counts TypeScript errors, split into errors under ignored path prefixes (e.g. .next/) and the rest. */
 export function parseTscOutput(text, ignoredPrefixes = []) {
   const errors = [];

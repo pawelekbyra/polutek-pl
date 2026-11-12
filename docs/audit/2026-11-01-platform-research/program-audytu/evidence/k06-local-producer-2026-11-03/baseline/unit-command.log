@@ -1,0 +1,28 @@
+Lokalne CI: docs/polutek-platform-audit @ 04ca6503e6a7 (+ niezatwierdzone zmiany), baza origin/main (c397b9e548ca)
+Zmienione pliki: 801 (+1 usunietych), sloty CPU: 1, Node v22.23.3
+Logi bramek: .claude/local-ci-logs/
+
+> unit: start (tests/coverage (vitest))
++ unit: PASS 17 min 7 s
+
+bramka          wynik  czas        przyczyna
+--------------  -----  ----------  ---------
+prisma          SKIP   -           pominieta (--skip)
+ci-parity       SKIP   -           nie wybrana (--only)
+migrations      SKIP   -           nie wybrana (--only)
+unit            PASS   17 min 7 s  caly zestaw; 540 plikow, 4732 testow, 0 nieudanych, 3 pominietych
+critical-path   SKIP   -           nie wybrana (--only)
+typecheck       SKIP   -           nie wybrana (--only)
+typecheck-all   SKIP   -           nie wybrana (--only)
+lint            SKIP   -           nie wybrana (--only)
+architecture    SKIP   -           nie wybrana (--only)
+hotspots        SKIP   -           nie wybrana (--only)
+strict-escapes  SKIP   -           nie wybrana (--only)
+env             SKIP   -           nie wybrana (--only)
+audit           SKIP   -           nie wybrana (--only)
+postgres        SKIP   -           nie wybrana (--only)
+encode-smoke    SKIP   -           nie wybrana (--only)
+build           SKIP   -           nie wybrana (--only)
+admin-build     SKIP   -           nie wybrana (--only)
+
+WYNIK: PASS, 17 min 9 s. Raport: .claude/local-ci-last.json

@@ -1,0 +1,138 @@
+{
+  "package": "K21/R21",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "status": "PARTIAL",
+  "scope": "Add pure shared runtime response schemas for multipart upload, encode pipeline and playback plans; validate the Studio/admin/browser consumers at their JSON boundary and stop safely on malformed success responses.",
+  "checks": [
+    {
+      "name": "focused-unit",
+      "command": "npx vitest run tests/unit/video-api-contracts.test.ts tests/unit/video-pipeline/multipart-uploader.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "files": 2,
+      "tests": 19,
+      "passed": 19,
+      "failed": 0,
+      "covers": [
+        "valid pipeline and playback DTOs",
+        "invalid response structure and enum",
+        "null/wrong/invalid JSON 200 in Studio client",
+        "malformed multipart success does not continue to upload",
+        "malformed remembered-upload response preserves resume point and sends no follow-up request (regression first reproduced red, then green)"
+      ]
+    },
+    {
+      "name": "server-route-contracts",
+      "command": "npx vitest run tests/unit/api/studio-routes.test.ts tests/unit/api/media-source-route.test.ts tests/unit/video-api-contracts.test.ts tests/unit/video-pipeline/multipart-uploader.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "files": 4,
+      "tests": 54,
+      "passed": 54,
+      "failed": 0,
+      "covers": [
+        "actual Studio upload and pipeline route serializers",
+        "actual media-source route sanitizer and playback response",
+        "controlled use-case doubles; not a live process or real server-backed API"
+      ]
+    },
+    {
+      "name": "postgres-studio-upload-and-job-routes",
+      "command": "DATABASE_URL=<disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "testsInFile": 4,
+      "passed": 4,
+      "failed": 0,
+      "covers": [
+        "real Prisma and PostgreSQL rows",
+        "actual Studio multipart-start/complete and pipeline GET route handlers",
+        "encode job DTO reflects persisted queued job",
+        "pre-contract generic Studio client consumes additive current response",
+        "R2 isolated behind controlled fake"
+      ]
+    },
+    {
+      "name": "postgres-playback-route",
+      "command": "DATABASE_URL=<disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/k21-media-source-contract.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "covers": [
+        "actual media-source route handler",
+        "actual PlaybackService and checkVideoAccess backed by PostgreSQL",
+        "valid denied playback plan matches response contract",
+        "rate limiter controlled"
+      ]
+    },
+    {
+      "name": "next-http-playback-runtime",
+      "command": "Start local `npm run dev -- --hostname 127.0.0.1 --port 3377` against disposable PostgreSQL 17; GET /api/media-source/<synthetic-video-id>; validate response with PlaybackPlanResponseSchema.safeParse.",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "httpStatus": 403,
+      "responseBytes": 596,
+      "contractValid": true,
+      "playbackStatus": "LOGIN_REQUIRED",
+      "cleanup": "Stopped the Next dev process and removed the disposable PostgreSQL container after the request.",
+      "runtimeNote": "Next 16.4.5 logged its sync-dynamic-apis warning from lib/utils/correlation.ts getCorrelationId(); the helper caught the error and the request completed with the expected contract. This separate finding is left for Claude's server review."
+    },
+    {
+      "name": "next-http-authenticated-studio-pipeline-runtime",
+      "command": "Start local npm run dev -- --hostname 127.0.0.1 --port 3377 against disposable PostgreSQL 17; seed synthetic Better Auth user/session/creator/draft video; sign disposable session cookie; GET /api/studio/videos/<id>/pipeline; validate with PipelineStateResponseSchema.safeParse.",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "httpStatus": 200,
+      "contractValid": true,
+      "pipelineSummary": "NO_ORIGINAL",
+      "cleanup": "Synthetic rows were deleted by the harness; Next dev process stopped and disposable PostgreSQL container removed."
+    },
+    {
+      "name": "typecheck",
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json (after final K21 review fixes)",
+      "exitCode": 0
+    },
+    {
+      "name": "eslint",
+      "command": "npx eslint <11 changed TS/TSX files>",
+      "exitCode": 0,
+      "warnings": 4,
+      "warningNote": "Four react-hooks/set-state-in-effect warnings are in existing effects; no lint errors."
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check (after final K21 review fixes)",
+      "exitCode": 0
+    },
+    {
+      "name": "postgres-route-regression-after-contract-tightening",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts tests/postgres/k21-media-source-contract.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "cleanup": "Temporary database container stopped after tests."
+    }
+  ],
+  "design": {
+    "contractModule": "lib/video-api-contracts/contracts.ts",
+    "dependencies": "Zod plus a type-only PlaybackPlan import; no application or infrastructure imports.",
+    "failureBehavior": "Studio HTTP 200 with malformed or invalid JSON becomes API_CONTRACT_MISMATCH/502; playback plan parsing returns null and consumers fail closed; multipart consumers stop before subsequent requests or PUTs.",
+    "compatibility": "Existing endpoints and URLs are unchanged; response schemas accept additive DTO fields."
+  },
+  "limits": [
+    "Playback and authenticated Studio pipeline were verified through a running local Next.js HTTP process and disposable PostgreSQL; authenticated Studio multipart upload with a real R2/S3-compatible service was not exercised, so K21-T1 remains partial.",
+    "Focused negative tests cover malformed reservation/list responses and invalid enums; full browser/runtime client matrix and second-person review remain partial, so K21-T2 is locally covered but the package is not formally closed.",
+    "No separate reviewer; R21 is not marked closed."
+  ],
+  "review": {
+    "scope": "Independent pass over K21 boundary schemas and their callers after initial implementation.",
+    "findingsFixed": [
+      "Malformed 200 response while resuming a saved multipart upload cleared local resume state and immediately created a new reservation; fallback now occurs only for explicit ORIGINAL_NOT_FOUND or UPLOAD_NOT_OPEN.",
+      "Pipeline original.status accepted any non-empty string; it now validates the complete VideoOriginalStatus enum in admin and Studio schemas."
+    ],
+    "remaining": "Live authenticated Studio multipart upload against a real S3-compatible/R2 service remains for Claude/server acceptance; no independent second-person review."
+  }
+}

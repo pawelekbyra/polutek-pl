@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { invalidRequest, privateNotificationResponse, viewerNotificationsContext } from "@/lib/api/viewer-notifications-route";
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
     const session = await viewerNotificationsContext("write");
     if ("response" in session) return session.response;
 
-    const parsed = markNotificationsReadSchema.safeParse(await req.json().catch(() => null));
+    const parsed = markNotificationsReadSchema.safeParse(await readRequestJsonOrNullWithLimit(req));
     if (!parsed.success) return invalidRequest('Send { "id": "..." } or { "all": true }.');
 
     const result = await markNotificationsRead(session.ctx, parsed.data);

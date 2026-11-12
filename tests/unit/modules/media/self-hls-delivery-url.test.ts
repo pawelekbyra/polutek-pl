@@ -15,6 +15,13 @@ describe("MediaPolicy.isProbablyRawMediaUrl and own HLS delivery", () => {
     expect(MediaPolicy.isSelfHlsDeliveryUrl(OWN, env)).toBe(false);
   });
 
+  it("accepts the signed attempt identity in the delivery version segment", () => {
+    const attempt = "9a4186c7-ef23-4a16-a3e0-8db8e89302d1";
+    const url = `https://video.pawelperfect.com/h/1790000000.abcDEF123/c52f0407-b0e8-4b5c-b6d3-a9f152653002/v1~${attempt}/master.m3u8`;
+    expect(MediaPolicy.isSelfHlsDeliveryUrl(url, {} as NodeJS.ProcessEnv)).toBe(true);
+    expect(MediaPolicy.isProbablyRawMediaUrl(url)).toBe(false);
+  });
+
   it("still redacts look-alikes and other raw media URLs", () => {
     expect(MediaPolicy.isProbablyRawMediaUrl("https://evil.example.com/h/t/v/v1/master.m3u8")).toBe(true);
     expect(MediaPolicy.isProbablyRawMediaUrl("https://video.pawelperfect.com.evil.com/h/t/v/v1/master.m3u8")).toBe(true);

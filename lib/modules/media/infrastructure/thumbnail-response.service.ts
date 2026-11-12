@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { MediaPolicy } from "@/lib/modules/media";
+import { MediaPolicy } from "@/lib/modules/media/domain/media.policy";
 import { parsePrivateThumbnailStorageUrl } from "../domain/r2-thumbnail";
 import { R2ThumbnailStorageClient } from "./r2-thumbnail-storage.client";
 import { logger } from "@/lib/logger";

@@ -57,7 +57,7 @@ export async function runWorkerLoop(deps: WorkerLoopDeps): Promise<{ processed: 
         await deps.sleep(poll, deps.shutdown);
         continue;
       }
-      deps.log("job claimed", { jobId: job.id, videoId: job.videoId, attempt: job.attemptCount });
+      deps.log("job claimed", { jobId: job.id, attemptId: job.attemptId, videoId: job.videoId, attempt: job.attemptCount });
       const outcome = await processEncodeJob(job, deps.portsFor(job));
       // The history is a test hook (maxTurns); a long-lived production loop would only grow it (audit W30).
       if (deps.maxTurns !== undefined) processed.push(outcome);

@@ -1,0 +1,34 @@
+Lokalne CI: docs/polutek-platform-audit @ 1aaef1910d38 (+ niezatwierdzone zmiany), baza origin/main (c397b9e548ca)
+Zmienione pliki: 857 (+1 usunietych), sloty CPU: 1, Node v22.23.3
+Logi bramek: .claude/local-ci-logs/
+
+> typecheck: start (typecheck (tsconfig.typecheck.json))
++ typecheck: PASS 1 min 3 s
+> architecture: start (architecture boundaries)
++ architecture: PASS 1.2 s
+> hotspots: start (hotspots)
++ hotspots: PASS 895 ms
+> strict-escapes: start (strict escapes)
++ strict-escapes: PASS 949 ms
+
+bramka          wynik  czas       przyczyna
+--------------  -----  ---------  ---------
+prisma          SKIP   -          pominieta (--skip)
+ci-parity       SKIP   -          nie wybrana (--only)
+migrations      SKIP   -          nie wybrana (--only)
+unit            SKIP   -          nie wybrana (--only)
+critical-path   SKIP   -          nie wybrana (--only)
+typecheck       PASS   1 min 3 s  0 bledow
+typecheck-all   SKIP   -          nie wybrana (--only)
+lint            SKIP   -          nie wybrana (--only)
+architecture    PASS   1.2 s      0 naruszen
+hotspots        PASS   895 ms     Hotspot guard passed: source files stay within LOC budgets or documented temporary exceptions.
+strict-escapes  PASS   949 ms     Only approved historical strict TypeScript escape hatches were found in scanned production source files; no new debt detected.
+env             SKIP   -          nie wybrana (--only)
+audit           SKIP   -          nie wybrana (--only)
+postgres        SKIP   -          nie wybrana (--only)
+encode-smoke    SKIP   -          nie wybrana (--only)
+build           SKIP   -          nie wybrana (--only)
+admin-build     SKIP   -          nie wybrana (--only)
+
+WYNIK: PASS, 1 min 7 s. Raport: .claude/local-ci-last.json

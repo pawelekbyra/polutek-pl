@@ -52,11 +52,17 @@ export async function handleDispute(
 
   try {
     const changed = await ctx.db.writeTransaction(async (tx) => {
-      const payment = await repo.findByIntentId(input.stripeIntentId, tx);
-      if (!payment) {
+      const found = await repo.findByIntentId(input.stripeIntentId, tx);
+      if (!found) {
         recordAlert('payment.dispute_unmatched', { stripeIntentId: input.stripeIntentId });
         return false;
       }
+      // Refund reconciliation uses the same row lock while reading Stripe and updating the
+      // aggregate. Serializing here ensures each transition sees the previous one's new status
+      // and refunded amount, including concurrent lost-dispute/refund delivery.
+      await repo.lockPaymentRow(found.id, tx);
+      const payment = await repo.findById(found.id, tx);
+      if (!payment) return false;
 
       // A dispute implies Stripe took the money: a payment still unpaid locally has not been recorded
       // yet (event order, webhook outage). Fail so Stripe redelivers once it is recorded, instead of

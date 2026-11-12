@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 import type { AppContext } from "@/lib/modules/shared/app-context";
-import { sendNotification } from "@/lib/modules/notifications";
+import { sendNotification } from "@/lib/modules/notifications/application/send-notification.use-case";
 import { describeDecisionAction, isAlwaysNotifiedAction, isAppealOutcomeAction } from "../domain/moderation-appeal.policy";
 
 /**
@@ -75,7 +75,7 @@ You can appeal in the "Decisions and appeals" section of the Studio.`,
     }
 
     if (!owner.email) return;
-    const email = await import("@/lib/modules/email");
+    const email = await import("@/lib/modules/email/application/send-moderation-email");
     await email.sendModerationDecisionEmail({
       to: owner.email,
       language: owner.language === "pl" ? "pl" : "en",
@@ -98,7 +98,7 @@ export async function notifyReporterOfDecision(
   try {
     const recipient = await resolveReporterAddress(ctx, input.reporterId, input.reporterEmail);
     if (!recipient) return;
-    const email = await import("@/lib/modules/email");
+    const email = await import("@/lib/modules/email/application/send-moderation-email");
     await email.sendReporterEmail({
       to: recipient.email,
       language: recipient.language === "pl" ? "pl" : "en",
@@ -121,7 +121,7 @@ export async function sendReportReceipt(
   try {
     const recipient = await resolveReporterAddress(ctx, input.reporterId, input.reporterEmail ?? null);
     if (!recipient) return;
-    const email = await import("@/lib/modules/email");
+    const email = await import("@/lib/modules/email/application/send-moderation-email");
     await email.sendReporterEmail({
       to: recipient.email,
       language: recipient.language === "pl" ? "pl" : "en",

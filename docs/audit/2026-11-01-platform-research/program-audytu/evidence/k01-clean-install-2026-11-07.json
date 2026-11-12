@@ -1,0 +1,39 @@
+{
+  "package": "K01",
+  "checkedAt": "2026-11-07",
+  "revision": "6ae3e5a320a840066b53359aafe189182fc538f1",
+  "workingTreeBeforeInstall": "clean",
+  "runtime": {
+    "node": "v22.23.3",
+    "npm": "10.9.9"
+  },
+  "inputs": {
+    "packageLockSha256": "0369f1f287f1d2cf20ef7615fbd326b316faa9a2d4c78e3044a97bf3ac14a83b",
+    "prismaSchemaSha256": "dde72e73d3169f07291175dd3a165009c0bc957a63ff49cb92180d08f523f830"
+  },
+  "command": "npm_config_audit=false npm ci",
+  "result": {
+    "exitCode": 0,
+    "durationSeconds": 59,
+    "packagesAdded": 893,
+    "postinstall": "npm run prisma:generate",
+    "prismaCli": "6.19.3",
+    "generatedClient": "6.19.3"
+  },
+  "verifiedResolvedPackages": {
+    "next": "16.4.5",
+    "eslint-config-next": "16.4.5",
+    "prisma": "6.19.3",
+    "@prisma/client": "6.19.3"
+  },
+  "warnings": [
+    "npm reported the existing deprecated whatwg-encoding@3.1.1 dependency.",
+    "Prisma reported the existing deprecated package.json#prisma configuration; generation succeeded."
+  ],
+  "limits": [
+    "Install ran in the dedicated repair worktree, not a newly cloned checkout.",
+    "npm audit was disabled per the recorded repository instruction; this is not a dependency security audit.",
+    "This command did not run migrations, PostgreSQL assertions, local API/worker, media encoding, storage, or production services."
+  ],
+  "status": "clean lockfile install and Prisma generation passed; K01 remains partial pending fresh-checkout reproducibility and full local API/worker/video acceptance."
+}

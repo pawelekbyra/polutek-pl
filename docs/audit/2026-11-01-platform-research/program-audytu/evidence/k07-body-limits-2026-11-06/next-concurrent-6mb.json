@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-06",
+  "nextVersion": "16.4.5",
+  "route": "/api/k07-concurrency-fixture",
+  "stack": "optimized local Next server on loopback, no external proxy",
+  "method": "POST chunked streaming, Content-Length absent, synthetic optimistic-session cookie; fixture has no auth/data side effects",
+  "concurrency": 16,
+  "applicationLimitBytes": 6291456,
+  "requestBodyBytes": 6291457,
+  "statuses": {
+    "413": 16
+  },
+  "elapsedMs": 1398,
+  "serverPid": 1284637,
+  "baselineRssBytes": 167489536,
+  "peakRssBytes": 304185344,
+  "rssIncreaseBytes": 136695808
+}

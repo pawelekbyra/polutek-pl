@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_EXISTING_LINT_BLOCKER_NOTIFICATION_HOOK",
+  "base_commit": "212a40cfdf70db9c501b34e33d762214f6aabee6",
+  "file_sha256": {
+    "app/components/notifications/useNotificationFeed.ts": "054188483066a72519ca9e1253db645030644265bcab37341a1c8e975a0db9ee"
+  },
+  "change": {
+    "before": "Refs were assigned during render; ESLint react-hooks/refs reported four errors.",
+    "after": "open, filter, items and refresh refs are synchronized in useLayoutEffect after commit and before paint."
+  },
+  "validation": {
+    "npx eslint app/components/notifications/useNotificationFeed.ts": {
+      "exit": 0,
+      "warnings": 3,
+      "errors": 0
+    },
+    "npx vitest run tests/unit/components/notification-feed.test.tsx --testTimeout=120000 --hookTimeout=120000": {
+      "exit": 0,
+      "files": 1,
+      "passed": 8,
+      "failed": 0
+    },
+    "npm run typecheck": {
+      "exit": 0
+    },
+    "npm run lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 101
+    }
+  },
+  "limitations": [
+    "No public/admin app build or runtime image inspection.",
+    "The 101 remaining lint warnings were not part of this fix."
+  ]
+}

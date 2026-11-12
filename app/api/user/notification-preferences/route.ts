@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { invalidRequest, viewerNotificationsContext } from "@/lib/api/viewer-notifications-route";
@@ -27,7 +28,7 @@ export async function PATCH(req: NextRequest) {
     const session = await viewerNotificationsContext("write");
     if ("response" in session) return session.response;
 
-    const parsed = updateNotificationPreferencesSchema.safeParse(await req.json().catch(() => null));
+    const parsed = updateNotificationPreferencesSchema.safeParse(await readRequestJsonOrNullWithLimit(req));
     if (!parsed.success) return invalidRequest("Send at least one boolean preference and no unknown fields.");
 
     const preferences = await updateNotificationPreferences(session.ctx, parsed.data);

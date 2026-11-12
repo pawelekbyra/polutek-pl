@@ -2,7 +2,7 @@
 
 Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-audit`** w repozytorium `pawelekbyra/polutek-pl`. Właściciel 1 listopada 2026 polecił zachowywać tutaj także poprzednie badanie i dopisywać kolejne wnioski na tej samej gałęzi.
 
-**Roadmapa v1 zatwierdzona przez właściciela 2 listopada 2026. H1: kandydaty zapisane, pełny odbiór blokuje środowisko.** [Bieżący postęp i blokady](POSTEP-NAPRAW.md). Weryfikacja obejmuje ten etap; szersze nowe ASVS pozostaje odłożone w tej instancji. Zachowano równoległe wyniki Windows i adopcję partii 17. Bez scalenia i wdrożenia.
+**Roadmapa wznowiona na polecenie właściciela 6 listopada 2026.** Punkt bazowy to lokalny merge aktualnego `origin/main` (`e2d33e0e`), commit `7e6f5335`; pełne `npm run quality` przeszło na tym drzewie. Pakiety K01–K40 są w różnym stopniu częściowo zweryfikowane; żaden nie jest formalnie zamknięty. Ostatni krok: K21/K15 retest na świeżej PostgreSQL po 84 migracjach, 6/6 PASS; K20 ma 8/8 z osobnym procesem finalizera. R2/HLS, pełne Next HTTP, niezależne review i K02 runtime images pozostają otwarte. [Bieżący stan i komenda wznowienia](program-audytu/STAN.md), [postęp i dowody](POSTEP-NAPRAW.md), [mapa commitów](program-audytu/MAPA-COMMITOW.csv). Bez push, PR, merge do main, wdrożenia ani produkcji.
 
 ## Zacznij tutaj
 
@@ -10,13 +10,14 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 |---|---|
 | [ROADMAPA NAPRAW v1](ROADMAPA-NAPRAW.md) | Wszystkie R01–R37, 40 pakietów w 8 etapach, testy, zależności i braki dowodowe |
 | [Kolejność napraw — CSV](KOLEJNOSC-NAPRAW.csv) | 37/37 ustaleń, klasyfikacja, priorytety, zależności i status planu |
-| [Plan wdrożenia i dalszej weryfikacji](PLAN-WDROZENIA-NAPRAW.md) | Proponowany harmonogram do zatwierdzenia; obecnie bez rozpoczęcia prac |
+| [Plan wdrożenia i dalszej weryfikacji](PLAN-WDROZENIA-NAPRAW.md) | Historyczny harmonogram; bieżąca realizacja i ograniczenia w POSTEP-NAPRAW.md |
 | [Co już wiemy — dla właściciela](program-audytu/WNIOSEK-DLA-WLASCICIELA.md) | Mocne fundamenty, odtworzone błędy i granice gotowości bez oceny w punktach |
 | [Plan domknięcia wszystkich obszarów](program-audytu/DOMKNIECIE-DOWODOW.csv) | Brakujące dowody i warunki odbioru dla D01–D18; żaden obszar nie jest zamknięty |
 | [Bramki gotowości](program-audytu/BRAMKI-GOTOWOSCI.csv) | Osobne wymagania dla lokalnego runtime, bety, sprzedaży, otwartej platformy i 10000 widzów |
 | [Raport bazowy](RAPORT.md) | Pogłębione porównanie, 22 obszary oceny, wyniki kontroli i eksperymentów |
 | [Program pełnego badania](program-audytu/PROGRAM.md) | Zakres 18 obszarów, etapy, wymagania dowodu i warunki ukończenia |
 | [Stan i następny krok](program-audytu/STAN.md) | Punkt wznowienia każdej kolejnej sesji |
+| [K32: inwentarz odtwarzania](program-audytu/K32-RECOVERY-INVENTORY.md) | Zasoby, udokumentowane kopie, granice obecnego restore testu i nierozstrzygnięte decyzje RPO/RTO |
 | [Mapa systemu](program-audytu/MAPA-SYSTEMU.md) | Komponenty, role, 14 przepływów krytycznych i granice zaufania |
 | [D01: produkt i zakres](program-audytu/obszary/D01-PRODUKT-I-ZAKRES.md) | 22 obietnice produktu i rozdzielenie implementacji od aktywnej konfiguracji |
 | [D03: tożsamość i sesje](program-audytu/obszary/D03-TOZSAMOSC-I-SESJE.md) | Konta WWW/panelu, zakres R13/R14 i R24: realny pomiar cofania sesji w izolowanym HTTP biblioteki |

@@ -1,0 +1,31 @@
+{
+  "package": "K35-T1 local Chromium playback through HLS edge Worker",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "e91ce1b1e8f26ef5c877d5126949374fd962d48a",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped and removed",
+    "storage_fixture": "loopback S3-compatible HTTP fixture with aws-chunked payload decoding; no external storage",
+    "browser": "Playwright Chromium loaded the actual Next page and Vidstack/Hls.js player",
+    "edge_worker": "actual workers/hls-edge/worker.mjs invoked by the browser route adapter",
+    "playback_assertions": [
+      "master and variant playlists begin with #EXTM3U and return HTTP 200",
+      "initialization MP4 and nonempty fMP4 media segment return HTTP 200",
+      "media element reaches readyState > 1 and currentTime > 0.5 seconds"
+    ],
+    "repo_typecheck": "PASS (npm run typecheck)",
+    "eslint": "PASS (targeted test file)",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "423f9f14559b04f9b0b0f84475f258d07d69e2393ebda65a2c4ec7739c8da3ec"
+  },
+  "correction": "Earlier local S3 fixture stored aws-chunked payload framing as object data. Prior K35 edge checks for contains(#EXTM3U) and nonempty segment did not prove valid HLS bytes. The corrected fixture decodes aws-chunked payloads; this browser acceptance supersedes the earlier limited content claim.",
+  "limitations": [
+    "Local Chromium, local Worker invocation and S3-compatible fixture only; not deployed Cloudflare Worker or real R2.",
+    "Other browsers, mobile playback, permission revocation, complete role/state matrix, deployed configuration and independent review remain unverified.",
+    "K35-T1 and K01-T3 remain partial pending provider/deployed acceptance and independent review."
+  ]
+}

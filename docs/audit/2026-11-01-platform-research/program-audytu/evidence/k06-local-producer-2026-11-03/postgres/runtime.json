@@ -1,0 +1,5 @@
+{
+  "owned_container": "4bb7d79e6503ea8c8e62544f148034f55cf2e83d38d0909c3d9670dc719d8b1f",
+  "image": "sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b",
+  "postgres": "postgres (PostgreSQL) 17.11"
+}
