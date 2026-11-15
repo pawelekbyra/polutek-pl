@@ -1,5 +1,17 @@
 # Co już wiemy o Polutku
 
+## Aktualizacja stanu pokrycia — 15 listopada 2026
+
+Ta aktualizacja uzgadnia stan programu po lokalnych retestach z 6–12 listopada. Analiza jest przypisana do gałęzi `docs/polutek-platform-audit`, HEAD `c63a85015f4d9aca627989c406201197e25d16a3`; pojedyncze wyniki pochodzą jednak z różnych SHA i nie tworzą jednego pełnego przebiegu na HEAD.
+
+**Wszystkie obszary audytu nie są gotowe.** W `POKRYCIE.csv` nadal wszystkie D01–D18 mają status `W_TRAKCIE`; `DOMKNIECIE-DOWODOW.csv` ma 18/18 pozycji otwartych; żaden z pięciu celów gotowości nie ma zatwierdzenia. Niezależnego przeglądu nie odnotowano.
+
+Późniejsze testy wyraźnie rozszerzyły lokalne dowody: m.in. K01 przeszło pełny lokalny przepływ Studio → worker/FFmpeg → HLS w Chromium (1/1), K03 critical path przeszedł 37/37, lokalne testy K11 zwrotów Premium przeszły 23/23, a wybrane próby K20–K25, K27, K34 i K38 sprawdziły konkretne kontrakty, wyścigi lub trasy. Te wyniki dotyczą wskazanych SHA i syntetycznych danych/usług; nie zamykają całych obszarów ani nie potwierdzają produkcji. Szczegóły i ograniczenia: [STAN](STAN.md) i [POSTEP-NAPRAW](../POSTEP-NAPRAW.md).
+
+**Istotna luka w ewidencji:** `ASVS-POKRYCIE.csv` i `POWIERZCHNIA-WEJSC.csv` nie były aktualizowane od 2 listopada. Nadal wykazują odpowiednio 86 wymagań w toku, 5 warunkowo wyłączonych, 254 niezbadane i 0 PASS oraz 84/286 powierzchni w toku i 202/286 niezbadanych. To ostatni zapis macierzy, **nie przeliczony wynik po późniejszych retestach**. Nie wiadomo jeszcze, które konkretne wymagania i powierzchnie zostały pokryte przez późniejsze próby; nie wolno ani utrzymywać tych liczb jako bieżącego pomiaru, ani automatycznie zaliczyć ich na podstawie podobnego tematu testu.
+
+Nadal nie ma pełnego audytu penetracyjnego produkcji, odbioru wszystkich tras i ról przez pełne HTTP/DB, prawdziwego odbioru R2/Cloudflare i Stripe, odtworzenia całego produktu z kopii offsite, reprezentatywnego testu obciążenia ani badań użytkowników/czytników ekranu. Nie przeprowadzono również pełnego przeglądu prawnego. Najbliższy krok badania: zbudować jawne powiązanie **wymaganie/powierzchnia → asercja testu → SHA → ograniczenia**, zaczynając od krytycznych wejść i nie zmieniając statusu na zaliczony bez pełnego dowodu.
+
 Stan na 2 listopada 2026, po partii 16 badania. Dotyczy kodu `c397b9e548ca2c628e21457ac69d66e54b12ddbd`, nie automatycznie późniejszego main ani aktywnej konfiguracji produkcji. [Punkt wznowienia](STAN.md), [program i warunki zakończenia](PROGRAM.md), [rejestr R01–R37](USTALENIA.json).
 
 **Polutek ma poważne fundamenty, ale nie mamy jeszcze podstaw do uznania go za profesjonalnie zweryfikowaną dużą platformę.** To nie jest ocena „wszystko jest złe”. Mamy dowody dobrych zabezpieczeń, konkretne odtworzone błędy i duży zakres, którego jeszcze nie dowiedziono. Fakt użycia Codexa i Claude Code nie rozstrzyga żadnej z tych trzech rzeczy.
