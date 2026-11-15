@@ -1,3 +1,11 @@
+## Punkt wznowienia — 15 listopada 2026, uzgodnienie późniejszych dowodów
+
+Na gałęzi `docs/polutek-platform-audit` (lokalny HEAD po tej aktualizacji) rozpoczęto przypisywanie retestów H1 do konkretnych metod tras. [KRYTYCZNE-TRASY-DOWODY.csv](KRYTYCZNE-TRASY-DOWODY.csv) ma obecnie 16 wpisów obejmujących wybrane dowody K01, K10, K11, K12 i K27. Wskazuje osobno wyniki lokalnego HTTP, PostgreSQL/use case oraz brak dowodu dla metod, których wskazany test nie wywołuje. To wycinek, nie pełny przeliczony inwentarz.
+
+**Nie zmieniono** statusów `POWIERZCHNIA-WEJSC.csv`, ASVS ani D01–D18 na podstawie podobieństwa tematu. Wszystkie 18 obszarów i warunków domknięcia nadal pozostają otwarte. Crosswalk pokazuje m.in. lokalne próby uploadu/playbacku, eksportu i księgowania refundów; nie dowodzi pełnych ról i tras, integracji Stripe/R2 w sandboxie, produkcji ani niezależnego review. Szczegóły stanu całości są w [wniosku dla właściciela](WNIOSEK-DLA-WLASCICIELA.md).
+
+**Następny krok:** kontynuować jawne mapowanie dowodów do krytycznych wejść D03/D04/D10/D12; osobno oznaczać testy tras z atrapami, prawdziwy lokalny HTTP/DB oraz brak testu. Dopiero potem przeliczyć rekordy map na podstawie tych powiązań i wyraźnych ograniczeń. Nie uruchamiano nowych testów ani usług w tej aktualizacji.
+
 ## Punkt wznowienia — 12 listopada 2026, K04 przegląd composition
 
 Statyczny skan 447 plików znalazł 125 konstrukcji repo/serwisów/use case w 84 plikach, dwa `deps.ts` i siedem plików warstwy app importujących ścieżki wewnętrzne. Nie ma jednego widocznego composition root; `lib/prisma.ts` jest leniwą fasadą, `shared/db.ts` tylko typami. To dług, nie dowód awarii. K21 lokalnie jest odbierany bez szerokiego refaktoru, więc nie zaczynamy go bez uzasadnionego celu. [Dowód i ograniczenia skanu](evidence/k04-composition-static-review-2026-11-12.json). **Następny krok K04:** pozostaje uzasadnienie konkretnej potrzeby runtime/bundla i niezależne review; nie uruchamiano kontenera ani builda.
