@@ -1,6 +1,6 @@
 ## Punkt wznowienia — 15 listopada 2026, uzgodnienie późniejszych dowodów
 
-Na gałęzi `docs/polutek-platform-audit` (lokalny HEAD po tej aktualizacji) rozpoczęto przypisywanie retestów H1 do konkretnych metod tras. [KRYTYCZNE-TRASY-DOWODY.csv](KRYTYCZNE-TRASY-DOWODY.csv) ma obecnie 21 wpisów obejmujących wybrane dowody D03 oraz K01, K10, K11, K12, K27 i K35. Wskazuje osobno wyniki lokalnego HTTP, PostgreSQL/use case oraz brak dowodu dla metod, których wskazany test nie wywołuje. To wycinek, nie pełny przeliczony inwentarz.
+Na gałęzi `docs/polutek-platform-audit` (lokalny HEAD po tej aktualizacji) rozpoczęto przypisywanie retestów H1 do konkretnych metod tras. [KRYTYCZNE-TRASY-DOWODY.csv](KRYTYCZNE-TRASY-DOWODY.csv) ma obecnie 25 wpisów obejmujących wybrane dowody D03 oraz K01, K10, K11, K12, K27 i K35. Wskazuje osobno testy handlerów z atrapami, lokalny HTTP/PostgreSQL oraz brak dowodu dla metod, których wskazany test nie wywołuje. To wycinek, nie pełny przeliczony inwentarz.
 
 **Nie zmieniono** statusów `POWIERZCHNIA-WEJSC.csv`, ASVS ani D01–D18 na podstawie podobieństwa tematu. Wszystkie 18 obszarów i warunków domknięcia nadal pozostają otwarte. Crosswalk pokazuje m.in. lokalne próby uploadu/playbacku, eksportu i księgowania refundów. K27 odrzuca cofnięty token na trasie eksportu, ale nie testuje replay podpisanego cache `session_data` z R24. Nie dowodzi to pełnych ról i tras, integracji Stripe/R2 w sandboxie, produkcji ani niezależnego review. Szczegóły stanu całości są w [wniosku dla właściciela](WNIOSEK-DLA-WLASCICIELA.md).
 
