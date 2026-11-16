@@ -8,6 +8,7 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 
 | Materiał | Znaczenie |
 |---|---|
+| [Przejęcie przez Claude Code](PRZEJECIE-CLAUDE.md) | Punkt startowy, stan dowodów, zakres niezależnego review, granice pracy i prompt do wznowienia |
 | [ROADMAPA NAPRAW v1](ROADMAPA-NAPRAW.md) | Wszystkie R01–R37, 40 pakietów w 8 etapach, testy, zależności i braki dowodowe |
 | [Kolejność napraw — CSV](KOLEJNOSC-NAPRAW.csv) | 37/37 ustaleń, klasyfikacja, priorytety, zależności i status planu |
 | [Plan wdrożenia i dalszej weryfikacji](PLAN-WDROZENIA-NAPRAW.md) | Historyczny harmonogram; bieżąca realizacja i ograniczenia w POSTEP-NAPRAW.md |
