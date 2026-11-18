@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-06",
+  "source_revision": "fe1b3d5db0771a998034ea4ef16365582d0c03bd",
+  "command": "POLUTEK_H1_EVIDENCE_DIR=/tmp/polutek-k02-runtime-2026-11-06 node docs/audit/2026-11-01-platform-research/program-audytu/tools/k02-image-runtime-check.mjs",
+  "node": "v22.23.3",
+  "npm": "10.9.9",
+  "dependencies": {
+    "next": "16.4.4",
+    "eslint-config-next": "16.4.4",
+    "sharp": "0.35.5",
+    "librsvg": "2.63.2",
+    "vips": "8.18.7"
+  },
+  "source_sha256": {
+    "package.json": "12a4823cb9540d25a28457a62c06ee5c8c9f585a9d49e990d5fbff22caf4b4b3",
+    "package-lock.json": "524607dc9c5e1ddb571c3592f9721f09febc5a363bb5605d3afdefff9cc6ec9f",
+    "next.config.mjs": "d381f1a26e6eb70bb14b99b25a030f07553258009a7b26aa5e6be20676a9214b"
+  },
+  "result": "PASS",
+  "observations": "observations.json",
+  "runtime_log": "next-runtime.log",
+  "npm_ci": {
+    "exit": 0,
+    "prisma_generate": "PASS",
+    "note": "npm ci's default behavior also invoked its automatic dependency audit and printed a vulnerability summary. That output is not a reviewed audit result and is not evidence for K02. Do not repeat npm audit or trigger it through npm install/ci until the prior graph-upload policy block is resolved."
+  },
+  "limits": "Isolated Next dev fixture with the real public Next config and native libraries. Not a full product build, not an application container, not production, and no new reviewed dependency audit. K02 remains open."
+}

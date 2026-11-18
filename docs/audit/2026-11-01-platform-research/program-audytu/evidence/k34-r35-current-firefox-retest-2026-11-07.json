@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-07",
+  "status": "passed_not_reproduced",
+  "repository_head_sha": "9d6bc512eaf2db23d0f1a87c4adee3c2fd29deb9",
+  "browser": "Firefox 151.0",
+  "source_sha256": {
+    "app/components/studio/ConfirmDialog.tsx": "c071877589611c8c424c61eadc9bbcc1d0fc4b824988718943fbb0accecddad9",
+    "components/ui/dialog.tsx": "1c7343c50a593860de16326a3a50f7a29d6ac42797525511fdf39c83ff0573f1",
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/ux-browser-experiment.cjs": "1b9bd8b95fd6fff4b4885cc44db0568290aea38b31b39945a2497c4aa1dc77d1"
+  },
+  "temporary_probe_sha256": "048f0a4c818f4245641ab88a29c86df413d016b0629ab5a97b3e4b1b3a66e1ec",
+  "method": "Ran a temporary copy of the existing component experiment with the busyStart focus snapshot made immediate and without the two-frame settling helper. With both actions disabled, sent five Tab keystrokes and Enter. All generated output stayed under /tmp.",
+  "observations": {
+    "busy_focus_at_first_snapshot": "Dialog panel (DIV), inside role=alertdialog",
+    "tab_steps": 5,
+    "tab_steps_inside_dialog": 5,
+    "background_control_in_accessible_role_tree": false,
+    "background_action_after_enter": false,
+    "busy_escape_policy_and_retry": "PASS"
+  },
+  "summary": {
+    "component_observations": 16,
+    "failed_assertions": 0,
+    "page_errors": 0,
+    "external_requests": 0,
+    "real_application_api_or_delete": false
+  },
+  "interpretation": "The historical R35 observation could not be reproduced on current ConfirmDialog/Base UI sources in Firefox 151 either. Together with the Chromium 149 retest, this argues against changing the component on the basis of the unrepeatable historical harness result; it does not resolve every integration or accessibility requirement.",
+  "limitations": [
+    "Synthetic page shell and callbacks; no Next application, Studio API, database or real deletion.",
+    "No screen reader or independent review.",
+    "The original historical R35 harness/timing remains unavailable and unexplained."
+  ],
+  "cleanup": "Browser and local server closed; temporary bundle and probe report stayed under /tmp."
+}

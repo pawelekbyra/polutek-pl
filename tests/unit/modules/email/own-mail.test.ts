@@ -81,9 +81,9 @@ describe('sendViaOwnMail', () => {
   });
 
   it('maps connection failures to a status-less error and SMTP rejections to their code', async () => {
-    sendMail.mockRejectedValueOnce(Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNECTION' }));
+    sendMail.mockRejectedValueOnce(Object.assign(new Error('connect ECONNREFUSED'), { code: 'ESOCKET', originalCode: 'ECONNREFUSED' }));
     expect(await sendViaOwnMail(message, config, { sendMail } as never)).toEqual({
-      ok: false, error: { name: 'own_smtp_econnection', message: 'connect ECONNREFUSED', statusCode: null },
+      ok: false, error: { name: 'own_smtp_econnrefused', message: 'connect ECONNREFUSED', statusCode: null },
     });
     expect(mapOwnMailError(Object.assign(new Error('Relay access denied'), { responseCode: 554 }))).toMatchObject({ name: 'own_smtp_rejected', statusCode: 554 });
   });
@@ -122,7 +122,7 @@ describe('sendEmail with the own path', () => {
   });
 
   it('falls back to the primary provider when the own server fails', async () => {
-    sendMail.mockRejectedValue(Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' }));
+    sendMail.mockRejectedValue(Object.assign(new Error('timeout'), { code: 'ESOCKET', originalCode: 'ETIMEDOUT' }));
     expect(await sendEmail(welcome)).toEqual({ ok: true, id: 'resend-1' });
     expect(emailsSend).toHaveBeenCalledTimes(1);
   });

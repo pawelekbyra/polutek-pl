@@ -1,0 +1,60 @@
+{
+  "package": "K01",
+  "checkedAt": "2026-11-07",
+  "checkoutRevision": "7e81993c456e084b39a684bbf0f2e0e32d486fce",
+  "checkoutMethod": "temporary detached git worktree from the repair branch HEAD; worktree removed after verification",
+  "runtime": {
+    "node": "v22.23.3",
+    "npm": "10.9.9",
+    "postgres": "17.11"
+  },
+  "inputs": {
+    "packageLockSha256": "0369f1f287f1d2cf20ef7615fbd326b316faa9a2d4c78e3044a97bf3ac14a83b",
+    "prismaSchemaSha256": "dde72e73d3169f07291175dd3a165009c0bc957a63ff49cb92180d08f523f830",
+    "postgresImage": "postgres:17",
+    "postgresImageId": "sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f"
+  },
+  "install": {
+    "command": "npm_config_audit=false npm ci",
+    "exitCode": 0,
+    "durationSeconds": 50,
+    "packagesAdded": 893,
+    "prismaPostinstallGenerate": "success, Prisma CLI/Client 6.19.3"
+  },
+  "database": {
+    "isolation": "disposable Docker container, PostgreSQL data on tmpfs, port bound to 127.0.0.1 only",
+    "migrationCommand": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<same disposable> npx prisma migrate deploy",
+    "migrationExitCode": 0,
+    "migrationsFound": 84,
+    "migrationsFinished": 84,
+    "unresolvedMigrations": 0
+  },
+  "clientTest": {
+    "command": "DATABASE_URL=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/k01-real-prisma-client.pg.test.ts --reporter=dot",
+    "exitCode": 0,
+    "testFilesPassed": 1,
+    "testsPassed": 1,
+    "assertions": [
+      "real generated Prisma client writes and reads User",
+      "interactive transaction rolls back",
+      "duplicate unique value is rejected with P2002",
+      "invalid foreign key is rejected with P2003"
+    ]
+  },
+  "additionalChecks": {
+    "command": "DATABASE_URL=<disposable> npx tsc --noEmit --pretty false -p tsconfig.typecheck.json",
+    "exitCode": 0,
+    "testFixtureRowsAfterCleanup": 0
+  },
+  "cleanup": {
+    "containerRemoved": true,
+    "temporaryWorktreeRemoved": true,
+    "repositoryWorktreeClean": true
+  },
+  "limits": [
+    "npm audit was disabled per the recorded K02 policy; this does not establish dependency advisory status.",
+    "This proves fresh-checkout installation, migration, and Prisma client behavior for K01-T1/T2; it does not test local HTTP API, worker, video encoding, or storage for K01-T3.",
+    "A first migration invocation omitted DATABASE_URL_UNPOOLED and exited with schema validation P1012 before connecting; rerunning with both datasource URLs set to the disposable DB succeeded."
+  ],
+  "status": "K01-T1/T2 fresh-checkout evidence passes; K01 remains partial pending API/worker/short-video integration acceptance."
+}

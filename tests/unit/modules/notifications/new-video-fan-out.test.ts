@@ -6,6 +6,7 @@ vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: 
 import {
   FAN_OUT_PAGE_SIZE,
   createNewVideoFanOutHandler,
+  enqueuePublishedVideoAnnouncement,
   notifyNewVideoPublished,
 } from "@/lib/modules/notifications/application/new-video-fan-out.use-case";
 import { DURABLE_JOB_LEASE_MS, runDurableJobs, type JobContext } from "@/lib/modules/shared/durable-job";
@@ -288,5 +289,32 @@ describe("notifyNewVideoPublished", () => {
     const kick = vi.fn();
     await expect(notifyNewVideoPublished("v1", { db, now: () => NOW, kick })).resolves.toEqual({ status: "error" });
     expect(kick).not.toHaveBeenCalled();
+  });
+});
+
+describe("enqueuePublishedVideoAnnouncement", () => {
+  it("writes a durable publish intent through the publication transaction", async () => {
+    const { db, raw } = makeDb();
+    await expect(enqueuePublishedVideoAnnouncement("v1", db as never, NOW)).resolves.toBe(true);
+    expect(raw.durableJob.createMany).toHaveBeenCalledWith(expect.objectContaining({
+      skipDuplicates: true,
+      data: [expect.objectContaining({ kind: "NEW_VIDEO_FANOUT", dedupeKey: "v1", payload: { variant: "publish" } })],
+    }));
+    expect(raw.durableJob.updateMany.mock.calls[0][0].where).toMatchObject({ kind: "NEW_VIDEO_FANOUT", dedupeKey: "v1", status: { in: ["DONE", "DEAD"] } });
+  });
+
+  it("does not queue a scheduled premiere or a non-published video", async () => {
+    const upcoming = makeDb({ video: makeVideo({ premiereAt: new Date("2026-11-01T00:00:00Z") }) });
+    await expect(enqueuePublishedVideoAnnouncement("v1", upcoming.db as never, NOW)).resolves.toBe(false);
+    expect(upcoming.raw.durableJob.createMany).not.toHaveBeenCalled();
+    const draft = makeDb({ video: makeVideo({ status: "DRAFT" }) });
+    await expect(enqueuePublishedVideoAnnouncement("v1", draft.db as never, NOW)).resolves.toBe(false);
+    expect(draft.raw.durableJob.createMany).not.toHaveBeenCalled();
+  });
+
+  it("surfaces persistence errors so the publication transaction can roll back", async () => {
+    const { db, raw } = makeDb();
+    raw.durableJob.createMany.mockRejectedValueOnce(new Error("db down"));
+    await expect(enqueuePublishedVideoAnnouncement("v1", db as never, NOW)).rejects.toThrow("db down");
   });
 });

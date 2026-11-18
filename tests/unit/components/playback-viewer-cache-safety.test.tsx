@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublicVideoDTO } from "@/app/types/video";
-import type { PlaybackPlan } from "@/lib/modules/playback";
+import type { PublicPlaybackPlan } from "@/lib/modules/playback/application/public-playback-plan";
 
 const mocks = vi.hoisted(() => ({
   auth: {
@@ -60,11 +60,12 @@ const TEST_VIDEO: PublicVideoDTO = {
   isMainFeatured: true,
 };
 
-function createReadyPlan(videoId = "video-1"): PlaybackPlan {
+function createReadyPlan(videoId = "video-1"): PublicPlaybackPlan {
   return {
     videoId,
     status: "READY",
     canPlay: true,
+    hasAccess: true,
     access: { allowed: true },
     source: {
       provider: "SELF_HLS",
@@ -92,11 +93,12 @@ function createReadyPlan(videoId = "video-1"): PlaybackPlan {
   };
 }
 
-function createDeniedPlan(videoId = "video-1"): PlaybackPlan {
+function createDeniedPlan(videoId = "video-1"): PublicPlaybackPlan {
   return {
     ...createReadyPlan(videoId),
     status: "LOGIN_REQUIRED",
     canPlay: false,
+    hasAccess: false,
     access: {
       allowed: false,
       reason: "LOGIN_REQUIRED",

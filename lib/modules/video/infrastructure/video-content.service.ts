@@ -5,16 +5,19 @@ import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicVideoDTO } from '@/app/types/video';
 import { canUseDemoFallbacks } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
-import { MainChannelService, publiclyVisibleChannelWhere, resolveChannelAvatarUrl, resolveMainChannelId } from '@/lib/modules/channel';
+import { MainChannelService, resolveMainChannelId } from '@/lib/modules/channel/application/main-channel.service';
+import { publiclyVisibleChannelWhere } from '@/lib/modules/channel/domain/channel.policy';
+import { resolveChannelAvatarUrl } from '@/lib/modules/channel/domain/channel-avatar';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
+import { MediaPolicy } from '@/lib/modules/media/domain/media.policy';
+import { resolvePublicThumbnailSrc } from '@/lib/modules/media/domain/r2-thumbnail';
 import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
 import { withFundraisingProgress } from './fundraising-progress.service';
 import { toVideoAccessTier } from '@/lib/access-tier';
 import { isVideoPubliclyVisible } from '../domain/public-visibility';
 import { isAdultVideo } from '../domain/video-visibility';
 import { isVideoCategory } from '@/lib/video-metadata';
-import { isPremiumPassVideoForEveryone } from '@/lib/modules/patron-zone'; // patron zone (docs/architecture/patron-zone.md)
+import { isPremiumPassVideoForEveryone } from '@/lib/modules/patron-zone/domain/config'; // patron zone (docs/architecture/patron-zone.md)
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -277,7 +280,7 @@ export class VideoContentService {
           },
         },
       });
-      if (!video || !isVideoPubliclyVisible(video as any)) return null;
+      if (!video || !isVideoPubliclyVisible(video)) return null;
 
       const adminData = await findMainCreatorAdminAvatar();
       const creator = video.creator
@@ -310,7 +313,7 @@ export class VideoContentService {
         creator: { select: { status: true, deletedAt: true } },
       },
     });
-    if (!video || !isVideoPubliclyVisible(video as any)) return null;
+    if (!video || !isVideoPubliclyVisible(video)) return null;
     return { id: video.id, description: video.description, descriptionEn: video.descriptionEn };
   }
 

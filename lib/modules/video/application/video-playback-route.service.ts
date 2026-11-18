@@ -14,19 +14,38 @@ export class VideoPlaybackRouteService {
     assetId: string;
     activatedBy: "ADMIN" | "POLICY" | "FALLBACK" | "MIGRATION" | "RECONCILER";
     reason?: string;
+    encodeClaim?: { jobId: string; workerId: string; attemptId: string | null };
   }, ctx: AppContext): Promise<VideoPlaybackRoute> {
-    const [video, asset] = await Promise.all([
-      ctx.prisma.video.findUnique({ where: { id: input.videoId }, select: { id: true, tier: true } }),
-      ctx.prisma.videoAsset.findUnique({ where: { id: input.assetId } }),
-    ]);
-    if (!video) throw new AppError("Video not found.", 404, "VIDEO_NOT_FOUND");
-    if (!asset || asset.videoId !== input.videoId) throw new AppError("Asset does not belong to this video.", 400, "VIDEO_ASSET_MISMATCH");
-    if (asset.processingState !== VideoAssetProcessingState.READY) throw new AppError("Only READY assets can be activated.", 409, "VIDEO_ASSET_NOT_READY");
-    if (asset.provider !== StorageProvider.SELF_HLS) {
-      throw new AppError(`${asset.provider} cannot be activated: only own HLS is supported.`, 400, "PROVIDER_CANNOT_SERVE_TIER");
-    }
-
     const route = await ctx.db.writeTransaction(async (tx) => {
+      // Asset cleanup takes this same video-row lock before setting cleanupPendingAt.
+      // This fresh read closes the check/delete race: only one transition can win.
+      const videos = await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "Video" WHERE "id" = ${input.videoId} FOR UPDATE`;
+      if (videos.length !== 1) throw new AppError("Video not found.", 404, "VIDEO_NOT_FOUND");
+      const [video, asset] = await Promise.all([
+        tx.video.findUnique({ where: { id: input.videoId }, select: { id: true, tier: true } }),
+        tx.videoAsset.findUnique({ where: { id: input.assetId } }),
+      ]);
+      if (!video) throw new AppError("Video not found.", 404, "VIDEO_NOT_FOUND");
+      if (!asset || asset.videoId !== input.videoId) throw new AppError("Asset does not belong to this video.", 400, "VIDEO_ASSET_MISMATCH");
+      if (asset.cleanupPendingAt) throw new AppError("Asset is reserved for cleanup.", 409, "VIDEO_ASSET_CLEANUP_PENDING");
+      if (asset.processingState !== VideoAssetProcessingState.READY) throw new AppError("Only READY assets can be activated.", 409, "VIDEO_ASSET_NOT_READY");
+      if (asset.provider !== StorageProvider.SELF_HLS) {
+        throw new AppError(`${asset.provider} cannot be activated: only own HLS is supported.`, 400, "PROVIDER_CANNOT_SERVE_TIER");
+      }
+      if (input.encodeClaim) {
+        const claim = input.encodeClaim;
+        const owned = await tx.$queryRaw<Array<{ id: string }>>`
+          SELECT "id" FROM "VideoEncodeJob"
+          WHERE "id" = ${claim.jobId}
+            AND "status" = 'RUNNING'
+            AND "workerId" = ${claim.workerId}
+            AND "attemptId" IS NOT DISTINCT FROM ${claim.attemptId}
+          FOR UPDATE
+        `;
+        if (owned.length !== 1) throw new AppError("Encode attempt no longer owns this job.", 409, "ENCODE_ATTEMPT_LOST");
+        // Refresh the lease while holding the job row lock, so a concurrent stale sweep cannot take over mid-finalize.
+        await tx.videoEncodeJob.update({ where: { id: claim.jobId }, data: { heartbeatAt: new Date() } });
+      }
       await tx.videoPlaybackRoute.updateMany({
         where: { videoId: input.videoId, status: VideoPlaybackRouteStatus.ACTIVE },
         data: { status: VideoPlaybackRouteStatus.PREVIOUS, deactivatedAt: new Date() },
@@ -44,14 +63,13 @@ export class VideoPlaybackRouteService {
       await tx.video.update({ where: { id: input.videoId }, data: { activePlaybackRouteId: created.id } });
       await tx.videoAsset.updateMany({ where: { videoId: input.videoId }, data: { isPrimary: false } });
       await tx.videoAsset.update({ where: { id: input.assetId }, data: { isPrimary: true } });
+      await recordAuditEvent(ctx, {
+        action: "VIDEO_PLAYBACK_ROUTE_ACTIVATED",
+        targetType: "Video",
+        targetId: input.videoId,
+        metadata: { routeId: created.id, assetId: input.assetId, activatedBy: input.activatedBy, reason: input.reason ?? null },
+      }, tx);
       return created;
-    });
-
-    await recordAuditEvent(ctx, {
-      action: "VIDEO_PLAYBACK_ROUTE_ACTIVATED",
-      targetType: "Video",
-      targetId: input.videoId,
-      metadata: { routeId: route.id, assetId: input.assetId, activatedBy: input.activatedBy, reason: input.reason ?? null },
     });
     return route;
   }

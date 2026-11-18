@@ -19,8 +19,8 @@ import type { NotificationParams, NotificationTemplateKey } from "../domain/noti
  * the last page is written the video is marked `premiereNotifiedAt` and the job is DONE.
  *
  * Rules:
- * - Enqueued AFTER the publication committed, never inside its transaction; `notifyNewVideoPublished`
- *   swallows every error, so a failing notification can never undo or fail a publication.
+ * - Ordinary publication intent is enqueued in the same transaction as PUBLISHED; only the runner kick
+ *   happens after commit. `notifyNewVideoPublished` remains a best-effort compatibility entry point.
  * - Only PUBLISHED without an upcoming premiere. UNLISTED, DRAFT, ARCHIVED and scheduled premieres
  *   are skipped; a scheduled premiere is announced when it starts by `premiere-notifications.use-case.ts`
  *   (cron). A completed job sets `Video.premiereNotifiedAt`, so that cron never repeats it.
@@ -103,6 +103,22 @@ export async function enqueueNewVideoFanOut(
   db: PrismaClient = prisma,
 ): Promise<void> {
   await new DurableJobRepository(db).enqueue({ kind: NEW_VIDEO_FANOUT_KIND, dedupeKey: videoId, payload: { variant }, reopen });
+}
+
+/**
+ * Creates the ordinary publication announcement in the caller's publication transaction.
+ * Keeping this intent beside the PUBLISHED write closes the commit→enqueue crash window.
+ */
+export async function enqueuePublishedVideoAnnouncement(videoId: string, tx: Prisma.TransactionClient, now = new Date()): Promise<boolean> {
+  const evaluated = await evaluateNewVideo(tx, videoId, now);
+  if ("skipped" in evaluated) return false;
+  await new DurableJobRepository(prisma).enqueue({
+    kind: NEW_VIDEO_FANOUT_KIND,
+    dedupeKey: videoId,
+    payload: { variant: "publish" },
+    reopen: ["DONE", "DEAD"],
+  }, tx);
+  return true;
 }
 
 function variantOf(payload: unknown): NewVideoVariant {
@@ -224,10 +240,15 @@ function kickRunner(): void {
   });
 }
 
+/** Starts the runner after the transaction that enqueued a publication intent has committed. */
+export function kickNewVideoFanOutJobs(): void {
+  kickRunner();
+}
+
 /**
- * The entry point for publication code: never throws. Checks the video is announceable, enqueues the
- * durable job and starts a runner at once (so the bell fills as fast as before); if this process dies
- * the minute cron continues the job. A failure is logged only.
+ * Best-effort queue-and-kick entry point for callers outside an atomic publication transaction.
+ * Publication use cases must use `enqueuePublishedVideoAnnouncement` inside their transaction and
+ * kick only after commit. A failure here is logged and does not throw to the caller.
  */
 export async function notifyNewVideoPublished(videoId: string, deps: NewVideoFanOutDeps = {}): Promise<NewVideoFanOutResult> {
   try {

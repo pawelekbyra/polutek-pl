@@ -1,0 +1,20 @@
+{
+  "source_parent": "50b7a0c5",
+  "import_origin": "f7ff10b5",
+  "next": "16.3.8",
+  "baseline": {
+    "bad_types_accepted": 2
+  },
+  "fixed": {
+    "bad_types_rejected": 2,
+    "valid_builds_passed": 2,
+    "intended_diagnostic_verified": true
+  },
+  "lint_exit": 0,
+  "source_hashes": {
+    "next.config.mjs": "3a998d5667677def361186707e1d6799a82f0c49304aeb055b551191ca0c8af7",
+    "apps/admin/next.config.mjs": "f219291301a8c7ff2ff9c9f1412717f0433eadb79809d85d94272b7df0571ea0"
+  },
+  "limits": "Six actual isolated Next builds using real configurations, one CPU and no application routes, DB, providers or Docker. Not full application acceptance. K02 patch still absent on this branch.",
+  "release_ready": false
+}

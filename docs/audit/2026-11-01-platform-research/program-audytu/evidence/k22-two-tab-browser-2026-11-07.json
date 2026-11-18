@@ -1,0 +1,35 @@
+{
+  "package": "K22/R22",
+  "date": "2026-11-07",
+  "scenario": "Two same-origin browser tabs resume the same Studio draft after a failed completion request.",
+  "command": "DATABASE_URL=<disposable-postgres-17> DATABASE_URL_UNPOOLED=<disposable-postgres-17> E2E_BASE_URL=http://localhost:3099 npx playwright test tests/e2e/studio-upload-resume.spec.ts --project=chromium",
+  "environment": {
+    "application": "Local Next.js 16.4.5 dev server",
+    "database": "Disposable PostgreSQL 17.11, tmpfs, all 84 migrations applied",
+    "browser": "Playwright Chromium",
+    "studioApi": "Controlled Playwright routes",
+    "r2": "Controlled mock route; no external R2 access",
+    "session": "Synthetic signed Better Auth session backed by disposable PostgreSQL"
+  },
+  "result": {
+    "playwright": "1/1 PASS",
+    "draftCreates": 1,
+    "multipartStarts": 1,
+    "savedPartsListedOnResume": 1,
+    "partPuts": 1,
+    "completionRequests": 2,
+    "completionResponses": [502, 200],
+    "fixtureRowsAfterCleanup": 0
+  },
+  "assertions": [
+    "A second tab on the same origin sees the persisted Studio draft identity.",
+    "The second tab validates and resumes the existing draft.",
+    "No second draft or multipart upload is created.",
+    "The already stored part is not uploaded again; only completion is retried after the controlled 502."
+  ],
+  "limits": [
+    "The tabs exercise sequential recovery while the first tab remains open; simultaneous competing uploads are not tested.",
+    "Studio API and R2 are controlled; this is not a real Cloudflare R2 ETag/CORS, presigned URL expiry, or provider retry acceptance.",
+    "Independent review remains outstanding."
+  ]
+}

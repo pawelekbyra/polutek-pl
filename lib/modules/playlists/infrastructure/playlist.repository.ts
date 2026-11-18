@@ -38,6 +38,11 @@ export class PlaylistRepository {
     await this.db.$queryRaw`SELECT "id" FROM "Playlist" WHERE "id" = ${playlistId} FOR UPDATE`;
   }
 
+  /** Serializes playlist-count mutations for one channel without blocking writers in other channels. */
+  async lockChannelWrites(channelId: string): Promise<void> {
+    await this.db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`playlists:channel:${channelId}`}))`;
+  }
+
   findInChannel(playlistId: string, channelId: string): Promise<PlaylistRow | null> {
     return this.db.playlist.findFirst({ where: { id: playlistId, channelId, deletedAt: null }, select: playlistColumns });
   }

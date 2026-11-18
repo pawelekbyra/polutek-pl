@@ -1,0 +1,36 @@
+{
+  "task": "K20 worker-process auto-publish channel acceptance",
+  "date": "2026-11-11",
+  "sourceSha": "9d1f9021",
+  "database": {
+    "image": "postgres:17-alpine",
+    "migrationsApplied": 84,
+    "exposure": "127.0.0.1 ephemeral port only",
+    "storage": "container tmpfs",
+    "cleanup": "container removed after test"
+  },
+  "commands": [
+    "DATABASE_URL=<loopback disposable PostgreSQL> DATABASE_URL_UNPOOLED=<same disposable PostgreSQL> npx prisma migrate deploy",
+    "DATABASE_URL=<loopback disposable PostgreSQL> DATABASE_URL_UNPOOLED=<same disposable PostgreSQL> npx vitest run --config vitest.postgres.config.ts tests/postgres/k20-auto-publish-channel.pg.test.ts --reporter=dot"
+  ],
+  "result": {
+    "testFilesPassed": 1,
+    "testsPassed": 8,
+    "testsFailed": 0,
+    "migrationExitCode": 0,
+    "testExitCode": 0
+  },
+  "coverage": [
+    "non-main channel PUBLIC and UNLISTED publication",
+    "auto-publish in a separate Node/tsx worker process",
+    "suspended and deleted channel refusal",
+    "job/video channel mismatch refusal",
+    "main-channel positive control",
+    "attempt fencing"
+  ],
+  "limitations": [
+    "The worker process test invokes the real Self-HLS finalizer but does not run FFmpeg encoding or upload HLS to Cloudflare R2.",
+    "No production database, production service, or external storage was used.",
+    "This retest does not replace independent review or the remaining end-to-end R2/HLS acceptance."
+  ]
+}

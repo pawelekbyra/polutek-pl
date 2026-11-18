@@ -1,0 +1,29 @@
+{
+  "package": "K35-T1 local edge playback of encoder-produced manifest and segment",
+  "date": "2026-11-07",
+  "status": "superseded-limited-local-verification",
+  "commit": "7faf909ef7c80324e31221cc92df74a138597930",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17, 84/84 migrations; tmpfs container stopped and removed",
+    "application": "Next.js 16.4.5 Studio multipart upload and media-source APIs; separate scripts/video-worker.ts process and FFmpeg encode",
+    "edge": "actual workers/hls-edge/worker.mjs fetch handler invoked with the playback URL signed by the API and a local R2-binding adapter over encoder-produced objects",
+    "playback_assertions": [
+      "master playlist returns 200 and contains #EXTM3U",
+      "variant playlist URI is read from the master and returns 200 with #EXTM3U",
+      "fMP4 segment URI is read from the variant and returns non-empty encoded bytes"
+    ],
+    "other_verification": "HLS edge worker unit suite 20/20 PASS; repo typecheck, targeted ESLint and git diff check PASS",
+    "cleanup": "test rows and temporary source removed by fixture teardown; Next server and loopback server stopped; object map and temporary PostgreSQL container cleared"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "70665f6b1860b464e8b436e34cce1d745a467bfb5ea27d9c26316c16ada02df9"
+  },
+  "limitations": [
+    "This invokes the actual Worker module locally but does not deploy it to Cloudflare or use a real R2 binding.",
+    "No browser playback, decoded-frame/time progression, replace/delete matrix, second user/channel, paid profile or independent review was tested.",
+    "K35-T1 is partial; K35-T2/T3 remain open. K01-T3 remains partial pending real provider and rollout acceptance.",
+    "Correction: the fixture stored aws-chunked framing in uploaded object bytes. contains-#EXTM3U and nonempty-segment checks did not prove valid HLS content/playback. Superseded for payload validity by k35-browser-hls-local-2026-11-07.json; worker invocation and HTTP status observations remain historical."
+  ]
+}

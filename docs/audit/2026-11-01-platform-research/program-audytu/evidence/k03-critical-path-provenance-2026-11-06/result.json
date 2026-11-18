@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-06",
+  "package": "K03-T3 partial: critical-path result provenance and failed receipts",
+  "base_commit": "99bd671fd9e667ec2bc9c8bfaed9bbc18c3d7a63",
+  "source_sha256": {
+    "scripts/test-critical-path.mjs": "66d0a082b4af92a2cc5e9fe90b33b97674c94a584f6422a4672f79bb2b16fd85",
+    "tests/unit/operations/critical-path-runner.test.ts": "338deaad8c9650c0b4097300432a129e58e381c6274c23f8143c5ea2890c18bf"
+  },
+  "observed_source": {
+    "revision": "99bd671fd9e667ec2bc9c8bfaed9bbc18c3d7a63",
+    "tracked_source_fingerprint": "b5d0d614c8654fdd0adbf0aad4a366ecb04611454bcc1ff6b7f62aec23a8d8a2",
+    "tracked_files": 3271,
+    "working_tree_clean": false,
+    "note": "The fingerprint was captured from tracked working-tree file contents, including the changes under test. The dirty state is explicit; the receipt does not claim a clean commit build."
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/operations/critical-path-runner.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 15
+    },
+    {
+      "command": "npm run test:critical-path -- --maxWorkers=1 --report-json=/tmp/polutek-critical-path-k03.json",
+      "result": "PASS",
+      "required_suites": 2,
+      "tests": { "collected": 37, "executed": 37, "passed": 37, "failed": 0, "skipped": 0 },
+      "duration_seconds": 43.45,
+      "per_suite": [
+        { "file": "tests/unit/operations/verify-restored-database-process.test.ts", "executed": 32, "passed": 32, "failed": 0, "skipped": 0 },
+        { "file": "tests/integration/launch-candidate-critical-path.test.ts", "executed": 5, "passed": 5, "failed": 0, "skipped": 0 }
+      ],
+      "receipt_source_fingerprint": "b5d0d614c8654fdd0adbf0aad4a366ecb04611454bcc1ff6b7f62aec23a8d8a2"
+    },
+    {
+      "command": "npx eslint scripts/test-critical-path.mjs tests/unit/operations/critical-path-runner.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "scope": "Critical-path guard ran the two required suites against synthetic fixtures. A separate expected-failure fixture verified that failed counts and source identity survive in JSON. No database, server, provider, or production service was used.",
+  "limitations": [
+    "The whole K03 baseline and K01 fresh database/app/worker acceptance remain incomplete.",
+    "The source fingerprint includes all tracked working-tree files. The receipt marks the worktree dirty; it does not treat the revision alone as the tested source state."
+  ]
+}

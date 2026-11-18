@@ -9,10 +9,21 @@ response times degrade. Results and method: `docs/operations/LOAD-TEST.md`.
   server** against `http://127.0.0.1:3000` with `Host: www.pawelperfect.com`. Never through Cloudflare.
 - Guest GET requests only: `/pl`, `/api/channel/sidebar`, `/api/comments`, `/api/media-source/<id>`,
   `/api/videos/<id>/thumbnail`. No logins, writes, payments, `/api/admin`, PP Support.
-- Every request carries `User-Agent: pp-loadtest/1` and a fake `CF-Connecting-IP` from `198.18.0.0/15`
+- Each 200 response must have the expected MIME type (HTML for home, JSON for APIs, image for thumbnail);
+  non-200 and wrong/missing MIME metrics make the summarizer stop the series. The three small JSON APIs
+  (`sidebar`, `comments`, `media`) selectively return text to k6 and are checked for their required response
+  shape; page HTML and image bodies remain discarded to cap generator memory. The checks validate only the
+  JSON fields needed to prove a usable public page/playback plan, not all domain fields or media decoding.
+- Every run gets a unique `User-Agent: pp-loadtest/<uuid>` saved in `OUT_DIR/client-user-agent` and a fake `CF-Connecting-IP` from `198.18.0.0/15`
   (RFC 2544 benchmark range), so each iteration looks like a new visitor (the app trusts that header behind the
-  tunnel). `/api/media-source` creates one `VideoPlaybackSession` row per call; `cleanup.sh` deletes exactly
-  those rows (`userAgentHash = sha256('pp-loadtest/1')`, guest).
+  tunnel). `/api/media-source` creates one `VideoPlaybackSession` row per call. `cleanup.sh` asks the running
+  app container to derive the exact HMAC using its configured client-hash secret and deletes only guest rows
+  matching this run's unique user-agent hash. The secret never leaves the app container. Missing/invalid
+  identity, unavailable app, HMAC failure, database failure or an active runner stop cleanup before deletion.
+  Both `run-steps.sh` and `count-queries.sh` take the same exclusive per-OUT_DIR lock and share the same unique
+  user-agent identity; cleanup refuses to run while either is active. Clean up only after all measurements finish.
+  If a runner was killed with SIGKILL, verify no `run-steps.sh`/`count-queries.sh`/k6 process is active before manually removing
+  the stale `.run-lock`; the scripts never clear it automatically.
 - `preflight.sh` refuses to start a step during a deploy (`deploy.sh`), an encode (`VideoEncodeJob`
   RUNNING/QUEUED), with < 600 MB available memory or load1 > 3.
 - `guard.sh` samples every ~5 s (memory, swap, load, `docker stats`, `pg_stat_activity`) into `monitor.csv`
@@ -21,6 +32,8 @@ response times degrade. Results and method: `docs/operations/LOAD-TEST.md`.
   > 900 MiB (`APP_MEM_FUSE_MIB`; the container limit is 1 GiB). It exits by itself after `GUARD_MAX_SECONDS`
   (1 h). k6 itself aborts at > 2% 5xx/timeouts; `run-steps.sh` ends a series at the first saturated step or
   p95 > `STOP_P95_MS` (default 2000 ms) and waits (up to 2 min) for the host to calm down between series.
+- Each `run-steps.sh` series writes `<LABEL>-profile.json`; `count-queries.sh` writes a fixed-count profile next to its output with its profile version, target, exact rate schedule, duration/rest, endpoint mix, k6 image reference and SHA-256 hashes of the generator, response probe and cleanup scripts. `results.tsv` and each `queries.tsv` result record that profile hash. An existing label cannot be reused for a different profile; `count-queries.sh` records exact N iterations, not throughput; choose a new `LABEL` or `OUT_DIR`. For `journey`, rate means new guest journeys per second (five requests per iteration); single-endpoint targets mean requests per second. Neither is a count of concurrent viewers. The label does not prove cache state; the profile records cache state as unspecified.
+- Before either runner measures a target that includes home or thumbnail, `response-probe.py` makes one separate loopback GET per relevant endpoint. It accepts numeric loopback targets only, reads at most 64 KiB plus one sentinel byte, checks the home HTML marker and expected `www.pawelperfect.com` title or a supported image signature matching the MIME type, and closes the response; this traffic is outside k6 timing and results. Redirects are refused. The title must be updated with an intentional public-brand change. It does not decode the image, validate the whole HTML, or establish that the full asset is usable. `profile.json` records the request target (with a SHA-256 of the video ID), whether the probe runs, the fixed bound, its result filename, and the source hash; results are appended as JSONL.
 
 ## Run
 
@@ -49,7 +62,7 @@ fuse), then one journey step at a known-safe rate.
 ## Clean up (always)
 
 ```bash
-./cleanup.sh                   # stops guard, deletes the test sessions, removes the k6 image
+./cleanup.sh                   # stops guard, deletes only this run's sessions, removes the k6 image
 rm -rf /tmp/pp-loadtest
 curl -s -o /dev/null -w '%{http_code}\n' https://www.pawelperfect.com/api/health   # 200
 AI_AGENT=claude-loadtest ai-log "load test end, cleaned up"

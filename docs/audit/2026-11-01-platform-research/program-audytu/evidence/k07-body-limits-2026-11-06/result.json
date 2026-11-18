@@ -1,0 +1,90 @@
+{
+  "package": "K07",
+  "commit": "1f467577",
+  "sourceRevision": "1f467577c38b19f8dc2897e5f6c89b7d32503b6d",
+  "status": "PARTIAL_OPEN",
+  "date": "2026-11-06",
+  "code": {
+    "sharedReader": "lib/utils/request-body.ts",
+    "defaultJsonLimitBytes": 131072,
+    "multipartCountBeforeNativeParser": true,
+    "completeMultipartBudgetBytes": 6291456,
+    "nextProxyClientMaxBodySize": "7mb",
+    "completeLegalParts": 10000,
+    "directJsonAndFormDataParsersInApiRoutes": "replaced in app/api and apps/admin/app/api (apart from non-request File.arrayBuffer reads)"
+  },
+  "checks": {
+    "focusedVitest": {
+      "command": "npx vitest run tests/unit/utils/request-body.test.ts tests/unit/api/video-progress-route.test.ts tests/unit/api/studio-routes.test.ts tests/unit/api/playback-event-route.test.ts tests/unit/api/video-favorite-route.test.ts tests/unit/comments-route.test.ts tests/unit/comment-reactions-route.test.ts tests/unit/subscriptions-route.test.ts tests/unit/modules/patron-zone/premium-pass-checkout-route.test.ts --reporter=json",
+      "files": 9,
+      "testsPassed": 111,
+      "testsFailed": 0,
+      "success": true,
+      "raw": "vitest-after-proxy-cap.json",
+      "log": "vitest-after-proxy-cap-summary.log"
+    },
+    "repoTypecheck": {
+      "passed": true,
+      "log": "typecheck-after-proxy-cap.log"
+    },
+    "changedFilesEslint": {
+      "passed": true,
+      "log": "eslint-after-proxy-cap.log"
+    },
+    "gitDiffCheck": "PASS"
+  },
+  "concurrentNodeReaderBenchmark": {
+    "harness": "tools/k07-body-memory-benchmark.mjs",
+    "command": "node --import tsx docs/audit/2026-11-01-platform-research/program-audytu/tools/k07-body-memory-benchmark.mjs",
+    "runtime": "Node v22.23.3",
+    "scenario": "16 concurrent chunked multipart bodies, each one byte above the current 6 MiB application cap, without Content-Length",
+    "before": "body-memory-6mb-before.json",
+    "after": "body-memory-6mb-after.json",
+    "beforeRssIncreaseBytes": 137420800,
+    "afterRssIncreaseBytes": 127262720,
+    "beforeElapsedMs": 578,
+    "afterElapsedMs": 286,
+    "outcome": "16/16 rejected with 413",
+    "scope": "Node Request/ReadableStream + application reader; single observational run per version, not Next/proxy or production evidence"
+  },
+  "localNextProductionHttp": {
+    "result": "http-result.json",
+    "nextVersion": "16.4.5",
+    "reverseProxyIncluded": false,
+    "smallValidForm": 400,
+    "tooManyParts": 413,
+    "multipartDeclaredBytes": 413,
+    "multipartChunkedNoLength": 413
+  },
+  "localNextConcurrentHttp": {
+    "nextVersion": "16.4.5",
+    "route": "/api/subscriptions/unsubscribe",
+    "reverseProxyIncluded": false,
+    "concurrency": 16,
+    "bodyBytes": 16385,
+    "limitBytes": 16384,
+    "contentLength": "absent",
+    "results": "16/16 returned 413",
+    "elapsedMs": 1091,
+    "raw": "local-next-concurrent-http.json"
+  },
+  "nextProxyBodyLimitRegression": "next-proxy-body-limit.json",
+  "buildsAfterProxyCap": "build-result-proxy-safe.json",
+  "notVerified": [
+    "Cloudflare or another external reverse proxy's body and buffering limits",
+    "memory and latency under concurrent 6 MiB requests through the configured optimized Next server and external proxy",
+    "full-stack denial-of-service resource budget"
+  ],
+  "proxyInventory": "proxy-inventory.json",
+  "buildsBeforeFinalValidationAdjustment": {
+    "public": {
+      "passed": true,
+      "log": "public-build-before-final-adjustment.log"
+    },
+    "adminStandalone": {
+      "passed": true,
+      "log": "admin-build-before-final-adjustment.log"
+    }
+  },
+  "conclusion": "Next 16.4.5 clipped bodies at 10 MiB and continued processing, so the application complete-body cap is now 6 MiB and the proxy buffer is 7 MiB. A 13 MiB request with the earlier temporary 13 MiB app limit reached a 303 partial-form path; with the 6 MiB limit it returns 413, and the optimized local server confirms the configured 7 MiB limit. Public/admin builds and 111 focused tests pass. Keep K07 open pending external proxy and concurrent full-stack budget evidence."
+}

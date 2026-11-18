@@ -1,0 +1,47 @@
+{
+  "package": "K27 Better Auth session boundary",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "base_revision": "fc5e1c63",
+  "test_file": "tests/postgres/user-export-session.pg.test.ts",
+  "database": {
+    "engine": "PostgreSQL 17 (postgres:17-alpine)",
+    "migrations_applied": 84,
+    "created_for_test": true,
+    "bound_to": "127.0.0.1:55443",
+    "container_removed": true,
+    "synthetic_rows_removed": true
+  },
+  "checks": {
+    "vitest": {
+      "command": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/user-export-session.pg.test.ts",
+      "files_passed": 1,
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "exit_code": 0
+    },
+    "repository_typecheck": {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exit_code": 0
+    },
+    "eslint": {
+      "command": "npx eslint tests/postgres/user-export-session.pg.test.ts",
+      "exit_code": 0
+    },
+    "diff_check": {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  },
+  "assertions": [
+    "A valid HMAC-SHA256 Better Auth session cookie resolves the live PostgreSQL session.",
+    "The authenticated user is resolved to an actor using current database state.",
+    "A cookie signed with a different secret is rejected.",
+    "A previously valid cookie is rejected after its database session is revoked."
+  ],
+  "scope_limits": [
+    "The test calls getAuth and resolveDbBackedActor directly; it does not launch Next HTTP.",
+    "The separate export route PostgreSQL test still mocks auth and rate limiting.",
+    "This does not complete K27-T1/T2, K05/K11/K26/K37 dependencies, or independent review."
+  ]
+}

@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PATCH, DELETE } from '@/app/api/comments/[commentId]/route';
-import { NextRequest, NextResponse } from 'next/server';
-import { createAppContext } from '@/lib/modules/shared/app-context';
+import { NextRequest } from 'next/server';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { updateComment, deleteComment } from '@/lib/modules/comments';
 
 vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
 }));
+
+// These assertions exercise authorization/body handling; Redis has its own integration boundary.
+vi.mock('@/lib/rate-limit', () => ({ rateLimit: vi.fn(async () => ({ success: true })) }));
 
 vi.mock('@/lib/modules/comments', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/modules/comments')>()),
@@ -38,12 +40,7 @@ describe('Comments API BOLA protection (Modularized)', () => {
     expect(deleteComment).toHaveBeenCalledWith({ commentId: 'comment_1' }, expect.any(Object));
   });
 
-  it('PATCH /api/comments/[commentId]: blocks non-creator from pinning comment', async () => {
-    // Note: pinning is now a separate route /api/comments/[commentId]/pin
-    // This test in bola-protection.test.ts was testing PATCH /api/comments?id=comment_1 with { pinned: true }
-    // Our new PATCH route only accepts { text: string } and doesn't allow pinning.
-    // So we should verify it returns 400 or ignoring 'pinned' field if it's not in the schema.
-
+  it('PATCH /api/comments/[commentId]: rejects a pinning payload before updating a comment', async () => {
     vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'random_user' });
 
     const req = new NextRequest('http://localhost/api/comments/comment_1', {
@@ -52,7 +49,7 @@ describe('Comments API BOLA protection (Modularized)', () => {
     });
     const res = await PATCH(req, { params: Promise.resolve({ commentId: 'comment_1' }) });
 
-    // It should be 400 because 'text' is missing and 'pinned' is not allowed/ignored
     expect(res.status).toBe(400);
+    expect(updateComment).not.toHaveBeenCalled();
   });
 });

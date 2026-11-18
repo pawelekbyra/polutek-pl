@@ -1,0 +1,77 @@
+{
+  "package": "K04/R34",
+  "checkedAt": "2026-11-07",
+  "revision": "f6f83ad261b3b80a8176bda99ef81ac2e8e38172",
+  "framework": "Next.js 16.4.5 with Turbopack, Node v22.23.3",
+  "configurationSha256": {
+    "next.config.mjs": "86fad172be3a0c662b1838a1fb9a22ad00ba1affa65c9c1e149362b6fe69ef15",
+    "apps/admin/next.config.mjs": "f219291301a8c7ff2ff9c9f1412717f0433eadb79809d85d94272b7df0571ea0"
+  },
+  "builds": [
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "compiled": true,
+      "typescript": true,
+      "routesGenerated": true,
+      "notes": [
+        "Next emitted the existing middleware-to-proxy deprecation warning.",
+        "Two legal pages logged the existing expected Dynamic server usage fallback from resolveInitialLanguage(auth/db lookup) and were generated as static routes."
+      ]
+    },
+    {
+      "command": "npm run admin:build",
+      "exitCode": 0,
+      "compiled": true,
+      "typescript": true,
+      "routesGenerated": true
+    }
+  ],
+  "generatedBoundaryInspection": {
+    "method": "Count literal server-only markers in emitted .js files under each production static/chunks directory and inspect Next route output-file traces.",
+    "mainClientChunks": {
+      "files": 79,
+      "literalHits": {
+        "@prisma/client": 0,
+        "PrismaClient": 0,
+        "node_modules/.prisma/client": 0,
+        "node:fs": 0,
+        "nodemailer": 0,
+        "better-auth/node_modules": 0
+      }
+    },
+    "adminClientChunks": {
+      "files": 35,
+      "literalHits": {
+        "@prisma/client": 0,
+        "PrismaClient": 0,
+        "node_modules/.prisma/client": 0,
+        "node:fs": 0,
+        "nodemailer": 0,
+        "better-auth/node_modules": 0
+      }
+    },
+    "mainServerRouteTraces": {
+      "routes": 128,
+      "tracesContainingPrisma": 125
+    },
+    "adminServerRouteTraces": {
+      "routes": 47,
+      "tracesContainingPrisma": 44
+    }
+  },
+  "regressionChecks": {
+    "command": "npx vitest run tests/unit/architecture/prisma-lazy-composition.test.ts tests/unit/modules/channel/main-channel-injected-db.test.ts tests/unit/channel-layout-upcoming-section.test.ts tests/unit/channel-layout-paging.test.ts tests/unit/channel-layout-patron-grant.test.ts tests/unit/sidebar-search-cleanup-static.test.ts --reporter=dot",
+    "exitCode": 0,
+    "filesPassed": 6,
+    "testsPassed": 23,
+    "eslintCommand": "npx eslint lib/modules/video/pure.ts lib/prisma.ts lib/modules/channel/application/channel-layout.service.ts tests/unit/architecture/prisma-lazy-composition.test.ts tests/unit/modules/channel/main-channel-injected-db.test.ts",
+    "eslintExitCode": 0
+  },
+  "limits": [
+    "Literal-marker absence is a focused inspection, not a full module provenance or secret-leak scanner.",
+    "Route traces include Prisma broadly; this observation does not establish separate DB connections or quantify bundle/runtime cost.",
+    "No container image, HTTP integration, production service, DB connection, or independent review was exercised."
+  ],
+  "status": "The actual Next production bundlers completed on this revision and emitted no selected server-only markers into client chunks. K04 remains partial pending full facade/composition-root review, integration evidence, and independent review."
+}

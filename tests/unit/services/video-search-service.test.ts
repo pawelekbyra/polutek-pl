@@ -61,7 +61,7 @@ describe("VideoSearchService", () => {
     findMany.mockResolvedValue([
       row({ id: "public", title: "Szukaj", tier: AccessTier.PUBLIC }),
       row({ id: "logged", title: "Szukaj", tier: AccessTier.LOGGED_IN }),
-      row({ id: "legacy", title: "Szukaj", tier: AccessTier.PATRON }),
+      row({ id: "legacy", title: "Szukaj", tier: "PATRON" }),
     ]);
 
     const results = await VideoSearchService.searchPublicVideos("szukaj");

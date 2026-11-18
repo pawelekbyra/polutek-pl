@@ -27,7 +27,7 @@ function load(relative) {
   const hash = crypto.createHash('sha256').update(source).digest('hex');
   if (hash !== inventory[relative]) throw Error('Baseline inventory changed: ' + relative);
   sources[relative] = hash;
-  const module = { exports: {} }; cache.set(relative, module.exports);
+  const loadedModule = { exports: {} }; cache.set(relative, loadedModule.exports);
   const localRequire = name => {
     if (Object.hasOwn(stubs, name)) return stubs[name];
     if (name === 'crypto') return crypto;
@@ -35,8 +35,8 @@ function load(relative) {
     return load(name.slice(2) + '.ts');
   };
   const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
-  vm.runInThisContext('(function(require,module,exports){' + js + '\n})', { filename: relative })(localRequire, module, module.exports);
-  return module.exports;
+  vm.runInThisContext('(function(require,module,exports){' + js + '\n})', { filename: relative })(localRequire, loadedModule, loadedModule.exports);
+  return loadedModule.exports;
 }
 const search = load('lib/modules/video/application/public-search.service.ts');
 const domain = load('lib/modules/video/domain/search-query.ts');

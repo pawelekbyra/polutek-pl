@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { resolveMainChannel } from "@/lib/modules/channel";
+import { resolveMainChannel } from "@/lib/modules/channel/application/main-channel.service";
 
 const SETTING_KEY = "default_video_thumbnail";
 

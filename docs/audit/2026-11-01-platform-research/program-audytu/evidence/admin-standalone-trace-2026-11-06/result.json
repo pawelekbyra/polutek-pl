@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-06",
+  "source_revision": "7d97d067",
+  "affected_source": "lib/modules/admin-overview/infrastructure/host-status-file.ts",
+  "affected_source_sha256": "0b9bafec3ffc623dd4e138f918b8bef1a9c5d3c85ea160b60ce9c5d9b5a983f7",
+  "baseline": {
+    "revision": "d6f0d33c",
+    "command": "NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone npm run admin:build",
+    "exit": 0,
+    "warning": "Turbopack reported dynamic filesystem access tracing the whole project; the pre-fix standalone apps/admin tree contained 1016 files and source files/directories app, components, lib and scripts.",
+    "log": "before.log"
+  },
+  "fixed": {
+    "command": "NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone npm run admin:build",
+    "exit": 0,
+    "next": "16.4.4",
+    "warning_absent": true,
+    "standalone_total_bytes": 172398698,
+    "standalone_total_files": 2159,
+    "app_tree_files": 828,
+    "app_tree_source_files": 0,
+    "app_tree_top_level": [
+      ".next",
+      "server.js"
+    ],
+    "log": "after.log"
+  },
+  "result": "PASS",
+  "limits": "Standalone Next output only; no Docker image build, runtime container, GHCR or deployment. Runtime readHostStatus path was not modified; the annotation directs Turbopack tracing only."
+}

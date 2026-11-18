@@ -18,18 +18,23 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/lib/modules/channel", async () => {
+vi.mock("@/lib/modules/channel/application/main-channel.service", async () => {
   const policy = await import("@/lib/modules/channel/domain/channel.policy");
   return {
     MainChannelService: {
       getOptional: vi.fn(async () => ({ id: "main-channel" })),
       getRequired: vi.fn(async () => ({ id: "main-channel" })),
     },
-    MainChannelPolicy: policy.MainChannelPolicy,
-    publiclyVisibleChannelWhere: () => ({ status: { in: ["ACTIVE", "LIMITED"] }, deletedAt: null }),
-    resolveChannelAvatarUrl: () => null,
     resolveMainChannelId: vi.fn(async () => "main-channel"),
     isMainChannelId: vi.fn(async () => true),
+  };
+});
+
+vi.mock("@/lib/modules/channel/domain/channel.policy", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/modules/channel/domain/channel.policy")>("@/lib/modules/channel/domain/channel.policy");
+  return {
+    ...actual,
+    publiclyVisibleChannelWhere: () => ({ status: { in: ["ACTIVE", "LIMITED"] }, deletedAt: null }),
   };
 });
 

@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-06",
+  "sourceRevision": "1f467577c38b19f8dc2897e5f6c89b7d32503b6d",
+  "nextVersion": "16.4.5",
+  "proxyClientMaxBodySize": "7mb",
+  "builds": {
+    "public": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "typescript": "PASS",
+      "staticPages": "9/9 generated",
+      "NextConfigReportedProxyLimit": "7mb",
+      "warnings": [
+        "Next middleware convention is deprecated in favor of proxy",
+        "Dynamic headers in localized privacy/terms routes triggered fallback warnings during static generation"
+      ]
+    },
+    "admin": {
+      "command": "npm run admin:build",
+      "exitCode": 0,
+      "typescript": "PASS",
+      "staticPages": "1/1 generated",
+      "wholeProjectTracingWarning": false
+    }
+  },
+  "scope": "Local optimized Next builds in the permitted worktree; no deployment, registry, or production runtime"
+}

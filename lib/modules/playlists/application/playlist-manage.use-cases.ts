@@ -77,6 +77,7 @@ export async function createPlaylist(
     try {
       const result = await ctx.db.writeTransaction(async (tx): Promise<UseCaseResult<StudioPlaylistSummaryDto>> => {
         const repo = new PlaylistRepository(tx);
+        await repo.lockChannelWrites(input.channelId);
         if ((await repo.countActive(input.channelId)) >= PLAYLISTS_PER_CHANNEL_MAX) {
           return fail(new AppError(`Kanał może mieć najwyżej ${PLAYLISTS_PER_CHANNEL_MAX} playlist.`, 409, "PLAYLIST_LIMIT"));
         }
@@ -143,6 +144,7 @@ export async function deletePlaylist(ctx: AppContext, input: { channelId: string
 
   return ctx.db.writeTransaction(async (tx) => {
     const repo = new PlaylistRepository(tx);
+    await repo.lockChannelWrites(input.channelId);
     const existing = await repo.findInChannel(input.playlistId, input.channelId);
     if (!existing) return fail(notFound());
     await repo.softDelete(existing.id, ctx.now());

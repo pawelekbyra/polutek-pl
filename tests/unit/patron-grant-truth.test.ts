@@ -17,7 +17,7 @@ vi.mock('@/lib/modules/patron', () => ({
 
 // Since 2026-09-22 support grants nothing (CLAUDE.md §4.4): a PATRON-tier video needs
 // sign-in only, and PatronGrant/cache fields must never influence the decision.
-describe('PATRON tier needs sign-in only', () => {
+describe('LOGGED_IN tier needs sign-in only', () => {
   let mockPrisma: any;
   const mainChannel = { id: 'main-channel-id' };
   const now = new Date('2026-01-01T12:00:00Z');
@@ -35,7 +35,7 @@ describe('PATRON tier needs sign-in only', () => {
     id: 'v1',
     creatorId: mainChannel.id,
     status: VideoStatus.PUBLISHED,
-    tier: AccessTier.PATRON,
+    tier: AccessTier.LOGGED_IN,
     publishedAt: new Date(now.getTime() - 1000),
     creator: { id: mainChannel.id, status: 'ACTIVE' },
   };

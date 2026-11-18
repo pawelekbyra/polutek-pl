@@ -1,0 +1,23 @@
+{
+  "cases": [],
+  "tmpfs_preflight": {
+    "root": "/dev/shm",
+    "available_bytes": 4058767360,
+    "required_bytes": 2147483648
+  },
+  "recorded_at_utc": "2026-11-07T09:11:54.412870+00:00",
+  "code_sha": "5da670acc2378516983011858c1ef21a8cb197f8",
+  "tool": "docs/audit/2026-11-01-platform-research/program-audytu/tools/k32-synthetic-restore-acceptance.py",
+  "tool_sha256": "24b3269e56595e9ff05481dc8f9e04514ba8941e1d3627eda2e21eb4db72310c",
+  "source": "synthetic-only PostgreSQL; current Prisma migrations; local pg_dump/pg_restore",
+  "status": "blocked_or_failed",
+  "postgres_image": "postgres:17",
+  "postgres_image_id": "sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f",
+  "postgres_repo_digests": "[postgres@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f]",
+  "limitations": [
+    "Does not use or prove recovery from any production/offsite backup, object storage, age key or external service.",
+    "Does not measure approved RPO/RTO or test Support attachments, payment reconciliation, host provisioning or media recovery.",
+    "Constraint probes cover only the synthetic video foreign key and channel membership uniqueness."
+  ],
+  "error": "command failed (2): docker ['exec']\npsql: error: connection to server on socket \"/var/run/postgresql/.s.PGSQL.5432\" failed: FATAL:  the database system is shutting down\n"
+}

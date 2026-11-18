@@ -12,7 +12,7 @@ import { toVideoAccessTier } from "@/lib/access-tier";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
 import { isUpcomingPremiere, toPremiereDate } from "@/lib/modules/video/domain/premiere";
 import { isAdultVideo, isLinkAccessibleStatus } from "@/lib/modules/video/domain/video-visibility";
-import { premiumPassGate } from "@/lib/modules/patron-zone"; // patron zone (docs/architecture/patron-zone.md)
+import { premiumPassGate } from "@/lib/modules/patron-zone/application/pass-access"; // patron zone (docs/architecture/patron-zone.md)
 
 export type CheckVideoAccessInput = {
   videoIdOrSlug: string;

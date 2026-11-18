@@ -1,0 +1,25 @@
+{
+  "package": "K03",
+  "checkedAt": "2026-11-07",
+  "revision": "cd5f4f4e57fe49d71a255a22c6acd88259764a60",
+  "command": "npx vitest run tests/unit/operations/verify-restored-database-process.test.ts tests/unit/operations/critical-path-runner.test.ts --reporter=dot",
+  "result": {
+    "exitCode": 0,
+    "testFilesPassed": 2,
+    "testsPassed": 47,
+    "durationSeconds": 47.58
+  },
+  "lint": {
+    "command": "npx eslint scripts/verify-restored-database.ts tests/unit/operations/verify-restored-database-process.test.ts tests/unit/operations/critical-path-runner.test.ts",
+    "exitCode": 0
+  },
+  "coverage": [
+    "The verifier is executed as a separate Node process; tests assert real exit codes and absence of the success marker for failures.",
+    "Scenarios include missing preflight values, source/target equality, connection and migration query failures, unfinished and rolled-back migration history, mandatory aggregate count failures, empty/missing/malformed/mismatching manifests, and orphaned records.",
+    "The critical-path runner guard is exercised by its focused unit suite."
+  ],
+  "limits": [
+    "The Prisma boundary is synthetic; no database restore, PostgreSQL connection, storage, email delivery, worker, or production service was exercised.",
+    "This retest does not close K03's separate live weekly restore acceptance."
+  ]
+}

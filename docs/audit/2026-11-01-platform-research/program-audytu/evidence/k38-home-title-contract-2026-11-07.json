@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-07",
+  "repository_head_sha": "2a9a767d",
+  "status": "passed",
+  "finding": "K38-T1 bounded HTML body semantics",
+  "source_sha256": {
+    "scripts/loadtest/response-probe.py": "33ee1f82bcb3061990d8102ebb2bdf82c09dfad622f422064da91f283c62444b",
+    "tests/unit/scripts/loadtest-contract.test.ts": "7ec20f3a6ded79621bea0c0e1ea3ef7d47b9587056eb4465d5f8156efb1c9bc3"
+  },
+  "change": "The fixed 64 KiB home response probe now requires both an HTML marker and a title containing the currently configured canonical site title www.pawelperfect.com. MIME-correct HTML titled Gateway error is rejected before measurement.",
+  "commands": [
+    "python3 -m py_compile scripts/loadtest/response-probe.py",
+    "TMPDIR=/tmp ./node_modules/.bin/vitest run tests/unit/scripts/loadtest-contract.test.ts --no-file-parallelism",
+    "./node_modules/.bin/eslint tests/unit/scripts/loadtest-contract.test.ts",
+    "git diff --check"
+  ],
+  "results": {
+    "targeted_test_file": "1 passed",
+    "tests": "36 passed, 0 failed",
+    "valid_large_home_html": "accepted within 65536-byte bound",
+    "wrong_title_200_text_html": "rejected",
+    "wrong_html_structure": "rejected",
+    "redirect": "rejected",
+    "valid_webp_signature": "accepted within bound",
+    "invalid_image_signature": "rejected",
+    "external_network": "not used"
+  },
+  "limitations": [
+    "The probe is a single pre-measurement request to numeric loopback; home body remains discarded by k6 during measured requests.",
+    "The title check is bounded to the first 64 KiB and does not parse/validate the complete HTML document.",
+    "No k6 load, real app/server, DB, proxy, production target, image decoder or deployment cleanup was run."
+  ]
+}

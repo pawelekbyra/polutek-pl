@@ -1,0 +1,32 @@
+{
+  "package": "K01-K03-HDR-fixture",
+  "source_parent": "d72dc0e5",
+  "import_origin": "a2708f00",
+  "red": {
+    "strict_gate_exit": 1,
+    "passed": 2,
+    "skipped": 1,
+    "meaning": "Gate correctly refused a successful Vitest run with hidden HDR coverage."
+  },
+  "green": {
+    "strict_gate_exit": 0,
+    "summary": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "files": 1,
+      "failedFiles": [],
+      "success": true
+    },
+    "source_stable": true
+  },
+  "lint_exit": 0,
+  "focused_types_exit": 0,
+  "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
+  "source_hashes": {
+    "tests/unit/hls/encode-hls.ffmpeg.test.ts": "40bbadd773a8fd657335ac3d14755075ba134f9dfe04bf41bb511fbc2018bcda"
+  },
+  "scope": "Three actual encodes with synthetic clips on the host; input VUI independently verified by ffprobe; encoder unchanged. Not an application Docker image or full upload/playback cycle.",
+  "release_ready": false
+}

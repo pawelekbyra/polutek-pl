@@ -4,6 +4,7 @@ import { getCorrelationId } from '@/lib/utils/correlation';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { SignedContentUnsubscribeUseCase } from '@/lib/modules/subscriptions';
 import { getBaseUrl } from '@/lib/utils';
+import { MalformedFormDataBodyError, readRequestFormDataWithLimit, RequestBodyTooLargeError, TooManyFormEntriesError } from '@/lib/utils/request-body';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
-  const form = await req.formData().catch(() => null);
+  let form: FormData | null = null;
+  try {
+    form = await readRequestFormDataWithLimit(req, 16 * 1024, 4);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: 'PAYLOAD_TOO_LARGE' }, { status: 413 });
+    }
+    if (error instanceof TooManyFormEntriesError) {
+      return NextResponse.json({ error: 'TOO_MANY_FORM_FIELDS' }, { status: 413 });
+    }
+    if (!(error instanceof MalformedFormDataBodyError)) scopedLogger.error('[UNSUBSCRIBE] could not read request form');
+  }
   const formToken = form?.get('token');
   const token = typeof formToken === 'string' && formToken ? formToken : req.nextUrl.searchParams.get('token');
   const isOneClick = form?.get('List-Unsubscribe') === 'One-Click';

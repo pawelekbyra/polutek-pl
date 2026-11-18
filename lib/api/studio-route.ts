@@ -2,6 +2,11 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import type { UseCaseResult } from "@/lib/modules/shared/result";
 import type { ChannelSummaryDto } from "@/lib/modules/channel";
 import { resolveStudioSession, type StudioSession } from "./studio-session";
+import {
+  DEFAULT_JSON_BODY_MAX_BYTES,
+  readRequestJsonWithLimit,
+  RequestBodyTooLargeError,
+} from "@/lib/utils/request-body";
 
 /**
  * Route plumbing of the Studio API (`/api/studio/*`): one JSON error shape `{ error, code }`, never cached,
@@ -53,8 +58,17 @@ export function studioResult<T>(result: UseCaseResult<T, unknown>, successStatus
 export async function readStudioJson<T>(
   request: Request,
   schema: { safeParse: (v: unknown) => { success: true; data: T } | { success: false } },
+  maxBytes = DEFAULT_JSON_BODY_MAX_BYTES,
 ): Promise<{ ok: true; data: T } | { ok: false; response: Response }> {
-  const raw = await request.json().catch(() => undefined);
+  let raw: unknown;
+  try {
+    raw = await readRequestJsonWithLimit(request, maxBytes);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return { ok: false, response: studioError(413, "Żądanie jest za duże.", "PAYLOAD_TOO_LARGE") };
+    }
+    raw = undefined;
+  }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) return { ok: false, response: studioError(400, "Niepoprawne żądanie.", "BAD_REQUEST") };
   return { ok: true, data: parsed.data };

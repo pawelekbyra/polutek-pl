@@ -93,7 +93,7 @@ describe('sendViaSes', () => {
     expect(mapSesError({ responseCode: 554, message: 'Message rejected: Email address is not verified.' })).toEqual({
       name: 'ses_smtp_554', message: 'Message rejected: Email address is not verified.', statusCode: 554,
     });
-    expect(mapSesError({ code: 'ETIMEDOUT', message: 'timeout' })).toEqual({ name: 'ses_etimedout', message: 'timeout', statusCode: null });
+    expect(mapSesError({ code: 'ESOCKET', originalCode: 'ETIMEDOUT', message: 'timeout' })).toEqual({ name: 'ses_etimedout', message: 'timeout', statusCode: null });
     // provider trouble: fall back
     expect(isSesUnavailable({ name: 'x', message: 'Connection timeout', statusCode: null })).toBe(true);
     expect(isSesUnavailable({ name: 'x', message: 'Throttling failure: Maximum sending rate exceeded.', statusCode: 454 })).toBe(true);

@@ -4,7 +4,7 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { resolveEmailLanguage, sendAccountDeletedEmail } from '@/lib/modules/email';
 import { enqueueContactRemovals, processContactRemovals } from '@/lib/modules/subscriptions';
-import { enqueueStripeCustomerAnonymization, processStripeCustomerAnonymizations } from '@/lib/modules/payments';
+import { enqueueStripeCustomerAnonymization, processStripeCustomerAnonymizations } from '@/lib/modules/payments/application/stripe-customer-anonymization.use-case';
 import { logger } from '@/lib/logger';
 
 /** APP_ACCOUNT_DELETION: the user deleted their own account. ADMIN_USER_DELETION: an admin deleted it (/admin/users). */

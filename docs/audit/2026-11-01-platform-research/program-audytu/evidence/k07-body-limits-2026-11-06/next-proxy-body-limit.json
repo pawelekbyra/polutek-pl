@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-06",
+  "nextVersion": "16.4.5",
+  "documentation": "https://nextjs.org/docs/app/api-reference/config/next-config-js/proxyClientMaxBodySize",
+  "observedBehavior": "The local Next proxy buffers the request before the route. When the body exceeds its configured per-request buffer limit, it logs a warning and continues with only the first N bytes available.",
+  "historicalDefault": "10 MiB",
+  "applicationLimit": "6 MiB",
+  "configuredNextProxyLimit": "7 MiB",
+  "reasoning": "The Next buffer must exceed the largest application cap so any clipped body still reaches the application reader with more than 6 MiB and is rejected. Valid 10,000-part JSON with 200 visible ETag characters requiring escaping is 4,299,010 bytes and fits the 6 MiB application cap.",
+  "comparison": {
+    "requestBytes": 13631489,
+    "contentLength": "absent",
+    "requestType": "chunked multipart/form-data",
+    "route": "/api/subscriptions/unsubscribe",
+    "before": {
+      "temporaryRouteLimitBytes": 13631488,
+      "nextProxyBufferBytes": 10485760,
+      "nextWarning": "Only the first 10MB will be available",
+      "responseStatus": 303,
+      "result": "Next truncated the request below the temporary 13 MiB reader limit; the partial form parsed and the route redirected for its absent token instead of rejecting the oversized request."
+    },
+    "after": {
+      "temporaryRouteLimitBytes": 6291456,
+      "nextProxyBufferBytes": 10485760,
+      "nextWarning": "Only the first 10MB will be available",
+      "responseStatus": 413,
+      "result": "The truncated body still exceeded the 6 MiB reader limit and was rejected before FormData parsing."
+    },
+    "productionBuildWithConfigured7MiBProxyLimit": {
+      "temporaryRouteLimitBytes": 16384,
+      "nextProxyBufferBytes": 7340032,
+      "nextWarning": "Only the first 7MB will be available",
+      "responseStatus": 413,
+      "elapsedMs": 826
+    }
+  },
+  "temporaryChanges": "Route limit values were changed only in the local worktree to compare behavior, then restored before commit. No production container, database, registry, DNS, or external proxy was accessed.",
+  "scopeLimitations": [
+    "The before/after route experiments used Next dev mode; the 7 MiB configuration check used a local optimized Next production server.",
+    "The direct tests did not include Cloudflare or another external reverse proxy.",
+    "The optimized-server request used the existing 16 KiB public route cap; no authenticated 6 MiB upload was sent."
+  ]
+}

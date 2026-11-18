@@ -2,6 +2,8 @@
 
 Stan: 2026-10-12. Ten plik jest dla agenta (i właściciela), który uruchamia **snapshot** serwera `serwerek` na nowej maszynie. Jeśli stawiasz wszystko od zera, a nie ze snapshotu, użyj `WAKE-UP.md` (ten sam katalog). Szczegóły serwera: `SERWEREK.md`.
 
+> **Granica K06 (2026-11-06):** proof-aware ścieżki są kandydatem tylko w lokalnej gałęzi audytu i nie zostały zastosowane na serwerze. Przy przyszłym użyciu nowego deployera plain Compose może startować bazę/Redis/SRH; aktywacja app/admin/encoder/collector wymaga release bundle i zatwierdzonego proofu z [RELEASE-PROOF.md](RELEASE-PROOF.md). Stare snapshoty nie zawierają tego proofu.
+
 ## Kontekst
 
 - Właściciel zrobił snapshot dysku serwera `serwerek` (Hetzner CPX22: 2 vCPU, 4 GB RAM, 80 GB, Norymberga) i skasował serwer, żeby nie płacić ok. 20 EUR miesięcznie, gdy strona jest w becie (`noindex`) i nikt nad nią nie pracuje.
@@ -15,7 +17,7 @@ Stan: 2026-10-12. Ten plik jest dla agenta (i właściciela), który uruchamia *
 2. **Pierwsze logowanie:** `ssh root@<nowy-IP>`. Klucz hosta SSH jest nowy, więc zaktualizuj `known_hosts` właściciela. Ustaw alias `serwerek` na nowy adres.
 3. **Stan systemu:** `docker ps`, `docker compose ls` (powinny być projekty `polutek`, `pp-support`, `mail-lab`), `systemctl status cloudflared-serwerek`, `systemctl list-timers | grep serwerek`, `df -h /`.
 4. **Tunel Cloudflare:** usługa `cloudflared-serwerek` (token w `/etc/serwerek/tunnel.env`) startuje sama. W Cloudflare Zero Trust → Networks → Tunnels sprawdź, że tunel jest `HEALTHY` i ma **jeden** łącznik. Jeśli stary serwer nadal istnieje, **wyłącz go**, żeby nie dzielił ruchu. Adres IP serwera się zmienił, ale strona jest za tunelem, więc DNS zostaje bez zmian.
-5. **Kontenery:** jeśli nie wstały, `cd /opt/serwerek/apps/polutek && docker compose up -d` (profil `admin` osobno: `deploy/serwerek/deploy-admin.sh`, patrz `SERWEREK.md` rozdz. 7). Obrazy są w snapshocie. Gdyby brakowało, zbuduj ponownie przez `deploy.sh` z `git archive origin/main`.
+5. **Kontenery:** jeśli nie wstały, uruchom tylko usługi infrastruktury i bazę (`db`, `redis`, `srh`) przez Compose. Nie startuj `app`, `admin`, `encoder` ani `collector` bezpośrednio i nie buduj obrazów z `git archive`. Po odtworzeniu danych aktywuj release przez proof-aware `deploy.sh`/`deploy-admin.sh` z release bundle, pełną rewizją i zewnętrznie zatwierdzonym hashem; nowy release musi być przygotowany zgodnie z [RELEASE-PROOF.md](RELEASE-PROOF.md).
 6. **Baza:** `docker exec polutek-db-1 pg_isready`; w logach Postgresa zobacz, czy odtworzył się po zatrzymaniu dysku. Uruchom `/opt/serwerek/scripts/restore-test.sh`, który sprawdza ostatni zrzut. Dane zatrzymały się na chwili snapshotu: wpłaty i konta po tej dacie nie istnieją w tej kopii.
 7. **Healthcheck i strona:** `curl -s https://www.pawelperfect.com/api/health -H "x-health-token: ..."` (token w `app.env`), potem strona, logowanie, odtwarzanie filmu, panel `admin.pawelperfect.com` (Access), `support.pawelperfect.com`.
 8. **Webhooki zewnętrzne (obowiązkowe po dłuższej przerwie):**

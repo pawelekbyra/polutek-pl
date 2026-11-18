@@ -56,7 +56,8 @@ describe("visibility: what search may ever show", () => {
     expect(visibilitySql(member, NOW).sql).not.toContain(`isAdult`);
   });
   it("uses the same rules in every search statement", () => {
-    for (const raw of [{ q: "kot" }, { category: "music" }, { tag: "a", sort: "views" }]) {
+    const queries: Record<string, string>[] = [{ q: "kot" }, { category: "music" }, { tag: "a", sort: "views" }];
+    for (const raw of queries) {
       expect(sqlOf(raw).sql).toContain(visibilitySql(guest, NOW).sql);
     }
   });

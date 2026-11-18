@@ -11,11 +11,15 @@ import {
 
 function makePrisma(over: Record<string, unknown> = {}) {
   const tx = {
-    creator: { updateMany: vi.fn(async () => ({ count: 1 })) },
+    creator: { updateMany: vi.fn<(args: unknown) => Promise<{ count: number }>>(async () => ({ count: 1 })) },
     moderationDecision: { create: vi.fn(async () => ({ id: "dec1" })) },
     auditLog: { create: vi.fn(async () => ({})) },
     contentReport: { updateMany: vi.fn(async () => ({ count: 1 })), update: vi.fn(async () => ({})) },
-    video: { update: vi.fn(async () => ({})), findUnique: vi.fn(async () => ({ moderationStatus: "VISIBLE", title: "Film" })) },
+    video: {
+      update: vi.fn(async () => ({})),
+      findUnique: vi.fn(async () => ({ id: "v1", creatorId: "c1", moderationStatus: "VISIBLE", title: "Film", moderationDecisionId: null })),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
     channelQuota: { upsert: vi.fn(async () => ({})) },
   };
   const prisma = {
@@ -72,7 +76,7 @@ describe("channel moderation use cases", () => {
     expect(res.ok).toBe(true);
     const update = tx.creator.updateMany.mock.calls[0][0] as { where: { status: string }; data: Record<string, unknown> };
     expect(update.where.status).toBe("ACTIVE");
-    expect(update.data).toMatchObject({ status: "SUSPENDED" });
+    expect(update.data).toMatchObject({ status: "SUSPENDED", statusDecisionId: "dec1" });
     expect(update.data).not.toHaveProperty("isApproved");
     expect(tx.moderationDecision.create).toHaveBeenCalledTimes(1);
     expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
@@ -90,7 +94,10 @@ describe("channel moderation use cases", () => {
     const { prisma, tx } = makePrisma();
     const res = await resolveContentReport(ctxFor(staff, prisma), { reportId: "r1", outcome: "ACTION_TAKEN", reasonPublic: "Usunięto film", removeVideo: true });
     expect(res.ok).toBe(true);
-    expect(tx.video.update).toHaveBeenCalledWith({ where: { id: "v1" }, data: { moderationStatus: "REMOVED" } });
+    expect(tx.video.updateMany).toHaveBeenCalledWith({
+      where: { id: "v1", moderationStatus: "VISIBLE" },
+      data: { moderationStatus: "REMOVED", moderationDecisionId: "dec1", moderationChangedAt: expect.any(Date) },
+    });
     expect(tx.moderationDecision.create).toHaveBeenCalledTimes(1);
   });
 
@@ -108,12 +115,14 @@ describe("channel moderation use cases", () => {
 
   it("moderates a single video with a decision and an audit row, and only for staff", async () => {
     const { prisma, tx } = makePrisma({ video: { findUnique: vi.fn(async () => ({ id: "v1", creatorId: "c1", moderationStatus: "VISIBLE" })) } });
-    (tx as Record<string, unknown>).video = { update: vi.fn(async () => ({})) };
     const denied = await setVideoModerationStatus(ctxFor(user, prisma), { videoId: "v1", status: "REMOVED", reason: "naruszenie zasad" });
     expect(denied.ok).toBe(false);
     const res = await setVideoModerationStatus(ctxFor(staff, prisma), { videoId: "v1", status: "REMOVED", reason: "naruszenie zasad" });
     expect(res.ok).toBe(true);
-    expect((tx as unknown as { video: { update: ReturnType<typeof vi.fn> } }).video.update).toHaveBeenCalledWith({ where: { id: "v1" }, data: { moderationStatus: "REMOVED" } });
+    expect(tx.video.updateMany).toHaveBeenCalledWith({
+      where: { id: "v1", moderationStatus: "VISIBLE" },
+      data: { moderationStatus: "REMOVED", moderationDecisionId: "dec1", moderationChangedAt: expect.any(Date) },
+    });
     expect(tx.moderationDecision.create).toHaveBeenCalledTimes(1);
     expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
   });

@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-06",
+  "package": "K27/R16 partial: export minimal own notification history",
+  "base_commit": "c734821b",
+  "source_sha256": {
+    "lib/modules/users/application/export-own-data.use-case.ts": "1dc3ae795c901830ece76dbf5942fc8dce9613318370eaa3eda9028e1da6f6ab",
+    "tests/unit/modules/users/export-own-data.test.ts": "65ae49ea04e07ce1c5f74ab47708300c1afe160cedecee1dfa26e7f9aca2d072"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/modules/users/export-own-data.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 5
+    },
+    {
+      "command": "npx eslint lib/modules/users/application/export-own-data.use-case.ts tests/unit/modules/users/export-own-data.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "added_category": "Own notification history includes kind, read state, and timestamp, selected with a userId filter.",
+  "excluded_fields": "title/body text and template params are excluded because they may contain third-party personal data or moderation details.",
+  "scope": "Synthetic Prisma use-case test only. No HTTP server, real database, production data, provider, or browser was used.",
+  "limitations": [
+    "Notification message content is not included; review whether its export scope can be expanded without disclosing other people's data.",
+    "NotificationPreference remains separately exported, with absent row represented as null.",
+    "K27 remains partial pending full HTTP/DB coverage, K05/K11/K26 dependencies, and independent review."
+  ]
+}

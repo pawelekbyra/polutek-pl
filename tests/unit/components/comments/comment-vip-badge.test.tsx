@@ -120,7 +120,8 @@ describe('comment badges under the avatar', () => {
   });
 
   it('a plain user, an admin and an old PATRON payload get no pill at all', () => {
-    for (const badges of [[], ['ADMIN'], ['PATRON' as unknown as CommentAuthorBadgeDto]]) {
+    const badgeSets: CommentAuthorBadgeDto[][] = [[], ['ADMIN'], ['PATRON' as unknown as CommentAuthorBadgeDto]];
+    for (const badges of badgeSets) {
       renderItem(commentBy(badges));
       expect(document.querySelectorAll('[data-badge]')).toHaveLength(0);
       cleanup();

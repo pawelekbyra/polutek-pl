@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Deploy the app on serwerek: build image -> migrate DB in a one-off container -> restart app -> wait for health -> roll back on failure.
-# Runs ON THE SERVER in /opt/serwerek/apps/polutek (this file lives there next to docker-compose.yml). Idempotent: safe to re-run with the same tag.
+# Deploy the app on serwerek from a release artifact with a verified proof.
+# Runs ON THE SERVER in /opt/serwerek/apps/polutek. Idempotent: safe to re-run with the same tag.
 #
 # Usage:  ./deploy.sh <tag> [--rollback]
-#   <tag>        image tag, normally the short git sha; sources must be in ./src (git archive of that commit)
-#   --rollback   skip build/migrate, just start the previously deployed image
-# Images come from one of two places:
-#   default            built here from ./src (fallback; heavy on the 2 vCPU / 4 GB server)
-#   IMAGE_SOURCE=ghcr  pulled from GHCR, built by .github/workflows/images.yml (tag = 12-char commit sha shown in
-#                      the workflow summary); needs a one-time `docker login ghcr.io` with a read:packages token.
-#                      No ./src and no build.env needed. Docs: docs/operations/SERWEREK.md, section 24.
+#   <tag>        local image alias; the image itself must come from a proof-verified registry digest
+#   --rollback   verify and start the previously deployed release images (never changes the schema)
+# Required environment: RELEASE_REVISION (full commit SHA), RELEASE_PROOF_SHA256 (approved hash from the producer).
+# Required artifact: .release-artifacts/<revision>/{source/,proof.json,inputs.json}.
 # Files next to this script (all root, 600, NOT in git):
 #   app.env    runtime env of the app (DATABASE_URL, BETTER_AUTH_SECRET, GOOGLE_*, TURNSTILE_*, STRIPE_*, CRON_SECRET, TRUST_CF_CONNECTING_IP=true ...)
 #   db.env     POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
@@ -20,14 +17,14 @@
 #   = app live, but encoder/collector did not start, or the readiness check failed; the warning is also in telemetry.job_run
 #   (status ok, detail "... WITH WARNINGS ..."; the table allows only running|ok|fail) and a failed worker/collector start does
 #   NOT promote that image to .current-*-image.
-# State: .current-image / .previous-image (image refs). --rollback restores CODE only, never the schema. Migrations were additive until
+# State: .current-image / .previous-image and matching proof state. --rollback restores CODE only, never the schema. Migrations were additive until
 # 20261005210000_cleanup_dead_schema (destructive): after such a migration the previous image may select dropped columns and fail,
 # so roll back by restoring the pre-deploy dump (docs/architecture/db-cleanup-2026-10-05.md).
 set -euo pipefail
-cd "$(dirname "$(readlink -f "$0")")"
+cd "${DEPLOY_APP_DIR:-$(dirname "$(readlink -f "$0")")}"
 
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-150}"
-IMAGE_SOURCE="${IMAGE_SOURCE:-build}"
+IMAGE_SOURCE="${IMAGE_SOURCE:-ghcr}"
 GHCR_PREFIX="${GHCR_PREFIX:-ghcr.io/pawelekbyra}"
 BUILD_CACHE_KEEP="${BUILD_CACHE_KEEP:-12GB}"
 DEPLOY_STARTED="$(date +%s)"
@@ -58,6 +55,10 @@ tag="${1:-}"; [[ -n "$tag" ]] || die "usage: $0 <tag> [--rollback]"
 mode="${2:-deploy}"
 [[ "$tag" =~ ^[A-Za-z0-9._-]+$ ]] || die "bad tag '$tag'"
 for f in app.env db.env docker-compose.yml; do [[ -f "$f" ]] || die "missing $f"; done
+[[ "$IMAGE_SOURCE" == "ghcr" ]] || die "unverified local builds are disabled; use a verified GHCR release"
+revision="${RELEASE_REVISION:-}"
+proof_hash="${RELEASE_PROOF_SHA256:-}"
+[[ "$revision" =~ ^[a-f0-9]{40}$ && "$proof_hash" =~ ^[a-f0-9]{64}$ ]] || die "RELEASE_REVISION and externally approved RELEASE_PROOF_SHA256 are required"
 
 new_image="polutek-app:$tag"
 migrator_image="polutek-migrator:$tag"
@@ -142,11 +143,22 @@ readiness_check() {
 }
 
 if [[ "$mode" == "--rollback" ]]; then
-  prev="$(cat .previous-image 2>/dev/null || true)"; [[ -n "$prev" ]] || die "no previous image recorded"
+  prev_revision="$(cat .previous-release-revision 2>/dev/null || true)"
+  [[ "$prev_revision" == "$revision" ]] || die "rollback revision must match .previous-release-revision"
+  state_dir=".release-state/$prev_revision"
+  [[ -r "$state_dir/proof.sha256" ]] || die "verified proof for rollback release is missing"
+  [[ "$(cat "$state_dir/proof.sha256")" == "$proof_hash" ]] || die "rollback proof hash must match the externally approved hash"
+  verify_output="$(node "$state_dir/source/scripts/ops/deploy-release.mjs" \
+    "--release-dir=$state_dir" "--revision=$prev_revision" "--proof-sha256=$proof_hash" --scope=app "--tag=$tag")" || die "rollback release proof verification failed"
+  mapfile -t verified_ids <<< "$verify_output"
+  prev="polutek-app:$tag"
   log "rollback to $prev"
   { start_app "$prev" && wait_healthy "$prev"; } || die "rollback image is not healthy either"
   cp .current-image .rolled-back-from 2>/dev/null || true
   printf '%s' "$prev" > .current-image
+  cp .current-release-revision .rolled-back-from-revision 2>/dev/null || true
+  printf '%s' "$prev_revision" > .current-release-revision
+  printf '%s' "$revision" > .previous-release-revision
   prev_worker="$(cat .previous-worker-image 2>/dev/null || true)"
   if [[ -n "$prev_worker" ]]; then
     rc=0; start_encoder "$prev_worker" || rc=$?
@@ -166,30 +178,14 @@ if [[ "$mode" == "--rollback" ]]; then
   exit 0
 fi
 
-# 1. Images: pull from GHCR, or build here (skipped when the images for this tag already exist).
-if [[ "$IMAGE_SOURCE" == "ghcr" ]]; then
-  for pair in "polutek-app:$new_image" "polutek-migrator:$migrator_image" "polutek-worker:$worker_image" "polutek-collector:$collector_image"; do
-    remote="$GHCR_PREFIX/${pair%%:*}:$tag"
-    log "pulling $remote"
-    docker pull -q "$remote" >/dev/null || die "cannot pull $remote (images workflow run for this commit? docker login ghcr.io?)"
-    docker tag "$remote" "${pair#*:}"
-    docker rmi "$remote" >/dev/null 2>&1 || true   # keep only the local name; the layers stay
-  done
-elif docker image inspect "$new_image" >/dev/null 2>&1 && docker image inspect "$migrator_image" >/dev/null 2>&1   && docker image inspect "$worker_image" >/dev/null 2>&1 && docker image inspect "$collector_image" >/dev/null 2>&1; then
-  log "images for $tag already built, skipping build"
-else
-  [[ -d src ]] || die "missing ./src (git archive of the commit to deploy)"
-  [[ -f build.env ]] || die "missing build.env (public NEXT_PUBLIC_* build args)"
-  args=()
-  while IFS='=' read -r k v; do
-    [[ "$k" =~ ^NEXT_PUBLIC_[A-Z0-9_]+$ ]] && args+=(--build-arg "$k=$v")
-  done < <(grep -v '^[[:space:]]*#' build.env | sed '/^[[:space:]]*$/d')
-  log "building $new_image (${#args[@]} public build args)"
-  docker build -f src/deploy/serwerek/Dockerfile --target runner "${args[@]}" -t "$new_image" src
-  docker build -f src/deploy/serwerek/Dockerfile --target migrator -t "$migrator_image" src
-  docker build -f src/deploy/serwerek/Dockerfile --target worker -t "$worker_image" src
-  docker build -f src/deploy/serwerek/Dockerfile --target collector -t "$collector_image" src
-fi
+# 1. Verify the complete release proof and pull/tag only its returned immutable image IDs.
+release_dir=".release-artifacts/$revision"
+[[ -d "$release_dir/source" ]] || die "missing verified release bundle at $release_dir (source/, proof.json, inputs.json)"
+log "verifying release $revision before migration"
+verify_output="$(node "$release_dir/source/scripts/ops/deploy-release.mjs" \
+  "--release-dir=$release_dir" "--revision=$revision" "--proof-sha256=$proof_hash" --scope=app "--tag=$tag")" || die "release proof verification failed"
+mapfile -t verified_ids <<< "$verify_output"
+prev_revision="$(cat .current-release-revision 2>/dev/null || true)"
 
 # 2. Database up, safety dump, migrations in a one-off container. A failure here leaves the running app untouched.
 log "starting db"
@@ -218,6 +214,10 @@ if start_app "$new_image" && wait_healthy "$new_image"; then
   if [[ "$prev_image" != "$new_image" ]]; then
     [[ -n "$prev_image" ]] && printf '%s' "$prev_image" > .previous-image
     printf '%s' "$new_image" > .current-image
+  fi
+  if [[ "$prev_revision" != "$revision" ]]; then
+    [[ -n "$prev_revision" ]] && printf '%s' "$prev_revision" > .previous-release-revision
+    printf '%s' "$revision" > .current-release-revision
   fi
   # Keep the last N app/migrator images for rollbacks, drop the rest and dangling layers.
   # Encoder next to the app (after the app is healthy, so a broken worker image never delays the site).
@@ -279,6 +279,14 @@ fi
 log "new image failed to start or did not become healthy in ${HEALTH_TIMEOUT}s; last logs:"
 docker compose logs --tail 40 app >&2 || true
 if [[ -n "$prev_image" ]] && docker image inspect "$prev_image" >/dev/null 2>&1; then
+  rollback_revision="$(cat .current-release-revision 2>/dev/null || true)"
+  rollback_state=".release-state/$rollback_revision"
+  [[ "$rollback_revision" =~ ^[a-f0-9]{40}$ && -r "$rollback_state/proof.sha256" ]] || die "deploy of $tag FAILED; previous image has no retained release proof, automatic rollback refused"
+  rollback_hash="$(cat "$rollback_state/proof.sha256")"
+  rollback_tag="${prev_image#*:}"
+  node "$rollback_state/source/scripts/ops/deploy-release.mjs" \
+    "--release-dir=$rollback_state" "--revision=$rollback_revision" "--proof-sha256=$rollback_hash" --scope=app "--tag=$rollback_tag" \
+    || die "deploy of $tag FAILED; previous release proof verification failed, automatic rollback refused"
   log "rolling back to $prev_image"
   if start_app "$prev_image" && wait_healthy "$prev_image"; then die "deploy of $tag FAILED, rolled back to $prev_image"; fi
   die "deploy of $tag FAILED and rollback to $prev_image is NOT healthy"

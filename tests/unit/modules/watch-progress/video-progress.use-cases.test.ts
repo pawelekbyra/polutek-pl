@@ -29,7 +29,7 @@ function makeCtx(overrides: { duration?: string | null; actor?: unknown } = {}) 
       upsert: vi.fn(async () => ({})),
       deleteMany: vi.fn(async () => ({ count: 1 })),
       findUnique: vi.fn(),
-      findMany: vi.fn(async () => []),
+      findMany: vi.fn<(args: unknown) => Promise<unknown[]>>(async () => []),
     },
   };
   const ctx = {

@@ -1,0 +1,22 @@
+{
+  "id": "K15 late abort compare-and-set regression",
+  "date": "2026-11-07",
+  "base_commit": "f256109d3b1873edec4b990a2c9b599e524c608a",
+  "scope": "Local application and test changes; disposable PostgreSQL 17 only. No production, R2, server, or external services.",
+  "finding": "A delayed storage abort could overwrite a successfully completed original as ABANDONED after the upload row had already become READY.",
+  "regression": "RED before fix: the Studio abort endpoint returned 200 after completion had won. GREEN after fix: abort returns 409 UPLOAD_NOT_OPEN; row remains READY, activeOriginalId remains v2, and one encode job exists.",
+  "implementation": "Abort closes the row using updateMany conditional on id, videoId, and status UPLOADING. A zero-row compare-and-set is reported as 409. NoSuchUpload is reconciled through the same status compare-and-set.",
+  "verification": {
+    "postgres_original_upload_suite": "5/5 PASS on disposable PostgreSQL 17 after 84 migrations",
+    "unit_original_upload": "21/21 PASS",
+    "eslint_changed_files": "PASS",
+    "repository_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "lib/modules/video-pipeline/application/original-upload.use-cases.ts": "5739f684a82a9a3ef96a1c5e479eb769ef088b8a470180bda9ffa7b96ad99db2",
+    "tests/postgres/original-upload.pg.test.ts": "76a4d49142b374e76c1826979bb6daa96368bd8240395dfe9ed732b53c219e7b",
+    "tests/unit/video-pipeline/original-upload.test.ts": "a1b69f52f64be0b751cea5e503b53dec1368a22ae5c367cc87f6ca63474b42f5"
+  },
+  "remaining": "R2 provider behavior and independent review remain outstanding; K15 stays open."
+}

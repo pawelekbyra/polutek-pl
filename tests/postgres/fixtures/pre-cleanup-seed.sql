@@ -2,8 +2,9 @@
 -- the migration drops, plus live rows that must survive. Used by tests/postgres/db-cleanup-migration.pg.test.ts.
 INSERT INTO "User" (id, email, name, "totalPaidMinor", "canCreateChannel", "updatedAt") VALUES
  ('u1','u1@example.test','alice',500,true,now()), ('u2','u2@example.test','bob',0,false,now());
-INSERT INTO "Creator" (id, "userId", slug, name, "bannerUrl", "stripeConnectId", "updatedAt") VALUES
- ('c1','u1','chan','Chan','https://x/banner.jpg','acct_123',now());
+-- Preserve the historic main-channel flag so later deployment A can seed main_channel_id before deployment B.
+INSERT INTO "Creator" (id, "userId", slug, name, "bannerUrl", "stripeConnectId", "isPrimary", "updatedAt") VALUES
+ ('c1','u1','chan','Chan','https://x/banner.jpg','acct_123',true,now());
 INSERT INTO "EmailTemplate" (id, slug, subject, html, "updatedAt") VALUES ('t1','welcome','s','<p>h</p>',now());
 INSERT INTO "Video" (id,"creatorId",title,slug,"thumbnailUrl","videoUrl","publishAfterAssetReadyProvider",tier,"updatedAt") VALUES
  ('v1','c1','Public','public','/t.jpg','https://old/v1.mp4','MUX','PUBLIC',now()),

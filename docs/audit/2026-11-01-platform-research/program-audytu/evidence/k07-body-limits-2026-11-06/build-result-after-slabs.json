@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-06",
+  "commit": "3dc8fb29997171f1ef413d9e21a598038ffd72d5",
+  "next": "16.4.5",
+  "builds": {
+    "public": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "typescript": "PASS",
+      "staticPages": "9/9 generated",
+      "warnings": [
+        "Next middleware convention is deprecated in favor of proxy",
+        "Dynamic headers in localized privacy/terms routes triggered fallback warnings during static generation"
+      ]
+    },
+    "admin": {
+      "command": "npm run admin:build",
+      "exitCode": 0,
+      "typescript": "PASS",
+      "staticPages": "1/1 generated",
+      "wholeProjectTracingWarning": false
+    }
+  },
+  "scope": "Local optimized Next builds in the permitted worktree; no container, deployment, registry, or production runtime"
+}

@@ -2,8 +2,8 @@
  * Player side of our own HLS (CLAUDE.md 4.17): hls.js from our own bundle, its start-up
  * tuning, and delivery-token renewal without reloading the stream.
  *
- * Token: every delivery URL is "<origin>/h/<exp>.<sig>/<videoId>/<version>/<file>" and one
- * token covers every file of one version. When the plan is renewed the player keeps playing
+ * Token: every delivery URL is "<origin>/h/<exp>.<sig>/<videoId>/<version>[~<attemptId>]/<file>" and one
+ * token covers every file of one asset attempt. When the plan is renewed the player keeps playing
  * and every later request (playlists, segments) is rewritten to the newest token, so position,
  * buffer and quality survive.
  */

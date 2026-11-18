@@ -1,0 +1,34 @@
+{
+  "package": "K06",
+  "finding": "R09",
+  "checkedAt": "2026-11-07",
+  "baseRevision": "bf8bc46d",
+  "change": "Added a Docker-free proof/source preflight and made deploy-release run it before any Docker inspect or registry pull.",
+  "sourceFiles": {
+    "scripts/ops/release/proof.mjs": "61348974dcc908beb850cca05dd645e88c7554a96f27a59fecab6abe9f7024d0",
+    "scripts/ops/release-proof.mjs": "47897d0360fd8dbf22cb44797e83e35bd3cbe03237b82bbb02d3510bff9e9203",
+    "scripts/ops/deploy-release.mjs": "871e25700dc5a13b28754ef4408b10564cb17a5eb0092293f3e49552a88d2c15",
+    "tests/unit/ops/deploy-release.test.ts": "833cf7ae6798650a12c80e49203a90ff314d4012e90120f94eef8976a8e2987b",
+    "tests/unit/ops/release-proof-process.test.ts": "cd5b52db668b732ed183e9d177c40f7848dab9f6623d9030ee19530e934f6eb8"
+  },
+  "verification": {
+    "node": "v22.23.3",
+    "command": "npx vitest run tests/unit/ops/release-proof-process.test.ts tests/unit/ops/release-artifact.test.ts tests/unit/ops/deploy-release.test.ts tests/unit/ops/mergedeploy-release.test.ts tests/unit/ops/images-workflow-release-gate.test.ts tests/unit/ops/release-publish.test.ts --reporter=dot",
+    "exitCode": 0,
+    "filesPassed": 6,
+    "testsPassed": 28,
+    "eslintCommand": "npx eslint scripts/ops/release/proof.mjs scripts/ops/release-proof.mjs scripts/ops/deploy-release.mjs tests/unit/ops/deploy-release.test.ts tests/unit/ops/release-proof-process.test.ts",
+    "eslintExitCode": 0,
+    "typecheckCommand": "npx tsc --noEmit --pretty false -p tsconfig.typecheck.json",
+    "typecheckExitCode": 0,
+    "diffCheckExitCode": 0,
+    "negativeCase": "preflight proof rejection exits before fake Docker is invoked",
+    "directPreflightCase": "valid proof/source passes; mismatched externally supplied hash fails"
+  },
+  "limits": [
+    "All tests use synthetic local fixtures and Docker/registry stubs.",
+    "No Docker image build/pull, GHCR, GitHub Actions, SSH, server or infrastructure deployment was run; deploy-release was exercised only with fake Docker and a synthetic verifier.",
+    "This does not prove a successful end-to-end release, actual image digests, rollback or production readiness; K06 remains partial."
+  ],
+  "status": "Local consumer now validates externally approved proof and source before Docker access; complete sandbox acceptance, real images and rollback remain open."
+}

@@ -25,8 +25,8 @@ services:
     mem_limit: 512m
 
   app:
-    # APP_IMAGE is set by deploy.sh to polutek-app:<git-sha>; "current" is only the manual fallback.
-    image: ${APP_IMAGE:-polutek-app:current}
+    # Set only by a proof-aware consumer. The fallback is deliberately absent from the registry and local deploy flow.
+    image: ${APP_IMAGE:-polutek-app:proof-required}
     restart: unless-stopped
     env_file: ./app.env           # DATABASE_URL (host "db"), BETTER_AUTH_SECRET, GOOGLE_*, TURNSTILE_*, STRIPE_*, TRUST_CF_CONNECTING_IP=true, CRON_SECRET ...
     depends_on:
@@ -43,7 +43,7 @@ services:
     # Runbook: docs/operations/VIDEO-PIPELINE.md. A separate container (not the app process) so a long ffmpeg
     # run can be limited, restarted and rolled back on its own.
     # ENCODER_IMAGE is set by deploy.sh to polutek-worker:<sha>. Own env file with only what it needs (no Stripe/auth secrets).
-    image: ${ENCODER_IMAGE:-polutek-worker:current}
+    image: ${ENCODER_IMAGE:-polutek-worker:proof-required}
     restart: unless-stopped
     env_file: ./worker.env        # DATABASE_URL (host "db"), CLOUDFLARE_R2_* (incl. _BUCKET_VIDEO_ORIGINALS, _BUCKET_HLS, _BUCKET_THUMBNAILS_PRIVATE), NEXT_PUBLIC_R2_PUBLIC_HOST
     depends_on:
@@ -65,7 +65,7 @@ services:
     # Tunnel ingress admin.pawelperfect.com -> http://127.0.0.1:3100, behind a Cloudflare Access application.
     # Runbook: docs/operations/ADMIN-PANEL.md.
     profiles: ["admin"]
-    image: ${ADMIN_IMAGE:-polutek-admin:current}
+    image: ${ADMIN_IMAGE:-polutek-admin:proof-required}
     restart: unless-stopped
     env_file: ./admin.env         # DATABASE_URL (host "db"), ADMIN_AUTH_SECRET, ADMIN_APP_URL, CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD ...
     depends_on:
@@ -93,7 +93,7 @@ services:
     # Postgres schema "telemetry" as role pp_collector, rollups every 5 min, retention every 6 h.
     # No published port: only the app reaches it, at http://collector:3200 (TELEMETRY_COLLECTOR_URL in app.env).
     # Optional like the encoder: deploy.sh starts it only when collector.env exists. Docs: docs/architecture/admin-telemetry.md.
-    image: ${COLLECTOR_IMAGE:-polutek-collector:current}
+    image: ${COLLECTOR_IMAGE:-polutek-collector:proof-required}
     restart: unless-stopped
     env_file: ./collector.env     # TELEMETRY_DATABASE_URL=postgresql://pp_collector:...@db:5432/<db>, TELEMETRY_ALLOWED_HOSTS=www.pawelperfect.com
     depends_on:
@@ -111,7 +111,7 @@ services:
   migrate:
     # One-off, run by deploy.sh:  docker compose --profile tools run --rm migrate
     profiles: ["tools"]
-    image: ${MIGRATOR_IMAGE:-polutek-migrator:current}
+    image: ${MIGRATOR_IMAGE:-polutek-migrator:proof-required}
     env_file: ./app.env
     depends_on:
       db:

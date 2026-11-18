@@ -1,0 +1,73 @@
+{
+  "package": "K23/R05",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "status": "PARTIAL",
+  "scope": "Persist the NEW_VIDEO fan-out intent atomically with immediate publication; retry delivery from the existing durable job runner.",
+  "implementation": [
+    "Immediate publish and premiere-to-live paths now enqueue NEW_VIDEO_FANOUT inside the same database transaction as their PUBLISHED/live state and audit update.",
+    "Only the low-latency runner kick happens after commit. If the kick or request process is lost, the existing cron runner can recover the pending job.",
+    "The durable enqueue retains its unique (kind, videoId) key, reopens DONE/DEAD jobs for an explicit republish and relies on per-user idempotence in the existing fan-out handler.",
+    "The transaction-scoped enqueue throws on persistence failure so the publication state and its announcement intent roll back together."
+  ],
+  "checks": [
+    {
+      "name": "cron-route-wiring",
+      "command": "npx vitest run tests/unit/cron/premiere-notifications-route.test.ts",
+      "exitCode": 0,
+      "files": 1,
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "source_sha256": {
+        "tests/unit/cron/premiere-notifications-route.test.ts": "42d2e5d8e52947d91fda52a9bbec189d0a12974bda0efb18ad1a4a0966bb140a",
+        "app/api/cron/premiere-notifications/route.ts": "c0b47069f7f7dd1d91be19672931573b336128bfcdabc7ccef78330dcbdaf818"
+      },
+      "covers": [
+        "Unauthorized route calls do not invoke any job runner",
+        "Every authorized route tick calls durable NEW_VIDEO_FANOUT runner",
+        "Runner failure returns HTTP 500 and does not falsely complete later cron work"
+      ]
+    },
+    {
+      "name": "focused-unit",
+      "command": "npx vitest run tests/unit/modules/notifications/new-video-fan-out.test.ts tests/unit/modules/notifications/announce-published-video.test.ts tests/unit/modules/video/unlist-admin-video.use-case.test.ts tests/unit/modules/video/update-admin-video.use-case.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "files": 4,
+      "tests": 51,
+      "passed": 51,
+      "failed": 0
+    },
+    {
+      "name": "postgres-transaction-and-runner-recovery",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/published-video-notification-intent.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "migrationsApplied": 83,
+      "exitCode": 0,
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "covers": [
+        "repeat enqueue in one publication transaction leaves one unique intent",
+        "commit leaves a PENDING intent without calling the request-side kick; the durable runner then claims and completes it",
+        "a transaction failure rolls both PUBLISHED state and the durable intent back"
+      ]
+    },
+    {
+      "name": "typecheck",
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exitCode": 0
+    },
+    {
+      "name": "eslint-and-diff-check",
+      "command": "npx eslint <8 touched TS files> && git diff --check",
+      "exitCode": 0,
+      "eslintErrors": 0
+    }
+  ],
+  "limits": [
+    "The PostgreSQL case tests the real transaction helper, durable runner and rows but does not kill a live web process or execute the cron HTTP route after restart.",
+    "Fan-out in this package is in-app notification delivery. No email provider is involved and no exactly-once provider delivery is claimed.",
+    "No independent review or server acceptance has been completed; K23 remains open."
+  ],
+  "handoff": "Claude: on non-production, confirm both publish entry points leave one pending NEW_VIDEO_FANOUT row in the same commit, then suppress the immediate runner kick/restart the request process and verify the scheduled premiere-notifications cron claims and completes it. Re-publish/retry and confirm the unique job plus per-user dedupe prevents duplicate in-app rows. Do not claim exactly-once external email delivery."
+}

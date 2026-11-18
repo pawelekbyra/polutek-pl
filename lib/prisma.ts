@@ -10,6 +10,19 @@ declare global {
   var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 
-export const prisma = globalThis.prisma ?? prismaClientSingleton();
+function getPrismaClient() {
+  if (!globalThis.prisma) globalThis.prisma = prismaClientSingleton();
+  return globalThis.prisma;
+}
 
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
+/** Compatibility facade: importing this module is side-effect free; first Prisma access creates the singleton. */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, property) {
+    const client = getPrismaClient();
+    const value = Reflect.get(client, property, client) as unknown;
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+  has(_target, property) {
+    return property in getPrismaClient();
+  },
+});

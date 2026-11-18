@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_PROXY_ADDR_TRANSITIVE_OVERRIDE",
+  "base_commit": "335b21d9e6e05c3406762307e167623d281e9793",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "files": {
+    "package.json": "4cb9bb7738fd60e4732d592550e3be5a1ad62388ace70ec479fb2d3e2a56baa4",
+    "package-lock.json": "b0b4d00a1bdebbdeefce1bbfe28e6cba03098477d7480e53db4cad783bdee54a"
+  },
+  "change": {
+    "previous_resolved": "2.0.7",
+    "current_resolved": "2.0.8",
+    "override": "package.json#overrides.proxy-addr",
+    "npm_tree_path": "shadcn -> @modelcontextprotocol/sdk -> express -> proxy-addr",
+    "classification": "development dependency path in npm ls output"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls proxy-addr --all": {
+      "exit": 0,
+      "version": "2.0.8",
+      "scope": "only shadcn development dependency path"
+    }
+  },
+  "limitations": [
+    "Does not establish actual standalone image contents or exploitability.",
+    "No new npm audit request and no package graph upload.",
+    "No application source change or full release acceptance."
+  ]
+}

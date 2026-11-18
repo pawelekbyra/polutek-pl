@@ -224,7 +224,7 @@ describe('legal sheet in the patron checkout', () => {
     const { LegalSheetProvider } = await import('@/app/components/legal/LegalSheet');
     render(
       <LegalSheetProvider tx={txFor('pl')} language="pl" demo>
-        <a href="/regulamin" onClick={(e) => e.preventDefault()}>x</a>
+        <a href="#unrelated" onClick={(e) => e.preventDefault()}>x</a>
         <LegalLink doc="terms" language="pl">Link regulaminu</LegalLink>
         <LegalLink doc="privacy" language="pl">Link polityki</LegalLink>
       </LegalSheetProvider>,

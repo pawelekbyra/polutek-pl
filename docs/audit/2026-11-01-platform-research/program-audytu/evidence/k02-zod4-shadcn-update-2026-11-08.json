@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_ZOD4_RUNTIME_AND_SHADCN_COMPATIBILITY",
+  "base_commit": "a4e59400",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "866bbb51f0af111b4ffa3bb136bb7380760df22fd84bd3d376287a0413e2c10e",
+    "package-lock.json": "27d5f95432b250a13935e261dd1d1968dc74eecc7ae815245491f91b2d9f196a"
+  },
+  "change": {
+    "zod": "3.23.8 range -> 4.6.7",
+    "shadcn": "4.8.0 range -> 4.23.0",
+    "resolved_tree": "all npm ls zod --all entries resolve to 4.6.7",
+    "compatibility_fixes": [
+      "Use ZodIssue for action issue arrays",
+      "Replace deprecated errorMap/invalid_type_error options with error callbacks",
+      "Pass an explicit string key schema to z.record"
+    ]
+  },
+  "validation": {
+    "npm ci --no-audit --no-fund": { "exit": 0 },
+    "npm ls shadcn zod --all": { "exit": 0, "shadcn": "4.23.0", "zod": "4.6.7", "zod_v3_entries": 0 },
+    "npx shadcn --version": { "exit": 0, "version": "4.23.0" },
+    "npm run typecheck": { "exit": 0 },
+    "targeted ESLint": { "exit": 0 },
+    "targeted Vitest": { "exit": 0, "files": 6, "tests_passed": 44 }
+  },
+  "limitations": [
+    "No new npm audit request or dependency graph upload.",
+    "Application builds and runtime image inspection remain open.",
+    "No full test suite or full K02 acceptance was performed."
+  ]
+}

@@ -37,6 +37,35 @@ export function toPublicPlaybackPlan(
     };
   }
 
+  // Defense in depth for hidden or missing videos: callers normally receive a generic plan from
+  // PlaybackService, but a denied plan must never forward metadata if a future caller builds one
+  // from a loaded row before applying the visibility decision.
+  if (!playbackPlan.access.allowed
+    && (playbackPlan.access.reason === 'NOT_FOUND' || playbackPlan.access.reason === 'VIDEO_NOT_FOUND')) {
+    playbackPlan = {
+      ...playbackPlan,
+      premiereAt: undefined,
+      access: { allowed: false, reason: 'VIDEO_NOT_FOUND' },
+      source: undefined,
+      player: {
+        ...playbackPlan.player,
+        title: '',
+        poster: '',
+        textTracks: undefined,
+        chapters: undefined,
+      },
+      diagnostics: {
+        ...playbackPlan.diagnostics,
+        warnings: ['Video not found'],
+        asset: undefined,
+        sourceMode: 'NONE',
+        providerResolutionAllowed: false,
+        providerResolutionAttempted: false,
+      },
+      tracking: { playbackSessionId: '', heartbeatIntervalSeconds: 0 },
+    };
+  }
+
   const hasPlayableSource = isPlayableServerPlan(playbackPlan);
 
   const safePlaybackPlan: PlaybackPlan = hasPlayableSource

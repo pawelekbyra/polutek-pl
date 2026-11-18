@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-06",
+  "package": "K03 partial: guarded critical-path npm entrypoint",
+  "base_commit": "83877ed3",
+  "source_sha256": {
+    "package.json": "98806c80f48b1554355fca136e6351ec91ce54c6e113e09659efbc8510dba007",
+    "tests/integration/launch-candidate-critical-path.test.ts": "2d89a257628f8f8eacedcc66f81a71c48622a3180713630cf41d7eb257685cab"
+  },
+  "checks": [
+    {
+      "command": "npm run test:critical-path -- --maxWorkers=1",
+      "result": "PASS",
+      "required_suites": 2,
+      "tests": 37,
+      "duration_seconds": 45.29,
+      "stderr_fixture_errors": 0
+    },
+    {
+      "command": "npx eslint tests/integration/launch-candidate-critical-path.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "scope": "The integration rehearsal uses synthetic Prisma, storage, and notification boundaries. No external provider or production service was contacted.",
+  "finding": "The public npm script previously bypassed scripts/test-critical-path.mjs and invoked Vitest directly. It now uses the guard, which verifies both required suites contain only executed passing tests. The harness models the best-effort support notification and asserts it is created, avoiding a swallowed fixture error that was previously printed to stderr."
+}

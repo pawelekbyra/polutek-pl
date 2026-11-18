@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-06",
+  "scope": "Read-only inventory in the permitted Polutek worktree; no server, Cloudflare account, DNS, or production access.",
+  "search": {
+    "commands": [
+      "rg --files -g '*cloudflared*' -g '*nginx*' -g '*Caddy*' -g '*traefik*' -g '*compose*' -g 'Dockerfile*'",
+      "rg -n 'cloudflared|client_max_body_size|proxy-body-size|body.*limit|max.*body|request.*size|tunnel:' docker-compose* compose* docs/operations scripts .github"
+    ],
+    "repositoryIngressConfigFound": false,
+    "operationsDocumentation": "docs/operations/SERWEREK.md identifies cloudflared as an active system service and says apps/cloudflared contains README only; the tunnel is managed remotely."
+  },
+  "conclusion": "The actual Cloudflare Tunnel ingress/buffering limits cannot be established from the repository. K07 proxy acceptance needs an explicitly permitted, non-production tunnel configuration or a production read-only review; until then, keep K07 open."
+}

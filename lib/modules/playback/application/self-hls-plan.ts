@@ -11,12 +11,13 @@ import { isAdultVideo, PLAYBACK_HEARTBEAT_INTERVAL_SECONDS, PLAYBACK_SESSION_MAX
  * a signed delivery URL exists only for an allowed viewer (CLAUDE.md 4.3).
  */
 
-const OBJECT_KEY_RE = /^videos\/([A-Za-z0-9-]{8,64})\/v\/([A-Za-z0-9_-]{1,32})$/;
+const OBJECT_KEY_RE = /^videos\/([A-Za-z0-9-]{8,64})\/v\/([A-Za-z0-9_-]{1,32})(?:\/attempts\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}))?$/;
 
-/** Version segment of "videos/<videoId>/v/<version>", only when it belongs to this video. */
+/** Delivery version for a legacy or attempt-scoped object key that belongs to this video. */
 export function parseSelfHlsObjectKey(objectKey: string, videoId: string): string | null {
   const m = OBJECT_KEY_RE.exec(objectKey);
-  return m && m[1] === videoId ? m[2] : null;
+  if (!m || m[1] !== videoId) return null;
+  return m[3] ? `${m[2]}~${m[3]}` : m[2];
 }
 
 /**

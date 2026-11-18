@@ -1,0 +1,16 @@
+
+$ /usr/bin/node /opt/codex/polutek-pl/.worktrees/platform-audit/node_modules/vitest/vitest.mjs run tests/unit/hls/encode-hls.ffmpeg.test.ts --maxWorkers=1 --reporter=dot --reporter=json --outputFile.json=/opt/codex/polutek-pl/.worktrees/platform-audit/.claude/local-ci-logs/encode-smoke.vitest.json
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+···
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:42:30
+   Duration  25.82s (transform 221ms, setup 0ms, import 620ms, tests 24.80s, environment 0ms)
+
+JSON report written to /opt/codex/polutek-pl/.worktrees/platform-audit/.claude/local-ci-logs/encode-smoke.vitest.json
+
+[exit 0]

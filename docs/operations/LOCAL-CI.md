@@ -14,7 +14,9 @@ node scripts/ops/local-ci.mjs --only=unit,lint      # wybrane bramki (+ ich zale
 
 Opcje: `--all` (eslint całego repo), `--unit-full` (cały zestaw Vitest), `--build` (next build + admin build), `--coverage` (testy z `--coverage`, jak job `tests/coverage`), `--strict` (brak Dockera, sieci lub ffmpeg to FAIL zamiast SKIP), `--skip=a,b`, `--base=<ref>` (domyślnie `origin/main`; zrób `git fetch` wcześniej), `--jobs=<n>` (sloty CPU, domyślnie liczba rdzeni).
 
-Wynik: tabela `bramka / wynik / czas / przyczyna`, kod wyjścia 0 tylko wtedy, gdy każda wymagana bramka ma PASS (SKIP z braku narzędzia nie blokuje, chyba że `--strict`). Raport z hashem HEAD: `.claude/local-ci-last.json` i `.claude/local-ci-last.md`, pełne wyjście każdej bramki: `.claude/local-ci-logs/<bramka>.log` (wszystko w `.gitignore`).
+Wynik: tabela `bramka / wynik / czas / przyczyna`, kod wyjścia 0 tylko wtedy, gdy każda wymagana bramka ma PASS i źródła nie zmieniły się podczas kontroli (SKIP z braku narzędzia nie blokuje, chyba że `--strict`). Raport z HEAD, inwentarzem/hashami źródeł przed i po kontroli oraz podsumowaniami testów: `.claude/local-ci-last.json` i `.claude/local-ci-last.md`, pełne wyjście każdej bramki: `.claude/local-ci-logs/<bramka>.log` (wszystko w `.gitignore`). Raport częściowy lub z brudnego checkoutu nie jest dowodem wydania; kontrakt: [RELEASE-PROOF.md](RELEASE-PROOF.md).
+
+Runner wymusza `ADMIN_DEV_FIXTURES=0`, `ADMIN_DEV_BYPASS_AUTH=0` i `ADMIN_DEV_BYPASS_ACCESS=0`. Raporty testowe muszą wskazywać rzeczywiście wykonane testy; brak raportu nie jest sukcesem.
 
 ## Scalanie bez GitHub Actions
 
@@ -28,7 +30,7 @@ Skrypt pobiera `origin/<gałąź>` i `origin/main`, sprawdza, że PR wskazuje do
 - w bieżącym katalogu, jeśli jest czysty, stoi na tym samym commicie i zawiera już `origin/main`;
 - w przeciwnym razie w tymczasowym `git worktree` z własnym `npm ci` (kilka minut i ok. 1,5 GB na czas przebiegu; worktree jest usuwany na końcu).
 
-Scala tylko przy PASS (`gh pr merge --squash --admin --match-head-commit <sha>`, więc nowszy push do PR nie zostanie scalony bez testu), a tabela wyników trafia do opisu scalenia. Dotychczasowe tryby bez zmian: domyślnie czekanie na CI GitHuba, `SKIP_CI=1` bez sprawdzeń.
+Scala tylko przy PASS (`gh pr merge --squash --match-head-commit <sha>`, bez omijania ochrony gałęzi; nowszy push do PR nie zostanie scalony bez testu), a tabela wyników trafia do opisu scalenia. Dotychczasowe tryby bez zmian: domyślnie czekanie na CI GitHuba, `SKIP_CI=1` bez lokalnych sprawdzeń. Samo scalenie nie stanowi proofu ani nie pozwala wdrożyć obrazu.
 
 ## Bramki
 
@@ -38,25 +40,30 @@ Scala tylko przy PASS (`gh pr merge --squash --admin --match-head-commit <sha>`,
 | `ci-parity` | (nowa) | FAIL, gdy ci.yml ma krok `run:`, którego local-ci nie odwzorowuje; zmienne `env:` czytane wprost z ci.yml |
 | `migrations` | część integration-postgres | UTF-8 bez BOM; nowe migracje: nazwa `<14 cyfr>_<snake_case>`, znacznik późniejszy niż ostatnia migracja na bazie, tylko operacje addytywne (migracja czyszcząca zatwierdzona przez właściciela musi mieć komentarz `-- local-ci: allow-destructive <powód>`); istniejących migracji nie wolno edytować ani usuwać |
 | `unit` | tests/coverage | domyślnie `vitest related` dla zmienionych źródeł i testów + wszystkie testy czytające źródła jako tekst (graf importów ich nie widzi); cały zestaw przy `--full`/`--unit-full` albo zmianie `package*.json`, `vitest*.config.*`, `tsconfig*.json`, `tests/setup.ts`, `prisma/schema.prisma`; pokrycie tylko z `--coverage` |
+| `critical-path` | dodatkowa kontrola lokalna | strażnik obu wymaganych plików; niepusty raport bez pominięć |
 | `typecheck` | typecheck | `tsc -p tsconfig.typecheck.json --noEmit` |
-| `typecheck-all` | (nowa) | `tsc -p tsconfig.json --noEmit` na całym repo razem z testami (CI ich nie sprawdza); błędy w `.next/` pomijane |
+| `typecheck-all` | (nowa) | `tsc -p tsconfig.json --noEmit` na całym repo razem z testami; także błędy w `.next/` kończą się FAIL |
 | `lint` | lint | eslint zmienionych plików (z cache w `.claude/local-ci-cache/`, wynik jak bez cache); całe repo przy `--all`/`--full` albo zmianie `eslint.config.mjs`, `package*.json`, `tsconfig.json` |
 | `architecture`, `hotspots`, `strict-escapes` | jak w CI | |
 | `env` | environment validation | `validate-env --mode=production` na fikcyjnych wartościach z ci.yml |
 | `audit` | npm audit/security | `scripts/audit-high.mjs` (zależności produkcyjne); SKIP bez sieci |
-| `postgres` | integration-postgres | tymczasowy kontener `postgres:16` (jak CI; `LOCAL_CI_PG_IMAGE=postgres:17` dla wersji produkcyjnej) na losowym porcie, `migrate deploy`, `db:smoke`, `vitest.postgres.config.ts`; SKIP bez Dockera |
-| `encode-smoke` | encode-smoke (ffmpeg) | SKIP bez `ffmpeg`/`ffprobe` w PATH |
+| `postgres` | integration-postgres | tymczasowy kontener `postgres:16` (jak CI; `LOCAL_CI_PG_IMAGE=postgres:17` dla wersji produkcyjnej), migracje/smoke i niepusty raport testów bez pominięć; SKIP bez Dockera |
+| `encode-smoke` | encode-smoke (ffmpeg) | trzy wykonane przypadki i niepusty raport bez pominięć; SKIP bez `ffmpeg`/`ffprobe` w PATH |
 | `build`, `admin-build` | build, admin build | tylko z `--build`/`--full` (zostawiają `.next/`, ok. 1 GB) |
 
-Równoległość: każda bramka zajmuje „sloty” CPU (Vitest: rdzenie − 1 i tyle samo wątków, tsc/eslint/skrypty: 1, build: cała maszyna), więc obok Vitesta biegnie jedna lżejsza bramka. Procesy potomne dostają zmienne z ci.yml (fikcyjne sekrety, `DATABASE_URL` na localhost) i `CI=true`; prawdziwe sekrety z lokalnego `.env` nie są używane.
+Równoległość: każda bramka zajmuje „sloty” CPU (Vitest: rdzenie − 1 i tyle samo wątków, tsc/eslint/skrypty: 1, build: cała maszyna), więc obok Vitesta biegnie jedna lżejsza bramka. Procesy potomne dostają wartości z ci.yml (fikcyjne sekrety, `DATABASE_URL` na localhost), `CI=true` i wyłączone obejścia panelu. Wartości wymienione w ci.yml nadpisują środowisko rodzica; pozostałe zmienne są dziedziczone. Uruchamiać w jawnym środowisku testowym bez poświadczeń produkcji.
 
 ## Różnice względem CI GitHuba
 
-- Node: lokalny (na maszynie właściciela 24), CI używa 22 z `.nvmrc`; skrypt to wypisuje. Różnice wersji w praktyce dotyczą tylko ostrzeżeń `EBADENGINE`.
+- Node: runner wypisuje lokalną wersję; dowód wydania wymaga Node 22 zgodnego z `.nvmrc`.
 - Domyślnie testy i lint tylko dla zmian; pełny odpowiednik CI to `--full --coverage`.
 - `postgres` i `encode-smoke` wymagają Dockera i ffmpeg; bez nich SKIP (na maszynie właściciela 2026-10-04 nie ma żadnego z nich). `--strict` zamienia to w FAIL.
 - Dodatkowo względem CI: `ci-parity`, `migrations` i `typecheck-all`.
 - Nie jest odwzorowany workflow `images.yml` (obrazy GHCR); obraz buduje `deploy.sh` na serwerze.
+
+## K06: lokalne wydanie po weryfikacji proofu
+
+Kandydat na gałęzi `docs/polutek-platform-audit` dodaje lokalny flow bez uruchamiania GitHub Actions: `release-produce.mjs` wykonuje pełne ścisłe kontrole i buduje pięć obrazów; `release-publish.mjs` wypycha wyłącznie zweryfikowane ID do GHCR i zapisuje proof z digestami. Potem zewnętrznie zatwierdzony hash i pięć plików artifactu przekazuje się przez `mergedeploy.sh`. Ten flow wymaga dostępu do GHCR i pełnego zielonego producenta; nie jest aktywny na serwerze i nie był uruchamiany w tej sesji. Szczegóły i format bundle: [RELEASE-PROOF.md](RELEASE-PROOF.md).
 
 ## Czas i co spowalnia testy (2026-10-04, Windows 10, 4 rdzenie, maszyna obciążona innymi agentami)
 
@@ -89,3 +96,17 @@ Propozycje przyspieszenia bez zmiany treści testów (do zrobienia osobno, każd
 - Po zmianie opcji w `tsconfig.json` tsc w trybie przyrostowym potrafi oddać stare błędy: usuń `tsconfig.tsbuildinfo`.
 - `Brak node_modules`: `npm ci`. Skrypt nie instaluje zależności sam (poza worktree w `mergedeploy.sh`).
 - Przerwanie (Ctrl+C) zatrzymuje bramki i usuwa kontener Postgresa.
+
+Producent `release-produce.mjs` nadaje każdemu uruchomieniu losowe `POLUTEK_CI_RUN_ID`; runner zapisuje je w polu `runId` raportu. Bez zgodnego identyfikatora producent odrzuca raport jako stary. Bezpośrednie lokalne CI bez producenta zapisuje `null`.
+
+## Obowiązkowe zestawy krytyczne
+
+`npm run test:critical-path -- --maxWorkers=1` wymaga obu plików: procesowych regresji weryfikatora odtworzonej bazy i `launch-candidate-critical-path.test.ts`. Brak pliku, zero testów, wykluczenie w konfiguracji, skip/todo lub błąd procesu/raportu oznacza porażkę. Filtry Vitest i `--passWithNoTests` nie są przyjmowane. Opcjonalne `--report-json=<plik>` zachowuje raport po sukcesie. Regresje uruchamiają prawdziwe procesy i Vitest, ale granice DB pozostają syntetyczne; nie zastępują SQL ani pełnego odtworzenia produktu.
+
+Obie konfiguracje Next (`next.config.mjs`, `apps/admin/next.config.mjs`) sprawdzają typy także przy budowaniu (`ignoreBuildErrors=false`). Dowód z małych buildów sprawdza działanie konfiguracji, nie zaliczenie całej aplikacji. Nie wyłączać tej kontroli w Dockerze ani ręcznej ścieżce.
+
+Profil `vitest.postgres.config.ts` obejmuje wszystkie `tests/postgres/**/*.pg.test.ts` oraz `tests/integration/email-event-idempotency.test.ts`; tylko ten profil ustawia `RUN_INTEGRATION_TESTS=true`. Runner wymaga poprawnych wykonanych asercji każdego pliku z inwentarza Git i obowiązkowego e-mail DB, bez skip/todo i pustych zestawów. Same zbiorcze zielone liczniki nie wystarczają. Bramkę uruchamiać na nowym własnym kontenerze (runner sam go tworzy/sprząta); `LOCAL_CI_PG_IMAGE` pozwala wybrać niezmienne ID lokalnego PostgreSQL17 zamiast domyślnego obrazu CI16.
+
+Fixture cleanup odtwarza tylko historyczny prefiks migracji, potem cleanup i późniejsze migracje w kolejności. Próba północy Warszawy używa niedawnej daty wewnątrz obecnej retencji. Nie edytujemy istniejących migracji ani polityki retencji dla uzyskania zielonego testu. Zewnętrzni dostawcy w części testów PostgreSQL pozostają kontrolowani; cały produkt wymaga osobnych prób.
+
+Pozostałe przekroczenia H1 usunięto przez wydzielenie `channel/home-props.ts`, `premium-pass/pass-checkout-state.ts` oraz widoków `StudioUploadFileInfo`, `StudioUploadStatus`, `StudioVideoPreview`. Progi i baseline obejść typów nie zostały podniesione. Zmiana widoczności filmu używa `ctx.db.writeTransaction`, który potrafi wykorzystać istniejącego klienta transakcji; audyt pozostaje w tym samym zapisie. Dwa testy odtwarzają błąd braku `$transaction`. Celowane testy i bramki nie zastępują pełnego cyklu produktu ani dowodu wydania.

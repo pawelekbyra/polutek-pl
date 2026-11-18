@@ -1,4 +1,4 @@
-import { HlsWriter } from '../../../lib/modules/video-pipeline/infrastructure/r2-storage.ts';
+import { HlsWriter } from '../../../lib/modules/video-pipeline/infrastructure/r2-storage';
 
 async function main() {
   let objectStillPresent = true;

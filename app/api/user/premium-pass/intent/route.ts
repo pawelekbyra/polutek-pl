@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 // patron zone (docs/architecture/patron-zone.md)
 // Starts (or updates the amount of) the REAL payment of the patron zone: one Payment row + one PaymentIntent per
 // attempt, through the tip gateway's own createCheckoutIntent. Only in `PREMIUM_PASS_PAYMENTS=stripe` mode and only
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
     const limit = await rateLimit({ key: `premium-pass:intent:${userId}`, limit: 10, windowMs: 10 * 60_000 });
     if (!limit.success) return NextResponse.json({ code: "RATE_LIMITED" }, { status: 429, headers: PASS_NO_STORE });
 
-    const parsed = patronIntentInputSchema.safeParse(await req.json().catch(() => null));
+    const parsed = patronIntentInputSchema.safeParse(await readRequestJsonOrNullWithLimit(req));
     if (!parsed.success) return passInvalidRequest();
 
     const result = await startPatronPayment(createAppContext({ actor }), parsed.data);

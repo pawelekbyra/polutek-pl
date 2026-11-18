@@ -1,0 +1,42 @@
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+ ❯ tests/unit/modules/video/unlist-admin-video.use-case.test.ts (14 tests | 2 failed) 70ms
+     × reuses an existing transaction when changing visibility to UNLISTED 8ms
+     × reuses an existing transaction when changing visibility to DRAFT 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/modules/video/unlist-admin-video.use-case.test.ts > unlistAdminVideo and the PUBLISHED <-> UNLISTED <-> DRAFT transitions > reuses an existing transaction when changing visibility to UNLISTED
+TypeError: ctx.prisma.$transaction is not a function
+ ❯ unlistAdminVideo lib/modules/video/application/unlist-admin-video.use-case.ts:47:45
+     45|
+     46|   const now = ctx.now();
+     47|   const updated = await (ctx.prisma as any).$transaction(async (tx: an…
+       |                                             ^
+     48|     const result = await tx.video.update({
+     49|       where: { id: videoId },
+ ❯ tests/unit/modules/video/unlist-admin-video.use-case.test.ts:74:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/modules/video/unlist-admin-video.use-case.test.ts > unlistAdminVideo and the PUBLISHED <-> UNLISTED <-> DRAFT transitions > reuses an existing transaction when changing visibility to DRAFT
+TypeError: ctx.prisma.$transaction is not a function
+ ❯ unpublishAdminVideo lib/modules/video/application/unpublish-admin-video.use-case.ts:34:45
+     32|   }
+     33|
+     34|   const updated = await (ctx.prisma as any).$transaction(async (tx: an…
+       |                                             ^
+     35|     const result = await tx.video.update({
+     36|       where: { id: videoId },
+ ❯ tests/unit/modules/video/unlist-admin-video.use-case.test.ts:74:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  00:02:21
+   Duration  7.23s (transform 4.77s, setup 0ms, import 6.78s, tests 70ms, environment 0ms)
+

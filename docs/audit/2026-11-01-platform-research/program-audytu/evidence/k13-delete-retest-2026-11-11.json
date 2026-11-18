@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-11",
+  "repository_head_sha": "2f31bda3cb30933ca3a3f436453601988ee73bc0",
+  "package": "K13 object deletion local retest",
+  "finding": "R04 per-object object-store delete errors",
+  "status": "passed_local_synthetic_tests",
+  "source_sha256": {
+    "lib/modules/video-pipeline/infrastructure/r2-storage.ts": "3f77834b2f180bff23090e0aa877dcbbb713d919af66e1a44302ea963e151a16",
+    "tests/unit/video-pipeline/r2-storage-delete.test.ts": "07a37f94a61c9ac47e8ef725f4f7f5c728a3822104b7ca80b17282f3b4363cec",
+    "tests/unit/video-pipeline/r2-storage-delete-http.test.ts": "3310d721597a26eb1918af1653743e408572daa6e00bbdf61e1480036c914a00"
+  },
+  "commands": [
+    "npx vitest run tests/unit/video-pipeline/r2-storage-delete.test.ts tests/unit/video-pipeline/r2-storage-delete-http.test.ts",
+    "npx eslint lib/modules/video-pipeline/infrastructure/r2-storage.ts tests/unit/video-pipeline/r2-storage-delete.test.ts tests/unit/video-pipeline/r2-storage-delete-http.test.ts",
+    "git diff --check"
+  ],
+  "result": { "files": 2, "passed": 10, "failed": 0, "eslint": "passed" },
+  "limitations": [
+    "The HTTP contract uses loopback and synthetic S3 responses, not a Cloudflare R2 or other provider sandbox.",
+    "No production storage or external endpoint was contacted.",
+    "K13 remains partial pending provider pagination behavior and independent review."
+  ]
+}

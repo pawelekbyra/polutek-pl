@@ -132,7 +132,8 @@ describe('checkVideoAccess Use Case Matrix', () => {
   });
 
   describe('leftover PATRON tier value (two levels since 2026-10-04: read as LOGGED_IN)', () => {
-    const patronVideo = { ...baseVideo, tier: AccessTier.PATRON };
+    // The removed enum member would be undefined; this literal exercises actual legacy data.
+    const patronVideo = { ...baseVideo, tier: 'PATRON' };
 
     it('denies guest with LOGIN_REQUIRED and reports LOGGED_IN as the required level', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
@@ -418,7 +419,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
     });
 
     it("gives the same answer for the id", async () => {
-      mockPrisma.video.findFirst.mockResolvedValue({ ...upcoming, tier: AccessTier.PATRON });
+      mockPrisma.video.findFirst.mockResolvedValue({ ...upcoming, tier: AccessTier.LOGGED_IN });
       mockPrisma.user.findUnique.mockResolvedValue({ id: "u1", isDeleted: false });
       const result = await checkVideoAccess({ videoIdOrSlug: upcoming.id }, createCtx({ type: "user", userId: "u1" }));
       expect(result.ok && result.data.hasAccess).toBe(true);

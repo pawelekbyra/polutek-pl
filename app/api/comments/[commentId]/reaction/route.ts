@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { createScopedLogger } from "@/lib/logger";
@@ -51,7 +52,7 @@ async function handle(request: NextRequest, commentId: string, reaction: Reactio
 
 export async function PUT(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
   const { commentId } = await props.params;
-  const body = (await request.json().catch(() => null)) as { type?: unknown } | null;
+  const body = (await readRequestJsonOrNullWithLimit(request)) as { type?: unknown } | null;
   const reaction: ReactionTarget = body?.type === "DISLIKE" ? "DISLIKE" : "LIKE";
   return handle(request, commentId, reaction, "[COMMENT_REACTION_PUT_ERROR]");
 }

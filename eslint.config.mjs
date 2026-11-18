@@ -5,6 +5,9 @@ const eslintConfig = [
   { ignores: ["apps/admin/.next/**", "apps/admin/next-env.d.ts", "odoo/**", "docs/audit/**"] },
   ...nextCoreWebVitals,
   {
+    // Keep hook overrides in the same file scope that Next uses to register react-hooks.
+    // CommonJS tooling has no React config; global hook rules would make its config invalid.
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     // These two rules are new "error"-level defaults as of eslint-config-next 16
     // (react-hooks v7). They flag ~58 pre-existing call sites across the codebase
     // that predate this upgrade. Downgraded to warn so `npm run lint` reflects the

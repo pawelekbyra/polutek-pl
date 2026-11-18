@@ -5,11 +5,13 @@ import type { VideoEncodeJob } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { processEncodeJob, type EncodeOutcome, type ProcessorPorts, type SourceProbe } from "@/lib/modules/video-pipeline/application/process-encode-job";
 import type { EncodeJobStore } from "@/lib/modules/video-pipeline/infrastructure/encode-job.repository";
+import { RouteActivationOutcomeUnknownError } from "@/lib/modules/video-pipeline/domain/route-activation-outcome-unknown";
 
 function makeJob(overrides: Partial<VideoEncodeJob> = {}): VideoEncodeJob {
   return {
     id: "job-1",
     videoId: "vid-1",
+    channelId: null,
     originalId: "orig-1",
     versionNumber: 2,
     idempotencyKey: "orig-1:1",
@@ -18,6 +20,7 @@ function makeJob(overrides: Partial<VideoEncodeJob> = {}): VideoEncodeJob {
     progressPercent: 0,
     etaSeconds: null,
     attemptCount: 1,
+    attemptId: null,
     maxAttempts: 3,
     cancelRequested: false,
     failureCode: null,
@@ -71,6 +74,7 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
   const uploaded: string[] = [];
   const hls = {
     bucket: "polutek-hls",
+    verifyOutput: vi.fn(async (_assetKey: string): ReturnType<ProcessorPorts["hls"]["verifyOutput"]> => ({ complete: true, objectCount: 5, reason: null })),
     putFile: vi.fn(async (key: string) => { uploaded.push(key); events.push(`put:${key.split("/").slice(4).join("/")}`); return 1; }),
     exists: vi.fn(async () => true),
     countPrefix: vi.fn(async () => uploaded.length),
@@ -85,7 +89,7 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
     }),
   };
   const finalizer = {
-    findExisting: vi.fn(async (): Promise<string | null> => null),
+    findExisting: vi.fn(async (_job: VideoEncodeJob, _assetKey: string): ReturnType<ProcessorPorts["finalizer"]["findExisting"]> => null),
     finalize: vi.fn(async () => { events.push("finalize"); return { assetId: "asset-1" }; }),
   };
   const audit = vi.fn(async (action: string) => { events.push(`audit:${action}`); });
@@ -112,6 +116,14 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
 }
 
 describe("processEncodeJob", () => {
+  it("preserves the uploaded attempt when route activation outcome cannot be reconciled", async () => {
+    const h = harness();
+    h.finalizer.finalize.mockRejectedValueOnce(new RouteActivationOutcomeUnknownError(new Error("database unavailable")));
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("retry");
+    expect(h.hls.deletePrefix).toHaveBeenCalledTimes(1); // the initial empty-prefix cleanup only
+    expect(h.store.markFailedOrRetry).toHaveBeenCalled();
+  });
+
   it("runs the whole pipeline, uploads the master last and publishes only after verification", async () => {
     const h = harness();
     const outcome = await processEncodeJob(h.job, h.ports);
@@ -125,11 +137,49 @@ describe("processEncodeJob", () => {
     expect(h.events.indexOf("finalize")).toBeGreaterThan(h.events.indexOf("put:master.m3u8"));
     expect(h.events.indexOf("markSucceeded")).toBeGreaterThan(h.events.indexOf("finalize"));
     expect(h.uploaded.every((k) => k.startsWith("videos/vid-1/v/v2/"))).toBe(true);
-    expect(h.hls.deletePrefix).toHaveBeenCalledWith("videos/vid-1/v/v2/"); // empties a stale partial attempt first
+    expect(h.hls.deletePrefix).toHaveBeenCalledWith("videos/vid-1/v/v2/"); // legacy jobs retain their original prefix
     expect(h.audit).toHaveBeenCalledWith("VIDEO_ENCODE_STARTED", expect.anything(), expect.anything());
     expect(h.audit).toHaveBeenCalledWith("VIDEO_ENCODE_SUCCEEDED", expect.anything(), expect.objectContaining({ assetId: "asset-1" }));
     // the work directory is gone
-    await expect(access(path.join(root, "job-1"))).rejects.toBeTruthy();
+    await expect(access(path.join(root, "job-1-legacy"))).rejects.toBeTruthy();
+  });
+
+  it("isolates upload and cleanup under the claimed attempt prefix", async () => {
+    const attemptId = "11111111-1111-4111-8111-111111111111";
+    const h = harness({ job: makeJob({ attemptId }) });
+    const prefix = `videos/vid-1/v/v2/attempts/${attemptId}/`;
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("succeeded");
+    expect(h.hls.deletePrefix).toHaveBeenCalledWith(prefix);
+    expect(h.uploaded.length).toBeGreaterThan(0);
+    expect(h.uploaded.every((key) => key.startsWith(prefix))).toBe(true);
+    expect(h.hls.exists).toHaveBeenCalledWith(`${prefix}master.m3u8`);
+    expect(h.finalizer.finalize).toHaveBeenCalledWith(expect.objectContaining({ assetKey: prefix.slice(0, -1) }));
+  });
+
+  it("cleans only the failed attempt prefix", async () => {
+    const attemptId = "22222222-2222-4222-8222-222222222222";
+    const otherAttemptId = "33333333-3333-4333-8333-333333333333";
+    const h = harness({ job: makeJob({ attemptId }) });
+    h.hls.countPrefix.mockResolvedValue(0);
+    const ownPrefix = `videos/vid-1/v/v2/attempts/${attemptId}/`;
+    const otherPrefix = `videos/vid-1/v/v2/attempts/${otherAttemptId}/`;
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("retry");
+    expect(h.hls.deletePrefix).toHaveBeenCalledTimes(2);
+    expect(h.hls.deletePrefix).toHaveBeenNthCalledWith(1, ownPrefix);
+    expect(h.hls.deletePrefix).toHaveBeenNthCalledWith(2, ownPrefix);
+    expect(h.hls.deletePrefix).not.toHaveBeenCalledWith(otherPrefix);
+  });
+
+  it("leaves finalized files intact when the claim changes before the success write", async () => {
+    const h = harness({ job: makeJob({ attemptId: "44444444-4444-4444-8444-444444444444" }) });
+    h.store.markSucceeded = vi.fn(async () => false);
+    const prefix = "videos/vid-1/v/v2/attempts/44444444-4444-4444-8444-444444444444/";
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("lost");
+    expect(h.finalizer.finalize).toHaveBeenCalledTimes(1);
+    expect(h.store.markFailedOrRetry).not.toHaveBeenCalled();
+    expect(h.hls.deletePrefix).toHaveBeenCalledTimes(1); // only the empty-before-upload, never final cleanup
+    expect(h.hls.deletePrefix).toHaveBeenCalledWith(prefix);
+    expect(h.audit).not.toHaveBeenCalledWith("VIDEO_ENCODE_SUCCEEDED", expect.anything(), expect.anything());
   });
 
   it("never finalizes when the R2 object count does not match, and retries", async () => {
@@ -138,7 +188,7 @@ describe("processEncodeJob", () => {
     const outcome = await processEncodeJob(h.job, h.ports);
     expect(outcome).toBe("retry");
     expect(h.finalizer.finalize).not.toHaveBeenCalled();
-    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ next: "QUEUED", code: "UPLOAD_VERIFY_FAILED" }), expect.any(Date));
+    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ next: "QUEUED", code: "UPLOAD_VERIFY_FAILED" }), expect.any(Date));
     // the partial output is removed so nothing half-uploaded can be reached
     expect(h.hls.deletePrefix.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
@@ -149,7 +199,7 @@ describe("processEncodeJob", () => {
     const outcome = await processEncodeJob(h.job, h.ports);
     expect(outcome).toBe("succeeded");
     expect(h.encoder.encode).toHaveBeenCalledTimes(1);
-    expect(h.store.reportProgress).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ sourceInfo: expect.objectContaining({ hdr: true }) }));
+    expect(h.store.reportProgress).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ sourceInfo: expect.objectContaining({ hdr: true }) }));
   });
 
   it("rejects over-long and over-large sources", async () => {
@@ -167,7 +217,7 @@ describe("processEncodeJob", () => {
       h.encoder.probe.mockResolvedValue({ ...GOOD_PROBE, duration: 901 });
       h.ports.channelLimits = { maxVideoSeconds: vi.fn(async () => 900) };
       expect(await processEncodeJob(h.job, h.ports)).toBe("failed");
-      expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ code: "CHANNEL_DURATION_LIMIT", next: "FAILED", message: expect.stringContaining("15 min") }), expect.any(Date));
+      expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ code: "CHANNEL_DURATION_LIMIT", next: "FAILED", message: expect.stringContaining("15 min") }), expect.any(Date));
       expect(h.encoder.encode).not.toHaveBeenCalled();
     });
 
@@ -190,7 +240,7 @@ describe("processEncodeJob", () => {
     const h = harness();
     h.encoder.probe.mockRejectedValue(new Error("Source has no video stream"));
     expect(await processEncodeJob(h.job, h.ports)).toBe("failed");
-    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ code: "NO_VIDEO_STREAM", next: "FAILED" }), expect.any(Date));
+    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ code: "NO_VIDEO_STREAM", next: "FAILED" }), expect.any(Date));
   });
 
   it("does not publish an output that failed encoder validation", async () => {
@@ -213,6 +263,40 @@ describe("processEncodeJob", () => {
     const last = harness({ job: makeJob({ attemptCount: 3 }) });
     last.hls.putFile.mockRejectedValue(new Error("socket hang up"));
     expect(await processEncodeJob(last.job, last.ports)).toBe("failed");
+  });
+
+  it("waits for every started upload to settle before cleaning the prefix", async () => {
+    const h = harness();
+    h.ports.uploadConcurrency = 3;
+    let finishSlowSuccess!: () => void;
+    let finishSlowFailure!: () => void;
+    const slowSuccess = new Promise<void>((resolve) => { finishSlowSuccess = resolve; });
+    const slowFailure = new Promise<void>((resolve) => { finishSlowFailure = resolve; });
+    let started = 0;
+    h.hls.putFile.mockImplementation(async (key: string) => {
+      const rel = key.split("/").slice(4).join("/");
+      h.events.push(`put-start:${rel}`);
+      started += 1;
+      if (started === 1) await slowSuccess;
+      if (started === 2) {
+        await slowFailure;
+        h.events.push(`put-error:${rel}`);
+        throw new Error("socket hang up");
+      }
+      if (started === 3) throw new Error("connection reset");
+      h.uploaded.push(key);
+      h.events.push(`put:${rel}`);
+      return 1;
+    });
+
+    setTimeout(finishSlowSuccess, 20);
+    setTimeout(finishSlowFailure, 30);
+    const outcomePromise = processEncodeJob(h.job, h.ports);
+    expect(await outcomePromise).toBe("retry");
+    expect(started).toBe(3); // the remaining output files were never assigned after the first error
+    const cleanup = h.events.lastIndexOf("deletePrefix");
+    expect(cleanup).toBeGreaterThan(h.events.indexOf("put-error:"));
+    expect(cleanup).toBeGreaterThan(h.events.lastIndexOf("put:"));
   });
 
   it("stops ffmpeg and cleans R2 when the admin cancels", async () => {
@@ -254,17 +338,28 @@ describe("processEncodeJob", () => {
       }),
     );
     expect(await processEncodeJob(h.job, h.ports)).toBe("released");
-    expect(h.store.release).toHaveBeenCalledWith("job-1", "w1");
+    expect(h.store.release).toHaveBeenCalledWith("job-1", "w1", null);
     expect(h.store.markFailedOrRetry).not.toHaveBeenCalled();
   });
 
   it("is idempotent: an output that is already live is only marked done (no re-encode, no R2 delete)", async () => {
     const h = harness();
-    h.finalizer.findExisting.mockResolvedValue("asset-live");
+    h.finalizer.findExisting.mockResolvedValue({ assetId: "asset-live", assetKey: "videos/vid-1/v/v2/attempts/55555555-5555-4555-8555-555555555555" });
+    h.hls.countPrefix.mockResolvedValue(3);
     expect(await processEncodeJob(h.job, h.ports)).toBe("succeeded");
     expect(h.ports.originals.download).not.toHaveBeenCalled();
     expect(h.hls.deletePrefix).not.toHaveBeenCalled();
-    expect(h.store.markSucceeded).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ assetId: "asset-live" }));
+    expect(h.store.markSucceeded).toHaveBeenCalledWith("job-1", "w1", null, expect.objectContaining({ assetId: "asset-live" }));
+  });
+
+  it("re-encodes instead of reporting success for an active DB route whose files are missing", async () => {
+    const h = harness();
+    h.finalizer.findExisting.mockResolvedValue({ assetId: "asset-live", assetKey: "videos/vid-1/v/v2/attempts/66666666-6666-4666-8666-666666666666" });
+    h.hls.verifyOutput.mockResolvedValueOnce({ complete: false, objectCount: 2, reason: "referenced object is missing" });
+    await expect(processEncodeJob(h.job, h.ports)).resolves.toBe("succeeded");
+    expect(h.encoder.encode).toHaveBeenCalledTimes(1);
+    expect(h.finalizer.finalize).toHaveBeenCalledTimes(1);
+    expect(h.store.markSucceeded).toHaveBeenCalledTimes(1);
   });
 
   it("does not delete a live output when marking success fails after finalize", async () => {

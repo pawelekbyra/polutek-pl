@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "date": "2026-11-03",
+  "date": "2026-11-12",
   "scope": "OWNER_APPROVED_H1",
   "audit_parent_sha": "35466051eb27c6957854532bba231b5e13a6bca7",
   "audit_branch": "docs/polutek-platform-audit",
@@ -10,11 +10,17 @@
   "repair_base_main_sha": "c80ef652d6b3fa3be7b357e7b53ce562ca1eceb3",
   "overall": "H1_RELEASE_CORE_AND_CI_PROVENANCE_VALIDATED_PRODUCER_ALL_CONSUMERS_FULL_STACK_K05_OPEN",
   "packages": {
-    "K01": "REAL_PRISMA_PG_AND_OWN_WORKER_3_ENCODER_CASES_PASS_API_QUEUE_REDIS_STORAGE_EMAIL_INTEGRATION_OPEN",
-    "K02": "THREE_LOCAL_IMAGES_LOAD_PATCHED_LIBRARIES_AND_OPTIMIZER_HTTP_PASSES_RELEASE_REVIEW_PRODUCTION_EVIDENCE_OPEN",
-    "K03": "CI_SOURCE_PROVENANCE_REQUIRED_TEST_REPORTS_AND_GENERATED_TYPE_FAILURE_VERIFIED_FULL_STACK_EMAIL_OPEN",
-    "K05": "CODE_PROFILE_DOCUMENTED_9_DECISIONS_AND_ACTIVE_CONFIG_OPEN",
-    "K06": "COMMON_PROOF_VALIDATOR_SEALER_TESTED_PRODUCER_AND_ALL_PUBLISH_ACTIVATE_PATHS_NOT_YET_CONNECTED"
+    "K01": "REAL_POSTGRES_84_MIGRATIONS_MULTIPART_WORKER_FFMPEG_HLS_CHROMIUM_REPLACEMENT_CLEANUP_1_PASS_LOCAL_SYNTHETIC_R2_QUEUE_REDIS_EMAIL_AND_REVIEW_OPEN",
+    "K02": "PRODUCTION_AUDIT_ZERO_FULL_LOCKFILE_3_LOW_DEV_ONLY_SHADCN_RETAINED_FOR_REPRODUCIBLE_COMPONENT_AUTHORING_FINAL_DOCKER_IMAGES_AND_RUNTIME_OPEN",
+    "K03": "CURRENT_CLEAN_SHA_CRITICAL_PATH_37_PASS_0_SKIP_FULL_QUALITY_AND_REAL_OFFSITE_RESTORE_OPEN",
+    "K05": "OWNER_PROFILE_AND_DP01_DP09_REGISTERED_PAID_ACCESS_CONFLICT_AND_RUNTIME_OPEN",
+    "K06": "COMMON_PROOF_VALIDATOR_SEALER_TESTED_PRODUCER_AND_ALL_PUBLISH_ACTIVATE_PATHS_NOT_YET_CONNECTED",
+    "K38": "SEMANTIC_API_HTML_THUMB_PROFILE_36_RETEST_PASS_NONPRODUCTION_LOAD_AND_CLEANUP_OPEN",
+    "K10": "HTTP_TO_WORKER_TOKEN_SYNTHETIC_R2_2_PASS_LIVE_R2_AND_REVIEW_OPEN",
+    "K07": "REQUEST_BODY_LIMITS_13_RETEST_PASS_EXTERNAL_PROXY_AND_FULL_STACK_BUDGET_OPEN",
+    "K13": "DELETEOBJECTS_LOOPBACK_10_RETEST_PASS_R2_SANDBOX_AND_REVIEW_OPEN",
+    "K04": "447_MODULES_ZERO_SCC_ARCH_BOUNDARIES_PASS_COMPOSITION_STATIC_REVIEW_DISTRIBUTED_ASSEMBLY_DEBT_NO_BROAD_REFACTOR_JUSTIFIED_BUNDLER_RUNTIME_AND_REVIEW_OPEN",
+    "K21": "REAL_POSTGRES_RUNTIME_CONTRACTS_LEGACY_CLIENT_6_PASS_LOCAL_NEXT_HTTP_MULTIPART_HLS_BROWSER_K01_1_PASS_LEGACY_HTTP_R2_REVIEW_OPEN"
   },
   "acceptance": {
     "K02_existing_tests": {
@@ -608,7 +614,7 @@
   "deployed": false,
   "merged": false,
   "paid_external_resources_created": false,
-  "resume": "Continue K06 with a trusted producer of pinned input-bound builds and all consumers: images workflow, local/existing-image deployment, GHCR immutable pulls, admin and rollback. Require externally supplied proof hash and revision, call verify before publish/migrate/activate and consume returned IDs. Negative full-path tests still needed. Retain mandatory audit requirement without retrying prior denied graph upload. Then full owned API/queue/HLS/Redis/storage and remaining email cases, K05 active profile/DP01-DP09. No merge/deploy/cost or generic ASVS expansion.",
+  "resume": "Continue K06 locally with synthetic consumer contracts and all non-production proof gates. K05 profile and DP01-DP09 register are documented, but Premium policy/runtime reconciliation remains open; keep monetization BLOCKED. Do not run deploy scripts, access production, create paid resources, merge, or publish.",
   "note": "Four small commits implement the shared proof contract, stable CI source snapshots and real test summaries; .next type errors now fail. Docker15 controls and real compiler before/after validated. Actual full unit and other executed local checks pass, but the partial CI report is deliberately rejected for release; no product proof or all-path enforcement claimed.",
   "previous_candidate_branch": "fix/polutek-h1-foundations",
   "previous_candidate_sha": "9824bb0abba7ed3672935845dedc328ae94ad8ff",
@@ -1321,11 +1327,11 @@
   "progress_estimates": {
     "h1_percent": 80,
     "h1_remaining_percent": 20,
-    "whole_roadmap_min_percent": 5,
-    "whole_roadmap_max_percent": 10,
-    "whole_roadmap_remaining_min_percent": 90,
-    "whole_roadmap_remaining_max_percent": 95,
-    "method": "Owner-requested rough effort estimate, not derived from passing test percentage;40 packages and unfinished evidence/security work remain the mission scope."
+    "whole_roadmap_min_percent": 10,
+    "whole_roadmap_max_percent": 15,
+    "whole_roadmap_remaining_min_percent": 85,
+    "whole_roadmap_remaining_max_percent": 90,
+    "method": "Rough effort estimate, not package count or test pass rate; no package is formally closed and substantial runtime, owner-decision, release and independent-review evidence remains."
   },
   "github_access_observation": {
     "date": "2026-11-03",
@@ -1348,5 +1354,258 @@
     ],
     "credential_values_read_or_changed": false,
     "environment_config_changed": false
+  },
+  "local_resumption": {
+    "date": "2026-11-04",
+    "branch": "docs/polutek-platform-audit",
+    "core_cherry_picks": [
+      "00ea71cb",
+      "3b7ccfff",
+      "f72bbe27",
+      "37eb1edb"
+    ],
+    "package": "K06_PRODUCER_AND_DOCKERFILE_INPUT_GUARD_PASS_CONSUMERS_PREREQUISITES_OPEN",
+    "tests_passed": 124,
+    "lint_exit": 0,
+    "whole_types_exit": 2,
+    "release_ready": false,
+    "evidence": "k06-local-producer-2026-11-03/pins-result.json",
+    "historical_candidate_not_identical_to_current_tree": true,
+    "focused_types_exit": 0,
+    "prerequisite_restore_critical": {
+      "guard_tests_passed": 44,
+      "actual_critical_passed": 36,
+      "evidence": "k06-local-producer-2026-11-03/critical-result.json",
+      "actual_db": false
+    },
+    "next_build_typecheck": {
+      "next": "16.3.8",
+      "actual_isolated_builds": 6,
+      "bad_type_baseline_accepted": 2,
+      "bad_type_fixed_rejected": 2,
+      "valid_fixed_accepted": 2,
+      "evidence": "k06-local-producer-2026-11-03/next-typecheck/result.json"
+    },
+    "K02_runtime": {
+      "next": "16.4.1",
+      "sharp": "0.35.5",
+      "native_http_pass": true,
+      "tests_passed": 170,
+      "fixed_next_builds": 4,
+      "docker_images": false,
+      "fresh_npm_audit": false,
+      "evidence": "k06-local-producer-2026-11-03/k02-runtime/result.json"
+    },
+    "baseline": {
+      "types_exit": 0,
+      "unit": {
+        "total": 4732,
+        "passed": 4729,
+        "failed": 0,
+        "skipped": 3,
+        "files": 540,
+        "failedFiles": [],
+        "success": true
+      },
+      "lint_errors": 0,
+      "lint_warnings": 100,
+      "unit_source_stable": true,
+      "release_ready": false,
+      "evidence": "k06-local-producer-2026-11-03/baseline/result.json"
+    },
+    "hdr": {
+      "strict_red": {
+        "passed": 2,
+        "skipped": 1,
+        "exit": 1
+      },
+      "strict_green": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "files": 1,
+        "failedFiles": [],
+        "success": true
+      },
+      "lint_exit": 0,
+      "focused_types_exit": 0,
+      "evidence": "k06-local-producer-2026-11-03/hdr/result.json"
+    },
+    "postgres": {
+      "summary": {
+        "total": 77,
+        "passed": 77,
+        "failed": 0,
+        "skipped": 0,
+        "files": 13,
+        "failedFiles": [],
+        "success": true
+      },
+      "postgres": "postgres (PostgreSQL) 17.11",
+      "email_real_db": true,
+      "owned_containers_cleaned": 2,
+      "receipt_unit_passed": 48,
+      "focused_types_exit": 0,
+      "lint_exit": 0,
+      "evidence": "k06-local-producer-2026-11-03/postgres/result.json"
+    },
+    "next": "READ_RELEASE_CONTRACT_AND_CONSUMERS_THEN_NEW_NEGATIVE_CONSUMER_TESTS_AFTER_RESUME",
+    "status": "STOPPED_BY_OWNER_WEEKLY_BUDGET",
+    "completed_code_sha": "2d081d7f",
+    "wip_scope": "K06 consumers, real five-image/product acceptance, K05 decisions; no registry publisher implementation started",
+    "resume_only_on_explicit_owner_request": true,
+    "no_uncommitted_code_expected": true,
+    "final_gates": {
+      "application_types": "PASS",
+      "architecture": "PASS",
+      "hotspots": "PASS",
+      "strict_escapes": "PASS",
+      "transaction_tests_passed": 61,
+      "ui_studio_i18n_tests_passed": 253,
+      "failed": 0,
+      "skipped": 0,
+      "lint_errors": 0,
+      "lint_warnings": 12,
+      "evidence": "k06-local-producer-2026-11-03/final-gates/result.json",
+      "release_ready": false
+    }
+  },
+  "latest_followup": {
+    "date": "2026-11-06",
+    "base_revision": "f7ac94b5",
+    "package": "K27 signed Better Auth session boundary",
+    "test_file": "tests/postgres/user-export-session.pg.test.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 1,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "diff_check_exit": 0,
+    "scope_limit": "Direct getAuth/resolveDbBackedActor calls; no Next HTTP; export route test still mocks auth and rate limiter.",
+    "evidence": "program-audytu/evidence/k27-session-postgres-2026-11-06/result.json",
+    "k27_closed": false,
+    "http_test_file": "tests/postgres/user-export-http.pg.test.ts",
+    "http_tests_passed": 1,
+    "http_tests_failed": 0,
+    "http_test_duration_seconds": 14.22,
+    "http_scope": "Local Next dev HTTP; actual Better Auth cookie and actor, real route and in-memory dev rate limiter, disposable PostgreSQL after 84 migrations; guest 401, owner 200 with own comment only, revoked session 401.",
+    "http_evidence": "program-audytu/evidence/k27-http-postgres-2026-11-06/result.json",
+    "http_database_migrations": 84,
+    "http_env": "Sanitized child env; no inherited Redis or provider credentials."
+  },
+  "latest_k17_followup": {
+    "date": "2026-11-06",
+    "base_revision": "990cabaf",
+    "test_file": "tests/postgres/encode-attempt-fencing-race.pg.test.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 1,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "diff_check_exit": 0,
+    "interleaving": "Stale A observed waiting on the real job-row FOR UPDATE lock while B holds an uncommitted takeover in an independent PostgreSQL session; after B commits, A is rejected and only B activates.",
+    "scope_limit": "Two independent DB sessions in one Vitest process; separate worker processes, R2/S3, controlled drain, and independent review remain open.",
+    "evidence": "program-audytu/evidence/k17-two-session-race-2026-11-06/result.json",
+    "k17_closed": false
+  },
+  "latest_k23_followup": {
+    "date": "2026-11-06",
+    "base_revision": "d480a4bc",
+    "test_file": "tests/postgres/published-video-notification-restart.pg.test.ts",
+    "recovery_helper": "tests/helpers/k23-recover-notification-job.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 1,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "diff_check_exit": 0,
+    "scenario": "Real publishAdminVideo transaction persisted one NEW_VIDEO_FANOUT intent; request-side kick was suppressed at the post-commit seam; a fresh OS process ran the actual durable worker and delivered one subscriber notification; retry produced no duplicate.",
+    "scope_limit": "Did not kill the HTTP publishing process after COMMIT or call the scheduled cron HTTP route; synthetic HLS route, no R2/S3 or independent review.",
+    "evidence": "program-audytu/evidence/k23-process-recovery-2026-11-06/result.json",
+    "k23_closed": false
+  },
+  "latest_k23_http_followup": {
+    "date": "2026-11-07",
+    "base_revision": "3cabe34f",
+    "test_file": "tests/postgres/k23-publish-crash-cron-http.pg.test.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 1,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "scenario": "Actual local Studio HTTP publish commits the video and durable fan-out intent; a test-only future lease prevents the immediate kick from claiming it; the publishing Next process is SIGKILLed, then a fresh Next process runs the actual cron HTTP route and delivers exactly one notification; repeated cron remains idempotent.",
+    "scope_limit": "Synthetic SELF_HLS/subscriber, disposable database, no external R2/S3 or independent review. K23 remains partial pending review and remaining premiere/provider boundaries.",
+    "evidence": "program-audytu/evidence/k23-http-crash-cron-2026-11-07/result.json",
+    "k23_closed": false
+  },
+  "latest_k23_premiere_followup": {
+    "date": "2026-11-07",
+    "base_revision": "f1cf838a",
+    "test_file": "tests/postgres/published-video-notification-intent.pg.test.ts",
+    "postgres_migrations": 84,
+    "postgres_tests_passed": 3,
+    "postgres_tests_failed": 0,
+    "typecheck_exit": 0,
+    "eslint_exit": 0,
+    "scenario": "Actual notifyDuePremieres enqueues one due premiere, repeat tick leaves one durable intent, actual runner delivers the premiere template once and marks premiereNotifiedAt; later tick has no candidate. Same DB file preserves ordinary intent and rollback checks.",
+    "scope_limit": "Synthetic PostgreSQL fixtures only; no R2/S3 or external review. K23 remains partial pending independent review and non-production operational acceptance.",
+    "evidence": "program-audytu/evidence/k23-premiere-postgres-2026-11-07/result.json",
+    "k23_closed": false
+  },
+  "latest_k05_followup": {
+    "date": "2026-11-07",
+    "package": "K05 product profile and DP01-DP09 register",
+    "changes": [
+      "documented actor outcomes and code gates",
+      "marked conflicting monetization profile BLOCKED",
+      "updated R19 status"
+    ],
+    "runtime_or_production_verified": false,
+    "policy_or_code_changed": false,
+    "package_closed": false,
+    "evidence": "program-audytu/K05-PROFIL-PRODUKTU.md"
+  },
+  "latest_k38_followup": {
+    "date": "2026-11-07",
+    "package": "bounded HTML/thumbnail probe and fixed-count runner identity",
+    "tests_passed": 36,
+    "tests_failed": 0,
+    "network_scope": "synthetic 127.0.0.1 fixture only",
+    "max_prefix_bytes": 65536,
+    "sentinel_bytes": 1,
+    "fixed_count_shares_lock_and_guest_identity": true,
+    "k6_load_or_app_used": false,
+    "package_closed": false,
+    "evidence": "program-audytu/evidence/k38-bounded-body-probe-2026-11-07.json"
+  },
+  "latest_local_retests": {
+    "date": "2026-11-11",
+    "code_under_test_sha": "2f31bda3cb30933ca3a3f436453601988ee73bc0",
+    "K07": {
+      "passed": 13,
+      "failed": 0,
+      "evidence": "program-audytu/evidence/k07-request-body-retest-2026-11-11.json",
+      "remaining": "external proxy and full-stack resource budget"
+    },
+    "K10": {
+      "passed": 2,
+      "failed": 0,
+      "environment": "Next HTTP + Better Auth + disposable PostgreSQL 17/84 migrations + synthetic Worker R2/cache",
+      "evidence": "program-audytu/evidence/k10-http-worker-token-contract-2026-11-11.json",
+      "remaining": "real Cloudflare/R2, browser segment playback, independent review"
+    },
+    "K13": {
+      "passed": 10,
+      "failed": 0,
+      "evidence": "program-audytu/evidence/k13-delete-retest-2026-11-11.json",
+      "remaining": "provider sandbox and independent review"
+    },
+    "K38": {
+      "passed": 36,
+      "failed": 0,
+      "evidence": "program-audytu/evidence/k38-local-contract-retest-2026-11-11.json",
+      "remaining": "non-production app/database runner, playback/heartbeat mix and cleanup"
+    }
   }
 }

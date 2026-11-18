@@ -1,6 +1,9 @@
 {
-  "date": "2026-11-01",
+  "date": "2026-11-06",
+  "repository_head_sha": "a655ce0a14eeae377da78895ae68158f8466c0a2",
   "actual_source_sha256": {
+    "lib/modules/video/pure.ts": "a620cedb89c1b61d350f84f89393e6c5644d7f430f17eb48a9b920dff38c915a",
+    "lib/modules/video/domain/sidebar-order.ts": "30a2f952e52f00be993da91fbe2038d9fbc8aac59071b6d85a5e42339ea90690",
     "lib/modules/video/domain/video-visibility.ts": "f453481e0b1b4798291fa7ff07ccb375b46b62f76ba466ba041f05440d40f7e9",
     "lib/modules/authz/index.ts": "5608d795bf2371e29a2bafb6b50c916b95f4f82f078fcd78f2a9c6b4b7987722",
     "lib/modules/authz/domain/actions.ts": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
@@ -11,9 +14,14 @@
     "lib/modules/authz/application/authorize.ts": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
     "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
     "lib/modules/shared/app-context.ts": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
-    "lib/prisma.ts": "036a65c0323a8bd563efdd33a151f25bcb22bbbad4994a481cfb3d4b3b63706c"
+    "lib/prisma.ts": "2950dd040c108fb08c765f7aa3795327302d7661916b4d4940d91a478f1e70b0"
   },
   "observations": [
+    {
+      "case": "narrow_video_pure_entry_stays_in_domain",
+      "compare_sidebar_exported": true,
+      "prisma_constructor_calls": 0
+    },
     {
       "case": "direct_pure_visibility_helper",
       "results": [
@@ -31,24 +39,49 @@
       "prisma_constructor_calls": 0
     },
     {
-      "case": "context_import_initializes_default_before_injection",
-      "prisma_constructor_calls_before_createContext": 1,
-      "prisma_constructor_calls_after_injection": 1,
+      "case": "context_import_and_injected_db_do_not_create_default_client",
+      "prisma_constructor_calls_at_import": 0,
+      "prisma_constructor_calls_after_injection": 0,
       "injected_db_preserved": true,
       "real_database_queries": 0
     },
     {
-      "case": "default_context_reuses_singleton_probe",
+      "case": "default_context_lazily_constructs_client_for_transaction",
       "default_actor": "guest",
-      "reuses_import_time_client": true,
-      "prisma_constructor_calls": 1,
+      "prisma_constructor_calls_before_transaction": 0,
+      "prisma_constructor_calls_after_transaction": 1,
+      "client_used_by_transaction": true,
       "real_database_queries": 0
     }
   ],
   "boundaries": [
-    "PrismaClient is a constructor probe supplied to VM only; no generated client or network",
-    "No Next/SWC optimization or full public video/channel barrel execution",
-    "Does not measure bundle size, request latency or production outage",
-    "No authorization result claimed from mere import of authz module"
-  ]
+    "The initial constructor probe uses a constructor stub inside VM; no generated client or network in that probe.",
+    "A separate follow-up instantiates the real generated client through the lazy facade and disconnects without a DB URL; no SQL or connection is attempted.",
+    "No Next/SWC optimization, production DB query, or full public video/channel barrel execution.",
+    "The selected video→channel→layout→video-barrel cycle is broken through the pure entry; unrelated cycles remain.",
+    "Does not measure bundle size, request latency or production outage.",
+    "No authorization result claimed from mere import of authz module."
+  ],
+  "followup_revision": "61405009",
+  "real_generated_client_smoke": {
+    "date": "2026-11-06",
+    "command": "env -u DATABASE_URL -u DATABASE_URL_UNPOOLED node --import tsx -e <probe>",
+    "exitCode": 0,
+    "status": "PASS",
+    "test": "tests/unit/architecture/prisma-lazy-composition.test.ts",
+    "testSha256": "ffba5ef889976dfc8ea3a3d4ce5b69878a324e27dbc914b17e0e43b6b43eb447",
+    "testCount": 1,
+    "observations": {
+      "generatedUserDelegatePresent": true,
+      "transactionMethodType": "function",
+      "disconnectCompleted": true
+    },
+    "client": "Actual generated @prisma/client accessed through the production lib/prisma.ts facade; no mock constructor.",
+    "databaseUrlConfigured": false,
+    "databaseQueries": 0,
+    "boundaries": [
+      "No database connection/query, bundler, Next production build, or latency measurement.",
+      "The constructor remains lazy until the test accesses a generated delegate/method."
+    ]
+  }
 }

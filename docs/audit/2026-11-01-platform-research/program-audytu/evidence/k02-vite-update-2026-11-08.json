@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_VITE_TRANSITIVE_OVERRIDE",
+  "base_commit": "3d853599dbc68ff4efe03606dcb3b21a75834c02",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "1b1555e04183068bd9fc8be803a08e78e7baae84446907f1d558d43ca1c01bc6",
+    "package-lock.json": "973df97e441265eadb1e94dba1978db477ffaee5f49503adbab062ca9c6f4751"
+  },
+  "change": {
+    "previous_resolved": "8.1.3",
+    "current_resolved": "8.3.6",
+    "override": "package.json#overrides.vite",
+    "paths": [
+      "@vitejs/plugin-react-swc -> vite",
+      "vitest -> vite"
+    ]
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "889 packages"
+    },
+    "npm ls vite --all": {
+      "exit": 0,
+      "resolved": "8.3.6"
+    },
+    "npx vitest run tests/unit/auth/auth-config.test.ts --testTimeout=120000 --hookTimeout=120000": {
+      "exit": 0,
+      "files": 1,
+      "passed": 12,
+      "failed": 0
+    }
+  },
+  "observed_warning": "Vite warned that configLoader native does not support existing ESM syntax in CommonJS vitest.config.ts; configuration not changed.",
+  "limitations": [
+    "No full test suite or public/admin build.",
+    "No application runtime image inspection or full K02 acceptance.",
+    "No new npm audit graph upload."
+  ]
+}

@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { handleApiError } from "@/lib/errors";
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
     if (csrf) return NextResponse.json(csrf.body, { status: csrf.status, headers: NO_STORE });
 
     const { id: videoId } = await props.params;
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readRequestJsonOrNullWithLimit(request));
     if (!parsed.success) {
       return NextResponse.json({ error: "VALIDATION_ERROR", message: "Invalid progress." }, { status: 400, headers: NO_STORE });
     }

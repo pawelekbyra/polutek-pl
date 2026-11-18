@@ -45,6 +45,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Wybór języka i dokumenty prawne | [`architecture/i18n-and-legal.md`](architecture/i18n-and-legal.md) |
 | Prywatność, retencja, e-mail | [`architecture/privacy-email-retention.md`](architecture/privacy-email-retention.md) |
 | Baza i migracje | [`architecture/database-and-migrations.md`](architecture/database-and-migrations.md) |
+| Limity bajtów i pól body przed parserem API | [`architecture/request-body-limits.md`](architecture/request-body-limits.md) |
 
 ## Jak to obsługiwać (`operations/`)
 

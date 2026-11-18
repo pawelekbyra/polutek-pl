@@ -7,7 +7,7 @@ import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, 
 import { VideoPolicy } from "../domain/video.policy";
 import { withPrimaryAsset } from "../domain/video-asset-selection";
 import { pickFundraisingUpdate, type FundraisingGoalFields } from "../domain/fundraising";
-import { publiclyVisibleChannelWhere } from "@/lib/modules/channel";
+import { publiclyVisibleChannelWhere } from "@/lib/modules/channel/domain/channel.policy";
 import { isDerivedThumbnailUrl } from "@/lib/modules/media"; // derived thumbnail srcs are never stored
 import type { ChapterInput } from "@/lib/video-chapters";
 
@@ -106,8 +106,12 @@ export class VideoRepository {
   }
 
   async findByIdForMainChannel(id: string, mainChannelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
+    return this.findByIdForChannel(id, mainChannelId);
+  }
+
+  async findByIdForChannel(id: string, channelId: string): Promise<(Video & { assets: VideoAsset[]; asset: VideoAsset | null }) | null> {
     const video = await this.db.video.findFirst({
-        where: { id, creatorId: mainChannelId },
+        where: { id, creatorId: channelId },
         include: {
             _count: { select: { comments: true } },
             assets: true,

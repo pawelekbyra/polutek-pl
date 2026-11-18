@@ -1,0 +1,38 @@
+{
+  "task": "K21 upload, job, and playback response contracts",
+  "date": "2026-11-11",
+  "sourceSha": "601e998e",
+  "database": {
+    "image": "postgres:17-alpine",
+    "migrationsApplied": 84,
+    "exposure": "127.0.0.1 ephemeral port only",
+    "storage": "container tmpfs",
+    "cleanup": "container removed after test"
+  },
+  "commands": [
+    "DATABASE_URL=<loopback disposable PostgreSQL> DATABASE_URL_UNPOOLED=<same disposable PostgreSQL> npx prisma migrate deploy",
+    "DATABASE_URL=<loopback disposable PostgreSQL> DATABASE_URL_UNPOOLED=<same disposable PostgreSQL> npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts tests/postgres/k21-media-source-contract.pg.test.ts --reporter=dot"
+  ],
+  "result": {
+    "testFilesPassed": 2,
+    "testsPassed": 6,
+    "testsFailed": 0,
+    "migrationExitCode": 0,
+    "testExitCode": 0,
+    "breakdown": {
+      "k15OriginalUpload": 5,
+      "k21MediaSourceContract": 1
+    }
+  },
+  "coverage": [
+    "real Prisma rows and Studio upload handlers with controlled multipart storage",
+    "legacy Studio client accepts the supported response shape with additional fields",
+    "upload completion retry, version ordering, and explicit abort behavior",
+    "media-source route response validates against PlaybackPlanResponseSchema"
+  ],
+  "limitations": [
+    "The multipart storage adapter and authentication session are controlled test doubles.",
+    "The K21 media-source test invokes the real route and PostgreSQL-backed service but does not run a Next HTTP server or Cloudflare R2.",
+    "Independent review and live R2/browser upload acceptance remain open."
+  ]
+}

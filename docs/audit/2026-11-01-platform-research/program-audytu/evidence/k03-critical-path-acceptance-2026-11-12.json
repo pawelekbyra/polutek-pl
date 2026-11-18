@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-12",
+  "repository_head_sha": "6dc1b50a4ae382ddd2b44ade0c68ba6963c3b67b",
+  "source_fingerprint": "5526216ee1611cace932256086a27b6a9b0d3c5e928c9ded69fc7a27d99dbc95",
+  "tracked_files": 3434,
+  "working_tree_clean": true,
+  "command": "npm run test:critical-path -- --report-json=/tmp/polutek-k03-critical-path-2026-11-12.json",
+  "exit": 0,
+  "result": {
+    "files": 2,
+    "collected": 37,
+    "executed": 37,
+    "passed": 37,
+    "failed": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "file": "tests/unit/operations/verify-restored-database-process.test.ts",
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "tests/integration/launch-candidate-critical-path.test.ts",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "limitations": [
+    "This is the guarded critical-path subset, not full npm run quality.",
+    "The restore helper suite uses controlled process/database fixtures; it is not a restore from the actual offsite/production backup."
+  ]
+}

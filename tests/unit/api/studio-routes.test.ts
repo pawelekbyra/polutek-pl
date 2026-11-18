@@ -18,6 +18,7 @@ const m = vi.hoisted(() => ({
   hideAdminComment: vi.fn(),
   createCreatorReply: vi.fn(),
   startOriginalUpload: vi.fn(),
+  getPipelineState: vi.fn(),
   getChannelLimitsView: vi.fn(),
   canCreateChannel: vi.fn(async () => false),
 }));
@@ -55,7 +56,7 @@ vi.mock("@/lib/modules/video-pipeline", () => ({
   abortOriginalUpload: vi.fn(),
   presignOriginalParts: vi.fn(),
   completeOriginalMultipart: vi.fn(),
-  getPipelineState: vi.fn(),
+  getPipelineState: m.getPipelineState,
   cancelEncode: vi.fn(),
   getChannelLimitsView: m.getChannelLimitsView,
 }));
@@ -72,6 +73,7 @@ vi.mock("@/lib/modules/comments", () => ({
 }));
 
 import { AppError } from "@/lib/modules/shared/app-error";
+import { MultipartStartResponseSchema, StudioPipelineStateResponseSchema } from "@/lib/video-api-contracts/contracts";
 import { describeError } from "@/lib/api/studio-route";
 import { GET as meGet } from "@/app/api/studio/me/route";
 import { POST as channelPost, PATCH as channelPatch } from "@/app/api/studio/channel/route";
@@ -80,6 +82,7 @@ import { POST as videosPost, GET as videosGet } from "@/app/api/studio/videos/ro
 import { PATCH as videoPatch, GET as videoGet } from "@/app/api/studio/videos/[id]/route";
 import { POST as publishPost } from "@/app/api/studio/videos/[id]/publish/route";
 import { POST as uploadPost } from "@/app/api/studio/videos/[id]/upload/route";
+import { GET as pipelineGet } from "@/app/api/studio/videos/[id]/pipeline/route";
 import { GET as commentsGet } from "@/app/api/studio/comments/route";
 import { POST as commentPost } from "@/app/api/studio/comments/[id]/route";
 
@@ -208,7 +211,23 @@ describe("Studio API: videos", () => {
     m.startOriginalUpload.mockResolvedValue({ ok: true, data: { originalId: "o1", partSize: 1, partCount: 1, fileSize: 10, version: 1 } });
     const response = await uploadPost(req("/api/studio/videos/v1/upload", json({ fileName: "a.mp4", fileSize: 10 })), params("v1"));
     expect(response.status).toBe(200);
+    const body: unknown = await response.json();
+    expect(MultipartStartResponseSchema.safeParse(body).success).toBe(true);
     expect(m.startOriginalUpload).toHaveBeenCalledWith({ videoId: "v1", fileName: "a.mp4", fileSize: 10 }, ctx);
+  });
+
+  it("serializes pipeline DTOs in the Studio response contract", async () => {
+    m.getPipelineState.mockResolvedValue({ ok: true, data: {
+      summary: "QUEUED", workerAlive: true, original: null,
+      job: { id: "job-1", status: "QUEUED", stage: "QUEUED", progressPercent: 0, etaSeconds: null, attemptCount: 0,
+        maxAttempts: 3, versionNumber: 1, originalId: "original-1", assetId: null, cancelRequested: false, failureCode: null,
+        failureReason: null, nextAttemptAt: null, createdAt: "2026-11-06T00:00:00.000Z", startedAt: null, finishedAt: null,
+        heartbeatFresh: false },
+      assets: [], hasCompetingSource: false,
+    } });
+    const response = await pipelineGet(req("/api/studio/videos/v1/pipeline"), params("v1"));
+    expect(response.status).toBe(200);
+    expect(StudioPipelineStateResponseSchema.safeParse(await response.json()).success).toBe(true);
   });
 
   it("clamps list paging", async () => {

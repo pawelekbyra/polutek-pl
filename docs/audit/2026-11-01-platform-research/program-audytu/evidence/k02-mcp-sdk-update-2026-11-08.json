@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_MCP_TYPESCRIPT_SDK_TRANSITIVE_OVERRIDE",
+  "base_commit": "47855c17c019424158a61ad6aafeb30cb6ea1ac5",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "337aff5351ecb75567cfd244f148ea61ec7fdf4f71b9212f1dd240459db08a26",
+    "package-lock.json": "7e9ca252c70a896089ab47ba0855b0030a6b0ede16a79b905314f25191720da8"
+  },
+  "change": {
+    "previous_resolved": "1.31.0",
+    "current_resolved": "1.32.2",
+    "override": "package.json#overrides.@modelcontextprotocol/sdk",
+    "path": "shadcn -> @modelcontextprotocol/sdk",
+    "advisory_fixed_range": "<1.32.0",
+    "scope": "development dependency in npm ls output"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls @modelcontextprotocol/sdk --all": {
+      "exit": 0,
+      "resolved": "1.32.2"
+    },
+    "npx shadcn --version": {
+      "exit": 0,
+      "version": "4.13.0"
+    }
+  },
+  "limitations": [
+    "No direct MCP protocol acceptance test.",
+    "No new npm audit request or graph upload.",
+    "No application runtime image inspection or full K02 acceptance."
+  ]
+}

@@ -5,7 +5,8 @@ import path from 'path';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['tests/postgres/**/*.pg.test.ts'],
+    include: ['tests/postgres/**/*.pg.test.ts', 'tests/integration/email-event-idempotency.test.ts'],
+    env: { RUN_INTEGRATION_TESTS: 'true' },
     fileParallelism: false,
     testTimeout: 30_000,
     alias: {

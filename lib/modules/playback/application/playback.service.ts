@@ -198,6 +198,19 @@ export class PlaybackService {
         });
     }
 
+    const decision = accessResult.data;
+
+    // A hidden video is indistinguishable from a missing one. Resolve this denial
+    // before the premiere gate, which may disclose a public title and schedule.
+    if (!decision.hasAccess && decision.reason === 'NOT_FOUND') {
+      return unavailablePlan({
+        videoId,
+        status: 'UNAVAILABLE',
+        accessReason: 'VIDEO_NOT_FOUND',
+        warnings: ['Video not found'],
+      });
+    }
+
     // Scheduled premiere gate (CLAUDE.md "Premieres"). Runs before any source,
     // token, provider id or playback session is touched, so an upcoming video
     // can never be played or counted early — whatever its tier. Admins may
@@ -219,19 +232,6 @@ export class PlaybackService {
         }),
         ...(isGuest ? {} : { premiereAt: upcomingPremiereAt.toISOString() }),
       };
-    }
-
-    const decision = accessResult.data;
-
-    // A hidden video (draft, archived, removed, hidden channel) answers exactly like one that does not exist: no title,
-    // no poster (audit S06). `video` is only used for those two fields before this point.
-    if (!decision.hasAccess && decision.reason === 'NOT_FOUND') {
-      return unavailablePlan({
-        videoId,
-        status: 'UNAVAILABLE',
-        accessReason: 'VIDEO_NOT_FOUND',
-        warnings: ['Video not found'],
-      });
     }
 
     if (!decision.hasAccess) {

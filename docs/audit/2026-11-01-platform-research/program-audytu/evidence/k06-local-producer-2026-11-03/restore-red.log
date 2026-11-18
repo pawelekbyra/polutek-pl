@@ -1,0 +1,399 @@
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts (31 tests | 26 failed) 35723ms
+     × fails and closes the client for connection-failure 1300ms
+     × fails and closes the client for migration-read-failure 1106ms
+     × fails and closes the client for migration-unfinished 1170ms
+     × fails and closes the client for migration-failed 1136ms
+     × allows a rolled-back attempt alongside completed migration history 1082ms
+     × fails when mandatory User count cannot be checked without a manifest 1110ms
+     × fails when mandatory Creator count cannot be checked without a manifest 1099ms
+     × fails when mandatory Video count cannot be checked without a manifest 1137ms
+     × fails when mandatory VideoAsset count cannot be checked without a manifest 1131ms
+     × fails when mandatory Payment count cannot be checked without a manifest 1080ms
+     × fails when mandatory UserPaymentTotal count cannot be checked without a manifest 1045ms
+     × fails when mandatory PatronGrant count cannot be checked without a manifest 1194ms
+     × fails when mandatory StripeEvent count cannot be checked without a manifest 1101ms
+     × fails when mandatory Comment count cannot be checked without a manifest 1217ms
+     × fails when mandatory CommentReport count cannot be checked without a manifest 1196ms
+     × fails when mandatory Subscription count cannot be checked without a manifest 1175ms
+     × fails when mandatory AuditLog count cannot be checked without a manifest 1146ms
+     × fails when a manifest count has no observed value 1090ms
+     × fails for manifest unknown aggregate 1045ms
+     × fails for manifest different count 1103ms
+     × fails for manifest missing counts object 1200ms
+     × fails for manifest array instead of counts object 1177ms
+     × fails for manifest invalid JSON 1167ms
+     × rejects orphan-user instead of reporting success 1201ms
+     × rejects orphan-payment instead of reporting success 1200ms
+     × rejects orphan-video instead of reporting success 1204ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails and closes the client for connection-failure
+AssertionError: expected '--- RESTORED DATABASE VERIFICATION --…' to contain 'FIXTURE_DISCONNECTED'
+
+- Expected
++ Received
+
+- FIXTURE_DISCONNECTED
++ --- RESTORED DATABASE VERIFICATION ---
++ Target: postgresql://fixture_user:****@127.0.0.1:5432/restored_fixture
++ FIXTURE_CLIENT_CREATED
++
++ [A] Connectivity
++
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:36:40
+     34|   expect(result.status).toBe(1);
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+       |                                        ^
+     37| }
+     38|
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:65:55
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails and closes the client for migration-read-failure
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails and closes the client for migration-unfinished
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:34:25
+     32|   expect(result.error).toBeUndefined();
+     33|   expect(result.signal).toBeNull();
+     34|   expect(result.status).toBe(1);
+       |                         ^
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:65:55
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails and closes the client for migration-failed
+AssertionError: expected '--- RESTORED DATABASE VERIFICATION --…' to contain 'FIXTURE_DISCONNECTED'
+
+- Expected
++ Received
+
+- FIXTURE_DISCONNECTED
++ --- RESTORED DATABASE VERIFICATION ---
++ Target: postgresql://fixture_user:****@127.0.0.1:5432/restored_fixture
++ FIXTURE_CLIENT_CREATED
++
++ [A] Connectivity
++ ✓ Reachable. Server time: 2026-11-02T00:00:00.000Z
++
++ [B] Migration/Schema State
++ ✓ _prisma_migrations accessible. Count: 1
++
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:36:40
+     34|   expect(result.status).toBe(1);
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+       |                                        ^
+     37| }
+     38|
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:65:55
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > allows a rolled-back attempt alongside completed migration history
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:70:27
+     68|   it('allows a rolled-back attempt alongside completed migration histo…
+     69|     const result = run('migration-rolled-back');
+     70|     expect(result.status).toBe(0);
+       |                           ^
+     71|     expect(result.stdout).toContain('VERIFICATION SUCCESSFUL');
+     72|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory User count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory Creator count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory Video count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory VideoAsset count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory Payment count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory UserPaymentTotal count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory PatronGrant count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory StripeEvent count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory Comment count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory CommentReport count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory Subscription count cannot be checked without a manifest
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when mandatory AuditLog count cannot be checked without a manifest
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:34:25
+     32|   expect(result.error).toBeUndefined();
+     33|   expect(result.signal).toBeNull();
+     34|   expect(result.status).toBe(1);
+       |                         ^
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:75:84
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails when a manifest count has no observed value
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:34:25
+     32|   expect(result.error).toBeUndefined();
+     33|   expect(result.signal).toBeNull();
+     34|   expect(result.status).toBe(1);
+       |                         ^
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:79:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails for manifest unknown aggregate
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails for manifest missing counts object
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails for manifest array instead of counts object
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:34:25
+     32|   expect(result.error).toBeUndefined();
+     33|   expect(result.signal).toBeNull();
+     34|   expect(result.status).toBe(1);
+       |                         ^
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:88:52
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails for manifest different count
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > fails for manifest invalid JSON
+AssertionError: expected '--- RESTORED DATABASE VERIFICATION --…' to contain 'FIXTURE_DISCONNECTED'
+
+- Expected
++ Received
+
+- FIXTURE_DISCONNECTED
++ --- RESTORED DATABASE VERIFICATION ---
++ Target: postgresql://fixture_user:****@127.0.0.1:5432/restored_fixture
++ FIXTURE_CLIENT_CREATED
++
++ [A] Connectivity
++ ✓ Reachable. Server time: 2026-11-02T00:00:00.000Z
++
++ [B] Migration/Schema State
++ ✓ _prisma_migrations accessible. Count: 1
++
++ [C/D] Model Availability & Safe Aggregates
++ ✓ User: 1 rows
++ ✓ Creator: 1 rows
++ ✓ Video: 1 rows
++ ✓ VideoAsset: 1 rows
++ ✓ Payment: 1 rows
++ ✓ UserPaymentTotal: 1 rows
++ ✓ PatronGrant: 1 rows
++ ✓ StripeEvent: 1 rows
++ ✓ Comment: 1 rows
++ ✓ CommentReport: 1 rows
++ ✓ Subscription: 1 rows
++ ✓ AuditLog: 1 rows
++
++ [E] Logical Integrity Checks
++ ✓ No orphaned PatronGrants detected.
++ ✓ No payment-linked PatronGrants referencing missing Payment.
++ ✓ No orphaned VideoAssets detected.
++
++ [F] Expected Manifest Comparison
++
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:36:40
+     34|   expect(result.status).toBe(1);
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+       |                                        ^
+     37| }
+     38|
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:88:52
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > rejects orphan-user instead of reporting success
+AssertionError: expected '--- RESTORED DATABASE VERIFICATION --…' to contain 'FIXTURE_DISCONNECTED'
+
+- Expected
++ Received
+
+- FIXTURE_DISCONNECTED
++ --- RESTORED DATABASE VERIFICATION ---
++ Target: postgresql://fixture_user:****@127.0.0.1:5432/restored_fixture
++ FIXTURE_CLIENT_CREATED
++
++ [A] Connectivity
++ ✓ Reachable. Server time: 2026-11-02T00:00:00.000Z
++
++ [B] Migration/Schema State
++ ✓ _prisma_migrations accessible. Count: 1
++
++ [C/D] Model Availability & Safe Aggregates
++ ✓ User: 1 rows
++ ✓ Creator: 1 rows
++ ✓ Video: 1 rows
++ ✓ VideoAsset: 1 rows
++ ✓ Payment: 1 rows
++ ✓ UserPaymentTotal: 1 rows
++ ✓ PatronGrant: 1 rows
++ ✓ StripeEvent: 1 rows
++ ✓ Comment: 1 rows
++ ✓ CommentReport: 1 rows
++ ✓ Subscription: 1 rows
++ ✓ AuditLog: 1 rows
++
++ [E] Logical Integrity Checks
++ ✓ No payment-linked PatronGrants referencing missing Payment.
++ ✓ No orphaned VideoAssets detected.
++
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:36:40
+     34|   expect(result.status).toBe(1);
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+       |                                        ^
+     37| }
+     38|
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:98:60
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > rejects orphan-payment instead of reporting success
+AssertionError: expected '--- RESTORED DATABASE VERIFICATION --…' to contain 'FIXTURE_DISCONNECTED'
+
+- Expected
++ Received
+
+- FIXTURE_DISCONNECTED
++ --- RESTORED DATABASE VERIFICATION ---
++ Target: postgresql://fixture_user:****@127.0.0.1:5432/restored_fixture
++ FIXTURE_CLIENT_CREATED
++
++ [A] Connectivity
++ ✓ Reachable. Server time: 2026-11-02T00:00:00.000Z
++
++ [B] Migration/Schema State
++ ✓ _prisma_migrations accessible. Count: 1
++
++ [C/D] Model Availability & Safe Aggregates
++ ✓ User: 1 rows
++ ✓ Creator: 1 rows
++ ✓ Video: 1 rows
++ ✓ VideoAsset: 1 rows
++ ✓ Payment: 1 rows
++ ✓ UserPaymentTotal: 1 rows
++ ✓ PatronGrant: 1 rows
++ ✓ StripeEvent: 1 rows
++ ✓ Comment: 1 rows
++ ✓ CommentReport: 1 rows
++ ✓ Subscription: 1 rows
++ ✓ AuditLog: 1 rows
++
++ [E] Logical Integrity Checks
++ ✓ No orphaned PatronGrants detected.
++ ✓ No orphaned VideoAssets detected.
++
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:36:40
+     34|   expect(result.status).toBe(1);
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+       |                                        ^
+     37| }
+     38|
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:98:60
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/26]⎯
+
+ FAIL  tests/unit/operations/verify-restored-database-process.test.ts > restore verification CLI result > rejects orphan-video instead of reporting success
+AssertionError: expected '--- RESTORED DATABASE VERIFICATION --…' to contain 'FIXTURE_DISCONNECTED'
+
+- Expected
++ Received
+
+- FIXTURE_DISCONNECTED
++ --- RESTORED DATABASE VERIFICATION ---
++ Target: postgresql://fixture_user:****@127.0.0.1:5432/restored_fixture
++ FIXTURE_CLIENT_CREATED
++
++ [A] Connectivity
++ ✓ Reachable. Server time: 2026-11-02T00:00:00.000Z
++
++ [B] Migration/Schema State
++ ✓ _prisma_migrations accessible. Count: 1
++
++ [C/D] Model Availability & Safe Aggregates
++ ✓ User: 1 rows
++ ✓ Creator: 1 rows
++ ✓ Video: 1 rows
++ ✓ VideoAsset: 1 rows
++ ✓ Payment: 1 rows
++ ✓ UserPaymentTotal: 1 rows
++ ✓ PatronGrant: 1 rows
++ ✓ StripeEvent: 1 rows
++ ✓ Comment: 1 rows
++ ✓ CommentReport: 1 rows
++ ✓ Subscription: 1 rows
++ ✓ AuditLog: 1 rows
++
++ [E] Logical Integrity Checks
++ ✓ No orphaned PatronGrants detected.
++ ✓ No payment-linked PatronGrants referencing missing Payment.
++
+
+ ❯ expectFailure tests/unit/operations/verify-restored-database-process.test.ts:36:40
+     34|   expect(result.status).toBe(1);
+     35|   expect(result.stdout).not.toContain('VERIFICATION SUCCESSFUL');
+     36|   if (connected) expect(result.stdout).toContain('FIXTURE_DISCONNECTED…
+       |                                        ^
+     37| }
+     38|
+ ❯ tests/unit/operations/verify-restored-database-process.test.ts:98:60
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/26]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  26 failed | 5 passed (31)
+   Start at  23:00:41
+   Duration  36.19s (transform 91ms, setup 0ms, import 131ms, tests 35.72s, environment 0ms)
+

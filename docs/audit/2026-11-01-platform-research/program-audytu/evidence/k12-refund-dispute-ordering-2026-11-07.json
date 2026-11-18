@@ -1,0 +1,92 @@
+{
+  "package": "K12",
+  "finding": "R32",
+  "checkedAt": "2026-11-07",
+  "baseRevision": "28f65562756382825ee4cd72675ced8fca18d571",
+  "implementationDiffSha256AtVerification": "0dd931af9470d58eb1f7fd0a4bbc1725af470b77d1c7f8d6eb339e3f888fec90",
+  "sourceFiles": {
+    "lib/modules/payments/application/handle-refund.use-case.ts": "fc1a4402f5b094d1d13b9b741afa37525afd879b878c7d4a7c3d04557be8c342",
+    "lib/modules/payments/application/handle-dispute.use-case.ts": "95b99a0c2a3ccb7a948890ddea9411d398e111e518e055a8340ecc8a18475293",
+    "tests/postgres/payments.pg.test.ts": "5862eccf6fe2d6a34daae23d76710536d71ce01f267a22b1f3452b00cfdc4507"
+  },
+  "reproductionBeforeFix": {
+    "command": "DATABASE_URL=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/payments.pg.test.ts -t 'keeps the total independent' --reporter=dot",
+    "exitCode": 1,
+    "testsPassed": 1,
+    "testsFailed": 2,
+    "observedTotals": [
+      600,
+      0
+    ],
+    "expectedTotal": 1000
+  },
+  "verificationAfterFix": {
+    "postgres": {
+      "version": "17.11",
+      "migrationsApplied": 84,
+      "migrationCommandExitCode": 0,
+      "targetBinding": "127.0.0.1 only",
+      "dataDirectory": "tmpfs",
+      "tests": "DATABASE_URL=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/payments.pg.test.ts --reporter=dot",
+      "exitCode": 0,
+      "filesPassed": 1,
+      "testsPassed": 20
+    },
+    "unit": {
+      "command": "npx vitest run tests/unit/modules/payments/admin-refund.use-case.test.ts tests/unit/modules/payments/admin-dispute-sync.use-case.test.ts tests/unit/modules/payments/refund-sync.test.ts --reporter=dot",
+      "exitCode": 0,
+      "filesPassed": 3,
+      "testsPassed": 31
+    },
+    "lint": {
+      "command": "npx eslint lib/modules/payments/application/handle-refund.use-case.ts lib/modules/payments/application/handle-dispute.use-case.ts tests/postgres/payments.pg.test.ts",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "command": "npx tsc --noEmit --pretty false -p tsconfig.typecheck.json",
+      "exitCode": 0
+    },
+    "concurrentRepeatRuns": {
+      "command": "for iteration in 1 2 3 4 5; do DATABASE_URL=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/payments.pg.test.ts -t 'concurrent dispute and refund' --reporter=dot; done",
+      "runs": 5,
+      "result": "all five fresh Vitest processes exited 0 against the same disposable database; each uses fresh payment fixtures and cleans them",
+      "fixtureUsersRemaining": 0,
+      "containerRemoved": true
+    }
+  },
+  "additionalRegressionRun": {
+    "scenario": "open dispute -> partial refund -> dispute won -> duplicate/concurrent replays",
+    "alsoChecks": "PLN total is 1600 after a 400 partial refund; independent USD total remains 700",
+    "database": "disposable PostgreSQL 17.11 with 84 migrations applied",
+    "targetedCommand": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/payments.pg.test.ts -t 'open and won dispute' --reporter=dot",
+    "targetedExitCode": 0,
+    "targetedTestsPassed": 1,
+    "wholeFileCommand": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/payments.pg.test.ts --reporter=dot",
+    "wholeFileExitCode": 0,
+    "wholeFileTestsPassed": 21,
+    "eslintExitCode": 0,
+    "typecheckExitCode": 0,
+    "containerRemoved": true,
+    "fixtureUsersRemaining": 0
+  },
+  "scenarios": [
+    "refund after lost dispute",
+    "lost dispute after refund",
+    "concurrent refund and lost-dispute transitions",
+    "duplicate deliveries after the transition",
+    "full refund after lost dispute",
+    "PLN and USD totals remain isolated",
+    "open then won dispute around a partial refund with duplicate concurrent replays"
+  ],
+  "cleanup": {
+    "fixtureUsersRemaining": 0,
+    "temporaryPostgresContainerRemoved": true,
+    "repositoryWorktreeCleanBeforeDocumentation": true
+  },
+  "limits": [
+    "All database and provider data were disposable/synthetic; no Stripe charge/refund, production payment, or historical correction was performed.",
+    "K12-T1 ordering regression is covered. K12-T2 policy coverage and independent review remain partial; K11 payment-contribution policy and K05 owner decisions remain dependencies.",
+    "No live payment feature was enabled."
+  ],
+  "status": "K12 partial: lost-dispute/refund aggregation is now event-order independent under a shared row lock; complete currency and dispute-policy review remains open."
+}

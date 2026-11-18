@@ -1,0 +1,10 @@
+▲ Next.js 16.4.5 (webpack)
+- Local:         http://127.0.0.1:37973
+- Network:       http://127.0.0.1:37973
+✓ Ready in 1082ms
+✓ Running next.config.mjs took 64ms
+
+✓ Generated AGENTS.md for AI agents. Set `agentRules: false` in next.config to disable.
+⨯ The requested resource "/sample.svg" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+⨯ The requested resource isn't a valid image for /invalid.png received null
+[?25h

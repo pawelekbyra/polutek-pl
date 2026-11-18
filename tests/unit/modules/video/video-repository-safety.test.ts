@@ -81,7 +81,7 @@ describe('VideoRepository Safety', () => {
         title: 'Title',
         slug: 'slug',
         creatorId: mainChannelId,
-        tier: AccessTier.PATRON,
+        tier: AccessTier.LOGGED_IN,
         status: VideoStatus.PUBLISHED,
         asset: { isPrimary: true, processingState: 'READY', provider: 'SELF_HLS', objectKey: 'videos/v123/v/v1' },
         activePlaybackRoute: { asset: { processingState: 'READY', provider: 'SELF_HLS', objectKey: 'videos/v123/v/v1' } }

@@ -1,0 +1,88 @@
+{
+  "recordedAt": "2026-11-11T20:08:56.481Z",
+  "sourceRevision": "ffe1fb434565a43b2e3315cadc425b4040adb2af",
+  "worktreeClean": true,
+  "inputs": {
+    "packageJsonSha256": "ecf4b6d6a6a452d47c4b4c993efb2067d26e26a36cbacda112e08a58f2d3ceca",
+    "packageLockSha256": "d905e2f2106e302abdeac2b977fb92fb5690a60dba82fa52e1244757a1ee75cb"
+  },
+  "buildCommands": [
+    "NEXT_OUTPUT=standalone npm run build",
+    "NEXT_OUTPUT=standalone npm run admin:build"
+  ],
+  "outputs": [
+    {
+      "name": "public-app",
+      "standalone": ".next/standalone",
+      "server": ".next/standalone/server.js",
+      "serverSha256": "ba87a6157fb92dedf83997d9982e9b6d4c62ffdb9f7f97a26e5c6680b328da2b",
+      "packages": {
+        "next": {
+          "version": "16.4.5",
+          "packageJsonSha256": "76f5b7ef447577c2855eee017ae8a47aeefc1e4c95e71387b66c2671283682c8"
+        },
+        "sharp": {
+          "version": "0.35.5",
+          "packageJsonSha256": "ad4a2535d72eb638053a38867b1abf43c328cd1c1dbae5cf4172d498365a8b97"
+        },
+        "@img/sharp-linux-x64": {
+          "version": "0.35.5",
+          "packageJsonSha256": "181c58413d16ac3ce035f39c94c614031e03c023d88315712a81ed210c9fa04c"
+        },
+        "@img/sharp-libvips-linux-x64": {
+          "version": "1.3.4",
+          "packageJsonSha256": "2c5f6f9abf74c1492622d5dc4e4da056ab0712fd71de61e03a687c88b8cdab4e"
+        }
+      },
+      "excludedFindings": {
+        "vitest": null,
+        "@vitest/mocker": null,
+        "@vitest/ui": null,
+        "shadcn": null,
+        "@shadcn/registry": null,
+        "deepmerge": null
+      }
+    },
+    {
+      "name": "admin",
+      "standalone": "apps/admin/.next/standalone",
+      "server": "apps/admin/.next/standalone/apps/admin/server.js",
+      "serverSha256": "3c96d7533036a83f527d23fd1d77a0c7965749f5248ea4a4c6da8cbaa4396ec6",
+      "packages": {
+        "next": {
+          "version": "16.4.5",
+          "packageJsonSha256": "76f5b7ef447577c2855eee017ae8a47aeefc1e4c95e71387b66c2671283682c8"
+        },
+        "sharp": {
+          "version": "0.35.5",
+          "packageJsonSha256": "ad4a2535d72eb638053a38867b1abf43c328cd1c1dbae5cf4172d498365a8b97"
+        },
+        "@img/sharp-linux-x64": {
+          "version": "0.35.5",
+          "packageJsonSha256": "181c58413d16ac3ce035f39c94c614031e03c023d88315712a81ed210c9fa04c"
+        },
+        "@img/sharp-libvips-linux-x64": {
+          "version": "1.3.4",
+          "packageJsonSha256": "2c5f6f9abf74c1492622d5dc4e4da056ab0712fd71de61e03a687c88b8cdab4e"
+        }
+      },
+      "excludedFindings": {
+        "vitest": null,
+        "@vitest/mocker": null,
+        "@vitest/ui": null,
+        "shadcn": null,
+        "@shadcn/registry": null,
+        "deepmerge": null
+      }
+    }
+  ],
+  "audit": {
+    "command": "npm audit --omit=dev",
+    "result": "0 vulnerabilities",
+    "evidence": "k02-npm-audit-production-2026-11-11.json"
+  },
+  "limitations": [
+    "These are actual Next standalone trace directories consumed by the Dockerfiles, not built Docker images.",
+    "This does not inspect the base operating-system packages, final image layers/digests, or runtime startup against a production-like database/R2."
+  ]
+}

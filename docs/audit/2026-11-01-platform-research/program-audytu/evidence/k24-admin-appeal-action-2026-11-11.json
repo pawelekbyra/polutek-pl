@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-11-11",
+  "baseCommit": "5fdc8493",
+  "workingTreeClean": false,
+  "files": {
+    "tests/unit/admin-phase3/appeal-action.test.ts": "4644ede8b9304d4faacf53d93c865ea54d3ed8547db915d73d306c40b872ce97"
+  },
+  "command": "npx vitest run tests/unit/admin-phase3/appeal-action.test.ts",
+  "result": {
+    "filesPassed": 1,
+    "testsPassed": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "scenarios": [
+    "valid appeal input is normalized and passed through the admin gate to the use case",
+    "gate refusal and invalid outcome do not call the use case or revalidate",
+    "resolved-appeal conflict is mapped to a safe action response"
+  ],
+  "additionalChecks": {
+    "typecheck": "PASS",
+    "eslint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limitations": [
+    "The server-action unit test controls the gate and use-case boundary; it is not an HTTP test.",
+    "The PostgreSQL authorization/race evidence remains a separate direct use-case integration test."
+  ]
+}

@@ -1,0 +1,10 @@
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+
+ Test Files  3 passed (3)
+      Tests  25 passed (25)
+   Start at  13:54:56
+   Duration  14.48s (transform 2.79s, setup 0ms, import 15.19s, tests 4.73s, environment 4.33s)
+

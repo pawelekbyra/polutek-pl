@@ -1,0 +1,38 @@
+{
+  "package": "K01-T3 Studio multipart upload through local HTTP and real worker pipeline",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "a10761c2ebd58b48ded9a6dceabf757cd2298688",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17; all 84 Prisma migrations applied; tmpfs container removed after test",
+    "http_server": "Next.js 16.4.5 dev server bound to 127.0.0.1; Better Auth session cookie created only for the synthetic owner",
+    "upload": "Studio API start -> AWS SDK multipart initiation -> presigned part PUT -> Studio API completion -> size and MP4 signature verification -> queued job",
+    "worker": "separate scripts/video-worker.ts process encoded the uploaded synthetic 6-second MP4 with FFmpeg, wrote and verified HLS, and finalized the active playback route",
+    "storage": "AWS SDK requests reached an in-memory S3-shaped HTTP fixture bound to 127.0.0.1; multipart initiation, UploadPart and completion are asserted",
+    "playback_http": "guest pipeline 401, guest media-source 403; owner pipeline and READY/SELF_HLS media-source assertions pass",
+    "test_endpoint_guard": "3/3 unit tests pass; production refuses endpoint injection even with test runtime marker; development acceptance requires explicit marker and loopback validation",
+    "repo_typecheck": "PASS",
+    "eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "lib/modules/video-pipeline/infrastructure/r2-multipart.ts": "ecf24f7f652ed75a20f07c2b1be971f5d4b1224ce06667aab351c9150a27d171",
+    "lib/modules/video-pipeline/infrastructure/r2-storage.ts": "3f77834b2f180bff23090e0aa877dcbbb713d919af66e1a44302ea963e151a16",
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "791f08b0114817d052772ae0f649748fa7d57224424d99111bda48720cda2be8",
+    "tests/unit/video-pipeline/r2-client-test-endpoint.test.ts": "ed9cb5955ed10ef172af046218120a36521c04e5997deb3c7e9895e3121c8b37"
+  },
+  "cleanup": {
+    "synthetic_database_rows": "test afterAll cleanup ran before Prisma disconnect",
+    "temporary_postgres_container": "stopped and automatically removed",
+    "next_dev_server": "stopped by test teardown",
+    "loopback_storage": "in-memory fixture cleared",
+    "temporary_video_files": "removed"
+  },
+  "limitations": [
+    "The fixture is S3-shaped local HTTP, not Cloudflare R2; provider multipart, CORS, durability and deployed edge behavior remain unverified.",
+    "No browser upload/playback, deployed Cloudflare Worker, or independent review was performed.",
+    "K01-T3 and K35 remain partial; the Next app still requires the documented Worker-first rollout for attempt-scoped delivery URLs."
+  ]
+}

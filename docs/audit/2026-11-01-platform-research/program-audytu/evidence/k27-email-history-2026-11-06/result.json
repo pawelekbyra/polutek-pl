@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-06",
+  "package": "K27/R16 partial: export own email delivery metadata",
+  "base_commit": "b9aeb1dd",
+  "source_sha256": {
+    "lib/modules/users/application/export-own-data.use-case.ts": "1fd55085fd8582a613bb9abd7b786b6718af9ace75fd7225c84ae710d0580017",
+    "tests/unit/modules/users/export-own-data.test.ts": "8b06e3e81c3483d0861c64d8f1e1089ab948b481c5724ee38b2c4911d930acbd"
+  },
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/modules/users/export-own-data.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 1,
+      "tests": 6
+    },
+    {
+      "command": "npm run quality:architecture-boundaries",
+      "result": "PASS"
+    },
+    {
+      "command": "npx eslint lib/modules/users/application/export-own-data.use-case.ts tests/unit/modules/users/export-own-data.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "included_categories": [
+    "BroadcastEmailRecipient rows filtered by userId, export language, delivery status, and lifecycle timestamps",
+    "EmailEvent rows filtered by userId, export event type/status, processing and lifecycle timestamps"
+  ],
+  "excluded_fields": ["email addresses", "provider/campaign/recipient IDs", "webhook payload", "error text", "attempt counters"],
+  "contract_version": 4,
+  "scope": "Synthetic Prisma use-case test only. No email provider, HTTP server, real database, or production data was used.",
+  "limitations": [
+    "Email events with null userId or records linkable only by e-mail address are excluded because ownership is ambiguous.",
+    "K27 still needs full HTTP/DB coverage, dependency decisions, and independent review."
+  ]
+}

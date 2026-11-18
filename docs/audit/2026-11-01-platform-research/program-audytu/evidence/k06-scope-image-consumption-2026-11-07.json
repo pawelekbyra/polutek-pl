@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-07",
+  "package": "K06",
+  "tested_base_revision": "d8c2457d5dddb2e80339e6feaf0874eea2d148a4",
+  "change": "deploy-release only inspects/pulls images selected by the requested app/admin scope",
+  "runtime": {
+    "node": "v22.23.3",
+    "vitest": "4.1.10"
+  },
+  "checks": {
+    "test_file": "tests/unit/ops/deploy-release.test.ts",
+    "passed": 6,
+    "failed": 0,
+    "eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "assertions": [
+    "app scope inspects four app images, does not inspect admin, and tags four selected IDs",
+    "when app cache IDs differ, only the four approved app digests are pulled before tagging",
+    "admin scope checks and pulls only the approved admin digest and never contacts the other four images",
+    "an unapproved reference and failed preflight still refuse before Docker access"
+  ],
+  "isolation": {
+    "docker": "fake executable in temporary PATH",
+    "registry": "not contacted",
+    "github_actions": "not run",
+    "ssh_or_server": "not used",
+    "release_or_deployment": "not published or activated"
+  },
+  "source_sha256": {
+    "scripts/ops/deploy-release.mjs": "f355e8377f124ccfe300aa508a50cd575750f21dc95e6d68ec7d238f47dab518",
+    "tests/unit/ops/deploy-release.test.ts": "3665c7b45e3445987261bf11214c276d744bf5ccd8fb03f921b457eb38ee2111"
+  },
+  "limitations": [
+    "synthetic release proof verifier; this tests the deploy consumer's scope behavior, not real proof production",
+    "does not establish registry availability, image authenticity, a full positive release, or rollback runtime",
+    "K06 remains partial"
+  ]
+}

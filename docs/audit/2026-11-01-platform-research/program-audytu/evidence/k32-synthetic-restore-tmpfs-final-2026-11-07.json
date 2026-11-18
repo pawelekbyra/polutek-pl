@@ -1,0 +1,61 @@
+{
+  "cases": [
+    {
+      "name": "fresh-disposable-postgres-loopback",
+      "passed": true,
+      "detail": "PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2); bound only to 127.0.0.1"
+    },
+    {
+      "name": "current-prisma-migrations",
+      "passed": true,
+      "detail": "Prisma migrate deploy applied 84 current migrations"
+    },
+    {
+      "name": "synthetic-owner-channel-membership-video-asset",
+      "passed": true,
+      "detail": "actual generated Prisma client seeded six rows across the five related models"
+    },
+    {
+      "name": "pg-dump-restore-data-and-migration-history",
+      "passed": true,
+      "detail": "source and empty target snapshots match; dump SHA-256 6d12a65921c41e91bc739444ed44320508c50f2f45be7eb671a19787ef8a02aa"
+    },
+    {
+      "name": "restored-generated-prisma-client",
+      "passed": true,
+      "detail": "Prisma traversed Video \u2192 Creator \u2192 User/Members and loaded VideoAsset"
+    },
+    {
+      "name": "restored-foreign-key-enforced",
+      "passed": true,
+      "detail": "PostgreSQL rejected a VideoAsset referencing a missing video"
+    },
+    {
+      "name": "restored-channel-membership-unique-enforced",
+      "passed": true,
+      "detail": "PostgreSQL rejected duplicate (channelId,userId)"
+    }
+  ],
+  "tmpfs_preflight": {
+    "root": "/dev/shm",
+    "available_bytes": 4058767360,
+    "required_bytes": 2147483648
+  },
+  "recorded_at_utc": "2026-11-07T09:17:06.925637+00:00",
+  "code_sha": "5da670acc2378516983011858c1ef21a8cb197f8",
+  "tool": "docs/audit/2026-11-01-platform-research/program-audytu/tools/k32-synthetic-restore-acceptance.py",
+  "tool_sha256": "661c2146dba6ab48bfa58a55a394a907b44b53834e27a459799b1f08b9ba6843",
+  "source": "synthetic-only PostgreSQL; current Prisma migrations; local pg_dump/pg_restore",
+  "status": "passed",
+  "postgres_image": "postgres:17",
+  "postgres_image_id": "sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f",
+  "postgres_repo_digests": "[postgres@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f]",
+  "limitations": [
+    "Does not use or prove recovery from any production/offsite backup, object storage, age key or external service.",
+    "Does not measure approved RPO/RTO or test Support attachments, payment reconciliation, host provisioning or media recovery.",
+    "Constraint probes cover only the synthetic video foreign key and channel membership uniqueness."
+  ],
+  "dump_sha256": "6d12a65921c41e91bc739444ed44320508c50f2f45be7eb671a19787ef8a02aa",
+  "source_database": "k32_source",
+  "restore_database": "k32_restored"
+}

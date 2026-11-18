@@ -7,9 +7,20 @@ exit:  0 ok | 10 p95 above stop_p95_ms | 11 >2% 5xx/timeouts | 12 saturated (<90
 import json
 import sys
 
+if len(sys.argv) not in (4, 5):
+    print(__doc__.split("\n\n", 1)[1], file=sys.stderr)
+    sys.exit(14)
+
 path, target, rate = sys.argv[1], sys.argv[2], float(sys.argv[3])
 stop_p95 = float(sys.argv[4]) if len(sys.argv) > 4 else 2000.0
-m = json.load(open(path))["metrics"]
+with open(path, encoding="utf-8") as summary_file:
+    m = json.load(summary_file)["metrics"]
+
+required = ("iterations", "dropped_iterations", "http_reqs", "server_errors", "unexpected_status", "unexpected_content", "http_req_duration")
+missing = [name for name in required if name not in m]
+if missing:
+    print(f"missing required k6 metrics: {', '.join(missing)}", file=sys.stderr)
+    sys.exit(14)
 
 
 def v(name, key, default=0.0):
@@ -23,6 +34,7 @@ reqs = v("http_reqs", "count")
 req_rate = v("http_reqs", "rate")
 err = v("server_errors", "rate")
 unexpected = v("unexpected_status", "count")
+unexpected_content = v("unexpected_content", "count")
 d = "http_req_duration"
 p50, p95, p99, mx = v(d, "med"), v(d, "p(95)"), v(d, "p(99)"), v(d, "max")
 
@@ -35,9 +47,11 @@ for ep in ("home", "sidebar", "comments", "media", "thumb"):
 
 served = iters / (iters + dropped) if iters + dropped else 0.0
 row = [target, f"{rate:g}", f"{iter_rate:.2f}", f"{req_rate:.1f}", f"{int(reqs)}", f"{int(dropped)}",
-       f"{p50:.0f}", f"{p95:.0f}", f"{p99:.0f}", f"{mx:.0f}", f"{err*100:.2f}", f"{int(unexpected)}", " ".join(eps)]
+       f"{p50:.0f}", f"{p95:.0f}", f"{p99:.0f}", f"{mx:.0f}", f"{err*100:.2f}", f"{int(unexpected)}", f"{int(unexpected_content)}", " ".join(eps)]
 print("\t".join(row))
 
+if unexpected > 0 or unexpected_content > 0:
+    sys.exit(13)
 if err > 0.02:
     sys.exit(11)
 if served < 0.9 or iter_rate < 0.8 * rate:

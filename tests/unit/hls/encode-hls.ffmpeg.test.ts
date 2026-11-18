@@ -84,18 +84,16 @@ describe.skipIf(!hasFfmpeg)('encode-hls with real ffmpeg', () => {
     expect(master).not.toContain('mp4a');
   }, 180_000);
 
-  it.skipIf(!hasToneMapFilters)('tone-maps an HLG (HDR) source to BT.709 SDR instead of rejecting it', async (ctx) => {
+  it.skipIf(!hasToneMapFilters)('tone-maps an HLG (HDR) source to BT.709 SDR instead of rejecting it', async () => {
     const src = makeClip('hlg.mp4', [
       '-f', 'lavfi', '-i', 'testsrc2=size=1280x720:rate=25:duration=3',
       '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p',
       '-color_primaries', 'bt2020', '-color_trc', 'arib-std-b67', '-colorspace', 'bt2020nc',
+      // Set the bitstream VUI explicitly: some builds drop transfer/primaries supplied only as codec options.
+      '-x264-params', 'colorprim=bt2020:transfer=arib-std-b67:colormatrix=bt2020nc',
     ]);
-    // Some libx264 builds (e.g. the distro ffmpeg 8 on Ubuntu) silently drop the HLG colour tags, so the fixture itself is not
-    // HDR there. That says nothing about the encoder under test: skip instead of failing.
-    if (!(await probeSource(src)).hdr) {
-      console.warn('[encode-hls.ffmpeg] skipping the HLG tone-mapping test: this libx264 build does not write the HLG colour tags');
-      ctx.skip();
-    }
+    // Check the fixture independently before exercising our own probe/encoder. A broken fixture fails instead of hiding HDR coverage.
+    expect(probeStream(src)).toMatchObject({ color_transfer: 'arib-std-b67', color_primaries: 'bt2020', color_space: 'bt2020nc' });
     expect((await probeSource(src)).hdr).toBe(true);
     const out = path.join(work, 'hlg');
     const { issues } = await encodeHls({ input: src, out, opts: FAST });

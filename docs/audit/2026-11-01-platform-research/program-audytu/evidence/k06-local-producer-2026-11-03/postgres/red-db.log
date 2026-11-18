@@ -1,0 +1,829 @@
+
+$ docker run -d --rm --name local-ci-pg-2984167 -e POSTGRES_USER=ci -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=ci -p 127.0.0.1::5432 sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+98509d2aa3e87a02b452b6db78e9378ea039f3c1cd9082ad692d0e6c705b8c57
+
+[exit 0]
+
+$ /usr/bin/node /opt/codex/polutek-pl/.worktrees/platform-audit/node_modules/prisma/build/index.js migrate deploy
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "ci", schema "public" at "127.0.0.1:32768"
+
+81 migrations found in prisma/migrations
+
+Applying migration `0_init`
+Applying migration `20260603120000_add_comment_pinning`
+Applying migration `20260603130000_refactor_email_templates`
+Applying migration `20260603140000_add_video_presentation_columns`
+Applying migration `20260604120000_add_user_patron_source`
+Applying migration `20260605000000_production_sync`
+Applying migration `20260605001000_production_schema_drift_guard`
+Applying migration `20260606090000_add_payment_settings_and_subscriber_override`
+Applying migration `20260606100000_add_broadcast_email`
+Applying migration `20260607000000_fix_schema_consistency`
+Applying migration `20260607010000_extend_playback_models`
+Applying migration `20260608000000_comments_pro`
+Applying migration `20260611000000_cloudflare_stream_video_asset_foundation`
+Applying migration `20260614000000_add_email_event_idempotency`
+Applying migration `20260615000000_make_videourl_nullable`
+Applying migration `20260620000000_add_comment_is_hearted`
+Applying migration `20260620000000_payment_request_id`
+Applying migration `20260620000000_video_publish_after_asset_ready`
+Applying migration `20260625121500_add_payment_request_id`
+Applying migration `20260626120000_video_assets_1n`
+Applying migration `20260627200000_video_sources_youtube`
+Applying migration `20260628000000_add_mux_vimeo_pending_primary`
+Applying migration `20260628000000_remove_referral_system`
+Applying migration `20260628100000_add_app_settings`
+Applying migration `20260628120000_video_original_and_mirror_metadata`
+Applying migration `20260629000000_publish_after_asset_ready_provider`
+Applying migration `20260629100000_add_email_template_name`
+Applying migration `20260630000000_remove_legacy_user_patron_cache`
+Applying migration `20260701000000_add_email_suppression`
+Applying migration `20260701000001_add_subtitle_urls_and_default_thumbnail`
+Applying migration `20260702000000_add_comment_dislike_reaction`
+Applying migration `20260703000000_add_patron_threshold_and_box_min`
+Applying migration `20260705000000_provider_neutral_video_distribution_phase1`
+Applying migration `20260710000000_add_notification_model`
+Applying migration `20260710000100_add_notification_preferences_and_templates`
+Applying migration `20260913000000_add_non_patrons_broadcast_recipient_group`
+Applying migration `20260920000000_add_audit_log_target_index`
+Applying migration `20260926120000_add_missing_schema_indexes`
+Applying migration `20260926120001_reconcile_notification_fk_onupdate`
+Applying migration `20260926120002_reconcile_schema_nullable_default_drift`
+Applying migration `20260926150000_add_video_thumbnail_public_url`
+Applying migration `20260930120000_admin_audit_actor_columns`
+Applying migration `20260930180000_add_video_premiere_at`
+Applying migration `20260930210000_add_video_fundraising_goal`
+Applying migration `20260930230000_add_video_fundraising_manual_percent`
+Applying migration `20261002100000_add_better_auth`
+Applying migration `20261002120000_better_auth_twofactor_fields`
+Applying migration `20261002140000_add_self_hls_storage_provider`
+Applying migration `20261003100000_add_video_encode_job`
+Applying migration `20261003110000_add_video_original_multipart`
+Applying migration `20261003200000_email_overrides_and_broadcast_queue`
+Applying migration `20261003200000_user_nickname_unique_active`
+Applying migration `20261004120000_privacy_terms_acceptance_contact_removal`
+Applying migration `20261004180000_add_passkey`
+Applying migration `20261004200000_add_admin_panel_auth`
+Applying migration `20261004210000_telemetry_schema`
+Applying migration `20261004230000_video_tier_patron_to_logged_in`
+Applying migration `20261005100000_add_video_translations`
+Applying migration `20261005120000_add_user_comment_mute`
+Applying migration `20261005120000_analytics_rollups`
+Applying migration `20261005200000_admin_phase3_roles_and_audit_immutable`
+Applying migration `20261005210000_cleanup_dead_schema`
+Applying migration `20261006090000_payment_refunds_checked_at`
+Applying migration `20261006091000_stripe_customer_anonymization`
+Applying migration `20261013120000_multi_channel_schema`
+Applying migration `20261013140000_sales_schema`
+Applying migration `20261013160000_video_metadata`
+Applying migration `20261014090000_main_channel_setting`
+Applying migration `20261014120000_drop_creator_legacy_flags`
+Applying migration `20261014180000_wave_schema`
+Applying migration `20261019120000_video_premiere_notified_at`
+Applying migration `20261019140000_comment_one_pinned_per_video`
+Applying migration `20261019160000_notification_template_key`
+Applying migration `20261019165000_channel_banner_about`
+Applying migration `20261019170000_video_search`
+Applying migration `20261019180000_playlists`
+Applying migration `20261020120000_video_chapters`
+Applying migration `20261020130000_video_chapters_search`
+Applying migration `20261021120000_video_favorites`
+Applying migration `20261027120000_durable_jobs`
+Applying migration `20261028120000_video_ready_visibility`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 0_init/
+    └─ migration.sql
+  └─ 20260603120000_add_comment_pinning/
+    └─ migration.sql
+  └─ 20260603130000_refactor_email_templates/
+    └─ migration.sql
+  └─ 20260603140000_add_video_presentation_columns/
+    └─ migration.sql
+  └─ 20260604120000_add_user_patron_source/
+    └─ migration.sql
+  └─ 20260605000000_production_sync/
+    └─ migration.sql
+  └─ 20260605001000_production_schema_drift_guard/
+    └─ migration.sql
+  └─ 20260606090000_add_payment_settings_and_subscriber_override/
+    └─ migration.sql
+  └─ 20260606100000_add_broadcast_email/
+    └─ migration.sql
+  └─ 20260607000000_fix_schema_consistency/
+    └─ migration.sql
+  └─ 20260607010000_extend_playback_models/
+    └─ migration.sql
+  └─ 20260608000000_comments_pro/
+    └─ migration.sql
+  └─ 20260611000000_cloudflare_stream_video_asset_foundation/
+    └─ migration.sql
+  └─ 20260614000000_add_email_event_idempotency/
+    └─ migration.sql
+  └─ 20260615000000_make_videourl_nullable/
+    └─ migration.sql
+  └─ 20260620000000_add_comment_is_hearted/
+    └─ migration.sql
+  └─ 20260620000000_payment_request_id/
+    └─ migration.sql
+  └─ 20260620000000_video_publish_after_asset_ready/
+    └─ migration.sql
+  └─ 20260625121500_add_payment_request_id/
+    └─ migration.sql
+  └─ 20260626120000_video_assets_1n/
+    └─ migration.sql
+  └─ 20260627200000_video_sources_youtube/
+    └─ migration.sql
+  └─ 20260628000000_add_mux_vimeo_pending_primary/
+    └─ migration.sql
+  └─ 20260628000000_remove_referral_system/
+    └─ migration.sql
+  └─ 20260628100000_add_app_settings/
+    └─ migration.sql
+  └─ 20260628120000_video_original_and_mirror_metadata/
+    └─ migration.sql
+  └─ 20260629000000_publish_after_asset_ready_provider/
+    └─ migration.sql
+  └─ 20260629100000_add_email_template_name/
+    └─ migration.sql
+  └─ 20260630000000_remove_legacy_user_patron_cache/
+    └─ migration.sql
+  └─ 20260701000000_add_email_suppression/
+    └─ migration.sql
+  └─ 20260701000001_add_subtitle_urls_and_default_thumbnail/
+    └─ migration.sql
+  └─ 20260702000000_add_comment_dislike_reaction/
+    └─ migration.sql
+  └─ 20260703000000_add_patron_threshold_and_box_min/
+    └─ migration.sql
+  └─ 20260705000000_provider_neutral_video_distribution_phase1/
+    └─ migration.sql
+  └─ 20260710000000_add_notification_model/
+    └─ migration.sql
+  └─ 20260710000100_add_notification_preferences_and_templates/
+    └─ migration.sql
+  └─ 20260913000000_add_non_patrons_broadcast_recipient_group/
+    └─ migration.sql
+  └─ 20260920000000_add_audit_log_target_index/
+    └─ migration.sql
+  └─ 20260926120000_add_missing_schema_indexes/
+    └─ migration.sql
+  └─ 20260926120001_reconcile_notification_fk_onupdate/
+    └─ migration.sql
+  └─ 20260926120002_reconcile_schema_nullable_default_drift/
+    └─ migration.sql
+  └─ 20260926150000_add_video_thumbnail_public_url/
+    └─ migration.sql
+  └─ 20260930120000_admin_audit_actor_columns/
+    └─ migration.sql
+  └─ 20260930180000_add_video_premiere_at/
+    └─ migration.sql
+  └─ 20260930210000_add_video_fundraising_goal/
+    └─ migration.sql
+  └─ 20260930230000_add_video_fundraising_manual_percent/
+    └─ migration.sql
+  └─ 20261002100000_add_better_auth/
+    └─ migration.sql
+  └─ 20261002120000_better_auth_twofactor_fields/
+    └─ migration.sql
+  └─ 20261002140000_add_self_hls_storage_provider/
+    └─ migration.sql
+  └─ 20261003100000_add_video_encode_job/
+    └─ migration.sql
+  └─ 20261003110000_add_video_original_multipart/
+    └─ migration.sql
+  └─ 20261003200000_email_overrides_and_broadcast_queue/
+    └─ migration.sql
+  └─ 20261003200000_user_nickname_unique_active/
+    └─ migration.sql
+  └─ 20261004120000_privacy_terms_acceptance_contact_removal/
+    └─ migration.sql
+  └─ 20261004180000_add_passkey/
+    └─ migration.sql
+  └─ 20261004200000_add_admin_panel_auth/
+    └─ migration.sql
+  └─ 20261004210000_telemetry_schema/
+    └─ migration.sql
+  └─ 20261004230000_video_tier_patron_to_logged_in/
+    └─ migration.sql
+  └─ 20261005100000_add_video_translations/
+    └─ migration.sql
+  └─ 20261005120000_add_user_comment_mute/
+    └─ migration.sql
+  └─ 20261005120000_analytics_rollups/
+    └─ migration.sql
+  └─ 20261005200000_admin_phase3_roles_and_audit_immutable/
+    └─ migration.sql
+  └─ 20261005210000_cleanup_dead_schema/
+    └─ migration.sql
+  └─ 20261006090000_payment_refunds_checked_at/
+    └─ migration.sql
+  └─ 20261006091000_stripe_customer_anonymization/
+    └─ migration.sql
+  └─ 20261013120000_multi_channel_schema/
+    └─ migration.sql
+  └─ 20261013140000_sales_schema/
+    └─ migration.sql
+  └─ 20261013160000_video_metadata/
+    └─ migration.sql
+  └─ 20261014090000_main_channel_setting/
+    └─ migration.sql
+  └─ 20261014120000_drop_creator_legacy_flags/
+    └─ migration.sql
+  └─ 20261014180000_wave_schema/
+    └─ migration.sql
+  └─ 20261019120000_video_premiere_notified_at/
+    └─ migration.sql
+  └─ 20261019140000_comment_one_pinned_per_video/
+    └─ migration.sql
+  └─ 20261019160000_notification_template_key/
+    └─ migration.sql
+  └─ 20261019165000_channel_banner_about/
+    └─ migration.sql
+  └─ 20261019170000_video_search/
+    └─ migration.sql
+  └─ 20261019180000_playlists/
+    └─ migration.sql
+  └─ 20261020120000_video_chapters/
+    └─ migration.sql
+  └─ 20261020130000_video_chapters_search/
+    └─ migration.sql
+  └─ 20261021120000_video_favorites/
+    └─ migration.sql
+  └─ 20261027120000_durable_jobs/
+    └─ migration.sql
+  └─ 20261028120000_video_ready_visibility/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+
+[exit 0]
+
+$ /usr/bin/node /opt/codex/polutek-pl/.worktrees/platform-audit/node_modules/tsx/dist/cli.mjs scripts/db-smoke.ts
+--- DB SCHEMA SMOKE CHECK ---
+Checking User table...
+✓ User table schema is up to date.
+Checking Video table...
+✓ Video table schema is up to date.
+Checking UserPaymentTotal table...
+✓ UserPaymentTotal table schema is up to date.
+Checking EmailTemplate table...
+✓ EmailTemplate table schema is up to date.
+Checking Payment table...
+✓ Payment table schema is up to date.
+Checking PatronGrant table...
+✓ PatronGrant table schema is up to date.
+Checking StripeEvent table...
+✓ StripeEvent table schema is up to date.
+
+🚀 DB SCHEMA HEALTHY: All critical columns and tables exist.
+
+[exit 0]
+
+$ /usr/bin/node /opt/codex/polutek-pl/.worktrees/platform-audit/node_modules/vitest/vitest.mjs run --config vitest.postgres.config.ts --maxWorkers=1 --reporter=dot --reporter=json --outputFile.json=/opt/codex/polutek-pl/.worktrees/platform-audit/.claude/local-ci-logs/postgres.vitest.json
+
+ RUN  v4.1.10 /opt/codex/polutek-pl/.worktrees/platform-audit
+
+stdout | tests/postgres/payments.pg.test.ts > fulfilment is exactly-once under concurrency > five simultaneous fulfilments (webhook + fast path + cron) count the tip once
+[INFO] [FulfillPayment] Payment 48126d80-08c4-476d-8aca-f8d23581de10 already recorded (status PENDING); nothing to do.
+
+stdout | tests/postgres/payments.pg.test.ts > fulfilment is exactly-once under concurrency > five simultaneous fulfilments (webhook + fast path + cron) count the tip once
+[INFO] [FulfillPayment] Payment 48126d80-08c4-476d-8aca-f8d23581de10 already recorded (status PENDING); nothing to do.
+
+stdout | tests/postgres/payments.pg.test.ts > fulfilment is exactly-once under concurrency > five simultaneous fulfilments (webhook + fast path + cron) count the tip once
+[INFO] [FulfillPayment] Payment 48126d80-08c4-476d-8aca-f8d23581de10 already recorded (status PENDING); nothing to do.
+
+stdout | tests/postgres/payments.pg.test.ts > fulfilment is exactly-once under concurrency > five simultaneous fulfilments (webhook + fast path + cron) count the tip once
+[INFO] [FulfillPayment] Payment 48126d80-08c4-476d-8aca-f8d23581de10 already recorded (status PENDING); nothing to do.
+
+·stderr | tests/postgres/payments.pg.test.ts > fulfilment is exactly-once under concurrency > refuses a mismatching amount and leaves the row PENDING
+[ERROR] [FulfillPayment] Error fulfilling payment 8cdc4eff-ba6f-40d2-bc83-a98bcb1d6651: {
+  name: 'Error',
+  message: 'PAYMENT_AMOUNT_MISMATCH: Expected 1000, got 999'
+}
+
+·stdout | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > partial then full refund, replays and a stale (smaller) event never move the total the wrong way
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'PARTIALLY_REFUNDED',
+  deltaMinor: 400,
+  fullRefund: false
+}
+
+stdout | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > partial then full refund, replays and a stale (smaller) event never move the total the wrong way
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'REFUNDED',
+  deltaMinor: 600,
+  fullRefund: true
+}
+
+stdout | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > concurrent identical refund events are applied once
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'PARTIALLY_REFUNDED',
+  deltaMinor: 300,
+  fullRefund: false
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > concurrent identical refund events are applied once
+[ERROR] [METRIC] payment.refund_cas_conflict {
+  metric: 'payment.refund_cas_conflict',
+  alert: true,
+  paymentId: '08527be6-d394-4af6-8b83-2cf88a918e6b'
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > concurrent identical refund events are applied once
+[ERROR] [METRIC] payment.refund_cas_conflict {
+  metric: 'payment.refund_cas_conflict',
+  alert: true,
+  paymentId: '08527be6-d394-4af6-8b83-2cf88a918e6b'
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > concurrent identical refund events are applied once
+[ERROR] [METRIC] payment.refund_cas_conflict {
+  metric: 'payment.refund_cas_conflict',
+  alert: true,
+  paymentId: '08527be6-d394-4af6-8b83-2cf88a918e6b'
+}
+
+·stderr | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > a refund event for a payment not yet recorded as paid fails (retry) and does not touch another tip's total
+[ERROR] [METRIC] payment.refund_before_fulfilment {
+  metric: 'payment.refund_before_fulfilment',
+  alert: true,
+  paymentId: '3cae84d4-10a0-463f-80e4-4831d62f8fe9',
+  status: 'PENDING'
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > a refund event for a payment not yet recorded as paid fails (retry) and does not touch another tip's total
+[ERROR] [HandleRefund] Error handling refund for 3cae84d4-10a0-463f-80e4-4831d62f8fe9: {
+  name: 'Error',
+  message: 'PAYMENT_NOT_RECORDED_YET: refund for payment 3cae84d4-10a0-463f-80e4-4831d62f8fe9 in status PENDING; retry later'
+}
+
+··stderr | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > a dispute event for a payment not yet recorded as paid fails (retry) instead of being dropped
+[ERROR] [METRIC] payment.dispute_before_fulfilment {
+  metric: 'payment.dispute_before_fulfilment',
+  alert: true,
+  paymentId: '84902d7b-dd5f-4956-a2bb-25b71d7cc449',
+  status: 'PENDING'
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > a dispute event for a payment not yet recorded as paid fails (retry) instead of being dropped
+[ERROR] [HandleDispute] Error handling dispute for pi_pg-pay-mw1a1l34_7: {
+  name: 'Error',
+  message: 'PAYMENT_NOT_RECORDED_YET: dispute dp_x for payment 84902d7b-dd5f-4956-a2bb-25b71d7cc449 in status PENDING; retry later'
+}
+
+stdout | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > a lost dispute removes the remaining net amount and the marker
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'PARTIALLY_REFUNDED',
+  deltaMinor: 250,
+  fullRefund: false
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refunds keep the per-user total and the status consistent > a lost dispute removes the remaining net amount and the marker
+[ERROR] [METRIC] payment.dispute_lost {
+  metric: 'payment.dispute_lost',
+  alert: true,
+  paymentId: 'aa2f7854-0224-4203-b907-25d78679a578',
+  currency: 'PLN'
+}
+
+··stdout | tests/postgres/payments.pg.test.ts > admin refund against the real ledger (Stripe replaced) > records the refund, the audit row and passes the dialog key to Stripe; the webhook echo of the same refund is a no-op
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'PARTIALLY_REFUNDED',
+  deltaMinor: 400,
+  fullRefund: false
+}
+
+·stdout | tests/postgres/payments.pg.test.ts > admin refund against the real ledger (Stripe replaced) > two simultaneous submits with different keys: Stripe is the limit and the local ledger converges to Stripe's total at once (PA-04)
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'REFUNDED',
+  deltaMinor: 1000,
+  fullRefund: true
+}
+
+·stdout | tests/postgres/payments.pg.test.ts > admin refund against the real ledger (Stripe replaced) > writes the intent audit row before Stripe and the result row after; both carry the idempotency key (PA-09)
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'PARTIALLY_REFUNDED',
+  deltaMinor: 100,
+  fullRefund: false
+}
+
+stdout | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > a refund made in the Dashboard is caught up with the person's total and marker
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'REFUNDED',
+  deltaMinor: 1000,
+  fullRefund: true
+}
+
+··stdout | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > a refund that failed afterwards gives the amount, the total and the marker back, and a repeat sync changes nothing more
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'REFUNDED',
+  deltaMinor: 1000,
+  fullRefund: true
+}
+
+stdout | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > a refund that failed afterwards gives the amount, the total and the marker back, and a repeat sync changes nothing more
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'REFUNDED',
+  deltaMinor: 1000,
+  fullRefund: true
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > a refund that failed afterwards gives the amount, the total and the marker back, and a repeat sync changes nothing more
+[ERROR] [METRIC] payment.refund_reverted {
+  metric: 'payment.refund_reverted',
+  alert: true,
+  paymentId: '93f07582-6651-4303-af5a-f64e4da49656',
+  deltaMinor: -1000
+}
+
+·stdout | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > a lost dispute keeps the total at zero when a refund on it fails afterwards
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'PARTIALLY_REFUNDED',
+  deltaMinor: 250,
+  fullRefund: false
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > a lost dispute keeps the total at zero when a refund on it fails afterwards
+[ERROR] [METRIC] payment.dispute_lost {
+  metric: 'payment.dispute_lost',
+  alert: true,
+  paymentId: 'a3ce2ce1-476e-4170-8765-b553dd99be39',
+  currency: 'PLN'
+}
+
+stderr | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > a lost dispute keeps the total at zero when a refund on it fails afterwards
+[ERROR] [METRIC] payment.refund_reverted {
+  metric: 'payment.refund_reverted',
+  alert: true,
+  paymentId: 'a3ce2ce1-476e-4170-8765-b553dd99be39',
+  deltaMinor: -250
+}
+
+·stdout | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > concurrent syncs are serialized by the row lock: each reads Stripe after the previous one committed, the last Stripe answer wins
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'PARTIALLY_REFUNDED',
+  deltaMinor: 600,
+  fullRefund: false
+}
+
+stdout | tests/postgres/payments.pg.test.ts > refund ledger follows Stripe (PA-04) > concurrent syncs are serialized by the row lock: each reads Stripe after the previous one committed, the last Stripe answer wins
+[INFO] [METRIC] payment.refund_received {
+  metric: 'payment.refund_received',
+  alert: false,
+  status: 'REFUNDED',
+  deltaMinor: 400,
+  fullRefund: true
+}
+
+·stderr | tests/postgres/payments.pg.test.ts > Stripe Customer anonymization queue (PA-03) > queues idempotently, backs off on a Stripe failure, succeeds on retry, removes the row and leaves an audit row
+[WARN] [stripe-customer-anonymization] Stripe customer update failed, will retry { attempts: 1, reason: 'Error' }
+
+stdout | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[INFO] [StripeEventLock] Lock acquired for new event: evt_pg-pay-mw1a1l34_lock (payment_intent.succeeded)
+[INFO] [METRIC] stripe.webhook.lock_acquired {
+  metric: 'stripe.webhook.lock_acquired',
+  alert: false,
+  eventType: 'payment_intent.succeeded'
+}
+
+stderr | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[ERROR] [METRIC] stripe.webhook.lock_conflict {
+  metric: 'stripe.webhook.lock_conflict',
+  alert: true,
+  eventType: 'payment_intent.succeeded',
+  status: 'PROCESSING'
+}
+
+stdout | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[INFO] [StripeEventLock] Event evt_pg-pay-mw1a1l34_lock (payment_intent.succeeded) lock conflict. Status: PROCESSING.
+
+stdout | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[INFO] [StripeEventLock] Event evt_pg-pay-mw1a1l34_lock (payment_intent.succeeded) lock conflict. Status: PROCESSING.
+
+stdout | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[INFO] [StripeEventLock] Event evt_pg-pay-mw1a1l34_lock (payment_intent.succeeded) lock conflict. Status: PROCESSING.
+
+stderr | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[ERROR] [METRIC] stripe.webhook.lock_conflict {
+  metric: 'stripe.webhook.lock_conflict',
+  alert: true,
+  eventType: 'payment_intent.succeeded',
+  status: 'PROCESSING'
+}
+
+stderr | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[ERROR] [METRIC] stripe.webhook.lock_conflict {
+  metric: 'stripe.webhook.lock_conflict',
+  alert: true,
+  eventType: 'payment_intent.succeeded',
+  status: 'PROCESSING'
+}
+
+stdout | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[INFO] [StripeEventLock] Event evt_pg-pay-mw1a1l34_lock (payment_intent.succeeded) lock conflict. Status: PROCESSING.
+
+stderr | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[ERROR] [METRIC] stripe.webhook.lock_conflict {
+  metric: 'stripe.webhook.lock_conflict',
+  alert: true,
+  eventType: 'payment_intent.succeeded',
+  status: 'PROCESSING'
+}
+
+stdout | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[INFO] [StripeEventLock] Event evt_pg-pay-mw1a1l34_lock (payment_intent.succeeded) lock conflict. Status: PROCESSING.
+
+stderr | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[ERROR] [METRIC] stripe.webhook.lock_conflict {
+  metric: 'stripe.webhook.lock_conflict',
+  alert: true,
+  eventType: 'payment_intent.succeeded',
+  status: 'PROCESSING'
+}
+
+stdout | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[INFO] [StripeEventLock] Lock re-acquired for event: evt_pg-pay-mw1a1l34_lock (stale or failed previously)
+
+stdout | tests/postgres/payments.pg.test.ts > StripeEvent lock > only one of several simultaneous deliveries of the same event acquires it; PROCESSED is acknowledged as duplicate; FAILED can be retaken
+[INFO] [StripeEventLock] Event evt_pg-pay-mw1a1l34_lock (payment_intent.succeeded) already PROCESSED.
+[INFO] [METRIC] stripe.webhook.duplicate_event {
+  metric: 'stripe.webhook.duplicate_event',
+  alert: false,
+  eventType: 'payment_intent.succeeded',
+  status: 'PROCESSED'
+}
+
+···xxx·xxxxxxx·················x····························stdout | tests/postgres/premium-pass-ledgers.pg.test.ts > premium-pass demo purchase against the real schema > writes one AppSetting row with provider DEMO and leaves every ledger untouched
+[premium-pass] event=checkout_submit
+
+stdout | tests/postgres/premium-pass-ledgers.pg.test.ts > premium-pass demo purchase against the real schema > writes one AppSetting row with provider DEMO and leaves every ledger untouched
+[premium-pass] event=demo_success
+
+stdout | tests/postgres/premium-pass-ledgers.pg.test.ts > premium-pass demo purchase against the real schema > writes one AppSetting row with provider DEMO and leaves every ledger untouched
+[premium-pass] event=checkout_submit
+
+stdout | tests/postgres/premium-pass-ledgers.pg.test.ts > premium-pass demo purchase against the real schema > writes one AppSetting row with provider DEMO and leaves every ledger untouched
+[premium-pass] event=demo_declined
+
+·
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/postgres/analytics-rollups.pg.test.ts > analytics rollups > assigns a beacon just after Warsaw midnight to the Warsaw day, not the UTC day
+AssertionError: expected undefined to be defined
+ ❯ tests/postgres/analytics-rollups.pg.test.ts:109:15
+    107|     expect(same).toHaveLength(0);
+    108|     const [h] = await sql`select hour from telemetry.r_video_hourly wh…
+    109|     expect(h).toBeDefined();
+       |               ^
+    110|   });
+    111|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > is atomic: a script that fails at the end changes nothing
+AssertionError: expected [Function] to throw error matching /division by zero/ but got 'cannot alter type of a column used in…'
+
+- Expected:
+/division by zero/
+
++ Received:
+"cannot alter type of a column used in a trigger definition"
+
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:98:61
+     96|   it('is atomic: a script that fails at the end changes nothing', asyn…
+     97|     if (!ready) skip();
+     98|     await expect(sql.unsafe(`${migrationSql}\nselect 1/0;`)).rejects.t…
+       |                                                             ^
+     99|     expect(await rel('ClerkEvent')).not.toBeNull();
+    100|     expect(await hasColumn('User', 'totalPaidMinor')).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > applies through `prisma migrate deploy`
+Error: Command failed: npx prisma migrate deploy
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Error: P3018
+
+A migration failed to apply. New migrations cannot be applied before the error is recovered from. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
+
+Migration name: 20261005210000_cleanup_dead_schema
+
+Database error code: 0A000
+
+Database error:
+ERROR: cannot alter type of a column used in a trigger definition
+DETAIL: trigger Video_search_refresh on table "Video" depends on column "tier"
+
+DbError { severity: "ERROR", parsed_severity: Some(Error), code: SqlState(E0A000), message: "cannot alter type of a column used in a trigger definition", detail: Some("trigger Video_search_refresh on table \"Video\" depends on column \"tier\""), hint: None, position: None, where_: Some("SQL statement \"ALTER TABLE \"Video\" ALTER COLUMN \"tier\" TYPE \"AccessTier_new\" USING (\"tier\"::text::\"AccessTier_new\")\"\nPL/pgSQL function inline_code_block line 11 at SQL statement"), schema: None, table: None, column: None, datatype: None, constraint: None, file: Some("tablecmds.c"), line: Some(13597), routine: Some("RememberAllDependentForRebuilding") }
+
+
+
+ ❯ cli tests/postgres/db-cleanup-migration.pg.test.ts:37:36
+     35|
+     36| const prismaEnv = { ...process.env, DATABASE_URL: scratchUrl.toString(…
+     37| const cli = (...args: string[]) => execFileSync('npx', ['prisma', ...a…
+       |                                    ^
+     38|
+     39| const rel = async (name: string) => (await sql`select to_regclass(${`p…
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:107:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > removes every dropped table, type and column
+AssertionError: ClerkEvent: expected '"ClerkEvent"' to be null
+
+- Expected:
+null
+
++ Received:
+"\"ClerkEvent\""
+
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:114:61
+    112|   it('removes every dropped table, type and column', async ({ skip }) …
+    113|     if (!ready) skip();
+    114|     for (const t of DROPPED_TABLES) expect(await rel(t), t).toBeNull();
+       |                                                             ^
+    115|     const types = await sql`select typname from pg_type where typname …
+    116|     expect(types).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > maps AccessTier PATRON to LOGGED_IN and keeps the default
+AssertionError: expected [ 'PUBLIC', 'LOGGED_IN', …(2) ] to deeply equal [ 'PUBLIC', 'LOGGED_IN' ]
+
+- Expected
++ Received
+
+  [
+    "PUBLIC",
+    "LOGGED_IN",
++   "PATRON",
++   "PAID",
+  ]
+
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:151:20
+    149|     if (!ready) skip();
+    150|     const [{ labels }] = await sql`select array_agg(enumlabel order by…
+    151|     expect(labels).toEqual(['PUBLIC', 'LOGGED_IN']);
+       |                    ^
+    152|     const videos = await sql`select id, tier::text from "Video" order …
+    153|     expect(videos.map((v) => [v.id, v.tier])).toEqual([['v1', 'PUBLIC'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > folds the legacy tip-box minimum into minAmountMinor (effective minimum unchanged)
+AssertionError: expected [ Array(3) ] to deeply equal [ Array(3) ]
+
+- Expected
++ Received
+
+@@ -1,9 +1,9 @@
+  [
+    [
+      "EUR",
+-     400,
++     300,
+    ],
+    [
+      "PLN",
+      700,
+    ],
+
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:163:61
+    161|     if (!ready) skip();
+    162|     const rows = await sql`select currency, "minAmountMinor" from "Pay…
+    163|     expect(rows.map((r) => [r.currency, r.minAmountMinor])).toEqual([[…
+       |                                                             ^
+    164|   });
+    165|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > stores sizes above 2 GiB (VideoAsset.sizeBytes is BIGINT)
+AssertionError: expected 'integer' to be 'bigint' // Object.is equality
+
+Expected: "bigint"
+Received: "integer"
+
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:169:15
+    167|     if (!ready) skip();
+    168|     const [{ t }] = await sql`select data_type as t from information_s…
+    169|     expect(t).toBe('bigint');
+       |               ^
+    170|     const big = 5n * 1024n ** 3n;
+    171|     await prisma.videoAsset.update({ where: { id: 'a1' }, data: { size…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > the Prisma client reads and writes the migrated tables
+PrismaClientUnknownRequestError: 
+Invalid `prisma.video.findUniqueOrThrow()` invocation in
+/opt/codex/polutek-pl/.worktrees/platform-audit/tests/postgres/db-cleanup-migration.pg.test.ts:178:38
+
+  175 
+  176 it('the Prisma client reads and writes the migrated tables', async ({ skip }) => {
+  177   if (!ready) skip();
+→ 178   const video = await prisma.video.findUniqueOrThrow(
+Value 'PATRON' not found in enum 'AccessTier'
+ ❯ ei.handleRequestError node_modules/@prisma/client/src/runtime/RequestHandler.ts:237:12
+ ❯ ei.handleAndLogRequestError node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:11
+ ❯ ei.request node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:11
+ ❯ a node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:23
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:178:19
+    176|   it('the Prisma client reads and writes the migrated tables', async (…
+    177|     if (!ready) skip();
+    178|     const video = await prisma.video.findUniqueOrThrow({ where: { slug…
+       |                   ^
+    179|     expect(video.tier).toBe('LOGGED_IN');
+    180|     expect(await prisma.comment.findMany({ where: { authorId: 'u2' } }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > creates the new indexes
+AssertionError: expected [] to have a length of 3 but got +0
+
+- Expected
++ Received
+
+- 3
++ 0
+
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:190:17
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > is idempotent: running the file again succeeds and changes nothing
+PostgresError: cannot alter type of a column used in a trigger definition
+ ❯ ErrorResponse node_modules/postgres/src/connection.js:815:30
+ ❯ handle node_modules/postgres/src/connection.js:489:6
+ ❯ Socket.data node_modules/postgres/src/connection.js:324:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  tests/postgres/db-cleanup-migration.pg.test.ts > cleanup migration with data > leaves nothing for `prisma migrate deploy` and no drift against schema.prisma
+Error: Command failed: npx prisma migrate deploy
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Error: P3009
+
+migrate found failed migrations in the target database, new migrations will not be applied. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
+The `20261005210000_cleanup_dead_schema` migration started at 2026-11-03 22:46:34.346831 UTC failed
+
+
+
+ ❯ cli tests/postgres/db-cleanup-migration.pg.test.ts:37:36
+     35|
+     36| const prismaEnv = { ...process.env, DATABASE_URL: scratchUrl.toString(…
+     37| const cli = (...args: string[]) => execFileSync('npx', ['prisma', ...a…
+       |                                    ^
+     38|
+     39| const rel = async (name: string) => (await sql`select to_regclass(${`p…
+ ❯ tests/postgres/db-cleanup-migration.pg.test.ts:204:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed | 10 passed (12)
+      Tests  11 failed | 64 passed (75)
+   Start at  23:46:15
+   Duration  42.86s (transform 6.30s, setup 0ms, import 15.13s, tests 23.82s, environment 2ms)
+
+JSON report written to /opt/codex/polutek-pl/.worktrees/platform-audit/.claude/local-ci-logs/postgres.vitest.json
+
+[exit 1]

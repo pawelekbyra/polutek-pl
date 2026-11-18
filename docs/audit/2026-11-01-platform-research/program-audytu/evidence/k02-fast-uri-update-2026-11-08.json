@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_FAST_URI_TRANSITIVE_OVERRIDE",
+  "base_commit": "ae51719de64a954523b96a702dab5c3c0e03f778",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "5c35f515d43ea4206f0d2d2e40fae3e51b05cec8cf627f90722d20684d7fed16",
+    "package-lock.json": "3ff2b0b285c1b0046428633c14df72f60c9be03b13dc8aedbddd1218ed9c3b3c"
+  },
+  "change": {
+    "previous_resolved": "3.1.8",
+    "current_resolved": "3.1.9",
+    "override": "package.json#overrides.fast-uri",
+    "paths": [
+      "shadcn -> @dotenvx/dotenvx -> conf -> ajv -> fast-uri",
+      "shadcn -> @modelcontextprotocol/sdk -> ajv-formats -> ajv -> fast-uri"
+    ],
+    "scope": "development dependency tree in npm ls output"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls fast-uri --all": {
+      "exit": 0,
+      "resolved": "3.1.9"
+    }
+  },
+  "limitations": [
+    "No new npm audit request or dependency graph upload.",
+    "No application runtime image inspection.",
+    "No application source change or full K02 acceptance."
+  ]
+}

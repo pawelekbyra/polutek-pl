@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import { Dialog, DialogOverlay, DialogPopup, DialogPortal } from "@/components/ui/dialog";
 import { buttonClass, dangerButtonClass, ghostButtonClass } from "./ui";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
-/**
- * Our own confirmation dialog (the Studio does not use the browser's `window.confirm` for new features): a modal
- * `alertdialog` with the focus on "Cancel" (the safe choice), Tab kept inside, Esc and the backdrop cancel, and the
- * focus returned to whatever opened it.
- */
+/** A modal confirmation that isolates background content and exposes pending work to assistive technology. */
 export default function ConfirmDialog({
   title,
   children,
@@ -28,65 +26,82 @@ export default function ConfirmDialog({
   onCancel: () => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const cancelRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+  const tx = useOptionalTx();
 
-  useEffect(() => {
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    cancelRef.current?.focus();
-    return () => opener?.focus();
+  useLayoutEffect(() => {
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   }, []);
 
-  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape") {
-      event.stopPropagation();
-      if (!busy) onCancel();
-      return;
+  useEffect(() => () => {
+    // A successful delete can unmount the dialog together with its opener, so the modal's normal close path
+    // never gets a chance to apply finalFocus. Restore focus after the DOM commit in that case.
+    if (openerRef.current?.isConnected) return;
+    const fallback = document.querySelector<HTMLElement>("main h1, [role='main'] h1, main, [role='main']");
+    if (!fallback) return;
+    fallback.tabIndex = 0;
+    fallback.focus({ preventScroll: true });
+    requestAnimationFrame(() => {
+      if (fallback.isConnected && document.activeElement === fallback) fallback.tabIndex = -1;
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (busy) panelRef.current?.focus({ preventScroll: true });
+  }, [busy]);
+
+  const restoreFocus = () => {
+    if (openerRef.current?.isConnected) return openerRef.current;
+    const fallback = document.querySelector<HTMLElement>("main h1, [role='main'] h1, main, [role='main']");
+    if (fallback) {
+      fallback.tabIndex = 0;
+      requestAnimationFrame(() => {
+        if (fallback.isConnected && document.activeElement === fallback) fallback.tabIndex = -1;
+      });
     }
-    if (event.key !== "Tab") return;
-    const focusable = panelRef.current?.querySelectorAll<HTMLElement>("button:not([disabled])");
-    if (!focusable || focusable.length === 0) return;
-    const first = focusable[0]!;
-    const last = focusable[focusable.length - 1]!;
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
+    return fallback ?? document.body;
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !busy) onCancel();
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        // Escape and outside-click are intentionally ignored while a mutation is pending.
+        if (!open && !busy) onCancel();
       }}
-      onKeyDown={onKeyDown}
     >
-      <div
-        ref={panelRef}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-body"
-        className="w-full max-w-md rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-5 shadow-xl"
-      >
-        <h2 id="confirm-dialog-title" className="text-[17px] font-bold text-[var(--chan-ink)]">
-          {title}
-        </h2>
-        <div id="confirm-dialog-body" className="mt-2 text-[14px] text-[var(--chan-muted)]">
-          {children}
-        </div>
-        <div className="mt-5 flex flex-wrap justify-end gap-2">
-          <button ref={cancelRef} type="button" className={ghostButtonClass} disabled={busy} onClick={onCancel}>
-            {cancelLabel}
-          </button>
-          <button type="button" className={danger ? dangerButtonClass : buttonClass} disabled={busy} onClick={onConfirm}>
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+      <DialogPortal>
+        <DialogOverlay className="z-[80] bg-black/50" />
+        <DialogPopup
+          ref={panelRef}
+          finalFocus={restoreFocus}
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="confirm-dialog-title"
+          aria-describedby="confirm-dialog-body"
+          aria-busy={busy}
+          tabIndex={-1}
+          className="fixed inset-x-4 bottom-4 z-[81] mx-auto grid w-full max-w-md gap-0 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-5 text-left text-[var(--chan-ink)] shadow-xl outline-none sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2"
+        >
+          <h2 id="confirm-dialog-title" className="text-[17px] font-bold text-[var(--chan-ink)]">
+            {title}
+          </h2>
+          <div id="confirm-dialog-body" className="mt-2 text-[14px] text-[var(--chan-muted)]">
+            {children}
+          </div>
+          <p role="status" aria-live="polite" className="sr-only">
+            {busy ? tx("Operacja w toku.", "Operation in progress.") : ""}
+          </p>
+          <div className="mt-5 flex flex-wrap justify-end gap-2">
+            <button type="button" className={ghostButtonClass} disabled={busy} onClick={onCancel}>
+              {cancelLabel}
+            </button>
+            <button type="button" className={danger ? dangerButtonClass : buttonClass} disabled={busy} onClick={onConfirm}>
+              {confirmLabel}
+            </button>
+          </div>
+        </DialogPopup>
+      </DialogPortal>
+    </Dialog>
   );
 }

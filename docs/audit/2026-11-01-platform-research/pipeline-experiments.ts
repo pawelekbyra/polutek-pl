@@ -1,7 +1,7 @@
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { processEncodeJob } from '../../../lib/modules/video-pipeline/application/process-encode-job.ts';
+import { processEncodeJob } from '../../../lib/modules/video-pipeline/application/process-encode-job';
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 async function harness(mode: 'failed-upload' | 'lost-during-finalize' | 'lost-while-uploading') {

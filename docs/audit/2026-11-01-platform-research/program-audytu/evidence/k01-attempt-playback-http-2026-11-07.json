@@ -1,0 +1,63 @@
+{
+  "package": "K01-T3 HTTP playback planning and attempt-scoped HLS routing",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "regression": {
+    "initial_observation": "After successful FFmpeg encoding and activation, owner GET /api/media-source returned an ERROR playback plan.",
+    "cause": "Playback URL parsing and the HLS edge worker mapped only legacy videos/<id>/v/<version> keys; the encoder now stores videos/<id>/v/<version>/attempts/<attemptId>.",
+    "fix": "The signed delivery version is now <version>~<attemptId>; the app signs the complete value and the edge Worker maps it to the exact attempt prefix. Legacy version URLs keep their existing mapping."
+  },
+  "result": {
+    "postgres_http_worker_test": {
+      "test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+      "outcome": "1/1 PASS",
+      "postgres": "disposable PostgreSQL 17.11; 84/84 Prisma migrations",
+      "http": "real Next dev server on loopback; guest Studio pipeline 401; owner pipeline 200 with SUCCEEDED/DONE and active asset; guest playback plan 403 without URL; owner /api/media-source READY with SELF_HLS URL"
+    },
+    "unit_suites": {
+      "files": 4,
+      "outcome": "62/62 PASS",
+      "files_list": [
+        "tests/unit/playback-self-hls.test.ts",
+        "tests/unit/hls/hls-edge-worker.test.ts",
+        "tests/unit/player/self-hls.test.ts",
+        "tests/unit/modules/media/self-hls-delivery-url.test.ts"
+      ]
+    },
+    "repo_typecheck": "PASS",
+    "eslint": "PASS, zero errors; one import/no-anonymous-default-export warning remains in the existing edge Worker export",
+    "git_diff_check": "PASS"
+  },
+  "assertions": [
+    "The signed playback URL for an attempt asset includes the exact attempt UUID and verifies against the edge token contract.",
+    "The edge Worker fetches the master playlist from videos/<videoId>/v/<version>/attempts/<attemptId>/master.m3u8, not the legacy prefix.",
+    "The player preserves attempt identity when replacing a token and refuses to rewrite a URL for a different attempt.",
+    "The Studio API omits bucket and object-key storage details."
+  ],
+  "source_sha256": {
+    "lib/modules/playback/application/self-hls-plan.ts": "eb073768c69154f712d4c91cfccc11df58fd2e8a9dfe177aa89cb1b4c3c7afda",
+    "lib/modules/playback/infrastructure/self-hls-token.service.ts": "c4e8bccc63cf57d3b0a0f22541a54ee1457ca6cba08a5546f484a58a947a2c4c",
+    "workers/hls-edge/worker.mjs": "ff47e8d667cd30eafcac29028bd77be11c268135bad29c0c629618ddefceb198",
+    "app/components/player/self-hls.ts": "3b8278a004abc939a56f7d63cfda13f264f587bf8d6f4a41853533ee8648022b",
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "42ddbce02c956540bb946e277c0e99fb86e387810192373eca033c8072785f91",
+    "tests/unit/playback-self-hls.test.ts": "0971552a5e2e0f93d9eada59191158439e7c122cfccf193a599d765ba0125c3b",
+    "tests/unit/hls/hls-edge-worker.test.ts": "cd5ba23bece48ea9a9f96781ef4c3f8a96f5ae353ed9cd09f6c35400092f5a2c",
+    "tests/unit/player/self-hls.test.ts": "899a763661bb5b36ec689472db5e491a4d08ab6eabb265ef67756f24ead766a1",
+    "tests/unit/modules/media/self-hls-delivery-url.test.ts": "063af4a5124652d3d41e70d566149438d1a8abaa48d00488718288deb014ca96"
+  },
+  "cleanup": {
+    "fixture_users": 0,
+    "fixture_creators": 0,
+    "fixture_videos": 0,
+    "fixture_encode_jobs": 0,
+    "temporary_postgres_container_stopped_and_removed": true,
+    "worker_temp_directory_removed": true,
+    "loopback_object_store_memory_cleared": true,
+    "next_dev_server_stopped": true
+  },
+  "limitations": [
+    "The test exercises playback planning over HTTP, not actual HLS segment delivery through a deployed Cloudflare Worker.",
+    "The S3-shaped object store is a loopback fixture, not Cloudflare R2; provider semantics and edge cache/CORS are unverified.",
+    "Studio upload HTTP, browser playback, deployed Worker-first rollout and independent review remain open; K01-T3/K35 are partial."
+  ]
+}

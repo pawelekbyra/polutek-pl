@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const audit = vi.hoisted(() => ({ recordAuditEvent: vi.fn(async () => undefined) }));
 vi.mock("@/lib/modules/audit", () => audit);
-const media = vi.hoisted(() => ({ invalidateDefaultThumbnailCache: vi.fn(), MediaStorageService: { deleteOwnedThumbnail: vi.fn(async () => true) }, R2ThumbnailStorageClient: class { static isConfigured = () => false; } }));
+const media = vi.hoisted(() => ({ invalidateDefaultThumbnailCache: vi.fn(), MediaStorageService: { deleteOwnedThumbnail: vi.fn(async () => true) }, R2ThumbnailStorageClient: class { static isConfigured: () => boolean = () => false; } }));
 vi.mock("@/lib/modules/media", () => media);
 
 import { getDefaultThumbnailState, removeDefaultThumbnail, setDefaultThumbnail } from "@/lib/modules/admin-content";

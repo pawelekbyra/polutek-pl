@@ -1,0 +1,20 @@
+{
+  "recordedAt": "2026-11-11",
+  "sourceCommit": "d3f25025bfbefac267da0b9fb3dbae89f4f2b23f",
+  "sourceTreeCleanBeforeEvidence": true,
+  "command": "npm run quality",
+  "result": {
+    "architecture": "PASS",
+    "typecheck": "PASS",
+    "testFilesPassed": 585,
+    "testFilesSkipped": 1,
+    "testsPassed": 5170,
+    "testsSkipped": 2,
+    "failed": 0,
+    "vitestDurationSeconds": 339.81
+  },
+  "limitations": [
+    "This is local repository quality, not acceptance against live Cloudflare R2, production services, or deployed processes.",
+    "Independent review and the external acceptance gates listed in STAN.md remain outstanding."
+  ]
+}

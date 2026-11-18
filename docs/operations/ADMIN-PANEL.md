@@ -4,6 +4,8 @@ Stan: 2026-10-05 (faza 1: powłoka, logowanie, ekrany „Dzisiaj” i „System�
 **Wdrożenie na serwerku wykonane 2026-10-05** (obraz `polutek-admin:adm10050110`, `admin.env`, Access, tunel, DNS). **Logowanie jest teraz proste: przez Cloudflare Access (kod na Gmail), bez rejestracji, kluczy dostępu i TOTP** (rozdział 1b; stary tryb z passkeyem zostaje pod `ADMIN_AUTH_MODE=passkey`). Architektura i decyzje:
 [`architecture/admin-panel.md`](../architecture/admin-panel.md) (sekcja 9). Stary `/admin` na `www` działa bez zmian.
 
+> **Granica K06 (2026-11-06):** powyższy stan jest produkcyjny. Kandydat proof-aware w lokalnej gałęzi audytu wymaga zweryfikowanego release bundle, pełnego SHA i zatwierdzonego proof hash przed migracją, aktywacją oraz rollbackiem; nie został wdrożony. Stare komendy deploy poniżej nie są komendami dla tego kandydata. Zob. [`RELEASE-PROOF.md`](RELEASE-PROOF.md).
+
 Panel to osobna aplikacja (`apps/admin`) i osobny kontener `admin` (`127.0.0.1:3100`, limit 384 MB) w stosie
 `/opt/serwerek/apps/polutek`. Domyślnie (`ADMIN_AUTH_MODE=access`) wejście to **Cloudflare Access** (JWT sprawdzany też w aplikacji; zweryfikowany
 adres e-mail z tokenu jest logowaniem) → dziennik logowań `AdminAuthEvent` (tylko dopisywanie). W trybie legacy (`ADMIN_AUTH_MODE=passkey`) dochodzi

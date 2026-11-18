@@ -90,6 +90,28 @@ describe('SELF_HLS playback plan', () => {
     expect(JSON.stringify(result)).not.toMatch(/legacy|raw\.example\.com|fallback/);
   });
 
+  it('binds new attempt-scoped assets to their exact attempt in the signed delivery version', async () => {
+    const attemptId = '9a4186c7-ef23-4a16-a3e0-8db8e89302d1';
+    const attemptAsset = asset({
+      id: 'attempt',
+      objectKey: `videos/${VIDEO_ID}/v/v1/attempts/${attemptId}`,
+      isPrimary: true,
+    });
+    prisma.video.findUnique.mockResolvedValue(video({
+      activePlaybackRoute: { asset: attemptAsset },
+      assets: [attemptAsset, ...legacyAssets],
+    }));
+
+    const result = await plan({ type: 'user', userId: 'u1' });
+    expect(result.status).toBe('READY');
+    const url = new URL(result.source!.playbackUrl!);
+    const [, , token, id, version, file] = url.pathname.split('/');
+    expect(id).toBe(VIDEO_ID);
+    expect(version).toBe(`v1~${attemptId}`);
+    expect(file).toBe('master.m3u8');
+    expect(await verifyToken(SECRET, id, version, token, Math.floor(Date.now() / 1000))).toBe(true);
+  });
+
   it('never exposes any URL or token to a denied viewer', async () => {
     vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } } as never);
     const result = await plan({ type: 'guest' });
@@ -236,7 +258,10 @@ describe('SELF_HLS playback plan', () => {
 
   it('only accepts object keys that belong to the video', () => {
     expect(parseSelfHlsObjectKey(`videos/${VIDEO_ID}/v/v1`, VIDEO_ID)).toBe('v1');
+    const attemptId = '9a4186c7-ef23-4a16-a3e0-8db8e89302d1';
+    expect(parseSelfHlsObjectKey(`videos/${VIDEO_ID}/v/v1/attempts/${attemptId}`, VIDEO_ID)).toBe(`v1~${attemptId}`);
     expect(parseSelfHlsObjectKey(`videos/other-video-id/v/v1`, VIDEO_ID)).toBeNull();
+    expect(parseSelfHlsObjectKey(`videos/${VIDEO_ID}/v/v1/attempts/not-a-uuid`, VIDEO_ID)).toBeNull();
     expect(parseSelfHlsObjectKey(`videos/${VIDEO_ID}/v/../x`, VIDEO_ID)).toBeNull();
   });
 

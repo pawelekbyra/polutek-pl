@@ -1,0 +1,51 @@
+{
+  "date": "2026-11-04",
+  "source_parent": "1aaef191",
+  "imports": [
+    "a3874d49",
+    "3417985b",
+    "89e8e31d",
+    "466d75f1"
+  ],
+  "red": {
+    "oversized_components": 4,
+    "new_type_escapes": 5,
+    "transaction_failed": 2,
+    "transaction_passed": 12
+  },
+  "green": {
+    "transaction_related_tests": 61,
+    "ui_studio_i18n_tests": 253,
+    "failed": 0,
+    "skipped": 0,
+    "application_types": "PASS",
+    "architecture": "PASS",
+    "hotspots": "PASS",
+    "strict_escapes": "PASS",
+    "targeted_lint_errors": 0,
+    "targeted_lint_warnings": 12
+  },
+  "earlier_unchanged_gates": {
+    "ci_parity": "PASS",
+    "migrations": "PASS:81 unchanged",
+    "env": "PASS:synthetic CI profile"
+  },
+  "source_hashes": {
+    "app/components/ChannelHome.tsx": "bb4257023b3fe9c639233e4d1e16b834f6d2fda01a4dd7ffd2e7f2d3a1a4a9ba",
+    "app/components/VideoPlayer.tsx": "55fb18ee422d96f7d6e8d8c7674feec3e94b90428cd23a3003e10a7de063be23",
+    "app/components/channel/home-props.ts": "776bf0f1baf0b6f63e92d9453a26f4be411875cfda876c23b42a40e3cc84fd04",
+    "app/components/premium-pass/PassCheckoutSheet.tsx": "47474ddb38e908b326204ee59389b009ff51428a48e125db55c66c6850c1b710",
+    "app/components/premium-pass/pass-checkout-state.ts": "e0b251143e9f92655a0ebd72242afc52de1ebbdcd8eba53b9242835628e1f039",
+    "app/components/studio/StudioUploadFileInfo.tsx": "f64befc0e49fa61d334939df44652f3da1446cb12fb99daed9640f6e404c9900",
+    "app/components/studio/StudioUploadStatus.tsx": "2fffb1f348129649e3420abd2f1b55e5f806a91ea5b95b3b0d7be282e02d25de",
+    "app/components/studio/StudioUploadWizard.tsx": "e1eaeb2d237691c9be0f4db626e18f42a65052517b2e30e87a8ce514c05f16fc",
+    "app/components/studio/StudioVideoEditor.tsx": "0be47f12c9563ed36c47e22e7f84e3844997807f222abc7b9bf8eb5349175a83",
+    "app/components/studio/StudioVideoPreview.tsx": "d3cdca9798923b7de7aa297bf37e36a444e1ddf5e7b612d33d08230fcecb2029",
+    "lib/modules/video/application/unlist-admin-video.use-case.ts": "62ae1f17f49f4347b168ab17c3d99b2ece6f5ce34d1d8250d73dc89c73692ee7",
+    "lib/modules/video/application/unpublish-admin-video.use-case.ts": "600faf7ed19e559e20a9d23f2a1b03375d19228c1c3cd5cc6990e7849aab1f55",
+    "lib/modules/video/infrastructure/video-content.service.ts": "0c69fd88b26a27313839c51174c4721b52e98f6d5d2bc4e3b732509e7db0793c",
+    "tests/unit/modules/video/unlist-admin-video.use-case.test.ts": "0316c0a89b9acb5d1724df96504ba3b58ebfeadb0d89d2802ce96acbec6ba1c5"
+  },
+  "scope": "Visibility changes use the existing typed transaction adapter; UI contracts/helpers/presentational views extracted without changing classes/text. Actual unit/component/i18n and compiler checks; no full browser, application Docker images or production. Full repository unit/types/lint baseline is preserved with its earlier source attribution and was not rerun after these scoped changes.",
+  "release_ready": false
+}

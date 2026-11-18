@@ -1,7 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
-import { MainChannelService } from "@/lib/modules/channel";
+import { MainChannelService } from "@/lib/modules/channel/application/main-channel.service";
 import { authorize } from "@/lib/modules/authz";
 import { VideoStatus } from "@prisma/client";
 import { recordAuditEvent } from "@/lib/modules/audit";
@@ -31,7 +31,7 @@ export async function unpublishAdminVideo(
     return ok(toAdminVideoDto(video));
   }
 
-  const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
+  const updated = await ctx.db.writeTransaction(async (tx) => {
     const result = await tx.video.update({
       where: { id: videoId },
       data: {

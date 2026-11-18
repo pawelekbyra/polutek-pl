@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-11",
+  "repository_head_sha": "0116bbb4fed05ae5340641db10687d53bc3164be",
+  "package": "K02 dependency advisory retest",
+  "source_sha256": {
+    "package.json": "ecf4b6d6a6a452d47c4b4c993efb2067d26e26a36cbacda112e08a58f2d3ceca",
+    "package-lock.json": "d905e2f2106e302abdeac2b977fb92fb5690a60dba82fa52e1244757a1ee75cb"
+  },
+  "runtime": {
+    "node": "v22.23.3",
+    "npm": "10.9.9"
+  },
+  "commands": [
+    {
+      "command": "npm audit --omit=dev --json",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    },
+    {
+      "command": "npm audit --json",
+      "exit": 1,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 3,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 3
+      }
+    }
+  ],
+  "affected_development_toolchain": {
+    "direct_dependency": "shadcn@4.23.0",
+    "transitive_chain": "shadcn@4.23.0 > @shadcn/registry@0.2.1 > deepmerge@4.3.1",
+    "severity": "low",
+    "fix_available": "npm recommends shadcn@1.0.0 as a semver-major change; not applied pending CLI/config compatibility review.",
+    "advisory": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+    "official_cli_docs": "https://ui.shadcn.com/docs/cli"
+  },
+  "decision": "No dependency changes. Production dependency audit is clean; full audit has three low findings confined to development-time shadcn tooling. K02 remains partial pending review of a safe CLI migration and built runtime image inspection.",
+  "limitations": [
+    "npm audit --omit=dev covers the lockfile production dependency graph; it does not prove actual standalone image contents.",
+    "No package upgrade, install, image build, deploy, or external service call was performed."
+  ],
+  "follow_up_2026_11_12": {
+    "repository_head_sha": "d24eb127",
+    "command": "npm view shadcn@1.0.0 --json",
+    "observation": {
+      "published": "2024-07-09T11:01:29.540Z",
+      "bin": null,
+      "dependency_count": 0,
+      "description": ""
+    },
+    "current_project_cli": "shadcn@4.23.0",
+    "official_current_cli_docs": "https://ui.shadcn.com/docs/cli",
+    "decision": "Do not apply npm audit suggested downgrade: version 1.0.0 is not the current CLI and has no executable bin. Keep the dev-only alert documented until an upstream-compatible fixed release or a validated migration exists."
+  }
+}

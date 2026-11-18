@@ -1,0 +1,33 @@
+{
+  "source_parent": "7d5db46c",
+  "import_origin": "989682ff",
+  "red": "Actual loaded sharp was0.35.4; required patched0.35.5 assertion failed before HTTP.",
+  "green": {
+    "next": "16.4.1",
+    "sharp": "0.35.5",
+    "librsvg": "2.63.2",
+    "vips": "8.18.7",
+    "native": true,
+    "http": {
+      "png": 200,
+      "svg": 400,
+      "invalid": 400,
+      "unapproved_host": 400
+    },
+    "tests_passed": 170,
+    "tests_failed": 0,
+    "next_build_controls": {
+      "bad_types_rejected": 2,
+      "valid_types_accepted": 2
+    }
+  },
+  "normal_npm_ci_and_prisma_generate_exit": 0,
+  "lint_exit": 0,
+  "source_hashes": {
+    "package.json": "8a1839e40eb93ffdaa98503532bc125b246745cde1b6ffd3b0e5f1ee9c14786a",
+    "package-lock.json": "14bdf3558c2d260ad2d8fd2b02ef9f2228bcd7f9da06cd881ca7a4224e30b343",
+    "docs/audit/2026-11-01-platform-research/program-audytu/tools/k02-image-runtime-check.mjs": "3444d286be6697c89e270a55d9298218d7d941e3db5a18598cb7ab2319fea941"
+  },
+  "limits": "Real local native libraries, loopback Next HTTP and four isolated Next builds. No Docker application images, actual production or fresh npm audit. K02 not closed.",
+  "release_ready": false
+}

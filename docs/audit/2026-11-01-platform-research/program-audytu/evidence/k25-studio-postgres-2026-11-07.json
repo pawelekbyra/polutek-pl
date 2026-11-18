@@ -1,0 +1,28 @@
+{
+  "package": "K25/R26 Studio POST acceptance",
+  "date": "2026-11-07",
+  "base_commit": "c16d485b3ffce3a0b747fc5181851ce5d0c5e149",
+  "scope": "Actual POST /api/studio/playlists handler and Prisma transactions against a disposable PostgreSQL 17 database after all 84 migrations.",
+  "test": {
+    "command": "DATABASE_URL=<disposable PostgreSQL 17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/playlist-limit-concurrency.pg.test.ts",
+    "result": "3/3 PASS",
+    "new_case": "At 99 active playlists, two concurrent calls through the actual Studio POST handler returned exactly one 201 and one 409 PLAYLIST_LIMIT; final active count was 100 and exactly one PLAYLIST_CREATED audit row existed for the committed request.",
+    "existing_cases": "Two separate Node processes concurrently exercise the actual use case/authz; slot reuse after soft delete; foreign-channel refusal; exactly one audit row; and no cross-channel advisory-lock blocking."
+  },
+  "other_checks": {
+    "playlist_unit_suite": "18/18 PASS",
+    "eslint_changed_file": "PASS",
+    "repository_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "controlled_boundaries": [
+    "Studio session resolver returned synthetic test sessions.",
+    "Studio rate limiter was stubbed to allow these requests.",
+    "The PostgreSQL container used tmpfs on loopback and was removed after the run; its synthetic rows were destroyed with it.",
+    "No deployed multi-process HTTP, production, external storage, or external service was used."
+  ],
+  "source_sha256": {
+    "tests/postgres/playlist-limit-concurrency.pg.test.ts": "265e6c0a62b370aa3ffa4915630c0873e972c76b51c570a5d9e61d11950e5c50"
+  },
+  "remaining": "K25 stays partial pending deployed non-production POST/DELETE across separate HTTP processes and independent review."
+}

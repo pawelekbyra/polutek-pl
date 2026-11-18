@@ -1,0 +1,16 @@
+{
+  "scenario": "parallel chunked multipart bodies, each exactly one byte over the application limit",
+  "runtime": "v22.23.3",
+  "stack": "Node Request/ReadableStream + application reader; no Next server or reverse proxy",
+  "contentLength": "absent",
+  "concurrency": 16,
+  "maxBytesPerRequest": 13631488,
+  "streamedChunkBytes": 65536,
+  "outcomes": {
+    "413": 16
+  },
+  "elapsedMs": 704,
+  "baselineRssBytes": 84373504,
+  "peakRssBytes": 330514432,
+  "rssIncreaseBytes": 246140928
+}

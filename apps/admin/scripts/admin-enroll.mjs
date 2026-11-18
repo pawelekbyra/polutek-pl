@@ -89,7 +89,7 @@ async function appendEvent(tx, row) {
  * Returns the plain token (shown once, only its hash is stored).
  *
  * @param {object} prisma PrismaClient (or a transaction-capable stand-in in tests)
- * @param {{ email: string, name?: string | null, reset?: boolean, now?: Date }} options
+ * @param {{ email: string, name?: string | null, reset?: boolean, role?: "OWNER" | "TRANSLATOR" | null, languages?: string[], now?: Date }} options
  */
 export async function issueEnrollment(prisma, { email, name, reset, role = null, languages = [], now = new Date() }) {
   const token = newEnrollmentToken();

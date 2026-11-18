@@ -4,6 +4,7 @@ import { createFakePaymentsDb } from '../modules/payments/fake-payments-db';
 
 const db = createFakePaymentsDb();
 const intents = new Map<string, any>();
+const refundsByIntent = new Map<string, Array<{ id: string; amount: number; status: string }>>();
 const stripe = {
   paymentIntents: {
     retrieve: vi.fn(async (id: string) => ({ ...intents.get(id) })),
@@ -12,9 +13,8 @@ const stripe = {
       return { ...intents.get(id) };
     }),
   },
+  refunds: { list: vi.fn(async ({ payment_intent }: { payment_intent: string }) => ({ data: refundsByIntent.get(payment_intent) ?? [], has_more: false })) },
 };
-const refundsByIntent = new Map<string, Array<{ id: string; amount: number; status: string }>>();
-(stripe as any).refunds = { list: vi.fn(async ({ payment_intent }: { payment_intent: string }) => ({ data: refundsByIntent.get(payment_intent) ?? [], has_more: false })) };
 const sendBecomePatronEmail = vi.fn();
 const sendDonationThankYouEmail = vi.fn();
 
@@ -192,7 +192,7 @@ describe('stripe-reconciliation cron', () => {
       const good = seed('good', 'SUCCEEDED', 2 * HOUR, null);
       good.stripeIntentId = 'pi_good';
       refundsByIntent.set('pi_good', [{ id: 're_3', amount: 100, status: 'succeeded' }]);
-      (stripe.refunds.list as any).mockImplementationOnce(async () => { throw new Error('stripe down'); });
+      stripe.refunds.list.mockImplementationOnce(async () => { throw new Error('stripe down'); });
 
       const body = await (await GET(cronRequest())).json();
 

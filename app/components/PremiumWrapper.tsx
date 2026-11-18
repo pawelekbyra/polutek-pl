@@ -14,6 +14,7 @@ import type {
   PlaybackPlan,
   PlaybackPlanStatus,
 } from "@/lib/modules/playback";
+import { readPlaybackPlan } from "@/lib/video-api-contracts/contracts";
 import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { PlayerLoadingState } from "./PlayerLoadingState";
 import { PlayerStateFrame } from "./PlayerStateFrame";
@@ -58,21 +59,14 @@ type PlanView = {
  * playable for exactly this video is never handed to the player.
  */
 function viewForPlan(rawData: unknown, videoId: string, isGuest: boolean): PlanView {
-  const data = rawData as Partial<PlaybackPlan> & {
-    access?: {
-      allowed?: unknown;
-      reason?: unknown;
-      requiredTier?: string;
-    };
-    hasAccess?: unknown;
-    requiredTier?: string;
-  };
+  const data = readPlaybackPlan(rawData);
+  if (!data) return { hasAccess: false, playbackPlan: null, playbackState: "ERROR", planPremiereAt: null, requiredTier: null, passView: null };
   const playbackState = getSafePlaybackState(data, isGuest ? "LOGIN_REQUIRED" : false);
-  const hasAccess = isPlayablePlaybackPlan(data as PlaybackPlan, videoId);
-  const requiredTier = data.requiredTier ?? data.access?.requiredTier;
+  const hasAccess = isPlayablePlaybackPlan(data, videoId);
+  const requiredTier = data.access.requiredTier;
   return {
     hasAccess,
-    playbackPlan: hasAccess ? (data as PlaybackPlan) : null,
+    playbackPlan: hasAccess ? data : null,
     playbackState,
     planPremiereAt: playbackState === "COMING_SOON" && typeof data.premiereAt === "string" ? data.premiereAt : null,
     requiredTier: parseVideoAccessTier(requiredTier),

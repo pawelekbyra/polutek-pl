@@ -12,6 +12,7 @@ import {
   parseEslintSummary,
   parseTscOutput,
   parseVitestJson,
+  requiredSuitesPass,
   parseWorkflowEnv,
   parseWorkflowRuns,
   pickRunnable,
@@ -260,5 +261,32 @@ describe('output parsers', () => {
   it('reads the eslint summary line', () => {
     expect(parseEslintSummary('\n✖ 12 problems (3 errors, 9 warnings)\n')).toEqual({ errors: 3, warnings: 9 });
     expect(parseEslintSummary('')).toEqual({ errors: 0, warnings: 0 });
+  });
+});
+
+
+describe('mandatory database suite receipts', () => {
+  const postgres = '/repo/tests/postgres/fixture.pg.test.ts';
+  const email = '/repo/tests/integration/email-event-idempotency.test.ts';
+  const required = [postgres, email];
+  const suite = (name: string, statuses = ['passed']) => ({ name, assertionResults: statuses.map(status => ({ status })) });
+
+  it('accepts only actual passing assertions in every required suite', () => {
+    expect(requiredSuitesPass({ success: true, testResults: [suite(postgres), suite(email, ['passed', 'passed'])] }, required)).toBe(true);
+  });
+
+  it.each(['missing', 'empty', 'pending', 'todo', 'failed', 'duplicate', 'different-checkout'])('rejects %s mandatory email results even if aggregate counts look green', scenario => {
+    const emailResults = scenario === 'missing' ? []
+      : scenario === 'duplicate' ? [suite(email), suite(email)]
+      : scenario === 'different-checkout' ? [suite('/other' + email)]
+      : [suite(email, scenario === 'empty' ? [] : [scenario])];
+    const report = { success: true, numTotalTests: 75, numPassedTests: 75, numFailedTests: 0,
+      testResults: [suite(postgres), ...emailResults] };
+    expect(requiredSuitesPass(report, required)).toBe(false);
+  });
+
+  it('rejects an empty required-file list or an unsuccessful report', () => {
+    expect(requiredSuitesPass({ success: true, testResults: [] }, [])).toBe(false);
+    expect(requiredSuitesPass({ success: false, testResults: [suite(postgres), suite(email)] }, required)).toBe(false);
   });
 });

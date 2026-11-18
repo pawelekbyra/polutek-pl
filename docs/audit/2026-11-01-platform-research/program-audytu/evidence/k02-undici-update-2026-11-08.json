@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-08",
+  "scope": "K02_UNDICI_TRANSITIVE_OVERRIDE",
+  "base_commit": "e63ff1f9fca4d5382939267fe2fe7fcc54afd476",
+  "source_report": "k02-npm-audit-2026-11-08.json",
+  "file_sha256": {
+    "package.json": "c4d1466b13a55630eb6d3774e11758660797587c1e3de5f7cb5f33a3269882c6",
+    "package-lock.json": "7631e123fce8f45ccb5886491057d084f979281cf2f2bf627870e559f64a00a0"
+  },
+  "change": {
+    "previous_resolved": "6.29.0",
+    "current_resolved": "6.29.1",
+    "override": "package.json#overrides.undici",
+    "paths": [
+      "shadcn -> undici",
+      "shadcn -> @dotenvx/dotenvx -> undici"
+    ],
+    "scope": "development dependency tree in npm ls output"
+  },
+  "validation": {
+    "npm install --package-lock-only --ignore-scripts --no-audit --no-fund": {
+      "exit": 0
+    },
+    "npm ci --no-audit --no-fund": {
+      "exit": 0,
+      "installed": "890 packages"
+    },
+    "npm ls undici --all": {
+      "exit": 0,
+      "resolved": "6.29.1"
+    }
+  },
+  "limitations": [
+    "No new npm audit request or dependency graph upload.",
+    "No application runtime image inspection.",
+    "No application source change or full K02 acceptance."
+  ]
+}

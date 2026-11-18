@@ -61,6 +61,19 @@ describe("uploadOriginal", () => {
     expect(JSON.parse(complete[1]!.body as string).parts.map((p: { etag: string }) => p.etag)).toEqual(['"old1"', '"old2"', '"new3"']);
   });
 
+  it("preserves the resume point and does not start a new upload after a malformed list response", async () => {
+    const f = file(MIB);
+    const key = resumeKey("v1", f);
+    const store = memoryStorage({ [key]: "o1" });
+    const fetchFn = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ originalId: "o1", partSize: 0, partCount: 1 }) }));
+    await expect(uploadOriginal({
+      videoId: "v1", file: f, signal: new AbortController().signal,
+      fetchFn: fetchFn as unknown as typeof fetch, putPart: vi.fn(), storage: store,
+    })).rejects.toMatchObject({ code: "API_CONTRACT_MISMATCH" });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(store.getItem(key)).toBe("o1");
+  });
+
   it("starts over when the remembered upload no longer exists", async () => {
     const s = server(1, 16 * MIB);
     s.spy.mockImplementationOnce(async () => ({ ok: false, status: 409, json: async () => ({ error: "closed", code: "UPLOAD_NOT_OPEN" }) }) as never);
@@ -90,6 +103,17 @@ describe("uploadOriginal", () => {
     expect(put).toHaveBeenCalledTimes(1);
     const bad = vi.fn(async () => ({ ok: false, status: 422, json: async () => ({ error: "Za duży", code: "UPLOAD_TOO_LARGE" }) }));
     await expect(uploadOriginal({ videoId: "v1", file: file(1 * MIB), signal: new AbortController().signal, fetchFn: bad as never, storage: null })).rejects.toMatchObject({ code: "UPLOAD_TOO_LARGE", message: "Za duży" });
+  });
+
+  it("rejects a malformed 200 reservation before uploading any parts", async () => {
+    const fetchFn = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ originalId: "o1", partSize: 0, partCount: 1 }) }));
+    const putPart = vi.fn(async () => '"etag"');
+    await expect(uploadOriginal({
+      videoId: "v1", file: file(MIB), signal: new AbortController().signal,
+      fetchFn: fetchFn as unknown as typeof fetch, putPart, storage: null,
+    })).rejects.toMatchObject({ code: "API_CONTRACT_MISMATCH" });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(putPart).not.toHaveBeenCalled();
   });
 
   it("stops on abort and keeps the resume point", async () => {

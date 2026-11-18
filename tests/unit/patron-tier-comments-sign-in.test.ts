@@ -16,7 +16,7 @@ vi.mock('@/lib/modules/channel', () => ({
   },
 }));
 
-describe('PATRON tier comments need sign-in only', () => {
+describe('LOGGED_IN tier comments need sign-in only', () => {
   const prismaMock = {
     video: {
       findFirst: vi.fn(),
@@ -53,7 +53,7 @@ describe('PATRON tier comments need sign-in only', () => {
       prismaMock.video.findFirst.mockResolvedValue({
         id: 'v1',
         creatorId: 'c1',
-        tier: AccessTier.PATRON,
+        tier: AccessTier.LOGGED_IN,
         status: VideoStatus.PUBLISHED,
         creator: { id: 'c1', status: 'ACTIVE' },
       });

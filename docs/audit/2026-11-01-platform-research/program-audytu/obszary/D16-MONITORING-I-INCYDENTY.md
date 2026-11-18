@@ -44,6 +44,8 @@ Hostowe skrypty mają też `OnFailure` systemd, ograniczenie częstości wiadomo
 
 **Kierunek:** rozdzielić lekki liveness, chroniony readiness zależności oraz syntetyczny test znanego filmu: uzyskanie dostępu, manifest, właściwy segment i faktyczny start dekodowania. Osobno kontrolować ścieżkę od uploadu do publikacji. Próbki muszą mieć bezpieczny koszt, własne treści i sprzątanie; nie używać tokenów widzów. Dla płatności monitorować zdarzenia i uzgodnienie, nie cyklicznie obciążać karty.
 
+**Uzupełnienie K30, 7 listopada 2026:** app probe przyjmuje tylko statusy 2xx. `/api/health` bez tokenu jest liveness; z ważnym `x-health-token` jest readiness i odpowiedź zależności `ok:false` mapuje się na HTTP 503. Test use case potwierdza, że niedostępne SQL daje `{ok:false,database:"failed"}`. Trasa 3/3, łącznie celowane health/probe **29/29 PASS**, lint i typecheck PASS. Nadal brak canary manifestu/segmentu/dekodowania i end-to-end alertu. HLS Worker wymaga podpisanego, krótkotrwałego tokenu, więc nie należy konfigurować w zewnętrznym watchdogzie statycznego URL, który wygaśnie lub będzie bearer credentialem; kolejny projekt powinien mintować token po stronie aplikacji dla jawnie wybranego, własnego publicznego kontrolnego filmu.
+
 ## R36 — utracone powiadomienie „OK again”
 
 Źródło: [Worker, przejście stanu i zapis](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/workers/pp-watchdog/worker.mjs#L88). Priorytet **P2 operacyjny**, niezależny przegląd PENDING.
@@ -61,7 +63,15 @@ Odtworzony przebieg rzeczywistego handlera z atrapami:
 
 **Propozycja, bez wdrożenia:** oddzielić stan obserwowanej usługi od trwałego zdarzenia powiadomienia z id incydentu i statusem dostarczenia. Ponawiać niezaakceptowane zdarzenie również po powrocie usługi i po zmianie dnia; ustalić politykę kolejności oraz duplikatów. Dodać ograniczony timeout dostawcy. Outbox zmniejsza ryzyko utraty, ale sam nie gwarantuje dokładnie jednego e-maila przy niepewnej odpowiedzi.
 
-**Test odbioru:** DOWN zaakceptowany → recovery HTTP 503 / limit → zdrowy kolejny przebieg / kolejny dzień → recovery ponowione i oznaczone dopiero po akceptacji. Kontrole: wyjątek sieciowy, błąd zapisu D1, równoległe scheduled/manual run, timeout i duplikat, nowa awaria zanim poprzednie recovery zostało wysłane. Obecny eksperyment nie testuje współbieżności ani atomowości D1.
+**Test odbioru:** DOWN zaakceptowany → recovery HTTP 503 / limit → zdrowy kolejny przebieg / kolejny dzień → recovery ponowione i oznaczone dopiero po akceptacji. Kontrole: wyjątek sieciowy, błąd zapisu D1, równoległe scheduled/manual run, timeout i duplikat, nowa awaria zanim poprzednie recovery zostało wysłane. Ówczesny eksperyment nie testował współbieżności ani atomowości D1.
+
+### K31 — lokalna implementacja, 6 listopada 2026
+
+Worker zapisuje zdarzenie DOWN/recovery do tabeli D1 `alert_delivery` przed wysyłką i ponawia je po błędach HTTP, wyjątkach sieciowych oraz limicie dziennym. Dzienny limit odkłada próbę do następnej północy UTC; błędy dostawcy używają rosnącego odstępu do 6 godzin. Warunkowa aktualizacja z krótką dzierżawą chroni zdarzenie przed równoległym runem, a stały `Idempotency-Key` wiąże retry z tym samym zdarzeniem. Healthy stan monitoringu jest zapisywany niezależnie od zaległej wiadomości.
+
+Nowe testy jednostkowe z atrapą D1 i całkowicie stubowanym fetch potwierdzają: recovery HTTP 503 i późniejsze ponowienie, oczekiwanie do resetu dziennego limitu, wyjątek sieciowy i jeden claim przy dwóch współbieżnych uruchomieniach. Razem z dotychczasowymi testami: 6/6; kontrola architektury i typecheck PASS, ESLint bez błędów (jedno ostrzeżenie anonymous default export). Dodatkowy [probe SQLite](../tools/k31-watchdog-sqlite-check.mjs) wykonał rzeczywisty kod Workera na lokalnym in-memory SQLite 3.51.3: schema i `UPDATE ... RETURNING` zadziałały, dwa równoległe runy dały jeden call provider stub. Wynik i hashe: [K31 evidence](../evidence/k31-watchdog-outbox-2026-11-06/result.json). Nie sprawdzono Cloudflare D1 runtime/konfiguracji wdrożonej bazy, Workera, Resend ani skrzynki. K31 pozostaje częściowy do niezależnego sprawdzenia D1, awarii między akceptacją Resend i zapisem SENT, timeoutu i prób w sandboxie. Klucz idempotencji ogranicza duplikaty; nie jest gwarancją dostarczenia do skrzynki ani absolutnie dokładnie jednego e-maila.
+
+**Uzupełnienie K31, 7 listopada 2026:** po akceptacji przez provider worker zapisuje SENT, zwiększa `alert_day` i usuwa przeterminowane dni w jednej transakcyjnej partii `D1.batch()`. Lokalny SQLite rollback po pierwszym statement zostawił delivery PENDING i nie zwiększył kwoty; kolejna próba wysłała to samo ID idempotencji, zapisała SENT i naliczyła event tylko raz. 7/7 testów jednostkowych, repo typecheck, ESLint bez błędów (jedno istniejące ostrzeżenie) i aktualny probe SQLite PASS. [Dowód](../evidence/k31-atomic-acceptance-2026-11-07/result.json). Nadal trzeba sprawdzić Cloudflare D1 i kontrakt/retencję idempotencji Resend w sandboxie; wynik nie dowodzi dokładnie jednego e-maila w skrzynce.
 
 ## Logi, korelacja i prywatność
 

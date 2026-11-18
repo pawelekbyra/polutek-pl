@@ -1,0 +1,63 @@
+{
+  "package": "K15",
+  "finding": "R27",
+  "date": "2026-11-06",
+  "baseRevision": "2bab9df6",
+  "status": "PARTIAL_LOCAL_VERIFICATION",
+  "change": {
+    "files": [
+      "lib/modules/video-pipeline/application/original-upload.use-cases.ts",
+      "lib/modules/video-pipeline/application/encode-queue.use-cases.ts",
+      "lib/modules/video-pipeline/infrastructure/encode-job.repository.ts",
+      "tests/unit/video-pipeline/original-upload.test.ts",
+      "tests/postgres/original-upload.pg.test.ts"
+    ],
+    "behavior": [
+      "Serialize successful completion and READY replay by video with one PostgreSQL transaction advisory lock.",
+      "Re-read original status under the lock and compare status plus version before activation; an older completion cannot replace a newer active or READY version.",
+      "When a historical stale READY row is observed, mark it SUPERSEDED and refuse to enqueue it; only repair a missing active pointer when no newer version exists.",
+      "Create the encode job in the same database transaction as READY promotion and pointer activation, while READY replay still repairs legacy rows that have no job.",
+      "If an UPLOADING version loses to a newer READY version, mark it SUPERSEDED and remove its completed object from storage."
+    ]
+  },
+  "redRegression": {
+    "command": "npx vitest run tests/unit/video-pipeline/original-upload.test.ts -t 'does not reactivate a READY snapshot' --reporter=verbose",
+    "exitCode": 1,
+    "observed": "Before the fix, the READY snapshot returned success, updated activeOriginalId to v1, and attempted to enqueue the stale source after the test supplied a fresh SUPERSEDED row."
+  },
+  "greenVerification": {
+    "postgresHttp": {
+      "command": "DATABASE_URL=<temporary-local-Postgres-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts --reporter=json",
+      "migrations": 83,
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "raw": "postgres-vitest.json",
+      "migrationLog": "migrate.log",
+      "environment": "Disposable local postgres:17-alpine container; real Prisma transactions and Studio POST/GET handlers; controlled session resolver and fake R2 storage. Includes a K21 route-contract check. Container removed after the run."
+    },
+    "focusedUnit": {
+      "command": "npx vitest run tests/unit/video-pipeline/original-upload.test.ts tests/unit/video-pipeline/encode-job-repository.test.ts --reporter=json",
+      "files": 2,
+      "passed": 28,
+      "failed": 0,
+      "raw": "unit-vitest.json"
+    },
+    "eslint": {
+      "command": "npx eslint lib/modules/video-pipeline/application/original-upload.use-cases.ts lib/modules/video-pipeline/application/encode-queue.use-cases.ts lib/modules/video-pipeline/infrastructure/encode-job.repository.ts tests/unit/video-pipeline/original-upload.test.ts tests/postgres/original-upload.pg.test.ts",
+      "passed": true,
+      "log": "eslint.log"
+    },
+    "repoTypecheck": {
+      "command": "npm run typecheck",
+      "passed": true,
+      "log": "typecheck.log"
+    },
+    "gitDiffCheck": "PASS"
+  },
+  "limits": [
+    "R2 is a controlled fake in the HTTP tests; no Cloudflare R2/S3 sandbox was available.",
+    "No independent second review or full product build was run for this package.",
+    "K15 remains partially verified; this does not close K16 attempt isolation, K03/K06 gates, or the full upload/runtime acceptance."
+  ]
+}

@@ -4,7 +4,7 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import { logger } from "@/lib/logger";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository, CreateVideoInput } from "../infrastructure/video.repository";
-import { MainChannelService } from "@/lib/modules/channel";
+import { MainChannelService } from "@/lib/modules/channel/application/main-channel.service";
 import { authorize } from "@/lib/modules/authz";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoInvalidPremiereError, VideoSlugConflictError } from "../domain/video.errors";

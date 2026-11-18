@@ -100,6 +100,7 @@ export function makeDb(state: FakeState, options: { failSetPositionAfter?: numbe
       },
     },
     $queryRaw: async () => [],
+    $executeRaw: async () => 1,
     $transaction: async (fn: (tx: unknown) => Promise<unknown>) => {
       const snapshot = structuredClone({ playlists: state.playlists, items: state.items, audit: state.audit });
       try {

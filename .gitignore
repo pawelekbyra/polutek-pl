@@ -38,3 +38,7 @@ docs/audit/2026-11-01-platform-research/**/unit-full.json
 docs/audit/2026-11-01-platform-research/**/unit.vitest.json
 docs/audit/2026-11-01-platform-research/vitest-results.json
 docs/audit/2026-11-01-platform-research/program-audytu/evidence/architecture-graph.json
+
+# Local audit repair verification and unpublished release artifacts
+.claude/audit-k06/
+.claude/releases/

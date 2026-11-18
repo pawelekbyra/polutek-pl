@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-07",
+  "base_revision": "dcdc053b9c78f1e660499db12dbeb902d6d27a05",
+  "package": "K38 bounded HTML/thumbnail preflight and fixed-count guest identity",
+  "scope": "One-shot preflight and runner-contract changes only; no k6 load or application traffic was run in verification.",
+  "contract": {
+    "target_restriction": "HTTP numeric loopback only (127.0.0.1, ::1); redirects refused",
+    "endpoints": [
+      "home",
+      "thumb"
+    ],
+    "read_limit_bytes": 65536,
+    "sentinel_bytes": 1,
+    "read_strategy": "incremental read1 chunks up to 8192 bytes, stop at limit plus one byte",
+    "home": "HTTP 200, HTML MIME, <html marker within bounded prefix",
+    "thumbnail": "HTTP 200, image MIME, supported PNG/JPEG/WebP/GIF/AVIF signature matches MIME",
+    "measured_k6": "HTML/image bodies remain discarded during measured k6 traffic",
+    "profile": "records base URL, Host, locale, SHA-256 of video ID, probe runner/applicability, bound, result filename, and helper source SHA-256",
+    "fixed_count": "shares OUT_DIR lock and guest User-Agent identity with rate-series runner; both pass matching BASE/Host/locale to k6"
+  },
+  "verification": {
+    "command": "npm test -- --run tests/unit/scripts/loadtest-contract.test.ts",
+    "test_files_passed": 1,
+    "tests_passed": 36,
+    "tests_failed": 0,
+    "eslint": "PASS: npx eslint tests/unit/scripts/loadtest-contract.test.ts",
+    "python_compile": "PASS: response-probe.py and profile-metadata.py",
+    "shell_syntax": "PASS: bash -n scripts/loadtest/run-steps.sh scripts/loadtest/count-queries.sh",
+    "diff_check": "PASS"
+  },
+  "fixture": "Synthetic Node HTTP server on 127.0.0.1; valid large HTML/WebP prefix accepted within bound, invalid HTML/JPEG signature and redirect rejected; external URL rejected before network access.",
+  "source_sha256": {
+    "scripts/loadtest/response-probe.py": "b7a2134254f70577adc10df52b1565e6099045f2ebc2be3e3a153b883ae98372",
+    "scripts/loadtest/profile-metadata.py": "86e2335ad18934c9e17fe90928a17c16fe06e86de1baee43188590c5ec9fb6dc",
+    "scripts/loadtest/run-steps.sh": "ed70083b57023840f76214d0597424f60502cc742264d7ea1b316f6e71fb1521",
+    "scripts/loadtest/count-queries.sh": "1eff53bd205ed7810a97ab25fac89009ff8975383214d7e03b51e94e4372bf12",
+    "tests/unit/scripts/loadtest-contract.test.ts": "34ec6d43fd5dd17432dda871bd498e6832b6ac0fecd2e8e5010043b59669c130"
+  },
+  "limitations": [
+    "No app, database, k6, Docker, server, proxy, load or production traffic.",
+    "No full HTML parsing, image decoding, cache verification, playback or capacity evidence.",
+    "Non-production acceptance and cleanup remain open; K38 is partial."
+  ]
+}

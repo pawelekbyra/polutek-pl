@@ -5,8 +5,9 @@ import EmailSubscriptionConsentModal from '@/app/components/subscriptions/EmailS
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { txFor } from "../../i18n/mock-language";
+import type { Locale } from '@/lib/i18n/routing';
 
-const lang = vi.hoisted(() => ({ language: 'pl' }));
+const lang = vi.hoisted(() => ({ language: 'pl' as Locale }));
 
 // Mock LanguageContext
 vi.mock('@/app/components/LanguageContext', () => ({
@@ -110,7 +111,8 @@ describe('EmailSubscriptionConsentModal', () => {
   });
 
   it("ends right after the buttons: no withdrawal note and no Privacy Policy or Terms links in the modal", () => {
-    for (const language of ['pl', 'en']) {
+    const languages: Locale[] = ['pl', 'en'];
+    for (const language of languages) {
       lang.language = language;
       render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
       expect(screen.queryByTestId('email-consent-legal')).toBeNull();
@@ -124,7 +126,8 @@ describe('EmailSubscriptionConsentModal', () => {
   });
 
   it("protects line breaking in CSS, in any language: balanced text, width cap, lang for hyphenation, CJK rules", () => {
-    for (const language of ['pl', 'de', 'zh']) {
+    const languages: Locale[] = ['pl', 'de', 'zh'];
+    for (const language of languages) {
       lang.language = language;
       render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
       const dialog = screen.getByRole('dialog');

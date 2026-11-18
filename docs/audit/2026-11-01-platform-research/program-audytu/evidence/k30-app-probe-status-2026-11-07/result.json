@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-07",
+  "package": "K30 partial: require successful HTTP status from public app health probe",
+  "base_commit": "af22777d",
+  "checks": [
+    {
+      "command": "npx vitest run tests/unit/api/health-route.test.ts tests/unit/modules/health/check-health.use-case.test.ts tests/unit/admin-overview/overview-use-cases.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "result": "PASS",
+      "files": 3,
+      "tests": 29
+    },
+    {
+      "command": "npx eslint lib/modules/admin-overview/infrastructure/probes.ts tests/unit/admin-overview/overview-use-cases.test.ts",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "scope": "Local unit test with synthetic Response objects. No external service, database, server, or production environment was contacted.",
+  "finding": "probePublicApp now treats only 2xx as healthy; 401, 404, 500 and 503 are unhealthy. The distinct HLS Worker probe still treats its expected root-path 404 as alive. This does not provide a video manifest/segment/decode canary, QoE freshness, alert delivery, or liveness/readiness split. K30 remains partial."
+}

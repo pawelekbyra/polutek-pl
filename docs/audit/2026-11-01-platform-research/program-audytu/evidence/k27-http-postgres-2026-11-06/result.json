@@ -1,0 +1,58 @@
+{
+  "package": "K27 export through local Next HTTP with Better Auth and PostgreSQL",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "base_revision": "f7ac94b5",
+  "test_file": "tests/postgres/user-export-http.pg.test.ts",
+  "database": {
+    "engine": "PostgreSQL 17 (postgres:17-alpine)",
+    "migrations_applied": 84,
+    "created_for_test": true,
+    "bound_to": "127.0.0.1:55445",
+    "container_removed": true,
+    "synthetic_user_count_after_cleanup": 0
+  },
+  "runtime": {
+    "next": "local development server",
+    "http": "loopback, dynamically selected available port",
+    "better_auth": "real configured instance and signed pp.session_token cookie",
+    "rate_limiter": "real in-memory development store",
+    "external_services": false,
+    "reverse_proxy": false
+  },
+  "checks": {
+    "vitest": {
+      "command": "DATABASE_URL=<disposable> DATABASE_URL_UNPOOLED=<disposable> npx vitest run --config vitest.postgres.config.ts tests/postgres/user-export-http.pg.test.ts",
+      "files_passed": 1,
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "duration_seconds": 14.22,
+      "exit_code": 0
+    },
+    "repository_typecheck": {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exit_code": 0
+    },
+    "eslint": {
+      "command": "npx eslint tests/postgres/user-export-http.pg.test.ts",
+      "exit_code": 0
+    },
+    "diff_check": {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  },
+  "observed": [
+    "Guest GET /api/user/export returned 401.",
+    "Signed live owner cookie returned 200 with Cache-Control: no-store and attachment disposition.",
+    "Export response contained the owner's comment and excluded another user's comment on the same video.",
+    "After deleting the session row, the same signed cookie returned 401.",
+    "Synthetic user count was zero after test teardown."
+  ],
+  "scope_limits": [
+    "The server runs in local Next development mode; production build and reverse proxy were not part of this test.",
+    "Rate limiting used the actual in-memory development store; no Redis or Cloudflare service was used.",
+    "This covers only the seeded account and comment categories, not every K27 data category or K37 export scale/streaming.",
+    "K05/K11/K26 policy and data-dependency review, K37, and independent code review remain open."
+  ]
+}

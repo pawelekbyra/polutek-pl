@@ -1,0 +1,51 @@
+{
+  "package": "K14",
+  "finding": "R03",
+  "date": "2026-11-06",
+  "baseRevision": "9b204e3a",
+  "status": "PARTIAL_LOCAL_VERIFICATION",
+  "change": {
+    "files": [
+      "lib/modules/video-pipeline/application/process-encode-job.ts",
+      "lib/modules/video-pipeline/infrastructure/r2-storage.ts",
+      "tests/unit/video-pipeline/process-encode-job.test.ts",
+      "tests/unit/video-pipeline/r2-storage-delete.test.ts"
+    ],
+    "behavior": [
+      "On the first failed parallel upload, stop assigning files and abort the upload-scoped signal.",
+      "Wait for every started PUT to settle before returning the error and allowing R2/work-directory cleanup.",
+      "Pass AbortSignal through the S3 PutObject request and destroy its file stream when the request settles.",
+      "Keep upload failure cancellation separate from job cancellation so a transient PUT error remains retryable."
+    ]
+  },
+  "redRegression": {
+    "command": "npx vitest run tests/unit/video-pipeline/process-encode-job.test.ts -t 'waits for every started upload' --reporter=verbose",
+    "exitCode": 1,
+    "observed": "Before the fix, cleanup event index 5 preceded the in-flight upload completion at event index 7."
+  },
+  "greenVerification": {
+    "focusedTests": {
+      "command": "npx vitest run tests/unit/video-pipeline/process-encode-job.test.ts tests/unit/video-pipeline/r2-storage-delete.test.ts --reporter=json",
+      "files": 5,
+      "passed": 23,
+      "failed": 0,
+      "raw": "vitest.json"
+    },
+    "eslint": {
+      "command": "npx eslint lib/modules/video-pipeline/application/process-encode-job.ts lib/modules/video-pipeline/infrastructure/r2-storage.ts tests/unit/video-pipeline/process-encode-job.test.ts tests/unit/video-pipeline/r2-storage-delete.test.ts",
+      "passed": true,
+      "log": "eslint.log"
+    },
+    "repoTypecheck": {
+      "command": "npm run typecheck",
+      "passed": true,
+      "log": "typecheck.log"
+    },
+    "gitDiffCheck": "PASS"
+  },
+  "limitations": [
+    "No Cloudflare R2 or other S3-compatible sandbox was used; provider cancellation timing remains unverified.",
+    "No full public/admin build was run for this worker/storage change.",
+    "K14 remains open for independent review and provider-backed acceptance; local tests do not close K16 attempt isolation."
+  ]
+}

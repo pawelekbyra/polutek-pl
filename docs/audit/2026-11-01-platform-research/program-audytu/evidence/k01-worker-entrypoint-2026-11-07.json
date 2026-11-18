@@ -1,0 +1,44 @@
+{
+  "package": "K01-T3 production worker entrypoint local acceptance",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "result": {
+    "test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "worker_process": "separate Node/tsx process launching scripts/video-worker.ts; graceful SIGTERM observed after SUCCEEDED",
+    "pipeline": "actual worker entrypoint, Prisma queue claim, FFmpeg 8.0.1, AWS SDK R2 client, OriginalsReader/HlsWriter, playlist verification and Prisma finalizer",
+    "object_storage": "in-memory S3-shaped HTTP fixture bound to 127.0.0.1; test endpoint enabled only in NODE_ENV=test and restricted to loopback HTTP",
+    "database": "disposable PostgreSQL 17.11; 84/84 Prisma migrations",
+    "worker_unit_guard": "2/2 PASS for loopback-only endpoint and production-mode refusal",
+    "eslint": "PASS",
+    "repo_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "assertions": [
+    "The disposable database contained only the target eligible queued job before the worker started.",
+    "The actual worker process reached SUCCEEDED/DONE at 100 percent and emitted started/stopped lifecycle logs.",
+    "The database has exactly one active route and one READY SELF_HLS asset; the asset key uses the claimed attemptId.",
+    "The loopback store contains master and variant playlists, an fMP4 segment and poster; HlsWriter verified playlist references before finalization.",
+    "After SUCCEEDED, SIGTERM caused graceful worker shutdown; all fixture rows were removed."
+  ],
+  "source_sha256": {
+    "scripts/video-worker.ts": "c61ddcdc8bb0aa3069260f9a00471fa96c387a12bdd42c812ae8eb8e4d4986c4",
+    "lib/modules/video-pipeline/infrastructure/r2-storage.ts": "79a7f252c266a1a447fe13342bcc246ed086855d41fb7250c823bd8e0da6945a",
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "1e63392e4795e03f80f564aab29893a6b220497ed5933e9acc673063f4f5e40b",
+    "tests/unit/video-pipeline/r2-client-test-endpoint.test.ts": "abb17d59f1c0dbfeceb0a1a7edc4a819fad3882fc073b4458aab2228af922d1b"
+  },
+  "cleanup": {
+    "fixture_users": 0,
+    "fixture_creators": 0,
+    "fixture_videos": 0,
+    "fixture_encode_jobs": 0,
+    "temporary_postgres_container_stopped_and_removed": true,
+    "worker_temp_directory_removed": true,
+    "loopback_object_store_memory_cleared": true
+  },
+  "limitations": [
+    "Does not exercise Next.js upload or playback HTTP routes and is not a browser test.",
+    "The loopback S3-shaped fixture is not Cloudflare R2; provider durability, multipart semantics, ETag/CORS and edge playback remain unverified.",
+    "K01-T3 and K35 remain partial; real R2 acceptance and independent review remain open."
+  ]
+}

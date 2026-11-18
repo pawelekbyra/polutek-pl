@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-11",
+  "repository_head_sha": "bd035b66a011e813707586439471b7d603d48276",
+  "status": "passed",
+  "finding": "K07 bounded request body readers local retest",
+  "source_sha256": {
+    "lib/utils/request-body.ts": "3db6f89d527279f820a3c1ca540905b7b9812d8537f3a32ff4cd31c0ddf84f65",
+    "tests/unit/utils/request-body.test.ts": "b7d316a221fce2ac777f449d8009e063ff71ded9a101a594d2ad8bfad3fe32ca",
+    "lib/api/studio-route.ts": "30fa0e2ab9aaf7ec3a7ffb7eafd6e48fb95aa018e4211990b9d47e184ed82653",
+    "next.config.mjs": "86fad172be3a0c662b1838a1fb9a22ad00ba1affa65c9c1e149362b6fe69ef15"
+  },
+  "commands": [
+    "npx vitest run tests/unit/utils/request-body.test.ts",
+    "npx eslint tests/unit/utils/request-body.test.ts lib/utils/request-body.ts lib/api/studio-route.ts",
+    "git diff --check"
+  ],
+  "results": {
+    "targeted_test_file": "1 passed",
+    "tests": "13 passed, 0 failed",
+    "eslint": "passed",
+    "covers": [
+      "rejects oversized declared and streamed bodies before JSON parsing",
+      "handles absent and understated Content-Length",
+      "bounds multipart bytes and field count before native FormData parsing",
+      "accepts the exact byte boundary",
+      "accepts the legal 10000-part completion body within the configured proxy-safe cap",
+      "returns 413 before schema parsing for oversized streamed Studio JSON"
+    ]
+  },
+  "limitations": [
+    "Tests use local synthetic Request streams and do not include the external reverse proxy or Cloudflare Tunnel.",
+    "No parallel full-Next adversarial load, production endpoint, or external service was exercised.",
+    "K07 remains open for external proxy behavior, broader route coverage, and independent review."
+  ]
+}

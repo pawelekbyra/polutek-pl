@@ -286,6 +286,8 @@ Adresy miniatur w bazie są pełnymi adresami S3 konta R2 (`thumbnails-r2.md`): 
 
 ## 4. Budowa i wdrożenie aplikacji
 
+> **Granica K06 (2026-11-06):** poniższe procedury opisują odtworzenie według starego stanu serwera i nie są zgodne z proof-aware kandydatem z gałęzi audytu. Nowy `deploy.sh` nie buduje ani nie aktywuje tagów ręcznych; przed jego użyciem wymagany jest kompletny proof bundle, pełna rewizja i zewnętrznie zatwierdzony hash. Aktualna procedura kandydata i testowane warianty: [`RELEASE-PROOF.md`](RELEASE-PROOF.md). Nie kopiować skryptów z tej gałęzi na serwer przed osobnym przeglądem i wdrożeniem.
+
 **Cel:** na odtworzonej bazie postawić stronę, `encoder`, `collector` i panel.
 **Wejścia:** dostęp do repo (rozdz. 0.3), odtworzone pliki env (rozdz. 2.3). Szczegóły skryptów: [`../../deploy/serwerek/deploy.sh`](../../deploy/serwerek/deploy.sh), [`../../deploy/serwerek/deploy-admin.sh`](../../deploy/serwerek/deploy-admin.sh), `SERWEREK.md` rozdz. 7.
 

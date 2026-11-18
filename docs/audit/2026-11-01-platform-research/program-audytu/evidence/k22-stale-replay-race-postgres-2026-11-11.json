@@ -1,0 +1,35 @@
+{
+  "recordedAt": "2026-11-11",
+  "baseCommit": "815b7de0",
+  "workingTreeClean": false,
+  "files": {
+    "tests/postgres/original-upload.pg.test.ts": "c8b4268bb9ac33f8a957bb0b1252e63c28352bb517d2422bf4abcafae852ce73"
+  },
+  "environment": {
+    "postgres": "17-alpine (PostgreSQL 17.11)",
+    "migrations": "84/84",
+    "container": "disposable, tmpfs data, port bound to 127.0.0.1; removed after test",
+    "storage": "controlled storage double"
+  },
+  "test": {
+    "command": "npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+    "file": "tests/postgres/original-upload.pg.test.ts",
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  "newScenario": {
+    "ordering": "v1 retry waits after storage verification; first request activates v1; v2 completes and becomes active; delayed v1 retry resumes",
+    "staleRetry": "HTTP 409 UPLOAD_NOT_OPEN",
+    "activeOriginal": "v2 remains active",
+    "jobs": "exactly one job for v1 and one for v2"
+  },
+  "additionalChecks": {
+    "command": "npm run typecheck && npx eslint tests/postgres/original-upload.pg.test.ts",
+    "result": "PASS"
+  },
+  "limitations": [
+    "Controlled storage double; no real R2, browser, or deployed multi-process instance.",
+    "Independent review and remaining K22 ETag/CORS, expiry, cancel, and foreign-original scenarios remain open."
+  ]
+}

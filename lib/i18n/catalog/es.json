@@ -685,7 +685,6 @@
  "Previous": "Anterior",
  "Creating a private draft…": "Creando un borrador privado…",
  "Upload stopped.": "Subida detenida.",
- "Keep this tab open. If you stop, the video stays a private draft.": "Mantenga esta pestaña abierta. Si se detiene, el vídeo queda como borrador privado.",
  "Go to the draft": "Ir al borrador",
  "Back to videos": "Volver a los vídeos",
  "You have unsaved changes. Leave without saving?": "Hay cambios sin guardar. ¿Salir sin guardar?",
@@ -1137,5 +1136,10 @@
   "See all": "Ver todas",
   "PREMIERE: {0}.": "ESTRENO: {0}.",
   "Tip The Guy": "Dale una propina",
-  "Payment processed by Stripe": "Pago procesado por Stripe"
+  "Payment processed by Stripe": "Pago procesado por Stripe",
+ "Operation in progress.": "Operación en curso.",
+ "You can refresh or come back later. Choose the same file to resume from the parts already stored.": "Puedes actualizar la página o volver más tarde. Elige el mismo archivo para reanudar la carga desde las partes guardadas.",
+ "Discard unfinished upload": "Descartar la carga sin terminar",
+ "Could not discard the upload.": "No se pudo descartar la carga.",
+ "Delete the unfinished upload and its stored parts?": "¿Eliminar la carga sin terminar y las partes guardadas?"
 }

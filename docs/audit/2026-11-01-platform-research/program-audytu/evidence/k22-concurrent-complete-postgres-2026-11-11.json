@@ -1,0 +1,43 @@
+{
+  "recordedAt": "2026-11-11T20:19:15.571Z",
+  "baseCommit": "619ee4fc9787146b0dcd38efc07b9a25d466cd1d",
+  "workingTreeClean": false,
+  "files": {
+    "lib/modules/video-pipeline/application/original-upload.use-cases.ts": "19c22afe0b6a52e62d8c5754b6290e9c3b3a31fa162097c090266696a551291c",
+    "tests/postgres/original-upload.pg.test.ts": "8475d26440a37de212882035139ec2e2d499fef9440e2e9a1cfbe4fbc8e7eb20"
+  },
+  "environment": {
+    "postgres": "17.11",
+    "migrations": "84/84",
+    "container": "disposable with tmpfs data; port bound to 127.0.0.1; removed after test",
+    "r2": "controlled storage double"
+  },
+  "test": {
+    "file": "tests/postgres/original-upload.pg.test.ts",
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0
+  },
+  "newScenario": {
+    "name": "two Studio tabs complete the same multipart upload concurrently",
+    "responses": "both HTTP 200 with identical originalId and encode-job id",
+    "database": "one READY original, activeOriginalId points to it, exactly one encode job",
+    "storageCompleteCalls": 2,
+    "secondStorageResponse": "NoSuchUpload after first request wins"
+  },
+  "fullQuality": {
+    "command": "npm run quality",
+    "architecture": "PASS",
+    "typecheck": "PASS",
+    "files": "584 passed, 1 skipped",
+    "tests": "5167 passed, 2 skipped"
+  },
+  "additionalChecks": {
+    "command": "npx eslint lib/modules/video-pipeline/application/original-upload.use-cases.ts tests/postgres/original-upload.pg.test.ts",
+    "result": "PASS"
+  },
+  "limitations": [
+    "Storage and auth are controlled; this does not exercise real R2, browser scheduling, or deployed multi-process instances.",
+    "K22 expiry/CORS, cancelled upload, distinct file, and independent review remain open."
+  ]
+}

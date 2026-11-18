@@ -101,6 +101,9 @@ describe("playlist slugs", () => {
     };
     const result = await createPlaylist(ctx, { channelId: "ch-1", title: "Race" });
     expect(result.ok && result.data.slug).toBe("race-2");
+    if (result.ok) {
+      expect(state.audit.filter((event) => event.action === "PLAYLIST_CREATED" && event.targetId === result.data.id)).toHaveLength(1);
+    }
   });
 });
 

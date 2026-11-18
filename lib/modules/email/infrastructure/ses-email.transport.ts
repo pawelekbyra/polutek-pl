@@ -104,8 +104,8 @@ export function extractSesMessageId(response: unknown): string | null {
 }
 
 export function mapSesError(error: unknown): EmailSendError {
-  const e = (error && typeof error === "object" ? error : {}) as { code?: unknown; responseCode?: unknown; message?: unknown };
-  const code = typeof e.code === "string" ? e.code : "";
+  const e = (error && typeof error === "object" ? error : {}) as { code?: unknown; originalCode?: unknown; responseCode?: unknown; message?: unknown };
+  const code = typeof e.originalCode === "string" ? e.originalCode : typeof e.code === "string" ? e.code : "";
   const smtp = typeof e.responseCode === "number" ? e.responseCode : null;
   const message = (typeof e.message === "string" ? e.message : String(error)).slice(0, 300);
   if (smtp) return { name: `ses_smtp_${smtp}`, message, statusCode: smtp };

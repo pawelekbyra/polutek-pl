@@ -10,7 +10,8 @@
  *                (dead man's switch); a WARN reported for 30 min is escalated here too (second channel).
  * A check alerts after 2 failed runs in a row (no e-mail for a blip), again every 6 h while failing, and once
  * when it recovers. E-mail through Resend, at most MAX_ALERTS_PER_DAY a day (the app shares the Resend quota).
- * State: D1 (binding DB). Free-plan budget: 288 cron runs + 288 pings a day.
+ * State: D1 (binding DB). Provider acceptance, SENT state, and daily quota are committed together.
+ * Free-plan budget: 288 cron runs + 288 pings a day.
  *
  * HTTP (all need "Authorization: Bearer <PING_TOKEN>"):
  *   POST /ping        body "OK" or "WARN <issues>"  (health.sh)
@@ -34,6 +35,10 @@ const REALERT_MS = 6 * 60 * 60 * 1000;
 const PING_STALE_MS = 15 * 60 * 1000;
 const WARN_ESCALATE_MS = 30 * 60 * 1000;
 const MAX_ALERTS_PER_DAY = 20;
+const MAX_DELIVERIES_PER_RUN = 100;
+const DELIVERY_LEASE_MS = 30_000;
+const DELIVERY_RETRY_BASE_MS = 5 * 60 * 1000;
+const DELIVERY_RETRY_MAX_MS = 6 * 60 * 60 * 1000;
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS check_state (name TEXT PRIMARY KEY, ok INTEGER NOT NULL, fails INTEGER NOT NULL,
@@ -41,6 +46,11 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS ping (source TEXT PRIMARY KEY, at INTEGER NOT NULL, status TEXT NOT NULL,
      warn_since INTEGER)`,
   `CREATE TABLE IF NOT EXISTS alert_day (day TEXT PRIMARY KEY, sent INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS alert_delivery (
+     id TEXT PRIMARY KEY, check_name TEXT NOT NULL, kind TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL,
+     status TEXT NOT NULL CHECK(status IN ('PENDING', 'SENT')), attempts INTEGER NOT NULL DEFAULT 0,
+     created_at INTEGER NOT NULL, retry_at INTEGER NOT NULL, lease_until INTEGER,
+     sent_at INTEGER, last_error TEXT)`,
 ];
 
 async function ensureSchema(db) {
@@ -85,19 +95,79 @@ async function evaluate(env, now) {
   return results;
 }
 
-async function sendMail(env, subject, text, now) {
+async function sendMail(env, subject, text, now, idempotencyKey) {
   const day = new Date(now).toISOString().slice(0, 10);
   const row = await env.DB.prepare('SELECT sent FROM alert_day WHERE day = ?').bind(day).first();
-  if ((row ? row.sent : 0) >= MAX_ALERTS_PER_DAY) return false;
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: env.ALERT_FROM, to: [env.ALERT_TO], subject, text, tags: [{ name: 'kind', value: 'watchdog' }] }),
-  });
-  if (!response.ok) return false;
-  await env.DB.prepare('INSERT INTO alert_day (day, sent) VALUES (?, 1) ON CONFLICT(day) DO UPDATE SET sent = sent + 1').bind(day).run();
-  await env.DB.prepare('DELETE FROM alert_day WHERE day < ?').bind(new Date(now - 7 * 86400000).toISOString().slice(0, 10)).run();
-  return true;
+  if ((row ? row.sent : 0) >= MAX_ALERTS_PER_DAY) {
+    return { sent: false, retryAt: Date.parse(`${day}T00:00:00.000Z`) + 86400000, error: 'daily-limit' };
+  }
+  let response;
+  try {
+    response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+      },
+      body: JSON.stringify({ from: env.ALERT_FROM, to: [env.ALERT_TO], subject, text, tags: [{ name: 'kind', value: 'watchdog' }] }),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch (error) {
+    return { sent: false, retryAt: null, error: error && error.name ? error.name : 'network-error' };
+  }
+  if (!response.ok) return { sent: false, retryAt: null, error: `http-${response.status}` };
+  // Outbox deliveries account for provider acceptance together with SENT in one D1 transaction below.
+  // If that transaction fails, retrying the same event uses the same provider idempotency key.
+  if (!idempotencyKey) {
+    await env.DB.prepare('INSERT INTO alert_day (day, sent) VALUES (?, 1) ON CONFLICT(day) DO UPDATE SET sent = sent + 1').bind(day).run();
+    await env.DB.prepare('DELETE FROM alert_day WHERE day < ?').bind(new Date(now - 7 * 86400000).toISOString().slice(0, 10)).run();
+  }
+  return { sent: true, retryAt: null, error: null };
+}
+
+async function queueDelivery(env, checkName, previous, state, mail, now) {
+  const recovered = mail.subject.startsWith('[pp-watchdog] OK again:');
+  const incidentAt = recovered ? previous.since : state.since;
+  const occurrence = recovered ? 'recovery' : `down-${state.last_alert}`;
+  const id = `${checkName}:${incidentAt}:${occurrence}`;
+  await env.DB.prepare(
+    `INSERT INTO alert_delivery (id, check_name, kind, subject, body, status, attempts, created_at, retry_at)
+     VALUES (?, ?, ?, ?, ?, 'PENDING', 0, ?, ?)
+     ON CONFLICT(id) DO NOTHING`,
+  ).bind(id, checkName, recovered ? 'RECOVERY' : 'DOWN', mail.subject, mail.text, now, now).run();
+}
+
+async function deliverPending(env, now) {
+  const { results } = await env.DB.prepare(
+    `SELECT * FROM alert_delivery WHERE status = 'PENDING' AND retry_at <= ?
+     AND (lease_until IS NULL OR lease_until <= ?) ORDER BY created_at, id LIMIT ?`,
+  ).bind(now, now, MAX_DELIVERIES_PER_RUN).all();
+  for (const candidate of results) {
+    // The conditional update is the claim: overlapping cron/manual runs cannot deliver this row together.
+    const claimed = await env.DB.prepare(
+      `UPDATE alert_delivery SET lease_until = ? WHERE id = ? AND status = 'PENDING'
+       AND retry_at <= ? AND (lease_until IS NULL OR lease_until <= ?) RETURNING *`,
+    ).bind(now + DELIVERY_LEASE_MS, candidate.id, now, now).first();
+    if (!claimed) continue;
+    const result = await sendMail(env, claimed.subject, claimed.body, now, claimed.id);
+    if (result.sent) {
+      const day = new Date(now).toISOString().slice(0, 10);
+      await env.DB.batch([
+        env.DB.prepare(
+          `UPDATE alert_delivery SET status = 'SENT', sent_at = ?, lease_until = NULL, last_error = NULL WHERE id = ? AND status = 'PENDING'`,
+        ).bind(now, claimed.id),
+        env.DB.prepare('INSERT INTO alert_day (day, sent) VALUES (?, 1) ON CONFLICT(day) DO UPDATE SET sent = sent + 1').bind(day),
+        env.DB.prepare('DELETE FROM alert_day WHERE day < ?').bind(new Date(now - 7 * 86400000).toISOString().slice(0, 10)),
+      ]);
+      continue;
+    }
+    const attempts = claimed.attempts + 1;
+    const backoff = Math.min(DELIVERY_RETRY_BASE_MS * (2 ** Math.min(attempts - 1, 10)), DELIVERY_RETRY_MAX_MS);
+    await env.DB.prepare(
+      `UPDATE alert_delivery SET attempts = ?, retry_at = ?, lease_until = NULL, last_error = ? WHERE id = ? AND status = 'PENDING'`,
+    ).bind(attempts, Math.max(result.retryAt ?? 0, now + backoff), result.error, claimed.id).run();
+  }
 }
 
 /** Applies one result to the stored state and decides about an e-mail. Exported for tests. */
@@ -140,9 +210,7 @@ async function runChecks(env, now = Date.now()) {
   for (const result of results) {
     const previous = await env.DB.prepare('SELECT * FROM check_state WHERE name = ?').bind(result.name).first();
     const { state, mail } = nextState(previous, result, now);
-    if (mail && !(await sendMail(env, mail.subject, mail.text, now)) && state.last_alert === now) {
-      state.last_alert = previous ? previous.last_alert : null; // not sent: try again next run
-    }
+    if (mail) await queueDelivery(env, result.name, previous || state, state, mail, now);
     await env.DB.prepare(
       `INSERT INTO check_state (name, ok, fails, since, last_alert, detail, checked_at) VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(name) DO UPDATE SET ok = excluded.ok, fails = excluded.fails, since = excluded.since,
@@ -150,6 +218,7 @@ async function runChecks(env, now = Date.now()) {
     ).bind(state.name, state.ok, state.fails, state.since, state.last_alert, state.detail, state.checked_at).run();
     states.push(state);
   }
+  await deliverPending(env, now);
   return states;
 }
 
@@ -177,8 +246,8 @@ export default {
     if (request.method === 'POST' && pathname === '/run') return json(await runChecks(env, now));
     if (request.method === 'POST' && pathname === '/test-alert') {
       await ensureSchema(env.DB);
-      const sent = await sendMail(env, '[pp-watchdog] test alert', `Test e-mail from pp-watchdog at ${new Date(now).toISOString()}. No action needed.`, now);
-      return json({ sent }, sent ? 200 : 502);
+      const result = await sendMail(env, '[pp-watchdog] test alert', `Test e-mail from pp-watchdog at ${new Date(now).toISOString()}. No action needed.`, now);
+      return json({ sent: result.sent }, result.sent ? 200 : 502);
     }
     if (request.method === 'GET' && pathname === '/status') {
       await ensureSchema(env.DB);

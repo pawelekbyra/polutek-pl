@@ -1,0 +1,88 @@
+{
+  "package": "K22/R22",
+  "date": "2026-11-06",
+  "branch": "docs/polutek-platform-audit",
+  "status": "PARTIAL",
+  "scope": "Use the shared multipart engine in Studio; preserve the draft/reservation over interruptions and page reload; resume only missing parts for a matching file; expose deliberate discard separately from pause.",
+  "implementation": [
+    "Studio now uses lib/video-upload/multipart-uploader.ts through its /api/studio/videos/:id/upload route adapter; the admin route and old localStorage key remain compatible.",
+    "An interrupted request does not DELETE the reservation or clear the resume key. Explicit discard aborts only the selected originalId; when active, it first aborts and awaits PUT workers before requesting server cleanup.",
+    "Studio stores the associated draft id across reloads and verifies the draft still belongs to the current Studio session before reuse.",
+    "Resume identity includes file name, size, mtime and SHA-256 of metadata plus five bounded 32 KiB samples across the file. It avoids reading the full video but is a sampled fingerprint, not a full-file digest.",
+    "Studio completion forwards the publish-after-encoding choice through the shared engine."
+  ],
+  "checks": [
+    {
+      "name": "focused-unit",
+      "command": "npx vitest run tests/unit/studio/upload-original.test.ts tests/unit/video-pipeline/multipart-uploader.test.ts tests/unit/video-api-contracts.test.ts tests/unit/video-upload/studio-resume.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "files": 4,
+      "tests": 34,
+      "passed": 34,
+      "failed": 0,
+      "covers": [
+        "Studio adapter route construction",
+        "interruption preserves reservation",
+        "refresh-style retry lists stored parts and skips them",
+        "different sampled contents do not share a resume point",
+        "deliberate DELETE only clears local state after success",
+        "draft id remember/forget helper",
+        "publish-after-ready flag"
+      ]
+    },
+    {
+      "name": "postgres-studio-routes",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/original-upload.pg.test.ts --testTimeout=120000 --hookTimeout=120000",
+      "exitCode": 0,
+      "migrationsApplied": 83,
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "covers": [
+        "actual Studio start and GET-parts handlers over real PostgreSQL",
+        "actual pipeline handler and completion/replay flows",
+        "older generic Studio client still reads additive start response"
+      ],
+      "storage": "Controlled fake; not live R2."
+    },
+    {
+      "name": "eslint",
+      "command": "npx eslint <9 touched TS/TSX test/code files>",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 1,
+      "warningNote": "Existing react-hooks/set-state-in-effect warning at StudioUploadWizard cover preview effect."
+    },
+    {
+      "name": "typecheck",
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exitCode": 0
+    },
+    {
+      "name": "studio-browser-resume",
+      "command": "DATABASE_URL=<fresh-disposable-PostgreSQL-17> E2E_BASE_URL=http://127.0.0.1:<local-next-port> npx playwright test tests/e2e/studio-upload-resume.spec.ts --project=chromium",
+      "exitCode": 0,
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "covers": [
+        "rendered Studio wizard persists its draft id across a browser reload",
+        "same file fingerprint resumes stored ETag without another multipart start or part PUT",
+        "retry after a temporary completion failure completes the existing multipart upload"
+      ],
+      "storage": "Controlled same-origin R2 part PUT; not live R2."
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "limits": [
+    "The browser test used a disposable PostgreSQL database, a local Next server and a controlled same-origin R2 route; no two-tab acceptance or live R2/S3-compatible multipart upload was run.",
+    "No live R2/S3-compatible multipart upload was run. Claude must exercise authorized Studio upload, refresh/resume, URL expiry and explicit discard against the server non-production bucket before deployment.",
+    "The sampled file identity is robust against ordinary re-selection mistakes but does not prove byte-for-byte identity for unsampled differences; do not describe it as a full-file checksum.",
+    "K22-T1/T2 and R22 remain open until two-tab, live storage acceptance and independent review."
+  ],
+  "handoff": "Claude: local browser acceptance now confirms reload/resume and retrying completion without repeating the multipart start or stored part PUT. On a non-production server, confirm actual R2 CORS ETag behavior, expire one presigned URL and verify refresh/retry, deliberately discard and verify reservation/parts are gone, then check two tabs and a different file with identical name/size/mtime. Do not deploy until this runtime acceptance and independent review pass."
+}

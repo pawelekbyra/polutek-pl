@@ -1,0 +1,92 @@
+{
+  "recordedAt": "2026-11-11T19:42:46.393Z",
+  "baseCommit": "3fdb3a0f3cb8a70b1b23554c75bac9d132c266ce",
+  "worktreeClean": false,
+  "packageJsonSha256": "ecf4b6d6a6a452d47c4b4c993efb2067d26e26a36cbacda112e08a58f2d3ceca",
+  "packageLockSha256": "d905e2f2106e302abdeac2b977fb92fb5690a60dba82fa52e1244757a1ee75cb",
+  "npmAudit": {
+    "full": {
+      "info": 0,
+      "low": 3,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 3
+    },
+    "fullFindings": [
+      {
+        "name": "@shadcn/registry",
+        "severity": "low",
+        "direct": false,
+        "fixAvailable": {
+          "name": "shadcn",
+          "version": "1.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      {
+        "name": "deepmerge",
+        "severity": "low",
+        "direct": false,
+        "fixAvailable": {
+          "name": "shadcn",
+          "version": "1.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      {
+        "name": "shadcn",
+        "severity": "low",
+        "direct": true,
+        "fixAvailable": {
+          "name": "shadcn",
+          "version": "1.0.0",
+          "isSemVerMajor": true
+        }
+      }
+    ],
+    "productionOnly": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "lockedVersions": {
+    "vitest": "4.1.12",
+    "@vitest/mocker": "4.1.12",
+    "@vitest/ui": "4.1.12",
+    "@vitest/coverage-v8": "4.1.12",
+    "zod": "4.6.7"
+  },
+  "cleanInstall": {
+    "command": "npm ci --no-audit --no-fund",
+    "result": "PASS",
+    "npm": "10.9.9",
+    "node": "v22.23.3"
+  },
+  "quality": {
+    "command": "npm run quality",
+    "result": "PASS",
+    "architecture": "PASS",
+    "typecheck": "PASS",
+    "testFiles": "584 passed, 1 skipped",
+    "tests": "5167 passed, 2 skipped"
+  },
+  "builds": {
+    "site": {
+      "command": "npm run build",
+      "result": "PASS"
+    },
+    "admin": {
+      "command": "npm run admin:build",
+      "result": "PASS"
+    }
+  },
+  "limitations": [
+    "Full audit retains three low-severity findings in the shadcn CLI dependency tree; npm reports the available fix as a major upgrade to shadcn 1.0.0.",
+    "No Docker runtime image was built or inspected; npm omit=dev audit does not prove the contents of standalone images."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "package": "K35-T2 idempotent retry of Studio multipart completion",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "commit": "e83124a694020cda300dcd2dce7b228a3b3cccf1",
+  "result": {
+    "integration_test": "tests/postgres/k01-video-worker-local.pg.test.ts",
+    "outcome": "1/1 PASS",
+    "database": "disposable PostgreSQL 17.11 after all 84 Prisma migrations; container stopped after test",
+    "scenario": "Repeat the same authenticated complete request after the first request has committed, modeling a client that cannot rely on its first response.",
+    "assertions": [
+      "retry returns HTTP 200 and the same encode job ID",
+      "retry makes no additional object-storage requests",
+      "exactly one encode job exists for the original",
+      "original remains READY"
+    ],
+    "repo_typecheck": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/k01-video-worker-local.pg.test.ts": "e28617b030146322f3834ba6c104d6572049e5232b15d1303b28e832a5c9a215"
+  },
+  "limitations": [
+    "This validates retry after a committed success, not process termination or network loss at every intermediate storage/database boundary.",
+    "Storage is a loopback S3-shaped fixture, not real Cloudflare R2; no deployed edge Worker was used.",
+    "K35-T2 and K35-T1 remain partial; full role/state matrix and independent review remain open."
+  ]
+}

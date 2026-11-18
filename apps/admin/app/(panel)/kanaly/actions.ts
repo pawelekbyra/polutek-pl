@@ -11,7 +11,7 @@ import { RATE } from "@admin/lib/actions/rate-limit";
 import { errorMessage, zodFieldErrors, type ActionResult } from "@admin/lib/actions/panel";
 
 const text = (fd: FormData, key: string) => String(fd.get(key) ?? "");
-const bad = (issues: { path: (string | number)[]; message: string }[]): ActionResult => ({ ok: false, message: "Popraw zaznaczone pola.", fieldErrors: zodFieldErrors(issues) });
+const bad = (issues: z.ZodIssue[]): ActionResult => ({ ok: false, message: "Popraw zaznaczone pola.", fieldErrors: zodFieldErrors(issues) });
 
 const statusSchema = z
   .object({

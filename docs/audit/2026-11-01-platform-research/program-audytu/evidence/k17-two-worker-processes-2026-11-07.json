@@ -1,0 +1,40 @@
+{
+  "id": "K17/R02 separate worker process takeover race",
+  "date": "2026-11-07",
+  "status": "partial-local-verification",
+  "environment": {
+    "database": "disposable local PostgreSQL 17.11 container",
+    "migrations_applied": 84,
+    "node": "v22.23.3",
+    "vitest": "4.1.10",
+    "database_url_scope": "127.0.0.1 only"
+  },
+  "scenario": [
+    "Parent holds a transaction that takes over the encode job from attempt A to attempt B.",
+    "A separate Node/tsx process reads the old A snapshot and attempts the real SELF_HLS finalizer.",
+    "Parent observes process A waiting on the PostgreSQL job-row FOR UPDATE lock, then commits B's takeover.",
+    "Process A is rejected as stale; a separate process for B finalizes and activates only B's asset and route."
+  ],
+  "result": {
+    "targeted_postgres_test": "1/1 PASS",
+    "fixture_rows_after_test": {
+      "users": 0,
+      "creators": 0,
+      "videos": 0,
+      "encode_jobs": 0
+    },
+    "temporary_container_stopped": true,
+    "eslint": "PASS",
+    "repo_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/encode-attempt-fencing-race.pg.test.ts": "c14994d6ced0012afcac2ee751d8d5477e58470f1bc9c3ebf58d674f694cadf3",
+    "tests/helpers/k17-finalize-self-hls-process.ts": "945fd1e927ed4ea18ff7f263232716e122d4b7e21d596bac385ac5b8fe600478"
+  },
+  "limitations": [
+    "Uses local PostgreSQL and synthetic fixtures; does not exercise R2/S3 or physical object cleanup.",
+    "Does not run the full FFmpeg/download/upload worker lifecycle.",
+    "Independent review and non-production provider acceptance remain outstanding; K17/R02 stays partial."
+  ]
+}

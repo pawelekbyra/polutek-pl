@@ -45,10 +45,10 @@ describe('Access Source of Truth (#1036)', () => {
     const videoId = 'patron-video-id';
     const userId = 'user-1';
 
-    // Mock video: PATRON tier
+    // Mock video: LOGGED_IN tier
     vi.mocked(mockPrisma.video.findFirst).mockResolvedValue({
       id: videoId,
-      tier: AccessTier.PATRON,
+      tier: AccessTier.LOGGED_IN,
       status: VideoStatus.PUBLISHED,
       creatorId: mainChannelId,
       creator: { status: 'ACTIVE' }
@@ -77,10 +77,10 @@ describe('Access Source of Truth (#1036)', () => {
   });
 
   it('VideoContentService.getVideoAccess grants a signed-in user without any PatronGrant', async () => {
-    // Support grants nothing (CLAUDE.md §4.4): sign-in alone opens PATRON-tier videos.
+    // Support grants nothing (CLAUDE.md §4.4): sign-in alone opens LOGGED_IN videos.
     vi.mocked(mockPrisma.video.findFirst).mockResolvedValue({
       id: 'patron-video-id',
-      tier: AccessTier.PATRON,
+      tier: AccessTier.LOGGED_IN,
       status: VideoStatus.PUBLISHED,
       creatorId: mainChannelId,
       creator: { status: 'ACTIVE' }
@@ -104,7 +104,7 @@ describe('Access Source of Truth (#1036)', () => {
 
     vi.mocked(mockPrisma.video.findFirst).mockResolvedValue({
       id: videoId,
-      tier: AccessTier.PATRON,
+      tier: AccessTier.LOGGED_IN,
       status: VideoStatus.PUBLISHED,
       creatorId: mainChannelId,
       creator: { status: 'ACTIVE' }

@@ -1,0 +1,52 @@
+{
+  "mode": "fixed",
+  "next": "16.3.8",
+  "result": "PASS",
+  "observations": [
+    {
+      "label": "fixed-public-bad-type",
+      "config": "next.config.mjs",
+      "configSha256": "3a998d5667677def361186707e1d6799a82f0c49304aeb055b551191ca0c8af7",
+      "badType": true,
+      "code": 1,
+      "expectedCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "expectedTypeError": true
+    },
+    {
+      "label": "fixed-public-valid-type",
+      "config": "next.config.mjs",
+      "configSha256": "3a998d5667677def361186707e1d6799a82f0c49304aeb055b551191ca0c8af7",
+      "badType": false,
+      "code": 0,
+      "expectedCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "expectedTypeError": false
+    },
+    {
+      "label": "fixed-admin-bad-type",
+      "config": "apps/admin/next.config.mjs",
+      "configSha256": "f219291301a8c7ff2ff9c9f1412717f0433eadb79809d85d94272b7df0571ea0",
+      "badType": true,
+      "code": 1,
+      "expectedCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "expectedTypeError": true
+    },
+    {
+      "label": "fixed-admin-valid-type",
+      "config": "apps/admin/next.config.mjs",
+      "configSha256": "f219291301a8c7ff2ff9c9f1412717f0433eadb79809d85d94272b7df0571ea0",
+      "badType": false,
+      "code": 0,
+      "expectedCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "expectedTypeError": false
+    }
+  ],
+  "scope": "Isolated actual Next builds importing each real app config; resource-only cpus=1 and agentRules=false overrides. Not full application builds, test gates or exact release artifact binding."
+}

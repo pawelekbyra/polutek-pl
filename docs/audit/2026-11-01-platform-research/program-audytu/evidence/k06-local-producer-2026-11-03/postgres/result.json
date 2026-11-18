@@ -1,0 +1,43 @@
+{
+  "package": "K01-K03-real-postgres-email",
+  "source_parent": "f9e5b027",
+  "fixture_import_origin": "8dce5f94",
+  "red": {
+    "passed": 64,
+    "failed": 11,
+    "files_failed": 2,
+    "meaning": "Invalid historical fixture migration order and a time sample outside retention, not eleven product bugs."
+  },
+  "green": {
+    "total": 77,
+    "passed": 77,
+    "failed": 0,
+    "skipped": 0,
+    "files": 13,
+    "failedFiles": [],
+    "success": true
+  },
+  "postgres": "postgres (PostgreSQL) 17.11",
+  "image": "sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b",
+  "owned_containers_cleaned": 2,
+  "new_receipt_guard": {
+    "red_failed": 9,
+    "red_passed": 28,
+    "green_total_with_compiler_process_regressions": 48,
+    "green_failed": 0
+  },
+  "focused_types_exit": 0,
+  "lint_exit": 0,
+  "source_stable": true,
+  "source_hashes": {
+    "scripts/ops/local-ci-lib.mjs": "b71fd2ac9234644119acd91899937ff54031398b281b6e879a94dfecd8cd8130",
+    "scripts/ops/local-ci.mjs": "55d970c2eaa252e8c41c4cea757fbe8122e65967a1dc35db6615f0a9d686f5a8",
+    "tests/unit/ops/local-ci-lib.test.ts": "d62a9a9f15f907ef83a9961547e7aabb106fc099e7f61fab6207a2a45d80f5e3",
+    "vitest.postgres.config.ts": "d040f51b8b5113049750f59c7b9a45fd1702097194afef2f8e25f67af0837f6e",
+    "tests/postgres/analytics-rollups.pg.test.ts": "e7e3146795bef5a61d4846959dc6a4636eb1764bb7eeb75f7e4a556916c4a974",
+    "tests/postgres/db-cleanup-migration.pg.test.ts": "481ada4117267b8ba8c6ccb47c4ecedd9974ebcfe66b5ce6d1ce1d1317d45f78",
+    "tests/postgres/fixtures/pre-cleanup-seed.sql": "e03f7f2f109a5b913715ed7917511392a74893a047fa32713b12fbba315f6170"
+  },
+  "scope": "Genuine Prisma6.19.3,81 migrations, real PostgreSQL17.11 in new disposable containers and synthetic data. All12 PG suites plus both email idempotency cases. External provider boundaries in other PG tests remain controlled. Not a full HTTP/storage/worker/product acceptance.",
+  "release_ready": false
+}

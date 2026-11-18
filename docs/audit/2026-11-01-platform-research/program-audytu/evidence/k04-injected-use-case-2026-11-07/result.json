@@ -1,0 +1,30 @@
+{
+  "package": "K04/R34",
+  "date": "2026-11-07",
+  "branch": "docs/polutek-platform-audit",
+  "base_revision": "fbbeb271",
+  "test_file": "tests/unit/modules/channel/main-channel-injected-db.test.ts",
+  "scenario": "The actual MainChannelService and ChannelRepository resolve a visible channel using the Prisma-like database injected through createAppContext; the exact injected delegate and query are asserted.",
+  "checks": {
+    "vitest": {
+      "command": "npx vitest run tests/unit/modules/channel/main-channel-injected-db.test.ts",
+      "files_passed": 1,
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "exit_code": 0
+    },
+    "eslint": {
+      "command": "npx eslint tests/unit/modules/channel/main-channel-injected-db.test.ts",
+      "exit_code": 0
+    },
+    "repository_typecheck": {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exit_code": 0
+    }
+  },
+  "scope_limits": [
+    "The injected database is a focused fake delegate, not PostgreSQL; this proves the service/repository composition path and requested database identity only.",
+    "The separate real generated PrismaClient smoke and lazy constructor probe remain the evidence for the default facade; this test does not measure the production bundler or bundle size.",
+    "K04 remains partial pending wider facade/composition-root review and the bundler check after K01."
+  ]
+}

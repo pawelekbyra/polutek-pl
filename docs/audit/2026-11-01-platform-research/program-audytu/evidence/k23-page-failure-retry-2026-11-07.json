@@ -1,0 +1,28 @@
+{
+  "package": "K23 durable fan-out page transaction failure and retry",
+  "date": "2026-11-07",
+  "base_commit": "5d00548d208e8945fc9c9668890a86182f845d6c",
+  "finding": "The durable fan-out must leave a failed recipient page uncommitted and keep the job recoverable for retry.",
+  "test": {
+    "command": "DATABASE_URL=<disposable PostgreSQL 17> DATABASE_URL_UNPOOLED=<same> npx vitest run --config vitest.postgres.config.ts tests/postgres/published-video-notification-intent.pg.test.ts",
+    "result": "4/4 PASS on PostgreSQL 17.11 after 84 migrations",
+    "failure_injection": "A temporary PostgreSQL trigger rejects Notification inserts only for the synthetic test video.",
+    "first_attempt": "Actual fan-out handler + runDurableJobs + repository checkpoint/release keep the job PENDING, increment attempts to 1, retain a null cursor, and commit neither notification rows nor premiereNotifiedAt.",
+    "retry": "After dropping the trigger and setting the synthetic job due, the runner writes one notification, marks premiereNotifiedAt, and completes the job with DONE/attempts=1.",
+    "isolation": "The test runner claims only the fixture job by id; checkpoint, complete, release, notification and transaction operations use real Prisma/PostgreSQL."
+  },
+  "other_checks": {
+    "notification_and_durable_job_unit_suites": "51/51 PASS",
+    "eslint_test_file": "PASS",
+    "repository_typecheck": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "source_sha256": {
+    "tests/postgres/published-video-notification-intent.pg.test.ts": "5530efbc9a3970b533aa0fbc1db031b43103b71eeec7eb6e99667339330fcd57"
+  },
+  "cleanup": "The test verified zero k23 user fixtures and zero matching triggers; its tmpfs PostgreSQL container was removed.",
+  "limits": [
+    "This simulates a PostgreSQL write failure, not an external e-mail/push provider outage; this fan-out creates in-app notification rows.",
+    "No production or external service was used. K23 still requires independent review and non-production operational acceptance."
+  ]
+}

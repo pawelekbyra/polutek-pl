@@ -1,0 +1,66 @@
+{
+  "package": "K27 complete export-category matrix through local HTTP",
+  "date": "2026-11-07",
+  "recorded_at_utc": "2026-11-07T22:55:36.038292+00:00",
+  "branch": "docs/polutek-platform-audit",
+  "base_revision": "7bea7b48f115d6e9be1f8ab4cdda3cfea88a63b1",
+  "test_file": "tests/postgres/user-export-http.pg.test.ts",
+  "test_file_sha256": "c38f49371893e1520c1bd9ceda9d10a4655fb201dad255eef2f7b3c499dfdff2",
+  "database": {
+    "engine": "PostgreSQL 17.11 (postgres:17)",
+    "migrations_applied": 84,
+    "synthetic_only": true,
+    "container_disposable": true,
+    "data_and_scratch": "container tmpfs",
+    "port_binding": "127.0.0.1 only",
+    "container_removed": true
+  },
+  "runtime": {
+    "next": "local development server",
+    "http": "loopback, dynamically selected port",
+    "auth": "real Better Auth session cookie signed with test-only secret",
+    "rate_limiter": "in-memory development store",
+    "external_services": false,
+    "reverse_proxy": false
+  },
+  "checks": {
+    "postgres_integration": {
+      "command": "npx vitest run --config vitest.postgres.config.ts tests/postgres/user-export-http.pg.test.ts --reporter=dot",
+      "files_passed": 1,
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "exit_code": 0
+    },
+    "repository_typecheck": {
+      "command": "npx tsc --noEmit -p tsconfig.typecheck.json",
+      "exit_code": 0
+    },
+    "eslint": {
+      "command": "npx eslint tests/postgres/user-export-http.pg.test.ts",
+      "exit_code": 0
+    },
+    "diff_check": {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    "migrations": {
+      "command": "npx prisma migrate deploy",
+      "applied": 84,
+      "exit_code": 0
+    }
+  },
+  "observed": [
+    "Anonymous request returned 401; an active owner session returned 200, no-store and an attachment response; revoked session returned 401.",
+    "The response asserted all schemaVersion 4 export fields for a synthetic owner with an owned channel and EDITOR membership in another channel.",
+    "The fixture covered account, comments/reactions, subscriptions, e-mail preferences and delivery/event metadata, payments, viewing/playback history, creator profiles/memberships, notifications, patron grants/pass and media attachments.",
+    "Another account owned the collaborator channel and foreign test data; foreign comment, payment and e-mail preference data were excluded from the owner response.",
+    "Secret markers for provider IDs, event payload, payment metadata, network hashes, playback/session IDs, private notification copy/params, patron reasons and payment references were absent.",
+    "Repeated authorized export returned identical data after normalizing the per-response exportedAt timestamp."
+  ],
+  "scope_limits": [
+    "Next ran in development mode; production build, reverse proxy, Redis and deployed runtime were not part of this test.",
+    "Only the seeded account and representative active categories are covered; this does not establish legal completeness or classify every row in CYKL-DANYCH.csv.",
+    "K05/K11/K26 policy dependencies, K37 large-export resource limits and independent review remain open."
+  ],
+  "status": "K27-T1/T2 expanded local HTTP coverage; package remains partial."
+}
