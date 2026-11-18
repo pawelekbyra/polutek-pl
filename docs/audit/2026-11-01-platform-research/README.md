@@ -2,7 +2,7 @@
 
 Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-audit`** w repozytorium `pawelekbyra/polutek-pl`. Właściciel 1 listopada 2026 polecił zachowywać tutaj także poprzednie badanie i dopisywać kolejne wnioski na tej samej gałęzi.
 
-**Roadmapa wznowiona na polecenie właściciela 6 listopada 2026.** Punkt bazowy to lokalny merge aktualnego `origin/main` (`e2d33e0e`), commit `7e6f5335`; pełne `npm run quality` przeszło na tym drzewie. Pakiety K01–K40 są w różnym stopniu częściowo zweryfikowane; żaden nie jest formalnie zamknięty. Ostatni krok: K21/K15 retest na świeżej PostgreSQL po 84 migracjach, 6/6 PASS; K20 ma 8/8 z osobnym procesem finalizera. R2/HLS, pełne Next HTTP, niezależne review i K02 runtime images pozostają otwarte. [Bieżący stan i komenda wznowienia](program-audytu/STAN.md), [postęp i dowody](POSTEP-NAPRAW.md), [mapa commitów](program-audytu/MAPA-COMMITOW.csv). Bez push, PR, merge do main, wdrożenia ani produkcji.
+**Roadmapa wznowiona na polecenie właściciela 6 listopada 2026.** Punkt bazowy to lokalny merge aktualnego `origin/main` (`e2d33e0e`), commit `7e6f5335`; pełne `npm run quality` przeszło na tym drzewie. Pakiety K01–K40 są w różnym stopniu częściowo zweryfikowane; żaden nie jest formalnie zamknięty. Ostatni krok: przygotowano pakiet niezależnego przejęcia przez Claude Code i wypchnięto go na istniejącą gałąź `docs/polutek-platform-audit` (commit `d997a858`). R2/HLS, pełne Next HTTP, niezależne review i K02 runtime images pozostają otwarte. [Pakiet przejęcia](PRZEJECIE-CLAUDE.md), [bieżący stan i komenda wznowienia](program-audytu/STAN.md), [postęp i dowody](POSTEP-NAPRAW.md), [mapa commitów](program-audytu/MAPA-COMMITOW.csv). Bez PR, merge do main ani wdrożenia.
 
 ## Zacznij tutaj
 
