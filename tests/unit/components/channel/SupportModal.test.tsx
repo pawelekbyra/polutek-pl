@@ -101,12 +101,12 @@ describe('SupportModal (tip gate)', () => {
     expect(screen.getByText('Odbiorca napiwku')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wstecz' })).not.toBeInTheDocument();
     // Legal documents open as a second modal on top of the gate, not a new tab.
-    fireEvent.click(screen.getByRole('button', { name: 'Regulamin' }));
+    fireEvent.click(screen.getAllByRole('link', { name: 'Regulamin' })[0]);
     expect(await screen.findByRole('heading', { name: 'Regulamin serwisu' })).toBeInTheDocument();
     expect(document.getElementById('tip-accept-terms-recipient')).not.toHaveAttribute('data-checked');
     fireEvent.click(screen.getAllByRole('button', { name: 'Zamknij' }).at(-1)!);
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Regulamin serwisu' })).not.toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Politykę Prywatności' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Politykę Prywatności' })[0]).toBeInTheDocument();
 
     const next = screen.getByRole('button', { name: 'Dalej' });
     fireEvent.click(next);

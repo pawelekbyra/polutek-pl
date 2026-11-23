@@ -2,7 +2,9 @@
 
 import React from "react";
 import type { SupportedCurrency } from "@/lib/constants";
-import { describeTipMethod, formatTipAmount } from "./tip-flow-config";
+import { PassTrustRow } from "../premium-pass/PassTrustRow";
+import { describeTipMethod } from "./tip-flow-config";
+import { TipRecipientCard, TipTotalBox, tipPayMode } from "./TipGateParts";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 import { TipSelect } from "./TipSelect";
 
@@ -23,7 +25,8 @@ interface TipMethodStepProps {
 /**
  * "Metoda napiwku": a dropdown (so nothing needs scrolling) of the methods Stripe allows for
  * this intent, plus Apple Pay / Google Pay when the device has one set up. Picking only
- * selects; paying is the next step.
+ * selects; paying is the next step. Under it the recipient, the total (with "Zmień" back to
+ * the amount) and the trust row, as in the premium checkout.
  */
 export function TipMethodStep({
   language,
@@ -36,10 +39,12 @@ export function TipMethodStep({
   onChangeAmount,
 }: TipMethodStepProps) {
   const tx = useOptionalTx(language);
+  const mode = tipPayMode();
   return (
     <TipStepLayout
+      bodyClassName="flex flex-col gap-[var(--pass-gap)] pt-[var(--pass-title-gap)]"
       footer={
-        <TipPrimaryButton onClick={onNext} disabled={!selected}>
+        <TipPrimaryButton onClick={onNext} disabled={!selected} lock>
           {tx("Dalej", "Next")}
         </TipPrimaryButton>
       }
@@ -53,29 +58,9 @@ export function TipMethodStep({
         options={methods.map((method) => ({ value: method, ...describeTipMethod(method, tx) }))}
       />
 
-      {selected && (() => {
-        const { icon: MethodIcon, title: methodTitle } = describeTipMethod(selected, tx);
-        return (
-          <div className="mt-5 flex items-start justify-between gap-3 rounded-[14px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-4 py-3">
-            <div className="flex flex-col gap-0.5">
-              <p className="m-0 text-[14px] font-bold tabular-nums text-[var(--chan-ink)]">
-                {tx("Napiwek", "Tip")} {formatTipAmount(amount, currency, language)}
-              </p>
-              <p className="m-0 text-[12px] text-[var(--chan-body)]">
-                {tx("Dla:", "For:")} <span className="font-semibold text-[var(--chan-ink)]">Paweł Perfect</span>
-              </p>
-              <p className="m-0 flex items-center gap-1.5 text-[12px] text-[var(--chan-body)]">
-                {tx("Metoda:", "Method:")}
-                {MethodIcon && <MethodIcon className="h-3.5 w-3.5 shrink-0" />}
-                <span className="font-semibold text-[var(--chan-ink)]">{methodTitle}</span>
-              </p>
-            </div>
-            <button type="button" onClick={onChangeAmount} className="text-[13px] font-bold text-[var(--chan-ink)] hover:underline">
-              {tx("Zmień", "Change")}
-            </button>
-          </div>
-        );
-      })()}
+      <TipRecipientCard tx={tx} mode={mode} />
+      <TipTotalBox tx={tx} language={language} amount={amount} currency={currency} onChange={onChangeAmount} />
+      <PassTrustRow tx={tx} mode={mode} methods={methods} currency={currency} label={tx("Bezpieczne połączenie SSL", "Secure SSL connection")} />
     </TipStepLayout>
   );
 }

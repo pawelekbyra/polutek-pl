@@ -18,10 +18,10 @@ import styles from "./premium-pass.module.css";
  * dots are 44 px apart centre to centre, so the areas never overlap. `disabled` (a payment is being created or confirmed)
  * turns the buttons off. The step itself is announced by the checkout ("Krok N z 3") and the heading takes focus.
  */
-export function PassStepDots({ tx, step, onStep, disabled = false }: { tx: Tx; step: number; onStep?: (step: number) => void; disabled?: boolean }) {
-  const pips = [tx("Dostęp", "Access"), tx("Metoda", "Method"), tx("Płatność", "Payment")];
+export function PassStepDots({ tx, step, onStep, disabled = false, pips: pipLabels, ariaLabel }: { tx: Tx; step: number; onStep?: (step: number) => void; disabled?: boolean; /** Names of the steps (the tip gateway has five); the checkout's three by default. */ pips?: string[]; ariaLabel?: string }) {
+  const pips = pipLabels ?? [tx("Dostęp", "Access"), tx("Metoda", "Method"), tx("Płatność", "Payment")];
   return (
-    <ol className={styles.stepDots} aria-label={tx("Etapy zakupu", "Checkout steps")}>
+    <ol className={styles.stepDots} aria-label={ariaLabel ?? tx("Etapy zakupu", "Checkout steps")}>
       {pips.map((label, i) => {
         const n = i + 1;
         const done = n < step;

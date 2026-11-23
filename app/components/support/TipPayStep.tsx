@@ -97,7 +97,7 @@ function SendButton({
   onClick: () => void;
 }) {
   return (
-    <TipPrimaryButton onClick={onClick} disabled={disabled || busy} busy={busy}>
+    <TipPrimaryButton onClick={onClick} disabled={disabled || busy} busy={busy} lock>
       {busy ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />

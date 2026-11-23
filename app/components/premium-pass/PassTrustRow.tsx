@@ -27,9 +27,10 @@ export function paymentLogosFor(methods: string[], currency: string): LogoId[] {
   return out;
 }
 
-export function PassTrustRow({ tx, mode, methods, currency }: { tx: Tx; mode: PassPayMode; methods: string[]; currency: string }) {
+/** `label` replaces the SSL line (the tip gateway always names the connection only; the logos follow the same rules). */
+export function PassTrustRow({ tx, mode, methods, currency, label: labelOverride }: { tx: Tx; mode: PassPayMode; methods: string[]; currency: string; label?: string }) {
   const logos = mode === "demo" ? [] : paymentLogosFor(methods, currency);
-  const label = mode === "live" ? tx("Bezpieczna płatność SSL", "Secure SSL payment") : tx("Bezpieczne połączenie SSL", "Secure SSL connection");
+  const label = labelOverride ?? (mode === "live" ? tx("Bezpieczna płatność SSL", "Secure SSL payment") : tx("Bezpieczne połączenie SSL", "Secure SSL connection"));
   return (
     <div className={styles.trustRow} data-trust-row="">
       <span className={styles.trustSsl}>

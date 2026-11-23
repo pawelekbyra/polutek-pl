@@ -392,7 +392,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  {hasActivePremiumPass
                    ? <Heart aria-hidden="true" className={styles.supportSpark} strokeWidth={2.2} />
                    : <Sparkles aria-hidden="true" className={styles.supportSpark} strokeWidth={2.2} />}
-                 <span className={styles.supportLabel}>{supportLabel}</span>
+                 {/* Both labels share one grid cell: the button is as wide as the longer of the two, so the swap after the pass status is known never moves the row. */}
+                 <span className={cn(styles.supportLabel, "inline-grid")}>
+                   <span className={cn("col-start-1 row-start-1", hasActivePremiumPass && "invisible")} aria-hidden={hasActivePremiumPass || undefined}>{tx("Kup se Premium", "Get Premium")}</span>
+                   <span className={cn("col-start-1 row-start-1", !hasActivePremiumPass && "invisible")} aria-hidden={!hasActivePremiumPass || undefined}>{tx("Napiwkuj", "Tip The Guy")}</span>
+                 </span>
                </button>
                <div className={cn("relative flex h-[36px] shrink-0 items-center rounded-[12px] bg-[var(--chan-surface)]", styles.actionCluster)}>
                   <button
