@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check } from "../icons";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import { TipLegalDialog, type TipLegalDoc } from "./TipLegalDialog";
+import { LegalLink } from "../legal/legal-sheet-context";
+import { TipQuietLink, TipRecipientCard } from "./TipGateParts";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 
 import { useOptionalTx } from "@/lib/i18n/language-context";
@@ -16,10 +15,14 @@ interface TipRecipientStepProps {
   onTermsChange: (accepted: boolean) => void;
   /** Proceeds to the amount step. */
   onNext: () => void;
-  /** "Nikomu" selected — close the gate immediately. */
+  /** "Nie teraz" — close the gate immediately. */
   onClose: () => void;
 }
 
+/**
+ * Step 1: who the tip goes to (the recipient card, drawn like the checkout's seller card) and the one consent the
+ * gateway asks for. The documents open in the legal sheet on top of the gateway (LegalLink); the texts are unchanged.
+ */
 export function TipRecipientStep({
   language,
   termsAccepted,
@@ -30,19 +33,11 @@ export function TipRecipientStep({
   const tx = useOptionalTx(language);
   const [attempted, setAttempted] = useState(false);
   const showTermsError = attempted && !termsAccepted;
-  const [legalDoc, setLegalDoc] = useState<TipLegalDoc | null>(null);
 
-  const legalLink = (key: TipLegalDoc, label: string) => (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        setLegalDoc(key);
-      }}
-      className="font-semibold text-[var(--chan-ink)] underline underline-offset-2 hover:text-[var(--chan-ink)]"
-    >
+  const legalLink = (doc: "terms" | "privacy", label: string) => (
+    <LegalLink doc={doc} language={language} className="font-semibold text-[var(--chan-ink)] underline underline-offset-2">
       {label}
-    </button>
+    </LegalLink>
   );
 
   const handleNext = () => {
@@ -53,17 +48,18 @@ export function TipRecipientStep({
 
   return (
     <TipStepLayout
-      bodyClassName="flex flex-col pb-0"
+      bodyClassName="flex flex-col gap-[var(--pass-gap)] pt-[var(--pass-title-gap)]"
       footer={
         <>
-          <label className="mb-3 flex cursor-pointer items-start gap-2.5">
+          <div className="mb-2 flex items-start gap-3 py-1">
             <Checkbox
               id="tip-accept-terms-recipient"
               checked={termsAccepted}
               onCheckedChange={(checked) => onTermsChange(checked === true)}
-              className="mt-[2px] shrink-0 border-[var(--cm-amber-46)] bg-white data-checked:border-[var(--chan-ink)] data-checked:bg-[var(--chan-ink)] data-checked:text-white"
+              aria-describedby={showTermsError ? "tip-terms-error" : undefined}
+              className="mt-[1px] size-5 shrink-0 border-2 border-[var(--pass-edge)] bg-white data-checked:border-[var(--pass-cta)] data-checked:bg-[var(--pass-cta)] data-checked:text-white focus-visible:ring-2 focus-visible:ring-[var(--pass-accent)]"
             />
-            <span className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
+            <label htmlFor="tip-accept-terms-recipient" className="cursor-pointer text-[13px] leading-[1.45] text-[var(--chan-body)]">
               {txRich(
                 tx,
                 "Akceptuję {0} i {1}",
@@ -71,8 +67,8 @@ export function TipRecipientStep({
                 legalLink("terms", tx("Regulamin", "Terms")),
                 legalLink("privacy", tx("Politykę Prywatności", "Privacy Policy")),
               )}
-            </span>
-          </label>
+            </label>
+          </div>
           <TipPrimaryButton onClick={handleNext}>
             {tx("Dalej", "Next")}
           </TipPrimaryButton>
@@ -84,45 +80,17 @@ export function TipRecipientStep({
         subtitle={tx("Komu chciałbyś przekazać napiwek?", "Who would you like to tip?")}
       />
 
-      <div className="flex flex-col gap-2">
-        {/* Primary option — Paweł Perfect: visually selected, clicking Dalej proceeds */}
-        <div className="rounded-[16px] border-2 border-[var(--chan-ink)] bg-[var(--chan-amber-soft)] px-4 py-3 shadow-[0_6px_18px_-10px_var(--cm-amber-62)]">
-          <div className="flex items-center gap-3">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--chan-ink)] bg-[var(--chan-ink)]">
-              <Check className="h-3 w-3 text-white" strokeWidth={3} />
-            </span>
-            <span className="text-[15px] font-extrabold text-[var(--chan-ink)]">{tx("Pawłowi Perfectowi", "Paweł Perfect")}</span>
-          </div>
-        </div>
+      <TipRecipientCard tx={tx} />
 
-        {/* Secondary option — Nobody: clicking immediately closes the gate */}
-        <button
-          type="button"
-          onClick={onClose}
-          className={cn(
-            "rounded-[16px] border-2 border-[var(--cm-amber-28)] bg-transparent px-4 py-3 text-left",
-            "transition-[border-color,background-color] duration-150",
-            "hover:border-[var(--chan-ink)] hover:bg-[var(--chan-amber-soft)]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)]",
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--cm-amber-38)]" />
-            <span className="text-[15px] font-semibold text-[var(--chan-body)]">
-              {tx("Nikomu", "Nobody")}
-            </span>
-          </div>
-        </button>
-      </div>
+      <TipQuietLink onClick={onClose}>{tx("Nie teraz", "Not now")}</TipQuietLink>
 
       <p
+        id="tip-terms-error"
         role="alert"
-        className={`mt-auto pt-3 px-2 text-center text-[12px] font-semibold text-destructive transition-opacity duration-150 ${showTermsError ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`mt-auto px-2 text-center text-[13px] font-semibold text-[var(--pass-err)] transition-opacity duration-150 ${showTermsError ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       >
         {tx("Zaakceptuj Regulamin i Politykę Prywatności.", "Please accept the Terms and Privacy Policy.")}
       </p>
-
-      <TipLegalDialog doc={legalDoc} language={language} onClose={() => setLegalDoc(null)} />
     </TipStepLayout>
   );
 }

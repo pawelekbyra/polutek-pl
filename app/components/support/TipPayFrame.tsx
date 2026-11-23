@@ -1,12 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useContext } from "react";
 import { cn } from "@/lib/utils";
 import type { Stripe } from "@stripe/stripe-js";
 import type { SupportedCurrency } from "@/lib/constants";
 import type { TipConfirmOutcome } from "./tip-confirm";
 import { describeTipMethod, formatTipAmount } from "./tip-flow-config";
-import { TipStepHeading, TipStepLayout } from "./TipStepLayout";
+import { TipBackContext, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 
 import { useOptionalTx } from "@/lib/i18n/language-context";
 import type { Locale } from "@/lib/i18n/routing";
@@ -51,17 +51,20 @@ export function PayStepFrame({
 }) {
   const { language, amount, currency, method, onChangeMethod } = props;
   const tx = useOptionalTx(language);
+  const gate = Boolean(useContext(TipBackContext)?.gate);
   const copy = describeTipMethod(method, tx);
+  const pass = Boolean(props.patron) || gate;
   return (
     <TipStepLayout footer={footer}>
-      {!props.patron && <TipStepHeading title={copy.title} />}
-      <div className={cn("mb-[var(--pass-gap-lg,20px)] flex items-center justify-between gap-3 rounded-[14px] border px-4 py-[var(--pass-box-y,12px)]", props.patron ? "border-[var(--chan-line)] bg-[var(--chan-card)]" : "border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)]")}>
+      {/* The checkout frame names the method in the strip below; the heading stays for screen readers (the gate focuses it on each step). */}
+      {!pass ? <TipStepHeading title={copy.title} /> : gate && <h3 data-step-heading="" tabIndex={-1} className="sr-only">{copy.title}</h3>}
+      <div className={cn("mb-[var(--pass-gap-lg,20px)] flex items-center justify-between gap-3 rounded-[14px] border px-4 py-[var(--pass-box-y,12px)]", props.patron ? "border-[var(--chan-line)] bg-[var(--chan-card)]" : gate ? "border-[var(--pass-card-line,var(--chan-line))] bg-[var(--chan-card)]" : "border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)]")}>
         <p className="m-0 text-[14px] font-bold text-[var(--chan-ink)]">
           <span className="tabular-nums">{formatTipAmount(amount, currency, language)}</span>
           <span className="mx-1.5 text-[var(--chan-muted)]">·</span>
           {copy.title}
         </p>
-        <button type="button" onClick={onChangeMethod} className="text-[13px] font-bold text-[var(--chan-ink)] hover:underline">
+        <button type="button" onClick={onChangeMethod} className="relative text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-inset-x-3 before:-inset-y-3.5 before:content-[''] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pass-accent,var(--chan-ink))]">
           {tx("Zmień", "Change")}
         </button>
       </div>
