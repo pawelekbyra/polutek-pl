@@ -240,6 +240,9 @@
 @media (max-width: 340px) { .productGrid { grid-template-columns: minmax(0, 1fr); } }
 .legalRow { display: inline-flex; align-items: center; justify-content: center; gap: 11px; flex-wrap: nowrap; }
 .legalRow a { line-height: 16px; white-space: nowrap; }
+/* Touch area of the footer links: 44 px high without changing the look (an invisible extension). */
+.legalRow a { position: relative; }
+.legalRow a::before { content: ""; position: absolute; inset: -14px -6px; }
 .legalSep { flex: 0 0 auto; display: block; width: 1px; height: 13px; background: var(--pass-sep, #9aa9bf); }
 .secureFooter a { color: var(--pass-gray-500); text-decoration: underline; text-underline-offset: 2px; }
 .secureFooter a:hover { color: var(--pass-gray-600); }
