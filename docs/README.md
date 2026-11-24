@@ -56,6 +56,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Konta i usługi zewnętrzne (bez sekretów), kalendarz odnowień i wygasania, co monitorować | [`operations/ACCOUNTS.md`](operations/ACCOUNTS.md) |
 | Języki interfejsu (osiem języków): jak działa `tx()`, jak dodać tekst lub język, decyzje, słownik | [`operations/I18N.md`](operations/I18N.md) |
 | Lokalne CI przed scaleniem (zamiast GitHub Actions) | [`operations/LOCAL-CI.md`](operations/LOCAL-CI.md) |
+| Płatności: plan testu zwrotów i sporów w Stripe test-mode | [`operations/PAYMENTS-REFUND-DISPUTE-TEST-PLAN.md`](operations/PAYMENTS-REFUND-DISPUTE-TEST-PLAN.md) |
 | Dzienna odprawa „co słychać?” (raport tylko do odczytu, skill `odprawa`) | [`operations/DAILY-BRIEFING.md`](operations/DAILY-BRIEFING.md) |
 | Dźwięk w odtwarzaczu i przycisk logo | [`operations/PLAYER-SOUND.md`](operations/PLAYER-SOUND.md) |
 | Wydajność: pomiary CPX22 z 2026-10-01 (aplikacja, ffmpeg) | [`operations/BENCHMARK-2026-10-01.md`](operations/BENCHMARK-2026-10-01.md) |
