@@ -10,7 +10,7 @@ async function main() {
     const job = await prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: jobId } });
     await createSelfHlsFinalizer(prisma).finalize({
       job,
-      assetKey: hlsAttemptAssetKey(job.videoId, job.versionNumber, job.attemptId, "master.m3u8"),
+      assetKey: hlsAttemptAssetKey(job.videoId, job.versionNumber, job.attemptId),
       hlsBucket: "k20-worker-process-test",
       posterPath: "/unused-k20-worker-poster.jpg",
       meta: { source: { durationSeconds: 30 } },
