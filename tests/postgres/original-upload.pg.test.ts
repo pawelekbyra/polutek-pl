@@ -320,4 +320,57 @@ describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
     expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id }, select: { activeOriginalId: true } })).toEqual({ activeOriginalId: original.id });
     expect(await prisma.videoEncodeJob.count({ where: { videoId: video.id, originalId: original.id } })).toBe(1);
   });
+
+  it("does not replay an older concurrent complete after a newer version becomes active", async () => {
+    const { video, v1 } = await makeVideo("parallel-complete-stale");
+    await prisma.videoOriginal.update({
+      where: { id: v1.id },
+      data: { status: "UPLOADING", uploadId: "parallel-v1", uploadPartSize: FILE_SIZE, uploadPartCount: 1 },
+    });
+    await prisma.video.update({ where: { id: video.id }, data: { activeOriginalId: null } });
+    const v2 = await prisma.videoOriginal.create({
+      data: {
+        videoId: video.id, bucket: mocks.storage.bucket, objectKey: `originals/${video.id}/v2.mp4`, version: 2,
+        status: "UPLOADING", uploadId: "parallel-v2", uploadPartSize: FILE_SIZE, uploadPartCount: 1,
+        sizeBytes: BigInt(FILE_SIZE), mimeType: "video/mp4",
+      },
+    });
+    const secondReadHead = deferred();
+    const releaseSecondReadHead = deferred();
+    const releaseFirstComplete = deferred();
+    let completeCalls = 0;
+    mocks.storage.complete.mockImplementation(async () => {
+      const call = ++completeCalls;
+      if (call === 1) await releaseFirstComplete.promise;
+      if (call === 2) {
+        const error = new Error("The upload no longer exists after the other tab completed it.");
+        error.name = "NoSuchUpload";
+        throw error;
+      }
+    });
+    mocks.storage.readHead.mockImplementationOnce(async () => {
+      secondReadHead.resolve();
+      await releaseSecondReadHead.promise;
+      return Uint8Array.from([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0, 0, 0, 0]);
+    });
+    registerSession("parallel-stale-v1-a", studioContext(userId, creatorId));
+    registerSession("parallel-stale-v1-b", studioContext(userId, creatorId));
+    registerSession("parallel-stale-v2", studioContext(userId, creatorId));
+
+    const firstV1 = post(video.id, v1.id, "parallel-stale-v1-a");
+    const staleV1Retry = post(video.id, v1.id, "parallel-stale-v1-b");
+    await secondReadHead.promise;
+    releaseFirstComplete.resolve();
+    await expectStatus(await firstV1, 200);
+    await prisma.videoEncodeJob.updateMany({ where: { videoId: video.id, originalId: v1.id }, data: { status: "SUCCEEDED", stage: "DONE" } });
+    await expectStatus(await post(video.id, v2.id, "parallel-stale-v2"), 200);
+    releaseSecondReadHead.resolve();
+
+    const staleResponse = await staleV1Retry;
+    await expectStatus(staleResponse, 409);
+    expect(await staleResponse.json()).toMatchObject({ code: "UPLOAD_NOT_OPEN" });
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: v1.id }, select: { status: true } })).toEqual({ status: "SUPERSEDED" });
+    expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id }, select: { activeOriginalId: true } })).toEqual({ activeOriginalId: v2.id });
+    expect(await prisma.videoEncodeJob.findMany({ where: { videoId: video.id }, select: { originalId: true } })).toEqual([{ originalId: v1.id }, { originalId: v2.id }]);
+  });
 });
