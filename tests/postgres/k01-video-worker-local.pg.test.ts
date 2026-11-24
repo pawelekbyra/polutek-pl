@@ -671,9 +671,6 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
       expect(playback?.currentTime ?? 0, playbackResult).toBeGreaterThan(0.5);
       expect(browserEdgePaths.some((entry) => entry.split(" ", 2)[1]?.endsWith("/master.m3u8")), playbackResult).toBe(true);
       expect(browserEdgePaths.some((entry) => /\.m4s$/.test(entry.split(" ", 2)[1] ?? "")), playbackResult).toBe(true);
-    } finally {
-      await browser.close();
-    }
 
     const replacementStartResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload`, {
       method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
@@ -724,6 +721,36 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(activeRoutes).toHaveLength(1);
     expect(replacementPipelineText).toContain('"versionNumber":2');
 
+    browserEdgePaths.length = 0;
+    await page.goto(videoUrl, { waitUntil: "domcontentloaded" });
+    const replacementAttachDeadline = Date.now() + 12_000;
+    while (Date.now() < replacementAttachDeadline && await page.locator("video").count() === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    expect(await page.locator("video").count()).toBeGreaterThan(0);
+    await page.locator("video").evaluateAll((elements) => {
+      const video = elements[0] as HTMLVideoElement | undefined;
+      if (!video) return;
+      video.muted = true;
+      void video.play().catch(() => undefined);
+    });
+    const replacementPlayDeadline = Date.now() + 20_000;
+    let replacementPlayback: { currentTime: number; readyState: number } | null = null;
+    while (Date.now() < replacementPlayDeadline) {
+      replacementPlayback = await page.locator("video").evaluateAll((elements) => {
+        const video = elements[0] as HTMLVideoElement | undefined;
+        return video ? { currentTime: video.currentTime, readyState: video.readyState } : null;
+      });
+      if (replacementPlayback && replacementPlayback.currentTime > 0.5) break;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    const replacementPlaybackResult = JSON.stringify({ playback: replacementPlayback, edge: browserEdgePaths, errors: browserErrors, replacementObjectKey: replacementVideo.activePlaybackRoute?.asset.objectKey });
+    expect(replacementPlayback?.readyState ?? 0, replacementPlaybackResult).toBeGreaterThan(1);
+    expect(replacementPlayback?.currentTime ?? 0, replacementPlaybackResult).toBeGreaterThan(0.5);
+    const replacementDeliveryVersion = `v2~${replacementJob.attemptId}`;
+    expect(browserEdgePaths.some((entry) => entry.includes(`/${replacementDeliveryVersion}/`) && entry.split(" ", 2)[1]?.endsWith("/master.m3u8")), replacementPlaybackResult).toBe(true);
+    expect(browserEdgePaths.some((entry) => entry.includes(`/${replacementDeliveryVersion}/`) && /\.m4s$/.test(entry)), replacementPlaybackResult).toBe(true);
+
     const deleteVideoResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}`, {
       method: "DELETE", headers: { cookie: ownerCookie() },
     });
@@ -747,5 +774,8 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect([...objects.keys()].some((key) => key.startsWith(`${ORIGINAL_BUCKET}/originals/${videoId}/`))).toBe(false);
     const remainingHlsObjects = [...objects.keys()].filter((key) => key.startsWith(`${HLS_BUCKET}/videos/${videoId}/`));
     expect(remainingHlsObjects, `remaining HLS objects: ${remainingHlsObjects.join(", ")}\nrequests: ${objectRequests.filter((request) => request.includes(videoId)).join("\n")}`).toHaveLength(0);
+    } finally {
+      await browser.close();
+    }
   }, 150_000);
 });
