@@ -114,4 +114,77 @@ describe("HlsWriter.deletePrefix over the AWS SDK HTTP protocol", () => {
       await once(server, "close");
     }
   });
+
+  it("fails closed when a truncated list page omits its continuation token", async () => {
+    const prefix = "videos/video-1/v/v1/";
+    const listed = `${prefix}one.ts`;
+    const requests: string[] = [];
+    const server = createServer(async (request, response) => {
+      for await (const _chunk of request) { /* consume the request body */ }
+      requests.push(`${request.method ?? ""} ${request.url ?? ""}`);
+      response.statusCode = 200;
+      response.setHeader("content-type", "application/xml");
+      const url = new URL(request.url ?? "/", "http://127.0.0.1");
+      if (request.method === "GET" && url.searchParams.get("list-type") === "2") {
+        response.end(`<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>hls</Name><Prefix>${prefix}</Prefix><KeyCount>1</KeyCount><MaxKeys>1000</MaxKeys><IsTruncated>true</IsTruncated><Contents><Key>${listed}</Key><Size>1</Size><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>`);
+        return;
+      }
+      response.statusCode = 400;
+      response.end("<Error><Code>InvalidRequest</Code></Error>");
+    });
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const { port } = server.address() as AddressInfo;
+    const client = new S3Client({ region: "auto", endpoint: `http://127.0.0.1:${port}`, forcePathStyle: true,
+      credentials: { accessKeyId: "loopback-only", secretAccessKey: "loopback-only" }, maxAttempts: 1 });
+
+    try {
+      await expect(new HlsWriter(client, "hls").deletePrefix(prefix))
+        .rejects.toBeInstanceOf(Error);
+      expect(requests).toHaveLength(1);
+      expect(requests[0]).toContain("GET ");
+    } finally {
+      client.destroy();
+      server.close();
+      await once(server, "close");
+    }
+  });
+
+  it("fails closed when a truncated list page repeats its continuation token", async () => {
+    const prefix = "videos/video-1/v/v1/";
+    const listed = `${prefix}one.ts`;
+    const requests: string[] = [];
+    const server = createServer(async (request, response) => {
+      for await (const _chunk of request) { /* consume the request body */ }
+      const url = new URL(request.url ?? "/", "http://127.0.0.1");
+      response.statusCode = 200;
+      response.setHeader("content-type", "application/xml");
+      if (request.method === "GET" && url.searchParams.get("list-type") === "2") {
+        requests.push(url.searchParams.get("continuation-token") ?? "first-page");
+        response.end(`<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>hls</Name><Prefix>${prefix}</Prefix><KeyCount>1</KeyCount><MaxKeys>1000</MaxKeys><IsTruncated>true</IsTruncated><NextContinuationToken>same-cursor</NextContinuationToken><Contents><Key>${listed}</Key><Size>1</Size><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>`);
+        return;
+      }
+      if (request.method === "POST" && url.searchParams.has("delete")) {
+        response.end(`<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>${listed}</Key></Deleted></DeleteResult>`);
+        return;
+      }
+      response.statusCode = 400;
+      response.end("<Error><Code>InvalidRequest</Code></Error>");
+    });
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const { port } = server.address() as AddressInfo;
+    const client = new S3Client({ region: "auto", endpoint: `http://127.0.0.1:${port}`, forcePathStyle: true,
+      credentials: { accessKeyId: "loopback-only", secretAccessKey: "loopback-only" }, maxAttempts: 1 });
+
+    try {
+      await expect(new HlsWriter(client, "hls").deletePrefix(prefix))
+        .rejects.toThrow("truncated object list without a new continuation token");
+      expect(requests).toEqual(["first-page", "same-cursor"]);
+    } finally {
+      client.destroy();
+      server.close();
+      await once(server, "close");
+    }
+  });
 });
