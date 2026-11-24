@@ -47,6 +47,7 @@ describe("video API runtime contracts", () => {
 
   it("rejects unknown job and playback statuses instead of passing them to UI code", () => {
     expect(PipelineStateResponseSchema.safeParse({ ...pipeline, summary: "WAITING_MAYBE" }).success).toBe(false);
+    expect(PipelineStateResponseSchema.safeParse({ ...pipeline, original: { ...pipeline.original, status: "WAITING_MAYBE" } }).success).toBe(false);
     expect(readPlaybackPlan({ ...playbackPlan, status: "PLAY_EVERYTHING" })).toBeNull();
   });
 

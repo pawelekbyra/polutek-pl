@@ -144,6 +144,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
       }
     } catch (error) {
       if (signal.aborted) throw error;
+      if (!(error instanceof UploadError) || !["ORIGINAL_NOT_FOUND", "UPLOAD_NOT_OPEN"].includes(error.code)) throw error;
       store?.removeItem(key); // the old upload is gone (409/404): start over
     }
   }

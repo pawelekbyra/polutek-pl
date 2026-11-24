@@ -56,7 +56,7 @@ export const PipelineStateResponseSchema = z.object({
   workerAlive: z.boolean(),
   original: z.object({
     id: z.string().min(1),
-    status: z.string().min(1),
+    status: z.enum(["PROVISIONING", "UPLOADING", "UPLOADED", "VERIFYING", "READY", "FAILED", "SUPERSEDED", "ABANDONED"]),
     fileName: nullableString,
     sizeBytes: nullableString,
     version: positiveInt,
@@ -80,7 +80,7 @@ export const StudioPipelineStateResponseSchema = z.object({
   summary: PipelineStateResponseSchema.shape.summary,
   workerAlive: z.boolean(),
   original: z.object({
-    status: z.string().min(1),
+    status: z.enum(["PROVISIONING", "UPLOADING", "UPLOADED", "VERIFYING", "READY", "FAILED", "SUPERSEDED", "ABANDONED"]),
     fileName: nullableString,
     sizeBytes: nullableString,
     failureReason: nullableString,
