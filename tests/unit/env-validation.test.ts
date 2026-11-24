@@ -115,3 +115,57 @@ describe('validateAppEnv', () => {
     expect(result.warnings.join(' ')).not.toContain('MAIN_CREATOR_SLUG');
   });
 });
+
+// Zod 4 (stricter string formats, new default messages): a production-like set of variables with fake values of the
+// real shapes must still pass, and the errors for bad values keep the same `KEY message.` wording as with Zod 3.
+describe('validateAppEnv under Zod 4', () => {
+  const serverLikeEnv = {
+    ...productionEnv,
+    APP_ENV: 'production',
+    DATABASE_URL: 'postgresql://app:secret@db:5432/polutek?schema=public',
+    DATABASE_URL_UNPOOLED: 'postgresql://app:secret@db:5432/polutek?schema=public',
+    NEXT_PUBLIC_APP_URL: 'https://www.example.com',
+    BETTER_AUTH_TRUSTED_ORIGINS: 'https://www.example.com,https://example.com',
+    STRIPE_SECRET_KEY: 'sk_live_fake',
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_live_fake',
+    STRIPE_WEBHOOK_SECRET: 'whsec_fake',
+    PREMIUM_PASS_STRIPE_SECRET_KEY: 'sk_test_fake',
+    NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY: 'pk_test_fake',
+    PREMIUM_PASS_STRIPE_WEBHOOK_SECRET: 'whsec_fake_premium',
+    KV_REST_API_URL: 'http://srh:80',
+    KV_REST_API_TOKEN: 'kv-token',
+    UPSTASH_REDIS_REST_URL: '',
+    UPSTASH_REDIS_REST_TOKEN: '',
+    NEXT_PUBLIC_R2_PUBLIC_HOST: 'pub-0123456789abcdef.r2.dev',
+    MEDIA_BUCKET_HOST: '',
+    HLS_DELIVERY_BASE_URL: 'https://hls.example.com',
+    TELEMETRY_COLLECTOR_URL: 'http://collector:8080/b',
+    TRUST_CF_CONNECTING_IP: 'true',
+    ADMIN_EMAILS: 'owner@example.com',
+    REFERRAL_PATRON_THRESHOLD: '3',
+  };
+
+  it('passes for a production-like set of variables (internal http host, Upstash-compatible KV)', () => {
+    const result = validateAppEnv(serverLikeEnv, 'production');
+
+    expect(result.errors).toEqual([]);
+    expect(result.success).toBe(true);
+  });
+
+  it('keeps the error wording for invalid URLs and integers', () => {
+    const result = validateAppEnv({ ...serverLikeEnv, NEXT_PUBLIC_APP_URL: 'not a url', KV_REST_API_URL: 'srh 80', REFERRAL_PATRON_THRESHOLD: 'abc' }, 'production');
+
+    expect(result.success).toBe(false);
+    expect(result.errors).toEqual(expect.arrayContaining([
+      'NEXT_PUBLIC_APP_URL must be a valid URL.',
+      'KV_REST_API_URL must be a valid URL.',
+      'REFERRAL_PATRON_THRESHOLD must be an integer string.',
+    ]));
+  });
+
+  it('keeps the error wording for a zero threshold', () => {
+    const result = validateAppEnv({ ...serverLikeEnv, REFERRAL_PATRON_THRESHOLD: '0' }, 'production');
+
+    expect(result.errors).toContain('REFERRAL_PATRON_THRESHOLD must be greater than zero.');
+  });
+});
