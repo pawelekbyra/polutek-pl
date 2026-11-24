@@ -15,12 +15,13 @@ interface UploadStatusProps {
   error: string | null;
   draftId: string | null;
   onRetry: () => void;
+  onDiscard: () => void;
   onCancel: () => void;
   onOpenDraft: () => void;
 }
 
 /** Presentation of a running upload; the wizard owns requests, cancellation and draft reuse. */
-export default function StudioUploadStatus({ title, visibilityLabel, phase, progress, warning, error, draftId, onRetry, onCancel, onOpenDraft }: UploadStatusProps) {
+export default function StudioUploadStatus({ title, visibilityLabel, phase, progress, warning, error, draftId, onRetry, onDiscard, onCancel, onOpenDraft }: UploadStatusProps) {
   const { tx } = useLanguage();
   const sending = phase === "creating" || phase === "uploading";
   const percent = progress && progress.totalBytes > 0 ? (progress.uploadedBytes / progress.totalBytes) * 100 : 0;
@@ -47,8 +48,8 @@ export default function StudioUploadStatus({ title, visibilityLabel, phase, prog
       {sending && (
         <p className="text-[12px] text-[var(--chan-muted)]">
           {tx(
-            "Nie zamykaj tej karty. Jeśli przerwiesz, film zostanie prywatnym szkicem.",
-            "Keep this tab open. If you stop, the video stays a private draft.",
+            "Możesz odświeżyć stronę albo wrócić później. Wybierz ten sam plik, a przesyłanie wznowi się od zapisanych części.",
+            "You can refresh or come back later. Choose the same file to resume from the parts already stored.",
           )}
         </p>
       )}
@@ -67,6 +68,11 @@ export default function StudioUploadStatus({ title, visibilityLabel, phase, prog
             onClick={onOpenDraft}
           >
             {tx("Przejdź do szkicu", "Go to the draft")}
+          </button>
+        )}
+        {(phase === "error" || sending) && draftId && (
+          <button type="button" className={ghostButtonClass} onClick={onDiscard}>
+            {tx("Usuń niedokończone przesyłanie", "Discard unfinished upload")}
           </button>
         )}
         <button type="button" className={ghostButtonClass} onClick={onCancel}>

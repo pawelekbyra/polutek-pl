@@ -31,15 +31,21 @@ export type PartPutter = (url: string, body: Blob, opts: { signal: AbortSignal; 
 
 export interface UploaderOptions {
   videoId: string;
-  file: File;
+  file: File | Blob;
+  fileName?: string;
+  contentType?: string;
+  resumeIdentity?: string;
   publishAfterReady?: boolean;
   signal: AbortSignal;
   onProgress?: (p: UploadProgress) => void;
   concurrency?: number;
+  attempts?: number;
   fetchFn?: typeof fetch;
   putPart?: PartPutter;
   storage?: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
   sleep?: (ms: number) => Promise<void>;
+  /** Override the per-video upload route while keeping the multipart protocol shared. */
+  uploadPath?: (videoId: string) => string;
   /** Prefix of the video API; defaults to "/api/videos" (the apps/admin panel). */
   apiBase?: string;
 }
@@ -51,6 +57,7 @@ export class UploadError extends Error {
     message: string,
     readonly code: string,
     readonly retryable = false,
+    readonly status?: number,
   ) {
     super(message);
     this.name = "UploadError";
@@ -60,8 +67,11 @@ export class UploadError extends Error {
 const BATCH = 50;
 const MAX_PART_ATTEMPTS = 4;
 
-export function resumeKey(videoId: string, file: File): string {
-  return `video-upload:${videoId}:${file.name}:${file.size}:${file.lastModified}`;
+export function resumeKey(videoId: string, file: File | Blob, fileName?: string, resumeIdentity?: string): string {
+  const identity = file as File;
+  const name = "name" in file ? file.name : fileName;
+  const base = `video-upload:${videoId}:${name ?? "upload"}:${file.size}:${identity.lastModified ?? 0}`;
+  return resumeIdentity ? `${base}:${resumeIdentity}` : base;
 }
 
 function safeStorage(storage: UploaderOptions["storage"]): Pick<Storage, "getItem" | "setItem" | "removeItem"> | null {
@@ -105,6 +115,7 @@ async function api<T>(f: typeof fetch, url: string, init: RequestInit, schema: z
       typeof errorBody?.error === "string" ? errorBody.error : `Błąd serwera (HTTP ${res.status}).`,
       typeof errorBody?.code === "string" ? errorBody.code : `HTTP_${res.status}`,
       res.status >= 500,
+      res.status,
     );
   }
   try {
@@ -123,8 +134,9 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   const putPart = opts.putPart ?? xhrPutPart;
   const store = safeStorage(opts.storage);
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
-  const base = `${opts.apiBase ?? DEFAULT_UPLOAD_API_BASE}/${encodeURIComponent(opts.videoId)}/original-upload/multipart`;
-  const key = resumeKey(opts.videoId, opts.file);
+  const maxAttempts = Math.max(1, opts.attempts ?? MAX_PART_ATTEMPTS);
+  const base = opts.uploadPath?.(opts.videoId) ?? `${opts.apiBase ?? DEFAULT_UPLOAD_API_BASE}/${encodeURIComponent(opts.videoId)}/original-upload/multipart`;
+  const key = resumeKey(opts.videoId, opts.file, opts.fileName, opts.resumeIdentity);
   const { file, signal } = opts;
 
   let originalId: string | null = null;
@@ -149,7 +161,9 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
     }
   }
   if (!originalId) {
-    const started = await api(f, base, json({ fileName: file.name, fileSize: file.size, contentType: file.type || "application/octet-stream" }, signal), MultipartStartResponseSchema);
+    const fileName = opts.fileName ?? ("name" in file ? file.name : "video");
+    const contentType = opts.contentType ?? (("type" in file ? file.type : "") || "application/octet-stream");
+    const started = await api(f, base, json({ fileName, fileSize: file.size, contentType }, signal), MultipartStartResponseSchema);
     originalId = started.originalId;
     partSize = started.partSize;
     partCount = started.partCount;
@@ -218,7 +232,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
         inFlight.delete(n);
         if (signal.aborted || (error as { name?: string }).name === "AbortError") throw error;
         const retryable = error instanceof UploadError ? error.retryable : true;
-        if (!retryable || attempt >= MAX_PART_ATTEMPTS) throw error;
+        if (!retryable || attempt >= maxAttempts) throw error;
         urls.delete(n); // a fresh URL also covers an expired one
         await sleep(500 * 2 ** (attempt - 1));
       }
@@ -242,17 +256,18 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   if (failure) throw failure;
 
   const parts = [...etags.entries()].sort((a, b) => a[0] - b[0]).map(([partNumber, etag]) => ({ partNumber, etag }));
-  const done = await api(f, `${base}/complete`, json({ originalId: id, parts, publishAfterReady: Boolean(opts.publishAfterReady) }, signal), MultipartCompleteResponseSchema);
+  const done = await api(f, `${base}/complete`, json({ originalId: id, parts, ...(opts.publishAfterReady !== undefined ? { publishAfterReady: opts.publishAfterReady } : {}) }, signal), MultipartCompleteResponseSchema);
   store?.removeItem(key);
   return { originalId: done.originalId, jobId: done.job.id };
 }
 
 /** Cancels the upload for good (server aborts the multipart upload) and forgets the resume point. */
-export async function cancelUpload(videoId: string, file: File, fetchFn: typeof fetch = fetch.bind(globalThis), storage?: UploaderOptions["storage"], apiBase: string = DEFAULT_UPLOAD_API_BASE): Promise<void> {
+export async function cancelUpload(videoId: string, file: File, fetchFn: typeof fetch = fetch.bind(globalThis), storage?: UploaderOptions["storage"], apiBase: string = DEFAULT_UPLOAD_API_BASE, uploadPath?: (videoId: string) => string): Promise<void> {
   const store = safeStorage(storage);
   const key = resumeKey(videoId, file);
   const originalId = store?.getItem(key);
   store?.removeItem(key);
   if (!originalId) return;
-  await fetchFn(`${apiBase}/${encodeURIComponent(videoId)}/original-upload/multipart?originalId=${encodeURIComponent(originalId)}`, { method: "DELETE" }).catch(() => undefined);
+  const base = uploadPath?.(videoId) ?? `${apiBase}/${encodeURIComponent(videoId)}/original-upload/multipart`;
+  await fetchFn(`${base}?originalId=${encodeURIComponent(originalId)}`, { method: "DELETE" }).catch(() => undefined);
 }

@@ -2,7 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createAppContext, type AppContext } from "@/lib/modules/shared/app-context";
-import { MultipartCompleteResponseSchema, MultipartStartResponseSchema, StudioPipelineStateResponseSchema } from "@/lib/video-api-contracts/contracts";
+import { MultipartCompleteResponseSchema, MultipartPartsResponseSchema, MultipartStartResponseSchema, StudioPipelineStateResponseSchema } from "@/lib/video-api-contracts/contracts";
 import { studioApi } from "@/app/components/studio/studio-client";
 
 const mocks = vi.hoisted(() => ({
@@ -29,7 +29,7 @@ vi.mock("@/lib/modules/video-pipeline/infrastructure/r2-multipart", () => ({
 }));
 
 import { POST as completeUpload } from "@/app/api/studio/videos/[id]/upload/complete/route";
-import { POST as startUpload } from "@/app/api/studio/videos/[id]/upload/route";
+import { GET as listUploadParts, POST as startUpload } from "@/app/api/studio/videos/[id]/upload/route";
 import { GET as getPipeline } from "@/app/api/studio/videos/[id]/pipeline/route";
 
 const prisma = new PrismaClient();
@@ -132,6 +132,16 @@ describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
       async () => legacyResponse.clone(),
     );
     expect(legacyClientBody).toMatchObject({ originalId: (startBody as { originalId: string }).originalId, partSize: expect.any(Number), partCount: expect.any(Number) });
+
+    const originalId = (startBody as { originalId: string }).originalId;
+    const listed = await listUploadParts(
+      new Request(`https://www.pawelperfect.com/api/studio/videos/${video.id}/upload?originalId=${encodeURIComponent(originalId)}`, {
+        headers: { "x-request-id": "contract-start" },
+      }),
+      { params: Promise.resolve({ id: video.id }) },
+    );
+    await expectStatus(listed, 200);
+    expect(MultipartPartsResponseSchema.safeParse(await listed.json()).success).toBe(true);
 
     const pipeline = await getPipelineResponse(video.id, "contract-start");
     await expectStatus(pipeline, 200);
