@@ -66,7 +66,8 @@ Co robi dla zadania (`processEncodeJob`):
 | `DATABASE_URL` | worker.env | ta sama baza co aplikacja |
 | `CLOUDFLARE_R2_ACCOUNT_ID`, `_ACCESS_KEY_ID`, `_SECRET_ACCESS_KEY` | app.env, worker.env | jeden token R2 z odczytem i zapisem na bucketach `polutek`, `polutek-hls`, thumbnails |
 | `CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS` | app.env, worker.env | `polutek` (prywatny, oryginały) |
-| `CLOUDFLARE_R2_BUCKET_HLS` | app.env, worker.env | `polutek-hls` (domyślnie, gdy brak) |
+| `CLOUDFLARE_R2_BUCKET_HLS` | app.env, worker.env, admin.env | `polutek-hls`. **Ustaw jawnie w `app.env`**: kasowanie wyników HLS robi cron aplikacji (job `VIDEO_ASSET_CLEANUP`); `scripts/validate-env.ts --mode=production` ostrzega, gdy brak |
+| `VIDEO_WORKER_TEST_S3_ENDPOINT` | nigdzie na serwerze | hak testów (loopback S3, tylko `NODE_ENV=test`); ustawiony w produkcji = błąd walidacji env |
 | `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE`, `NEXT_PUBLIC_R2_PUBLIC_HOST` | worker.env | miniatura z plakatu |
 | `HLS_PRESET` (`slow`), `HLS_NICE` (`10`), `VIDEO_WORKER_WORK_DIR` (`/work`) | worker.env (opcjonalne) | |
 
@@ -108,7 +109,7 @@ Ręczne awaryjne czyszczenie zadania: `update "VideoEncodeJob" set status='CANCE
 
 1. Scal PR-y, `deploy.sh <tag>` (migracje `VideoEncodeJob` i `VideoOriginal.upload*`, obraz `worker`).
 2. CORS bucketa oryginałów: `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (potrzebny token Cloudflare z uprawnieniem do R2).
-3. Upewnij się, że token R2 ma odczyt i zapis na `polutek`, `polutek-hls` i bucketach miniatur; w `app.env` muszą być `CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS=polutek` i (opcjonalnie) `CLOUDFLARE_R2_BUCKET_HLS=polutek-hls`.
+3. Upewnij się, że token R2 ma odczyt i zapis na `polutek`, `polutek-hls` i bucketach miniatur; w `app.env` muszą być `CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS=polutek` i `CLOUDFLARE_R2_BUCKET_HLS=polutek-hls` (jawnie, patrz tabela w §3).
 4. Na serwerze: `cd /opt/serwerek/apps/polutek && grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env && mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work`
 5. `ENCODER_IMAGE=polutek-worker:<tag> docker compose up -d --no-deps encoder` (albo ponowny `./deploy.sh <tag>`), `docker compose logs -f encoder` ma pokazać `started`. `ai-log "enabled video encoder"`.
 6. Test: nowy szkic, wgraj krótki plik, obserwuj Media -> Przetwarzanie.

@@ -96,6 +96,16 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
       errors.push('At least one exact media host allowlist env is required in production: MEDIA_BUCKET_HOST, NEXT_PUBLIC_R2_PUBLIC_HOST, or ALLOWED_MEDIA_HOSTS.');
     }
 
+    // Own-HLS storage (audit U10): R2 clean-up of HLS outputs now runs in the APP cron, not only in the admin
+    // process, so the app must name the HLS bucket explicitly instead of relying on the code default.
+    if (hasValue(env, 'CLOUDFLARE_R2_ACCESS_KEY_ID') && !hasValue(env, 'CLOUDFLARE_R2_BUCKET_HLS')) {
+      warnings.push('CLOUDFLARE_R2_BUCKET_HLS should be set explicitly (e.g. polutek-hls): the app cron deletes HLS outputs from it.');
+    }
+    // A test-only loopback S3 endpoint makes every R2 client throw outside NODE_ENV=test (audit U6).
+    if (hasValue(env, 'VIDEO_WORKER_TEST_S3_ENDPOINT')) {
+      errors.push('VIDEO_WORKER_TEST_S3_ENDPOINT is a test-only hook and must not be set in production.');
+    }
+
     if (!hasWritableRateLimitStore(env)) {
       errors.push('Writable Redis/KV REST credentials are required in production for rate limiting: UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN or KV_REST_API_URL/KV_REST_API_TOKEN.');
     }
