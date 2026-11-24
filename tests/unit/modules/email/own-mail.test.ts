@@ -81,9 +81,10 @@ describe('sendViaOwnMail', () => {
   });
 
   it('maps connection failures to a status-less error and SMTP rejections to their code', async () => {
-    sendMail.mockRejectedValueOnce(Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNECTION' }));
+    // Shape of a refused connection in Nodemailer 8+: code ESOCKET, the system code kept in originalCode (nodemailer-real-errors.test.ts runs the real library).
+    sendMail.mockRejectedValueOnce(Object.assign(new Error('connect ECONNREFUSED 172.20.0.5:25'), { code: 'ESOCKET', originalCode: 'ECONNREFUSED', command: 'CONN' }));
     expect(await sendViaOwnMail(message, config, { sendMail } as never)).toEqual({
-      ok: false, error: { name: 'own_smtp_econnection', message: 'connect ECONNREFUSED', statusCode: null },
+      ok: false, error: { name: 'own_smtp_esocket', message: 'connect ECONNREFUSED 172.20.0.5:25', statusCode: null },
     });
     expect(mapOwnMailError(Object.assign(new Error('Relay access denied'), { responseCode: 554 }))).toMatchObject({ name: 'own_smtp_rejected', statusCode: 554 });
   });
