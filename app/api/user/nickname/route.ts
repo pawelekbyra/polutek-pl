@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
@@ -12,7 +13,7 @@ export async function PATCH(req: NextRequest) {
     if (actor.type !== "user" && actor.type !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const body = (await req.json().catch(() => null)) as { nickname?: unknown } | null;
+    const body = (await readRequestJsonOrNullWithLimit(req)) as { nickname?: unknown } | null;
     if (typeof body?.nickname !== "string") {
       return NextResponse.json({ error: "INVALID_NICKNAME" }, { status: 400 });
     }

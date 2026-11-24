@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 // patron zone (docs/architecture/patron-zone.md)
 // Step 2 of the checkout: the two boxes (Terms + Privacy Policy, immediate access) were ticked; the browser records
 // that on its own unpaid patron payment right before it confirms the payment with Stripe.
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     const limit = await rateLimit({ key: `premium-pass:consent:${userId}`, limit: 20, windowMs: 10 * 60_000 });
     if (!limit.success) return NextResponse.json({ code: "RATE_LIMITED" }, { status: 429, headers: PASS_NO_STORE });
 
-    const parsed = patronConsentInputSchema.safeParse(await req.json().catch(() => null));
+    const parsed = patronConsentInputSchema.safeParse(await readRequestJsonOrNullWithLimit(req));
     if (!parsed.success) return passInvalidRequest();
 
     const result = await recordPatronConsent(createAppContext({ actor }), parsed.data);

@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
@@ -17,7 +18,7 @@ export async function PUT(req: NextRequest) {
   try {
     const actor = await resolveUser();
     if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const body = (await req.json().catch(() => null)) as { dataUrl?: unknown } | null;
+    const body = (await readRequestJsonOrNullWithLimit(req)) as { dataUrl?: unknown } | null;
     if (typeof body?.dataUrl !== "string") {
       return NextResponse.json({ error: "INVALID_AVATAR" }, { status: 400 });
     }

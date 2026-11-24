@@ -1,3 +1,4 @@
+import { readRequestJsonWithLimit, DEFAULT_JSON_BODY_MAX_BYTES } from "@/lib/utils/request-body";
 import { auth } from "@/lib/auth/server";
 import { NextRequest, NextResponse } from 'next/server';
 import { createScopedLogger } from '@/lib/logger';
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
     };
     const ctx = createAppContext(actor);
 
-    const body = await req.json();
+    const body = await readRequestJsonWithLimit(req, DEFAULT_JSON_BODY_MAX_BYTES);
     const result = checkoutSchema.safeParse(body);
 
     if (!result.success) {

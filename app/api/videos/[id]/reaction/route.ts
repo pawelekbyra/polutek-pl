@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { handleApiError } from "@/lib/errors";
@@ -25,7 +26,7 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
   const scopedLogger = createScopedLogger(getCorrelationId());
   try {
     const { id: videoId } = await props.params;
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = bodySchema.safeParse(await readRequestJsonOrNullWithLimit(request));
     if (!parsed.success) {
       return NextResponse.json({ success: false, error: "VALIDATION_ERROR", message: "Nieprawidłowe dane." }, { status: 400 });
     }
