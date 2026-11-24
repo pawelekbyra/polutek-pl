@@ -34,6 +34,8 @@ const mockPrisma: any = {
     update: vi.fn(),
     updateMany: vi.fn()
   },
+  creator: { findUnique: vi.fn().mockResolvedValue({ id: 'main-channel-id', slug: 'main', status: 'ACTIVE', deletedAt: null }) },
+  $queryRaw: vi.fn().mockResolvedValue([{ id: 'main-channel-id' }]),
   $transaction: vi.fn((cb) => cb(mockPrisma))
 };
 
