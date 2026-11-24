@@ -7,7 +7,10 @@ import { AccessTier, VideoStatus } from '@prisma/client';
 // any source, the encode worker later creates the SELF_HLS asset + route, and publication is
 // gated on that route. Legacy provider routes can never publish.
 
-vi.mock('../../lib/modules/channel', () => ({
+vi.mock('../../lib/modules/channel', async () => ({
+  // Real pure domain exports of the barrel (policy, errors): the use cases import them from "@/lib/modules/channel".
+  ...(await vi.importActual<object>('../../lib/modules/channel/domain/channel.policy')),
+  ...(await vi.importActual<object>('../../lib/modules/channel/domain/channel.errors')),
   MainChannelService: {
     getRequired: vi.fn().mockResolvedValue({ id: 'main-channel-id' })
   }

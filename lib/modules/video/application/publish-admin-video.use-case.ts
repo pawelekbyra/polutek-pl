@@ -1,11 +1,9 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
-import { MainChannelService } from "@/lib/modules/channel";
+import { ChannelNotFoundError, MainChannelNotApprovedError, MainChannelPolicy, MainChannelService } from "@/lib/modules/channel";
 import { authorize } from "@/lib/modules/authz";
 import { VideoStatus } from "@prisma/client";
-import { ChannelNotFoundError, MainChannelNotApprovedError } from "@/lib/modules/channel/domain/channel.errors";
-import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { toAdminVideoDto } from "../domain/video.dto";
 import { VideoNotFoundError, VideoNotReadyForPublicationError } from "../domain/video.errors";

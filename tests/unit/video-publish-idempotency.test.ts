@@ -16,7 +16,10 @@ vi.mock('../../lib/modules/audit', () => ({
   recordAuditEvent: vi.fn().mockResolvedValue({})
 }));
 
-vi.mock('../../lib/modules/channel', () => ({
+vi.mock('../../lib/modules/channel', async () => ({
+  // Real pure domain exports of the barrel (policy, errors): the use cases import them from "@/lib/modules/channel".
+  ...(await vi.importActual<object>('../../lib/modules/channel/domain/channel.policy')),
+  ...(await vi.importActual<object>('../../lib/modules/channel/domain/channel.errors')),
   MainChannelService: {
     getRequired: vi.fn(async (ctx: any) => ({ id: ctx.channelId ?? 'main-channel-id', status: 'ACTIVE', deletedAt: null })),
   },

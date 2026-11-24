@@ -457,10 +457,10 @@
     },
     {
       "file": "lib/modules/video/application/publish-admin-video.use-case.ts",
-      "line": 32,
+      "line": 42,
       "label": "explicit any annotation",
-      "text": "const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {",
-      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
+      "text": "updated = await (ctx.prisma as any).$transaction(async (tx: any) => {",
+      "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002 (same escape, moved into try/catch by K20 df154ba1, not a new one); must be removed when the underlying debt is fixed."
     },
     {
       "file": "lib/modules/video/application/publish-after-asset-ready.use-case.ts",
