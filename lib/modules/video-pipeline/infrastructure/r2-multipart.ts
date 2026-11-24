@@ -36,7 +36,7 @@ export class OriginalsMultipart {
     const bucket = env.CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS;
     if (!credentials || !bucket) return null;
     return new OriginalsMultipart(makeR2Client(credentials, {
-      testEndpoint: env.VIDEO_WORKER_TEST_S3_ENDPOINT,
+      testEndpoint: env.VIDEO_WORKER_TEST_S3_ENDPOINT || undefined,
     }), bucket);
   }
 

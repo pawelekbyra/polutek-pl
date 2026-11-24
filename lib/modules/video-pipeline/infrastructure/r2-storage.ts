@@ -32,10 +32,13 @@ export function makeR2Client(credentials: R2Credentials, options: { testEndpoint
   let endpoint = `https://${credentials.accountId}.r2.cloudflarestorage.com`;
   let forcePathStyle = false;
   let maxAttempts = 5;
-  if (options.testEndpoint !== undefined) {
+  // An EMPTY value means "not set" (e.g. `VIDEO_WORKER_TEST_S3_ENDPOINT=` in an env file): it must not
+  // block every production R2 client (audit U6).
+  const testEndpoint = options.testEndpoint?.trim();
+  if (testEndpoint) {
     let parsed: URL;
     try {
-      parsed = new URL(options.testEndpoint);
+      parsed = new URL(testEndpoint);
     } catch {
       throw new Error("The video worker test endpoint must be a loopback HTTP URL");
     }

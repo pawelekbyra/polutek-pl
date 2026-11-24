@@ -22,6 +22,16 @@ describe("makeR2Client test endpoint", () => {
     expect(() => makeR2Client(credentials, { testEndpoint: "http://127.0.0.1:43210" })).toThrow(/test runtime/);
   });
 
+  it("treats an empty test endpoint as unset in production (U6)", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    for (const empty of ["", "  "]) {
+      const client = makeR2Client(credentials, { testEndpoint: empty });
+      const endpoint = await client.config.endpoint?.();
+      expect(endpoint?.hostname).toBe("test-account.r2.cloudflarestorage.com");
+      client.destroy();
+    }
+  });
+
   it("allows the isolated HTTP acceptance runtime while keeping loopback validation", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("VIDEO_WORKER_TEST_RUNTIME", "true");
