@@ -253,10 +253,19 @@ export class HlsWriter {
     });
   }
 
-  /** Deletes every object under `prefix` (must end with "/"). Returns how many were removed. */
-  async deletePrefix(prefix: string): Promise<number> {
+  /**
+   * Deletes every object under `prefix` (must end with "/"). Returns how many were removed.
+   * `keepPrefixes` (each inside `prefix`) are skipped: nested outputs of other assets stay intact.
+   */
+  async deletePrefix(prefix: string, options: { keepPrefixes?: string[] } = {}): Promise<number> {
     if (!prefix.endsWith("/") || prefix.split("/").filter(Boolean).length < 4) {
       throw new Error(`Refusing to delete a too-broad prefix: ${prefix}`);
+    }
+    const keepPrefixes = options.keepPrefixes ?? [];
+    for (const keep of keepPrefixes) {
+      if (!keep.startsWith(prefix) || !keep.endsWith("/") || keep === prefix) {
+        throw new Error(`Invalid keep prefix ${keep} for ${prefix}`);
+      }
     }
     let removed = 0;
     const failures: string[] = [];
@@ -264,7 +273,10 @@ export class HlsWriter {
     do {
       const list = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
       const nextToken = nextPageToken(list.IsTruncated, list.NextContinuationToken, token);
-      const keys = (list.Contents ?? []).map((o) => o.Key).filter((k): k is string => Boolean(k));
+      const keys = (list.Contents ?? [])
+        .map((o) => o.Key)
+        .filter((k): k is string => Boolean(k))
+        .filter((k) => !keepPrefixes.some((keep) => k.startsWith(keep)));
       if (keys.length > 0) {
         const result = await deleteKeysWithRetry(this.client, this.bucket, keys);
         removed += result.removed;

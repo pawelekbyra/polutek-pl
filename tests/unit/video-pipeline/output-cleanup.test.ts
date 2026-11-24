@@ -87,9 +87,28 @@ describe("createVideoAssetCleanupHandler", () => {
       checkpoint: async () => undefined,
     });
     expect(result).toBe("done");
-    expect(hls.deletePrefix).toHaveBeenCalledWith("videos/v1/v/v2/");
+    expect(hls.deletePrefix).toHaveBeenCalledWith("videos/v1/v/v2/", { keepPrefixes: ["videos/v1/v/v2/attempts/"] });
     expect(tx.videoAsset.delete).toHaveBeenCalledWith({ where: { id: "a1" } });
     expect(audit).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "VIDEO_SELF_HLS_ASSET_DELETED" }), tx);
+  });
+
+  it("deletes an attempt asset by its own prefix without keep-prefixes (U3)", async () => {
+    const attemptKey = "videos/v1/v/v2/attempts/0b8a7d4e-3f0c-4c55-9f61-2d7f7c1d9a10";
+    const tx = {
+      videoAsset: {
+        findFirst: vi.fn(async () => ({ id: "a2", processingState: "PROCESSING", cleanupPendingAt: new Date() })),
+        delete: vi.fn(async () => ({})),
+      },
+    };
+    const db = { $transaction: vi.fn(async (fn: (value: unknown) => Promise<unknown>) => fn(tx)) };
+    const hls = { deletePrefix: vi.fn(async () => 5) };
+    const handler = createVideoAssetCleanupHandler({ db: db as never, hls });
+    await handler({
+      job: { id: "j2", kind: VIDEO_ASSET_CLEANUP_KIND, dedupeKey: "a2", payload: { videoId: "v1", assetId: "a2", objectKey: attemptKey }, cursor: null, attempts: 0, token: "lease" },
+      shouldYield: () => false,
+      checkpoint: async () => undefined,
+    });
+    expect(hls.deletePrefix).toHaveBeenCalledWith(`${attemptKey}/`, { keepPrefixes: [] });
   });
 
   it("keeps the reservation when storage deletion fails so the durable job can retry", async () => {

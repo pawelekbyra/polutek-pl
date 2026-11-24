@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { DurableJobRepository } from "@/lib/modules/shared/durable-job.repository";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import type { JobHandler } from "@/lib/modules/shared/durable-job";
-import { isHlsAssetKey } from "../domain/keys";
+import { isHlsAssetKey, nestedHlsAssetPrefixes } from "../domain/keys";
 import { parseVersionNumber } from "../domain/encode-job.state";
 import { HlsWriter, hlsBucketName, makeR2Client, readR2Credentials } from "../infrastructure/r2-storage";
 import { OriginalsMultipart } from "../infrastructure/r2-multipart";
@@ -23,7 +23,7 @@ type VideoAssetCleanupPayload = { videoId: string; assetId: string; objectKey: s
 
 function defaultHlsWriter(): HlsWriter | null {
   const credentials = readR2Credentials();
-  return credentials ? new HlsWriter(makeR2Client(credentials, { testEndpoint: process.env.VIDEO_WORKER_TEST_S3_ENDPOINT }), hlsBucketName()) : null;
+  return credentials ? new HlsWriter(makeR2Client(credentials, { testEndpoint: process.env.VIDEO_WORKER_TEST_S3_ENDPOINT || undefined }), hlsBucketName()) : null;
 }
 
 /**
@@ -117,7 +117,9 @@ export function createVideoAssetCleanupHandler(deps: { db?: PrismaClient; hls?: 
     if (job.dedupeKey !== payload.assetId) throw new Error("HLS asset cleanup dedupe key mismatch");
     if (!hls) throw new Error("R2 HLS storage not configured");
 
-    await hls.deletePrefix(`${payload.objectKey}/`);
+    // A legacy `v<N>` asset may contain a newer attempt output (`v<N>/attempts/<uuid>/`) that is a separate,
+    // possibly ACTIVE asset; its objects are kept (audit U3).
+    await hls.deletePrefix(`${payload.objectKey}/`, { keepPrefixes: nestedHlsAssetPrefixes(payload.objectKey) });
     const ctx = createAppContext({ prisma: db, actor: { type: "system", reason: "video_hls_asset_cleanup" } });
     await db.$transaction(async (tx) => {
       const asset = await tx.videoAsset.findFirst({

@@ -30,6 +30,25 @@ describe("HlsWriter.deletePrefix", () => {
     expect(command.input.Delete?.Quiet).toBe(false);
   });
 
+  it("keeps nested attempt outputs when deleting a legacy generation prefix (U3)", async () => {
+    const attempt = `${prefix}attempts/0b8a7d4e-3f0c-4c55-9f61-2d7f7c1d9a10/`;
+    const { client, send } = clientWith([
+      { Contents: [{ Key: `${prefix}master.m3u8` }, { Key: `${attempt}master.m3u8` }, { Key: `${attempt}v0/seg-1.m4s` }] },
+      { Deleted: [{ Key: `${prefix}master.m3u8` }] },
+    ]);
+
+    await expect(new HlsWriter(client, "hls").deletePrefix(prefix, { keepPrefixes: [`${prefix}attempts/`] })).resolves.toBe(1);
+    const command = send.mock.calls[1]?.[0] as DeleteObjectsCommand;
+    expect(command.input.Delete?.Objects).toEqual([{ Key: `${prefix}master.m3u8` }]);
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects a keep prefix outside the deleted prefix", async () => {
+    const { client, send } = clientWith([]);
+    await expect(new HlsWriter(client, "hls").deletePrefix(prefix, { keepPrefixes: ["videos/video-2/v/v1/attempts/"] })).rejects.toThrow(/Invalid keep prefix/);
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("retries only transiently failed keys and counts confirmed deletions", async () => {
     const { client, send } = clientWith([
       { Contents: [{ Key: `${prefix}one.ts` }, { Key: `${prefix}two.ts` }] },
