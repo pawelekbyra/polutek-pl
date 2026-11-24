@@ -18,6 +18,11 @@
 #   RB_LOCATION (default: location of this server), RB_MIN_CORES=4, RB_MIN_MEM_GB=8, RB_TTL_MIN=90,
 #   RB_PROD_IP (default: this server's public IPv4), RB_EXTRA_SSH_CIDRS (comma list), RB_GATE (default: npm ci),
 #   RB_MIN_FREE_GB=8, RB_DOCKER_MATCH=1 (install the same Docker version as here), RB_LOAD_RATE (e.g. 50m, needs pv).
+# Trial runs (T3): RB_NO_LOAD=1 builds and compresses the images on the builder (size and time measured) but sends
+#   nothing to this server: no docker load, no manifest (summary in $RB_HOME/<tag>/no-load.json).
+#   RB_VM_CHECK=<file> runs that bash script on the builder after the images are built (env TAG, SHA; output in
+#   $RB_HOME/logs/vmcheck-<run>.log; its exit code is logged, it does not fail the build).
+#   The builder's RAM is sampled every 2 s (free -m); the peak is logged and kept in timings.
 set -euo pipefail
 . "$(dirname "$(readlink -f "$0")")/lib/common.sh"
 LOG_TAG=build
@@ -74,10 +79,16 @@ compute_cost() { # $1 = exit status so far
 ' "$(date -u +%FT%TZ)" "$run" "$mode"     "$type" "$secs" "$(jget "$cost" 'd.exact_gross_eur')" "$(jget "$cost" 'd.billed_gross_eur')" "$([[ ${1:-0} == 0 ]] && echo ok || echo fail)" >> "$RB_HOME/costs.log"
 }
 
-# Children first (the sleep), then the watchdog itself; otherwise the orphaned sleep keeps the build lock open.
+# Watchdog first, then its sleep (pids taken before, so the sleep is not orphaned and does not keep the build lock
+# open). Killing the sleep first let the watchdog run on into its "TTL reached" branch. `wait` returns 143 for the
+# killed watchdog: that must not trip `set -e` (it used to end every successful build with exit 143, no manifest).
 stop_watchdog() {
   [[ -n "$watchdog_pid" ]] || return 0
-  pkill -P "$watchdog_pid" 2>/dev/null; kill "$watchdog_pid" 2>/dev/null; wait "$watchdog_pid" 2>/dev/null
+  local kids
+  kids="$(pgrep -P "$watchdog_pid" 2>/dev/null || true)"
+  kill "$watchdog_pid" 2>/dev/null || true
+  if [[ -n "$kids" ]]; then kill $kids 2>/dev/null || true; fi
+  wait "$watchdog_pid" 2>/dev/null || true
   watchdog_pid=""
   return 0
 }
@@ -204,6 +215,9 @@ done
 t_ready=$(date +%s)
 vm 'docker info >/dev/null && zstd --version >/dev/null' || die "docker/zstd missing on the builder"
 log "builder ready in $(( t_ready - t_create )) s (ssh+cloud-init); docker $(vm "docker version --format '{{.Server.Version}}'")"
+# RAM sampler on the builder: "<epoch> <used MiB> <available MiB> <swap used MiB>" every 2 s.
+vm "nohup sh -c 'while :; do free -m | awk -v t=\$(date +%s) \"/^Mem:/{u=\\\$3;a=\\\$7} /^Swap:/{s=\\\$3} END{print t, u, a, s}\"; sleep 2; done' > /root/mem.log 2>/dev/null < /dev/null &" || log "WARN: RAM sampler not started"
+mem_peak() { vm "awk 'BEGIN{m=0;a=-1} {if(\$2>m)m=\$2; if(a<0||\$3<a)a=\$3; if(\$4>s)s=\$4} END{printf \"{\\\"peak_used_mib\\\":%d,\\\"min_available_mib\\\":%d,\\\"peak_swap_mib\\\":%d,\\\"samples\\\":%d}\", m, a, s, NR}' /root/mem.log" 2>/dev/null || printf '{}'; }
 
 created_iso="$(date -u -d "@$(date +%s)" +%FT%TZ)"
 lbl=(--label "org.opencontainers.image.revision=$sha" --label "org.opencontainers.image.version=$tag" --label "org.opencontainers.image.created=$created_iso")
@@ -222,7 +236,7 @@ else
   for _ in $(seq 1 20); do [[ -s "$work/src.sha" ]] && break; sleep 0.5; done
   printf '{"files":%s,"archive_sha256":"%s","git_archive":"%s"}' "$files" "$(cat "$work/src.sha")" "$sha" > "$facts/source.json"
   vm 'umask 077; cat > /build/build-args' < "$work/build-args"
-  log "source sent ($files files)"
+  log "source sent ($files files) in $(( $(date +%s) - t_src )) s"
   # 7. Gate: npm ci (and whatever RB_GATE adds) in a clean Node 22 container.
   t_g0=$(date +%s)
   vm "timeout 30m docker run --rm -v /build/src:/src -w /src node:22-bookworm-slim sh -c $(printf '%q' "$RB_GATE")" 2>&1 | tail -n 15 | sed 's/^/  gate: /' \
@@ -232,13 +246,27 @@ else
   log "gate ok in $(( t_gate - t_g0 )) s"
   # 8. Images: same Dockerfile and targets as deploy.sh; public args only for the app (runner), as deploy.sh does.
   vm "set -e; cd /build; args=(); while IFS= read -r l; do args+=(--build-arg \"\$l\"); done < build-args
-    b() { timeout 45m docker build -q -f src/deploy/serwerek/Dockerfile ${lbl[*]} \"\$@\" src >/dev/null; }
-    b --target runner \"\${args[@]}\" --label pl.pawelperfect.release.kind=app -t polutek-app:$tag
-    b --target migrator --label pl.pawelperfect.release.kind=migrator -t polutek-migrator:$tag
-    b --target worker --label pl.pawelperfect.release.kind=worker -t polutek-worker:$tag
-    b --target collector --label pl.pawelperfect.release.kind=collector -t polutek-collector:$tag" 2>&1 | tail -n 40 | sed 's/^/  build: /'     || die "image build failed"
+    b() { local k=\"\$1\" t0=\$(date +%s); shift
+      if ! timeout 45m docker build --progress=plain -f src/deploy/serwerek/Dockerfile ${lbl[*]} \"\$@\" src > /root/build-\$k.log 2>&1; then
+        tail -n 30 /root/build-\$k.log; return 1; fi
+      echo \"\$k \$(( \$(date +%s) - t0 )) s\"; }
+    b app --target runner \"\${args[@]}\" --label pl.pawelperfect.release.kind=app -t polutek-app:$tag
+    b migrator --target migrator --label pl.pawelperfect.release.kind=migrator -t polutek-migrator:$tag
+    b worker --target worker --label pl.pawelperfect.release.kind=worker -t polutek-worker:$tag
+    b collector --target collector --label pl.pawelperfect.release.kind=collector -t polutek-collector:$tag" 2>&1 | tail -n 40 | sed 's/^/  build: /'     || die "image build failed"
   t_built=$(date +%s)
   log "images built in $(( t_built - t_gate )) s"
+  # Long steps of the app build (BuildKit step number -> duration), for the record.
+  vm "awk 'FNR==1{delete name} /^#[0-9]+ /{if(!(\$1 in name)){s=\$0; sub(/^#[0-9]+ /,\"\",s); name[\$1]=s}} /^#[0-9]+ DONE [0-9.]+s/{d=\$3; sub(/s\$/,\"\",d); if (d+0 >= 5) printf \"%7.1fs %s\\n\", d, name[\$1]}' /root/build-app.log /root/build-worker.log" 2>/dev/null | sed 's/^/  step: /' || true
+  log "RAM on the builder so far: $(mem_peak)"
+fi
+
+# 8b. Optional checks on the builder (e.g. ffmpeg in the worker image); never fails the build.
+if [[ -n "${RB_VM_CHECK:-}" ]]; then
+  [[ -r "$RB_VM_CHECK" ]] || die "RB_VM_CHECK: cannot read $RB_VM_CHECK"
+  t_c0=$(date +%s); crc=0
+  vm "TAG=$tag SHA=$sha bash -s" < "$RB_VM_CHECK" > "$RB_HOME/logs/vmcheck-$run.log" 2>&1 || crc=$?
+  log "vm check: exit $crc in $(( $(date +%s) - t_c0 )) s, output in $RB_HOME/logs/vmcheck-$run.log"
 fi
 
 # 9. Facts from the builder.
@@ -251,7 +279,24 @@ t_x0=$(date +%s)
 remote="$(vm "set -e; docker save ${refs[*]} | zstd -q -T0 -3 -o /root/images.tar.zst; sha256sum /root/images.tar.zst | cut -d' ' -f1; stat -c %s /root/images.tar.zst")"
 remote_sha="$(sed -n 1p <<<"$remote")"; remote_bytes="$(sed -n 2p <<<"$remote")"
 t_x1=$(date +%s)
-log "saved+compressed on the builder: $remote_bytes bytes in $(( t_x1 - t_x0 )) s; loading here"
+log "saved+compressed on the builder: $remote_bytes bytes in $(( t_x1 - t_x0 )) s"
+mem="$(mem_peak)"; log "RAM on the builder (whole run): $mem"
+if [[ "${RB_NO_LOAD:-0}" == "1" ]]; then
+  # Trial run: nothing is sent to this server. Delete the machine, record cost and a summary, no manifest.
+  log "RB_NO_LOAD=1: images NOT transferred to this server"
+  stop_watchdog
+  destroy_builder || die "builder deletion not confirmed"
+  compute_cost 0
+  log "left in Hetzner for this run: $(hc inventory --run "$run")"
+  out="$RB_HOME/$tag"; mkdir -p "$out"
+  printf '{"tag":"%s","revision":"%s","builder":%s,"compressed_bytes":%s,"sha256":"%s","ram":%s,"cost":%s,"timings":{"create_to_running":%s,"cloud_init":%s,"source_and_gate":%s,"build":%s,"save":%s,"machine_lifetime":%s,"total":%s}}\n' \
+    "$tag" "$sha" "$builder_json" "$remote_bytes" "$remote_sha" "${mem:-null}" "$(cat "$facts/cost.json" 2>/dev/null || echo null)" \
+    $(( t_running - t_create )) $(( t_ready - t_running )) $(( t_gate - t_src )) $(( t_built - t_gate )) $(( t_x1 - t_x0 )) \
+    $(( t_destroyed - t_create )) $(( $(date +%s) - started )) > "$out/no-load.json"
+  log "summary: $out/no-load.json"
+  exit 0
+fi
+log "loading here"
 rate=(cat); [[ -n "${RB_LOAD_RATE:-}" ]] && command -v pv >/dev/null && rate=(pv -q -L "$RB_LOAD_RATE")
 vm 'cat /root/images.tar.zst' | "${rate[@]}" | tee >(sha256sum | cut -d' ' -f1 > "$work/recv.sha") \
   | ionice -c3 nice -n 10 zstd -dq | ionice -c3 nice -n 10 docker load -q | sed 's/^/  load: /'

@@ -97,6 +97,10 @@ Budowa: `RB_SERVER_TYPE`, `RB_LOCATION`, `RB_MIN_CORES=4`, `RB_MIN_MEM_GB=8`, `R
 `RB_GATE="npm ci --no-audit --no-fund"` (np. dopisz `&& npx prisma generate && npm run typecheck`), `RB_MIN_FREE_GB=8`,
 `RB_REPO` (repo z commitem, domyślnie lustro `/opt/serwerek/releases/repo.git`), `RB_DOCKER_MATCH=1` (na maszynie
 ta sama wersja Dockera co na serwerze), `RB_EXTRA_SSH_CIDRS`, `RB_LOAD_RATE` (limit przesyłu, wymaga `pv`).
+Próby (T3): `RB_NO_LOAD=1` buduje i kompresuje obrazy na maszynie, ale **nic nie przesyła na serwer** (bez `docker load`,
+bez manifestu; podsumowanie w `$RB_HOME/<tag>/no-load.json`). `RB_VM_CHECK=<plik>` uruchamia ten skrypt bash na maszynie
+po zbudowaniu obrazów (zmienne `TAG`, `SHA`; wynik w `logs/vmcheck-<run>.log`; nie przerywa budowy).
+`RB_ALLOW_NOT_MAIN=1` pozwala zbudować commit spoza `main` (np. gałąź PR). RAM maszyny jest próbkowany co 2 s (szczyt w logu).
 Wydanie: `RD_MIN_FREE_GB=5`, `RD_BACKUP=full|dump`, `RD_DRAIN_ENCODER=1`, `HEALTH_TIMEOUT=150`, `KEEP_RELEASES=3`.
 `RELEASE_FOREGROUND=1` wyłącza przejście w tło. Testy pomocników: `node --test deploy/release/test/*.test.mjs`.
 
@@ -120,7 +124,7 @@ Próba 24.11.2026: dwa uruchomienia `release-build.sh HEAD --probe` (maszyna cpx
 |---|---|---|
 | T1 | `docker save` na maszynie → `docker load` na serwerze: ID i etykiety identyczne (containerd, Docker 29.8.2) | **częściowo OK**: mały obraz `release-probe:test` (3,6 MB po kompresji) ma identyczne ID i etykietę revision. Obie strony: Docker 29.8.2, magazyn containerd. Duże obrazy jeszcze nie testowane. |
 | T2 | Weryfikacja dowodu bez atrap | **częściowo OK**: `manifest.mjs create` porównał prawdziwe `docker image inspect` z obu stron. `verify` na pełnym wydaniu jeszcze nie testowany. |
-| T3 | Pełna budowa `main` na maszynie: czas, koszt | nie testowano (wymaga zgody koordynatora) |
+| T3 | Pełna budowa `main` na maszynie: czas, koszt | **OK z poprawką** (24.11.2026, gałąź wideo `ef637d9b`, cpx32, `RB_NO_LOAD=1`): budowa 4 obrazów przechodzi. cloud-init 84 s, npm ci 49 s, obrazy 356 s (app 144 s, w tym `next build` 57 s; worker 157 s), zapis+zstd 19 s, 844 MB do przesłania; szczyt RAM 3,5 GB z 7,7 GB, bez swapu; maszyna żyła 671 s, 0,013 € proporcjonalnie, 0,071 € rozliczone. Znaleziony błąd: `stop_watchdog` pod `set -e` kończył każdą udaną budowę kodem 143 bez manifestu (poprawione w `fix/release-process-t3`). |
 | T4 | Próbne wdrożenie na maszynie, zepsuty obraz → rollback, pierwsze wdrożenie bez poprzedniego dowodu | nie testowano |
 | T5 | Zerwanie SSH w trakcie | **częściowo**: obie próby szły w tle (`setsid nohup` + log). Samego zerwania SSH nie symulowano. |
 | T6 | Brak miejsca | nie testowano (kontrola `df` jest w obu skryptach) |
