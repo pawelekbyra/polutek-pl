@@ -15,6 +15,13 @@ vi.mock('@/lib/modules/comments', async (importOriginal) => ({
   deleteComment: vi.fn(),
 }));
 
+// The PATCH route rate-limits edits first. With Redis env vars present (CI sets fake ones) the real store would try
+// a network call; this test is about authorization/validation, so the limiter is stubbed to "allowed".
+vi.mock('@/lib/rate-limit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/rate-limit')>()),
+  rateLimit: vi.fn().mockResolvedValue({ success: true, remaining: 9 }),
+}));
+
 vi.mock('@/lib/modules/shared/app-context', () => ({
   createAppContext: vi.fn().mockReturnValue({}),
 }));

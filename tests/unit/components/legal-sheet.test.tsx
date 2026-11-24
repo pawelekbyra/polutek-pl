@@ -224,6 +224,7 @@ describe('legal sheet in the patron checkout', () => {
     const { LegalSheetProvider } = await import('@/app/components/legal/LegalSheet');
     render(
       <LegalSheetProvider tx={txFor('pl')} language="pl" demo>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a plain anchor on purpose: the test checks how the sheet reacts to a native link */}
         <a href="/regulamin" onClick={(e) => e.preventDefault()}>x</a>
         <LegalLink doc="terms" language="pl">Link regulaminu</LegalLink>
         <LegalLink doc="privacy" language="pl">Link polityki</LegalLink>

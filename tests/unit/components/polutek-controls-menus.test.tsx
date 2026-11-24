@@ -61,8 +61,11 @@ vi.mock("@vidstack/react", async () => {
 vi.mock("@vidstack/react/icons", () => {
   const icon = () => null;
   // Play and replay get a marker so the tests can tell which glyph the centre button shows.
-  const marked = (id: string) => (props: { className?: string }) =>
-    React.createElement("svg", { "data-testid": id, className: props.className, "aria-hidden": "true" });
+  const marked = (id: string) => {
+    const MarkedIcon = (props: { className?: string }) =>
+      React.createElement("svg", { "data-testid": id, className: props.className, "aria-hidden": "true" });
+    return MarkedIcon;
+  };
   return {
     ChaptersIcon: icon, FullscreenExitIcon: icon, FullscreenIcon: icon, MuteIcon: icon,
     PauseIcon: icon, PlayIcon: marked("play-icon"), ReplayIcon: marked("replay-icon"),

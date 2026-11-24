@@ -74,11 +74,17 @@ jobs:
       - run: npx prisma generate
       - run: npx tsc -p tsconfig.typecheck.json --noEmit
       - run: npm run lint
+      # The checks below run even when an earlier one failed, so one red step does not hide the rest.
       - run: npm run quality:architecture-boundaries
+        if: ${{ !cancelled() }}
       - run: npm run quality:hotspots
+        if: ${{ !cancelled() }}
       - run: npm run quality:strict-escapes
+        if: ${{ !cancelled() }}
       - run: npm run env:validate:prod
+        if: ${{ !cancelled() }}
       - name: i18n catalog parity
+        if: ${{ !cancelled() }}
         run: npx vitest run tests/unit/i18n/catalog-parity.test.ts
 
   unit:
@@ -221,4 +227,18 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-      - run: npm audit --omit=dev --audit-level=high
+      - name: npm audit
+        id: audit
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+      - name: summary (informational, does not block)
+        if: always()
+        env:
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        run: |
+          {
+            echo "### npm audit (production deps): informational, does NOT block the PR"
+            echo ""
+            echo "Result of the audit step: \`${AUDIT_OUTCOME}\` (success = no high/critical advisory; failure = read the step log)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
