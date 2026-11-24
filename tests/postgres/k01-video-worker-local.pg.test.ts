@@ -39,6 +39,7 @@ let server: ReturnType<typeof createServer> | undefined;
 let nextServer: ChildProcess | undefined;
 let baseUrl = "";
 let nextOutput = "";
+let mainChannelSettingCreated = false;
 const cachedResponses = new Map<string, Response>();
 const pendingCacheWrites: Promise<unknown>[] = [];
 const previousCaches = (globalThis as unknown as { caches?: unknown }).caches;
@@ -330,6 +331,8 @@ beforeAll(async () => {
   const user = await prisma.user.create({ data: { id: userId, email: `${RUN}@example.test` } });
   const creator = await prisma.creator.create({ data: { userId: user.id, slug: `${RUN}-creator`, name: "K01 local worker" } });
   creatorId = creator.id;
+  await prisma.appSetting.create({ data: { key: "main_channel_id", value: creatorId } });
+  mainChannelSettingCreated = true;
   const video = await prisma.video.create({ data: { creatorId, title: "K01 synthetic video", slug: `${RUN}-video`, thumbnailUrl: "https://example.test/cover.jpg" } });
   videoId = video.id;
   strangerUserId = `${RUN}-stranger`;
@@ -361,6 +364,7 @@ afterAll(async () => {
   if (strangerCreatorId) await prisma.creator.deleteMany({ where: { id: strangerCreatorId } });
   if (userId) await prisma.user.deleteMany({ where: { id: userId } });
   if (strangerUserId) await prisma.user.deleteMany({ where: { id: strangerUserId } });
+  if (mainChannelSettingCreated) await prisma.appSetting.deleteMany({ where: { key: "main_channel_id", value: creatorId } });
   await prisma.$disconnect();
   if (server) {
     server.closeAllConnections();
@@ -427,7 +431,7 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     }
     const completeResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/complete`, {
       method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
-      body: JSON.stringify({ originalId, parts: completedParts }),
+      body: JSON.stringify({ originalId, parts: completedParts, publishAfterReady: true }),
     });
     const completeText = await completeResponse.text();
     expect(completeResponse.status, `${completeText}\n${nextOutput}`).toBe(200);
@@ -445,6 +449,7 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
       prisma.videoAsset.findMany({ where: { videoId, provider: "SELF_HLS", processingState: "READY" } }),
     ]);
     expect(persistedJob).toMatchObject({ status: "SUCCEEDED", stage: "DONE", progressPercent: 100 });
+    expect(result.status).toBe("PUBLISHED");
     expect(result.activePlaybackRoute?.asset.videoId).toBe(videoId);
     expect(result.activePlaybackRoute?.asset.objectKey).toBe(hlsAttemptAssetKey(videoId, 1, persistedJob.attemptId));
     expect(routes).toHaveLength(1);
@@ -470,8 +475,8 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
 
     const guestPlaybackResponse = await fetch(`${baseUrl}/api/media-source/${videoId}`);
     const guestPlaybackText = await guestPlaybackResponse.text();
-    expect(guestPlaybackResponse.status).toBe(403);
-    expect(guestPlaybackText).not.toContain("playbackUrl");
+    expect(guestPlaybackResponse.status).toBe(200);
+    expect(JSON.parse(guestPlaybackText)).toMatchObject({ status: "READY", access: { allowed: true }, source: { provider: "SELF_HLS" } });
     const ownerPlaybackResponse = await fetch(`${baseUrl}/api/media-source/${videoId}`, {
       headers: { cookie: ownerCookie() },
       cache: "no-store",
