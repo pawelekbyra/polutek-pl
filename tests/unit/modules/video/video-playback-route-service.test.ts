@@ -3,8 +3,11 @@ import { AccessTier, StorageProvider, VideoAssetProcessingState } from '@prisma/
 import { VideoPlaybackRouteService } from '@/lib/modules/video/application/video-playback-route.service';
 
 function ctxForRoute(assetOverrides: any = {}) {
-  const calls: any = { routeUpdates: [], assetUpdateMany: [], assetUpdates: [], videoUpdates: [] };
+  const calls: any = { routeUpdates: [], assetUpdateMany: [], assetUpdates: [], videoUpdates: [], auditCreates: [], claimUpdates: [] };
   const tx = {
+    $queryRaw: async () => [{ id: 'job-1' }],
+    auditLog: { create: async ({ data }: any) => { calls.auditCreates.push(data); return { id: 'audit-1' }; } },
+    videoEncodeJob: { update: async ({ data }: any) => calls.claimUpdates.push(data) },
     videoPlaybackRoute: {
       updateMany: async ({ data }: any) => calls.routeUpdates.push(data),
       create: async ({ data }: any) => ({ id: 'route-new', ...data, createdAt: new Date(), updatedAt: new Date() }),
@@ -33,6 +36,17 @@ describe('VideoPlaybackRouteService', () => {
     expect(calls.videoUpdates[0]).toMatchObject({ activePlaybackRouteId: 'route-new' });
     expect(calls.assetUpdateMany[0]).toMatchObject({ isPrimary: false });
     expect(calls.assetUpdates[0]).toMatchObject({ isPrimary: true });
+    expect(calls.auditCreates[0]).toMatchObject({ action: 'VIDEO_PLAYBACK_ROUTE_ACTIVATED', targetId: 'video-1' });
+  });
+
+  it('locks and refreshes the current encode claim in the activation transaction', async () => {
+    const { ctx, calls } = ctxForRoute();
+    await new VideoPlaybackRouteService().activateRoute({
+      videoId: 'video-1', assetId: 'asset-1', activatedBy: 'POLICY',
+      encodeClaim: { jobId: 'job-1', workerId: 'worker-1', attemptId: 'attempt-1' },
+    }, ctx);
+    expect(calls.claimUpdates).toEqual([expect.objectContaining({ heartbeatAt: expect.any(Date) })]);
+    expect(calls.auditCreates[0]).toMatchObject({ action: 'VIDEO_PLAYBACK_ROUTE_ACTIVATED' });
   });
 
   it('rejects non-ready assets', async () => {

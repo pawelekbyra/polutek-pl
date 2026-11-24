@@ -11,6 +11,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { DEFAULT_HLS_BUCKET } from "../domain/keys";
+import { verifyHlsOutput, type HlsOutputVerification } from "../domain/verify-hls-output";
 
 export interface R2Credentials {
   accountId: string;
@@ -193,6 +194,28 @@ export class HlsWriter {
       token = r.IsTruncated ? r.NextContinuationToken : undefined;
     } while (token);
     return count;
+  }
+
+  async verifyOutput(assetKey: string): Promise<HlsOutputVerification> {
+    const prefix = `${assetKey}/`;
+    const objectKeys: string[] = [];
+    let token: string | undefined;
+    do {
+      const page = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
+      for (const object of page.Contents ?? []) if (object.Key) objectKeys.push(object.Key);
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
+
+    return verifyHlsOutput(prefix, objectKeys, async (key) => {
+      try {
+        const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+        if (!result.Body) return null;
+        return result.Body.transformToString();
+      } catch (error) {
+        if (isNotFound(error)) return null;
+        throw error;
+      }
+    });
   }
 
   /** Deletes every object under `prefix` (must end with "/"). Returns how many were removed. */

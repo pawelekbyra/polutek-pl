@@ -59,14 +59,13 @@ export class VideoPlaybackRouteService {
       await tx.video.update({ where: { id: input.videoId }, data: { activePlaybackRouteId: created.id } });
       await tx.videoAsset.updateMany({ where: { videoId: input.videoId }, data: { isPrimary: false } });
       await tx.videoAsset.update({ where: { id: input.assetId }, data: { isPrimary: true } });
+      await recordAuditEvent(ctx, {
+        action: "VIDEO_PLAYBACK_ROUTE_ACTIVATED",
+        targetType: "Video",
+        targetId: input.videoId,
+        metadata: { routeId: created.id, assetId: input.assetId, activatedBy: input.activatedBy, reason: input.reason ?? null },
+      }, tx);
       return created;
-    });
-
-    await recordAuditEvent(ctx, {
-      action: "VIDEO_PLAYBACK_ROUTE_ACTIVATED",
-      targetType: "Video",
-      targetId: input.videoId,
-      metadata: { routeId: route.id, assetId: input.assetId, activatedBy: input.activatedBy, reason: input.reason ?? null },
     });
     return route;
   }
