@@ -153,18 +153,24 @@ export class HlsWriter {
     readonly bucket: string,
   ) {}
 
-  async putFile(key: string, filePath: string, contentType: string, cacheControl?: string): Promise<number> {
+  async putFile(key: string, filePath: string, contentType: string, signal?: AbortSignal, cacheControl?: string): Promise<number> {
     const { size } = await stat(filePath);
-    await this.client.send(
-      new PutObjectCommand({
+    const body = createReadStream(filePath);
+    try {
+      await this.client.send(
+        new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
-        Body: createReadStream(filePath),
+        Body: body,
         ContentLength: size,
         ContentType: contentType,
         ...(cacheControl ? { CacheControl: cacheControl } : {}),
-      }),
-    );
+        }),
+        signal ? { abortSignal: signal } : undefined,
+      );
+    } finally {
+      body.destroy();
+    }
     return size;
   }
 
