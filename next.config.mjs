@@ -26,6 +26,10 @@ const configuredImageHosts = Array.from(new Set([
 const siteIsBeta = !['false', '0', 'no', 'off'].includes((process.env.NEXT_PUBLIC_SITE_BETA ?? '').trim().toLowerCase());
 
 const nextConfig = {
+  // Buffer only slightly above the largest application body cap (6 MiB); larger bodies still exceed the reader cap after Next truncates them.
+  experimental: {
+    proxyClientMaxBodySize: '7mb',
+  },
   // VAT status of the seller (lib/config/vat.ts): `PLATFORM_VAT_STATUS` (or the NEXT_PUBLIC_ alias) is inlined at build time for the server and the browser alike.
   env: {
     NEXT_PUBLIC_PLATFORM_VAT_STATUS: process.env.NEXT_PUBLIC_PLATFORM_VAT_STATUS || process.env.PLATFORM_VAT_STATUS || '',

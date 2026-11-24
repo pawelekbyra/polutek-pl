@@ -16,7 +16,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const MAX_COMMENT_REQUEST_BODY_BYTES = 10_000;
+/** 5000 characters (the schema maximum) even at 6 bytes each after JSON escaping, plus the wrapper and parentId. */
+const MAX_COMMENT_REQUEST_BODY_BYTES = 32 * 1024;
 
 const postCommentSchema = z.object({
   text: z.string().trim().min(1, "Komentarz nie może być pusty.").max(5000, "Komentarz jest za długi."),

@@ -1,3 +1,4 @@
+import { readRequestJsonWithLimit, DEFAULT_JSON_BODY_MAX_BYTES } from "@/lib/utils/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { createScopedLogger } from "@/lib/logger";
 import { handleApiError } from "@/lib/errors";
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "RATE_LIMITED" }, { status: 429 });
     }
 
-    const body = await req.json();
+    const body = await readRequestJsonWithLimit<Parameters<typeof recordPlaybackEventUseCase>[0]>(req, DEFAULT_JSON_BODY_MAX_BYTES);
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
     const result = await recordPlaybackEventUseCase(

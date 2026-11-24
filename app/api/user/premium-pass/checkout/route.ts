@@ -1,3 +1,4 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
 // patron zone (docs/architecture/patron-zone.md)
 // SIMULATED checkout (PREMIUM_PASS_PAYMENTS=demo). Never takes money: no payment provider, no card/BLIK data (strict
 // schema); in `stripe` mode it answers WRONG_MODE. The real flow is ../intent + the Stripe webhook.
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     const limit = await rateLimit({ key: `premium-pass:checkout:${userId}`, limit: 10, windowMs: 60_000 });
     if (!limit.success) return NextResponse.json({ code: "RATE_LIMITED" }, { status: 429, headers: PASS_NO_STORE });
 
-    const parsed = checkoutDemoInputSchema.safeParse(await req.json().catch(() => null));
+    const parsed = checkoutDemoInputSchema.safeParse(await readRequestJsonOrNullWithLimit(req));
     if (!parsed.success) return passInvalidRequest();
 
     const result = await checkoutDemoPass(createAppContext({ actor }), parsed.data);

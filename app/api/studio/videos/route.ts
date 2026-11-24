@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { slugify } from "@/lib/modules/admin-content";
 import { createAdminVideo, getAdminVideoList } from "@/lib/modules/video";
-import { STUDIO_VIDEO_ORDER_BY, createVideoSchema, studioVideosQuerySchema } from "@/lib/api/studio-schemas";
+import { STUDIO_VIDEO_ORDER_BY, createVideoSchema, studioVideosQuerySchema, STUDIO_VIDEO_BODY_MAX_BYTES } from "@/lib/api/studio-schemas";
 import { readStudioJson, studioError, studioResult, withStudio } from "@/lib/api/studio-route";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 /** Creates a draft. The slug is the title plus a short random suffix: globally unique without a round trip. */
 export async function POST(request: Request) {
   return withStudio(request, { channel: true }, async ({ ctx }) => {
-    const body = await readStudioJson(request, createVideoSchema);
+    const body = await readStudioJson(request, createVideoSchema, STUDIO_VIDEO_BODY_MAX_BYTES);
     if (!body.ok) return body.response;
     const base = slugify(body.data.title) || "film";
     const slug = `${base}-${randomBytes(3).toString("hex")}`;

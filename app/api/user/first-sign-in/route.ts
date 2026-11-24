@@ -1,3 +1,5 @@
+import { readRequestJsonOrNullWithLimit } from "@/lib/utils/request-body";
+import { AVATAR_REQUEST_BODY_MAX_BYTES } from "@/lib/auth/avatar";
 import { NextRequest, NextResponse } from "next/server";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
@@ -17,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (actor.type !== "user" && actor.type !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const body = (await req.json().catch(() => null)) as { nickname?: unknown; avatarDataUrl?: unknown; language?: unknown } | null;
+    const body = (await readRequestJsonOrNullWithLimit(req, AVATAR_REQUEST_BODY_MAX_BYTES)) as { nickname?: unknown; avatarDataUrl?: unknown; language?: unknown } | null;
     if (typeof body?.nickname !== "string") {
       return NextResponse.json({ error: "INVALID_NICKNAME" }, { status: 400 });
     }

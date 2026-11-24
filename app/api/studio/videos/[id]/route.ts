@@ -1,6 +1,6 @@
 import { deleteVideoWithStorage } from "@/lib/modules/admin-content";
 import { getAdminVideoDetails, updateAdminVideo } from "@/lib/modules/video";
-import { updateVideoSchema } from "@/lib/api/studio-schemas";
+import { updateVideoSchema, STUDIO_VIDEO_BODY_MAX_BYTES } from "@/lib/api/studio-schemas";
 import { readStudioJson, studioJson, studioResult, withStudio } from "@/lib/api/studio-route";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export async function GET(request: Request, props: Params) {
 export async function PATCH(request: Request, props: Params) {
   return withStudio(request, { channel: true }, async ({ ctx }) => {
     const { id } = await props.params;
-    const body = await readStudioJson(request, updateVideoSchema);
+    const body = await readStudioJson(request, updateVideoSchema, STUDIO_VIDEO_BODY_MAX_BYTES);
     if (!body.ok) return body.response;
     const { premiereAt, ...rest } = body.data;
     return studioResult(
