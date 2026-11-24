@@ -467,6 +467,9 @@ export async function abortOriginalUpload(input: { videoId: string; originalId: 
       data: { status: "ABANDONED", failureReason: "Przerwany przez admina.", uploadId: null },
     });
     if (closed.count !== 1) return fail(new AppError("Ten upload został już zakończony albo zastąpiony.", 409, "UPLOAD_NOT_OPEN"));
+    // The abort won the compare-and-set, but a concurrent "complete" may already have assembled the object in R2
+    // (audit U8). The key is unique to this upload, so removing it is safe; failure only leaks space.
+    await storage.deleteObject(original.objectKey).catch(() => undefined);
     await recordAuditEvent(ctx, { action: "VIDEO_ORIGINAL_UPLOAD_ABORTED", targetType: "Video", targetId: video.id, metadata: { originalId: original.id } });
     return ok({ originalId: original.id });
   } catch (error) {

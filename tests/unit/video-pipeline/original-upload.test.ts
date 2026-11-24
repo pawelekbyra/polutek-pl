@@ -265,6 +265,7 @@ describe("abortOriginalUpload / sanitizeFileName", () => {
       data: { status: "ABANDONED", uploadId: null },
     });
     expect(audit).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "VIDEO_ORIGINAL_UPLOAD_ABORTED" }));
+    expect(t.storage.deleteObject).toHaveBeenCalledWith("originals/v1/1.mp4"); // U8: an object assembled by a racing complete is removed
   });
   it("does not audit a late abort when completion already won the status compare-and-set", async () => {
     const t = setup();
@@ -272,6 +273,7 @@ describe("abortOriginalUpload / sanitizeFileName", () => {
     expect(await abortOriginalUpload({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps))
       .toMatchObject({ ok: false, error: { code: "UPLOAD_NOT_OPEN", statusCode: 409 } });
     expect(audit).not.toHaveBeenCalled();
+    expect(t.storage.deleteObject).not.toHaveBeenCalled(); // the completed READY file must stay
   });
   it("keeps only a harmless display name", () => {
     expect(sanitizeFileName("C:\\x\\y\\a.mp4")).toBe("a.mp4");
