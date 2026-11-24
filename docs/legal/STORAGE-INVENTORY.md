@@ -40,5 +40,6 @@ Cloudflare Turnstile (formularze logowania) nie używa cookies.
 | `pp:patron-attempt-id` | sessionStorage | wznowienie próby zakupu dostępu patrona po zamknięciu i otwarciu okna płatności |
 | `pp:comment-target` | sessionStorage | identyfikator komentarza z linku (`#comment-...`) i czas, by po wejściu przewinąć do niego; ważny minutę |
 | `sso-return-to` | sessionStorage | powrót na stronę po logowaniu Google |
+| `studio-upload-draft:v1:<userId>` | localStorage | ID prywatnego szkicu i metadane wznowienia uploadu administratora; powiązane z kontem i usuwane po zakończeniu/anulowaniu |
 
-Poza zakresem publicznej strony: wznowienie uploadu w panelu administratora (`multipart-uploader`).
+Wznowienie uploadu w panelu administratora (`multipart-uploader`) jest dostępne wyłącznie po zalogowaniu i nie przechowuje tokenów ani sekretów.
