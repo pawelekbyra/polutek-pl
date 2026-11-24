@@ -18,6 +18,15 @@ describe("makeR2Client test endpoint", () => {
 
   it("refuses test endpoint injection outside NODE_ENV=test", () => {
     vi.stubEnv("NODE_ENV", "production");
-    expect(() => makeR2Client(credentials, { testEndpoint: "http://127.0.0.1:43210" })).toThrow(/NODE_ENV=test/);
+    vi.stubEnv("VIDEO_WORKER_TEST_RUNTIME", "true");
+    expect(() => makeR2Client(credentials, { testEndpoint: "http://127.0.0.1:43210" })).toThrow(/test runtime/);
+  });
+
+  it("allows the isolated HTTP acceptance runtime while keeping loopback validation", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("VIDEO_WORKER_TEST_RUNTIME", "true");
+    const client = makeR2Client(credentials, { testEndpoint: "http://127.0.0.1:43210" });
+    client.destroy();
+    expect(() => makeR2Client(credentials, { testEndpoint: "http://192.0.2.1:43210" })).toThrow(/loopback HTTP URL/);
   });
 });

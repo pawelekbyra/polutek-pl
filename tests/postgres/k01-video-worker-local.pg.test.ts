@@ -11,7 +11,6 @@ import os from "node:os";
 import path from "node:path";
 import type { ChildProcess } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hlsAttemptAssetKey } from "@/lib/modules/video-pipeline/domain/keys";
 
@@ -22,16 +21,16 @@ const SESSION_TOKEN = randomBytes(32).toString("base64url");
 const ORIGINAL_BUCKET = "k01-originals";
 const HLS_BUCKET = "k01-hls";
 const objects = new Map<string, Buffer>();
+const multipartUploads = new Map<string, { bucket: string; key: string; parts: Map<number, Buffer> }>();
+const objectRequests: string[] = [];
 let userId = "";
 let creatorId = "";
 let videoId = "";
 let originalId = "";
-let sourceKey = "";
 let endpoint = "";
 let sourceDir = "";
 let server: ReturnType<typeof createServer> | undefined;
 let nextServer: ChildProcess | undefined;
-let client: S3Client | undefined;
 let baseUrl = "";
 let nextOutput = "";
 
@@ -86,7 +85,7 @@ async function startNextServer() {
     cwd: process.cwd(),
     env: {
       PATH: process.env.PATH,
-      NODE_ENV: "development",
+      NODE_ENV: "test",
       DATABASE_URL: databaseUrl.toString(),
       DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED || databaseUrl.toString(),
       BETTER_AUTH_SECRET: AUTH_SECRET,
@@ -99,6 +98,12 @@ async function startNextServer() {
       UPSTASH_REDIS_REST_TOKEN: "",
       KV_REST_API_URL: "",
       KV_REST_API_TOKEN: "",
+      CLOUDFLARE_R2_ACCOUNT_ID: "k01-loopback",
+      CLOUDFLARE_R2_ACCESS_KEY_ID: "k01-loopback-only",
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: "k01-loopback-only",
+      CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS: ORIGINAL_BUCKET,
+      VIDEO_WORKER_TEST_S3_ENDPOINT: endpoint,
+      VIDEO_WORKER_TEST_RUNTIME: "true",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -124,11 +129,55 @@ async function startNextServer() {
 function startObjectServer() {
   const app = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", endpoint || "http://127.0.0.1");
+    objectRequests.push(`${request.method} ${url.pathname}${url.search}`);
     const parts = url.pathname.split("/").filter(Boolean);
     const bucket = decodeURIComponent(parts[0] ?? "");
     const key = decodeURIComponent(parts.slice(1).join("/"));
     const storageKey = `${bucket}/${key}`;
     if (!bucket) return sendError(response, 404, "NoSuchBucket");
+
+    const uploadId = url.searchParams.get("uploadId");
+    if (request.method === "POST" && url.searchParams.has("uploads")) {
+      const id = randomBytes(12).toString("hex");
+      multipartUploads.set(id, { bucket, key, parts: new Map() });
+      response.statusCode = 200;
+      response.setHeader("content-type", "application/xml");
+      return response.end(`<InitiateMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Bucket>${xml(bucket)}</Bucket><Key>${xml(key)}</Key><UploadId>${id}</UploadId></InitiateMultipartUploadResult>`);
+    }
+    if (uploadId && request.method === "PUT" && url.searchParams.has("partNumber")) {
+      const upload = multipartUploads.get(uploadId);
+      if (!upload || upload.bucket !== bucket || upload.key !== key) return sendError(response, 404, "NoSuchUpload");
+      const partNumber = Number(url.searchParams.get("partNumber"));
+      upload.parts.set(partNumber, await requestBody(request));
+      response.statusCode = 200;
+      response.setHeader("etag", '"k01-local"');
+      return response.end();
+    }
+    if (uploadId && request.method === "GET") {
+      const upload = multipartUploads.get(uploadId);
+      if (!upload || upload.bucket !== bucket || upload.key !== key) return sendError(response, 404, "NoSuchUpload");
+      const partsXml = [...upload.parts.entries()].sort(([a], [b]) => a - b)
+        .map(([partNumber, body]) => `<Part><PartNumber>${partNumber}</PartNumber><ETag>"k01-local"</ETag><Size>${body.length}</Size></Part>`).join("");
+      response.statusCode = 200;
+      response.setHeader("content-type", "application/xml");
+      return response.end(`<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Bucket>${xml(bucket)}</Bucket><Key>${xml(key)}</Key><UploadId>${uploadId}</UploadId><IsTruncated>false</IsTruncated>${partsXml}</ListPartsResult>`);
+    }
+    if (uploadId && request.method === "POST") {
+      const upload = multipartUploads.get(uploadId);
+      if (!upload || upload.bucket !== bucket || upload.key !== key) return sendError(response, 404, "NoSuchUpload");
+      const completed = [...upload.parts.entries()].sort(([a], [b]) => a - b).map(([, body]) => body);
+      const body = Buffer.concat(completed);
+      objects.set(storageKey, body);
+      multipartUploads.delete(uploadId);
+      response.statusCode = 200;
+      response.setHeader("content-type", "application/xml");
+      return response.end(`<CompleteMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Bucket>${xml(bucket)}</Bucket><Key>${xml(key)}</Key><ETag>"k01-complete"</ETag></CompleteMultipartUploadResult>`);
+    }
+    if (uploadId && request.method === "DELETE") {
+      multipartUploads.delete(uploadId);
+      response.statusCode = 204;
+      return response.end();
+    }
 
     if (request.method === "PUT") {
       const body = await requestBody(request);
@@ -259,28 +308,12 @@ beforeAll(async () => {
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
   endpoint = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  client = new S3Client({ region: "auto", endpoint, forcePathStyle: true, credentials: { accessKeyId: "k01-loopback-only", secretAccessKey: "k01-loopback-only" }, maxAttempts: 1 });
-
   userId = `${RUN}-user`;
   const user = await prisma.user.create({ data: { id: userId, email: `${RUN}@example.test` } });
   const creator = await prisma.creator.create({ data: { userId: user.id, slug: `${RUN}-creator`, name: "K01 local worker" } });
   creatorId = creator.id;
   const video = await prisma.video.create({ data: { creatorId, title: "K01 synthetic video", slug: `${RUN}-video`, thumbnailUrl: "https://example.test/cover.jpg" } });
   videoId = video.id;
-  sourceKey = `originals/${video.id}/source.mp4`;
-  const sourceBytes = await import("node:fs/promises").then(({ readFile }) => readFile(sourcePath));
-  await client.send(new PutObjectCommand({ Bucket: ORIGINAL_BUCKET, Key: sourceKey, Body: sourceBytes, ContentLength: sourceBytes.length, ContentType: "video/mp4" }));
-  const original = await prisma.videoOriginal.create({ data: { videoId: video.id, bucket: ORIGINAL_BUCKET, objectKey: sourceKey, version: 1, status: "READY", sizeBytes: sourceBytes.length } });
-  originalId = original.id;
-  await prisma.videoEncodeJob.create({ data: {
-    videoId: video.id,
-    originalId: original.id,
-    versionNumber: 1,
-    idempotencyKey: `${original.id}:k01-worker-test`,
-    status: "QUEUED",
-    attemptCount: 0,
-    channelId: creator.id,
-  } });
   await prisma.session.create({ data: {
     id: `${RUN}-session`, token: SESSION_TOKEN, userId, expiresAt: new Date(Date.now() + 5 * 60_000),
   } });
@@ -298,13 +331,15 @@ afterAll(async () => {
   if (videoId) await prisma.video.deleteMany({ where: { id: videoId } });
   if (creatorId) await prisma.creator.deleteMany({ where: { id: creatorId } });
   if (userId) await prisma.user.deleteMany({ where: { id: userId } });
-  await Promise.all([prisma.$disconnect(), client?.destroy()]);
+  await prisma.$disconnect();
   if (server) {
     server.closeAllConnections();
     server.close();
     await once(server, "close");
   }
   objects.clear();
+  multipartUploads.clear();
+  objectRequests.length = 0;
   if (sourceDir) await rm(sourceDir, { recursive: true, force: true });
 });
 
@@ -313,6 +348,38 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     const guestPipeline = await fetch(`${baseUrl}/api/studio/videos/${videoId}/pipeline`);
     expect(guestPipeline.status).toBe(401);
 
+    const sourceBytes = await import("node:fs/promises").then(({ readFile }) => readFile(path.join(sourceDir, "source.mp4")));
+    const uploadResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload`, {
+      method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "source.mp4", fileSize: sourceBytes.length, contentType: "video/mp4" }),
+    });
+    const uploadText = await uploadResponse.text();
+    expect(uploadResponse.status, `${uploadText}\nS3 requests: ${objectRequests.join(" | ")}\n${nextOutput}`).toBe(200);
+    const upload = JSON.parse(uploadText) as { originalId: string; partCount: number; partSize: number };
+    originalId = upload.originalId;
+    const partsResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/parts`, {
+      method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId, partNumbers: Array.from({ length: upload.partCount }, (_, index) => index + 1) }),
+    });
+    const partsText = await partsResponse.text();
+    expect(partsResponse.status, `${partsText}\n${nextOutput}`).toBe(200);
+    const signed = JSON.parse(partsText) as { urls: Array<{ partNumber: number; url: string }> };
+    const completedParts: Array<{ partNumber: number; etag: string }> = [];
+    for (const part of signed.urls) {
+      const start = (part.partNumber - 1) * upload.partSize;
+      const put = await fetch(part.url, { method: "PUT", body: sourceBytes.subarray(start, start + upload.partSize) });
+      expect(put.status).toBe(200);
+      completedParts.push({ partNumber: part.partNumber, etag: put.headers.get("etag") ?? '"k01-local"' });
+    }
+    const completeResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/complete`, {
+      method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId, parts: completedParts }),
+    });
+    const completeText = await completeResponse.text();
+    expect(completeResponse.status, `${completeText}\n${nextOutput}`).toBe(200);
+    expect(objectRequests.some((entry) => entry.startsWith("POST ") && entry.includes("uploads"))).toBe(true);
+    expect(objectRequests.some((entry) => entry.startsWith("PUT ") && entry.includes("partNumber"))).toBe(true);
+    expect(objectRequests.some((entry) => entry.startsWith("POST ") && entry.includes("uploadId"))).toBe(true);
     const job = await prisma.videoEncodeJob.findFirstOrThrow({ where: { videoId, originalId } });
     const output = await runWorker(job.id);
     expect(output).toContain('"message":"started"');

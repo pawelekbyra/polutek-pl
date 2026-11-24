@@ -35,7 +35,9 @@ export class OriginalsMultipart {
     const credentials = readR2Credentials(env);
     const bucket = env.CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS;
     if (!credentials || !bucket) return null;
-    return new OriginalsMultipart(makeR2Client(credentials), bucket);
+    return new OriginalsMultipart(makeR2Client(credentials, {
+      testEndpoint: env.VIDEO_WORKER_TEST_S3_ENDPOINT,
+    }), bucket);
   }
 
   async create(key: string, contentType: string): Promise<string> {

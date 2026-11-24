@@ -39,7 +39,9 @@ export function makeR2Client(credentials: R2Credentials, options: { testEndpoint
     } catch {
       throw new Error("The video worker test endpoint must be a loopback HTTP URL");
     }
-    if (process.env.NODE_ENV !== "test"
+    const testRuntime = process.env.NODE_ENV === "test"
+      || (process.env.NODE_ENV === "development" && process.env.VIDEO_WORKER_TEST_RUNTIME === "true");
+    if (!testRuntime
       || parsed.protocol !== "http:"
       || !["127.0.0.1", "[::1]", "localhost"].includes(parsed.hostname)
       || parsed.username !== ""
@@ -47,7 +49,7 @@ export function makeR2Client(credentials: R2Credentials, options: { testEndpoint
       || parsed.pathname !== "/"
       || parsed.search !== ""
       || parsed.hash !== "") {
-      throw new Error("The video worker test endpoint must be a loopback HTTP URL in NODE_ENV=test");
+      throw new Error("The video worker test endpoint must be a loopback HTTP URL in a test runtime");
     }
     endpoint = parsed.origin;
     forcePathStyle = true;
