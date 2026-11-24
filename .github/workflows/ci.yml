@@ -1,12 +1,35 @@
 name: CI
 
+# Independent check of pull requests to main. It does NOT build or publish images, does not deploy and uses no
+# secrets: every value in `env` below is a fake placeholder (the app validates their shape, not their truth).
+# Docs (what runs, cost, how to switch it on/off): docs/operations/CI.md.
+# The same gates run locally with scripts/ops/local-ci.mjs (its "ci-parity" gate reads the run: lines of this file).
+#
+# Heavy job (ffmpeg, Chromium, tests/postgres "stack" tests) runs only on demand:
+#   - by hand: Actions -> CI -> Run workflow, tick "heavy" (gh workflow run ci.yml --ref <branch> -f heavy=true), or
+#   - on a PR that carries the label "ci:heavy" at the time of a push (add the label, then push or reopen).
+
 on:
   pull_request:
-  push:
-    branches:
-      - main
-      - master
-      - work
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+    inputs:
+      heavy:
+        description: 'Also run the heavy job (ffmpeg, Chromium, stack tests)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One run per PR: a new push cancels the run of the previous one.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
@@ -30,143 +53,62 @@ env:
   UPSTASH_REDIS_REST_URL: https://redis.example.com
   UPSTASH_REDIS_REST_TOKEN: ci-redis-token
   HLS_TOKEN_SECRET: ci-hls-token-secret-0123456789abcdef012345
+  NEXT_TELEMETRY_DISABLED: "1"
 
+# Actions are pinned to full commit SHAs (tag in the comment). Node version comes from .nvmrc (22).
 jobs:
-  environment-validation:
-    name: environment validation
+  static:
+    name: static (prisma, typecheck, lint, architecture, i18n)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run env:validate:prod
-
-  prisma-validation-generation:
-    name: Prisma validation/generation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npx prisma validate
       - run: npx prisma generate
-
-  strict-escapes:
-    name: strict escapes
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run quality:strict-escapes
-
-  hotspots:
-    name: hotspots
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run quality:hotspots
-
-  architecture-boundaries:
-    name: architecture boundaries
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run quality:architecture-boundaries
-
-  typecheck:
-    name: typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
       - run: npx tsc -p tsconfig.typecheck.json --noEmit
-
-  tests-coverage:
-    name: tests/coverage
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run test:coverage
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: vitest-coverage
-          path: coverage/
-
-  lint:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
       - run: npm run lint
+      - run: npm run quality:architecture-boundaries
+      - run: npm run quality:hotspots
+      - run: npm run quality:strict-escapes
+      - run: npm run env:validate:prod
+      - name: i18n catalog parity
+        run: npx vitest run tests/unit/i18n/catalog-parity.test.ts
 
-  build:
-    name: build
+  unit:
+    name: unit (vitest)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run build
+      # 2 workers for the 2 vCPU runner. The real-ffmpeg test is excluded here and runs (as a hard requirement,
+      # ENCODE_SMOKE=1) in the heavy job; every other conditional skip is listed in the job summary.
+      - name: vitest (tests/unit, tests/integration)
+        run: npx vitest run --maxWorkers=2 --exclude tests/unit/hls/encode-hls.ffmpeg.test.ts --reporter=default --reporter=json --outputFile.json=vitest-unit.json
+      - name: summary (counts and skipped tests)
+        if: always()
+        run: node scripts/ops/ci-test-summary.mjs vitest-unit.json "unit (vitest)"
 
-  admin-build:
-    name: admin build
+  postgres:
+    name: postgres (migrations + tests/postgres on PG 17)
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run admin:build
-        env:
-          NEXT_OUTPUT: standalone
-
-  integration-postgres:
-    name: integration-postgres
-    runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci
@@ -174,43 +116,109 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run test:integration:postgres
+      # Empty database: every migration from prisma/migrations must apply cleanly.
+      - run: npx prisma migrate deploy
+      - run: npm run db:smoke
+      - name: vitest (tests/postgres, without the heavy stack tests)
+        run: npx vitest run --config vitest.postgres.config.ts --reporter=default --reporter=json --outputFile.json=vitest-postgres.json
+      - name: summary (counts and skipped tests)
+        if: always()
+        run: node scripts/ops/ci-test-summary.mjs vitest-postgres.json "postgres (vitest)"
 
-  encode-smoke:
-    name: encode-smoke (ffmpeg)
+  heavy:
+    name: heavy (ffmpeg, Chromium, stack tests)
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.heavy) ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci:heavy'))
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: npm ci
-      - run: npx vitest run tests/unit/hls/encode-hls.ffmpeg.test.ts
+      - run: npx playwright install --with-deps chromium
+      # ENCODE_SMOKE=1: a missing ffmpeg or missing HDR filters is a failure, not a skip.
+      - name: encode-smoke (real ffmpeg)
         env:
           ENCODE_SMOKE: '1'
+        run: npx vitest run tests/unit/hls/encode-hls.ffmpeg.test.ts
+      - run: npx prisma migrate deploy
+      # PG_STACK=1 selects only the stack tests listed in vitest.postgres.config.ts (next dev, worker, ffmpeg).
+      - name: vitest (tests/postgres stack tests)
+        env:
+          PG_STACK: '1'
+        run: npx vitest run --config vitest.postgres.config.ts --passWithNoTests --reporter=default --reporter=json --outputFile.json=vitest-stack.json
+      - name: summary (counts and skipped tests)
+        if: always()
+        run: node scripts/ops/ci-test-summary.mjs vitest-stack.json "heavy (stack tests)"
 
-  security:
-    name: npm audit/security
+  actionlint:
+    name: actionlint (workflow syntax)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Pinned release binary, verified by its SHA-256 before use.
+      - name: install actionlint 1.7.12
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/actionlint"
+          mkdir -p "$dir"
+          file=actionlint_1.7.12_linux_amd64.tar.gz
+          curl -fsSL -o "$dir/$file" "https://github.com/rhysd/actionlint/releases/download/v1.7.12/$file"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $dir/$file" | sha256sum -c -
+          tar -xzf "$dir/$file" -C "$dir" actionlint
+          echo "$dir" >> "$GITHUB_PATH"
+      - name: actionlint
+        run: |
+          actionlint -color
+
+  audit:
+    name: npm audit (production deps, informational)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Informational only: a new advisory must not block unrelated PRs. Read the log / annotations.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - name: npm audit high
-        run: npm run audit:high
+      - run: npm audit --omit=dev --audit-level=high
