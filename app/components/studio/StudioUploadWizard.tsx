@@ -6,19 +6,15 @@ import { jsonBody, studioApi, type StudioLimits } from "./studio-client";
 import { studioErrorText } from "./studio-errors";
 import { uploadOriginal, type UploadProgress } from "./upload-original";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
-import { DESCRIPTION_MAX, TITLE_MAX, formatLimitDuration, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
+import { DESCRIPTION_MAX, TITLE_MAX, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
 import VideoMoreOptions from "./VideoMoreOptions";
+import StudioUploadStatus, { type UploadPhase } from "./StudioUploadStatus";
+import StudioUploadFileInfo from "./StudioUploadFileInfo";
 import type { VideoCommentsModeValue } from "@/lib/video-metadata";
-import { Card, CharCounter, Field, Notice, ProgressBar, buttonClass, ghostButtonClass, inputClass } from "./ui";
+import { Card, CharCounter, Field, Notice, buttonClass, ghostButtonClass, inputClass } from "./ui";
 
 type Step = 1 | 2 | 3;
-type Phase = "idle" | "creating" | "uploading" | "error";
 type Tier = "PUBLIC" | "LOGGED_IN";
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  return `${Math.max(1, Math.round(bytes / (1024 * 1024)))} MB`;
-}
 
 /**
  * Upload wizard: (1) file and details, (2) visibility, (3) sending. The draft is created when sending starts,
@@ -58,7 +54,7 @@ export default function StudioUploadWizard({
   const [category, setCategory] = useState("");
   const [commentsMode, setCommentsMode] = useState<VideoCommentsModeValue>("ON");
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<UploadPhase>("idle");
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -220,7 +216,6 @@ export default function StudioUploadWizard({
     onCancel();
   };
 
-  const percent = progress && progress.totalBytes > 0 ? (progress.uploadedBytes / progress.totalBytes) * 100 : 0;
   const steps: { id: Step; label: string }[] = [
     { id: 1, label: tx("Szczegóły", "Details") },
     { id: 2, label: tx("Widoczność", "Visibility") },
@@ -267,26 +262,7 @@ export default function StudioUploadWizard({
               }}
             />
           </Field>
-          {limits && (
-            <p className="text-[13px] text-[var(--chan-muted)]">
-              {tx(
-                "Limit Twojego kanału: film do {0}, plik do {1}.",
-                "Your channel limit: videos up to {0}, files up to {1}.",
-                formatLimitDuration(limits.maxVideoSeconds),
-                formatBytes(limits.maxUploadBytes),
-              )}
-            </p>
-          )}
-          {file && (
-            <p className="text-[13px] text-[var(--chan-muted)]">
-              {file.name} · {formatBytes(file.size)}
-            </p>
-          )}
-          {file && limits && file.size > limits.maxUploadBytes && (
-            <Notice kind="error">
-              {tx("Ten plik jest większy niż limit Twojego kanału ({0}).", "This file is larger than your channel limit ({0}).", formatBytes(limits.maxUploadBytes))}
-            </Notice>
-          )}
+          <StudioUploadFileInfo file={file} limits={limits} />
           <Field label={tx("Tytuł", "Title")} htmlFor="wz-title" counter={<CharCounter id="wz-title-count" value={title} max={TITLE_MAX} />}>
             <input
               id="wz-title"
@@ -442,58 +418,15 @@ export default function StudioUploadWizard({
       )}
 
       {step === 3 && (
-        <div className="grid max-w-2xl gap-4">
-          <dl className="grid gap-1 text-[14px]">
-            <div className="flex flex-wrap gap-2">
-              <dt className="font-semibold text-[var(--chan-ink)]">{tx("Tytuł", "Title")}:</dt>
-              <dd className="text-[var(--chan-muted)]">{title.trim()}</dd>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <dt className="font-semibold text-[var(--chan-ink)]">{tx("Widoczność", "Visibility")}:</dt>
-              <dd className="text-[var(--chan-muted)]">{visibilityLabel[mode]}</dd>
-            </div>
-          </dl>
-          <div className="grid gap-2" aria-live="polite">
-            <ProgressBar value={percent} />
-            <p className="text-[13px] text-[var(--chan-muted)]">
-              {phase === "creating" && tx("Tworzę prywatny szkic…", "Creating a private draft…")}
-              {phase === "uploading" && tx("Przesłano {0}%", "Uploaded {0}%", Math.round(percent))}
-              {phase === "error" && tx("Przesyłanie zatrzymane.", "Upload stopped.")}
-            </p>
-          </div>
-          {sending && (
-            <p className="text-[12px] text-[var(--chan-muted)]">
-              {tx(
-                "Nie zamykaj tej karty. Jeśli przerwiesz, film zostanie prywatnym szkicem.",
-                "Keep this tab open. If you stop, the video stays a private draft.",
-              )}
-            </p>
-          )}
-          {warning && <Notice>{warning}</Notice>}
-          {error && <Notice kind="error">{error}</Notice>}
-          <div className="flex flex-wrap gap-2">
-            {phase === "error" && (
-              <button type="button" className={buttonClass} onClick={start}>
-                {tx("Spróbuj ponownie", "Try again")}
-              </button>
-            )}
-            {phase === "error" && draftId && (
-              <button
-                type="button"
-                className={ghostButtonClass}
-                onClick={() => {
-                  setUnsavedWork(false);
-                  onFinished(draftId);
-                }}
-              >
-                {tx("Przejdź do szkicu", "Go to the draft")}
-              </button>
-            )}
-            <button type="button" className={ghostButtonClass} onClick={cancel}>
-              {sending ? tx("Przerwij", "Cancel") : tx("Wróć do filmów", "Back to videos")}
-            </button>
-          </div>
-        </div>
+        <StudioUploadStatus
+          title={title} visibilityLabel={visibilityLabel[mode]} phase={phase} progress={progress}
+          warning={warning} error={error} draftId={draftId} onRetry={start} onCancel={cancel}
+          onOpenDraft={() => {
+            if (!draftId) return;
+            setUnsavedWork(false);
+            onFinished(draftId);
+          }}
+        />
       )}
     </Card>
   );
