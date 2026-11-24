@@ -3,10 +3,13 @@ import { spawn } from "node:child_process";
 import { execFileSync } from "node:child_process";
 import { once } from "node:events";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import net from "node:net";
+import { createHmac, randomBytes } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import type { ChildProcess } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -14,6 +17,8 @@ import { hlsAttemptAssetKey } from "@/lib/modules/video-pipeline/domain/keys";
 
 const prisma = new PrismaClient();
 const RUN = `k01-worker-${Date.now().toString(36)}`;
+const AUTH_SECRET = randomBytes(32).toString("base64url");
+const SESSION_TOKEN = randomBytes(32).toString("base64url");
 const ORIGINAL_BUCKET = "k01-originals";
 const HLS_BUCKET = "k01-hls";
 const objects = new Map<string, Buffer>();
@@ -25,7 +30,10 @@ let sourceKey = "";
 let endpoint = "";
 let sourceDir = "";
 let server: ReturnType<typeof createServer> | undefined;
+let nextServer: ChildProcess | undefined;
 let client: S3Client | undefined;
+let baseUrl = "";
+let nextOutput = "";
 
 function xml(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
@@ -41,6 +49,76 @@ function sendError(response: ServerResponse, status: number, code: string) {
   response.statusCode = status;
   response.setHeader("content-type", "application/xml");
   response.end(`<Error><Code>${code}</Code><Message>${code}</Message></Error>`);
+}
+
+async function findFreePort(): Promise<number> {
+  const listener = net.createServer();
+  await new Promise<void>((resolve, reject) => {
+    listener.once("error", reject);
+    listener.listen(0, "127.0.0.1", resolve);
+  });
+  const address = listener.address();
+  if (!address || typeof address === "string") throw new Error("Could not reserve a K01 HTTP port");
+  await new Promise<void>((resolve, reject) => listener.close((error) => error ? reject(error) : resolve()));
+  return address.port;
+}
+
+function ownerCookie() {
+  const signature = createHmac("sha256", AUTH_SECRET).update(SESSION_TOKEN).digest("base64");
+  return `pp.session_token=${SESSION_TOKEN}.${signature}`;
+}
+
+function appendNextOutput(chunk: Buffer | string) {
+  nextOutput = `${nextOutput}${chunk.toString()}`.slice(-8_000)
+    .replaceAll(AUTH_SECRET, "[auth-secret-redacted]")
+    .replaceAll(SESSION_TOKEN, "[session-token-redacted]");
+}
+
+async function startNextServer() {
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required for K01 HTTP acceptance");
+  const port = await findFreePort();
+  baseUrl = `http://127.0.0.1:${port}`;
+  const databaseUrl = new URL(process.env.DATABASE_URL);
+  databaseUrl.searchParams.set("application_name", `${RUN}-next`);
+  nextServer = spawn(process.execPath, [
+    path.join(process.cwd(), "node_modules/next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", String(port),
+  ], {
+    cwd: process.cwd(),
+    env: {
+      PATH: process.env.PATH,
+      NODE_ENV: "development",
+      DATABASE_URL: databaseUrl.toString(),
+      DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED || databaseUrl.toString(),
+      BETTER_AUTH_SECRET: AUTH_SECRET,
+      BETTER_AUTH_URL: baseUrl,
+      NEXT_PUBLIC_APP_URL: baseUrl,
+      HLS_TOKEN_SECRET: randomBytes(32).toString("base64url"),
+      HLS_DELIVERY_BASE_URL: "https://video.pawelperfect.com",
+      NEXT_TELEMETRY_DISABLED: "1",
+      UPSTASH_REDIS_REST_URL: "",
+      UPSTASH_REDIS_REST_TOKEN: "",
+      KV_REST_API_URL: "",
+      KV_REST_API_TOKEN: "",
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  nextServer.stdout?.on("data", appendNextOutput);
+  nextServer.stderr?.on("data", appendNextOutput);
+
+  const deadline = Date.now() + 90_000;
+  let lastStatus: number | undefined;
+  while (Date.now() < deadline) {
+    if (nextServer.exitCode !== null) throw new Error(`K01 Next server exited (${nextServer.exitCode}).\n${nextOutput}`);
+    try {
+      const response = await fetch(`${baseUrl}/api/studio/videos/${videoId}/pipeline`, { signal: AbortSignal.timeout(2_000) });
+      lastStatus = response.status;
+      if (lastStatus === 401) return;
+    } catch {
+      // Next can still be compiling/binding its loopback listener.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  throw new Error(`K01 Next server did not become ready (last HTTP status: ${lastStatus ?? "none"}).\n${nextOutput}`);
 }
 
 function startObjectServer() {
@@ -203,9 +281,20 @@ beforeAll(async () => {
     attemptCount: 0,
     channelId: creator.id,
   } });
-});
+  await prisma.session.create({ data: {
+    id: `${RUN}-session`, token: SESSION_TOKEN, userId, expiresAt: new Date(Date.now() + 5 * 60_000),
+  } });
+  await startNextServer();
+}, 150_000);
 
 afterAll(async () => {
+  if (nextServer && nextServer.exitCode === null) {
+    nextServer.kill("SIGTERM");
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => { nextServer?.kill("SIGKILL"); resolve(); }, 5_000);
+      nextServer?.once("exit", () => { clearTimeout(timeout); resolve(); });
+    });
+  }
   if (videoId) await prisma.video.deleteMany({ where: { id: videoId } });
   if (creatorId) await prisma.creator.deleteMany({ where: { id: creatorId } });
   if (userId) await prisma.user.deleteMany({ where: { id: userId } });
@@ -221,6 +310,9 @@ afterAll(async () => {
 
 describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS SDK loopback)", () => {
   it("claims, encodes, uploads, verifies, finalizes and activates one complete HLS graph", async () => {
+    const guestPipeline = await fetch(`${baseUrl}/api/studio/videos/${videoId}/pipeline`);
+    expect(guestPipeline.status).toBe(401);
+
     const job = await prisma.videoEncodeJob.findFirstOrThrow({ where: { videoId, originalId } });
     const output = await runWorker(job.id);
     expect(output).toContain('"message":"started"');
@@ -242,5 +334,34 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(stored.some((key) => /\/seg_\d+\.m4s$/.test(key))).toBe(true);
     expect(stored.some((key) => key.endsWith("/index.m3u8"))).toBe(true);
     expect(stored.some((key) => key.endsWith("/poster.jpg"))).toBe(true);
+
+    const pipelineResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/pipeline`, {
+      headers: { cookie: ownerCookie() },
+      cache: "no-store",
+    });
+    const pipelineText = await pipelineResponse.text();
+    expect(pipelineResponse.status, `${pipelineText}\n${nextOutput}`).toBe(200);
+    const pipeline = JSON.parse(pipelineText) as { job: { status: string; progressPercent: number }; assets: Array<{ versionNumber: number; isActive: boolean }> };
+    expect(pipeline).toMatchObject({ job: { status: "SUCCEEDED", progressPercent: 100 }, assets: [{ versionNumber: 1, isActive: true }] });
+    expect(pipelineText).not.toContain(ORIGINAL_BUCKET);
+    expect(pipelineText).not.toContain(HLS_BUCKET);
+    expect(pipelineText).not.toContain("objectKey");
+
+    const guestPlaybackResponse = await fetch(`${baseUrl}/api/media-source/${videoId}`);
+    const guestPlaybackText = await guestPlaybackResponse.text();
+    expect(guestPlaybackResponse.status).toBe(403);
+    expect(guestPlaybackText).not.toContain("playbackUrl");
+    const ownerPlaybackResponse = await fetch(`${baseUrl}/api/media-source/${videoId}`, {
+      headers: { cookie: ownerCookie() },
+      cache: "no-store",
+    });
+    const ownerPlaybackText = await ownerPlaybackResponse.text();
+    expect(ownerPlaybackResponse.status, `${ownerPlaybackText}\n${nextOutput}`).toBe(200);
+    const playback = JSON.parse(ownerPlaybackText) as { status: string; access: { allowed: boolean }; source: { provider: string; playbackUrl: string } };
+    expect(playback).toMatchObject({ status: "READY", access: { allowed: true }, source: { provider: "SELF_HLS" } });
+    expect(playback.source.playbackUrl).toContain(videoId);
+    expect(ownerPlaybackText).not.toContain(ORIGINAL_BUCKET);
+    expect(ownerPlaybackText).not.toContain(HLS_BUCKET);
+    expect(ownerPlaybackText).not.toContain("objectKey");
   }, 150_000);
 });

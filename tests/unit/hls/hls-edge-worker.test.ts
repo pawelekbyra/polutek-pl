@@ -61,8 +61,8 @@ function makeEnv(objects: Record<string, string>) {
 const pending: Promise<unknown>[] = [];
 const ctx = { waitUntil: (p: Promise<unknown>) => void pending.push(p) };
 
-function url(token: string, rest = 'master.m3u8') {
-  return `https://video.pawelperfect.com/h/${token}/${VIDEO}/v1/${rest}`;
+function url(token: string, rest = 'master.m3u8', version = 'v1') {
+  return `https://video.pawelperfect.com/h/${token}/${VIDEO}/${version}/${rest}`;
 }
 
 describe('hls edge worker', () => {
@@ -88,9 +88,30 @@ describe('hls edge worker', () => {
 
   it('parses only well-formed media paths', () => {
     expect(parsePath(`/h/t/${VIDEO}/v1/720p/seg_00001.m4s`)?.ext).toBe('m4s');
+    const attemptId = '9a4186c7-ef23-4a16-a3e0-8db8e89302d1';
+    expect(parsePath(`/h/t/${VIDEO}/v1~${attemptId}/master.m3u8`)?.version).toBe(`v1~${attemptId}`);
+    expect(parsePath(`/h/t/${VIDEO}/v1~invalid/master.m3u8`)).toBeNull();
     expect(parsePath(`/h/t/${VIDEO}/v1/meta.json`)).toBeNull();
     expect(parsePath(`/h/t/${VIDEO}/v1/../x.m3u8`)).toBeNull();
     expect(parsePath('/other')).toBeNull();
+  });
+
+  it('serves attempt-scoped objects from the exact attempt prefix', async () => {
+    const attemptId = '9a4186c7-ef23-4a16-a3e0-8db8e89302d1';
+    const version = `v1~${attemptId}`;
+    const objectKey = `videos/${VIDEO}/v/v1/attempts/${attemptId}/master.m3u8`;
+    const { env, gets } = makeEnv({ [objectKey]: '#EXTM3U\n#EXT-X-VERSION:7\n' });
+    const real = Date.now;
+    Date.now = () => NOW;
+    try {
+      const { token } = SelfHlsTokenService.sign({ videoId: VIDEO, version, secret: SECRET, nowMs: NOW }, 'https://x');
+      const response = await worker.fetch(new Request(url(token, 'master.m3u8', version)), env, ctx);
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain('#EXTM3U');
+      expect(gets).toEqual([objectKey]);
+    } finally {
+      Date.now = real;
+    }
   });
 
   it('serves a valid token from R2, then from cache without touching R2', async () => {
