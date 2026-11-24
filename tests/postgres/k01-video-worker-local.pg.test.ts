@@ -11,6 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import type { ChildProcess } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
+import { chromium } from "@playwright/test";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hlsAttemptAssetKey } from "@/lib/modules/video-pipeline/domain/keys";
 import hlsEdgeWorker from "@/workers/hls-edge/worker.mjs";
@@ -51,7 +52,28 @@ function xml(value: string) {
 async function requestBody(request: IncomingMessage) {
   const chunks: Buffer[] = [];
   for await (const chunk of request) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  return Buffer.concat(chunks);
+  const body = Buffer.concat(chunks);
+  const contentEncoding = String(request.headers["content-encoding"] ?? "").toLowerCase();
+  if (!contentEncoding.split(",").some((encoding) => encoding.trim() === "aws-chunked")) return body;
+
+  const decoded: Buffer[] = [];
+  let offset = 0;
+  while (offset < body.length) {
+    const lineEnd = body.indexOf("\r\n", offset);
+    if (lineEnd < 0) throw new Error("Malformed aws-chunked body: missing chunk header terminator");
+    const sizeText = body.subarray(offset, lineEnd).toString("ascii").split(";", 1)[0];
+    if (!/^[0-9a-f]+$/i.test(sizeText)) throw new Error("Malformed aws-chunked body: invalid chunk size");
+    const size = Number.parseInt(sizeText, 16);
+    offset = lineEnd + 2;
+    if (size === 0) break; // The remaining bytes are checksum trailers, not object content.
+    const chunkEnd = offset + size;
+    if (chunkEnd + 2 > body.length || body[chunkEnd] !== 13 || body[chunkEnd + 1] !== 10) {
+      throw new Error("Malformed aws-chunked body: truncated data chunk");
+    }
+    decoded.push(body.subarray(offset, chunkEnd));
+    offset = chunkEnd + 2;
+  }
+  return Buffer.concat(decoded);
 }
 
 function sendError(response: ServerResponse, status: number, code: string) {
@@ -148,7 +170,8 @@ async function startNextServer() {
 function startObjectServer() {
   const app = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", endpoint || "http://127.0.0.1");
-    objectRequests.push(`${request.method} ${url.pathname}${url.search}`);
+    const contentEncoding = request.headers["content-encoding"];
+    objectRequests.push(`${request.method} ${url.pathname}${url.search}${contentEncoding ? ` content-encoding=${contentEncoding}` : ""}`);
     const parts = url.pathname.split("/").filter(Boolean);
     const bucket = decodeURIComponent(parts[0] ?? "");
     const key = decodeURIComponent(parts.slice(1).join("/"));
@@ -518,19 +541,98 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     const masterResponse = await hlsEdgeWorker.fetch(new Request(playback.source.playbackUrl), edgeEnv, edgeContext);
     expect(masterResponse.status).toBe(200);
     const master = await masterResponse.text();
-    expect(master).toContain("#EXTM3U");
+    expect(master.startsWith("#EXTM3U\n") || master.startsWith("#EXTM3U\r\n"), master.slice(0, 80)).toBe(true);
     const variantPath = master.split(/\r?\n/).find((line) => line.endsWith("/index.m3u8"));
     expect(variantPath).toBeTruthy();
     const variantResponse = await hlsEdgeWorker.fetch(new Request(new URL(variantPath!, playback.source.playbackUrl)), edgeEnv, edgeContext);
     expect(variantResponse.status).toBe(200);
     const variant = await variantResponse.text();
-    expect(variant).toContain("#EXTM3U");
+    expect(variant.startsWith("#EXTM3U\n") || variant.startsWith("#EXTM3U\r\n"), variant.slice(0, 80)).toBe(true);
     const segmentPath = variant.split(/\r?\n/).find((line) => /\.m4s$/.test(line));
     expect(segmentPath).toBeTruthy();
     const segmentResponse = await hlsEdgeWorker.fetch(new Request(new URL(segmentPath!, new URL(variantPath!, playback.source.playbackUrl))), edgeEnv, edgeContext);
     expect(segmentResponse.status).toBe(200);
     const segment = new Uint8Array(await segmentResponse.arrayBuffer());
     expect(segment.length).toBeGreaterThan(0);
+    expect(Buffer.from(segment).includes(Buffer.from("moof"))).toBe(true);
     await Promise.all(pendingCacheWrites);
+
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const page = await browser.newPage();
+      const browserErrors: string[] = [];
+      const browserEdgePaths: string[] = [];
+      page.on("pageerror", (error) => browserErrors.push(`${error.name}: ${error.message}\n${error.stack ?? ""}`));
+      page.on("requestfailed", (request) => browserErrors.push(`requestfailed ${request.url()}: ${request.failure()?.errorText ?? "unknown"}`));
+      page.on("console", (message) => { if (message.type() === "error") browserErrors.push(`console: ${message.text()}`); });
+      page.on("response", async (response) => {
+        if (!response.url().includes("/api/media-source/")) return;
+        const payload = (await response.text().catch(() => "")).replace(/https:\/\/video\.pawelperfect\.com\/h\/[^\"\s]+/g, "[signed HLS URL]");
+        browserErrors.push(`media-source ${response.status()} ${payload.slice(0, 800)}`);
+      });
+      await page.route("https://video.pawelperfect.com/h/**", async (route) => {
+        const request = route.request();
+        const response = await hlsEdgeWorker.fetch(
+          new Request(request.url(), { method: request.method(), headers: request.headers() }),
+          { ...edgeEnv, ALLOWED_ORIGINS: baseUrl },
+          edgeContext,
+        );
+        const headers: Record<string, string> = {};
+        for (const name of ["content-type", "cache-control", "access-control-allow-origin", "access-control-expose-headers", "vary", "x-hls-cache"]) {
+          const value = response.headers.get(name);
+          if (value) headers[name] = value;
+        }
+        const body = request.method() === "HEAD" || response.status === 204 ? undefined : Buffer.from(await response.arrayBuffer());
+        const manifestPreview = new URL(request.url()).pathname.endsWith(".m3u8") ? ` ${body?.toString("utf8").slice(0, 240) ?? ""}` : "";
+        const safePath = new URL(request.url()).pathname.replace(/^\/h\/[^/]+\/[^/]+\//, "/h/[signed]/[video]/");
+        browserEdgePaths.push(`${response.status} ${safePath}${manifestPreview}`);
+        await route.fulfill({
+          status: response.status,
+          headers,
+          body,
+        });
+        await Promise.all(pendingCacheWrites);
+        pendingCacheWrites.length = 0;
+      });
+      const videoUrl = `${baseUrl}/pl?v=${encodeURIComponent(`${RUN}-video`)}`;
+      await page.goto(videoUrl, { waitUntil: "domcontentloaded" });
+      const attachDeadline = Date.now() + 12_000;
+      while (Date.now() < attachDeadline && await page.locator("video").count() === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+      if (await page.locator("video").count() === 0 && browserErrors.some((error) => error.includes("ERR_NETWORK_CHANGED"))) {
+        await page.goto(videoUrl, { waitUntil: "domcontentloaded" });
+        const retryDeadline = Date.now() + 12_000;
+        while (Date.now() < retryDeadline && await page.locator("video").count() === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+      }
+      const videoCount = await page.locator("video").count();
+      const browserResult = JSON.stringify({ videoCount, edge: browserEdgePaths, errors: browserErrors, text: (await page.locator("body").innerText()).slice(0, 1000), nextOutput });
+      expect(videoCount, browserResult).toBeGreaterThan(0);
+      await page.locator("video").evaluateAll((elements) => {
+        const video = elements[0] as HTMLVideoElement | undefined;
+        if (!video) return;
+        video.muted = true;
+        void video.play().catch(() => undefined);
+      });
+      const playDeadline = Date.now() + 20_000;
+      let playback: { currentTime: number; readyState: number } | null = null;
+      while (Date.now() < playDeadline) {
+        playback = await page.locator("video").evaluateAll((elements) => {
+          const video = elements[0] as HTMLVideoElement | undefined;
+          return video ? { currentTime: video.currentTime, readyState: video.readyState } : null;
+        });
+        if (playback && playback.currentTime > 0.5) break;
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+      const playbackResult = JSON.stringify({ playback, edge: browserEdgePaths, errors: browserErrors, text: (await page.locator("body").innerText()).slice(0, 1000) });
+      expect(playback?.readyState ?? 0, playbackResult).toBeGreaterThan(1);
+      expect(playback?.currentTime ?? 0, playbackResult).toBeGreaterThan(0.5);
+      expect(browserEdgePaths.some((entry) => entry.split(" ", 2)[1]?.endsWith("/master.m3u8")), playbackResult).toBe(true);
+      expect(browserEdgePaths.some((entry) => /\.m4s$/.test(entry.split(" ", 2)[1] ?? "")), playbackResult).toBe(true);
+    } finally {
+      await browser.close();
+    }
   }, 150_000);
 });
