@@ -18,7 +18,7 @@ import {
   type UpdateVideoInput,
 } from "@/lib/modules/video";
 import { cancelEncode, deleteSelfHlsAsset, enqueueEncode } from "@/lib/modules/video-pipeline";
-import { deleteVideoWithStorage, removeVideoSubtitle, saveChannelLayout, slugify } from "@/lib/modules/admin-content";
+import { deleteVideoWithStorage, kickStorageCleanup, removeVideoSubtitle, saveChannelLayout, slugify } from "@/lib/modules/admin-content";
 import { hasFreshStepUp, requireAdmin } from "@admin/lib/auth/guard";
 import { isDevFixturesEnabled, stepUpMessage } from "@admin/lib/config";
 import { dateToWarsawLocal, errorMessage, sampleDataRefusal, panelContext, warsawLocalToDate, zodFieldErrors, type ActionResult } from "@admin/lib/actions/panel";
@@ -244,8 +244,9 @@ export async function encodeAction(input: { videoId: string; op: "reencode" | "c
           : null;
   if (!result) return { ok: false, message: "Niepoprawne żądanie." };
   if (!result.ok) return { ok: false, ...errorMessage(result.error) };
+  if (input.op === "delete-asset") kickStorageCleanup();
   revalidateFilm(input.slug);
-  return { ok: true, message: { reencode: "Kodowanie w kolejce.", cancel: "Anulowanie zlecone: encoder przerwie przy następnym sygnale i posprząta pliki.", "delete-asset": "Wersja HLS usunięta." }[input.op] };
+  return { ok: true, message: { reencode: "Kodowanie w kolejce.", cancel: "Anulowanie zlecone: encoder przerwie przy następnym sygnale i posprząta pliki.", "delete-asset": "Usuwanie wersji HLS zlecone." }[input.op] };
 }
 
 export async function removeSubtitleAction(input: { videoId: string; lang: string; slug: string }): Promise<ActionResult> {
