@@ -19,19 +19,39 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | "ti
 }
 
 describe("HlsWriter.putFile over the AWS SDK HTTP protocol", () => {
-  it("rejects an in-flight PUT when its signal is aborted", async () => {
+  it("aborts an in-flight PUT and the receiver observes the interrupted request", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "hls-put-abort-http-"));
     const file = path.join(dir, "segment.m4s");
     await writeFile(file, "");
     await truncate(file, 512 * 1024 * 1024);
     const controller = new AbortController();
     let requestStartedResolve!: () => void;
+    let requestFinishedResolve!: (state: "aborted" | "completed" | "completed-after-abort" | "continued-after-abort") => void;
     const requestStarted = new Promise<void>((resolve) => { requestStartedResolve = resolve; });
+    const requestFinished = new Promise<"aborted" | "completed" | "completed-after-abort" | "continued-after-abort">((resolve) => {
+      requestFinishedResolve = resolve;
+    });
     const server = createServer((request) => {
-      request.once("data", () => {
-        request.pause();
-        requestStartedResolve();
+      let paused = false;
+      let bytesAfterAbort = 0;
+      request.on("data", (chunk: Buffer) => {
+        if (!paused) {
+          paused = true;
+          request.pause();
+          requestStartedResolve();
+          return;
+        }
+        if (controller.signal.aborted) {
+          bytesAfterAbort += chunk.length;
+          if (bytesAfterAbort >= 1024 * 1024) {
+            requestFinishedResolve("continued-after-abort");
+            request.destroy();
+          }
+        }
       });
+      request.once("aborted", () => requestFinishedResolve("aborted"));
+      request.once("end", () => requestFinishedResolve(controller.signal.aborted ? "completed-after-abort" : "completed"));
+      controller.signal.addEventListener("abort", () => request.resume(), { once: true });
       request.on("error", () => undefined);
     });
     let client: S3Client | undefined;
@@ -56,6 +76,8 @@ describe("HlsWriter.putFile over the AWS SDK HTTP protocol", () => {
       const putResult = await withTimeout(put.then(() => "resolved", (error: unknown) =>
         error instanceof Error ? error.name : "rejected"), 3_000);
       expect(putResult).toBe("AbortError");
+      const requestResult = await withTimeout(requestFinished, 3_000);
+      expect(requestResult).toBe("aborted");
     } finally {
       controller.abort();
       client?.destroy();
