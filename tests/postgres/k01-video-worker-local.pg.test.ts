@@ -440,7 +440,24 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(crossChannelComplete.status).toBe(404);
     expect(await crossChannelComplete.text()).not.toContain(foreignUpload.originalId);
     expect(objectRequests).toHaveLength(requestsBeforeForeignComplete);
-    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: foreignUpload.originalId }, select: { status: true } })).toMatchObject({ status: "UPLOADING" });
+    const recoveredForeignOriginal = await prisma.videoOriginal.findUniqueOrThrow({ where: { id: foreignUpload.originalId } });
+    expect(recoveredForeignOriginal.status).toBe("UPLOADING");
+
+    // Model R2 having committed CompleteMultipartUpload while its successful response was lost.
+    // The database still owns the upload row, but the multipart UploadId no longer exists and the object is present.
+    expect(recoveredForeignOriginal.uploadId).toBeTruthy();
+    objects.set(`${ORIGINAL_BUCKET}/${recoveredForeignOriginal.objectKey}`, sourceBytes);
+    multipartUploads.delete(recoveredForeignOriginal.uploadId!);
+    const recoveredCompleteResponse = await fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/upload/complete`, {
+      method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId: foreignUpload.originalId, parts: [{ partNumber: 1, etag: '"k01-foreign"' }] }),
+    });
+    const recoveredCompleteText = await recoveredCompleteResponse.text();
+    expect(recoveredCompleteResponse.status, `${recoveredCompleteText}\n${nextOutput}`).toBe(200);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: foreignUpload.originalId }, select: { status: true } })).toMatchObject({ status: "READY" });
+    const recoveredForeignJob = await prisma.videoEncodeJob.findFirstOrThrow({ where: { videoId: strangerVideoId, originalId: foreignUpload.originalId } });
+    expect(await runWorker(recoveredForeignJob.id)).toContain('"message":"stopped"');
+    expect(await prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: recoveredForeignJob.id }, select: { status: true } })).toMatchObject({ status: "SUCCEEDED" });
 
     const uploadResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload`, {
       method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
