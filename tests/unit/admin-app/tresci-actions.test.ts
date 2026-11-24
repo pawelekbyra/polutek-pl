@@ -67,6 +67,8 @@ describe("createFilmAction", () => {
     const r = await createFilmAction(null, fd);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(Object.keys(r.fieldErrors ?? {})).toEqual(expect.arrayContaining(["title", "tier"]));
+    // Zod 4: the enum message is set with `error` (the v3 `errorMap` option is gone and would fall back to English).
+    if (!r.ok) expect(r.fieldErrors?.tier).toBe("Wybierz poziom dostępu.");
     expect(m.video.createAdminVideo).not.toHaveBeenCalled();
   });
 

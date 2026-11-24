@@ -83,8 +83,8 @@ export function sampleDataRefusal(): { ok: false; message: string; code: string 
   return { ok: false, code: "SAMPLE_DATA", message: "Dane przykładowe: zapis jest wyłączony (ADMIN_DEV_FIXTURES=1)." };
 }
 
-/** Collects the first message per field from a zod error. */
-export function zodFieldErrors(issues: { path: (string | number)[]; message: string }[]): Record<string, string> {
+/** Collects the first message per field from a zod error (Zod 4 issue paths are `PropertyKey[]`; an issue without a path lands under `_`). */
+export function zodFieldErrors(issues: readonly { path: readonly PropertyKey[]; message: string }[]): Record<string, string> {
   const out: Record<string, string> = {};
   for (const i of issues) {
     const key = String(i.path[0] ?? "_");
