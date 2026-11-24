@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
-import { jsonBody, studioApi, type StudioVideo } from "./studio-client";
+import { StudioPipelineStateResponseSchema } from "@/lib/video-api-contracts/contracts";
+import { jsonBody, studioApi, studioApiContract, type StudioVideo } from "./studio-client";
 import { studioErrorText as errorText } from "./studio-errors";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
 import { DESCRIPTION_MAX, TITLE_MAX, isFormDirty, validateCoverFile, videoToForm, visibilityAction, type EditorForm, type EditorVisibility } from "./video-form";
@@ -13,11 +14,7 @@ import VideoMoreOptions from "./VideoMoreOptions";
 import StudioVideoPreview from "./StudioVideoPreview";
 import { Card, CharCounter, Field, Notice, buttonClass, dangerButtonClass, ghostButtonClass, inputClass } from "./ui";
 
-export interface PipelineView {
-  summary: "NO_ORIGINAL" | "UPLOADING" | "QUEUED" | "ENCODING" | "READY" | "FAILED" | "CANCELLED" | "UPLOAD_FAILED";
-  job: { id: string; progressPercent: number; stage: string; failureReason: string | null } | null;
-  original: { failureReason: string | null } | null;
-}
+export type PipelineView = ReturnType<typeof StudioPipelineStateResponseSchema.parse>;
 
 /** Studio -> video editor: form on the left, preview card (thumbnail, processing, status, link) on the right. */
 export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: () => void }) {
@@ -66,7 +63,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
     let timer: ReturnType<typeof setTimeout> | undefined;
     const poll = async () => {
       try {
-        const state = await studioApi<PipelineView>(`${base}/pipeline`);
+        const state = await studioApiContract(`${base}/pipeline`, StudioPipelineStateResponseSchema);
         if (cancelled) return;
         setPipeline(state);
         if (["UPLOADING", "QUEUED", "ENCODING"].includes(state.summary)) timer = setTimeout(poll, 4000);

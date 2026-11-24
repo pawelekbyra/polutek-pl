@@ -1,4 +1,9 @@
-import { StudioApiError, jsonBody, studioApi, type StudioFetch } from "./studio-client";
+import {
+  MultipartCompleteResponseSchema,
+  MultipartPresignResponseSchema,
+  MultipartStartResponseSchema,
+} from "@/lib/video-api-contracts/contracts";
+import { StudioApiError, jsonBody, studioApi, studioApiContract, type StudioFetch } from "./studio-client";
 
 /**
  * Sends the original file of a video straight to private storage in parts (CLAUDE.md 4.17): the server only
@@ -29,13 +34,6 @@ export interface UploadOptions {
   wait?: (ms: number) => Promise<void>;
 }
 
-interface StartedUpload {
-  originalId: string;
-  partSize: number;
-  partCount: number;
-  fileSize: number;
-}
-
 const PRESIGN_BATCH = 50;
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -48,8 +46,9 @@ export async function uploadOriginal(options: UploadOptions): Promise<{ original
   const wait = options.wait ?? sleep;
   const base = `/api/studio/videos/${encodeURIComponent(videoId)}/upload`;
 
-  const started = await studioApi<StartedUpload>(
+  const started = await studioApiContract(
     base,
+    MultipartStartResponseSchema,
     { method: "POST", ...jsonBody({ fileName, fileSize: file.size, contentType: options.contentType || file.type || undefined }), signal },
     fetchImpl,
   );
@@ -67,8 +66,9 @@ export async function uploadOriginal(options: UploadOptions): Promise<{ original
     const partNumbers = Array.from({ length: totalParts }, (_, i) => i + 1);
     for (let i = 0; i < partNumbers.length; i += PRESIGN_BATCH) {
       const batch = partNumbers.slice(i, i + PRESIGN_BATCH);
-      const { urls } = await studioApi<{ urls: Array<{ partNumber: number; url: string }> }>(
+      const { urls } = await studioApiContract(
         `${base}/parts`,
+        MultipartPresignResponseSchema,
         { method: "POST", ...jsonBody({ originalId: started.originalId, partNumbers: batch }), signal },
         fetchImpl,
       );
@@ -89,8 +89,9 @@ export async function uploadOriginal(options: UploadOptions): Promise<{ original
     }
 
     const parts = [...done.entries()].sort((a, b) => a[0] - b[0]).map(([partNumber, etag]) => ({ partNumber, etag }));
-    const completed = await studioApi<{ originalId: string; job?: { id?: string } | null }>(
+    const completed = await studioApiContract(
       `${base}/complete`,
+      MultipartCompleteResponseSchema,
       { method: "POST", ...jsonBody({ originalId: started.originalId, parts }), signal },
       fetchImpl,
     );

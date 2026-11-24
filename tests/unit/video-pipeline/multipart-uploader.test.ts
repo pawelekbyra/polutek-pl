@@ -92,6 +92,17 @@ describe("uploadOriginal", () => {
     await expect(uploadOriginal({ videoId: "v1", file: file(1 * MIB), signal: new AbortController().signal, fetchFn: bad as never, storage: null })).rejects.toMatchObject({ code: "UPLOAD_TOO_LARGE", message: "Za duży" });
   });
 
+  it("rejects a malformed 200 reservation before uploading any parts", async () => {
+    const fetchFn = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ originalId: "o1", partSize: 0, partCount: 1 }) }));
+    const putPart = vi.fn(async () => '"etag"');
+    await expect(uploadOriginal({
+      videoId: "v1", file: file(MIB), signal: new AbortController().signal,
+      fetchFn: fetchFn as unknown as typeof fetch, putPart, storage: null,
+    })).rejects.toMatchObject({ code: "API_CONTRACT_MISMATCH" });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(putPart).not.toHaveBeenCalled();
+  });
+
   it("stops on abort and keeps the resume point", async () => {
     const s = server(2, 16 * MIB);
     const ctrl = new AbortController();
