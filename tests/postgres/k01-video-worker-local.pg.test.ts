@@ -443,6 +443,16 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     const recoveredForeignOriginal = await prisma.videoOriginal.findUniqueOrThrow({ where: { id: foreignUpload.originalId } });
     expect(recoveredForeignOriginal.status).toBe("UPLOADING");
 
+    const strangerUploadUrl = `${baseUrl}/api/studio/videos/${strangerVideoId}/upload?originalId=${encodeURIComponent(foreignUpload.originalId)}`;
+    const requestsBeforeForeignResumeDenials = objectRequests.length;
+    const foreignResumeDenials = await Promise.all([
+      fetch(strangerUploadUrl, { headers: { cookie: ownerCookie() } }),
+      fetch(strangerUploadUrl, { method: "DELETE", headers: { cookie: ownerCookie() } }),
+    ]);
+    for (const response of foreignResumeDenials) expect(response.status).toBe(404);
+    expect(objectRequests).toHaveLength(requestsBeforeForeignResumeDenials);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: foreignUpload.originalId }, select: { status: true } })).toMatchObject({ status: "UPLOADING" });
+
     expect(recoveredForeignOriginal.uploadId).toBeTruthy();
     const foreignPartsResponse = await fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/upload/parts`, {
       method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
@@ -522,6 +532,15 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(await reverseCrossChannelComplete.text()).not.toContain(originalId);
     expect(objectRequests).toHaveLength(requestsBeforeReverseComplete);
     expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: originalId }, select: { status: true } })).toMatchObject({ status: "UPLOADING" });
+    const ownerUploadUrl = `${baseUrl}/api/studio/videos/${videoId}/upload?originalId=${encodeURIComponent(originalId)}`;
+    const requestsBeforeOwnerResumeDenials = objectRequests.length;
+    const ownerResumeDenials = await Promise.all([
+      fetch(ownerUploadUrl, { headers: { cookie: strangerCookie() } }),
+      fetch(ownerUploadUrl, { method: "DELETE", headers: { cookie: strangerCookie() } }),
+    ]);
+    for (const response of ownerResumeDenials) expect(response.status).toBe(404);
+    expect(objectRequests).toHaveLength(requestsBeforeOwnerResumeDenials);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: originalId, status: "UPLOADING" }, select: { status: true } })).toMatchObject({ status: "UPLOADING" });
     const foreignParts = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/parts`, {
       method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
       body: JSON.stringify({ originalId, partNumbers: [1] }),
