@@ -3,7 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { DurableJobRepository } from "@/lib/modules/shared/durable-job.repository";
 import { runDurableJobs, type JobHandler, type RunJobsResult } from "@/lib/modules/shared/durable-job";
-import { purgeVideoStorageStrict, snapshotVideoStorageInTx, type VideoStorageSnapshot } from "@/lib/modules/video-pipeline";
+import {
+  createVideoAssetCleanupHandler,
+  purgeVideoStorageStrict,
+  snapshotVideoStorageInTx,
+  VIDEO_ASSET_CLEANUP_KIND,
+  type VideoStorageSnapshot,
+} from "@/lib/modules/video-pipeline";
 import { R2CaptionStorageClient, R2ThumbnailStorageClient, isCaptionKeyOf } from "@/lib/modules/media";
 
 /**
@@ -85,7 +91,10 @@ export function createStorageCleanupHandler(deps: StorageCleanupDeps = {}): JobH
 export function runStorageCleanupJobs(deps: { db?: PrismaClient; maxJobs?: number } = {}): Promise<RunJobsResult> {
   return runDurableJobs<Prisma.TransactionClient>({
     store: new DurableJobRepository(deps.db ?? prisma),
-    handlers: { STORAGE_CLEANUP: createStorageCleanupHandler() },
+    handlers: {
+      STORAGE_CLEANUP: createStorageCleanupHandler(),
+      [VIDEO_ASSET_CLEANUP_KIND]: createVideoAssetCleanupHandler({ db: deps.db ?? prisma }),
+    },
     maxJobs: deps.maxJobs,
   });
 }

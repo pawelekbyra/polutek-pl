@@ -7,8 +7,33 @@ export function hlsAssetKey(videoId: string, versionNumber: number): string {
   return `videos/${videoId}/v/v${versionNumber}`;
 }
 
+/** Each newly claimed attempt owns a private output prefix; null maps pre-migration in-flight jobs. */
+export function hlsAttemptAssetKey(videoId: string, versionNumber: number, attemptId: string | null | undefined): string {
+  const generationKey = hlsAssetKey(videoId, versionNumber);
+  return attemptId ? `${generationKey}/attempts/${attemptId}` : generationKey;
+}
+
+const ATTEMPT_ASSET_KEY_RE = /\/attempts\/[0-9a-f-]{36}$/;
+
+/**
+ * Prefixes under an asset key that belong to OTHER assets. Attempt outputs live INSIDE the legacy generation
+ * prefix (`v<N>/attempts/<uuid>/`), so removing a legacy `v<N>` asset must never touch them (audit U3).
+ */
+export function nestedHlsAssetPrefixes(assetKey: string): string[] {
+  return ATTEMPT_ASSET_KEY_RE.test(assetKey) ? [] : [`${assetKey}/attempts/`];
+}
+
 export function hlsObjectKey(videoId: string, versionNumber: number, relativePath: string): string {
   return `${hlsAssetKey(videoId, versionNumber)}/${relativePath.replace(/^\/+/, "")}`;
+}
+
+export function hlsAttemptObjectKey(videoId: string, versionNumber: number, attemptId: string | null | undefined, relativePath: string): string {
+  return `${hlsAttemptAssetKey(videoId, versionNumber, attemptId)}/${relativePath.replace(/^\/+/, "")}`;
+}
+
+export function isHlsAssetKey(videoId: string, key: string): boolean {
+  const prefix = `videos/${videoId}/v/v`;
+  return key.startsWith(prefix) && /^\d+(?:\/attempts\/[0-9a-f-]{36})?$/.test(key.slice(prefix.length));
 }
 
 const CONTENT_TYPES: Record<string, string> = {

@@ -11,6 +11,7 @@ describe('updateAdminVideo premieres', () => {
     auditLog: { create: vi.fn() },
     appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
     creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
+    $queryRaw: vi.fn().mockResolvedValue([{ id: 'c1' }]),
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   } as any;
   const ctx = createAppContext({ actor: { type: 'admin', userId: 'a1' }, prisma: mockPrisma });

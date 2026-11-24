@@ -38,15 +38,17 @@ beforeEach(async () => {
 });
 afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
 
-function prismaStub(video: Record<string, unknown>, existingAsset: { id: string } | null = null) {
+function prismaStub(video: Record<string, unknown>, existingAsset: { id: string } | null = null, activeRoute: { id: string } | null = null) {
   return {
     videoAsset: {
       findFirst: vi.fn(async () => existingAsset),
       create: vi.fn(async () => ({ id: "asset-new" })),
       delete: vi.fn(async () => ({})),
     },
-    video: { findUnique: vi.fn(async () => video), update: vi.fn(async () => ({})) },
-  } as unknown as PrismaClient & { videoAsset: { create: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> }; video: { update: ReturnType<typeof vi.fn> } };
+    videoPlaybackRoute: { findFirst: vi.fn(async () => activeRoute) },
+    videoEncodeJob: { findFirst: vi.fn(async () => ({ id: "job-1", channelId: "channel-1", video: { creatorId: "channel-1" } })) },
+    video: { findUnique: vi.fn(async () => video), updateMany: vi.fn(async () => ({ count: 1 })) },
+  } as unknown as PrismaClient & { videoAsset: { create: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> }; videoPlaybackRoute: { findFirst: ReturnType<typeof vi.fn> }; video: { updateMany: ReturnType<typeof vi.fn> } };
 }
 
 const input = (extra = {}) => ({ job, assetKey: "videos/v1/v/v3", hlsBucket: "polutek-hls", posterPath, meta: { source: { durationSeconds: 125 } }, totalBytes: 5000, ...extra });
@@ -58,7 +60,10 @@ describe("createSelfHlsFinalizer", () => {
     expect(res).toEqual({ assetId: "asset-new" });
     expect(prisma.videoAsset.create.mock.calls[0][0].data).toMatchObject({ provider: "SELF_HLS", objectKey: "videos/v1/v/v3", bucket: "polutek-hls", processingState: "READY", isPrimary: false });
     expect(activateRoute).toHaveBeenCalledWith(expect.objectContaining({ videoId: "v1", assetId: "asset-new", activatedBy: "POLICY" }), expect.anything());
-    expect(prisma.video.update.mock.calls[0][0].data).toEqual({ duration: "2:05", thumbnailUrl: "https://acc.r2.cloudflarestorage.com/priv/k.jpg" });
+    expect(prisma.video.updateMany.mock.calls[0][0]).toMatchObject({
+      where: { encodeJobs: { some: { id: "job-1", status: "RUNNING" } } },
+      data: { duration: "2:05", thumbnailUrl: "https://acc.r2.cloudflarestorage.com/priv/k.jpg" },
+    });
     expect(attemptPublish).toHaveBeenCalledWith("v1", expect.anything(), "SELF_HLS");
     expect(syncThumb).not.toHaveBeenCalled(); // draft: nothing public to sync
   });
@@ -67,7 +72,7 @@ describe("createSelfHlsFinalizer", () => {
     const prisma = prismaStub({ id: "v1", status: "PUBLISHED", thumbnailUrl: "https://acc.r2.cloudflarestorage.com/priv/custom.jpg", duration: "9:99" });
     await createSelfHlsFinalizer(prisma).finalize(input());
     expect(putPrivate).not.toHaveBeenCalled();
-    expect(prisma.video.update).not.toHaveBeenCalled();
+    expect(prisma.video.updateMany).not.toHaveBeenCalled();
   });
 
   it("syncs the public thumbnail copy when the video is already published", async () => {
@@ -90,9 +95,43 @@ describe("createSelfHlsFinalizer", () => {
     expect(attemptPublish).not.toHaveBeenCalled();
   });
 
+  it("keeps a route and its files when the transaction committed but the acknowledgement was lost", async () => {
+    const prisma = prismaStub({ id: "v1", status: "DRAFT", thumbnailUrl: "x", duration: "1:00" }, null, { id: "route-committed" });
+    activateRoute.mockRejectedValueOnce(new Error("connection lost after commit"));
+    await expect(createSelfHlsFinalizer(prisma).finalize(input())).resolves.toEqual({ assetId: "asset-new" });
+    expect(prisma.videoAsset.delete).not.toHaveBeenCalled();
+    expect(attemptPublish).not.toHaveBeenCalled(); // recovery returns directly after confirming the committed route
+  });
+
+  it("preserves the asset row when the database cannot reconcile a lost activation acknowledgement", async () => {
+    const prisma = prismaStub({ id: "v1", status: "DRAFT", thumbnailUrl: "x", duration: "1:00" });
+    activateRoute.mockRejectedValueOnce(new Error("connection lost after commit"));
+    prisma.videoPlaybackRoute.findFirst.mockRejectedValueOnce(new Error("database unavailable"));
+    await expect(createSelfHlsFinalizer(prisma).finalize(input())).rejects.toThrow("Could not determine whether HLS route activation committed");
+    expect(prisma.videoAsset.delete).not.toHaveBeenCalled();
+  });
+
+  it("removes a pre-existing unactivated asset after activation rolls back", async () => {
+    const prisma = prismaStub({ id: "v1", status: "DRAFT", thumbnailUrl: "x", duration: "1:00" }, { id: "asset-orphan" });
+    activateRoute.mockRejectedValueOnce(new Error("audit insert failed and transaction rolled back"));
+    await expect(createSelfHlsFinalizer(prisma).finalize(input())).rejects.toThrow("audit insert failed");
+    expect(prisma.videoAsset.create).not.toHaveBeenCalled();
+    expect(prisma.videoAsset.delete).toHaveBeenCalledWith({ where: { id: "asset-orphan" } });
+    expect(attemptPublish).not.toHaveBeenCalled();
+  });
+
   it("does not fail the job when the auto-publish step throws", async () => {
     const prisma = prismaStub({ id: "v1", status: "DRAFT", thumbnailUrl: "x", duration: "1:00" });
     attemptPublish.mockRejectedValueOnce(new Error("blocker"));
     await expect(createSelfHlsFinalizer(prisma).finalize(input())).resolves.toEqual({ assetId: "asset-new" });
+  });
+
+  it("does not auto-publish when the persisted job channel disagrees with the video's creator", async () => {
+    const prisma = prismaStub({ id: "v1", status: "DRAFT", thumbnailUrl: "x", duration: "1:00" });
+    (prisma as any).videoEncodeJob.findFirst.mockResolvedValueOnce({
+      id: "job-1", channelId: "foreign-channel", video: { creatorId: "actual-channel" },
+    });
+    await expect(createSelfHlsFinalizer(prisma).finalize(input())).resolves.toEqual({ assetId: "asset-new" });
+    expect(attemptPublish).not.toHaveBeenCalled();
   });
 });

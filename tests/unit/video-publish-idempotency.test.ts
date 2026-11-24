@@ -16,9 +16,12 @@ vi.mock('../../lib/modules/audit', () => ({
   recordAuditEvent: vi.fn().mockResolvedValue({})
 }));
 
-vi.mock('../../lib/modules/channel', () => ({
+vi.mock('../../lib/modules/channel', async () => ({
+  // Real pure domain exports of the barrel (policy, errors): the use cases import them from "@/lib/modules/channel".
+  ...(await vi.importActual<object>('../../lib/modules/channel/domain/channel.policy')),
+  ...(await vi.importActual<object>('../../lib/modules/channel/domain/channel.errors')),
   MainChannelService: {
-    getRequired: vi.fn().mockResolvedValue({ id: 'main-channel-id' }),
+    getRequired: vi.fn(async (ctx: any) => ({ id: ctx.channelId ?? 'main-channel-id', status: 'ACTIVE', deletedAt: null })),
   },
 }));
 
@@ -62,7 +65,8 @@ const mockPrisma: any = {
 
 const mockCtx: any = {
   prisma: mockPrisma,
-  actor: { type: 'admin', userId: 'admin-id' }
+  actor: { type: 'admin', userId: 'admin-id' },
+  channelId: 'main-channel-id',
 };
 
 describe('attemptPublishAfterAssetReady Idempotency', () => {
@@ -78,6 +82,7 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
     // First call: fail with error
     mockPrisma.video.findUnique.mockResolvedValueOnce({
       id: videoId,
+      creatorId: 'main-channel-id',
       status: 'DRAFT',
       publishAfterAssetReady: true,
       publishAfterAssetReadyCompletedAt: null,
@@ -109,6 +114,7 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
 
     mockPrisma.video.findUnique.mockResolvedValueOnce({
       id: videoId,
+      creatorId: 'main-channel-id',
       status: 'DRAFT',
       publishAfterAssetReady: true,
       publishAfterAssetReadyCompletedAt: null,
@@ -139,6 +145,7 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
 
     mockPrisma.video.findUnique.mockResolvedValueOnce({
       id: videoId,
+      creatorId: 'main-channel-id',
       status: 'DRAFT',
       publishAfterAssetReady: true,
       publishAfterAssetReadyCompletedAt: null,
@@ -175,6 +182,7 @@ describe('attemptPublishAfterAssetReady is readiness-driven', () => {
     const videoId = 'video-xyz';
     mockPrisma.video.findUnique.mockResolvedValue({
       id: videoId,
+      creatorId: 'main-channel-id',
       status: 'DRAFT',
       publishAfterAssetReady: true,
       publishAfterAssetReadyCompletedAt: null,
@@ -189,6 +197,34 @@ describe('attemptPublishAfterAssetReady is readiness-driven', () => {
       action: 'VIDEO_PUBLISH_AFTER_ASSET_READY_COMPLETED',
       metadata: expect.objectContaining({ triggeredByProvider: 'self_hls' }),
     }));
+  });
+
+  it('publishes a non-main creator video using the creator relation as channel context', async () => {
+    const creatorCtx = { ...mockCtx, channelId: 'creator-channel-2' };
+    mockPrisma.video.findUnique.mockResolvedValue({
+      id: 'video-creator-2', creatorId: 'creator-channel-2', status: 'DRAFT',
+      publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: null,
+      publishAfterAssetReadyVisibility: 'PUBLISHED',
+    });
+    vi.mocked(publishAdminVideo).mockResolvedValue({ ok: true } as any);
+
+    await expect(attemptPublishAfterAssetReady('video-creator-2', creatorCtx)).resolves.toBe('published');
+    expect(publishAdminVideo).toHaveBeenCalledWith('video-creator-2', creatorCtx);
+    expect(mockPrisma.video.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'video-creator-2', creatorId: 'creator-channel-2' } }));
+  });
+
+  it('refuses a suspended channel and does not report publication success', async () => {
+    const channelCtx = { ...mockCtx, channelId: 'creator-channel-2' };
+    mockPrisma.video.findUnique.mockResolvedValue({
+      id: 'video-suspended', creatorId: 'creator-channel-2', status: 'DRAFT',
+      publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: null,
+      publishAfterAssetReadyVisibility: 'PUBLISHED',
+    });
+    const { MainChannelService } = await import('../../lib/modules/channel');
+    vi.mocked(MainChannelService.getRequired).mockResolvedValueOnce({ id: 'creator-channel-2', status: 'SUSPENDED', deletedAt: null } as any);
+
+    await expect(attemptPublishAfterAssetReady('video-suspended', channelCtx)).resolves.toBe('refused');
+    expect(publishAdminVideo).not.toHaveBeenCalled();
   });
 
   it('does NOT publish while no active playback route is ready yet', async () => {
@@ -211,6 +247,7 @@ describe('attemptPublishAfterAssetReady target visibility (A01)', () => {
   const videoId = 'video-vis';
   const pending = (extra: object = {}) => ({
     id: videoId,
+    creatorId: 'main-channel-id',
     status: 'DRAFT',
     publishAfterAssetReady: true,
     publishAfterAssetReadyCompletedAt: null,

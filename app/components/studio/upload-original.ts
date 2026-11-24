@@ -1,11 +1,8 @@
-import { StudioApiError, jsonBody, studioApi, type StudioFetch } from "./studio-client";
+import { UploadError as MultipartUploadError, resumeKey, uploadOriginal as uploadMultipartOriginal, type PartPutter } from "@/lib/video-upload/multipart-uploader";
+import { studioFileIdentity } from "@/lib/video-upload/studio-resume";
+import { StudioApiError, type StudioFetch } from "./studio-client";
 
-/**
- * Sends the original file of a video straight to private storage in parts (CLAUDE.md 4.17): the server only
- * reserves the upload, hands out presigned part addresses and verifies the finished object. Each part is retried;
- * progress is reported in bytes. The same flow as the admin panel, through `/api/studio/videos/:id/upload`.
- */
-
+/** Progress shape retained for the Studio wizard while both upload surfaces use one multipart engine. */
 export interface UploadProgress {
   uploadedBytes: number;
   totalBytes: number;
@@ -18,111 +15,88 @@ export interface UploadOptions {
   file: File | Blob;
   fileName: string;
   contentType?: string;
+  publishAfterReady?: boolean;
   onProgress?: (progress: UploadProgress) => void;
   signal?: AbortSignal;
-  /** Parts sent at once (default 4). */
   concurrency?: number;
-  /** Tries per part before the upload fails (default 3). */
   attempts?: number;
   fetchImpl?: StudioFetch;
-  /** Delay between tries, replaceable in tests. */
   wait?: (ms: number) => Promise<void>;
+  storage?: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
 }
 
-interface StartedUpload {
-  originalId: string;
-  partSize: number;
-  partCount: number;
-  fileSize: number;
-}
-
-const PRESIGN_BATCH = 50;
-
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-export async function uploadOriginal(options: UploadOptions): Promise<{ originalId: string; jobId: string | null }> {
-  const { videoId, file, fileName, onProgress, signal } = options;
+/** Studio adapter for the shared resumable multipart engine. */
+export async function uploadOriginal(options: UploadOptions): Promise<{ originalId: string; jobId: string }> {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const concurrency = Math.max(1, options.concurrency ?? 4);
-  const attempts = Math.max(1, options.attempts ?? 3);
-  const wait = options.wait ?? sleep;
-  const base = `/api/studio/videos/${encodeURIComponent(videoId)}/upload`;
-
-  const started = await studioApi<StartedUpload>(
-    base,
-    { method: "POST", ...jsonBody({ fileName, fileSize: file.size, contentType: options.contentType || file.type || undefined }), signal },
-    fetchImpl,
-  );
-
-  const totalParts = started.partCount;
-  const partBytes = (n: number) => Math.min(started.partSize, file.size - (n - 1) * started.partSize);
-  const done = new Map<number, string>();
-  let uploadedBytes = 0;
-  const report = () => onProgress?.({ uploadedBytes, totalBytes: file.size, completedParts: done.size, totalParts });
-  report();
-
-  const abort = () => studioApi(`${base}?originalId=${encodeURIComponent(started.originalId)}`, { method: "DELETE" }, fetchImpl).catch(() => undefined);
-
-  try {
-    const partNumbers = Array.from({ length: totalParts }, (_, i) => i + 1);
-    for (let i = 0; i < partNumbers.length; i += PRESIGN_BATCH) {
-      const batch = partNumbers.slice(i, i + PRESIGN_BATCH);
-      const { urls } = await studioApi<{ urls: Array<{ partNumber: number; url: string }> }>(
-        `${base}/parts`,
-        { method: "POST", ...jsonBody({ originalId: started.originalId, partNumbers: batch }), signal },
-        fetchImpl,
-      );
-
-      const queue = [...urls];
-      const worker = async () => {
-        for (let item = queue.shift(); item; item = queue.shift()) {
-          if (signal?.aborted) throw new StudioApiError("Przesyłanie zostało przerwane.", 499, "ABORTED");
-          const start = (item.partNumber - 1) * started.partSize;
-          const body = file.slice(start, start + partBytes(item.partNumber));
-          const etag = await putPart(item.url, body, attempts, wait, fetchImpl, signal);
-          done.set(item.partNumber, etag);
-          uploadedBytes += partBytes(item.partNumber);
-          report();
-        }
-      };
-      await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker));
+  const putPart: PartPutter = async (url, body, { signal }) => {
+    const response = await fetchImpl(url, { method: "PUT", body, signal });
+    if (!response.ok) {
+      const retryable = response.status === 403 || response.status >= 500;
+      throw new MultipartUploadError(`Wysyłanie części nie powiodło się (HTTP ${response.status}).`, response.status === 403 ? "UPLOAD_URL_EXPIRED" : `HTTP_${response.status}`, retryable, response.status);
     }
-
-    const parts = [...done.entries()].sort((a, b) => a[0] - b[0]).map(([partNumber, etag]) => ({ partNumber, etag }));
-    const completed = await studioApi<{ originalId: string; job?: { id?: string } | null }>(
-      `${base}/complete`,
-      { method: "POST", ...jsonBody({ originalId: started.originalId, parts }), signal },
-      fetchImpl,
-    );
-    return { originalId: started.originalId, jobId: completed.job?.id ?? null };
+    const etag = response.headers.get("etag");
+    if (!etag) throw new MultipartUploadError("Magazyn nie zwrócił znacznika części (ETag).", "UPLOAD_NO_ETAG");
+    return etag;
+  };
+  try {
+    const resumeIdentity = await studioFileIdentity(options.file, options.fileName);
+    return await uploadMultipartOriginal({
+      videoId: options.videoId,
+      file: options.file,
+      fileName: options.fileName,
+      contentType: options.contentType,
+      publishAfterReady: options.publishAfterReady,
+      resumeIdentity,
+      signal: options.signal ?? new AbortController().signal,
+      concurrency: options.concurrency,
+      attempts: options.attempts,
+      fetchFn: options.fetchImpl,
+      putPart,
+      sleep: options.wait,
+      storage: options.storage,
+      uploadPath: (videoId) => `/api/studio/videos/${encodeURIComponent(videoId)}/upload`,
+      onProgress: (progress) => options.onProgress?.({
+        uploadedBytes: progress.uploadedBytes,
+        totalBytes: progress.totalBytes,
+        completedParts: progress.uploadedParts,
+        totalParts: progress.partCount,
+      }),
+    });
   } catch (error) {
-    await abort();
+    if (error instanceof MultipartUploadError) {
+      const status = error.status ?? (error.code === "API_CONTRACT_MISMATCH" ? 502 : Number(error.code.replace(/^HTTP_/, "")) || 0);
+      throw new StudioApiError(error.message, status, error.code);
+    }
     throw error;
   }
 }
 
-async function putPart(
-  url: string,
-  body: Blob,
-  attempts: number,
-  wait: (ms: number) => Promise<void>,
-  fetchImpl: StudioFetch,
-  signal?: AbortSignal,
-): Promise<string> {
-  let lastError: unknown;
-  for (let attempt = 1; attempt <= attempts; attempt++) {
+/** Permanently abandons only this file's unfinished Studio reservation after explicit user confirmation. */
+export async function cancelStudioUpload(options: Pick<UploadOptions, "videoId" | "file" | "fileName" | "fetchImpl" | "storage">): Promise<void> {
+  let storage = options.storage;
+  if (storage === undefined) {
     try {
-      const response = await fetchImpl(url, { method: "PUT", body, signal });
-      if (!response.ok) throw new StudioApiError(`Wysyłanie części nie powiodło się (${response.status}).`, response.status, "PART_FAILED");
-      const etag = response.headers.get("etag");
-      if (!etag) throw new StudioApiError("Magazyn nie zwrócił znacznika części (ETag).", 502, "PART_ETAG_MISSING");
-      // Returned exactly as the storage sent it (quotes included): that is what CompleteMultipartUpload expects.
-      return etag;
-    } catch (error) {
-      lastError = error;
-      if (signal?.aborted) break;
-      if (attempt < attempts) await wait(500 * 2 ** (attempt - 1));
+      storage = typeof localStorage === "undefined" ? null : localStorage;
+    } catch {
+      storage = null;
     }
   }
-  throw lastError instanceof Error ? lastError : new StudioApiError("Wysyłanie nie powiodło się.", 502, "PART_FAILED");
+  const identity = await studioFileIdentity(options.file, options.fileName);
+  const key = resumeKey(options.videoId, options.file, options.fileName, identity);
+  const originalId = storage?.getItem(key);
+  if (!originalId) return;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const response = await fetchImpl(`/api/studio/videos/${encodeURIComponent(options.videoId)}/upload?originalId=${encodeURIComponent(originalId)}`, {
+    method: "DELETE",
+    credentials: "same-origin",
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { error?: unknown; code?: unknown } | null;
+    throw new StudioApiError(
+      typeof payload?.error === "string" ? payload.error : `Nie udało się usunąć przesyłania (HTTP ${response.status}).`,
+      response.status,
+      typeof payload?.code === "string" ? payload.code : undefined,
+    );
+  }
+  storage?.removeItem(key);
 }

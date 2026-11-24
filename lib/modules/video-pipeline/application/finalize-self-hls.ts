@@ -4,7 +4,9 @@ import { createAppContext } from "@/lib/modules/shared/app-context";
 import { R2ThumbnailStorageClient } from "@/lib/modules/media";
 import { VideoPlaybackRouteService, attemptPublishAfterAssetReady, syncPublicThumbnailById } from "@/lib/modules/video";
 import { createScopedLogger } from "@/lib/logger";
-import type { FinalizeInput, ProcessorPorts } from "./process-encode-job";
+import type { ExistingEncodeOutput, FinalizeInput, ProcessorPorts } from "./process-encode-job";
+import { hlsAssetKey } from "../domain/keys";
+import { RouteActivationOutcomeUnknownError } from "../domain/route-activation-outcome-unknown";
 
 const logger = createScopedLogger("FinalizeSelfHls");
 
@@ -29,12 +31,18 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
   const ctx = createAppContext({ prisma, actor: { type: "system", reason: "video_encode_worker" } });
 
   return {
-    async findExisting(job: VideoEncodeJob, assetKey: string) {
+    async findExisting(job: VideoEncodeJob, _assetKey: string) {
+      const legacyKey = hlsAssetKey(job.videoId, job.versionNumber);
       const asset = await prisma.videoAsset.findFirst({
-        where: { videoId: job.videoId, provider: "SELF_HLS", objectKey: assetKey, processingState: "READY" },
-        select: { id: true, playbackRoutes: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 } },
+        where: {
+          videoId: job.videoId,
+          provider: "SELF_HLS",
+          processingState: "READY",
+          OR: [{ objectKey: legacyKey }, { objectKey: { startsWith: `${legacyKey}/attempts/` } }],
+        },
+        select: { id: true, objectKey: true, playbackRoutes: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 } },
       });
-      return asset && asset.playbackRoutes.length > 0 ? asset.id : null;
+      return asset && asset.playbackRoutes.length > 0 ? { assetId: asset.id, assetKey: asset.objectKey } satisfies ExistingEncodeOutput : null;
     },
 
     async finalize(input: FinalizeInput) {
@@ -64,19 +72,70 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
 
       try {
         await new VideoPlaybackRouteService().activateRoute(
-          { videoId: job.videoId, assetId, activatedBy: "POLICY", reason: `own HLS encode job ${job.id}` },
+          {
+            videoId: job.videoId,
+            assetId,
+            activatedBy: "POLICY",
+            reason: `own HLS encode job ${job.id} attempt ${job.attemptId ?? "legacy"}`,
+            encodeClaim: { jobId: job.id, workerId: job.workerId ?? "", attemptId: job.attemptId },
+          },
           ctx,
         );
       } catch (error) {
-        // Never leave a READY asset that no route can use; the retry creates it again.
-        if (!created) await prisma.videoAsset.delete({ where: { id: assetId } }).catch(() => undefined);
+        // The transaction can commit while its acknowledgement is lost. Reconcile the exact asset before cleanup;
+        // deleting a committed route's files would turn a transient DB error into a broken active video.
+        let activeRoute;
+        try {
+          activeRoute = await prisma.videoPlaybackRoute.findFirst({
+            where: { videoId: job.videoId, assetId, status: "ACTIVE" },
+            select: { id: true },
+          });
+        } catch (reconcileError) {
+          logger.error("route activation outcome is unknown; preserving HLS output", {
+            jobId: job.id,
+            attemptId: job.attemptId,
+            assetId,
+            error: String(reconcileError),
+          });
+          throw new RouteActivationOutcomeUnknownError(reconcileError);
+        }
+        if (activeRoute) return { assetId };
+        // An unactivated row is safe to remove whether it was created now or left by an earlier failed attempt.
+        await prisma.videoAsset.delete({ where: { id: assetId } }).catch(() => undefined);
         throw error;
       }
 
       await applyVideoDetails(prisma, input).catch((error: unknown) => logger.warn("poster/duration step failed (non-fatal)", { jobId: job.id, error: String(error) }));
 
+      const ownerAndChannel = await prisma.videoEncodeJob.findFirst({
+        where: { id: job.id, status: "RUNNING", workerId: job.workerId, attemptId: job.attemptId },
+        select: { id: true, channelId: true, video: { select: { creatorId: true } } },
+      }).catch((error: unknown) => {
+        logger.warn("encode owner check after route commit failed", { jobId: job.id, attemptId: job.attemptId, error: String(error) });
+        return null;
+      });
+      if (!ownerAndChannel) return { assetId };
+      const channelId = ownerAndChannel.video.creatorId;
+      if (!channelId || ownerAndChannel.channelId !== channelId) {
+        logger.error("auto-publish refused: encode job channel does not match its video", {
+          jobId: job.id,
+          videoId: job.videoId,
+          jobChannelId: ownerAndChannel.channelId,
+          videoChannelId: channelId,
+        });
+        return { assetId };
+      }
+
       try {
-        await attemptPublishAfterAssetReady(job.videoId, ctx, "SELF_HLS");
+        const outcome = await attemptPublishAfterAssetReady(job.videoId, createAppContext({
+          prisma,
+          actor: { type: "system", reason: "video_encode_worker" },
+          channelId,
+        }), "SELF_HLS");
+        logger.info("auto-publish outcome", { jobId: job.id, videoId: job.videoId, channelId, outcome });
+        if (outcome === "refused" || outcome === "failed") {
+          logger.warn("auto-publish did not complete", { jobId: job.id, videoId: job.videoId, channelId, outcome });
+        }
       } catch (error) {
         logger.warn("auto-publish after encode failed (non-fatal)", { jobId: job.id, error: String(error) });
       }
@@ -103,7 +162,14 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
       data.thumbnailUrl = storageUrl;
     }
     if (Object.keys(data).length === 0) return;
-    await db.video.update({ where: { id: video.id }, data });
+    const updated = await db.video.updateMany({
+      where: {
+        id: video.id,
+        encodeJobs: { some: { id: input.job.id, status: "RUNNING", workerId: input.job.workerId, attemptId: input.job.attemptId } },
+      },
+      data,
+    });
+    if (updated.count === 0) return;
     if (data.thumbnailUrl && video.status === "PUBLISHED") await syncPublicThumbnailById(video.id, ctx);
   }
 }

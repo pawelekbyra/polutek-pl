@@ -99,6 +99,21 @@ describe('validateAppEnv', () => {
     expect(result.errors).toContain('HLS_TOKEN_SECRET must be at least 32 characters.');
   });
 
+  it('warns when R2 is configured without an explicit HLS bucket and rejects the worker test endpoint (U10/U6)', () => {
+    const withR2 = { ...productionEnv, CLOUDFLARE_R2_ACCESS_KEY_ID: 'r2-key' };
+    const missing = validateAppEnv(withR2, 'production');
+    expect(missing.success).toBe(true);
+    expect(missing.warnings.join(' ')).toContain('CLOUDFLARE_R2_BUCKET_HLS');
+
+    const explicit = validateAppEnv({ ...withR2, CLOUDFLARE_R2_BUCKET_HLS: 'polutek-hls' }, 'production');
+    expect(explicit.warnings.join(' ')).not.toContain('CLOUDFLARE_R2_BUCKET_HLS');
+
+    const hooked = validateAppEnv({ ...productionEnv, VIDEO_WORKER_TEST_S3_ENDPOINT: 'http://127.0.0.1:9000' }, 'production');
+    expect(hooked.success).toBe(false);
+    expect(hooked.errors.join(' ')).toContain('VIDEO_WORKER_TEST_S3_ENDPOINT');
+    expect(validateAppEnv({ ...productionEnv, VIDEO_WORKER_TEST_S3_ENDPOINT: '' }, 'production').success).toBe(true);
+  });
+
   it('no longer asks for any Mux or Cloudflare Stream variable', () => {
     const result = validateAppEnv(productionEnv, 'production');
 

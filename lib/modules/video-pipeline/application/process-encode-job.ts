@@ -15,8 +15,9 @@ import {
   estimateEtaSeconds,
   overallProgress,
 } from "../domain/encode-job.state";
-import { hlsAssetKey, hlsContentType, hlsObjectKey, isUploadableHlsFile, sortForUpload } from "../domain/keys";
+import { hlsAttemptAssetKey, hlsAttemptObjectKey, hlsContentType, isUploadableHlsFile, sortForUpload } from "../domain/keys";
 import type { EncodeJobStore } from "../infrastructure/encode-job.repository";
+import { RouteActivationOutcomeUnknownError } from "../domain/route-activation-outcome-unknown";
 
 /** What the encoder library reports about a source file (subset of probeSource()). */
 export interface SourceProbe {
@@ -51,6 +52,11 @@ export interface FinalizeInput {
   totalBytes: number;
 }
 
+export interface ExistingEncodeOutput {
+  assetId: string;
+  assetKey: string;
+}
+
 /** Everything the processor touches outside itself; the worker wires real ones, tests wire fakes. */
 export interface ProcessorPorts {
   store: EncodeJobStore;
@@ -62,7 +68,8 @@ export interface ProcessorPorts {
   };
   hls: {
     bucket: string;
-    putFile(key: string, filePath: string, contentType: string): Promise<number>;
+    verifyOutput(assetKey: string): Promise<{ complete: boolean; objectCount: number; reason: string | null }>;
+    putFile(key: string, filePath: string, contentType: string, signal?: AbortSignal): Promise<number>;
     exists(key: string): Promise<boolean>;
     countPrefix(prefix: string): Promise<number>;
     deletePrefix(prefix: string): Promise<number>;
@@ -78,7 +85,7 @@ export interface ProcessorPorts {
   };
   finalizer: {
     /** Asset id when this job's output is already live (crash between finalize and markSucceeded). */
-    findExisting(job: VideoEncodeJob, assetKey: string): Promise<string | null>;
+    findExisting(job: VideoEncodeJob, assetKey: string): Promise<ExistingEncodeOutput | null>;
     finalize(input: FinalizeInput): Promise<{ assetId: string }>;
   };
   /**
@@ -112,7 +119,7 @@ function makeProgressWriter(ports: ProcessorPorts, job: VideoEncodeJob, controll
     if (!force && nowMs - lastWrite < 2000 && Math.abs(percent - lastPercent) < 2) return;
     lastWrite = nowMs;
     lastPercent = percent;
-    const res = await ports.store.reportProgress(job.id, ports.workerId, { stage, progressPercent: percent, etaSeconds: eta });
+    const res = await ports.store.reportProgress(job.id, ports.workerId, job.attemptId, { stage, progressPercent: percent, etaSeconds: eta });
     if (!res.owned) {
       state.lost = true;
       controller.abort();
@@ -146,16 +153,24 @@ async function listFiles(root: string, rel = ""): Promise<string[]> {
   return out;
 }
 
-async function runPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>, signal: AbortSignal): Promise<void> {
+async function runPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>, controller: AbortController): Promise<void> {
   let index = 0;
+  let firstError: unknown;
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (index < items.length) {
-      if (signal.aborted) throw new EncodeCancelledError();
+    while (index < items.length && !controller.signal.aborted) {
       const item = items[index++];
-      await fn(item);
+      try {
+        await fn(item);
+      } catch (error) {
+        if (firstError === undefined) firstError = error;
+        controller.abort();
+        return;
+      }
     }
   });
   await Promise.all(workers);
+  if (firstError !== undefined) throw firstError;
+  if (controller.signal.aborted) throw new EncodeCancelledError();
 }
 
 /**
@@ -171,9 +186,9 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
   const controller = new AbortController();
   const lostState = { lost: false };
   const progress = makeProgressWriter(ports, job, controller, lostState);
-  const assetKey = hlsAssetKey(job.videoId, job.versionNumber);
+  const assetKey = hlsAttemptAssetKey(job.videoId, job.versionNumber, job.attemptId);
   const prefix = `${assetKey}/`;
-  const workDir = path.join(ports.workRoot, job.id);
+  const workDir = path.join(ports.workRoot, `${job.id}-${job.attemptId ?? "legacy"}`);
   let uploadStarted = false;
   let finalized = false;
 
@@ -198,14 +213,25 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
   };
 
   try {
-    await ports.audit("VIDEO_ENCODE_STARTED", job, { attempt: job.attemptCount, versionNumber: job.versionNumber });
+    await ports.audit("VIDEO_ENCODE_STARTED", job, { attempt: job.attemptCount, attemptId: job.attemptId, versionNumber: job.versionNumber, assetKey });
 
-    // A previous attempt may have crashed after the output went live; do not redo or delete it.
+    // A previous attempt may have crashed after the output went live. Reuse only after checking its storage prefix.
     const existing = await ports.finalizer.findExisting(job, assetKey);
     if (existing) {
-      await ports.store.markSucceeded(job.id, ports.workerId, { assetId: existing, result: { reusedExistingAsset: true } });
-      await ports.audit("VIDEO_ENCODE_SUCCEEDED", job, { assetId: existing, reused: true });
-      return "succeeded";
+      const output = await ports.hls.verifyOutput(existing.assetKey);
+      if (output.complete) {
+        const succeeded = await ports.store.markSucceeded(job.id, ports.workerId, job.attemptId, {
+          assetId: existing.assetId,
+          result: { reusedExistingAsset: true, assetKey: existing.assetKey, verifiedObjects: output.objectCount },
+        });
+        if (!succeeded) return "lost";
+        await ports.audit("VIDEO_ENCODE_SUCCEEDED", job, { assetId: existing.assetId, assetKey: existing.assetKey, reused: true, objects: output.objectCount });
+        return "succeeded";
+      }
+      ports.log("active output is incomplete; encoding a replacement attempt", {
+        jobId: job.id, attemptId: job.attemptId, existingAssetId: existing.assetId, existingAssetKey: existing.assetKey,
+        objects: output.objectCount, reason: output.reason,
+      });
     }
 
     await mkdir(workDir, { recursive: true });
@@ -230,7 +256,7 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
       },
     });
     throwIfStopped();
-    ports.log("downloaded", { jobId: job.id, seconds: (Date.now() - downloadStartedAt) / 1000 });
+    ports.log("downloaded", { jobId: job.id, attemptId: job.attemptId, seconds: (Date.now() - downloadStartedAt) / 1000 });
 
     // 2. probe + hard limits
     await stage("PROBING", 0);
@@ -253,7 +279,7 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     if (probe.width > ENCODE_LIMITS.maxWidth || probe.height > ENCODE_LIMITS.maxHeight) {
       throw new EncodeJobError(PERMANENT.TOO_LARGE_FRAME, `Rozdzielczosc ${probe.width}x${probe.height} poza limitem.`, true);
     }
-    await ports.store.reportProgress(job.id, ports.workerId, {
+    await ports.store.reportProgress(job.id, ports.workerId, job.attemptId, {
       sourceInfo: { width: probe.width, height: probe.height, durationSeconds: probe.duration, hasAudio: probe.hasAudio, hdr: probe.hdr, codec: probe.videoCodec ?? null, sizeBytes: probe.sizeBytes ?? null } as Prisma.InputJsonValue,
     });
 
@@ -293,20 +319,28 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     for (const f of files) sizes.set(f, (await stat(path.join(outDir, f))).size);
     const totalBytes = [...sizes.values()].reduce((a, b) => a + b, 0);
     let uploaded = 0;
+    const uploadController = new AbortController();
+    const abortUploads = () => uploadController.abort();
+    controller.signal.addEventListener("abort", abortUploads, { once: true });
+    if (controller.signal.aborted) abortUploads();
     const putOne = async (rel: string) => {
-      await ports.hls.putFile(hlsObjectKey(job.videoId, job.versionNumber, rel), path.join(outDir, rel), hlsContentType(rel));
+      await ports.hls.putFile(hlsAttemptObjectKey(job.videoId, job.versionNumber, job.attemptId, rel), path.join(outDir, rel), hlsContentType(rel), uploadController.signal);
       uploaded += sizes.get(rel) ?? 0;
       progress.set({ stage: "UPLOADING", percent: overallProgress("UPLOADING", totalBytes ? uploaded / totalBytes : 1), eta: null });
       progress.tick();
     };
     const withoutMaster = files.filter((f) => f !== "master.m3u8");
-    await runPool(withoutMaster, ports.uploadConcurrency ?? 4, putOne, controller.signal);
+    try {
+      await runPool(withoutMaster, ports.uploadConcurrency ?? 4, putOne, uploadController);
+    } finally {
+      controller.signal.removeEventListener("abort", abortUploads);
+    }
     throwIfStopped();
     await putOne("master.m3u8");
 
     // 5. verify everything is really in R2 before anything points at it
     await stage("FINALIZING", 0);
-    if (!(await ports.hls.exists(hlsObjectKey(job.videoId, job.versionNumber, "master.m3u8")))) {
+    if (!(await ports.hls.exists(hlsAttemptObjectKey(job.videoId, job.versionNumber, job.attemptId, "master.m3u8")))) {
       throw new EncodeJobError("UPLOAD_VERIFY_FAILED", "master.m3u8 nie jest widoczny w R2 po wgraniu.", false);
     }
     const objectCount = await ports.hls.countPrefix(prefix);
@@ -325,9 +359,13 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     });
     finalized = true;
     const result = { ...encoded.meta, uploadedObjects: files.length, uploadedBytes: totalBytes } as Prisma.InputJsonValue;
-    const done = await ports.store.markSucceeded(job.id, ports.workerId, { assetId, result });
+    const done = await ports.store.markSucceeded(job.id, ports.workerId, job.attemptId, { assetId, result });
+    if (!done) {
+      ports.log("finalized output but attempt no longer owns job status", { jobId: job.id, attemptId: job.attemptId, prefix });
+      return "lost";
+    }
     await ports.audit("VIDEO_ENCODE_SUCCEEDED", job, { assetId, versionNumber: job.versionNumber, objects: files.length, bytes: totalBytes });
-    return done ? "succeeded" : "lost";
+    return "succeeded";
   } catch (err) {
     return await handleFailure(err);
   } finally {
@@ -338,27 +376,29 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
 
   async function handleFailure(err: unknown): Promise<ProcessOutcome> {
     const cancelled = err instanceof EncodeCancelledError || controller.signal.aborted;
+    const preserveOutput = err instanceof RouteActivationOutcomeUnknownError;
     // Nothing references the prefix until the asset exists, so partial output can always go.
-    if (uploadStarted && !finalized) await ports.hls.deletePrefix(prefix).catch((e) => ports.log("cleanup failed", { jobId: job.id, error: String(e) }));
+    if (uploadStarted && !finalized && !preserveOutput) await ports.hls.deletePrefix(prefix).catch((e) => ports.log("cleanup failed", { jobId: job.id, attemptId: job.attemptId, prefix, error: String(e) }));
+    if (preserveOutput) ports.log("route activation outcome unknown; preserving HLS output for retry", { jobId: job.id, attemptId: job.attemptId, prefix });
     if (shutdownState.requested && !lostState.lost) {
-      await ports.store.release(job.id, ports.workerId);
-      ports.log("released on shutdown", { jobId: job.id });
+      await ports.store.release(job.id, ports.workerId, job.attemptId);
+      ports.log("released on shutdown", { jobId: job.id, attemptId: job.attemptId });
       return "released";
     }
     if (lostState.lost) {
-      ports.log("claim lost, leaving the job to its new owner", { jobId: job.id });
+      ports.log("claim lost, leaving the job to its new owner", { jobId: job.id, attemptId: job.attemptId, prefix });
       return "lost";
     }
     if (cancelled) {
-      await ports.store.markCancelled(job.id, ports.workerId);
-      await ports.audit("VIDEO_ENCODE_CANCELLED", job, {});
+      await ports.store.markCancelled(job.id, ports.workerId, job.attemptId);
+      await ports.audit("VIDEO_ENCODE_CANCELLED", job, { attemptId: job.attemptId, prefix });
       return "cancelled";
     }
     const failure = classifyFailure(err);
     const verdict = decideAfterFailure(job, failure);
-    const applied = await ports.store.markFailedOrRetry(job.id, ports.workerId, verdict, ports.now());
-    ports.log("job failed", { jobId: job.id, code: failure.code, next: verdict.next, error: failure.message });
-    if (verdict.next === "FAILED") await ports.audit("VIDEO_ENCODE_FAILED", job, { code: failure.code, message: failure.message });
+    const applied = await ports.store.markFailedOrRetry(job.id, ports.workerId, job.attemptId, verdict, ports.now());
+    ports.log("job failed", { jobId: job.id, attemptId: job.attemptId, prefix, code: failure.code, next: verdict.next, error: failure.message });
+    if (verdict.next === "FAILED") await ports.audit("VIDEO_ENCODE_FAILED", job, { attemptId: job.attemptId, prefix, code: failure.code, message: failure.message });
     if (!applied) return "lost";
     return verdict.next === "FAILED" ? "failed" : "retry";
   }

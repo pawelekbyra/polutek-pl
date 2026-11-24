@@ -12,6 +12,9 @@ const ORIGIN = 'https://video.pawelperfect.com';
 const VIDEO = 'c52f0407-b0e8-4b5c-b6d3-a9f152653002';
 const OLD = `${ORIGIN}/h/1800000000.${'a'.repeat(43)}/${VIDEO}/v1/master.m3u8`;
 const NEW = `${ORIGIN}/h/1800021600.${'b'.repeat(43)}/${VIDEO}/v1/master.m3u8`;
+const ATTEMPT = '9a4186c7-ef23-4a16-a3e0-8db8e89302d1';
+const OLD_ATTEMPT = `${ORIGIN}/h/1800000000.${'a'.repeat(43)}/${VIDEO}/v1~${ATTEMPT}/master.m3u8`;
+const NEW_ATTEMPT = `${ORIGIN}/h/1800021600.${'b'.repeat(43)}/${VIDEO}/v1~${ATTEMPT}/master.m3u8`;
 
 describe('own HLS player helpers', () => {
   it('identifies a stream without its token', () => {
@@ -30,6 +33,14 @@ describe('own HLS player helpers', () => {
     expect(withCurrentToken(seg, NEW.replace(ORIGIN, 'https://evil.example'))).toBe(seg);
     expect(withCurrentToken('https://subs.example/pl.vtt', NEW)).toBe('https://subs.example/pl.vtt');
     expect(withCurrentToken(seg, null)).toBe(seg);
+  });
+
+  it('keeps attempt identity stable when refreshing an attempt-scoped asset token', () => {
+    const segment = OLD_ATTEMPT.replace('master.m3u8', '720p/seg_00003.m4s');
+    expect(streamIdentity(OLD_ATTEMPT)).toBe(`${ORIGIN}/${VIDEO}/v1~${ATTEMPT}`);
+    expect(streamIdentity(OLD_ATTEMPT)).toBe(streamIdentity(NEW_ATTEMPT));
+    expect(withCurrentToken(segment, NEW_ATTEMPT)).toBe(NEW_ATTEMPT.replace('master.m3u8', '720p/seg_00003.m4s'));
+    expect(withCurrentToken(segment, NEW_ATTEMPT.replace(ATTEMPT, 'bc23f3d9-673a-4510-89e7-cb09eaa44992'))).toBe(segment);
   });
 
   it('starts from the browser bandwidth estimate when there is one', () => {

@@ -15,7 +15,7 @@ vi.mock("@/lib/modules/audit", () => ({ recordAuditEvent: audit, recordAuditEven
 vi.mock("@/lib/modules/video", () => ({ requestPublishAfterAssetReady: requestPublish }));
 vi.mock("@/lib/modules/video-pipeline/application/encode-queue.use-cases", () => ({ enqueueEncode: enqueue }));
 
-import { STALE_UPLOAD_MS, abandonStaleOriginalUploads, abortOriginalUpload, completeOriginalMultipart, presignOriginalParts, sanitizeFileName, startOriginalUpload } from "@/lib/modules/video-pipeline/application/original-upload.use-cases";
+import { STALE_UPLOAD_MS, abandonStaleOriginalUploads, abortOriginalUpload, completeOriginalMultipart, listOriginalParts, presignOriginalParts, sanitizeFileName, startOriginalUpload } from "@/lib/modules/video-pipeline/application/original-upload.use-cases";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { MIB } from "@/lib/modules/video-pipeline/domain/upload-policy";
 
@@ -29,13 +29,19 @@ function original(over: Partial<VideoOriginal> = {}): VideoOriginal {
   } as VideoOriginal;
 }
 
-function setup(row: VideoOriginal | null = original(), opts: { activeJob?: boolean; stale?: VideoOriginal[] } = {}) {
+function setup(row: VideoOriginal | null = original(), opts: { activeJob?: boolean; stale?: VideoOriginal[]; activeOriginal?: VideoOriginal } = {}) {
   const prisma = {
     video: { findFirst: vi.fn(async () => ({ id: "v1", title: "t", status: "DRAFT", activeOriginalId: null })), update: vi.fn(async () => ({})), updateMany: vi.fn(async () => ({ count: 1 })) },
     $executeRaw: vi.fn(async () => 1),
+    $queryRaw: vi.fn(async () => []),
     videoEncodeJob: { findFirst: vi.fn(async () => (opts.activeJob ? { id: "j" } : null)) },
     videoOriginal: {
-      findFirst: vi.fn(async (a: { orderBy?: unknown }) => (a?.orderBy ? { version: 3 } : row)),
+      findFirst: vi.fn(async (a: { orderBy?: unknown; where?: { id?: string; status?: string }; select?: { version?: boolean } }) => {
+        if (a?.where?.id && a.where.id === opts.activeOriginal?.id) return opts.activeOriginal;
+        if (a?.where?.status === "READY" && a?.orderBy) return row?.status === "READY" ? { version: row.version } : null;
+        if (a?.select?.version) return { version: 3 };
+        return row;
+      }),
       findMany: vi.fn(async () => opts.stale ?? []),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => original({ ...(data as Partial<VideoOriginal>), id: "new" })),
       update: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({})),
@@ -138,10 +144,10 @@ describe("completeOriginalMultipart", () => {
     expect(res).toMatchObject({ ok: true, data: { originalId: "o1", job: { id: "job1" } } });
     expect(t.storage.complete).toHaveBeenCalledWith("originals/v1/1.mp4", "up1", [{ partNumber: 1, etag: '"a"' }, { partNumber: 2, etag: '"b"' }]);
     expect(t.prisma.videoOriginal.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "SUPERSEDED" }) }));
-    expect(t.prisma.videoOriginal.updateMany).toHaveBeenCalledWith({
-      where: { id: "o1", status: "UPLOADING" },
+    expect(t.prisma.videoOriginal.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "o1", status: "UPLOADING", version: 1 },
       data: expect.objectContaining({ status: "READY", uploadId: null, mimeType: "video/mp4" }),
-    });
+    }));
     expect(t.prisma.video.update).toHaveBeenCalledWith({ where: { id: "v1" }, data: { activeOriginalId: "o1" } });
     expect(requestPublish).toHaveBeenCalledWith("v1", expect.anything());
     expect(enqueue).toHaveBeenCalledWith({ videoId: "v1", originalId: "o1" }, expect.anything());
@@ -193,10 +199,39 @@ describe("completeOriginalMultipart", () => {
     expect(t.prisma.video.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { activeOriginalId: "o1" } }));
   });
 
+  it("does not reactivate a READY snapshot that a newer completion already superseded", async () => {
+    const t = setup(original({ status: "READY", uploadId: null }));
+    const staleRead = original({ status: "READY", uploadId: null, version: 1 });
+    const current = original({ id: "o2", objectKey: "originals/v1/2.mp4", status: "READY", uploadId: null, version: 2 });
+    t.prisma.videoOriginal.findFirst
+      .mockImplementationOnce(async () => staleRead)
+      .mockImplementationOnce(async () => original({ ...staleRead, status: "SUPERSEDED", supersededAt: new Date() }));
+    t.prisma.videoOriginal.findFirst.mockImplementation(async (args: { orderBy?: unknown }) => args?.orderBy ? current : staleRead);
+
+    const result = await completeOriginalMultipart({ videoId: "v1", originalId: "o1", parts }, t.ctx, t.deps);
+
+    expect(result).toMatchObject({ ok: false, error: { code: "UPLOAD_SUPERSEDED", statusCode: 409 } });
+    expect(t.prisma.video.updateMany).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
   it("continues verification when R2 says the upload was already completed", async () => {
     const t = setup();
     t.storage.complete.mockRejectedValue(Object.assign(new Error("gone"), { name: "NoSuchUpload" }));
     expect((await completeOriginalMultipart({ videoId: "v1", originalId: "o1", parts }, t.ctx, t.deps)).ok).toBe(true);
+  });
+
+  it("refuses before completing in R2 while another file of the video is encoding (U4)", async () => {
+    const t = setup(original(), { activeJob: true });
+    const parts = [{ partNumber: 1, etag: "e1" }, { partNumber: 2, etag: "e2" }];
+    const res = await completeOriginalMultipart({ videoId: "v1", originalId: "o1", parts }, t.ctx, t.deps);
+    expect(res).toMatchObject({ ok: false, error: { code: "ENCODE_ALREADY_ACTIVE", statusCode: 409 } });
+    expect(t.storage.complete).not.toHaveBeenCalled();
+    expect(t.prisma.videoOriginal.updateMany).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(t.prisma.videoEncodeJob.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ videoId: "v1", originalId: { not: "o1" } }),
+    }));
   });
 
   it("maps R2 part errors to a resumable 409", async () => {
@@ -206,13 +241,39 @@ describe("completeOriginalMultipart", () => {
   });
 });
 
+describe("listOriginalParts", () => {
+  it("answers UPLOAD_NOT_OPEN when R2 no longer knows the multipart upload (U4)", async () => {
+    const t = setup();
+    t.storage.listParts.mockRejectedValueOnce(Object.assign(new Error("gone"), { name: "NoSuchUpload" }));
+    expect(await listOriginalParts({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps)).toMatchObject({ ok: false, error: { code: "UPLOAD_NOT_OPEN", statusCode: 409 } });
+  });
+
+  it("does not hide other storage failures", async () => {
+    const t = setup();
+    t.storage.listParts.mockRejectedValueOnce(Object.assign(new Error("denied"), { name: "AccessDenied" }));
+    await expect(listOriginalParts({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps)).rejects.toThrow("denied");
+  });
+});
+
 describe("abortOriginalUpload / sanitizeFileName", () => {
   it("aborts R2 and abandons the row", async () => {
     const t = setup();
     expect((await abortOriginalUpload({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps)).ok).toBe(true);
     expect(t.storage.abort).toHaveBeenCalledWith("originals/v1/1.mp4", "up1");
-    expect(t.prisma.videoOriginal.update.mock.calls[0][0].data).toMatchObject({ status: "ABANDONED" });
+    expect(t.prisma.videoOriginal.updateMany.mock.calls[0]?.[0]).toMatchObject({
+      where: { id: "o1", videoId: "v1", status: "UPLOADING" },
+      data: { status: "ABANDONED", uploadId: null },
+    });
     expect(audit).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "VIDEO_ORIGINAL_UPLOAD_ABORTED" }));
+    expect(t.storage.deleteObject).toHaveBeenCalledWith("originals/v1/1.mp4"); // U8: an object assembled by a racing complete is removed
+  });
+  it("does not audit a late abort when completion already won the status compare-and-set", async () => {
+    const t = setup();
+    t.prisma.videoOriginal.updateMany.mockResolvedValue({ count: 0 });
+    expect(await abortOriginalUpload({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps))
+      .toMatchObject({ ok: false, error: { code: "UPLOAD_NOT_OPEN", statusCode: 409 } });
+    expect(audit).not.toHaveBeenCalled();
+    expect(t.storage.deleteObject).not.toHaveBeenCalled(); // the completed READY file must stay
   });
   it("keeps only a harmless display name", () => {
     expect(sanitizeFileName("C:\\x\\y\\a.mp4")).toBe("a.mp4");

@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { PublicVideoDTO } from "@/app/types/video";
 import type { PlaybackPlan } from "@/lib/modules/playback";
+import { readPlaybackPlan } from "@/lib/video-api-contracts/contracts";
 import { resolvePlaybackViewerKey } from "./playback-viewer-key";
 import type { InitialPlaybackPlan } from "./initial-playback-plan";
 import { isUpcomingPremiere } from "@/lib/premiere";
@@ -157,9 +158,7 @@ export function AppPreloadProvider({
         const data = await response.json().catch(() => null);
         if (!isCurrentRequest()) return null;
 
-        const plan = data && typeof data === "object"
-          ? data as PlaybackPlan
-          : null;
+        const plan = readPlaybackPlan(data);
         playbackRecords.current.set(cacheKey, {
           status: plan ? "ready" : "error",
           plan,

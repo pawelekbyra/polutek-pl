@@ -15,8 +15,11 @@ function planExpiringIn(ms: number): PlaybackPlan {
     videoId: VIDEO,
     status: "READY",
     canPlay: true,
+    hasAccess: true,
     access: { allowed: true },
     source: { provider: "SELF_HLS", kind: "self_hls", playbackUrl: `https://v.test/h/x.y/${VIDEO}/v1/master.m3u8`, expiresAt: new Date(Date.now() + ms).toISOString(), isSignedUrl: true },
+    player: { autoplayAllowed: false, mutedAutoplay: false, controls: true, poster: "", title: "Test" },
+    diagnostics: { warnings: [], sourceConfidence: "HIGH", providerResolutionAllowed: true, providerResolutionAttempted: true },
     tracking: { playbackSessionId: "sess-1", heartbeatIntervalSeconds: 15 },
   } as unknown as PlaybackPlan;
 }
