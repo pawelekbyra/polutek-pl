@@ -681,7 +681,6 @@
  "Previous": "Précédent",
  "Creating a private draft…": "Création d'un brouillon privé…",
  "Upload stopped.": "Envoi interrompu.",
- "Keep this tab open. If you stop, the video stays a private draft.": "Gardez cet onglet ouvert. Si vous arrêtez, la vidéo reste un brouillon privé.",
  "Go to the draft": "Aller au brouillon",
  "Back to videos": "Retour aux vidéos",
  "You have unsaved changes. Leave without saving?": "Des modifications ne sont pas enregistrées. Quitter sans enregistrer ?",
@@ -1142,5 +1141,9 @@
   "Tip steps": "Étapes du pourboire",
   "Step {0} of {1}": "Étape {0} sur {1}",
   "Recipient": "Bénéficiaire",
-  "About tips": "À propos des pourboires"
+  "About tips": "À propos des pourboires",
+ "You can refresh or come back later. Choose the same file to resume from the parts already stored.": "Vous pouvez actualiser la page ou revenir plus tard. Choisissez le même fichier pour reprendre le téléversement à partir des parties déjà enregistrées.",
+ "Discard unfinished upload": "Abandonner le téléversement inachevé",
+ "Could not discard the upload.": "Impossible d’abandonner le téléversement.",
+ "Delete the unfinished upload and its stored parts?": "Supprimer le téléversement inachevé et les parties enregistrées ?"
 }
