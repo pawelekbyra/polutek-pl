@@ -46,6 +46,7 @@ export class EncodeJobRepository implements EncodeJobStore {
     const rows = await this.db.$queryRaw<Array<{ id: string }>>`
       UPDATE "VideoEncodeJob" AS j
       SET "status" = 'RUNNING',
+          "attemptId" = gen_random_uuid()::text,
           "stage" = 'DOWNLOADING',
           "progressPercent" = 0,
           "etaSeconds" = NULL,
