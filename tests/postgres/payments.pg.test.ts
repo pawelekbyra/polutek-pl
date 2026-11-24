@@ -171,6 +171,55 @@ describe('refunds keep the per-user total and the status consistent', () => {
     expect(await total()).toBe(0);
     expect(await activeGrants()).toBe(0);
   });
+
+  it.each(['dispute then refund', 'refund then dispute', 'concurrent dispute and refund'])(
+    'keeps the total independent of event order for %s', async (order) => {
+      await resetUser();
+      const disputed = await newPayment();
+      await fulfillPayment(fulfillInput(disputed), ctx());
+      const other = await newPayment();
+      await fulfillPayment(fulfillInput(other), ctx());
+      expect(await total()).toBe(2000);
+
+      const refund = () => handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 400 }, ctx());
+      const dispute = () => handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_${order}`, status: 'lost' }, ctx());
+      if (order === 'dispute then refund') {
+        await dispute();
+        await refund();
+      } else if (order === 'refund then dispute') {
+        await refund();
+        await dispute();
+      } else {
+        await Promise.all([dispute(), refund()]);
+      }
+
+      await Promise.all([dispute(), refund()]); // replays must not change the result
+      expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).status).toBe('CHARGEBACK_LOST');
+      expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).refundedAmountMinor).toBe(400);
+      expect(await total()).toBe(1000);
+    },
+  );
+
+  it('a full refund after a lost dispute only records the refund and leaves other currency totals intact', async () => {
+    await resetUser();
+    const disputed = await newPayment();
+    await fulfillPayment(fulfillInput(disputed), ctx());
+    const sameCurrency = await newPayment();
+    await fulfillPayment(fulfillInput(sameCurrency), ctx());
+    const otherCurrency = await newPayment({ amountMinor: 700, currency: 'USD' });
+    await fulfillPayment(fulfillInput(otherCurrency, { amountMinor: 700, currency: 'usd' }), ctx());
+
+    await handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_full`, status: 'lost' }, ctx());
+    await handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 1000 }, ctx());
+    await handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 1000 }, ctx());
+
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).status).toBe('CHARGEBACK_LOST');
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).refundedAmountMinor).toBe(1000);
+    expect(await prisma.userPaymentTotal.findMany({ where: { userId }, orderBy: { currency: 'asc' } })).toMatchObject([
+      { currency: 'PLN', amountMinor: 1000 },
+      { currency: 'USD', amountMinor: 700 },
+    ]);
+  });
 });
 
 describe('admin refund against the real ledger (Stripe replaced)', () => {
