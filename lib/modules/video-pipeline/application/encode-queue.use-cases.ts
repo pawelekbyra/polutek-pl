@@ -1,4 +1,4 @@
-import type { PrismaClient, VideoAsset, VideoEncodeJob, VideoOriginal } from "@prisma/client";
+import type { Prisma, PrismaClient, VideoAsset, VideoEncodeJob, VideoOriginal } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
@@ -71,7 +71,7 @@ export function toEncodeJobDto(job: VideoEncodeJob, now: Date): EncodeJobDto {
 }
 
 function repo(ctx: AppContext) {
-  return new EncodeJobRepository(ctx.prisma as PrismaClient);
+  return new EncodeJobRepository(ctx.prisma as PrismaClient | Prisma.TransactionClient);
 }
 
 /**
