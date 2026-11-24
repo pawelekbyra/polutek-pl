@@ -1,6 +1,6 @@
 # Lokalne CI (`scripts/ops/local-ci.mjs`)
 
-Stały tryb pracy od 2026-10-04: GitHub Actions dla prywatnego repo nie startuje (limit minut, właściciel nie płaci), więc przed scaleniem te same bramki co w `.github/workflows/ci.yml` uruchamiamy lokalnie (Windows lub Linux, Node 22, bez dodatkowych zależności). Workflow GitHuba zostaje w repo bez zmian: jeśli Actions wróci, oba sposoby dają ten sam wynik.
+Stały tryb pracy od 2026-10-04: GitHub Actions dla prywatnego repo nie startuje (limit minut, właściciel nie płaci), więc przed scaleniem te same bramki co w `.github/workflows/ci.yml` uruchamiamy lokalnie (Windows lub Linux, Node 22, bez dodatkowych zależności). Od 2026-11-24 `ci.yml` jest przygotowany jako niezależne sprawdzenie PR do `main` (opis, koszt, włączenie: `docs/operations/CI.md`); bramka `ci-parity` pilnuje, żeby każdy jednoliniowy krok `run:` z `ci.yml` miał odpowiednik tutaj.
 
 ## Użycie
 
@@ -44,7 +44,7 @@ Scala tylko przy PASS (`gh pr merge --squash --admin --match-head-commit <sha>`,
 | `architecture`, `hotspots`, `strict-escapes` | jak w CI | |
 | `env` | environment validation | `validate-env --mode=production` na fikcyjnych wartościach z ci.yml |
 | `audit` | npm audit/security | `scripts/audit-high.mjs` (zależności produkcyjne); SKIP bez sieci |
-| `postgres` | integration-postgres | tymczasowy kontener `postgres:16` (jak CI; `LOCAL_CI_PG_IMAGE=postgres:17` dla wersji produkcyjnej) na losowym porcie, `migrate deploy`, `db:smoke`, `vitest.postgres.config.ts`; SKIP bez Dockera |
+| `postgres` | integration-postgres | tymczasowy kontener `postgres:17` (jak CI i produkcja; inna wersja: `LOCAL_CI_PG_IMAGE`) na losowym porcie, `migrate deploy`, `db:smoke`, `vitest.postgres.config.ts`; SKIP bez Dockera |
 | `encode-smoke` | encode-smoke (ffmpeg) | SKIP bez `ffmpeg`/`ffprobe` w PATH |
 | `build`, `admin-build` | build, admin build | tylko z `--build`/`--full` (zostawiają `.next/`, ok. 1 GB) |
 

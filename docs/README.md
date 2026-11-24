@@ -51,6 +51,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Temat | Plik |
 |---|---|
 | Serwer: układ, deploy, rollback, kopie, crony | [`operations/SERWEREK.md`](operations/SERWEREK.md) |
+| CI pull requestów na GitHubie: co sprawdza, koszt w minutach, włączenie | [`operations/CI.md`](operations/CI.md) |
 | Obudź projekt od zera: kolejność odtworzenia na nowym serwerze z kopii R2, testy dymne, czego nie da się odtworzyć | [`operations/WAKE-UP.md`](operations/WAKE-UP.md) |
 | Konta i usługi zewnętrzne (bez sekretów), kalendarz odnowień i wygasania, co monitorować | [`operations/ACCOUNTS.md`](operations/ACCOUNTS.md) |
 | Języki interfejsu (osiem języków): jak działa `tx()`, jak dodać tekst lub język, decyzje, słownik | [`operations/I18N.md`](operations/I18N.md) |

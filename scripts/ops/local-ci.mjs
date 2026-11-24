@@ -160,7 +160,16 @@ const skip = (reason, skipKind = 'mode') => ({ status: STATUS.SKIP, reason, skip
 // ---------------------------------------------------------------------------------------------
 // Gates. Order = priority. weight = CPU slots the gate occupies (capacity = cores).
 
-const LOCAL_ONLY_CI_RUNS = ['npm ci', 'sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg'];
+// CI-only steps: installs, the job-summary report and the on-demand stack tests (need next dev/ffmpeg/Chromium).
+const LOCAL_ONLY_CI_RUNS = [
+  'npm ci',
+  'sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg',
+  'npx playwright install --with-deps chromium',
+  'node scripts/ops/ci-test-summary.mjs vitest-unit.json "unit (vitest)"',
+  'node scripts/ops/ci-test-summary.mjs vitest-postgres.json "postgres (vitest)"',
+  'node scripts/ops/ci-test-summary.mjs vitest-stack.json "heavy (stack tests)"',
+  'npx vitest run --config vitest.postgres.config.ts --passWithNoTests --reporter=default --reporter=json --outputFile.json=vitest-stack.json',
+];
 
 const gates = [
   {
@@ -209,7 +218,11 @@ const gates = [
   {
     id: 'unit',
     title: 'tests/coverage (vitest)',
-    ci: ['npm run test:coverage'],
+    ci: [
+      'npm run test:coverage',
+      'npx vitest run --maxWorkers=2 --exclude tests/unit/hls/encode-hls.ffmpeg.test.ts --reporter=default --reporter=json --outputFile.json=vitest-unit.json',
+      'npx vitest run tests/unit/i18n/catalog-parity.test.ts',
+    ],
     weight: Math.max(1, CAPACITY - 1),
     deps: ['prisma'],
     run: async () => {
@@ -340,7 +353,7 @@ const gates = [
   {
     id: 'audit',
     title: 'npm audit/security',
-    ci: ['npm run audit:high'],
+    ci: ['npm run audit:high', 'npm audit --omit=dev --audit-level=high'],
     weight: 1,
     run: async () => {
       try {
@@ -357,7 +370,12 @@ const gates = [
   {
     id: 'postgres',
     title: 'integration-postgres (tymczasowy kontener)',
-    ci: ['npm run test:integration:postgres'],
+    ci: [
+      'npm run test:integration:postgres',
+      'npx prisma migrate deploy',
+      'npm run db:smoke',
+      'npx vitest run --config vitest.postgres.config.ts --reporter=default --reporter=json --outputFile.json=vitest-postgres.json',
+    ],
     weight: 1,
     deps: ['prisma'],
     run: runPostgresGate,
@@ -407,7 +425,7 @@ function listTestFiles() {
 
 async function runPostgresGate() {
   if (!commandWorks('docker', ['info'], 20000)) return skip('Docker niedostepny (docker info nie dziala)', 'env');
-  const image = process.env.LOCAL_CI_PG_IMAGE || 'postgres:16'; // ci.yml uses postgres:16 (production runs 17)
+  const image = process.env.LOCAL_CI_PG_IMAGE || 'postgres:17'; // same as ci.yml and production
   const name = `local-ci-pg-${process.pid}`;
   const started = await run('postgres', 'docker run', 'docker', ['run', '-d', '--rm', '--name', name, '-e', 'POSTGRES_USER=ci', '-e', 'POSTGRES_PASSWORD=ci', '-e', 'POSTGRES_DB=ci', '-p', '127.0.0.1::5432', image]);
   if (started.code !== 0) return fail(`docker run: ${tail(started.output)}`);
