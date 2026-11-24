@@ -160,3 +160,28 @@ describe('bounded request body readers', () => {
     expect(input.cancelled).toBe(true);
   });
 });
+
+describe("413 messages", () => {
+  it("names the limit in a readable unit", async () => {
+    const { formatBodyLimit, payloadTooLargeMessage } = await import("@/lib/utils/request-body");
+    expect(formatBodyLimit(640 * 1024)).toBe("640 KB");
+    expect(formatBodyLimit(128 * 1024)).toBe("128 KB");
+    expect(formatBodyLimit(6 * 1024 * 1024)).toBe("6 MB");
+    expect(formatBodyLimit(1.5 * 1024 * 1024)).toBe("1,5 MB");
+    expect(payloadTooLargeMessage(640 * 1024)).toBe("Żądanie jest za duże (limit 640 KB).");
+  });
+
+  it("is what the Studio reader answers with", async () => {
+    const { z } = await import("zod");
+    const result = await readStudioJson(new Request("http://fixture.invalid/body", {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": "200" },
+      body: JSON.stringify({ text: "x".repeat(180) }),
+    }), z.object({ text: z.string() }), 100);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(413);
+      expect((await result.response.json()).error).toBe("Żądanie jest za duże (limit 1 KB).");
+    }
+  });
+});

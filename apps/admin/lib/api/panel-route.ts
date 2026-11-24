@@ -11,6 +11,7 @@ import { isDevFixturesEnabled } from "@admin/lib/config";
 import {
   DEFAULT_JSON_BODY_MAX_BYTES,
   MalformedFormDataBodyError,
+  payloadTooLargeMessage,
   readRequestFormDataWithLimit,
   readRequestJsonWithLimit,
   RequestBodyTooLargeError,
@@ -59,7 +60,7 @@ export async function readJson<T>(
   try {
     raw = await readRequestJsonWithLimit(request, maxBytes);
   } catch (error) {
-    if (error instanceof RequestBodyTooLargeError) return { ok: false, response: jsonError(413, "Żądanie jest za duże.", "PAYLOAD_TOO_LARGE") };
+    if (error instanceof RequestBodyTooLargeError) return { ok: false, response: jsonError(413, payloadTooLargeMessage(error.maxBytes), "PAYLOAD_TOO_LARGE") };
     raw = undefined;
   }
   const parsed = schema.safeParse(raw);

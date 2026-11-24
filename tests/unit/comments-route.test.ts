@@ -80,7 +80,7 @@ describe('/api/videos/[id]/comments POST', () => {
   it('rejects oversized request bodies before parsing JSON', async () => {
     const request = new NextRequest('http://localhost/api/videos/video-id/comments', {
       method: 'POST',
-      body: JSON.stringify({ text: 'a'.repeat(10001) }),
+      body: JSON.stringify({ text: 'a'.repeat(40_000) }),
       headers: { 'Content-Type': 'application/json' },
     });
 

@@ -4,6 +4,7 @@ import type { ChannelSummaryDto } from "@/lib/modules/channel";
 import { resolveStudioSession, type StudioSession } from "./studio-session";
 import {
   DEFAULT_JSON_BODY_MAX_BYTES,
+  payloadTooLargeMessage,
   readRequestJsonWithLimit,
   RequestBodyTooLargeError,
 } from "@/lib/utils/request-body";
@@ -65,7 +66,7 @@ export async function readStudioJson<T>(
     raw = await readRequestJsonWithLimit(request, maxBytes);
   } catch (error) {
     if (error instanceof RequestBodyTooLargeError) {
-      return { ok: false, response: studioError(413, "Żądanie jest za duże.", "PAYLOAD_TOO_LARGE") };
+      return { ok: false, response: studioError(413, payloadTooLargeMessage(error.maxBytes), "PAYLOAD_TOO_LARGE") };
     }
     raw = undefined;
   }

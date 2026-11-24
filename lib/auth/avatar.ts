@@ -11,6 +11,8 @@ const ALLOWED_TYPES = new Set(AVATAR_ACCEPT.split(","));
 export const AVATAR_SIZE_PX = 256;
 /** Upper bound of the uploaded data URL (the resized image is normally 15-40 KB). */
 export const AVATAR_MAX_DATA_URL_CHARS = 120_000;
+/** Body cap of the avatar and first-sign-in endpoints: the data URL maximum plus the JSON wrapper, nickname and language. */
+export const AVATAR_REQUEST_BODY_MAX_BYTES = 192 * 1024;
 
 /** Public URL of a stored avatar; `version` changes with every upload so caches never go stale. */
 export function avatarRouteUrl(userId: string, version: number = Date.now()): string {

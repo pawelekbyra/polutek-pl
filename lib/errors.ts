@@ -6,6 +6,7 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import {
   MalformedFormDataBodyError,
   MalformedJsonBodyError,
+  payloadTooLargeMessage,
   RequestBodyTooLargeError,
 } from "@/lib/utils/request-body";
 
@@ -31,7 +32,7 @@ export function handleApiError(error: unknown) {
   }
 
   if (error instanceof RequestBodyTooLargeError) {
-    return NextResponse.json({ error: "PAYLOAD_TOO_LARGE" }, { status: 413 });
+    return NextResponse.json({ error: "PAYLOAD_TOO_LARGE", message: payloadTooLargeMessage(error.maxBytes) }, { status: 413 });
   }
   if (error instanceof MalformedJsonBodyError || error instanceof MalformedFormDataBodyError) {
     return NextResponse.json({ error: "INVALID_REQUEST_BODY" }, { status: 400 });

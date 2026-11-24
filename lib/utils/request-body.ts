@@ -34,6 +34,18 @@ export class TooManyFormEntriesError extends Error {
 
 export const DEFAULT_JSON_BODY_MAX_BYTES = 128 * 1024;
 
+/** Human-readable body cap for 413 messages: "640 KB", "6 MB", "1,5 MB". */
+export function formatBodyLimit(maxBytes: number): string {
+  const mib = 1024 * 1024;
+  if (maxBytes >= mib) return `${String(Math.round((maxBytes / mib) * 10) / 10).replace('.', ',')} MB`;
+  return `${Math.max(1, Math.round(maxBytes / 1024))} KB`;
+}
+
+/** The one 413 message of the JSON APIs (no i18n key exists for it; the limit makes it actionable). */
+export function payloadTooLargeMessage(maxBytes: number): string {
+  return `Żądanie jest za duże (limit ${formatBodyLimit(maxBytes)}).`;
+}
+
 function getContentLengthBytes(req: Request): number | null {
   const contentLength = req.headers.get('content-length');
   if (contentLength === null || !/^\d+$/.test(contentLength)) return null;

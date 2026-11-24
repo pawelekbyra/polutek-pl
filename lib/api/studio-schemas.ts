@@ -28,8 +28,17 @@ export const updateChannelAboutSchema = z.object({
   contactEmail: z.string().max(300).nullable().optional(),
 });
 
+/** Longest banner data URL the schema lets through; the use case then applies BANNER_MAX_DATA_URL_CHARS (400 000). */
+export const CHANNEL_BANNER_DATA_URL_SCHEMA_MAX = 600_000;
+
+/**
+ * Body cap of PUT /api/studio/channel/banner (audit U1: the 128 KiB default rejected larger banners with 413).
+ * A data URL is base64 (ASCII, 1 byte a character), so the schema maximum plus the JSON wrapper fits with ~55 KB to spare.
+ */
+export const CHANNEL_BANNER_BODY_MAX_BYTES = 640 * 1024;
+
 /** Browser-cropped banner as a data URL, or null to remove it (the use case validates type, size and signature). */
-export const setChannelBannerSchema = z.object({ dataUrl: z.string().max(600_000).nullable() });
+export const setChannelBannerSchema = z.object({ dataUrl: z.string().max(CHANNEL_BANNER_DATA_URL_SCHEMA_MAX).nullable() });
 
 export const changeHandleSchema = z.object({ handle: trimmed(60, 1) });
 
@@ -59,6 +68,12 @@ const videoMetadataFields = {
   /** Creator's 18+ declaration: signed-in viewers only (same effect as the AGE_RESTRICTED moderation state). */
   isAdult: z.boolean().optional(),
 };
+
+/**
+ * Body cap of video create/update: two 5000-character descriptions, 50 chapters with two 200-character titles and
+ * 30 raw tags of 200 characters stay below ~220 KB even if every character needs a 6-byte JSON escape.
+ */
+export const STUDIO_VIDEO_BODY_MAX_BYTES = 256 * 1024;
 
 export const createVideoSchema = z.object({
   title: trimmed(100, 1),

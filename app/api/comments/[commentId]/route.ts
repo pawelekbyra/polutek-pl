@@ -16,7 +16,8 @@ import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
-const MAX_EDIT_REQUEST_BODY_BYTES = 10_000;
+/** 5000 characters (the schema maximum) even at 6 bytes each after JSON escaping, plus the wrapper. */
+const MAX_EDIT_REQUEST_BODY_BYTES = 32 * 1024;
 /** Edits per account and minute: the same pace the other comment writes (reactions, reports) are held to. */
 const EDITS_PER_MINUTE = 10;
 const editSchema = z.object({ text: z.string().trim().min(1).max(5000) });

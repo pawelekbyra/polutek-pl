@@ -52,7 +52,12 @@ async function handle(request: NextRequest, commentId: string, reaction: Reactio
 
 export async function PUT(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
   const { commentId } = await props.params;
-  const body = (await readRequestJsonOrNullWithLimit(request)) as { type?: unknown } | null;
+  let body: { type?: unknown } | null;
+  try {
+    body = (await readRequestJsonOrNullWithLimit(request)) as { type?: unknown } | null;
+  } catch (error) {
+    return handleApiError(error);
+  }
   const reaction: ReactionTarget = body?.type === "DISLIKE" ? "DISLIKE" : "LIKE";
   return handle(request, commentId, reaction, "[COMMENT_REACTION_PUT_ERROR]");
 }
