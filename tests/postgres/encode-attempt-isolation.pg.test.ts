@@ -59,6 +59,16 @@ describe("K16 encode attempt isolation (PostgreSQL)", () => {
     expect(secondPrefix.startsWith(`${firstPrefix}/`)).toBe(false);
 
     expect(await repository.release(job.id, "k16-worker-b", second!.attemptId)).toBe(true);
+    // U2: a requeued job keeps its previous attemptId. A legacy claim that does not mint a new one must
+    // still be rejected, otherwise an old worker would run under the previous attempt identity.
+    await expect(prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: job.id } })).resolves.toMatchObject({ status: "QUEUED", attemptId: second!.attemptId });
+    await expect(prisma.$executeRaw`
+      UPDATE "VideoEncodeJob" SET "status" = 'RUNNING', "workerId" = 'legacy-worker' WHERE "id" = ${job.id}
+    `).rejects.toThrow(/requires attemptId/);
+    await expect(prisma.$executeRaw`
+      UPDATE "VideoEncodeJob" SET "status" = 'RUNNING', "workerId" = 'legacy-worker', "attemptId" = ${second!.attemptId} WHERE "id" = ${job.id}
+    `).rejects.toThrow(/requires attemptId/);
+    await expect(prisma.videoEncodeJob.findUniqueOrThrow({ where: { id: job.id } })).resolves.toMatchObject({ status: "QUEUED" });
     await prisma.videoEncodeJob.update({ where: { id: job.id }, data: { status: "CANCELLED", finishedAt: new Date() } });
     const legacy = await prisma.videoEncodeJob.create({
       data: {
