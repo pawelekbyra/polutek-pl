@@ -431,7 +431,7 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     });
     const foreignUploadText = await foreignUploadResponse.text();
     expect(foreignUploadResponse.status, `${foreignUploadText}\n${nextOutput}`).toBe(200);
-    const foreignUpload = JSON.parse(foreignUploadText) as { originalId: string };
+    const foreignUpload = JSON.parse(foreignUploadText) as { originalId: string; partCount: number; partSize: number };
     const requestsBeforeForeignComplete = objectRequests.length;
     const crossChannelComplete = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/complete`, {
       method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
@@ -443,14 +443,60 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     const recoveredForeignOriginal = await prisma.videoOriginal.findUniqueOrThrow({ where: { id: foreignUpload.originalId } });
     expect(recoveredForeignOriginal.status).toBe("UPLOADING");
 
-    // Model R2 having committed CompleteMultipartUpload while its successful response was lost.
-    // The database still owns the upload row, but the multipart UploadId no longer exists and the object is present.
     expect(recoveredForeignOriginal.uploadId).toBeTruthy();
-    objects.set(`${ORIGINAL_BUCKET}/${recoveredForeignOriginal.objectKey}`, sourceBytes);
-    multipartUploads.delete(recoveredForeignOriginal.uploadId!);
+    const foreignPartsResponse = await fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/upload/parts`, {
+      method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId: foreignUpload.originalId, partNumbers: Array.from({ length: foreignUpload.partCount }, (_, index) => index + 1) }),
+    });
+    const foreignPartsText = await foreignPartsResponse.text();
+    expect(foreignPartsResponse.status, `${foreignPartsText}\n${nextOutput}`).toBe(200);
+    const foreignSigned = JSON.parse(foreignPartsText) as { urls: Array<{ partNumber: number; url: string }> };
+    const foreignCompletedParts: Array<{ partNumber: number; etag: string }> = [];
+    for (const part of foreignSigned.urls) {
+      const start = (part.partNumber - 1) * foreignUpload.partSize;
+      const put = await fetch(part.url, { method: "PUT", body: sourceBytes.subarray(start, start + foreignUpload.partSize) });
+      expect(put.status).toBe(200);
+      foreignCompletedParts.push({ partNumber: part.partNumber, etag: put.headers.get("etag") ?? '"k01-foreign"' });
+    }
+
+    // Inject a one-shot DB failure at UPLOADING -> READY after S3 CompleteMultipartUpload commits.
+    // The sequence is non-transactional, so the retry sees the trigger permit the promotion.
+    const injectionPrefix = RUN.replaceAll("-", "_");
+    const injectionSequence = `${injectionPrefix}_complete_failure_once`;
+    const injectionFunction = `${injectionPrefix}_fail_original_promotion_once`;
+    const injectionTrigger = `${injectionPrefix}_fail_original_promotion_trigger`;
+    await prisma.$executeRawUnsafe(`CREATE SEQUENCE "${injectionSequence}"`);
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION "${injectionFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF NEW."id" = TG_ARGV[0] AND OLD."status" = 'UPLOADING' AND NEW."status" = 'READY' THEN
+          IF nextval('"${injectionSequence}"'::regclass) = 1 THEN
+            RAISE EXCEPTION 'injected K35 post-storage promotion failure';
+          END IF;
+        END IF;
+        RETURN NEW;
+      END;
+    $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER "${injectionTrigger}" BEFORE UPDATE ON "VideoOriginal" FOR EACH ROW EXECUTE FUNCTION "${injectionFunction}"('${foreignUpload.originalId}')`);
+    let failedPromotionResponse: Response;
+    try {
+      failedPromotionResponse = await fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/upload/complete`, {
+        method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
+        body: JSON.stringify({ originalId: foreignUpload.originalId, parts: foreignCompletedParts }),
+      });
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER "${injectionTrigger}" ON "VideoOriginal"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION "${injectionFunction}"()`);
+      await prisma.$executeRawUnsafe(`DROP SEQUENCE "${injectionSequence}"`);
+    }
+    const failedPromotionText = await failedPromotionResponse.text();
+    expect(failedPromotionResponse.status, `${failedPromotionText}\n${nextOutput}`).toBe(500);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: foreignUpload.originalId }, select: { status: true, uploadId: true } })).toMatchObject({ status: "UPLOADING", uploadId: recoveredForeignOriginal.uploadId });
+    expect(objects.get(`${ORIGINAL_BUCKET}/${recoveredForeignOriginal.objectKey}`)).toEqual(sourceBytes);
+    expect(await prisma.videoEncodeJob.count({ where: { videoId: strangerVideoId, originalId: foreignUpload.originalId } })).toBe(0);
+
     const recoveredCompleteResponse = await fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/upload/complete`, {
       method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
-      body: JSON.stringify({ originalId: foreignUpload.originalId, parts: [{ partNumber: 1, etag: '"k01-foreign"' }] }),
+      body: JSON.stringify({ originalId: foreignUpload.originalId, parts: foreignCompletedParts }),
     });
     const recoveredCompleteText = await recoveredCompleteResponse.text();
     expect(recoveredCompleteResponse.status, `${recoveredCompleteText}\n${nextOutput}`).toBe(200);
@@ -744,7 +790,16 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     while (Date.now() < replacementAttachDeadline && await page.locator("video").count() === 0) {
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
-    expect(await page.locator("video").count()).toBeGreaterThan(0);
+    if (await page.locator("video").count() === 0 && browserErrors.some((error) => error.includes("ERR_NETWORK_CHANGED"))) {
+      await page.goto(videoUrl, { waitUntil: "domcontentloaded" });
+      const replacementRetryDeadline = Date.now() + 12_000;
+      while (Date.now() < replacementRetryDeadline && await page.locator("video").count() === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+    const replacementVideoCount = await page.locator("video").count();
+    const replacementBrowserAttachResult = JSON.stringify({ replacementVideoCount, edge: browserEdgePaths, errors: browserErrors, text: (await page.locator("body").innerText()).slice(0, 1000), nextOutput });
+    expect(replacementVideoCount, replacementBrowserAttachResult).toBeGreaterThan(0);
     await page.locator("video").evaluateAll((elements) => {
       const video = elements[0] as HTMLVideoElement | undefined;
       if (!video) return;
