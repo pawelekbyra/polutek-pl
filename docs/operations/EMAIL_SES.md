@@ -7,6 +7,7 @@ Stan: 2026-10-11. Bez sekretów. Część projektu „rozgrzewanie mailingu” (
 - `EMAIL_PROVIDER=ses` + `SES_SMTP_USER` i `SES_SMTP_PASS` → `sendEmail()` wysyła przez SMTP SES (`email-smtp.eu-north-1.amazonaws.com:587`, STARTTLS, biblioteka `nodemailer`, bez AWS SDK). Kod: `lib/modules/email/infrastructure/ses-email.transport.ts`. Bez poświadczeń albo bez zmiennej zostaje Resend.
 - **Awaryjnie Resend:** gdy SES nie może wysłać (awaria, przepustowość, dzienny limit, konto w piaskownicy, odrzucone poświadczenia), ten sam mail idzie przez Resend. Błędy adresata (zły adres, kod 501/553) są ostateczne. Wymaga `RESEND_API_KEY`.
 - Każdy mail dostaje znaczniki SES (`X-SES-MESSAGE-TAGS`: `app=pawelperfect, kind=<rodzaj>, stream=tx|news`) i, jeśli ustawiono `SES_CONFIGURATION_SET`, nagłówek zestawu konfiguracji. Nagłówki `List-Unsubscribe`, `Feedback-ID`, `Auto-Submitted` zostają.
+- Aktualizacja Nodemailer 7 → 10 i próba po wdrożeniu: [`NODEMAILER-10.md`](NODEMAILER-10.md).
 - Własny tor (`EMAIL_OWN_*`, [`MAIL-OWN-TRANSPORT.md`](MAIL-OWN-TRANSPORT.md)) jest wyłączony (`EMAIL_OWN_SHARE=0`), żeby testy dostarczalności mierzyły samo SES. Kod zostaje.
 
 ## Konto AWS
