@@ -233,8 +233,18 @@ describe("abortOriginalUpload / sanitizeFileName", () => {
     const t = setup();
     expect((await abortOriginalUpload({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps)).ok).toBe(true);
     expect(t.storage.abort).toHaveBeenCalledWith("originals/v1/1.mp4", "up1");
-    expect(t.prisma.videoOriginal.update.mock.calls[0][0].data).toMatchObject({ status: "ABANDONED" });
+    expect(t.prisma.videoOriginal.updateMany.mock.calls[0]?.[0]).toMatchObject({
+      where: { id: "o1", videoId: "v1", status: "UPLOADING" },
+      data: { status: "ABANDONED", uploadId: null },
+    });
     expect(audit).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "VIDEO_ORIGINAL_UPLOAD_ABORTED" }));
+  });
+  it("does not audit a late abort when completion already won the status compare-and-set", async () => {
+    const t = setup();
+    t.prisma.videoOriginal.updateMany.mockResolvedValue({ count: 0 });
+    expect(await abortOriginalUpload({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps))
+      .toMatchObject({ ok: false, error: { code: "UPLOAD_NOT_OPEN", statusCode: 409 } });
+    expect(audit).not.toHaveBeenCalled();
   });
   it("keeps only a harmless display name", () => {
     expect(sanitizeFileName("C:\\x\\y\\a.mp4")).toBe("a.mp4");

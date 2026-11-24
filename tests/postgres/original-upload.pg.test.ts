@@ -29,7 +29,7 @@ vi.mock("@/lib/modules/video-pipeline/infrastructure/r2-multipart", () => ({
 }));
 
 import { POST as completeUpload } from "@/app/api/studio/videos/[id]/upload/complete/route";
-import { GET as listUploadParts, POST as startUpload } from "@/app/api/studio/videos/[id]/upload/route";
+import { DELETE as abortUpload, GET as listUploadParts, POST as startUpload } from "@/app/api/studio/videos/[id]/upload/route";
 import { GET as getPipeline } from "@/app/api/studio/videos/[id]/pipeline/route";
 
 const prisma = new PrismaClient();
@@ -78,6 +78,16 @@ async function post(videoId: string, originalId: string, requestId: string) {
       method: "POST",
       headers: { "content-type": "application/json", "x-request-id": requestId },
       body: JSON.stringify({ originalId, parts: PARTS }),
+    }),
+    { params: Promise.resolve({ id: videoId }) },
+  );
+}
+
+async function abort(videoId: string, originalId: string, requestId: string) {
+  return abortUpload(
+    new Request(`https://www.pawelperfect.com/api/studio/videos/${videoId}/upload?originalId=${encodeURIComponent(originalId)}`, {
+      method: "DELETE",
+      headers: { "x-request-id": requestId },
     }),
     { params: Promise.resolve({ id: videoId }) },
   );
@@ -233,5 +243,37 @@ describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
     expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: v1.id }, select: { status: true, uploadId: true } })).toEqual({ status: "SUPERSEDED", uploadId: null });
     expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id }, select: { activeOriginalId: true } })).toEqual({ activeOriginalId: v2.id });
     expect(await prisma.videoEncodeJob.count({ where: { videoId: video.id } })).toBe(0);
+  });
+
+  it("does not let a delayed abort overwrite a completed original", async () => {
+    const { video, v1 } = await makeVideo("late-abort");
+    const v2 = await prisma.videoOriginal.create({
+      data: {
+        videoId: video.id, bucket: mocks.storage.bucket, objectKey: `originals/${video.id}/v2.mp4`, version: 2,
+        status: "UPLOADING", uploadId: "upload-v2", uploadPartSize: FILE_SIZE, uploadPartCount: 1,
+        sizeBytes: BigInt(FILE_SIZE), mimeType: "video/mp4",
+      },
+    });
+    const abortEnteredStorage = deferred();
+    const resumeAbort = deferred();
+    mocks.storage.abort.mockImplementationOnce(async () => {
+      abortEnteredStorage.resolve();
+      await resumeAbort.promise;
+    });
+    registerSession("late-abort", studioContext(userId, creatorId));
+    registerSession("complete-before-abort-commit", studioContext(userId, creatorId));
+
+    const abortResponsePromise = abort(video.id, v2.id, "late-abort");
+    await abortEnteredStorage.promise;
+    const completed = await post(video.id, v2.id, "complete-before-abort-commit");
+    await expectStatus(completed, 200);
+    resumeAbort.resolve();
+    const abortResponse = await abortResponsePromise;
+
+    await expectStatus(abortResponse, 409);
+    expect(await abortResponse.json()).toMatchObject({ code: "UPLOAD_NOT_OPEN" });
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: v2.id }, select: { status: true } })).toEqual({ status: "READY" });
+    expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id }, select: { activeOriginalId: true } })).toEqual({ activeOriginalId: v2.id });
+    expect(await prisma.videoEncodeJob.count({ where: { videoId: video.id, originalId: v2.id } })).toBe(1);
   });
 });
