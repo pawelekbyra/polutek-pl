@@ -13,11 +13,13 @@ import type { ChildProcess } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hlsAttemptAssetKey } from "@/lib/modules/video-pipeline/domain/keys";
+import hlsEdgeWorker from "@/workers/hls-edge/worker.mjs";
 
 const prisma = new PrismaClient();
 const RUN = `k01-worker-${Date.now().toString(36)}`;
 const AUTH_SECRET = randomBytes(32).toString("base64url");
 const SESSION_TOKEN = randomBytes(32).toString("base64url");
+const HLS_SECRET = randomBytes(32).toString("base64url");
 const ORIGINAL_BUCKET = "k01-originals";
 const HLS_BUCKET = "k01-hls";
 const objects = new Map<string, Buffer>();
@@ -33,6 +35,9 @@ let server: ReturnType<typeof createServer> | undefined;
 let nextServer: ChildProcess | undefined;
 let baseUrl = "";
 let nextOutput = "";
+const cachedResponses = new Map<string, Response>();
+const pendingCacheWrites: Promise<unknown>[] = [];
+const previousCaches = (globalThis as unknown as { caches?: unknown }).caches;
 
 function xml(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
@@ -91,7 +96,7 @@ async function startNextServer() {
       BETTER_AUTH_SECRET: AUTH_SECRET,
       BETTER_AUTH_URL: baseUrl,
       NEXT_PUBLIC_APP_URL: baseUrl,
-      HLS_TOKEN_SECRET: randomBytes(32).toString("base64url"),
+      HLS_TOKEN_SECRET: HLS_SECRET,
       HLS_DELIVERY_BASE_URL: "https://video.pawelperfect.com",
       NEXT_TELEMETRY_DISABLED: "1",
       UPSTASH_REDIS_REST_URL: "",
@@ -340,6 +345,8 @@ afterAll(async () => {
   objects.clear();
   multipartUploads.clear();
   objectRequests.length = 0;
+  (globalThis as unknown as { caches?: unknown }).caches = previousCaches;
+  cachedResponses.clear();
   if (sourceDir) await rm(sourceDir, { recursive: true, force: true });
 });
 
@@ -430,5 +437,48 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(ownerPlaybackText).not.toContain(ORIGINAL_BUCKET);
     expect(ownerPlaybackText).not.toContain(HLS_BUCKET);
     expect(ownerPlaybackText).not.toContain("objectKey");
+
+    (globalThis as unknown as { caches: unknown }).caches = {
+      default: {
+        async match(request: Request) {
+          return cachedResponses.get(new URL(request.url).pathname)?.clone();
+        },
+        async put(request: Request, response: Response) {
+          cachedResponses.set(new URL(request.url).pathname, response.clone());
+        },
+      },
+    };
+    const edgeEnv = {
+      HLS_TOKEN_SECRET: HLS_SECRET,
+      ALLOWED_ORIGINS: "",
+      HLS: {
+        async get(key: string) {
+          const body = objects.get(`${HLS_BUCKET}/${key}`);
+          return body ? { body, httpEtag: '"k01-edge"', size: body.length } : null;
+        },
+        async head(key: string) {
+          const body = objects.get(`${HLS_BUCKET}/${key}`);
+          return body ? { httpEtag: '"k01-edge"', size: body.length } : null;
+        },
+      },
+    };
+    const edgeContext = { waitUntil(promise: Promise<unknown>) { pendingCacheWrites.push(promise); } };
+    const masterResponse = await hlsEdgeWorker.fetch(new Request(playback.source.playbackUrl), edgeEnv, edgeContext);
+    expect(masterResponse.status).toBe(200);
+    const master = await masterResponse.text();
+    expect(master).toContain("#EXTM3U");
+    const variantPath = master.split(/\r?\n/).find((line) => line.endsWith("/index.m3u8"));
+    expect(variantPath).toBeTruthy();
+    const variantResponse = await hlsEdgeWorker.fetch(new Request(new URL(variantPath!, playback.source.playbackUrl)), edgeEnv, edgeContext);
+    expect(variantResponse.status).toBe(200);
+    const variant = await variantResponse.text();
+    expect(variant).toContain("#EXTM3U");
+    const segmentPath = variant.split(/\r?\n/).find((line) => /\.m4s$/.test(line));
+    expect(segmentPath).toBeTruthy();
+    const segmentResponse = await hlsEdgeWorker.fetch(new Request(new URL(segmentPath!, new URL(variantPath!, playback.source.playbackUrl))), edgeEnv, edgeContext);
+    expect(segmentResponse.status).toBe(200);
+    const segment = new Uint8Array(await segmentResponse.arrayBuffer());
+    expect(segment.length).toBeGreaterThan(0);
+    await Promise.all(pendingCacheWrites);
   }, 150_000);
 });
