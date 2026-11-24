@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createAppContext, type AppContext } from "@/lib/modules/shared/app-context";
 import { MultipartCompleteResponseSchema, MultipartStartResponseSchema, StudioPipelineStateResponseSchema } from "@/lib/video-api-contracts/contracts";
+import { studioApi } from "@/app/components/studio/studio-client";
 
 const mocks = vi.hoisted(() => ({
   sessions: new Map<string, unknown>(),
@@ -122,8 +123,15 @@ describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
       { params: Promise.resolve({ id: video.id }) },
     );
     await expectStatus(started, 200);
+    const legacyResponse = started.clone();
     const startBody: unknown = await started.json();
     expect(MultipartStartResponseSchema.safeParse(startBody).success).toBe(true);
+    const legacyClientBody = await studioApi<{ originalId: string; partSize: number; partCount: number }>(
+      `/api/studio/videos/${video.id}/upload`,
+      {},
+      async () => legacyResponse.clone(),
+    );
+    expect(legacyClientBody).toMatchObject({ originalId: (startBody as { originalId: string }).originalId, partSize: expect.any(Number), partCount: expect.any(Number) });
 
     const pipeline = await getPipelineResponse(video.id, "contract-start");
     await expectStatus(pipeline, 200);
