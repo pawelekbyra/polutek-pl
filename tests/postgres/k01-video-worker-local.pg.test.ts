@@ -424,6 +424,23 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(await prisma.videoOriginal.count({ where: { videoId: { in: [videoId, strangerVideoId] } } })).toBe(0);
     expect(objectRequests).toHaveLength(0);
 
+    const foreignUploadResponse = await fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/upload`, {
+      method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "foreign.mp4", fileSize: sourceBytes.length, contentType: "video/mp4" }),
+    });
+    const foreignUploadText = await foreignUploadResponse.text();
+    expect(foreignUploadResponse.status, `${foreignUploadText}\n${nextOutput}`).toBe(200);
+    const foreignUpload = JSON.parse(foreignUploadText) as { originalId: string };
+    const requestsBeforeForeignComplete = objectRequests.length;
+    const crossChannelComplete = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/complete`, {
+      method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId: foreignUpload.originalId, parts: [{ partNumber: 1, etag: '"k01-foreign"' }] }),
+    });
+    expect(crossChannelComplete.status).toBe(404);
+    expect(await crossChannelComplete.text()).not.toContain(foreignUpload.originalId);
+    expect(objectRequests).toHaveLength(requestsBeforeForeignComplete);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: foreignUpload.originalId }, select: { status: true } })).toMatchObject({ status: "UPLOADING" });
+
     const uploadResponse = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload`, {
       method: "POST", headers: { cookie: ownerCookie(), "content-type": "application/json" },
       body: JSON.stringify({ fileName: "source.mp4", fileSize: sourceBytes.length, contentType: "video/mp4" }),
@@ -432,6 +449,15 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
     expect(uploadResponse.status, `${uploadText}\nS3 requests: ${objectRequests.join(" | ")}\n${nextOutput}`).toBe(200);
     const upload = JSON.parse(uploadText) as { originalId: string; partCount: number; partSize: number };
     originalId = upload.originalId;
+    const requestsBeforeReverseComplete = objectRequests.length;
+    const reverseCrossChannelComplete = await fetch(`${baseUrl}/api/studio/videos/${strangerVideoId}/upload/complete`, {
+      method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
+      body: JSON.stringify({ originalId, parts: [{ partNumber: 1, etag: '"k01-owner"' }] }),
+    });
+    expect(reverseCrossChannelComplete.status).toBe(404);
+    expect(await reverseCrossChannelComplete.text()).not.toContain(originalId);
+    expect(objectRequests).toHaveLength(requestsBeforeReverseComplete);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: originalId }, select: { status: true } })).toMatchObject({ status: "UPLOADING" });
     const foreignParts = await fetch(`${baseUrl}/api/studio/videos/${videoId}/upload/parts`, {
       method: "POST", headers: { cookie: strangerCookie(), "content-type": "application/json" },
       body: JSON.stringify({ originalId, partNumbers: [1] }),
