@@ -4,10 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { HlsWriter } from "@/lib/modules/video-pipeline/infrastructure/r2-storage";
-import { R2DeleteObjectsError } from "@/lib/modules/video-pipeline/infrastructure/r2-storage";
 
 function clientWith(responses: unknown[]) {
-  const send = vi.fn(async () => responses.shift());
+  const send = vi.fn(async (..._args: unknown[]) => responses.shift());
   return { client: { send } as never, send };
 }
 
@@ -25,7 +24,7 @@ describe("HlsWriter.deletePrefix", () => {
 
     const result = new HlsWriter(client, "hls").deletePrefix(prefix);
     await expect(result).rejects.toThrow(/AccessDenied/);
-    await expect(result).rejects.toMatchObject<R2DeleteObjectsError>({ failedCount: 1, removedCount: 1, errorCodes: ["AccessDenied"] });
+    await expect(result).rejects.toMatchObject({ failedCount: 1, removedCount: 1, errorCodes: ["AccessDenied"] });
     const command = send.mock.calls[1]?.[0] as DeleteObjectsCommand;
     expect(command).toBeInstanceOf(DeleteObjectsCommand);
     expect(command.input.Delete?.Quiet).toBe(false);
@@ -98,7 +97,7 @@ describe("HlsWriter.putFile", () => {
     const file = path.join(dir, "segment.m4s");
     await writeFile(file, "segment");
     try {
-      const send = vi.fn(async () => ({}));
+      const send = vi.fn(async (..._args: unknown[]) => ({}));
       const controller = new AbortController();
       await new HlsWriter({ send } as never, "hls").putFile("key", file, "video/iso.segment", controller.signal);
       expect(send.mock.calls[0]?.[0]).toBeInstanceOf(PutObjectCommand);
