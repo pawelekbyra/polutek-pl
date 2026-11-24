@@ -338,10 +338,14 @@ describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
     const secondReadHead = deferred();
     const releaseSecondReadHead = deferred();
     const releaseFirstComplete = deferred();
+    const firstAtStorage = deferred();
     let completeCalls = 0;
     mocks.storage.complete.mockImplementation(async () => {
       const call = ++completeCalls;
-      if (call === 1) await releaseFirstComplete.promise;
+      if (call === 1) {
+        firstAtStorage.resolve();
+        await releaseFirstComplete.promise;
+      }
       if (call === 2) {
         const error = new Error("The upload no longer exists after the other tab completed it.");
         error.name = "NoSuchUpload";
@@ -357,7 +361,11 @@ describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
     registerSession("parallel-stale-v1-b", studioContext(userId, creatorId));
     registerSession("parallel-stale-v2", studioContext(userId, creatorId));
 
+    // Start the retry only once the first request holds R2 call #1. Starting both at once let the retry win the
+    // race to storage.complete (each request does a few DB reads first), so the request awaited as "first" got the
+    // NoSuchUpload path, blocked in readHead until releaseSecondReadHead, and the test waited on itself (timeout).
     const firstV1 = post(video.id, v1.id, "parallel-stale-v1-a");
+    await firstAtStorage.promise;
     const staleV1Retry = post(video.id, v1.id, "parallel-stale-v1-b");
     await secondReadHead.promise;
     releaseFirstComplete.resolve();
