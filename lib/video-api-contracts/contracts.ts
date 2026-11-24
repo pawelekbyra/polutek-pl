@@ -118,7 +118,7 @@ export const PlaybackPlanResponseSchema = z.object({
     allowed: z.boolean(),
     reason: z.string().optional(),
     requiredTier: z.string().optional(),
-    offer: z.record(z.unknown()).optional(),
+    offer: z.record(z.string(), z.unknown()).optional(),
     premiumPassUntil: z.string().optional(),
   }).passthrough(),
   source: z.object({
