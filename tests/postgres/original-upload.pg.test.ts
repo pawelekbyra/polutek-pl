@@ -276,4 +276,48 @@ describe("original upload monotonic completion on PostgreSQL and HTTP", () => {
     expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id }, select: { activeOriginalId: true } })).toEqual({ activeOriginalId: v2.id });
     expect(await prisma.videoEncodeJob.count({ where: { videoId: video.id, originalId: v2.id } })).toBe(1);
   });
+
+  it("returns the same job when two Studio tabs complete one upload concurrently", async () => {
+    const video = await prisma.video.create({
+      data: { creatorId, title: "K15 concurrent complete", slug: `${RUN}-parallel-complete`, thumbnailUrl: "/logo.png" },
+    });
+    const original = await prisma.videoOriginal.create({
+      data: {
+        videoId: video.id, bucket: mocks.storage.bucket, objectKey: `originals/${video.id}/v1.mp4`, version: 1,
+        status: "UPLOADING", uploadId: "parallel-upload", uploadPartSize: FILE_SIZE, uploadPartCount: 1,
+        sizeBytes: BigInt(FILE_SIZE), mimeType: "video/mp4",
+      },
+    });
+    const bothAtStorage = deferred();
+    const releaseStorage = deferred();
+    let completeCalls = 0;
+    mocks.storage.complete.mockImplementation(async () => {
+      const call = ++completeCalls;
+      if (call === 2) bothAtStorage.resolve();
+      await releaseStorage.promise;
+      if (call === 2) {
+        const error = new Error("The upload no longer exists after the other tab completed it.");
+        error.name = "NoSuchUpload";
+        throw error;
+      }
+    });
+    registerSession("parallel-complete-a", studioContext(userId, creatorId));
+    registerSession("parallel-complete-b", studioContext(userId, creatorId));
+
+    const first = post(video.id, original.id, "parallel-complete-a");
+    const second = post(video.id, original.id, "parallel-complete-b");
+    await bothAtStorage.promise;
+    releaseStorage.resolve();
+    const [firstResponse, secondResponse] = await Promise.all([first, second]);
+
+    await expectStatus(firstResponse, 200);
+    await expectStatus(secondResponse, 200);
+    const [firstBody, secondBody] = await Promise.all([firstResponse.json(), secondResponse.json()]);
+    expect(firstBody).toMatchObject({ originalId: original.id, job: { id: expect.any(String) } });
+    expect(secondBody).toEqual(firstBody);
+    expect(completeCalls).toBe(2);
+    expect(await prisma.videoOriginal.findUniqueOrThrow({ where: { id: original.id }, select: { status: true } })).toEqual({ status: "READY" });
+    expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id }, select: { activeOriginalId: true } })).toEqual({ activeOriginalId: original.id });
+    expect(await prisma.videoEncodeJob.count({ where: { videoId: video.id, originalId: original.id } })).toBe(1);
+  });
 });
