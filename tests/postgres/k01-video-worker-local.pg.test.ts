@@ -6,7 +6,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import net from "node:net";
 import { createHmac, randomBytes } from "node:crypto";
 import type { AddressInfo } from "node:net";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { ChildProcess } from "node:child_process";
@@ -24,6 +24,7 @@ const STRANGER_SESSION_TOKEN = randomBytes(32).toString("base64url");
 const HLS_SECRET = randomBytes(32).toString("base64url");
 const ORIGINAL_BUCKET = "k01-originals";
 const HLS_BUCKET = "k01-hls";
+const COLD_HOME_NAVIGATION_TIMEOUT_MS = 90_000;
 const objects = new Map<string, Buffer>();
 const multipartUploads = new Map<string, { bucket: string; key: string; parts: Map<number, Buffer> }>();
 const objectRequests: string[] = [];
@@ -40,6 +41,7 @@ let server: ReturnType<typeof createServer> | undefined;
 let nextServer: ChildProcess | undefined;
 let baseUrl = "";
 let nextOutput = "";
+let nextHttpDiagnostics = "";
 let mainChannelSettingCreated = false;
 const cachedResponses = new Map<string, Response>();
 const pendingCacheWrites: Promise<unknown>[] = [];
@@ -108,7 +110,10 @@ function strangerCookie() {
 }
 
 function appendNextOutput(chunk: Buffer | string) {
-  nextOutput = `${nextOutput}${chunk.toString()}`.slice(-8_000)
+  const output = chunk.toString();
+  const diagnosticLines = output.split(/\r?\n/).filter((line) => line.includes("[K01_HTTP_DIAG]"));
+  if (diagnosticLines.length > 0) nextHttpDiagnostics = `${nextHttpDiagnostics}\n${diagnosticLines.join("\n")}`.slice(-4_000);
+  nextOutput = `${nextOutput}${output}`.slice(-8_000)
     .replaceAll(AUTH_SECRET, "[auth-secret-redacted]")
     .replaceAll(SESSION_TOKEN, "[session-token-redacted]")
     .replaceAll(STRANGER_SESSION_TOKEN, "[stranger-session-token-redacted]");
@@ -118,6 +123,25 @@ async function startNextServer() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required for K01 HTTP acceptance");
   const port = await findFreePort();
   baseUrl = `http://127.0.0.1:${port}`;
+  const httpDiagnosticsPath = path.join(sourceDir, "next-http-diagnostics.cjs");
+  await writeFile(httpDiagnosticsPath, [
+    'const http = require("node:http");',
+    'const originalEmit = http.Server.prototype.emit;',
+    'http.Server.prototype.emit = function(event, ...args) {',
+    '  if (event === "request") {',
+    '    const [request, response] = args;',
+    '    if (request.url === "/pl" || request.url?.startsWith("/pl?")) {',
+    '      const startedAt = Date.now();',
+    '      const log = (state) => console.error(`[K01_HTTP_DIAG] ${state} elapsed_ms=${Date.now() - startedAt} method=${request.method} path=${request.url} status=${response.statusCode} headers_sent=${response.headersSent}`);',
+    '      log("request-start");',
+    '      const timer = setInterval(() => log("request-pending"), 5000); timer.unref();',
+    '      response.once("finish", () => { clearInterval(timer); log("response-finish"); });',
+    '      response.once("close", () => { clearInterval(timer); log("response-close"); });',
+    '    }',
+    '  }',
+    '  return originalEmit.call(this, event, ...args);',
+    '};',
+  ].join("\n"));
   const databaseUrl = new URL(process.env.DATABASE_URL);
   databaseUrl.searchParams.set("application_name", `${RUN}-next`);
   nextServer = spawn(process.execPath, [
@@ -146,6 +170,7 @@ async function startNextServer() {
       CLOUDFLARE_R2_BUCKET_HLS: HLS_BUCKET,
       VIDEO_WORKER_TEST_S3_ENDPOINT: endpoint,
       VIDEO_WORKER_TEST_RUNTIME: "true",
+      NODE_OPTIONS: `--require=${httpDiagnosticsPath}`,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -719,11 +744,11 @@ describe("K01 local worker and short synthetic video (PostgreSQL + FFmpeg + AWS 
       const videoUrl = `${baseUrl}/pl?v=${encodeURIComponent(`${RUN}-video`)}`;
       let navigationResponse: Awaited<ReturnType<typeof page.goto>> = null;
       try {
-        navigationResponse = await page.goto(videoUrl, { waitUntil: "commit" });
-        await page.waitForLoadState("domcontentloaded", { timeout: 30_000 });
+        navigationResponse = await page.goto(videoUrl, { waitUntil: "commit", timeout: COLD_HOME_NAVIGATION_TIMEOUT_MS });
+        await page.waitForLoadState("domcontentloaded", { timeout: COLD_HOME_NAVIGATION_TIMEOUT_MS });
       } catch (error) {
         const pageState = await page.evaluate(() => ({ readyState: document.readyState, title: document.title, bodyText: document.body.innerText.slice(0, 500) })).catch(() => null);
-        throw new Error(`K01 browser navigation did not reach DOMContentLoaded: ${error instanceof Error ? error.message : String(error)}\nHTTP status: ${navigationResponse?.status() ?? "no response"}\nURL: ${page.url()}\nPage state: ${JSON.stringify(pageState)}\nBrowser errors: ${JSON.stringify(browserErrors)}\nNext output: ${nextOutput}`);
+        throw new Error(`K01 browser navigation did not reach DOMContentLoaded: ${error instanceof Error ? error.message : String(error)}\nHTTP status: ${navigationResponse?.status() ?? "no response"}\nURL: ${page.url()}\nPage state: ${JSON.stringify(pageState)}\nBrowser errors: ${JSON.stringify(browserErrors)}\nNext HTTP diagnostics: ${nextHttpDiagnostics || "none captured"}\nNext output: ${nextOutput}`);
       }
       const attachDeadline = Date.now() + 12_000;
       while (Date.now() < attachDeadline && await page.locator("video").count() === 0) {
