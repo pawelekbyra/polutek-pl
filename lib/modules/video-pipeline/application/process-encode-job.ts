@@ -112,7 +112,7 @@ function makeProgressWriter(ports: ProcessorPorts, job: VideoEncodeJob, controll
     if (!force && nowMs - lastWrite < 2000 && Math.abs(percent - lastPercent) < 2) return;
     lastWrite = nowMs;
     lastPercent = percent;
-    const res = await ports.store.reportProgress(job.id, ports.workerId, { stage, progressPercent: percent, etaSeconds: eta });
+    const res = await ports.store.reportProgress(job.id, ports.workerId, job.attemptId, { stage, progressPercent: percent, etaSeconds: eta });
     if (!res.owned) {
       state.lost = true;
       controller.abort();
@@ -211,7 +211,8 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     // A previous attempt may have crashed after the output went live; do not redo or delete it.
     const existing = await ports.finalizer.findExisting(job, assetKey);
     if (existing) {
-      await ports.store.markSucceeded(job.id, ports.workerId, { assetId: existing, result: { reusedExistingAsset: true } });
+      const succeeded = await ports.store.markSucceeded(job.id, ports.workerId, job.attemptId, { assetId: existing, result: { reusedExistingAsset: true } });
+      if (!succeeded) return "lost";
       await ports.audit("VIDEO_ENCODE_SUCCEEDED", job, { assetId: existing, reused: true });
       return "succeeded";
     }
@@ -261,7 +262,7 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     if (probe.width > ENCODE_LIMITS.maxWidth || probe.height > ENCODE_LIMITS.maxHeight) {
       throw new EncodeJobError(PERMANENT.TOO_LARGE_FRAME, `Rozdzielczosc ${probe.width}x${probe.height} poza limitem.`, true);
     }
-    await ports.store.reportProgress(job.id, ports.workerId, {
+    await ports.store.reportProgress(job.id, ports.workerId, job.attemptId, {
       sourceInfo: { width: probe.width, height: probe.height, durationSeconds: probe.duration, hasAudio: probe.hasAudio, hdr: probe.hdr, codec: probe.videoCodec ?? null, sizeBytes: probe.sizeBytes ?? null } as Prisma.InputJsonValue,
     });
 
@@ -341,9 +342,13 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     });
     finalized = true;
     const result = { ...encoded.meta, uploadedObjects: files.length, uploadedBytes: totalBytes } as Prisma.InputJsonValue;
-    const done = await ports.store.markSucceeded(job.id, ports.workerId, { assetId, result });
+    const done = await ports.store.markSucceeded(job.id, ports.workerId, job.attemptId, { assetId, result });
+    if (!done) {
+      ports.log("finalized output but attempt no longer owns job status", { jobId: job.id, attemptId: job.attemptId, prefix });
+      return "lost";
+    }
     await ports.audit("VIDEO_ENCODE_SUCCEEDED", job, { assetId, versionNumber: job.versionNumber, objects: files.length, bytes: totalBytes });
-    return done ? "succeeded" : "lost";
+    return "succeeded";
   } catch (err) {
     return await handleFailure(err);
   } finally {
@@ -357,7 +362,7 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     // Nothing references the prefix until the asset exists, so partial output can always go.
     if (uploadStarted && !finalized) await ports.hls.deletePrefix(prefix).catch((e) => ports.log("cleanup failed", { jobId: job.id, attemptId: job.attemptId, prefix, error: String(e) }));
     if (shutdownState.requested && !lostState.lost) {
-      await ports.store.release(job.id, ports.workerId);
+      await ports.store.release(job.id, ports.workerId, job.attemptId);
       ports.log("released on shutdown", { jobId: job.id, attemptId: job.attemptId });
       return "released";
     }
@@ -366,13 +371,13 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
       return "lost";
     }
     if (cancelled) {
-      await ports.store.markCancelled(job.id, ports.workerId);
+      await ports.store.markCancelled(job.id, ports.workerId, job.attemptId);
       await ports.audit("VIDEO_ENCODE_CANCELLED", job, { attemptId: job.attemptId, prefix });
       return "cancelled";
     }
     const failure = classifyFailure(err);
     const verdict = decideAfterFailure(job, failure);
-    const applied = await ports.store.markFailedOrRetry(job.id, ports.workerId, verdict, ports.now());
+    const applied = await ports.store.markFailedOrRetry(job.id, ports.workerId, job.attemptId, verdict, ports.now());
     ports.log("job failed", { jobId: job.id, attemptId: job.attemptId, prefix, code: failure.code, next: verdict.next, error: failure.message });
     if (verdict.next === "FAILED") await ports.audit("VIDEO_ENCODE_FAILED", job, { attemptId: job.attemptId, prefix, code: failure.code, message: failure.message });
     if (!applied) return "lost";

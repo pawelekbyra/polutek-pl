@@ -49,7 +49,7 @@ describe("K16 encode attempt isolation (PostgreSQL)", () => {
     expect(first).toMatchObject({ id: job.id, status: "RUNNING", attemptCount: 1 });
     expect(first?.attemptId).toMatch(/^[0-9a-f-]{36}$/i);
     const firstPrefix = hlsAttemptAssetKey(videoId, job.versionNumber, first?.attemptId);
-    expect(await repository.release(job.id, "k16-worker-a")).toBe(true);
+    expect(await repository.release(job.id, "k16-worker-a", first!.attemptId)).toBe(true);
 
     const second = await repository.claimNext("k16-worker-b", new Date());
     expect(second).toMatchObject({ id: job.id, status: "RUNNING", attemptCount: 1 });
@@ -58,7 +58,7 @@ describe("K16 encode attempt isolation (PostgreSQL)", () => {
     expect(secondPrefix).not.toBe(firstPrefix);
     expect(secondPrefix.startsWith(`${firstPrefix}/`)).toBe(false);
 
-    expect(await repository.release(job.id, "k16-worker-b")).toBe(true);
+    expect(await repository.release(job.id, "k16-worker-b", second!.attemptId)).toBe(true);
     await prisma.videoEncodeJob.update({ where: { id: job.id }, data: { status: "CANCELLED", finishedAt: new Date() } });
     const legacy = await prisma.videoEncodeJob.create({
       data: {

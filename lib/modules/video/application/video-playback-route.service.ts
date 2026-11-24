@@ -14,6 +14,7 @@ export class VideoPlaybackRouteService {
     assetId: string;
     activatedBy: "ADMIN" | "POLICY" | "FALLBACK" | "MIGRATION" | "RECONCILER";
     reason?: string;
+    encodeClaim?: { jobId: string; workerId: string; attemptId: string | null };
   }, ctx: AppContext): Promise<VideoPlaybackRoute> {
     const [video, asset] = await Promise.all([
       ctx.prisma.video.findUnique({ where: { id: input.videoId }, select: { id: true, tier: true } }),
@@ -27,6 +28,20 @@ export class VideoPlaybackRouteService {
     }
 
     const route = await ctx.db.writeTransaction(async (tx) => {
+      if (input.encodeClaim) {
+        const claim = input.encodeClaim;
+        const owned = await tx.$queryRaw<Array<{ id: string }>>`
+          SELECT "id" FROM "VideoEncodeJob"
+          WHERE "id" = ${claim.jobId}
+            AND "status" = 'RUNNING'
+            AND "workerId" = ${claim.workerId}
+            AND "attemptId" IS NOT DISTINCT FROM ${claim.attemptId}
+          FOR UPDATE
+        `;
+        if (owned.length !== 1) throw new AppError("Encode attempt no longer owns this job.", 409, "ENCODE_ATTEMPT_LOST");
+        // Refresh the lease while holding the job row lock, so a concurrent stale sweep cannot take over mid-finalize.
+        await tx.videoEncodeJob.update({ where: { id: claim.jobId }, data: { heartbeatAt: new Date() } });
+      }
       await tx.videoPlaybackRoute.updateMany({
         where: { videoId: input.videoId, status: VideoPlaybackRouteStatus.ACTIVE },
         data: { status: VideoPlaybackRouteStatus.PREVIOUS, deactivatedAt: new Date() },

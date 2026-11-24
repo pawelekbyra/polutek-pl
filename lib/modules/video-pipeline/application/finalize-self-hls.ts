@@ -31,8 +31,14 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
 
   return {
     async findExisting(job: VideoEncodeJob, assetKey: string) {
+      const legacyKey = hlsAssetKey(job.videoId, job.versionNumber);
       const asset = await prisma.videoAsset.findFirst({
-        where: { videoId: job.videoId, provider: "SELF_HLS", objectKey: { in: [...new Set([assetKey, hlsAssetKey(job.videoId, job.versionNumber)])] }, processingState: "READY" },
+        where: {
+          videoId: job.videoId,
+          provider: "SELF_HLS",
+          processingState: "READY",
+          OR: [{ objectKey: legacyKey }, { objectKey: { startsWith: `${legacyKey}/attempts/` } }],
+        },
         select: { id: true, playbackRoutes: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 } },
       });
       return asset && asset.playbackRoutes.length > 0 ? asset.id : null;
@@ -66,7 +72,13 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
 
       try {
         await new VideoPlaybackRouteService().activateRoute(
-          { videoId: job.videoId, assetId, activatedBy: "POLICY", reason: `own HLS encode job ${job.id} attempt ${job.attemptId ?? "legacy"}` },
+          {
+            videoId: job.videoId,
+            assetId,
+            activatedBy: "POLICY",
+            reason: `own HLS encode job ${job.id} attempt ${job.attemptId ?? "legacy"}`,
+            encodeClaim: { jobId: job.id, workerId: job.workerId ?? "", attemptId: job.attemptId },
+          },
           ctx,
         );
       } catch (error) {

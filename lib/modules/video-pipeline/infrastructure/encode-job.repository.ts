@@ -18,13 +18,14 @@ export interface EncodeJobStore {
   reportProgress(
     jobId: string,
     workerId: string,
+    attemptId: string | null,
     patch: { stage?: EncodeStage; progressPercent?: number; etaSeconds?: number | null; sourceInfo?: Prisma.InputJsonValue },
   ): Promise<{ owned: boolean; cancelRequested: boolean }>;
-  markSucceeded(jobId: string, workerId: string, data: { assetId: string; result: Prisma.InputJsonValue }): Promise<boolean>;
-  markFailedOrRetry(jobId: string, workerId: string, verdict: FailureVerdict, now: Date): Promise<boolean>;
-  markCancelled(jobId: string, workerId: string): Promise<boolean>;
+  markSucceeded(jobId: string, workerId: string, attemptId: string | null, data: { assetId: string; result: Prisma.InputJsonValue }): Promise<boolean>;
+  markFailedOrRetry(jobId: string, workerId: string, attemptId: string | null, verdict: FailureVerdict, now: Date): Promise<boolean>;
+  markCancelled(jobId: string, workerId: string, attemptId: string | null): Promise<boolean>;
   /** Graceful shutdown: back to QUEUED without consuming the attempt that was just claimed. */
-  release(jobId: string, workerId: string): Promise<boolean>;
+  release(jobId: string, workerId: string, attemptId: string | null): Promise<boolean>;
 }
 
 /** Same advisory-lock key for every claim: with one worker per server this serialises "one encode at a time". */
@@ -89,10 +90,11 @@ export class EncodeJobRepository implements EncodeJobStore {
   async reportProgress(
     jobId: string,
     workerId: string,
+    attemptId: string | null,
     patch: { stage?: EncodeStage; progressPercent?: number; etaSeconds?: number | null; sourceInfo?: Prisma.InputJsonValue },
   ) {
     const result = await this.db.videoEncodeJob.updateMany({
-      where: { id: jobId, workerId, status: "RUNNING" },
+      where: { id: jobId, workerId, attemptId, status: "RUNNING" },
       data: {
         heartbeatAt: new Date(),
         ...(patch.stage ? { stage: patch.stage } : {}),
@@ -102,13 +104,14 @@ export class EncodeJobRepository implements EncodeJobStore {
       },
     });
     if (result.count === 0) return { owned: false, cancelRequested: false };
-    const row = await this.db.videoEncodeJob.findUnique({ where: { id: jobId }, select: { cancelRequested: true } });
-    return { owned: true, cancelRequested: row?.cancelRequested ?? false };
+    const row = await this.db.videoEncodeJob.findUnique({ where: { id: jobId }, select: { cancelRequested: true, attemptId: true, workerId: true, status: true } });
+    const owned = row?.attemptId === attemptId && row.workerId === workerId && row.status === "RUNNING";
+    return { owned, cancelRequested: owned ? row?.cancelRequested ?? false : false };
   }
 
-  async markSucceeded(jobId: string, workerId: string, data: { assetId: string; result: Prisma.InputJsonValue }) {
+  async markSucceeded(jobId: string, workerId: string, attemptId: string | null, data: { assetId: string; result: Prisma.InputJsonValue }) {
     const res = await this.db.videoEncodeJob.updateMany({
-      where: { id: jobId, workerId, status: "RUNNING" },
+      where: { id: jobId, workerId, attemptId, status: "RUNNING" },
       data: {
         status: "SUCCEEDED",
         stage: "DONE",
@@ -124,10 +127,10 @@ export class EncodeJobRepository implements EncodeJobStore {
     return res.count === 1;
   }
 
-  async markFailedOrRetry(jobId: string, workerId: string, verdict: FailureVerdict, now: Date) {
+  async markFailedOrRetry(jobId: string, workerId: string, attemptId: string | null, verdict: FailureVerdict, now: Date) {
     const base = { failureCode: verdict.code, failureReason: verdict.message, etaSeconds: null, workerId: null };
     const res = await this.db.videoEncodeJob.updateMany({
-      where: { id: jobId, workerId, status: "RUNNING" },
+      where: { id: jobId, workerId, attemptId, status: "RUNNING" },
       data:
         verdict.next === "FAILED"
           ? { ...base, status: "FAILED", finishedAt: now }
@@ -136,19 +139,19 @@ export class EncodeJobRepository implements EncodeJobStore {
     return res.count === 1;
   }
 
-  async release(jobId: string, workerId: string) {
-    const job = await this.db.videoEncodeJob.findFirst({ where: { id: jobId, workerId, status: "RUNNING" }, select: { attemptCount: true } });
+  async release(jobId: string, workerId: string, attemptId: string | null) {
+    const job = await this.db.videoEncodeJob.findFirst({ where: { id: jobId, workerId, attemptId, status: "RUNNING" }, select: { attemptCount: true } });
     if (!job) return false;
     const res = await this.db.videoEncodeJob.updateMany({
-      where: { id: jobId, workerId, status: "RUNNING" },
+      where: { id: jobId, workerId, attemptId, status: "RUNNING" },
       data: { status: "QUEUED", stage: "QUEUED", progressPercent: 0, etaSeconds: null, workerId: null, nextAttemptAt: null, attemptCount: Math.max(0, job.attemptCount - 1) },
     });
     return res.count === 1;
   }
 
-  async markCancelled(jobId: string, workerId: string) {
+  async markCancelled(jobId: string, workerId: string, attemptId: string | null) {
     const res = await this.db.videoEncodeJob.updateMany({
-      where: { id: jobId, workerId, status: "RUNNING" },
+      where: { id: jobId, workerId, attemptId, status: "RUNNING" },
       data: { status: "CANCELLED", stage: "QUEUED", etaSeconds: null, workerId: null, finishedAt: new Date() },
     });
     return res.count === 1;
