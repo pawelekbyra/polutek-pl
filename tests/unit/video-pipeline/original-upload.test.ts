@@ -15,7 +15,7 @@ vi.mock("@/lib/modules/audit", () => ({ recordAuditEvent: audit, recordAuditEven
 vi.mock("@/lib/modules/video", () => ({ requestPublishAfterAssetReady: requestPublish }));
 vi.mock("@/lib/modules/video-pipeline/application/encode-queue.use-cases", () => ({ enqueueEncode: enqueue }));
 
-import { STALE_UPLOAD_MS, abandonStaleOriginalUploads, abortOriginalUpload, completeOriginalMultipart, presignOriginalParts, sanitizeFileName, startOriginalUpload } from "@/lib/modules/video-pipeline/application/original-upload.use-cases";
+import { STALE_UPLOAD_MS, abandonStaleOriginalUploads, abortOriginalUpload, completeOriginalMultipart, listOriginalParts, presignOriginalParts, sanitizeFileName, startOriginalUpload } from "@/lib/modules/video-pipeline/application/original-upload.use-cases";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { MIB } from "@/lib/modules/video-pipeline/domain/upload-policy";
 
@@ -221,10 +221,37 @@ describe("completeOriginalMultipart", () => {
     expect((await completeOriginalMultipart({ videoId: "v1", originalId: "o1", parts }, t.ctx, t.deps)).ok).toBe(true);
   });
 
+  it("refuses before completing in R2 while another file of the video is encoding (U4)", async () => {
+    const t = setup(original(), { activeJob: true });
+    const parts = [{ partNumber: 1, etag: "e1" }, { partNumber: 2, etag: "e2" }];
+    const res = await completeOriginalMultipart({ videoId: "v1", originalId: "o1", parts }, t.ctx, t.deps);
+    expect(res).toMatchObject({ ok: false, error: { code: "ENCODE_ALREADY_ACTIVE", statusCode: 409 } });
+    expect(t.storage.complete).not.toHaveBeenCalled();
+    expect(t.prisma.videoOriginal.updateMany).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(t.prisma.videoEncodeJob.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ videoId: "v1", originalId: { not: "o1" } }),
+    }));
+  });
+
   it("maps R2 part errors to a resumable 409", async () => {
     const t = setup();
     t.storage.complete.mockRejectedValue(Object.assign(new Error("x"), { name: "InvalidPart" }));
     expect(await completeOriginalMultipart({ videoId: "v1", originalId: "o1", parts }, t.ctx, t.deps)).toMatchObject({ ok: false, error: { code: "UPLOAD_PARTS_INCOMPLETE", statusCode: 409 } });
+  });
+});
+
+describe("listOriginalParts", () => {
+  it("answers UPLOAD_NOT_OPEN when R2 no longer knows the multipart upload (U4)", async () => {
+    const t = setup();
+    t.storage.listParts.mockRejectedValueOnce(Object.assign(new Error("gone"), { name: "NoSuchUpload" }));
+    expect(await listOriginalParts({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps)).toMatchObject({ ok: false, error: { code: "UPLOAD_NOT_OPEN", statusCode: 409 } });
+  });
+
+  it("does not hide other storage failures", async () => {
+    const t = setup();
+    t.storage.listParts.mockRejectedValueOnce(Object.assign(new Error("denied"), { name: "AccessDenied" }));
+    await expect(listOriginalParts({ videoId: "v1", originalId: "o1" }, t.ctx, t.deps)).rejects.toThrow("denied");
   });
 });
 

@@ -208,7 +208,18 @@ export async function listOriginalParts(
     await requireVideo(input.videoId, ctx, "video.upload");
     const original = await loadUploadingOriginal(input.videoId, input.originalId, ctx);
     requireOpenUpload(original);
-    const parts = await storage.listParts(original.objectKey, original.uploadId);
+    let parts: UploadedPart[];
+    try {
+      parts = await storage.listParts(original.objectKey, original.uploadId);
+    } catch (error) {
+      // R2 no longer knows this multipart upload (completed earlier while the DB promotion rolled back, expired,
+      // or aborted). Answer with the code the browser uploader treats as "start over" instead of a 500 that
+      // blocks every resume until the 7-day clean-up (audit U4).
+      if ((error as { name?: string })?.name === "NoSuchUpload") {
+        return fail(new AppError("Ten upload nie jest już otwarty w magazynie. Wgraj plik ponownie.", 409, "UPLOAD_NOT_OPEN"));
+      }
+      throw error;
+    }
     return ok({ parts, partSize: original.uploadPartSize, partCount: original.uploadPartCount });
   } catch (error) {
     return fail(asFailure(error));
@@ -279,6 +290,18 @@ export async function completeOriginalMultipart(
     const unique = new Set(numbers);
     if (input.parts.length !== original.uploadPartCount || unique.size !== numbers.length || !numbers.every((n) => n >= 1 && n <= original.uploadPartCount) || input.parts.some((p) => !p.etag.trim())) {
       return fail(new AppError("Lista części jest niekompletna albo niepoprawna.", 400, "UPLOAD_BAD_PARTS"));
+    }
+
+    // The promotion below queues encoding in the SAME transaction; an encode of another file of this video
+    // would make that enqueue fail and roll the promotion back AFTER R2 already assembled the object, leaving the
+    // row UPLOADING with an upload id R2 no longer knows (audit U4). Refuse before completing in R2 instead: the
+    // multipart upload stays open and the same "complete" can be retried when the encode is over.
+    const blockingEncode = await ctx.prisma.videoEncodeJob.findFirst({
+      where: { videoId: video.id, status: { in: ["QUEUED", "RUNNING"] }, originalId: { not: original.id } },
+      select: { id: true },
+    });
+    if (blockingEncode) {
+      return fail(new AppError("Dla tego filmu trwa kodowanie innego pliku. Upload jest zachowany: dokończ go po zakończeniu kodowania.", 409, "ENCODE_ALREADY_ACTIVE"));
     }
 
     try {
