@@ -35,6 +35,9 @@ potwierdzenie w Stripe.js -> płatność udana w Stripe
 - Webhook (`handleStripeWebhook`) weryfikuje podpis na surowym ciele (`Stripe.webhooks.constructEvent`), loguje każde przyjęte i odrzucone zdarzenie (tylko id i typy), ignoruje zdarzenia z innym `livemode`
   niż klucz oraz `succeeded` bez `metadata.paymentId` (200), a kod inny niż 2xx zwraca tylko gdy Stripe ma ponowić. Spory rozstrzyga się po aktualnym statusie z Stripe (zdarzenia mogą przyjść w złej kolejności).
   Zwroty administratora mają klucz idempotencji i zawsze trafiają do audytu.
+- **Zwroty i spory są szeregowane blokadą wiersza `Payment`** (`lockPaymentRow`, `SELECT … FOR UPDATE`) w `handleRefund`, `handleDispute` i `sync-refunds`; stan jest czytany ponownie po blokadzie.
+  Przegrany spór (`CHARGEBACK_LOST`) zdejmuje z `UserPaymentTotal` całą niezwróconą część płatności, więc późniejszy zwrot zapisuje tylko kwotę zwrotu i nie odejmuje drugi raz (suma nie zależy od kolejności zdarzeń).
+  Testy: `tests/postgres/payments.pg.test.ts`; test ręczny w Stripe test-mode: `../operations/PAYMENTS-REFUND-DISPUTE-TEST-PLAN.md`.
 - **Szybka ścieżka powrotu:** `getOwnedPaymentStatus()` (`GET /api/payments/[paymentId]`) dla własnej, nadal `PENDING` płatności z `stripeIntentId` pyta Stripe i przy `succeeded` woła `fulfillPayment()`;
   sprawdza też wiersze `FAILED`/`CANCELED`. Błąd Stripe/sieci jest połykany (wraca zwykłe odpytywanie): to najlepszy wysiłek, nie nowe źródło prawdy.
 - **Komunikat na stronie powrotu ufa sygnałowi Stripe.** `useCheckoutFlow` czyta `redirect_status`: `succeeded` (lub brak przy zwykłej karcie) pokazuje pełne podziękowanie od razu, `failed` ekran porażki,

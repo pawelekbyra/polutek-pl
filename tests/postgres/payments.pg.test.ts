@@ -62,6 +62,7 @@ async function resetUser() {
   await prisma.patronGrant.deleteMany({ where: { userId } });
   await prisma.userPaymentTotal.deleteMany({ where: { userId } });
   await prisma.payment.deleteMany({ where: { userId } });
+  await prisma.appSetting.deleteMany({ where: { key: `xp.premium_pass:${userId}` } });
 }
 
 /** Default Stripe fakes: list reads stripeRefunds; create appends a succeeded refund. */
@@ -111,6 +112,75 @@ describe('fulfilment is exactly-once under concurrency', () => {
 });
 
 describe('refunds keep the per-user total and the status consistent', () => {
+  it('serializes concurrent Premium fulfilments and refunds without losing a payment contribution', async () => {
+    await resetUser();
+    const metadata = {
+      purpose: 'premium_pass', productId: 'ACCESS_30D',
+      consents: { termsVersion: 'test-v1', waiverAt: new Date().toISOString() },
+    };
+    const first = await newPayment({ amountMinor: 1499, metadata });
+    const second = await newPayment({ amountMinor: 1499, metadata });
+
+    await Promise.all([
+      fulfillPayment(fulfillInput(first, { amountMinor: 1499 }), ctx()),
+      fulfillPayment(fulfillInput(second, { amountMinor: 1499 }), ctx()),
+    ]);
+    const key = `xp.premium_pass:${userId}`;
+    const granted = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(granted.paymentIds).toHaveLength(2);
+    expect(granted.paymentIds).toEqual(expect.arrayContaining([first.id, second.id]));
+    expect(Date.parse(granted.expiresAt)).toBeGreaterThan(Date.now() + 58 * 24 * 60 * 60 * 1000);
+
+    await Promise.all([
+      handleRefund({ paymentId: first.id, reportedRefundedMinor: 1499 }, ctx()),
+      handleRefund({ paymentId: second.id, reportedRefundedMinor: 1499 }, ctx()),
+    ]);
+    const refunded = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(refunded.paymentIds).toEqual([]);
+    expect(Date.parse(refunded.expiresAt)).toBeLessThanOrEqual(Date.now() + 1_000);
+    expect(await total()).toBe(0);
+
+    await Promise.all([
+      handleRefund({ paymentId: first.id, reportedRefundedMinor: 1499 }, ctx()),
+      handleRefund({ paymentId: second.id, reportedRefundedMinor: 1499 }, ctx()),
+    ]);
+    expect(JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value)).toMatchObject(refunded);
+    expect(await total()).toBe(0);
+  });
+
+  it('refunds only the refunded Premium payment contribution while another payment remains active', async () => {
+    await resetUser();
+    const first = await newPayment({
+      amountMinor: 1499,
+      metadata: { purpose: 'premium_pass', productId: 'ACCESS_30D', consents: { termsVersion: 'test-v1', waiverAt: new Date().toISOString() } },
+    });
+    const second = await newPayment({
+      amountMinor: 1499,
+      metadata: { purpose: 'premium_pass', productId: 'ACCESS_30D', consents: { termsVersion: 'test-v1', waiverAt: new Date().toISOString() } },
+    });
+    await fulfillPayment(fulfillInput(first, { amountMinor: 1499 }), ctx());
+    await fulfillPayment(fulfillInput(second, { amountMinor: 1499 }), ctx());
+
+    const key = `xp.premium_pass:${userId}`;
+    const before = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(before.paymentIds).toEqual([first.id, second.id]);
+    expect(Date.parse(before.expiresAt)).toBeGreaterThan(Date.now() + 58 * 24 * 60 * 60 * 1000);
+
+    await handleRefund({ paymentId: first.id, reportedRefundedMinor: 1499 }, ctx());
+    const afterFirstRefund = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(afterFirstRefund.paymentIds).toEqual([second.id]);
+    expect(Date.parse(afterFirstRefund.expiresAt)).toBeGreaterThan(Date.now() + 28 * 24 * 60 * 60 * 1000);
+    expect(Date.parse(afterFirstRefund.expiresAt)).toBeLessThan(Date.now() + 32 * 24 * 60 * 60 * 1000);
+    expect(await total()).toBe(1499);
+    expect(await activeGrants()).toBe(0); // Premium Pass is not a tip/supporter grant.
+
+    await handleRefund({ paymentId: second.id, reportedRefundedMinor: 1499 }, ctx());
+    const afterLastRefund = JSON.parse((await prisma.appSetting.findUniqueOrThrow({ where: { key } })).value) as { paymentIds: string[]; expiresAt: string };
+    expect(afterLastRefund.paymentIds).toEqual([]);
+    expect(Date.parse(afterLastRefund.expiresAt)).toBeLessThanOrEqual(Date.now() + 1_000);
+    expect(await total()).toBe(0);
+  });
+
   it('partial then full refund, replays and a stale (smaller) event never move the total the wrong way', async () => {
     await resetUser();
     const payment = await newPayment();
@@ -170,6 +240,84 @@ describe('refunds keep the per-user total and the status consistent', () => {
     expect((await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe('CHARGEBACK_LOST');
     expect(await total()).toBe(0);
     expect(await activeGrants()).toBe(0);
+  });
+
+  it.each(['dispute then refund', 'refund then dispute', 'concurrent dispute and refund'])(
+    'keeps the total independent of event order for %s', async (order) => {
+      await resetUser();
+      const disputed = await newPayment();
+      await fulfillPayment(fulfillInput(disputed), ctx());
+      const other = await newPayment();
+      await fulfillPayment(fulfillInput(other), ctx());
+      expect(await total()).toBe(2000);
+
+      const refund = () => handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 400 }, ctx());
+      const dispute = () => handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_${order}`, status: 'lost' }, ctx());
+      if (order === 'dispute then refund') {
+        await dispute();
+        await refund();
+      } else if (order === 'refund then dispute') {
+        await refund();
+        await dispute();
+      } else {
+        await Promise.all([dispute(), refund()]);
+      }
+
+      await Promise.all([dispute(), refund()]); // replays must not change the result
+      expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).status).toBe('CHARGEBACK_LOST');
+      expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).refundedAmountMinor).toBe(400);
+      expect(await total()).toBe(1000);
+    },
+  );
+
+  it('a full refund after a lost dispute only records the refund and leaves other currency totals intact', async () => {
+    await resetUser();
+    const disputed = await newPayment();
+    await fulfillPayment(fulfillInput(disputed), ctx());
+    const sameCurrency = await newPayment();
+    await fulfillPayment(fulfillInput(sameCurrency), ctx());
+    const otherCurrency = await newPayment({ amountMinor: 700, currency: 'USD' });
+    await fulfillPayment(fulfillInput(otherCurrency, { amountMinor: 700, currency: 'usd' }), ctx());
+
+    await handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_full`, status: 'lost' }, ctx());
+    await handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 1000 }, ctx());
+    await handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 1000 }, ctx());
+
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).status).toBe('CHARGEBACK_LOST');
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).refundedAmountMinor).toBe(1000);
+    expect(await prisma.userPaymentTotal.findMany({ where: { userId }, orderBy: { currency: 'asc' } })).toMatchObject([
+      { currency: 'PLN', amountMinor: 1000 },
+      { currency: 'USD', amountMinor: 700 },
+    ]);
+  });
+
+  it('keeps partial-refund aggregates stable through an open and won dispute, without mixing currencies', async () => {
+    await resetUser();
+    const disputed = await newPayment();
+    await fulfillPayment(fulfillInput(disputed), ctx());
+    const sameCurrency = await newPayment();
+    await fulfillPayment(fulfillInput(sameCurrency), ctx());
+    const otherCurrency = await newPayment({ amountMinor: 700, currency: 'USD' });
+    await fulfillPayment(fulfillInput(otherCurrency, { amountMinor: 700, currency: 'usd' }), ctx());
+    expect(await prisma.userPaymentTotal.findMany({ where: { userId }, orderBy: { currency: 'asc' } })).toMatchObject([
+      { currency: 'PLN', amountMinor: 2000 },
+      { currency: 'USD', amountMinor: 700 },
+    ]);
+
+    await handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_open_win`, status: 'needs_response' }, ctx());
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).status).toBe('DISPUTED');
+    await handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 400 }, ctx());
+    await handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_open_win`, status: 'won' }, ctx());
+    await Promise.all([
+      handleRefund({ paymentId: disputed.id, reportedRefundedMinor: 400 }, ctx()),
+      handleDispute({ stripeIntentId: disputed.stripeIntentId!, disputeId: `dp_${RUN}_open_win`, status: 'won' }, ctx()),
+    ]);
+
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: disputed.id } })).status).toBe('PARTIALLY_REFUNDED');
+    expect(await prisma.userPaymentTotal.findMany({ where: { userId }, orderBy: { currency: 'asc' } })).toMatchObject([
+      { currency: 'PLN', amountMinor: 1600 },
+      { currency: 'USD', amountMinor: 700 },
+    ]);
   });
 });
 
