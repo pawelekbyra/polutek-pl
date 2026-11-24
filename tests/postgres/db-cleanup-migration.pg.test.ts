@@ -189,6 +189,10 @@ describe('cleanup migration with data', () => {
 
   it('`prisma migrate deploy` then adds only the migrations newer than the cleanup', async ({ skip }) => {
     if (!ready) skip();
+    // Production has the main channel set by deployment A (migration 20261014090000) before deployment B drops the legacy
+    // flags (20261014120000 refuses to run on a database with channels but no main_channel_id). The seed was inserted
+    // after those migrations' state, so this reproduces the operator step: set the main channel.
+    await sql`insert into "AppSetting" ("key", "value", "updatedAt") values ('main_channel_id', 'c1', now()) on conflict ("key") do nothing`;
     const out = cli('migrate', 'deploy');
     expect(out).not.toContain(MIGRATION);
     for (const name of laterMigrations) expect(out, name).toContain(name);
