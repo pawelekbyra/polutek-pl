@@ -941,6 +941,34 @@
       "label": "explicit any annotation",
       "text": "const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' as any });",
       "reason": "Stripe SDK apiVersion type requires as any; same pattern as handle-stripe-webhook.use-case.ts. Added by INCOMPLETE-006."
+    },
+    {
+      "file": "app/components/VideoPlayer.tsx",
+      "line": 125,
+      "label": "explicit any annotation",
+      "text": "// warp has its own sound): any play in between (a resumed autoplay, a buffering restart) is undone.",
+      "reason": "Pre-existing at the time CI went live (ci-green baseline); must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/unlist-admin-video.use-case.ts",
+      "line": 47,
+      "label": "explicit any annotation",
+      "text": "const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {",
+      "reason": "Pre-existing at the time CI went live (ci-green baseline); must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/application/unpublish-admin-video.use-case.ts",
+      "line": 34,
+      "label": "explicit any annotation",
+      "text": "const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {",
+      "reason": "Pre-existing at the time CI went live (ci-green baseline); must be removed when the underlying debt is fixed."
+    },
+    {
+      "file": "lib/modules/video/infrastructure/video-content.service.ts",
+      "line": 280,
+      "label": "explicit any annotation",
+      "text": "if (!video || !isVideoPubliclyVisible(video as any)) return null;",
+      "reason": "Pre-existing at the time CI went live (ci-green baseline); must be removed when the underlying debt is fixed."
     }
   ]
 }

@@ -96,16 +96,29 @@ describe('analytics rollups', () => {
   });
 
   it('assigns a beacon just after Warsaw midnight to the Warsaw day, not the UTC day', async () => {
-    // 22:30 UTC on a summer date is 00:30 the next day in Warsaw (UTC+2).
-    const at = new Date('2026-07-01T22:30:00Z');
+    // Relative to "today": the rollup deletes hourly rows older than 120 days, so a fixed date would rot.
+    // Take yesterday's Warsaw calendar day and a beacon 30 minutes after that day's Warsaw midnight: in UTC it is
+    // still the PREVIOUS calendar day (Warsaw is UTC+2 in summer, UTC+1 in winter, so the offset is read, not assumed).
+    const [y, m, d] = warsawDay(new Date(Date.now() - 24 * 3_600_000)).split('-').map(Number);
+    // Offset sampled just before that midnight (23:00 UTC the day before), because on a DST-change day the offset at noon differs.
+    const beforeMidnight = new Date(Date.UTC(y, m - 1, d - 1, 23));
+    const offsetLabel = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Warsaw', timeZoneName: 'longOffset' })
+      .formatToParts(beforeMidnight).find((part) => part.type === 'timeZoneName')!.value; // e.g. "GMT+02:00"
+    const offsetHours = Number(offsetLabel.replace('GMT', '').split(':')[0]); // +1 or +2
+    expect([1, 2]).toContain(offsetHours);
+    const at = new Date(Date.UTC(y, m - 1, d, 0, 30) - offsetHours * 3_600_000);
+    const day = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`; // the Warsaw day of the beacon
+    const utcDay = at.toISOString().slice(0, 10); // the UTC day of the beacon: one day earlier
+    expect(utcDay).not.toBe(day);
+    const hourStart = new Date(Math.floor(at.getTime() / 3_600_000) * 3_600_000).toISOString();
     await insertRows(sql, rows({ v: 1, playback: [{ attempt: '00000000000000c1', videoId: VIDEO, started: true, startupMs: 800, watchMs: 11000 }] }, '198.51.100.21', at));
-    await sql`select telemetry.rollup_analytics_day('2026-07-02'::date)`;
-    await sql`select telemetry.rollup_analytics_day('2026-07-01'::date)`;
-    const [next] = await sql`select views from telemetry.r_video_qoe_daily where day = '2026-07-02'::date and video_id = ${VIDEO}`;
+    await sql`select telemetry.rollup_analytics_day(${day}::date)`;
+    await sql`select telemetry.rollup_analytics_day(${utcDay}::date)`;
+    const [next] = await sql`select views from telemetry.r_video_qoe_daily where day = ${day}::date and video_id = ${VIDEO}`;
     expect(next?.views).toBe(1);
-    const same = await sql`select views from telemetry.r_video_qoe_daily where day = '2026-07-01'::date and video_id = ${VIDEO}`;
+    const same = await sql`select views from telemetry.r_video_qoe_daily where day = ${utcDay}::date and video_id = ${VIDEO}`;
     expect(same).toHaveLength(0);
-    const [h] = await sql`select hour from telemetry.r_video_hourly where video_id = ${VIDEO} and hour = '2026-07-01T22:00:00Z'`;
+    const [h] = await sql`select hour from telemetry.r_video_hourly where video_id = ${VIDEO} and hour = ${hourStart}::timestamptz`;
     expect(h).toBeDefined();
   });
 

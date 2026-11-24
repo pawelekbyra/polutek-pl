@@ -35,9 +35,9 @@ describe("accessibility audit fixes: contrast of controls and focus (A15-A17)", 
   });
 
   it("A15: light checkout buttons do not use the gold ring (1.7:1 on white)", () => {
-    const module = read("app/components/premium-pass/premium-pass.module.css");
-    expect(module).toMatch(/\.inkBtn:focus-visible, \.lineBtn:focus-visible, \.ghostBtn:focus-visible \{ outline: 3px solid var\(--chan-focus-ring/);
-    expect(module).not.toMatch(/\.inkBtn:focus-visible[^{]*\{[^}]*--pass-gold/);
+    const cssModule = read("app/components/premium-pass/premium-pass.module.css");
+    expect(cssModule).toMatch(/\.inkBtn:focus-visible, \.lineBtn:focus-visible, \.ghostBtn:focus-visible \{ outline: 3px solid var\(--chan-focus-ring/);
+    expect(cssModule).not.toMatch(/\.inkBtn:focus-visible[^{]*\{[^}]*--pass-gold/);
   });
 
   it.each(surfaces)("A16: the field border has at least 3:1 on %s", (_name, bg) => {
