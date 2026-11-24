@@ -10,7 +10,8 @@ BEGIN
   IF NEW."status" = 'ACTIVE'::"VideoPlaybackRouteStatus" THEN
     PERFORM 1 FROM "Video" WHERE "id" = NEW."videoId" FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'Cannot activate a route for a missing video';
+      RAISE EXCEPTION 'Cannot activate a route for a missing video'
+        USING ERRCODE = '55000';
     END IF;
 
     SELECT "cleanupPendingAt" INTO reserved_at
@@ -18,7 +19,8 @@ BEGIN
     WHERE "id" = NEW."assetId" AND "videoId" = NEW."videoId"
     FOR UPDATE;
     IF NOT FOUND OR reserved_at IS NOT NULL THEN
-      RAISE EXCEPTION 'Cannot activate an HLS asset reserved for cleanup';
+      RAISE EXCEPTION 'Cannot activate an HLS asset reserved for cleanup'
+        USING ERRCODE = '55000';
     END IF;
   END IF;
   RETURN NEW;
