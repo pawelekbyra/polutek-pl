@@ -1,10 +1,12 @@
 -- An upheld appeal may reverse only the exact moderation decision still attached to the resource.
 -- Scalar ids intentionally have no FK: moderation decisions are append-only history and may outlive a target.
+-- Idempotent and cheap: nullable columns without a default are a catalog-only change (brief ACCESS EXCLUSIVE lock);
+-- the backfill below is deterministic (re-running it yields the same values) and touches only rows with moderation audit history.
 ALTER TABLE "Creator"
-  ADD COLUMN "statusDecisionId" TEXT;
+  ADD COLUMN IF NOT EXISTS "statusDecisionId" TEXT;
 
 ALTER TABLE "Video"
-  ADD COLUMN "moderationDecisionId" TEXT;
+  ADD COLUMN IF NOT EXISTS "moderationDecisionId" TEXT;
 
 -- Preserve reversibility for a still-current legacy moderation decision. A newer lifecycle or upheld-appeal
 -- event wins, including an ABA transition back to the same enum value.
