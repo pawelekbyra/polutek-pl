@@ -27,7 +27,8 @@ import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, ty
 import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
 import type { PassPayMode } from "./PassTrustRow";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
-import { newRequestId, price } from "./pass-copy";
+import { price } from "./pass-copy";
+import { POLL_AFTER_PROCESSING, POLL_AFTER_REDIRECT, POLL_AFTER_SUCCEEDED, POLL_CHECK_AGAIN, POLL_INTERVAL_MS, attemptId, resetAttempt } from "./pass-attempt";
 import { announcePassActivated } from "./pass-activation";
 import { fetchPassStatus, pollPatronPayment, fetchPatronMethods, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
@@ -47,41 +48,8 @@ type Stage =
 /** Query parameter of the return URL of redirect methods (Przelewy24, bank redirects). */
 export const PASS_PAYMENT_PARAM = "pass_payment";
 const RETURN_PARAMS = [PASS_PAYMENT_PARAM, "payment_intent", "payment_intent_client_secret", "redirect_status", "pass"];
-const ATTEMPT_KEY = "pp:patron-attempt-id";
 const DEMO_PROCESSING_MS = 1_200;
-/**
- * Waiting for the server to record the payment ("Premium od razu po płatności"): the payment-status endpoint is asked
- * every second (it checks the PaymentIntent in Stripe itself and, on `succeeded`, grants through fulfillPayment()).
- * A card / wallet that Stripe.js reported as succeeded gets ~12 s, a bank or BLIK still processing ~15 s; after that
- * the "taking longer" screen with "Check again" (another ~5 s).
- */
-const POLL_INTERVAL_MS = 1_000;
-const POLL_AFTER_SUCCEEDED = 12;
-const POLL_AFTER_PROCESSING = 15;
-const POLL_AFTER_REDIRECT = 15;
-const POLL_CHECK_AGAIN = 5;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** One attempt = one request id = one PaymentIntent on the server (kept for the tab, like the tip gateway's). */
-function attemptId(): string {
-  try {
-    const stored = window.sessionStorage.getItem(ATTEMPT_KEY);
-    if (stored) return stored;
-    const fresh = newRequestId();
-    window.sessionStorage.setItem(ATTEMPT_KEY, fresh);
-    return fresh;
-  } catch {
-    return newRequestId();
-  }
-}
-
-function resetAttempt() {
-  try {
-    window.sessionStorage.removeItem(ATTEMPT_KEY);
-  } catch {
-    // storage blocked: the next attempt simply gets a new id
-  }
-}
 
 /** BLIK and Przelewy24 are Polish methods: only PLN offers them; everything else starts from the card (Stripe's reply narrows it). */
 function candidateTypes(currency: string): string[] {

@@ -27,8 +27,7 @@ import { LinkedDescription } from './video/LinkedDescription';
 import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { Heart, ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
-import { fetchPassStatus } from './premium-pass/usePremiumPass';
-import { usePassActivated } from './premium-pass/pass-activation';
+import { useHeroPassState } from './premium-pass/useHeroPassState';
 import { PatronCheckoutHostContext } from './premium-pass/PatronCheckoutHost';
 import styles from './watch-actions.module.css';
 
@@ -100,7 +99,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const { userId } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [mounted, setMounted] = useState(false);
-  const [premiumPassViewer, setPremiumPassViewer] = useState({ userId: initialPremiumPassUserId ?? null, active: initialHasActivePremiumPass });
   const [isExpanded, setIsExpanded] = useState(false);
   const displayTitle = getVideoDisplayTitle(video, language);
   const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
@@ -112,31 +110,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!userId) {
-      setPremiumPassViewer({ userId: null, active: false });
-      return;
-    }
-    if (userId === initialPremiumPassUserId) {
-      setPremiumPassViewer({ userId, active: initialHasActivePremiumPass });
-      return;
-    }
-    let current = true;
-    void fetchPassStatus().then((status) => {
-      if (current) setPremiumPassViewer({ userId, active: status?.pass.state === "active" });
-    });
-    return () => { current = false; };
-  }, [userId, initialPremiumPassUserId, initialHasActivePremiumPass]);
-
-  // patron zone: right after a Premium purchase the button turns into "Napiwkuj" without a reload.
-  usePassActivated(() => {
-    if (!userId) return;
-    void fetchPassStatus().then((status) => {
-      if (status) setPremiumPassViewer({ userId, active: status.pass.state === "active" });
-    });
-  });
-
-  const hasActivePremiumPass = Boolean(userId && premiumPassViewer.userId === userId && premiumPassViewer.active);
+  // patron zone: server-rendered pass state, refreshed right after a purchase on this page.
+  const hasActivePremiumPass = useHeroPassState(userId, initialPremiumPassUserId, initialHasActivePremiumPass);
   const supportLabel = hasActivePremiumPass ? tx("Napiwkuj", "Tip The Guy") : tx("Kup se Premium", "Get Premium");
 
   useEffect(() => {
