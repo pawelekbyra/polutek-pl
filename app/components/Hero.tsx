@@ -27,7 +27,8 @@ import { LinkedDescription } from './video/LinkedDescription';
 import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { Heart, ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
-import { fetchPassStatus } from './premium-pass/usePremiumPass';
+import { useHeroPassState } from './premium-pass/useHeroPassState';
+import { PatronCheckoutHostContext } from './premium-pass/PatronCheckoutHost';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -98,7 +99,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const { userId } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [mounted, setMounted] = useState(false);
-  const [premiumPassViewer, setPremiumPassViewer] = useState({ userId: initialPremiumPassUserId ?? null, active: initialHasActivePremiumPass });
   const [isExpanded, setIsExpanded] = useState(false);
   const displayTitle = getVideoDisplayTitle(video, language);
   const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
@@ -110,23 +110,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!userId) {
-      setPremiumPassViewer({ userId: null, active: false });
-      return;
-    }
-    if (userId === initialPremiumPassUserId) {
-      setPremiumPassViewer({ userId, active: initialHasActivePremiumPass });
-      return;
-    }
-    let current = true;
-    void fetchPassStatus().then((status) => {
-      if (current) setPremiumPassViewer({ userId, active: status?.pass.state === "active" });
-    });
-    return () => { current = false; };
-  }, [userId, initialPremiumPassUserId, initialHasActivePremiumPass]);
-
-  const hasActivePremiumPass = Boolean(userId && premiumPassViewer.userId === userId && premiumPassViewer.active);
+  // patron zone: server-rendered pass state, refreshed right after a purchase on this page.
+  const hasActivePremiumPass = useHeroPassState(userId, initialPremiumPassUserId, initialHasActivePremiumPass);
   const supportLabel = hasActivePremiumPass ? tx("Napiwkuj", "Tip The Guy") : tx("Kup se Premium", "Get Premium");
 
   useEffect(() => {
@@ -295,6 +280,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       <div className="w-full lg:rounded-[26px] lg:border lg:border-[var(--cm-line-80)] lg:bg-[var(--cm-card-92-white)] lg:p-3 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_30px_60px_-26px_rgba(23,23,23,0.24)]">
         {/* FEATURED MEDIA — full-bleed edge-to-edge on phone/tablet (standard mobile video-platform layout), contained card on desktop */}
         <div data-player-slot="" className="relative -mx-4 mb-3 aspect-video overflow-hidden bg-black md:-mx-6 md:mb-4 lg:mx-0 lg:rounded-[22px]">
+          {/* patron zone: the video gate opens the checkout of PatronCheckoutHost (below, outside the wrapper), so the
+              success screen survives the gate being replaced by the player right after the purchase. */}
+          <PatronCheckoutHostContext.Provider value={true}>
           <PremiumWrapper
             videoId={video.id}
             requiredTier={video.tier}
@@ -311,6 +299,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
               onViewCounted={() => setLocalViewsCount((views) => views + 1)}
             />
           </PremiumWrapper>
+          </PatronCheckoutHostContext.Provider>
         </div>
 
         {/* INFO SECTION */}

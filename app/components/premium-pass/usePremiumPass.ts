@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import type { PassMethod, PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
+import { usePassActivated } from "./pass-activation";
 
 export type PremiumPassStatus = { offer: PremiumPassOffer; pass: PassStatusDto };
 
@@ -169,5 +170,7 @@ export function usePremiumPassStatus(enabled: boolean) {
     if (!enabled) return;
     void reload();
   }, [enabled, reload]);
+  // A purchase on this page: the account panel ("VIP · Premium", valid until) shows the new access without a reload.
+  usePassActivated(() => void reload(), enabled);
   return { status, loaded, reload, setStatus };
 }

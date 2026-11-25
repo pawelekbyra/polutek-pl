@@ -8,6 +8,7 @@ import { MotionConfig } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { getRouteLocaleFromPathname, type Locale } from "@/lib/i18n/routing";
 import type { Catalog } from "@/lib/i18n/ui";
+import { PremiumPassSync } from "./premium-pass/PremiumPassSync"; // patron zone: refresh after a Premium purchase
 
 const CLIENT_API_GET_TIMEOUT_MS = 15_000;
 const TIMEOUT_PATHS = [
@@ -115,6 +116,7 @@ export default function Providers({
 
   return (
     <QueryClientProvider client={queryClient}>
+      <PremiumPassSync />
       <LanguageProvider
         initialLanguage={effectiveInitialLanguage}
         forcedLanguage={routeLocale ?? undefined}

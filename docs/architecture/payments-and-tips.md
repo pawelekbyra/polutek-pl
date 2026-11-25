@@ -44,6 +44,7 @@ potwierdzenie w Stripe.js -> płatność udana w Stripe
   Testy: `tests/postgres/payments.pg.test.ts`, `tests/postgres/premium-pass-disputes.pg.test.ts`; test ręczny w Stripe test-mode: `../operations/PAYMENTS-REFUND-DISPUTE-TEST-PLAN.md`.
 - **Szybka ścieżka powrotu:** `getOwnedPaymentStatus()` (`GET /api/payments/[paymentId]`) dla własnej, nadal `PENDING` płatności z `stripeIntentId` pyta Stripe i przy `succeeded` woła `fulfillPayment()`;
   sprawdza też wiersze `FAILED`/`CANCELED`. Błąd Stripe/sieci jest połykany (wraca zwykłe odpytywanie): to najlepszy wysiłek, nie nowe źródło prawdy.
+  Kasa Premium pyta ją co 1 s zaraz po wyniku Stripe.js i po sukcesie odświeża całą stronę bez przeładowania (`patron-zone.md`, „Premium od razu po płatności”).
 - **Komunikat na stronie powrotu ufa sygnałowi Stripe.** `useCheckoutFlow` czyta `redirect_status`: `succeeded` (lub brak przy zwykłej karcie) pokazuje pełne podziękowanie od razu, `failed` ekran porażki,
   `pending`/`processing` neutralny ekran przetwarzania. Pętla uzgadniania tylko **podnosi** ekran przetwarzania do sukcesu, nigdy nie cofa pokazanego sukcesu; do UI nie trafia surowy enum ani żargon „webhook”.
   Zamknięcie ekranu sukcesu robi pełne `window.location` do czystego adresu (nie `router.replace`), żeby wszystkie powierzchnie renderowane na serwerze wróciły świeże.

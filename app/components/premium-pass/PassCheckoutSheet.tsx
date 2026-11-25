@@ -27,7 +27,9 @@ import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, ty
 import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
 import type { PassPayMode } from "./PassTrustRow";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
-import { newRequestId, price } from "./pass-copy";
+import { price } from "./pass-copy";
+import { POLL_AFTER_PROCESSING, POLL_AFTER_REDIRECT, POLL_AFTER_SUCCEEDED, POLL_CHECK_AGAIN, POLL_INTERVAL_MS, attemptId, resetAttempt } from "./pass-attempt";
+import { announcePassActivated } from "./pass-activation";
 import { fetchPassStatus, pollPatronPayment, fetchPatronMethods, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
 
@@ -46,30 +48,8 @@ type Stage =
 /** Query parameter of the return URL of redirect methods (Przelewy24, bank redirects). */
 export const PASS_PAYMENT_PARAM = "pass_payment";
 const RETURN_PARAMS = [PASS_PAYMENT_PARAM, "payment_intent", "payment_intent_client_secret", "redirect_status", "pass"];
-const ATTEMPT_KEY = "pp:patron-attempt-id";
 const DEMO_PROCESSING_MS = 1_200;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** One attempt = one request id = one PaymentIntent on the server (kept for the tab, like the tip gateway's). */
-function attemptId(): string {
-  try {
-    const stored = window.sessionStorage.getItem(ATTEMPT_KEY);
-    if (stored) return stored;
-    const fresh = newRequestId();
-    window.sessionStorage.setItem(ATTEMPT_KEY, fresh);
-    return fresh;
-  } catch {
-    return newRequestId();
-  }
-}
-
-function resetAttempt() {
-  try {
-    window.sessionStorage.removeItem(ATTEMPT_KEY);
-  } catch {
-    // storage blocked: the next attempt simply gets a new id
-  }
-}
 
 /** BLIK and Przelewy24 are Polish methods: only PLN offers them; everything else starts from the card (Stripe's reply narrows it). */
 function candidateTypes(currency: string): string[] {
@@ -161,9 +141,17 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const email = maskEmail(user?.primaryEmailAddress?.emailAddress);
 
   // ---- opening: a fresh attempt (or the return from a redirect method), Stripe.js only from here
+  // The access is recorded: show what was unlocked and tell the whole page to ask the server again (avatar ring,
+  // Hero button, video gate, lists, account panel, comment badges), without a reload. See pass-activation.ts.
+  const succeed = useCallback((pass: ActivePass) => {
+    resetAttempt();
+    setStage({ kind: "success", pass });
+    announcePassActivated();
+  }, []);
+
   const finish = useCallback(async (paymentId: string, attempts: number) => {
     setStage({ kind: "processing" });
-    const result = await pollPatronPayment(paymentId, { attempts, isCancelled: () => cancelledRef.current });
+    const result = await pollPatronPayment(paymentId, { attempts, intervalMs: POLL_INTERVAL_MS, isCancelled: () => cancelledRef.current });
     if (cancelledRef.current) return;
     if (result === "FAILED") {
       setStage({ kind: "declined" });
@@ -172,13 +160,14 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     if (result === "SUCCEEDED") {
       resetAttempt();
       const status = await fetchPassStatus();
+      if (cancelledRef.current) return;
       if (status && status.pass.state === "active") {
-        setStage({ kind: "success", pass: status.pass });
+        succeed(status.pass);
         return;
       }
     }
     setStage({ kind: "pending", paymentId, timedOut: true });
-  }, []);
+  }, [succeed]);
 
   useEffect(() => {
     if (!open) return;
@@ -210,7 +199,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     const returned = returnedPaymentRef.current;
     if (returned) {
       returnedPaymentRef.current = null;
-      void finish(returned, 10);
+      void finish(returned, POLL_AFTER_REDIRECT);
       return () => { cancelledRef.current = true; };
     }
     setStage({ kind: "plan" });
@@ -335,8 +324,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     ]);
     if (cancelledRef.current) return;
     if (outcome.kind === "success" && outcome.pass.state !== "none") {
-      resetAttempt();
-      setStage({ kind: "success", pass: outcome.pass });
+      succeed(outcome.pass);
     } else if (outcome.kind === "declined") {
       resetAttempt();
       setStage({ kind: "declined" });
@@ -485,7 +473,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   beforeConfirm={beforeConfirm}
                   onBusyChange={setPayBusy}
                   onChangeMethod={backToMethod}
-                  onConfirmed={(outcome) => void finish(intent.paymentId, outcome === "succeeded" ? 6 : 10)}
+                  onConfirmed={(outcome) => void finish(intent.paymentId, outcome === "succeeded" ? POLL_AFTER_SUCCEEDED : POLL_AFTER_PROCESSING)}
                   consent={<PassConsent spaced tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} />}
                 />
               </TipBackContext.Provider>
@@ -517,9 +505,9 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
               {stage.kind === "processing" && (
                 <PassPending ref={headingRef} tx={tx} timedOut={false} onCheck={() => undefined} onClose={() => changeOpen(false)} />
               )}
-              {stage.kind === "success" && <PassSuccess ref={headingRef} tx={tx} language={language} pass={stage.pass} onWatch={watch} watchLabel={watchLabel} />}
+              {stage.kind === "success" && <PassSuccess ref={headingRef} tx={tx} language={language} pass={stage.pass} unlockedCount={offer.premiumCount} onWatch={watch} watchLabel={watchLabel} />}
               {stage.kind === "pending" && (
-                <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, 4)} onClose={() => changeOpen(false)} />
+                <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, POLL_CHECK_AGAIN)} onClose={() => changeOpen(false)} />
               )}
               {stage.kind === "declined" && <PassDeclined ref={headingRef} tx={tx} onRetry={retry} onChangeMethod={retry} />}
               {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} onWatch={watch} />}
