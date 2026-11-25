@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ExportOwnDataUseCase } from "@/lib/modules/users/application/export-own-data.use-case";
+import { EXPORT_MAX_ITEMS_PER_CATEGORY, ExportOwnDataUseCase } from "@/lib/modules/users/application/export-own-data.use-case";
 
 function fakeCtx() {
   const find = (rows: unknown[]) => ({ findMany: vi.fn(async () => rows) });
@@ -36,7 +36,10 @@ describe("ExportOwnDataUseCase", () => {
     const { ctx, prisma } = fakeCtx();
     const data = await ExportOwnDataUseCase.execute(ctx, "u1");
 
-    expect(data.schemaVersion).toBe(4);
+    expect(data.schemaVersion).toBe(5);
+    expect(data.limits).toEqual({ maxItemsPerCategory: EXPORT_MAX_ITEMS_PER_CATEGORY });
+    expect(data.truncatedCategories).toEqual([]);
+    expect(data.skippedRecords).toEqual([]);
     expect(data.exportedAt).toBe("2026-10-05T10:00:00.000Z");
     expect(data.account).toMatchObject({ id: "u1" });
     expect(data.comments).toHaveLength(1);
@@ -76,7 +79,7 @@ describe("ExportOwnDataUseCase", () => {
     expect(prisma.videoProgress.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.videoFavorite.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.videoView.findMany).toHaveBeenCalledWith({
-      where: { userId: "u1" }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "asc" },
+      where: { userId: "u1" }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: EXPORT_MAX_ITEMS_PER_CATEGORY + 1,
     });
     expect(prisma.videoPlaybackSession.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { userId: "u1" },
@@ -92,7 +95,8 @@ describe("ExportOwnDataUseCase", () => {
     expect(prisma.notification.findMany).toHaveBeenCalledWith({
       where: { userId: "u1" },
       select: { kind: true, read: true, createdAt: true },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
+      take: EXPORT_MAX_ITEMS_PER_CATEGORY + 1,
     });
     expect(prisma.patronGrant.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.userAvatar.findUnique).toHaveBeenCalledWith({ where: { userId: "u1" }, select: { mime: true, data: true } });
@@ -148,14 +152,50 @@ describe("ExportOwnDataUseCase", () => {
     expect(prisma.channelBanner.findMany).not.toHaveBeenCalled();
   });
 
-  it("fails closed for stored media with unsupported MIME or beyond the existing size limit", async () => {
+  it("skips one unexportable stored image and records why, instead of failing the whole export", async () => {
     const { ctx, prisma } = fakeCtx();
     prisma.userAvatar.findUnique.mockResolvedValue({ mime: "image/svg+xml", data: Buffer.from("<svg/>") });
 
-    await expect(ExportOwnDataUseCase.execute(ctx, "u1")).rejects.toMatchObject({ code: "OWN_DATA_IMAGE_INVALID" });
+    const unsupported = await ExportOwnDataUseCase.execute(ctx, "u1");
+    expect(unsupported.skippedRecords).toEqual([{ category: "mediaAttachments", type: "avatar", ownerId: "u1", reason: "UNSUPPORTED_MIME" }]);
+    // the rest of the export is intact, including the valid banner
+    expect(unsupported.mediaAttachments).toEqual([{ type: "channel_banner", ownerId: "ch1", mime: "image/webp", dataBase64: "UklGRmRhdGFXRUJQ" }]);
+    expect(unsupported.comments).toHaveLength(1);
+    expect(JSON.stringify(unsupported)).not.toContain("<svg");
 
     prisma.userAvatar.findUnique.mockResolvedValue({ mime: "image/png", data: Buffer.alloc(90_000) });
-    await expect(ExportOwnDataUseCase.execute(ctx, "u1")).rejects.toMatchObject({ code: "OWN_DATA_IMAGE_INVALID" });
+    prisma.channelBanner.findMany.mockResolvedValue([{ channelId: "ch1", mime: "text/html", data: Buffer.from("x") }]);
+    const tooLarge = await ExportOwnDataUseCase.execute(ctx, "u1");
+    expect(tooLarge.skippedRecords).toEqual([
+      { category: "mediaAttachments", type: "avatar", ownerId: "u1", reason: "TOO_LARGE" },
+      { category: "mediaAttachments", type: "channel_banner", ownerId: "ch1", reason: "UNSUPPORTED_MIME" },
+    ]);
+    expect(tooLarge.mediaAttachments).toEqual([]);
+  });
+
+  it("caps log-like categories to the newest rows, oldest first, and names the truncated ones", async () => {
+    const { ctx, prisma } = fakeCtx();
+    // The query sorts newest first and asks for limit + 1 rows.
+    prisma.videoView.findMany.mockResolvedValue([
+      { videoId: "v-new", createdAt: new Date(3000) },
+      { videoId: "v-mid", createdAt: new Date(2000) },
+      { videoId: "v-old", createdAt: new Date(1000) },
+    ]);
+    prisma.notification.findMany.mockResolvedValue([
+      { kind: "NEW_VIDEO", read: false, createdAt: new Date(2000) },
+      { kind: "NEW_VIDEO", read: true, createdAt: new Date(1000) },
+    ]);
+
+    const data = await ExportOwnDataUseCase.execute(ctx, "u1", { maxItemsPerCategory: 2 });
+
+    expect(prisma.videoView.findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { createdAt: "desc" }, take: 3 }));
+    for (const model of ["videoPlaybackSession", "videoPlaybackEvent", "notification", "emailEvent", "broadcastEmailRecipient"] as const) {
+      expect(prisma[model].findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 3 }));
+    }
+    expect(data.videoViews.map((row) => row.videoId)).toEqual(["v-mid", "v-new"]);
+    expect(data.notifications).toHaveLength(2);
+    expect(data.truncatedCategories).toEqual(["videoViews"]);
+    expect(data.limits).toEqual({ maxItemsPerCategory: 2 });
   });
 
   it("exports only portable patron-pass fields from the exact account AppSetting key", async () => {

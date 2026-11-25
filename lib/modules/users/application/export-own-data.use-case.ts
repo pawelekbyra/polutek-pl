@@ -1,18 +1,52 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AVATAR_MAX_DATA_URL_CHARS } from "@/lib/auth/avatar";
 import { BANNER_MAX_DATA_URL_CHARS } from "@/lib/modules/channel";
-import { AppError } from "@/lib/modules/shared/app-error";
 import { exportOwnPassData } from "@/lib/modules/patron-zone";
+import { logger } from "@/lib/logger";
 
 const EXPORT_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-function encodeOwnedImage(input: { type: "avatar" | "channel_banner"; ownerId: string; mime: string; data: Uint8Array }, maxDataUrlChars: number) {
-  const data = Buffer.from(input.data);
-  const dataUrlChars = `data:${input.mime};base64,`.length + Math.ceil(data.byteLength / 3) * 4;
-  if (!EXPORT_IMAGE_MIMES.has(input.mime) || dataUrlChars > maxDataUrlChars) {
-    throw new AppError("Stored image cannot be safely exported", 500, "OWN_DATA_IMAGE_INVALID");
+/**
+ * Upper bound per log-like category (views, playback, notifications, email states). These grow with
+ * every play or broadcast and are read into memory in one request, so an export keeps the most recent
+ * rows and names the categories that were cut in `truncatedCategories`.
+ */
+export const EXPORT_MAX_ITEMS_PER_CATEGORY = 10_000;
+
+export type ExportTruncatableCategory =
+  | "broadcastEmailRecipients" | "emailEvents" | "videoViews" | "playbackSessions" | "playbackEvents" | "notifications";
+
+type MediaAttachment = { type: "avatar" | "channel_banner"; ownerId: string; mime: string; dataBase64: string };
+export type ExportSkippedRecord = {
+  category: "mediaAttachments";
+  type: "avatar" | "channel_banner";
+  ownerId: string;
+  reason: "UNSUPPORTED_MIME" | "TOO_LARGE" | "UNREADABLE";
+};
+
+function encodeOwnedImage(
+  input: { type: "avatar" | "channel_banner"; ownerId: string; mime: string; data: Uint8Array },
+  maxDataUrlChars: number,
+): { ok: true; attachment: MediaAttachment } | { ok: false; skipped: ExportSkippedRecord } {
+  const skip = (reason: ExportSkippedRecord["reason"]) => ({
+    ok: false as const,
+    skipped: { category: "mediaAttachments" as const, type: input.type, ownerId: input.ownerId, reason },
+  });
+  try {
+    if (!EXPORT_IMAGE_MIMES.has(input.mime)) return skip("UNSUPPORTED_MIME");
+    const data = Buffer.from(input.data);
+    const dataUrlChars = `data:${input.mime};base64,`.length + Math.ceil(data.byteLength / 3) * 4;
+    if (dataUrlChars > maxDataUrlChars) return skip("TOO_LARGE");
+    return { ok: true, attachment: { type: input.type, ownerId: input.ownerId, mime: input.mime, dataBase64: data.toString("base64") } };
+  } catch {
+    return skip("UNREADABLE");
   }
-  return { type: input.type, ownerId: input.ownerId, mime: input.mime, dataBase64: data.toString("base64") };
+}
+
+/** Newest `limit` rows (query sorted descending with `take: limit + 1`), returned oldest first. */
+function capNewest<T>(rows: T[], limit: number): { rows: T[]; truncated: boolean } {
+  const truncated = rows.length > limit;
+  return { rows: (truncated ? rows.slice(0, limit) : rows).reverse(), truncated };
 }
 
 /**
@@ -24,8 +58,14 @@ function encodeOwnedImage(input: { type: "avatar" | "channel_banner"; ownerId: s
  */
 export interface OwnDataExport {
   /** Increment when the shape or meaning of this portable JSON contract changes. */
-  schemaVersion: 4;
+  schemaVersion: 5;
   exportedAt: string;
+  /** Per-category row cap for log-like categories; the newest rows are kept. */
+  limits: { maxItemsPerCategory: number };
+  /** Categories that had more rows than `limits.maxItemsPerCategory`; empty when the export is complete. */
+  truncatedCategories: ExportTruncatableCategory[];
+  /** Stored records left out because they could not be exported safely (e.g. a legacy image in an unsupported format). */
+  skippedRecords: ExportSkippedRecord[];
   account: Record<string, unknown> | null;
   comments: unknown[];
   videoReactions: { videoId: string; type: "like" | "dislike"; createdAt: Date }[];
@@ -72,12 +112,14 @@ export interface OwnDataExport {
   /** Own patron-zone access summary, without request/payment references; null when no valid record exists. */
   patronPass: Awaited<ReturnType<typeof exportOwnPassData>>;
   /** The person's own bounded avatar and channel-banner bytes, portable as Base64. */
-  mediaAttachments: { type: "avatar" | "channel_banner"; ownerId: string; mime: string; dataBase64: string }[];
+  mediaAttachments: MediaAttachment[];
 }
 
 export class ExportOwnDataUseCase {
-  static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
+  static async execute(ctx: AppContext, userId: string, options: { maxItemsPerCategory?: number } = {}): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
+    const limit = options.maxItemsPerCategory ?? EXPORT_MAX_ITEMS_PER_CATEGORY;
+    const take = limit + 1;
     const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, broadcastEmailRecipients, emailEvents, payments, videoProgress, videoFavorites, videoViews, playbackSessions, playbackEvents, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, patronPass, avatar] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -106,12 +148,14 @@ export class ExportOwnDataUseCase {
       prisma.broadcastEmailRecipient.findMany({
         where: { userId },
         select: { language: true, status: true, sentAt: true, deliveredAt: true, openedAt: true, clickedAt: true, bouncedAt: true, complainedAt: true, createdAt: true, updatedAt: true },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
+        take,
       }),
       prisma.emailEvent.findMany({
         where: { userId },
         select: { type: true, status: true, processedAt: true, createdAt: true, updatedAt: true },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
+        take,
       }),
       prisma.payment.findMany({
         where: { userId },
@@ -127,7 +171,7 @@ export class ExportOwnDataUseCase {
         orderBy: { updatedAt: "desc" },
       }),
       prisma.videoFavorite.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "desc" } }),
-      prisma.videoView.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "asc" } }),
+      prisma.videoView.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "desc" }, take }),
       prisma.videoPlaybackSession.findMany({
         where: { userId },
         select: {
@@ -137,7 +181,8 @@ export class ExportOwnDataUseCase {
           countedAsView: true, isAdminPreview: true, errorCode: true,
           createdAt: true, updatedAt: true,
         },
-        orderBy: { startedAt: "asc" },
+        orderBy: { startedAt: "desc" },
+        take,
       }),
       prisma.videoPlaybackEvent.findMany({
         where: { userId },
@@ -146,7 +191,8 @@ export class ExportOwnDataUseCase {
           bufferedMs: true, volume: true, muted: true, fullscreen: true,
           errorCode: true, provider: true, sourceKind: true, createdAt: true,
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
+        take,
       }),
       prisma.creator.findMany({
         where: { userId },
@@ -172,7 +218,8 @@ export class ExportOwnDataUseCase {
       prisma.notification.findMany({
         where: { userId },
         select: { kind: true, read: true, createdAt: true },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
+        take,
       }),
       prisma.patronGrant.findMany({
         where: { userId },
@@ -191,17 +238,45 @@ export class ExportOwnDataUseCase {
           orderBy: { channelId: "asc" },
         });
 
-    const mediaAttachments = [
+    const mediaAttachments: MediaAttachment[] = [];
+    const skippedRecords: ExportSkippedRecord[] = [];
+    const encoded = [
       ...(avatar ? [encodeOwnedImage({ type: "avatar", ownerId: userId, ...avatar }, AVATAR_MAX_DATA_URL_CHARS)] : []),
       ...banners.map((banner) => encodeOwnedImage(
         { type: "channel_banner", ownerId: banner.channelId, ...banner },
         BANNER_MAX_DATA_URL_CHARS,
       )),
     ];
+    for (const result of encoded) {
+      if (result.ok) mediaAttachments.push(result.attachment);
+      else skippedRecords.push(result.skipped);
+    }
+    if (skippedRecords.length > 0) {
+      // Ids and reasons only: never the stored bytes.
+      logger.warn("[ExportOwnData] stored media skipped", JSON.stringify(skippedRecords.map(({ type, reason }) => ({ type, reason }))));
+    }
+
+    const truncatedCategories: ExportTruncatableCategory[] = [];
+    const capped = <T>(category: ExportTruncatableCategory, rows: T[]): T[] => {
+      const result = capNewest(rows, limit);
+      if (result.truncated) truncatedCategories.push(category);
+      return result.rows;
+    };
+    const cappedRows = {
+      broadcastEmailRecipients: capped("broadcastEmailRecipients", broadcastEmailRecipients),
+      emailEvents: capped("emailEvents", emailEvents),
+      videoViews: capped("videoViews", videoViews),
+      playbackSessions: capped("playbackSessions", playbackSessions),
+      playbackEvents: capped("playbackEvents", playbackEvents),
+      notifications: capped("notifications", notifications),
+    };
 
     return {
-      schemaVersion: 4,
+      schemaVersion: 5,
       exportedAt: ctx.now().toISOString(),
+      limits: { maxItemsPerCategory: limit },
+      truncatedCategories,
+      skippedRecords,
       account: user,
       comments,
       videoReactions: [
@@ -211,18 +286,18 @@ export class ExportOwnDataUseCase {
       commentReactions,
       subscriptions,
       emailPreferences,
-      broadcastEmailRecipients,
-      emailEvents,
+      broadcastEmailRecipients: cappedRows.broadcastEmailRecipients,
+      emailEvents: cappedRows.emailEvents,
       payments,
       videoProgress,
       videoFavorites,
-      videoViews,
-      playbackSessions,
-      playbackEvents,
+      videoViews: cappedRows.videoViews,
+      playbackSessions: cappedRows.playbackSessions,
+      playbackEvents: cappedRows.playbackEvents,
       creatorProfiles,
       channelMemberships,
       notificationPreferences,
-      notifications,
+      notifications: cappedRows.notifications,
       patronGrants,
       patronPass,
       mediaAttachments,

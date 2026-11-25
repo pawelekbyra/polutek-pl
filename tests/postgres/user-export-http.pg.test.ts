@@ -231,7 +231,7 @@ describe("K27 export route (real local Next HTTP + Better Auth + PostgreSQL)", (
       patronPass: { provider: string; productId: string; totalMinor: number };
       mediaAttachments: Array<{ type: string; ownerId: string }>;
     };
-    expect(body.schemaVersion).toBe(4);
+    expect(body.schemaVersion).toBe(5);
     expect(body.account.id).toBe(userId);
     expect(body.comments.map(({ text }) => text)).toEqual(["http export own marker"]);
     expect(body.videoReactions).toEqual([{ videoId, type: "like", createdAt: expect.any(String) }]);

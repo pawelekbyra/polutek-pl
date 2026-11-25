@@ -85,8 +85,10 @@ describe("K27 self-service export route (PostgreSQL)", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("content-disposition")).toContain("pawelperfect-my-data-");
+    expect(response.headers.get("x-export-truncated")).toBe("none");
+    expect(response.headers.get("x-export-skipped-records")).toBe("0");
     const body = await response.json();
-    expect(body).toMatchObject({ schemaVersion: 4, account: { id: userId } });
+    expect(body).toMatchObject({ schemaVersion: 5, account: { id: userId } });
     expect(body.comments.map((row: { text: string }) => row.text)).toEqual(["own export comment"]);
     expect(body.videoViews).toHaveLength(1);
     expect(body.videoViews[0]).not.toHaveProperty("ipHash");
