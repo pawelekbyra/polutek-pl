@@ -1,4 +1,53 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { AVATAR_MAX_DATA_URL_CHARS } from "@/lib/auth/avatar";
+import { BANNER_MAX_DATA_URL_CHARS } from "@/lib/modules/channel";
+import { exportOwnPassData } from "@/lib/modules/patron-zone";
+import { logger } from "@/lib/logger";
+
+const EXPORT_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+/**
+ * Upper bound per log-like category (views, playback, notifications, email states). These grow with
+ * every play or broadcast and are read into memory in one request, so an export keeps the most recent
+ * rows and names the categories that were cut in `truncatedCategories`.
+ */
+export const EXPORT_MAX_ITEMS_PER_CATEGORY = 10_000;
+
+export type ExportTruncatableCategory =
+  | "broadcastEmailRecipients" | "emailEvents" | "videoViews" | "playbackSessions" | "playbackEvents" | "notifications";
+
+type MediaAttachment = { type: "avatar" | "channel_banner"; ownerId: string; mime: string; dataBase64: string };
+export type ExportSkippedRecord = {
+  category: "mediaAttachments";
+  type: "avatar" | "channel_banner";
+  ownerId: string;
+  reason: "UNSUPPORTED_MIME" | "TOO_LARGE" | "UNREADABLE";
+};
+
+function encodeOwnedImage(
+  input: { type: "avatar" | "channel_banner"; ownerId: string; mime: string; data: Uint8Array },
+  maxDataUrlChars: number,
+): { ok: true; attachment: MediaAttachment } | { ok: false; skipped: ExportSkippedRecord } {
+  const skip = (reason: ExportSkippedRecord["reason"]) => ({
+    ok: false as const,
+    skipped: { category: "mediaAttachments" as const, type: input.type, ownerId: input.ownerId, reason },
+  });
+  try {
+    if (!EXPORT_IMAGE_MIMES.has(input.mime)) return skip("UNSUPPORTED_MIME");
+    const data = Buffer.from(input.data);
+    const dataUrlChars = `data:${input.mime};base64,`.length + Math.ceil(data.byteLength / 3) * 4;
+    if (dataUrlChars > maxDataUrlChars) return skip("TOO_LARGE");
+    return { ok: true, attachment: { type: input.type, ownerId: input.ownerId, mime: input.mime, dataBase64: data.toString("base64") } };
+  } catch {
+    return skip("UNREADABLE");
+  }
+}
+
+/** Newest `limit` rows (query sorted descending with `take: limit + 1`), returned oldest first. */
+function capNewest<T>(rows: T[], limit: number): { rows: T[]; truncated: boolean } {
+  const truncated = rows.length > limit;
+  return { rows: (truncated ? rows.slice(0, limit) : rows).reverse(), truncated };
+}
 
 /**
  * Everything the service keeps about one account, as plain JSON the person can take with them
@@ -8,24 +57,70 @@ import { AppContext } from "@/lib/modules/shared/app-context";
  * included because they are the person's own records; the card or bank details never reach us.
  */
 export interface OwnDataExport {
+  /** Increment when the shape or meaning of this portable JSON contract changes. */
+  schemaVersion: 5;
   exportedAt: string;
+  /** Per-category row cap for log-like categories; the newest rows are kept. */
+  limits: { maxItemsPerCategory: number };
+  /** Categories that had more rows than `limits.maxItemsPerCategory`; empty when the export is complete. */
+  truncatedCategories: ExportTruncatableCategory[];
+  /** Stored records left out because they could not be exported safely (e.g. a legacy image in an unsupported format). */
+  skippedRecords: ExportSkippedRecord[];
   account: Record<string, unknown> | null;
   comments: unknown[];
   videoReactions: { videoId: string; type: "like" | "dislike"; createdAt: Date }[];
   commentReactions: unknown[];
   subscriptions: unknown[];
   emailPreferences: unknown[];
+  /** Own broadcast email delivery/engagement states, without provider or campaign identifiers. */
+  broadcastEmailRecipients: {
+    language: string; status: string; sentAt: Date | null; deliveredAt: Date | null; openedAt: Date | null;
+    clickedAt: Date | null; bouncedAt: Date | null; complainedAt: Date | null; createdAt: Date; updatedAt: Date;
+  }[];
+  /** Own email webhook event metadata, without addresses, payload, or provider IDs. */
+  emailEvents: { type: string; status: string; processedAt: Date | null; createdAt: Date; updatedAt: Date }[];
   payments: unknown[];
   /** Saved "resume watching" positions (one row per video, seconds). */
   videoProgress: { videoId: string; positionSeconds: number; durationSeconds: number | null; updatedAt: Date }[];
   /** Videos saved to the person's favorites. */
   videoFavorites: { videoId: string; createdAt: Date }[];
+  /** Own signed-in view history, without network hashes. */
+  videoViews: { videoId: string; createdAt: Date }[];
+  /** Own playback sessions, without network hashes, database IDs, or free-text error messages. */
+  playbackSessions: {
+    videoId: string; sourceKind: string | null; provider: string | null; accessTier: "PUBLIC" | "LOGGED_IN" | "PAID";
+    startedAt: Date; firstPlayAt: Date | null; lastHeartbeatAt: Date | null; totalWatchMs: number;
+    maxProgressMs: number; durationMs: number | null; countedAsView: boolean; isAdminPreview: boolean;
+    errorCode: string | null; createdAt: Date; updatedAt: Date;
+  }[];
+  /** Own playback events, without session IDs, arbitrary metadata, or free-text error messages. */
+  playbackEvents: {
+    videoId: string; type: string; positionMs: number | null; durationMs: number | null; bufferedMs: number | null;
+    volume: number | null; muted: boolean | null; fullscreen: boolean | null; errorCode: string | null;
+    provider: string | null; sourceKind: string | null; createdAt: Date;
+  }[];
+  /** Profiles owned by this account; moderation internals are excluded and binary media is in mediaAttachments. */
+  creatorProfiles: unknown[];
+  /** This person's role and acceptance timestamps in channels they belong to. */
+  channelMemberships: unknown[];
+  /** Explicit null means no preference row exists and the application defaults apply. */
+  notificationPreferences: unknown | null;
+  /** Own notification event metadata; message text and template params are excluded. */
+  notifications: { kind: string; read: boolean; createdAt: Date }[];
+  /** The person's patron history, without internal reviewer IDs, reasons, or payment provider IDs. */
+  patronGrants: unknown[];
+  /** Own patron-zone access summary, without request/payment references; null when no valid record exists. */
+  patronPass: Awaited<ReturnType<typeof exportOwnPassData>>;
+  /** The person's own bounded avatar and channel-banner bytes, portable as Base64. */
+  mediaAttachments: MediaAttachment[];
 }
 
 export class ExportOwnDataUseCase {
-  static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
+  static async execute(ctx: AppContext, userId: string, options: { maxItemsPerCategory?: number } = {}): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
-    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites] = await Promise.all([
+    const limit = options.maxItemsPerCategory ?? EXPORT_MAX_ITEMS_PER_CATEGORY;
+    const take = limit + 1;
+    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, broadcastEmailRecipients, emailEvents, payments, videoProgress, videoFavorites, videoViews, playbackSessions, playbackEvents, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, patronPass, avatar] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -50,6 +145,18 @@ export class ExportOwnDataUseCase {
         where: { userId },
         select: { email: true, marketingEmails: true, systemEmails: true, unsubscribedAt: true, createdAt: true },
       }),
+      prisma.broadcastEmailRecipient.findMany({
+        where: { userId },
+        select: { language: true, status: true, sentAt: true, deliveredAt: true, openedAt: true, clickedAt: true, bouncedAt: true, complainedAt: true, createdAt: true, updatedAt: true },
+        orderBy: { createdAt: "desc" },
+        take,
+      }),
+      prisma.emailEvent.findMany({
+        where: { userId },
+        select: { type: true, status: true, processedAt: true, createdAt: true, updatedAt: true },
+        orderBy: { createdAt: "desc" },
+        take,
+      }),
       prisma.payment.findMany({
         where: { userId },
         select: {
@@ -64,10 +171,112 @@ export class ExportOwnDataUseCase {
         orderBy: { updatedAt: "desc" },
       }),
       prisma.videoFavorite.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "desc" } }),
+      prisma.videoView.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "desc" }, take }),
+      prisma.videoPlaybackSession.findMany({
+        where: { userId },
+        select: {
+          videoId: true, sourceKind: true, provider: true, accessTier: true,
+          startedAt: true, firstPlayAt: true, lastHeartbeatAt: true,
+          totalWatchMs: true, maxProgressMs: true, durationMs: true,
+          countedAsView: true, isAdminPreview: true, errorCode: true,
+          createdAt: true, updatedAt: true,
+        },
+        orderBy: { startedAt: "desc" },
+        take,
+      }),
+      prisma.videoPlaybackEvent.findMany({
+        where: { userId },
+        select: {
+          videoId: true, type: true, positionMs: true, durationMs: true,
+          bufferedMs: true, volume: true, muted: true, fullscreen: true,
+          errorCode: true, provider: true, sourceKind: true, createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take,
+      }),
+      prisma.creator.findMany({
+        where: { userId },
+        select: {
+          id: true, slug: true, name: true, bio: true, handle: true, avatarUrl: true,
+          bannerUpdatedAt: true, links: true, publicContactEmail: true, country: true,
+          language: true, isVerified: true, status: true, createdAt: true, updatedAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.channelMember.findMany({
+        where: { userId },
+        select: { channelId: true, role: true, acceptedAt: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.notificationPreference.findUnique({
+        where: { userId },
+        select: {
+          patronEnabled: true, commentEnabled: true, systemEnabled: true,
+          newVideoInApp: true, newVideoEmail: true, moderationEnabled: true, updatedAt: true,
+        },
+      }),
+      prisma.notification.findMany({
+        where: { userId },
+        select: { kind: true, read: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take,
+      }),
+      prisma.patronGrant.findMany({
+        where: { userId },
+        select: { source: true, createdAt: true, revokedAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      exportOwnPassData(ctx, userId),
+      prisma.userAvatar.findUnique({ where: { userId }, select: { mime: true, data: true } }),
     ]);
 
+    const banners = creatorProfiles.length === 0
+      ? []
+      : await prisma.channelBanner.findMany({
+          where: { channelId: { in: creatorProfiles.map((profile) => profile.id) } },
+          select: { channelId: true, mime: true, data: true },
+          orderBy: { channelId: "asc" },
+        });
+
+    const mediaAttachments: MediaAttachment[] = [];
+    const skippedRecords: ExportSkippedRecord[] = [];
+    const encoded = [
+      ...(avatar ? [encodeOwnedImage({ type: "avatar", ownerId: userId, ...avatar }, AVATAR_MAX_DATA_URL_CHARS)] : []),
+      ...banners.map((banner) => encodeOwnedImage(
+        { type: "channel_banner", ownerId: banner.channelId, ...banner },
+        BANNER_MAX_DATA_URL_CHARS,
+      )),
+    ];
+    for (const result of encoded) {
+      if (result.ok) mediaAttachments.push(result.attachment);
+      else skippedRecords.push(result.skipped);
+    }
+    if (skippedRecords.length > 0) {
+      // Ids and reasons only: never the stored bytes.
+      logger.warn("[ExportOwnData] stored media skipped", JSON.stringify(skippedRecords.map(({ type, reason }) => ({ type, reason }))));
+    }
+
+    const truncatedCategories: ExportTruncatableCategory[] = [];
+    const capped = <T>(category: ExportTruncatableCategory, rows: T[]): T[] => {
+      const result = capNewest(rows, limit);
+      if (result.truncated) truncatedCategories.push(category);
+      return result.rows;
+    };
+    const cappedRows = {
+      broadcastEmailRecipients: capped("broadcastEmailRecipients", broadcastEmailRecipients),
+      emailEvents: capped("emailEvents", emailEvents),
+      videoViews: capped("videoViews", videoViews),
+      playbackSessions: capped("playbackSessions", playbackSessions),
+      playbackEvents: capped("playbackEvents", playbackEvents),
+      notifications: capped("notifications", notifications),
+    };
+
     return {
+      schemaVersion: 5,
       exportedAt: ctx.now().toISOString(),
+      limits: { maxItemsPerCategory: limit },
+      truncatedCategories,
+      skippedRecords,
       account: user,
       comments,
       videoReactions: [
@@ -77,9 +286,21 @@ export class ExportOwnDataUseCase {
       commentReactions,
       subscriptions,
       emailPreferences,
+      broadcastEmailRecipients: cappedRows.broadcastEmailRecipients,
+      emailEvents: cappedRows.emailEvents,
       payments,
       videoProgress,
       videoFavorites,
+      videoViews: cappedRows.videoViews,
+      playbackSessions: cappedRows.playbackSessions,
+      playbackEvents: cappedRows.playbackEvents,
+      creatorProfiles,
+      channelMemberships,
+      notificationPreferences,
+      notifications: cappedRows.notifications,
+      patronGrants,
+      patronPass,
+      mediaAttachments,
     };
   }
 }

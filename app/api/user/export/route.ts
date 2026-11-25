@@ -33,6 +33,9 @@ export async function GET() {
         "Content-Type": "application/json; charset=utf-8",
         "Content-Disposition": `attachment; filename="pawelperfect-my-data-${stamp}.json"`,
         "Cache-Control": "no-store",
+        // Completeness at a glance: categories cut to the newest rows and records left out (details are in the file).
+        "X-Export-Truncated": data.truncatedCategories.join(",") || "none",
+        "X-Export-Skipped-Records": String(data.skippedRecords.length),
       },
     });
   } catch (error) {
