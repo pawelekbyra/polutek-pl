@@ -24,7 +24,7 @@ function encodeOwnedImage(input: { type: "avatar" | "channel_banner"; ownerId: s
  */
 export interface OwnDataExport {
   /** Increment when the shape or meaning of this portable JSON contract changes. */
-  schemaVersion: 2;
+  schemaVersion: 3;
   exportedAt: string;
   account: Record<string, unknown> | null;
   comments: unknown[];
@@ -37,6 +37,21 @@ export interface OwnDataExport {
   videoProgress: { videoId: string; positionSeconds: number; durationSeconds: number | null; updatedAt: Date }[];
   /** Videos saved to the person's favorites. */
   videoFavorites: { videoId: string; createdAt: Date }[];
+  /** Own signed-in view history, without network hashes. */
+  videoViews: { videoId: string; createdAt: Date }[];
+  /** Own playback sessions, without network hashes, database IDs, or free-text error messages. */
+  playbackSessions: {
+    videoId: string; sourceKind: string | null; provider: string | null; accessTier: "PUBLIC" | "LOGGED_IN" | "PAID";
+    startedAt: Date; firstPlayAt: Date | null; lastHeartbeatAt: Date | null; totalWatchMs: number;
+    maxProgressMs: number; durationMs: number | null; countedAsView: boolean; isAdminPreview: boolean;
+    errorCode: string | null; createdAt: Date; updatedAt: Date;
+  }[];
+  /** Own playback events, without session IDs, arbitrary metadata, or free-text error messages. */
+  playbackEvents: {
+    videoId: string; type: string; positionMs: number | null; durationMs: number | null; bufferedMs: number | null;
+    volume: number | null; muted: boolean | null; fullscreen: boolean | null; errorCode: string | null;
+    provider: string | null; sourceKind: string | null; createdAt: Date;
+  }[];
   /** Profiles owned by this account; moderation internals are excluded and binary media is in mediaAttachments. */
   creatorProfiles: unknown[];
   /** This person's role and acceptance timestamps in channels they belong to. */
@@ -56,7 +71,7 @@ export interface OwnDataExport {
 export class ExportOwnDataUseCase {
   static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
-    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, patronPass, avatar] = await Promise.all([
+    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, videoViews, playbackSessions, playbackEvents, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, patronPass, avatar] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -95,6 +110,27 @@ export class ExportOwnDataUseCase {
         orderBy: { updatedAt: "desc" },
       }),
       prisma.videoFavorite.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "desc" } }),
+      prisma.videoView.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "asc" } }),
+      prisma.videoPlaybackSession.findMany({
+        where: { userId },
+        select: {
+          videoId: true, sourceKind: true, provider: true, accessTier: true,
+          startedAt: true, firstPlayAt: true, lastHeartbeatAt: true,
+          totalWatchMs: true, maxProgressMs: true, durationMs: true,
+          countedAsView: true, isAdminPreview: true, errorCode: true,
+          createdAt: true, updatedAt: true,
+        },
+        orderBy: { startedAt: "asc" },
+      }),
+      prisma.videoPlaybackEvent.findMany({
+        where: { userId },
+        select: {
+          videoId: true, type: true, positionMs: true, durationMs: true,
+          bufferedMs: true, volume: true, muted: true, fullscreen: true,
+          errorCode: true, provider: true, sourceKind: true, createdAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
       prisma.creator.findMany({
         where: { userId },
         select: {
@@ -147,7 +183,7 @@ export class ExportOwnDataUseCase {
     ];
 
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       exportedAt: ctx.now().toISOString(),
       account: user,
       comments,
@@ -161,6 +197,9 @@ export class ExportOwnDataUseCase {
       payments,
       videoProgress,
       videoFavorites,
+      videoViews,
+      playbackSessions,
+      playbackEvents,
       creatorProfiles,
       channelMemberships,
       notificationPreferences,

@@ -13,6 +13,9 @@ function fakeCtx() {
     emailPreference: find([]),
     payment: find([{ id: "p1", amountMinor: 500, currency: "PLN", status: "SUCCEEDED" }]),
     videoFavorite: find([{ videoId: "v3", createdAt: new Date(0) }]),
+    videoView: { findMany: vi.fn(async () => [{ videoId: "v-view", createdAt: new Date(0) }]) },
+    videoPlaybackSession: { findMany: vi.fn(async () => [{ videoId: "v-session", sourceKind: "HLS", provider: "R2", accessTier: "PUBLIC", startedAt: new Date(0), firstPlayAt: new Date(1000), lastHeartbeatAt: new Date(2000), totalWatchMs: 30_000, maxProgressMs: 15_000, durationMs: 120_000, countedAsView: true, isAdminPreview: false, errorCode: null, createdAt: new Date(0), updatedAt: new Date(2000) }]) },
+    videoPlaybackEvent: { findMany: vi.fn(async () => [{ videoId: "v-event", type: "PLAY", positionMs: 1500, durationMs: 120_000, bufferedMs: 4000, volume: 0.5, muted: false, fullscreen: true, errorCode: null, provider: "R2", sourceKind: "HLS", createdAt: new Date(1000) }]) },
     videoProgress: find([{ videoId: "v1", positionSeconds: 120, durationSeconds: 600, updatedAt: new Date(0) }]),
     creator: { findMany: vi.fn(async () => [{ id: "ch1", slug: "owned", name: "Own channel", publicContactEmail: "public@example.com" }]) },
     channelMember: { findMany: vi.fn(async () => [{ channelId: "ch2", role: "EDITOR", acceptedAt: new Date(0), createdAt: new Date(0) }]) },
@@ -31,7 +34,7 @@ describe("ExportOwnDataUseCase", () => {
     const { ctx, prisma } = fakeCtx();
     const data = await ExportOwnDataUseCase.execute(ctx, "u1");
 
-    expect(data.schemaVersion).toBe(2);
+    expect(data.schemaVersion).toBe(3);
     expect(data.exportedAt).toBe("2026-10-05T10:00:00.000Z");
     expect(data.account).toMatchObject({ id: "u1" });
     expect(data.comments).toHaveLength(1);
@@ -41,6 +44,9 @@ describe("ExportOwnDataUseCase", () => {
       { videoId: "v1", positionSeconds: 120, durationSeconds: 600, updatedAt: new Date(0) },
     ]);
     expect(data.videoFavorites).toEqual([{ videoId: "v3", createdAt: new Date(0) }]);
+    expect(data.videoViews).toEqual([{ videoId: "v-view", createdAt: new Date(0) }]);
+    expect(data.playbackSessions).toEqual([expect.objectContaining({ videoId: "v-session", totalWatchMs: 30_000 })]);
+    expect(data.playbackEvents).toEqual([expect.objectContaining({ videoId: "v-event", type: "PLAY", positionMs: 1500 })]);
     expect(data.creatorProfiles).toEqual([{ id: "ch1", slug: "owned", name: "Own channel", publicContactEmail: "public@example.com" }]);
     expect(data.channelMemberships).toHaveLength(1);
     expect(data.notificationPreferences).toMatchObject({ patronEnabled: false, newVideoInApp: false });
@@ -57,6 +63,17 @@ describe("ExportOwnDataUseCase", () => {
     expect(prisma.emailPreference.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.videoProgress.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.videoFavorite.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
+    expect(prisma.videoView.findMany).toHaveBeenCalledWith({
+      where: { userId: "u1" }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "asc" },
+    });
+    expect(prisma.videoPlaybackSession.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId: "u1" },
+      select: expect.not.objectContaining({ id: true, ipHash: true, userAgentHash: true, errorMessage: true }),
+    }));
+    expect(prisma.videoPlaybackEvent.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId: "u1" },
+      select: expect.not.objectContaining({ id: true, sessionId: true, metadata: true, errorMessage: true }),
+    }));
     expect(prisma.creator.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.channelMember.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.notificationPreference.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
@@ -85,11 +102,14 @@ describe("ExportOwnDataUseCase", () => {
       prisma.channelMember.findMany.mock.calls,
       prisma.notificationPreference.findUnique.mock.calls,
       prisma.notification.findMany.mock.calls,
+      prisma.videoView.findMany.mock.calls,
+      prisma.videoPlaybackSession.findMany.mock.calls,
+      prisma.videoPlaybackEvent.findMany.mock.calls,
       prisma.patronGrant.findMany.mock.calls,
       prisma.userAvatar.findUnique.mock.calls,
       prisma.channelBanner.findMany.mock.calls,
     ]);
-    expect(selects).not.toMatch(/password|token|secret|ipAddress|userAgent|stripeCustomerId|stripeIntentId|statusReason|statusChangedById|statusDecisionId|grantedById|revokeReason|paymentId/i);
+    expect(selects).not.toMatch(/password|token|secret|ipAddress|userAgent|ipHash|userAgentHash|metadata|errorMessage|stripeCustomerId|stripeIntentId|statusReason|statusChangedById|statusDecisionId|grantedById|revokeReason|paymentId/i);
   });
 
   it("keeps the notification-preferences category explicit when no preference row exists", async () => {
