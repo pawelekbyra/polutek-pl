@@ -60,11 +60,12 @@ for c in $targets; do
   fi
 done
 
-# 2. Configuration without secrets: apps (compose files, scripts), docs, host scripts, our cron and systemd units.
+# 2. Configuration without secrets (dziennikarski/repo + build excluded: public GitHub clone pawelekbyra/dziennikarski, rebuilt by prep.sh): apps (compose files, scripts), docs, host scripts, our cron and systemd units.
 units=$(ls /etc/systemd/system/{polutek-cron,serwerek-}*.{service,timer} /etc/systemd/system/cloudflared-serwerek.service 2>/dev/null | sed 's|^/||')
 # shellcheck disable=SC2086
 tar czf "$D/configs-$TS.tar.gz" --exclude='*/node_modules' --exclude='*.env' --exclude='.env' --exclude='*.env.*' --exclude='.env.*' \
   --exclude='*.bak' --exclude='*.bak-*' --exclude='*.log' --exclude='*/.next' --exclude='opt/serwerek/apps/*/src' \
+  --exclude='opt/serwerek/apps/dziennikarski/repo' --exclude='opt/serwerek/apps/dziennikarski/build' --exclude='*/src-before-*' --exclude='*/src.*' --exclude='*/.release-*' \
   -C / opt/serwerek/apps opt/serwerek/docs opt/serwerek/scripts etc/cron.d $units 2>/dev/null \
   && [ -s "$D/configs-$TS.tar.gz" ] && echo "configs ok" || { echo "configs FAILED"; rm -f "$D/configs-$TS.tar.gz"; fail=1; }
 
@@ -72,6 +73,12 @@ tar czf "$D/configs-$TS.tar.gz" --exclude='*/node_modules' --exclude='*.env' --e
 if [ -d /opt/serwerek/data/pp-support/storage ]; then
   tar czf "$D/pp-support-storage-$TS.tar.gz" -C /opt/serwerek/data/pp-support storage \
     && [ -s "$D/pp-support-storage-$TS.tar.gz" ] && echo "pp-support-storage ok" || { echo "pp-support-storage FAILED"; fail=1; }
+fi
+
+# 2b2. Odoo filestore (test environment firma.pawelperfect.com; the Odoo database is dumped in step 1 as an
+#      opportunistic postgres container "odoo-db-1"). Not required: a failure here is reported but does not touch the rest.
+if [ -d /opt/serwerek/data/odoo/odoo-data/filestore ]; then
+  tar czf "$D/odoo-filestore-$TS.tar.gz" -C /opt/serwerek/data/odoo/odoo-data filestore     && [ -s "$D/odoo-filestore-$TS.tar.gz" ] && echo "odoo-filestore ok" || { echo "odoo-filestore FAILED"; rm -f "$D/odoo-filestore-$TS.tar.gz"; fail=1; }
 fi
 
 # 2c. Completeness check + manifest (written even on failure, then with complete=no).
@@ -101,7 +108,8 @@ if [ -r "$BACKUP_ENV" ]; then
       age -r "$AGE_RECIPIENT" -o "$out/$(basename "$f").age" "$f" || { echo "encrypt FAILED: $f"; fail=1; }
     done
     secrets=$(find /opt/serwerek/apps -maxdepth 2 -type f \( -name '*.env' -o -name '.env' -o -name '*.env.*' \) -not -path '*/src/*' 2>/dev/null
-              ls /etc/serwerek/*.env 2>/dev/null; [ -d /opt/serwerek/secrets ] && echo /opt/serwerek/secrets)
+              ls /etc/serwerek/*.env 2>/dev/null; [ -d /opt/serwerek/secrets ] && echo /opt/serwerek/secrets
+              [ -r /root/.ai-secrets/odoo.env ] && echo /root/.ai-secrets/odoo.env)
     # shellcheck disable=SC2086
     if tar -C / -czf - $(printf '%s\n' $secrets | sed 's|^/||') 2>/dev/null | age -r "$AGE_RECIPIENT" -o "$out/secrets-$TS.tar.gz.age"; then
       echo "secrets ok (encrypted, offsite only)"
@@ -126,7 +134,7 @@ fi
 # 5. Local rotation: 7 days (pre-deploy dumps are rotated by deploy.sh). A failed run does not shorten the history of last
 #    good copies: it only drops what is older than 14 days.
 if [ "$fail" = 0 ]; then keep_days=6; else keep_days=13; echo "run failed: rotation limited to files older than 14 days"; fi
-find "$D" -maxdepth 1 -type f \( -name 'pg-*.sql.gz' -o -name 'configs-*.tar.gz' -o -name 'pp-support-storage-*.tar.gz' -o -name 'manifest-*.txt' \) -mtime +"$keep_days" -delete
+find "$D" -maxdepth 1 -type f \( -name 'pg-*.sql.gz' -o -name 'configs-*.tar.gz' -o -name 'pp-support-storage-*.tar.gz' -o -name 'odoo-filestore-*.tar.gz' -o -name 'manifest-*.txt' \) -mtime +"$keep_days" -delete
 
 status=ok; [ "$fail" = 0 ] || status=fail
 write_status backup "$status" "$TS"
