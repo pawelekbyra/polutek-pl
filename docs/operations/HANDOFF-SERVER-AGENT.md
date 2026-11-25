@@ -12,7 +12,7 @@ poprzednia sesja. Reguły pracy, decyzje właściciela i stan prac są w [`STATU
 |---|---|
 | **Pełne repozytorium z historią** (bundle gita) | `/opt/serwerek/handoff/polutek-pl.bundle` |
 | **Roboczy klon** (zrobiony z bundla, gałąź `main` wyciągnięta) | `/opt/serwerek/repo` |
-| Kopia dokumentacji do czytania bez gita | `/opt/serwerek/docs/` (odświeżana przy każdym `deploy.sh`) |
+| Kopia dokumentacji do czytania bez gita | `/opt/serwerek/docs/` (odświeżana przy każdym `deploy.sh`; pliki spoza repo nie są kasowane, lista w `/opt/serwerek/docs.sync.log`) |
 | Opis serwera i podstawowe polecenia | `/opt/serwerek/README.md` |
 | Lista nazw sekretów, których agent może potrzebować (bez wartości) | `/opt/serwerek/handoff/secrets-names.txt` |
 | Uruchomiona produkcja (strona, baza, kodowanie, kolektor, panel admina) | `/opt/serwerek/apps/polutek/` |
