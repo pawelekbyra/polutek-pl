@@ -224,7 +224,8 @@ Co robi `deploy.sh <tag>` (kolejność z kodu):
    z `DOCS_SYNC_MODE=archive ./deploy.sh <tag>` są najpierw kopiowane do `/opt/serwerek/docs.removed-<czas UTC>/` (te same ścieżki,
    lista w `REMOVED.txt`, sprawdzone `cmp`), dopiero potem usuwane z `docs`. Do 2026-11 ten krok kasował cały katalog i takie pliki ginęły.
    Test: `node --test deploy/serwerek/test/*.test.mjs`. Trwałe notatki i tak zapisuj w repo (`docs/`), kopia na serwerze jest do czytania;
-7. zapisuje wynik w `telemetry.job_run` jako zadanie `deploy`.
+7. zapisuje wynik w `telemetry.job_run` jako zadanie `deploy`;
+8. po udanym wdrożeniu i po `--rollback` przepisuje w `.env` projektu linie `APP_IMAGE`, `MIGRATOR_IMAGE`, `ENCODER_IMAGE`, `COLLECTOR_IMAGE` z plików `.current-*` (reszta `.env`, np. `SRH_TOKEN`, zostaje), więc ręczne `docker compose up -d` uruchamia to, co działa; ten sam format co `deploy/release/release-deploy.sh --sync-env`.
 
 Wynik skryptu przekieruj do pliku (`./deploy.sh <tag> 2>&1 | tee deploy-<tag>.log`) i uruchom w `tmux`, żeby przeżył zerwanie połączenia.
 Deploy restartuje `encoder` (trwające kodowanie wraca do kolejki i zaczyna od zera) oraz na kilka sekund `app` (jedna instancja, bez płynnej wymiany).

@@ -75,7 +75,7 @@ Każde uruchomienie zapisuje koszt w logu i w `/opt/serwerek/releases/costs.log`
   (`/opt/serwerek/backups/pre-deploy-<tag>-*.sql.gz`). O tym decyduje człowiek, bo traci się dane z okna wdrożenia.
 - **`.env` (linie `APP_IMAGE=...`, `MIGRATOR_IMAGE`, `ENCODER_IMAGE`, `COLLECTOR_IMAGE`)**: `release-deploy.sh` zapisuje je
   sam na końcu każdego wydania i rollbacku (także nieudanego), z plików `.current-*`. **Po każdym wdrożeniu lub rollbacku
-  starym `deploy.sh` uruchom `deploy/release/release-deploy.sh --sync-env`.** Inaczej ręczne `docker compose up -d`
+  starym `deploy.sh` uruchom `deploy/release/release-deploy.sh --sync-env`.** (`deploy.sh` z repo od commita „deploy.sh: .env w zgodzie” robi to sam po udanym wdrożeniu i rollbacku; komenda przyda się po wersji na serwerze sprzed tej zmiany.) Inaczej ręczne `docker compose up -d`
   mogłoby wrócić do starszego obrazu (lub do nieistniejącego `:current`).
 
 ## Co zrobić przy awarii
