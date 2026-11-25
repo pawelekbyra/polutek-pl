@@ -58,6 +58,7 @@ export const PassSuccess = forwardRef<HTMLHeadingElement, { tx: Tx; language: Lo
               )
             : tx("Potwierdzenie znajdziesz też w „Moje konto → Strefa Premium”.", "You can also find this confirmation in “My account → Premium Zone”.")}
         </p>
+        {pass.provider !== "DEMO" && <p className={styles.fine}>{tx("Nie widzisz wiadomości? Sprawdź też folder Spam.", "Can't find the email? Check your Spam folder too.")}</p>}
       </div>
     );
   },

@@ -68,7 +68,7 @@ function PasswordPart({ tx, hasPassword }: { tx: Tx; hasPassword: boolean }) {
           fetchOptions: captchaFetchOptions(captchaGate.token()),
         });
         if (error) return setMsg({ error: authErrorMessage(error, tx), info: null });
-        setMsg({ error: null, info: tx("Wysłaliśmy link do ustawienia hasła na Twój e-mail.", "We sent a link to set a password to your email.") });
+        setMsg({ error: null, info: `${tx("Wysłaliśmy link do ustawienia hasła na Twój e-mail.", "We sent a link to set a password to your email.")} ${tx("Nie widzisz wiadomości? Sprawdź też folder Spam.", "Can't find the email? Check your Spam folder too.")}` });
       } finally {
         captchaGate.reset();
       }
