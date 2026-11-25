@@ -52,7 +52,9 @@ ALLOWED_ARGS=(NEXT_PUBLIC_APP_URL NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY NEXT_PUBLIC
   NEXT_PUBLIC_PLATFORM_VAT_STATUS NEXT_PUBLIC_BLOB_PUBLIC_HOST)
 
 started=$(date +%s)
-work="$(mktemp -d /run/release-build.XXXXXX)"; chmod 700 "$work"
+clean_stale_workdirs | sed 's/^/[build] /' || true   # left by an earlier run killed with -9 (holds its one-time SSH key)
+work="$(mktemp -d "$RB_WORK_ROOT/release-build.XXXXXX")"; chmod 700 "$work"
+echo "$$" > "$work/pid"   # owner, for clean_stale_workdirs (release-gc.sh)
 facts="$work/facts"; mkdir "$facts"
 created_attempt=0; destroyed=0; cost_done=0; location=""; watchdog_pid=""; t_create=0; t_destroyed=0; builder_json=""; result="FAILED"
 

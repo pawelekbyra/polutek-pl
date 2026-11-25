@@ -13,12 +13,13 @@ set -euo pipefail
 LOG_TAG=gc
 RB_PROD_IP="${RB_PROD_IP:-$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')}"
 export RB_PROD_IP
+# Also local: work dirs of killed builds ($RB_WORK_ROOT/release-build.*, one-time SSH keys), see lib/common.sh.
 case "${1:-}" in
-  --list) hc inventory ;;
-  --dry-run) hc gc --dry-run ;;
+  --list) hc inventory; clean_stale_workdirs --dry-run ;;
+  --dry-run) hc gc --dry-run; clean_stale_workdirs --dry-run ;;
   --all)
     if [[ -e "$RB_HOME/.build.lock" ]] && ! flock -n "$RB_HOME/.build.lock" true; then die "a release-build is running; not deleting all builders"; fi
-    hc gc --all ;;
-  "") hc gc ;;
+    hc gc --all; clean_stale_workdirs ;;
+  "") hc gc; clean_stale_workdirs ;;
   *) die "usage: $0 [--all|--list|--dry-run]" ;;
 esac

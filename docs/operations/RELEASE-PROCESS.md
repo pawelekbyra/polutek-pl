@@ -63,13 +63,20 @@ Każde uruchomienie zapisuje koszt w logu i w `/opt/serwerek/releases/costs.log`
 - **Kod, od razu:** `deploy/release/release-deploy.sh --rollback`. Wraca do poprzedniego wydania z
   `/opt/serwerek/releases/.previous-release`, a gdy go nie ma, do `.previous-image`. Rollback **jest zawsze dozwolony**:
   wystarczą obrazy na dysku, nie trzeba żadnego dowodu. Można też wskazać konkretny manifest:
-  `--rollback /opt/serwerek/releases/<tag>/manifest.json`.
+  `--rollback /opt/serwerek/releases/<tag>/manifest.json` (ścieżka może być względna, liczona od bieżącego katalogu).
+- **Rollback nigdy nie zostawia strony na zepsutym obrazie.** Gdy obraz, do którego wracasz, nie przejdzie health,
+  skrypt od razu uruchamia ostatni zdrowy obraz z plików stanu (to, co działało przed komendą, potem `.current-image`,
+  `.previous-image`), znowu sprawdza health i kończy kodem 1 z opisem (`app is back on ... (healthy)`); pliki stanu się
+  nie zmieniają. Tak samo przy wydaniu, gdy nowa app nie wstanie. Komunikat `SITE DOWN` znaczy, że żaden obraz nie wstał:
+  wtedy tryb awaryjny `./deploy.sh <tag>`.
 - Stara droga działa dalej: `cd /opt/serwerek/apps/polutek && ./deploy.sh <tag> --rollback`
   (te same pliki stanu `.current-image` i `.previous-image`).
 - **Schemat bazy nie jest cofany automatycznie.** Po migracji niszczącej przywróć zrzut sprzed wdrożenia
   (`/opt/serwerek/backups/pre-deploy-<tag>-*.sql.gz`). O tym decyduje człowiek, bo traci się dane z okna wdrożenia.
-- Po każdym wdrożeniu starym `deploy.sh` uruchom `release-deploy.sh --sync-env`. Wtedy linie `APP_IMAGE=...` w `.env`
-  zgadzają się z tym, co działa. Inaczej ręczne `docker compose up -d` mogłoby wrócić do starszego obrazu.
+- **`.env` (linie `APP_IMAGE=...`, `MIGRATOR_IMAGE`, `ENCODER_IMAGE`, `COLLECTOR_IMAGE`)**: `release-deploy.sh` zapisuje je
+  sam na końcu każdego wydania i rollbacku (także nieudanego), z plików `.current-*`. **Po każdym wdrożeniu lub rollbacku
+  starym `deploy.sh` uruchom `deploy/release/release-deploy.sh --sync-env`.** Inaczej ręczne `docker compose up -d`
+  mogłoby wrócić do starszego obrazu (lub do nieistniejącego `:current`).
 
 ## Co zrobić przy awarii
 
@@ -77,10 +84,10 @@ Każde uruchomienie zapisuje koszt w logu i w `/opt/serwerek/releases/costs.log`
 |---|---|
 | Hetzner API nie działa / brak typu maszyny | Spróbuj innej lokalizacji (`RB_LOCATION=fsn1`) lub typu (`RB_SERVER_TYPE=ccx23`). Pilna poprawka: **stary `deploy.sh`** (buduje na serwerze, najlepiej wieczorem). |
 | Budowa się wywala | Log w `releases/logs/build-*.log`. Maszyna jest skasowana automatycznie. Produkcja nietknięta. |
-| Skrypt padł, maszyna mogła zostać | `deploy/release/release-gc.sh --list`, potem `release-gc.sh --all`. Usuwa tylko zasoby z etykietą `managed-by=polutek-release` i nazwą `polutek-rb-*`, nigdy serwera produkcyjnego. Watchdog i tak kasuje maszynę po 90 min. |
+| Skrypt padł, maszyna mogła zostać | `deploy/release/release-gc.sh --list`, potem `release-gc.sh --all`. Usuwa tylko zasoby z etykietą `managed-by=polutek-release` i nazwą `polutek-rb-*`, nigdy serwera produkcyjnego. Watchdog i tak kasuje maszynę po 90 min, a timer `polutek-release-gc.timer` (co 30 min) wygasłe. `release-gc.sh` (i start kolejnej budowy) usuwa też lokalne katalogi `/run/release-build.*` po budowie zabitej `kill -9` (jednorazowy klucz SSH); `--list` je pokazuje. |
 | Suma kontrolna przesyłu się nie zgadza | Manifest nie powstaje, więc `release-deploy.sh` nie wyda takich obrazów. Puść budowę jeszcze raz. |
 | Migracja nie przeszła | App nie jest restartowana, strona działa na starym obrazie. Zrzut sprzed wdrożenia jest w logu. |
-| Nowa app nie przechodzi health | Automatyczny rollback do poprzedniego obrazu (schemat zostaje zmigrowany). |
+| Nowa app nie przechodzi health | Automatyczny rollback do ostatniego zdrowego obrazu i ponowny health (schemat zostaje zmigrowany). |
 | Mało miejsca na dysku | Budowa wymaga ≥ 8 GB wolnego, wydanie ≥ 5 GB. Posprzątaj: `docker image prune`, `docker builder prune`. |
 
 ## Jak sprawdzić po wydaniu
@@ -102,7 +109,8 @@ bez manifestu; podsumowanie w `$RB_HOME/<tag>/no-load.json`). `RB_VM_CHECK=<plik
 po zbudowaniu obrazów (zmienne `TAG`, `SHA`; wynik w `logs/vmcheck-<run>.log`; nie przerywa budowy).
 `RB_ALLOW_NOT_MAIN=1` pozwala zbudować commit spoza `main` (np. gałąź PR). RAM maszyny jest próbkowany co 2 s (szczyt w logu).
 Wydanie: `RD_MIN_FREE_GB=5`, `RD_BACKUP=full|dump`, `RD_DRAIN_ENCODER=1`, `HEALTH_TIMEOUT=150`, `KEEP_RELEASES=3`.
-`RELEASE_FOREGROUND=1` wyłącza przejście w tło. Testy pomocników: `node --test deploy/release/test/*.test.mjs`.
+`RELEASE_FOREGROUND=1` wyłącza przejście w tło. Testy: `node --test deploy/release/test/*.test.mjs` (pomocniki + zachowanie `release-deploy.sh` z udawanym `docker`:
+rollback na zepsuty obraz, `.env`, ścieżki manifestu, sprzątanie `/run/release-build.*`). `RB_WORK_ROOT` (domyślnie `/run`).
 
 ## Plan wdrożenia procesu (6 etapów z audytu)
 

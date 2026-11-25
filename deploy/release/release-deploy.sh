@@ -9,7 +9,12 @@
 #   release-deploy.sh --rollback [<manifest.json>]          back to the previous release (or the given one); ALWAYS
 #                                                           allowed: no proof needed, only the local images
 #   release-deploy.sh --sync-env                            write .env image lines from the .current-* state files
-#                                                           (run after any deploy made with the old deploy.sh)
+#                                                           (run after any deploy made with the old deploy.sh;
+#                                                           deploy and rollback below re-sync .env themselves, on
+#                                                           success AND on failure)
+# Rollback safety: if the new image (deploy) or the rollback target (--rollback) is not healthy, the app goes back to
+#   the last healthy image from the state files (what ran before, then .current-image, .previous-image) and health is
+#   checked again; the state files then stay unchanged. Manifest paths may be relative to the current directory.
 # Options (env): RD_MIN_FREE_GB=5, RD_BACKUP=full|dump (full = /opt/serwerek/scripts/backup.sh + pre-deploy dump),
 #   RD_DRAIN_ENCODER=1 (stop the encoder before migrations: video-schema migrations), HEALTH_TIMEOUT=150, KEEP_RELEASES=3,
 #   RD_PUBLIC_URL=https://www.pawelperfect.com/api/health, RELEASE_FOREGROUND=1 (do not detach).
@@ -21,6 +26,14 @@ LOG_TAG=release-deploy
 
 arg1="${1:-}"; arg2="${2:-}"
 [[ -n "$arg1" ]] || die "usage: $0 <manifest.json> [--check|--stop-before-migrate] | --rollback [<manifest.json>] | --sync-env"
+# Manifest paths are resolved HERE, before the script detaches and before `cd $APP_DIR`: a relative path used to be
+# resolved against $APP_DIR and the script ended with exit 1 and no message.
+if [[ "$arg1" == --rollback ]]; then
+  [[ -z "$arg2" ]] || arg2="$(abs_manifest "$arg2")" || die "no such manifest: ${2} (from $PWD)"
+else
+  [[ "$arg1" == --* ]] || arg1="$(abs_manifest "$arg1")" || die "no such manifest: ${1} (from $PWD)"
+fi
+set -- "$arg1" ${arg2:+"$arg2"}
 detach_self "$RB_HOME/logs/deploy-$(date -u +%Y%m%dT%H%M%S).log" "$@"
 
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-150}"
@@ -33,9 +46,14 @@ BACKUP_KEEP="${BACKUP_KEEP:-10}"
 started=$(date +%s)
 warnings=()
 summary="?"
+touched=0      # 1 once this run may have changed which containers run: .env is then re-synced on ANY exit
+env_written=0
 
 finish() {
   local rc=$?
+  # Keep .env (APP_IMAGE=... lines for a manual `docker compose up -d`) in step with the state files, also after a
+  # failure or an automatic rollback (sync-env is part of every deploy/rollback, not a separate step).
+  if (( touched && !env_written )); then ( write_env ) || log "WARN: .env image lines not updated (run $0 --sync-env)"; fi
   if (( rc == 0 )); then record_job deploy ok "$started" "release: $summary${warnings:+ WITH WARNINGS: ${warnings[*]}}"
   else record_job deploy fail "$started" "release: $summary (exit $rc)"; fi
   write_rc "$rc"
@@ -110,7 +128,24 @@ write_env() { # from the state files, so .env always matches what runs
     v="$(cat .current-collector-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "COLLECTOR_IMAGE=$v"
   } >> "$tmp"
   mv -f "$tmp" .env
+  env_written=1
   log ".env image lines updated from state files"
+}
+# After a failed start of $1: bring back the last image known to be healthy, so the site is never left on a broken
+# image. Candidates in order: $2 (what ran before this command), then .current-image and .previous-image (state files
+# only ever name images that passed health). Sets `recovered`. 0 = some candidate is healthy again, 1 = none.
+recovered=""
+recover_app() { # $1 failed image, $2 image that ran before
+  local failed="$1" cand seen=" $1 "
+  for cand in "$2" "$(cat .current-image 2>/dev/null || true)" "$(cat .previous-image 2>/dev/null || true)"; do
+    [[ -n "$cand" && "$seen" != *" $cand "* ]] || continue
+    seen+="$cand "
+    docker image inspect "$cand" >/dev/null 2>&1 || { log "recovery: $cand is not on this server, skipped"; continue; }
+    log "recovery: $failed is not healthy, starting $cand"
+    if start_app "$cand" && wait_healthy "$cand"; then recovered="$cand"; return 0; fi
+    log "recovery: $cand is not healthy either"
+  done
+  return 1
 }
 release_of() { node -e 'const m=JSON.parse(require("fs").readFileSync(process.argv[1]));process.stdout.write(m.tag)' "$1"; }
 
@@ -134,8 +169,16 @@ if [[ "$arg1" == --rollback ]]; then
   [[ -n "$APP_IMAGE" ]] || die "nothing to roll back to (no previous release, no .previous-image)"
   docker image inspect "$APP_IMAGE" >/dev/null 2>&1 || die "image $APP_IMAGE is not on this server; emergency path: ./deploy.sh <tag> (builds here)"
   summary="rollback to $APP_IMAGE"
-  log "ROLLBACK (code only, never the schema) to $APP_IMAGE"
-  { start_app "$APP_IMAGE" && wait_healthy "$APP_IMAGE"; } || die "rollback image $APP_IMAGE is not healthy either"
+  running_before="$(cat .current-image 2>/dev/null || true)"
+  log "ROLLBACK (code only, never the schema) to $APP_IMAGE (running now: ${running_before:-none})"
+  touched=1
+  if ! { start_app "$APP_IMAGE" && wait_healthy "$APP_IMAGE"; }; then
+    docker compose logs --tail 40 app >&2 || true
+    # Never leave the site on the image that just failed: back to the last healthy one (state files unchanged).
+    recover_app "$APP_IMAGE" "$running_before" \
+      && die "rollback to $APP_IMAGE FAILED (not healthy); app is back on $recovered (healthy), state files unchanged"
+    die "rollback to $APP_IMAGE FAILED and no healthy image could be restored: SITE DOWN; emergency path: ./deploy.sh <tag> (builds here)"
+  fi
   promote "" "$APP_IMAGE"
   [[ -n "$ENCODER_IMAGE" ]] && { rc=0; start_optional encoder ENCODER_IMAGE worker.env "$ENCODER_IMAGE" || rc=$?; (( rc == 1 )) && warnings+=("encoder") || promote -worker "$ENCODER_IMAGE"; }
   [[ -n "$COLLECTOR_IMAGE" ]] && { rc=0; start_optional collector COLLECTOR_IMAGE collector.env "$COLLECTOR_IMAGE" || rc=$?; (( rc == 1 )) && warnings+=("collector") || promote -collector "$COLLECTOR_IMAGE"; }
@@ -147,7 +190,7 @@ if [[ "$arg1" == --rollback ]]; then
 fi
 
 # ---------- deploy ----------
-manifest="$(readlink -f "$arg1")"; [[ -f "$manifest" ]] || die "no such manifest: $arg1"
+manifest="$(abs_manifest "$arg1")" || die "no such manifest: $arg1"
 mode="${arg2:-deploy}"
 case "$mode" in deploy|--check|--stop-before-migrate) ;; *) die "unknown option $mode" ;; esac
 
@@ -194,14 +237,13 @@ MIGRATOR_IMAGE="$MIGRATOR_IMAGE" docker compose --profile tools run --rm -T migr
 
 # 6. App, health, automatic rollback (always allowed).
 log "starting app on $APP_IMAGE"
+touched=1
 if ! { start_app "$APP_IMAGE" && wait_healthy "$APP_IMAGE"; }; then
   docker compose logs --tail 40 app >&2 || true
-  if [[ -n "$prev_image" ]] && docker image inspect "$prev_image" >/dev/null 2>&1; then
-    log "rolling back to $prev_image"
-    { start_app "$prev_image" && wait_healthy "$prev_image"; } && die "release $RELEASE_TAG FAILED, rolled back to $prev_image (schema stays migrated)"
-    die "release $RELEASE_TAG FAILED and rollback to $prev_image is NOT healthy"
-  fi
-  die "release $RELEASE_TAG FAILED, no previous image to roll back to"
+  log "rolling back (running before: ${prev_image:-none})"
+  recover_app "$APP_IMAGE" "$prev_image" \
+    && die "release $RELEASE_TAG FAILED, rolled back to $recovered (schema stays migrated)"
+  die "release $RELEASE_TAG FAILED and no previous image is healthy: SITE DOWN; emergency path: ./deploy.sh <tag>"
 fi
 promote "" "$APP_IMAGE"
 printf '%s' "$MIGRATOR_IMAGE" > .current-migrator-image
