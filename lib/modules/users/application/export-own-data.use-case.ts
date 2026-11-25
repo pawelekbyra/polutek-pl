@@ -42,6 +42,8 @@ export interface OwnDataExport {
   channelMemberships: unknown[];
   /** Explicit null means no preference row exists and the application defaults apply. */
   notificationPreferences: unknown | null;
+  /** Own notification event metadata; message text and template params are excluded. */
+  notifications: { kind: string; read: boolean; createdAt: Date }[];
   /** The person's patron history, without internal reviewer IDs, reasons, or payment provider IDs. */
   patronGrants: unknown[];
   /** The person's own bounded avatar and channel-banner bytes, portable as Base64. */
@@ -51,7 +53,7 @@ export interface OwnDataExport {
 export class ExportOwnDataUseCase {
   static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
-    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, creatorProfiles, channelMemberships, notificationPreferences, patronGrants, avatar] = await Promise.all([
+    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, avatar] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -111,6 +113,11 @@ export class ExportOwnDataUseCase {
           newVideoInApp: true, newVideoEmail: true, moderationEnabled: true, updatedAt: true,
         },
       }),
+      prisma.notification.findMany({
+        where: { userId },
+        select: { kind: true, read: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
       prisma.patronGrant.findMany({
         where: { userId },
         select: { source: true, createdAt: true, revokedAt: true },
@@ -153,6 +160,7 @@ export class ExportOwnDataUseCase {
       creatorProfiles,
       channelMemberships,
       notificationPreferences,
+      notifications,
       patronGrants,
       mediaAttachments,
     };
