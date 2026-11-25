@@ -22,6 +22,8 @@
 #   NOT promote that image to .current-*-image.
 # Docs: after a healthy deploy /opt/serwerek/docs gets the docs of the commit; files that exist only on the server are kept
 #   (DOCS_SYNC_MODE=keep, default) or moved to /opt/serwerek/docs.removed-<time>/ (DOCS_SYNC_MODE=archive), never deleted.
+# .env: after a deploy or rollback the APP_IMAGE/MIGRATOR_IMAGE/ENCODER_IMAGE/COLLECTOR_IMAGE lines are rewritten from the
+#   state files (sync_env_images), so a manual `docker compose up -d` starts what runs now. Other .env lines are kept.
 # State: .current-image / .previous-image (image refs). --rollback restores CODE only, never the schema. Migrations were additive until
 # 20261005210000_cleanup_dead_schema (destructive): after such a migration the previous image may select dropped columns and fail,
 # so roll back by restoring the pre-deploy dump (docs/architecture/db-cleanup-2026-10-05.md).
@@ -199,6 +201,30 @@ sync_docs() { # $1 = source tree (git archive of the deployed commit)
 }
 # <<< sync_docs
 
+# >>> sync_env_images (keep this marker pair: deploy/serwerek/test/deploy-env-sync.test.mjs runs the function between them)
+# .env of this compose project gets APP_IMAGE / MIGRATOR_IMAGE / ENCODER_IMAGE / COLLECTOR_IMAGE from the .current-*
+# state files, so a manual `docker compose up -d` starts exactly what deploy.sh started (otherwise it falls back to
+# the non-existent ":current" or to stale lines). Same format as `deploy/release/release-deploy.sh --sync-env`.
+# Every other line (SRH_TOKEN ...) is kept as is; values are never printed; file mode 600, replaced atomically.
+# Commands in this script pass the image env vars explicitly, which always wins over .env.
+sync_env_images() {
+  local tmp v
+  tmp="$(mktemp .env.XXXXXX)" || return 1
+  chmod 600 "$tmp"
+  if [[ -f .env ]]; then grep -vE '^(APP_IMAGE|MIGRATOR_IMAGE|ENCODER_IMAGE|COLLECTOR_IMAGE|# release-deploy)' .env > "$tmp" || true; fi
+  {
+    echo "# release-deploy: image lines below are written by deploy/release/release-deploy.sh (--sync-env) and deploy.sh"
+    v="$(cat .current-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "APP_IMAGE=$v"
+    v="$(cat .current-migrator-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "MIGRATOR_IMAGE=$v"
+    v="$(cat .current-worker-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "ENCODER_IMAGE=$v"
+    v="$(cat .current-collector-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "COLLECTOR_IMAGE=$v"
+    true
+  } >> "$tmp" || { rm -f "$tmp"; return 1; }
+  mv -f "$tmp" .env || { rm -f "$tmp"; return 1; }
+  log ".env image lines updated from the state files"
+}
+# <<< sync_env_images
+
 if [[ "$mode" == "--rollback" ]]; then
   prev="$(cat .previous-image 2>/dev/null || true)"; [[ -n "$prev" ]] || die "no previous image recorded"
   log "rollback to $prev"
@@ -221,6 +247,7 @@ if [[ "$mode" == "--rollback" ]]; then
   else
     record_deploy ok "rollback to $prev"
   fi
+  sync_env_images || log "WARN: .env image lines not updated (run deploy/release/release-deploy.sh --sync-env)"
   exit 0
 fi
 
@@ -277,6 +304,7 @@ if start_app "$new_image" && wait_healthy "$new_image"; then
     [[ -n "$prev_image" ]] && printf '%s' "$prev_image" > .previous-image
     printf '%s' "$new_image" > .current-image
   fi
+  printf '%s' "$migrator_image" > .current-migrator-image   # schema now matches this migrator (release-deploy.sh reads it)
   # Keep the last N app/migrator images for rollbacks, drop the rest and dangling layers.
   # Encoder next to the app (after the app is healthy, so a broken worker image never delays the site).
   # A start that failed is a warning and does NOT promote the image to .current-*-image (the state keeps the last version
@@ -298,9 +326,10 @@ if start_app "$new_image" && wait_healthy "$new_image"; then
     printf '%s' "$collector_image" > .current-collector-image
   fi
   readiness_check
+  sync_env_images || log "WARN: .env image lines not updated (run deploy/release/release-deploy.sh --sync-env)"
   # Never remove an image that a state file points at (current or previous, of any service), nor this deploy's images.
   protected=" $new_image $migrator_image $worker_image $collector_image $prev_image "
-  for state_file in .current-image .previous-image .current-worker-image .previous-worker-image .current-collector-image .previous-collector-image; do
+  for state_file in .current-image .previous-image .current-worker-image .previous-worker-image .current-collector-image .previous-collector-image .current-migrator-image; do
     protected+="$(cat "$state_file" 2>/dev/null || true) "
   done
   for repo in polutek-app polutek-migrator polutek-worker polutek-collector; do

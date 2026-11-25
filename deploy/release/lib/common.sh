@@ -24,6 +24,30 @@ jget() { node -e 'const d=JSON.parse(process.argv[1]); const v=(new Function("d"
 
 free_gb() { df -BG --output=avail "${1:-/}" | tail -n 1 | tr -dc '0-9'; }
 
+# Absolute path of an existing file (relative paths resolve against the CURRENT directory); prints nothing and
+# returns 1 when the file does not exist.
+abs_manifest() { local p; p="$(readlink -f -- "$1" 2>/dev/null)" && [[ -f "$p" ]] && printf '%s' "$p"; }
+
+# Work directories of release-build.sh (/run/release-build.XXXXXX: one-time SSH keys, build args). The build's trap
+# removes its own; after kill -9 or a crash they stay. Removed here when the build that owns one is gone:
+# its "pid" file names a process that no longer runs, or there is no pid file and the directory is older than 3 h.
+#   clean_stale_workdirs [--dry-run]   prints one line per removed (or, with --dry-run, removable) directory
+RB_WORK_ROOT="${RB_WORK_ROOT:-/run}"
+clean_stale_workdirs() {
+  local d pid dry="${1:-}"
+  for d in "$RB_WORK_ROOT"/release-build.*; do
+    [[ -d "$d" && ! -L "$d" ]] || continue
+    pid="$(cat "$d/pid" 2>/dev/null || true)"
+    if [[ "$pid" =~ ^[0-9]+$ ]]; then
+      kill -0 "$pid" 2>/dev/null && continue   # owner still running (a reused pid only delays the cleanup)
+    elif [[ -n "$(find "$d" -maxdepth 0 -mmin -180 2>/dev/null)" ]]; then
+      continue
+    fi
+    if [[ "$dry" == --dry-run ]]; then echo "stale work dir: $d"; else rm -rf -- "$d" && echo "removed stale work dir: $d"; fi
+  done
+  return 0
+}
+
 # Run the calling script detached from the terminal (survives a dropped SSH session) with a log file, and follow
 # the log. Ctrl+C stops only the follow, not the job. The job writes its exit code to "<log>.rc".
 #   detach_self <logfile> "$@"   (no-op when already detached or RELEASE_FOREGROUND=1)
