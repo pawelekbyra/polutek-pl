@@ -19,6 +19,7 @@ function fakeCtx() {
     notificationPreference: { findUnique: vi.fn(async () => ({ patronEnabled: false, commentEnabled: true, systemEnabled: true, newVideoInApp: false, newVideoEmail: false, moderationEnabled: true, updatedAt: new Date(0) })) },
     notification: { findMany: vi.fn(async () => [{ kind: "NEW_VIDEO", read: true, createdAt: new Date(0) }]) },
     patronGrant: { findMany: vi.fn(async () => [{ source: "STRIPE_TIP", createdAt: new Date(0), revokedAt: null }]) },
+    appSetting: { findUnique: vi.fn(async () => ({ value: null as string | null })) },
     userAvatar: { findUnique: vi.fn(async () => ({ mime: "image/png", data: Buffer.from([0x89, 0x50, 0x4e, 0x47]) })) },
     channelBanner: { findMany: vi.fn(async () => [{ channelId: "ch1", mime: "image/webp", data: Buffer.from("RIFFdataWEBP") }]) },
   };
@@ -30,7 +31,7 @@ describe("ExportOwnDataUseCase", () => {
     const { ctx, prisma } = fakeCtx();
     const data = await ExportOwnDataUseCase.execute(ctx, "u1");
 
-    expect(data.schemaVersion).toBe(1);
+    expect(data.schemaVersion).toBe(2);
     expect(data.exportedAt).toBe("2026-10-05T10:00:00.000Z");
     expect(data.account).toMatchObject({ id: "u1" });
     expect(data.comments).toHaveLength(1);
@@ -45,6 +46,7 @@ describe("ExportOwnDataUseCase", () => {
     expect(data.notificationPreferences).toMatchObject({ patronEnabled: false, newVideoInApp: false });
     expect(data.notifications).toEqual([{ kind: "NEW_VIDEO", read: true, createdAt: new Date(0) }]);
     expect(data.patronGrants).toEqual([{ source: "STRIPE_TIP", createdAt: new Date(0), revokedAt: null }]);
+    expect(data.patronPass).toBeNull();
     expect(data.mediaAttachments).toEqual([
       { type: "avatar", ownerId: "u1", mime: "image/png", dataBase64: "iVBORw==" },
       { type: "channel_banner", ownerId: "ch1", mime: "image/webp", dataBase64: "UklGRmRhdGFXRUJQ" },
@@ -119,5 +121,48 @@ describe("ExportOwnDataUseCase", () => {
 
     prisma.userAvatar.findUnique.mockResolvedValue({ mime: "image/png", data: Buffer.alloc(90_000) });
     await expect(ExportOwnDataUseCase.execute(ctx, "u1")).rejects.toMatchObject({ code: "OWN_DATA_IMAGE_INVALID" });
+  });
+
+  it("exports only portable patron-pass fields from the exact account AppSetting key", async () => {
+    const { ctx, prisma } = fakeCtx();
+    prisma.appSetting.findUnique.mockResolvedValue({ value: JSON.stringify({
+      v: 3,
+      provider: "STRIPE",
+      ref: "internal-ref",
+      productId: "ACCESS_30D",
+      priceMinor: 1499,
+      totalMinor: 1499,
+      currency: "PLN",
+      method: "card",
+      requestId: "c84fc6d5-6ae6-4b75-85f5-46b01dedf2ec",
+      paymentIds: ["payment-internal-id"],
+      lifetime: false,
+      lifetimePaymentId: null,
+      grantedAt: "2026-11-01T12:00:00.000Z",
+      expiresAt: "2026-12-01T12:00:00.000Z",
+      consents: { termsVersion: "patron-2026-10-draft", waiverAt: "2026-11-01T12:00:00.000Z" },
+    }) });
+
+    const data = await ExportOwnDataUseCase.execute(ctx, "u1");
+
+    expect(data.patronPass).toEqual({
+      provider: "STRIPE",
+      productId: "ACCESS_30D",
+      priceMinor: 1499,
+      totalMinor: 1499,
+      currency: "PLN",
+      method: "card",
+      grantedAt: "2026-11-01T12:00:00.000Z",
+      expiresAt: "2026-12-01T12:00:00.000Z",
+      consents: { termsVersion: "patron-2026-10-draft", waiverAt: "2026-11-01T12:00:00.000Z" },
+    });
+    expect(prisma.appSetting.findUnique).toHaveBeenCalledWith({
+      where: { key: "xp.premium_pass:u1" },
+      select: { value: true },
+    });
+
+    prisma.appSetting.findUnique.mockResolvedValue({ value: "not-json" });
+    const invalid = await ExportOwnDataUseCase.execute(ctx, "u1");
+    expect(invalid.patronPass).toBeNull();
   });
 });

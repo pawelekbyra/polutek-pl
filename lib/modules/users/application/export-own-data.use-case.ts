@@ -1,7 +1,8 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AVATAR_MAX_DATA_URL_CHARS } from "@/lib/auth/avatar";
-import { BANNER_MAX_DATA_URL_CHARS } from "@/lib/modules/channel/domain/channel-banner-limits";
+import { BANNER_MAX_DATA_URL_CHARS } from "@/lib/modules/channel";
 import { AppError } from "@/lib/modules/shared/app-error";
+import { exportOwnPassData } from "@/lib/modules/patron-zone";
 
 const EXPORT_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
@@ -23,7 +24,7 @@ function encodeOwnedImage(input: { type: "avatar" | "channel_banner"; ownerId: s
  */
 export interface OwnDataExport {
   /** Increment when the shape or meaning of this portable JSON contract changes. */
-  schemaVersion: 1;
+  schemaVersion: 2;
   exportedAt: string;
   account: Record<string, unknown> | null;
   comments: unknown[];
@@ -36,7 +37,7 @@ export interface OwnDataExport {
   videoProgress: { videoId: string; positionSeconds: number; durationSeconds: number | null; updatedAt: Date }[];
   /** Videos saved to the person's favorites. */
   videoFavorites: { videoId: string; createdAt: Date }[];
-  /** Profiles owned by this account; moderation internals and binary media are intentionally excluded. */
+  /** Profiles owned by this account; moderation internals are excluded and binary media is in mediaAttachments. */
   creatorProfiles: unknown[];
   /** This person's role and acceptance timestamps in channels they belong to. */
   channelMemberships: unknown[];
@@ -46,6 +47,8 @@ export interface OwnDataExport {
   notifications: { kind: string; read: boolean; createdAt: Date }[];
   /** The person's patron history, without internal reviewer IDs, reasons, or payment provider IDs. */
   patronGrants: unknown[];
+  /** Own patron-zone access summary, without request/payment references; null when no valid record exists. */
+  patronPass: Awaited<ReturnType<typeof exportOwnPassData>>;
   /** The person's own bounded avatar and channel-banner bytes, portable as Base64. */
   mediaAttachments: { type: "avatar" | "channel_banner"; ownerId: string; mime: string; dataBase64: string }[];
 }
@@ -53,7 +56,7 @@ export interface OwnDataExport {
 export class ExportOwnDataUseCase {
   static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
-    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, avatar] = await Promise.all([
+    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, creatorProfiles, channelMemberships, notificationPreferences, notifications, patronGrants, patronPass, avatar] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -123,6 +126,7 @@ export class ExportOwnDataUseCase {
         select: { source: true, createdAt: true, revokedAt: true },
         orderBy: { createdAt: "asc" },
       }),
+      exportOwnPassData(ctx, userId),
       prisma.userAvatar.findUnique({ where: { userId }, select: { mime: true, data: true } }),
     ]);
 
@@ -143,7 +147,7 @@ export class ExportOwnDataUseCase {
     ];
 
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: ctx.now().toISOString(),
       account: user,
       comments,
@@ -162,6 +166,7 @@ export class ExportOwnDataUseCase {
       notificationPreferences,
       notifications,
       patronGrants,
+      patronPass,
       mediaAttachments,
     };
   }
