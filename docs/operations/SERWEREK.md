@@ -218,7 +218,12 @@ Co robi `deploy.sh <tag>` (kolejność z kodu):
 3. `prisma migrate deploy` w jednorazowym kontenerze `migrate`: błąd = aplikacja NIE jest restartowana;
 4. startuje `app` na nowym obrazie i czeka na `healthy` (150 s); gdy nie wstanie, wraca do poprzedniego obrazu (`.previous-image`) i kończy kodem 1;
 5. po zdrowej aplikacji startuje `encoder` i `collector` (best effort), zapisuje znaczniki `.current-*` / `.previous-*`, zostawia 3 ostatnie obrazy, czyści obrazy wiszące i cache budowania (limit `BUILD_CACHE_KEEP`, domyślnie 12 GB);
-6. odświeża `/opt/serwerek/docs` (z `src/docs`, `CLAUDE.md`, `AGENTS.md`, `README.md`) i `/opt/serwerek/README.md` (z `deploy/serwerek/SERVER-README.md`), best effort;
+6. odświeża `/opt/serwerek/docs` (z `src/docs`, `CLAUDE.md`, `AGENTS.md`, `README.md`) i `/opt/serwerek/README.md` (z `deploy/serwerek/SERVER-README.md`), best effort.
+   Pliki z repo nadpisują swoje kopie. **Pliki, których nie ma w repo (zapisane tylko na serwerze), nie są kasowane**:
+   domyślnie (`DOCS_SYNC_MODE=keep`) zostają na miejscu, a ich lista trafia do logu deployu i do `/opt/serwerek/docs.sync.log`;
+   z `DOCS_SYNC_MODE=archive ./deploy.sh <tag>` są najpierw kopiowane do `/opt/serwerek/docs.removed-<czas UTC>/` (te same ścieżki,
+   lista w `REMOVED.txt`, sprawdzone `cmp`), dopiero potem usuwane z `docs`. Do 2026-11 ten krok kasował cały katalog i takie pliki ginęły.
+   Test: `node --test deploy/serwerek/test/*.test.mjs`. Trwałe notatki i tak zapisuj w repo (`docs/`), kopia na serwerze jest do czytania;
 7. zapisuje wynik w `telemetry.job_run` jako zadanie `deploy`.
 
 Wynik skryptu przekieruj do pliku (`./deploy.sh <tag> 2>&1 | tee deploy-<tag>.log`) i uruchom w `tmux`, żeby przeżył zerwanie połączenia.

@@ -20,6 +20,8 @@
 #   = app live, but encoder/collector did not start, or the readiness check failed; the warning is also in telemetry.job_run
 #   (status ok, detail "... WITH WARNINGS ..."; the table allows only running|ok|fail) and a failed worker/collector start does
 #   NOT promote that image to .current-*-image.
+# Docs: after a healthy deploy /opt/serwerek/docs gets the docs of the commit; files that exist only on the server are kept
+#   (DOCS_SYNC_MODE=keep, default) or moved to /opt/serwerek/docs.removed-<time>/ (DOCS_SYNC_MODE=archive), never deleted.
 # State: .current-image / .previous-image (image refs). --rollback restores CODE only, never the schema. Migrations were additive until
 # 20261005210000_cleanup_dead_schema (destructive): after such a migration the previous image may select dropped columns and fail,
 # so roll back by restoring the pre-deploy dump (docs/architecture/db-cleanup-2026-10-05.md).
@@ -141,6 +143,62 @@ readiness_check() {
   done
 }
 
+# >>> sync_docs (keep this marker pair: deploy/serwerek/test/deploy-docs-sync.test.mjs runs the function between them)
+# Copy the human-readable docs of the deployed commit (src/docs plus the root CLAUDE.md, AGENTS.md, README.md) to
+# DOCS_DIR, and deploy/serwerek/SERVER-README.md to SERVER_README. Files the commit has overwrite their server copies.
+# Files that exist ONLY on the server (notes written there by people or agents) are never lost. Until 2026-11 this
+# step replaced the whole directory (rm -rf + mv) and such files disappeared. Now:
+#   DOCS_SYNC_MODE=keep (default)  server-only files stay where they are; they are listed in the deploy log.
+#   DOCS_SYNC_MODE=archive         server-only files are first copied to <DOCS_DIR>.removed-<UTC time>/ (same relative
+#                                  paths, list in REMOVED.txt), checked with cmp, and only then removed from DOCS_DIR.
+# Either way every server-only file gets a line "<time> <mode> <path>" in <DOCS_DIR>.sync.log.
+# Return 1 (the caller only warns) when the copy fails; nothing is deleted then.
+sync_docs() { # $1 = source tree (git archive of the deployed commit)
+  local src="$1" docs="${DOCS_DIR:-/opt/serwerek/docs}" readme="${SERVER_README:-/opt/serwerek/README.md}"
+  local mode="${DOCS_SYNC_MODE:-keep}" stamp stage extra n=0 f arch failed=0
+  [[ -d "$src/docs" ]] || return 0
+  case "$mode" in keep|archive) ;; *) log "WARN: DOCS_SYNC_MODE=$mode is unknown, using keep"; mode=keep ;; esac
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  mkdir -p "$docs" || return 1
+  stage="$(mktemp -d "$docs.new.XXXXXX")" || return 1
+  if ! cp -a "$src/docs/." "$stage/"; then rm -rf "$stage"; return 1; fi
+  for f in CLAUDE.md AGENTS.md README.md; do
+    if [[ -f "$src/$f" ]]; then cp -f "$src/$f" "$stage/" || { rm -rf "$stage"; return 1; }; fi
+  done
+  # Relative paths present on the server but not in the commit (one per line; names with a newline are not supported).
+  extra="$(LC_ALL=C comm -23 \
+    <(cd "$docs" && find . \( -type f -o -type l \) -print | sed 's|^\./||' | LC_ALL=C sort) \
+    <(cd "$stage" && find . \( -type f -o -type l \) -print | sed 's|^\./||' | LC_ALL=C sort))" || { rm -rf "$stage"; return 1; }
+  [[ -n "$extra" ]] && n="$(printf '%s\n' "$extra" | wc -l)"
+  if (( n > 0 )); then
+    log "docs: $n file(s) in $docs are not in the repo (mode $mode):"
+    while IFS= read -r f; do
+      log "  $f"
+      printf '%s %s %s\n' "$stamp" "$mode" "$f" >> "$docs.sync.log"
+    done <<<"$extra"
+    if [[ "$mode" == archive ]]; then
+      arch="$docs.removed-$stamp"
+      mkdir -p "$arch" || { rm -rf "$stage"; return 1; }
+      while IFS= read -r f; do
+        if mkdir -p "$arch/$(dirname "$f")" && cp -a "$docs/$f" "$arch/$f" \
+          && { [[ -L "$docs/$f" ]] || cmp -s "$docs/$f" "$arch/$f"; }; then
+          rm -f "$docs/$f"; printf '%s\n' "$f" >> "$arch/REMOVED.txt"
+        else
+          failed=1; log "WARN: docs: could not archive $f, left in place"
+        fi
+      done <<<"$extra"
+      find "$docs" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+      log "docs: server-only files archived in $arch (list: $arch/REMOVED.txt)"
+    fi
+  fi
+  if ! cp -a "$stage/." "$docs/"; then rm -rf "$stage"; return 1; fi
+  rm -rf "$stage"
+  if [[ -f "$src/deploy/serwerek/SERVER-README.md" ]]; then cp -f "$src/deploy/serwerek/SERVER-README.md" "$readme" || return 1; fi
+  log "docs synced to $docs (mode $mode, $n server-only file(s) $([[ $mode == archive ]] && echo archived || echo kept))"
+  (( failed == 0 ))
+}
+# <<< sync_docs
+
 if [[ "$mode" == "--rollback" ]]; then
   prev="$(cat .previous-image 2>/dev/null || true)"; [[ -n "$prev" ]] || die "no previous image recorded"
   log "rollback to $prev"
@@ -256,15 +314,9 @@ if start_app "$new_image" && wait_healthy "$new_image"; then
   docker builder prune -f --keep-storage "$BUILD_CACHE_KEEP" >/dev/null 2>&1 || true
   # Keep the human-readable documentation on the server in step with the deployed commit (docs/ plus the root guides and
   # the server README). Best effort: a failure here never affects the deploy.
+  # Files that exist only on the server are never deleted (sync_docs above, DOCS_SYNC_MODE).
   if [[ -d src/docs ]]; then
-    {
-      rm -rf /opt/serwerek/docs.new && mkdir /opt/serwerek/docs.new \
-        && cp -a src/docs/. /opt/serwerek/docs.new/ \
-        && cp -f src/CLAUDE.md src/AGENTS.md src/README.md /opt/serwerek/docs.new/ 2>/dev/null \
-        && { [[ -f src/deploy/serwerek/SERVER-README.md ]] && cp -f src/deploy/serwerek/SERVER-README.md /opt/serwerek/README.md; true; } \
-        && rm -rf /opt/serwerek/docs && mv /opt/serwerek/docs.new /opt/serwerek/docs \
-        && log "docs synced to /opt/serwerek/docs"
-    } || log "WARN: docs sync failed (ignored)"
+    sync_docs src || log "WARN: docs sync failed (ignored)"
   fi
   if (( ${#warnings[@]} )); then
     record_deploy ok "live on $new_image WITH WARNINGS: ${warnings[*]}"
