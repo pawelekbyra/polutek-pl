@@ -1,10 +1,12 @@
-# Aktualizacja Better Auth 1.7.7 → 1.7.28 (paczka D3)
+# Aktualizacja Better Auth 1.7.7 → 1.7.26 (paczka D3)
 
 ## Co się zmienia
-- `better-auth` i `@better-auth/passkey` 1.7.7 → 1.7.28 (ostatnie wydanie 1.7.x; 1.8 to dopiero beta), razem z nimi
-  `@better-auth/core` 1.7.28, `better-call` 1.4.0 → 1.4.6, `@better-auth/utils` 0.4.2 → 0.5.1, `@better-fetch/fetch` 1.3.3.
-- `@better-auth/utils` jest teraz wpisany wprost do `package.json`, bo panel admina importuje z niego kod TOTP.
-- Override `better-call → zod: $zod` zostaje bez zmian. Bez dodatkowych sztywnych przypięć wersji.
+- `better-auth`, `@better-auth/core` i `@better-auth/passkey` 1.7.7 → 1.7.26, przypięte dokładnie (bez `^`), żeby
+  zawsze była jedna kopia core. 1.7.26 (18.11) to najnowsze 1.7.x sprzed około tygodnia; nowsze 1.7.27–1.7.28 celowo pomijamy.
+  Zgodnie z ich zależnościami: `better-call` 1.4.0 → 1.4.6, `@better-auth/utils` 0.4.2 → 0.5.1, `@better-fetch/fetch` 1.3.3.
+- `@better-auth/utils` (0.5.1) i `@better-auth/core` są wpisane wprost do `package.json` (panel admina importuje
+  z utils kod TOTP). Przy następnej aktualizacji zmień razem trzy wersje 1.7.x i sprawdź utils.
+- Override `better-call → zod: $zod` zostaje bez zmian.
 - **Schemat bazy bez zmian**: tabele User, Session, Account, Verification, TwoFactor, Passkey (i Admin*) są
   w obu wersjach identyczne. Nie ma migracji Prisma.
 - Kod aplikacji bez zmian. Dochodzi test `tests/unit/auth/better-auth-upgrade-contract.test.ts`, który uruchamia
@@ -13,7 +15,7 @@
 
 ## Zmiany w bibliotece, które nas dotyczą (same poprawki błędów)
 - Sesje: `revoke-session` i usunięcie konta kasują ciasteczko; `getSession` nie zostawia wygasłej sesji.
-- 2FA: po wygaśnięciu wyzwania kod nie jest już liczony jako błędna próba; kody zapasowe czytają świeży stan.
+- 2FA: po wygaśnięciu wyzwania kod nie jest już liczony jako błędna próba.
 - Passkey: oczekiwany origin pochodzi wyłącznie z konfiguracji (my i tak go podajemy), `userVerification:
   "required"` w panelu admina jest teraz egzekwowane przez samą bibliotekę (my sprawdzamy to też sami).
 - Linki weryfikacji e-mail i zmiany adresu działają tylko dla konta, dla którego je wysłano.
@@ -21,7 +23,7 @@
 - Google One Tap: poprawki obsługi FedCM. OAuth: brak błędu `state_mismatch` przy zmianie czasu (DST).
 - `better-call`: ciasteczka `__Host-`/`__Secure-` zawsze dostają wymagane atrybuty (u nas już je mają);
   dokładne dopasowanie `Content-Type` (nasz klient wysyła `application/json`).
-- Bezpieczeństwo: znane advisories (GHSA) nie dotyczą ani 1.7.7, ani 1.7.28. Alarm z `npm audit` z 08.11
+- Bezpieczeństwo: znane advisories (GHSA) nie dotyczą ani 1.7.7, ani 1.7.26. Alarm z `npm audit` z 08.11
   szedł przez stary Zod 3 w `better-call`; zniknął po wejściu Zod 4 do main.
 
 ## Ryzyka
