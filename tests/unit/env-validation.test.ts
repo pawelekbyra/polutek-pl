@@ -183,4 +183,12 @@ describe('validateAppEnv under Zod 4', () => {
 
     expect(result.errors).toContain('REFERRAL_PATRON_THRESHOLD must be greater than zero.');
   });
+
+  it("does not require REFERRAL_PATRON_THRESHOLD (dead referral programme), but still validates it when set", () => {
+    const { REFERRAL_PATRON_THRESHOLD: _omitted, ...withoutThreshold } = serverLikeEnv;
+    const result = validateAppEnv(withoutThreshold, "production");
+
+    expect(result.errors).toEqual([]);
+    expect(result.success).toBe(true);
+  });
 });
