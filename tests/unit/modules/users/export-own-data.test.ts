@@ -11,6 +11,8 @@ function fakeCtx() {
     commentReaction: find([]),
     subscription: find([]),
     emailPreference: find([]),
+    broadcastEmailRecipient: { findMany: vi.fn(async () => [{ language: "pl", status: "DELIVERED", sentAt: new Date(0), deliveredAt: new Date(1000), openedAt: null, clickedAt: null, bouncedAt: null, complainedAt: null, createdAt: new Date(0), updatedAt: new Date(1000) }]) },
+    emailEvent: { findMany: vi.fn(async () => [{ type: "delivered", status: "PROCESSED", processedAt: new Date(1000), createdAt: new Date(0), updatedAt: new Date(1000) }]) },
     payment: find([{ id: "p1", amountMinor: 500, currency: "PLN", status: "SUCCEEDED" }]),
     videoFavorite: find([{ videoId: "v3", createdAt: new Date(0) }]),
     videoView: { findMany: vi.fn(async () => [{ videoId: "v-view", createdAt: new Date(0) }]) },
@@ -34,12 +36,14 @@ describe("ExportOwnDataUseCase", () => {
     const { ctx, prisma } = fakeCtx();
     const data = await ExportOwnDataUseCase.execute(ctx, "u1");
 
-    expect(data.schemaVersion).toBe(3);
+    expect(data.schemaVersion).toBe(4);
     expect(data.exportedAt).toBe("2026-10-05T10:00:00.000Z");
     expect(data.account).toMatchObject({ id: "u1" });
     expect(data.comments).toHaveLength(1);
     expect(data.videoReactions.map((r) => r.type).sort()).toEqual(["dislike", "like"]);
     expect(data.payments).toHaveLength(1);
+    expect(data.broadcastEmailRecipients).toHaveLength(1);
+    expect(data.emailEvents).toEqual([{ type: "delivered", status: "PROCESSED", processedAt: new Date(1000), createdAt: new Date(0), updatedAt: new Date(1000) }]);
     expect(data.videoProgress).toEqual([
       { videoId: "v1", positionSeconds: 120, durationSeconds: 600, updatedAt: new Date(0) },
     ]);
@@ -61,6 +65,14 @@ describe("ExportOwnDataUseCase", () => {
     expect(prisma.comment.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { authorId: "u1" } }));
     expect(prisma.payment.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.emailPreference.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
+    expect(prisma.broadcastEmailRecipient.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId: "u1" },
+      select: expect.not.objectContaining({ id: true, email: true, resendEmailId: true, broadcastEmailId: true, error: true, attemptCount: true }),
+    }));
+    expect(prisma.emailEvent.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId: "u1" },
+      select: expect.not.objectContaining({ id: true, email: true, payload: true, error: true, providerEventId: true, resendEmailId: true }),
+    }));
     expect(prisma.videoProgress.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.videoFavorite.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.videoView.findMany).toHaveBeenCalledWith({
@@ -97,6 +109,9 @@ describe("ExportOwnDataUseCase", () => {
     const selects = JSON.stringify([
       prisma.user.findUnique.mock.calls,
       prisma.comment.findMany.mock.calls,
+      prisma.emailPreference.findMany.mock.calls,
+      prisma.broadcastEmailRecipient.findMany.mock.calls,
+      prisma.emailEvent.findMany.mock.calls,
       prisma.payment.findMany.mock.calls,
       prisma.creator.findMany.mock.calls,
       prisma.channelMember.findMany.mock.calls,
@@ -109,7 +124,7 @@ describe("ExportOwnDataUseCase", () => {
       prisma.userAvatar.findUnique.mock.calls,
       prisma.channelBanner.findMany.mock.calls,
     ]);
-    expect(selects).not.toMatch(/password|token|secret|ipAddress|userAgent|ipHash|userAgentHash|metadata|errorMessage|stripeCustomerId|stripeIntentId|statusReason|statusChangedById|statusDecisionId|grantedById|revokeReason|paymentId/i);
+    expect(selects).not.toMatch(/password|token|secret|ipAddress|userAgent|ipHash|userAgentHash|metadata|errorMessage|payload|providerEventId|resendEmailId|broadcastEmailId|stripeCustomerId|stripeIntentId|statusReason|statusChangedById|statusDecisionId|grantedById|revokeReason|paymentId/i);
   });
 
   it("keeps the notification-preferences category explicit when no preference row exists", async () => {
