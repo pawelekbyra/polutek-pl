@@ -13,4 +13,5 @@ export * from "./application/patron-checkout.use-case";
 export * from "./application/preview-payment-methods.use-case";
 export * from "./application/patron-grant";
 export * from "./application/vip-status";
+export * from "./application/effective-pass";
 export * from "./application/demo-controls.use-case";

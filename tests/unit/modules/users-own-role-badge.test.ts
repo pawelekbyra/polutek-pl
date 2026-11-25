@@ -13,7 +13,7 @@ const vipRow = (userId: string, provider = "STRIPE") => ({
   }),
 });
 
-function ctxWith(opts: { channel?: boolean; rows?: Array<{ key: string; value: string }>; failVip?: boolean }) {
+function ctxWith(opts: { channel?: boolean; rows?: Array<{ key: string; value: string }>; failVip?: boolean; disputed?: string[] }) {
   const creator = { findFirst: vi.fn(async () => (opts.channel ? { id: "c1" } : null)) };
   const appSetting = {
     findMany: vi.fn(async ({ where }: { where: { key: { in: string[] } } }) => {
@@ -21,7 +21,11 @@ function ctxWith(opts: { channel?: boolean; rows?: Array<{ key: string; value: s
       return (opts.rows ?? []).filter((row) => where.key.in.includes(row.key));
     }),
   };
-  return { ctx: { prisma: { creator, appSetting } as never, now: () => NOW }, creator, appSetting };
+  const payment = {
+    findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+      where.id.in.filter((id) => (opts.disputed ?? []).includes(id)).map((id) => ({ id, metadata: { purpose: "premium_pass", productId: "ACCESS_30D" } }))),
+  };
+  return { ctx: { prisma: { creator, appSetting, payment } as never, now: () => NOW }, creator, appSetting };
 }
 
 describe("getOwnRoleBadge (top bar avatar ring)", () => {
@@ -31,6 +35,10 @@ describe("getOwnRoleBadge (top bar avatar ring)", () => {
 
   it("an active paid access is VIP", async () => {
     expect(await getOwnRoleBadge(ctxWith({ rows: [vipRow("u1")] }).ctx, "u1")).toBe("VIP");
+  });
+
+  it("an access whose payment is in an open or lost dispute gives no VIP ring (same rule as the comment badge)", async () => {
+    expect(await getOwnRoleBadge(ctxWith({ rows: [vipRow("u1")], disputed: ["pay_1"] }).ctx, "u1")).toBe("BASE");
   });
 
   it("someone else's access does not count, and a simulated checkout gives no VIP", async () => {

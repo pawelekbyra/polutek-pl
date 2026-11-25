@@ -1,7 +1,7 @@
 // patron zone (docs/architecture/patron-zone.md)
 // The patron-zone access grant of one account and its state. Pure: no I/O, safe on the client.
 import { z } from "zod";
-import { PATRON_CURRENCIES, PATRON_CURRENCY, PATRON_MAX_AHEAD_DAYS, PLAN_DURATIONS, type PatronProduct, type PlanDuration } from "./config";
+import { PATRON_CURRENCIES, PATRON_CURRENCY, PATRON_MAX_AHEAD_DAYS, PLAN_DURATIONS, patronProduct, type PatronProduct, type PlanDuration } from "./config";
 
 /** Methods the demo checkout offers (the Stripe flow uses Stripe's own method ids, any string). */
 export const PASS_METHODS = ["blik", "card", "apple_pay", "google_pay", "p24"] as const;
@@ -172,6 +172,29 @@ export function addPlanDuration(date: Date, duration: PlanDuration): Date {
 /** `date` minus one plan length (a full refund takes the refunded payment back out of the end date). */
 export function subtractPlanDuration(date: Date, duration: PlanDuration): Date {
   return duration.months !== undefined ? addMonths(date, -duration.months) : addDays(date, -duration.days);
+}
+
+/** One payment of a grant whose period does not count now: its dispute is open (DISPUTED) or was lost (CHARGEBACK_LOST). */
+export type HeldPassPayment = { paymentId: string; productId: string };
+
+/**
+ * The access as it counts NOW (owner decision DP01, 2026-11-25): the stored end date minus the period (30 days or 3
+ * months, by product) of every payment of this grant that a dispute holds. An open dispute only suspends: the stored
+ * record is never changed for it, so when the dispute is won (the payment is SUCCEEDED again) the access is back by
+ * itself, with its original end. A lost dispute is also taken out of the stored record (revokePatronAccessForPayment).
+ * Payments that are not part of the record are ignored; an unknown product cannot be measured and fails closed (no
+ * access). Pure: the result is only compared with "now", never written.
+ */
+export function withoutHeldPayments(record: PassRecord, held: readonly HeldPassPayment[]): PassRecord {
+  const own = held.filter((payment) => record.paymentIds.includes(payment.paymentId));
+  if (own.length === 0 || record.expiresAt === null) return record;
+  let end = new Date(record.expiresAt);
+  for (const payment of own) {
+    const product = patronProduct(payment.productId);
+    if (!product) return { ...record, expiresAt: record.grantedAt };
+    end = subtractPlanDuration(end, product.duration);
+  }
+  return { ...record, expiresAt: end.toISOString() };
 }
 
 /** Where the new end of the access lands: the current end when still active, else now; plus the plan length (extension, never overwrite). */

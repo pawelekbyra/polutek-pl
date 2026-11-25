@@ -21,6 +21,7 @@ import {
 import { buildPremiumPassOffer, type PremiumPassOffer } from "../domain/offer";
 import { countFunnelEvent, readPass, writePass } from "../infrastructure/pass-store";
 import { listPremiumPassVideos, passUserId } from "./pass-access";
+import { readEffectivePass } from "./effective-pass";
 
 export const checkoutDemoInputSchema = z
   .object({
@@ -60,7 +61,8 @@ export async function getPremiumPassStatus(ctx: Pick<AppContext, "prisma" | "act
   const userId = passUserId(ctx.actor);
   if (!userId) return { ok: false, code: "UNAUTHORIZED" };
   const now = ctx.now();
-  const [videos, record] = await Promise.all([listPremiumPassVideos(ctx, config, now), readPass(ctx.prisma, userId)]);
+  // The access as it counts now (a payment in an open or lost dispute gives none), like the playback gate.
+  const [videos, record] = await Promise.all([listPremiumPassVideos(ctx, config, now), readEffectivePass(ctx.prisma, userId, now)]);
   const state = passStateOf(record, now);
   return {
     ok: true,

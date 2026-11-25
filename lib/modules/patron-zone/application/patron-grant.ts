@@ -76,9 +76,11 @@ export async function grantPatronAccessForPayment(tx: WriteTx, input: GrantInput
 }
 
 /**
- * A payment was refunded in full: that payment's period (30 days or 3 months, by its product) leaves the end date, never
- * below "now" (so a refund of the only payment ends the access at once). A partial refund, a dispute and a refund that
- * failed later are handled by the owner by hand (docs/architecture/patron-zone.md); only the full refund is automatic.
+ * A payment was refunded in full or its dispute was lost: that payment's period (30 days or 3 months, by its product)
+ * leaves the end date, never below "now" (so losing the only payment ends the access at once). Idempotent: a payment id
+ * is taken out at most once. An OPEN dispute does not come here: it only suspends the access while the payment is
+ * DISPUTED (readEffectivePass), so a won dispute brings it back without any write. A partial refund keeps the access;
+ * a refund that failed later is handled by the owner by hand (docs/architecture/patron-zone.md).
  */
 export async function revokePatronAccessForPayment(
   tx: WriteTx,

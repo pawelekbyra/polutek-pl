@@ -6,7 +6,7 @@ import { isPremiumPassVideo, premiumPassFor, type PremiumPassConfig, type Premiu
 import { passStateOf, type PassState } from "../domain/pass-state";
 import { buildPremiumPassOffer, type PremiumPassOffer } from "../domain/offer";
 import { resolvePremiumPayments, toPremiumPaymentsDto } from "../domain/payments-mode";
-import { readPass } from "../infrastructure/pass-store";
+import { readEffectivePass } from "./effective-pass";
 
 /** `activeUntil`: the end of the running access (ISO); no access is unlimited. */
 export type PremiumPassGate = { denied: true } | { activeUntil: string } | null;
@@ -15,10 +15,13 @@ export function passUserId(actor: Actor): string | null {
   return actor.type === "user" || actor.type === "admin" ? actor.userId : null;
 }
 
-/** The viewer's own patron-zone access state (guests: none). */
+/**
+ * The viewer's own patron-zone access state (guests: none), as it counts now: a payment whose dispute is open or lost
+ * gives no access (readEffectivePass), so the gate, the sidebar, the shelf and the home page all follow the dispute.
+ */
 export async function viewerPassState(ctx: Pick<AppContext, "prisma" | "actor">, now: Date): Promise<PassState> {
   const userId = passUserId(ctx.actor);
-  return userId ? passStateOf(await readPass(ctx.prisma, userId), now) : { state: "none" };
+  return userId ? passStateOf(await readEffectivePass(ctx.prisma, userId, now), now) : { state: "none" };
 }
 
 /**

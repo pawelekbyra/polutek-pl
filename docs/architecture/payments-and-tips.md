@@ -37,7 +37,11 @@ potwierdzenie w Stripe.js -> płatność udana w Stripe
   Zwroty administratora mają klucz idempotencji i zawsze trafiają do audytu.
 - **Zwroty i spory są szeregowane blokadą wiersza `Payment`** (`lockPaymentRow`, `SELECT … FOR UPDATE`) w `handleRefund`, `handleDispute` i `sync-refunds`; stan jest czytany ponownie po blokadzie.
   Przegrany spór (`CHARGEBACK_LOST`) zdejmuje z `UserPaymentTotal` całą niezwróconą część płatności, więc późniejszy zwrot zapisuje tylko kwotę zwrotu i nie odejmuje drugi raz (suma nie zależy od kolejności zdarzeń).
-  Testy: `tests/postgres/payments.pg.test.ts`; test ręczny w Stripe test-mode: `../operations/PAYMENTS-REFUND-DISPUTE-TEST-PLAN.md`.
+  Spór wygrany na płatności zwróconej w czasie sporu w całości kończy się statusem `REFUNDED` (wcześniej `PARTIALLY_REFUNDED`).
+- **Spory a dostęp Premium (DP01, 2026-11-25):** płatność Premium w statusie `DISPUTED` (spór otwarty) albo `CHARGEBACK_LOST` (przegrany) nie daje dostępu ani plakietki VIP;
+  dostęp jest liczony z aktualnego statusu (`readEffectivePass` w strefie patrona), więc wygrany spór (powrót do `SUCCEEDED`) przywraca go bez ręcznej pracy.
+  Przegrany spór dodatkowo zdejmuje okres tej wpłaty z zapisanego dostępu (`revokePatronAccessForPayment`, jak pełny zwrot). Zwrot częściowy dostępu nie zmienia. Szczegóły: `patron-zone.md`.
+  Testy: `tests/postgres/payments.pg.test.ts`, `tests/postgres/premium-pass-disputes.pg.test.ts`; test ręczny w Stripe test-mode: `../operations/PAYMENTS-REFUND-DISPUTE-TEST-PLAN.md`.
 - **Szybka ścieżka powrotu:** `getOwnedPaymentStatus()` (`GET /api/payments/[paymentId]`) dla własnej, nadal `PENDING` płatności z `stripeIntentId` pyta Stripe i przy `succeeded` woła `fulfillPayment()`;
   sprawdza też wiersze `FAILED`/`CANCELED`. Błąd Stripe/sieci jest połykany (wraca zwykłe odpytywanie): to najlepszy wysiłek, nie nowe źródło prawdy.
 - **Komunikat na stronie powrotu ufa sygnałowi Stripe.** `useCheckoutFlow` czyta `redirect_status`: `succeeded` (lub brak przy zwykłej karcie) pokazuje pełne podziękowanie od razu, `failed` ekran porażki,
@@ -70,4 +74,4 @@ Opis i źródło danych (liczy wszystkie udane napiwki kanału): `premieres-and-
 
 Za przełącznikiem `PREMIUM_PASS_PAYMENTS=stripe` (domyślnie `demo`, bez pieniędzy) ten sam stos obsługuje też prawdziwą płatność za dostęp do strefy patrona: `createCheckoutIntent({ purpose: "premium_pass" })`, ten sam webhook,
 szybka ścieżka i cron. Płatność ma `metadata.purpose = "premium_pass"` (wiersz `Payment` i PaymentIntent). `fulfillPayment()` dla niej zamiast znacznika wspierającego i maila napiwkowego przyznaje dostęp
-(`AppSetting xp.premium_pass:<userId>`, w tej samej transakcji), pełny zwrot zdejmuje jej 30 dni, a pasek zbiórki jej nie liczy (to sprzedaż, nie napiwek). Pełny opis, limity i włączanie: `patron-zone.md`; braki przed prawdziwą sprzedażą: `patron-zone-audit.md`.
+(`AppSetting xp.premium_pass:<userId>`, w tej samej transakcji), pełny zwrot zdejmuje jej okres (30 dni albo 3 miesiące), spór otwarty go zawiesza, przegrany odbiera, a pasek zbiórki jej nie liczy (to sprzedaż, nie napiwek). Pełny opis, limity i włączanie: `patron-zone.md`; braki przed prawdziwą sprzedażą: `patron-zone-audit.md`.
