@@ -1,4 +1,18 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { AVATAR_MAX_DATA_URL_CHARS } from "@/lib/auth/avatar";
+import { BANNER_MAX_DATA_URL_CHARS } from "@/lib/modules/channel/domain/channel-banner-limits";
+import { AppError } from "@/lib/modules/shared/app-error";
+
+const EXPORT_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+function encodeOwnedImage(input: { type: "avatar" | "channel_banner"; ownerId: string; mime: string; data: Uint8Array }, maxDataUrlChars: number) {
+  const data = Buffer.from(input.data);
+  const dataUrlChars = `data:${input.mime};base64,`.length + Math.ceil(data.byteLength / 3) * 4;
+  if (!EXPORT_IMAGE_MIMES.has(input.mime) || dataUrlChars > maxDataUrlChars) {
+    throw new AppError("Stored image cannot be safely exported", 500, "OWN_DATA_IMAGE_INVALID");
+  }
+  return { type: input.type, ownerId: input.ownerId, mime: input.mime, dataBase64: data.toString("base64") };
+}
 
 /**
  * Everything the service keeps about one account, as plain JSON the person can take with them
@@ -30,12 +44,14 @@ export interface OwnDataExport {
   notificationPreferences: unknown | null;
   /** The person's patron history, without internal reviewer IDs, reasons, or payment provider IDs. */
   patronGrants: unknown[];
+  /** The person's own bounded avatar and channel-banner bytes, portable as Base64. */
+  mediaAttachments: { type: "avatar" | "channel_banner"; ownerId: string; mime: string; dataBase64: string }[];
 }
 
 export class ExportOwnDataUseCase {
   static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
-    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, creatorProfiles, channelMemberships, notificationPreferences, patronGrants] = await Promise.all([
+    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites, creatorProfiles, channelMemberships, notificationPreferences, patronGrants, avatar] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -100,7 +116,24 @@ export class ExportOwnDataUseCase {
         select: { source: true, createdAt: true, revokedAt: true },
         orderBy: { createdAt: "asc" },
       }),
+      prisma.userAvatar.findUnique({ where: { userId }, select: { mime: true, data: true } }),
     ]);
+
+    const banners = creatorProfiles.length === 0
+      ? []
+      : await prisma.channelBanner.findMany({
+          where: { channelId: { in: creatorProfiles.map((profile) => profile.id) } },
+          select: { channelId: true, mime: true, data: true },
+          orderBy: { channelId: "asc" },
+        });
+
+    const mediaAttachments = [
+      ...(avatar ? [encodeOwnedImage({ type: "avatar", ownerId: userId, ...avatar }, AVATAR_MAX_DATA_URL_CHARS)] : []),
+      ...banners.map((banner) => encodeOwnedImage(
+        { type: "channel_banner", ownerId: banner.channelId, ...banner },
+        BANNER_MAX_DATA_URL_CHARS,
+      )),
+    ];
 
     return {
       schemaVersion: 1,
@@ -121,6 +154,7 @@ export class ExportOwnDataUseCase {
       channelMemberships,
       notificationPreferences,
       patronGrants,
+      mediaAttachments,
     };
   }
 }
