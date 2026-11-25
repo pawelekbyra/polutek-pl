@@ -1,4 +1,4 @@
-// patron zone (docs/architecture/patron-zone.md): the BODY of the DRAFT "Patron Zone Terms". One source of the text for
+// patron zone (docs/architecture/patron-zone.md): the BODY of the DRAFT "Premium Zone Terms". One source of the text for
 // the standalone page (PassTermsPage) and for the legal sheet opened from inside the checkout (LegalSheet), so the legal
 // wording exists once. No hooks and no data fetching: callers pass the translator, the language and the payments mode.
 import type { ReactNode } from "react";
@@ -10,7 +10,7 @@ import { PATRON_SUPPORT_EMAIL, price, sellerLine, vatTermsNote } from "./pass-co
 
 /** The draft's own title (the page h1 and the sheet title). */
 export function passTermsTitle(tx: Tx): string {
-  return tx("Regulamin strefy patrona (projekt)", "Patron Zone Terms (draft)");
+  return tx("Regulamin Strefy Premium (projekt)", "Premium Zone Terms (draft)");
 }
 
 export function PassTermsContent({ tx, locale, demo, termsLink }: { tx: Tx; locale: Locale; demo: boolean; termsLink: ReactNode }) {
@@ -19,16 +19,16 @@ export function PassTermsContent({ tx, locale, demo, termsLink }: { tx: Tx; loca
       <p className="text-[15px] leading-relaxed">
         {demo
           ? tx(
-              "To jest projekt regulaminu i pokaz sprzedaży dostępu do strefy patrona. Żadna umowa nie jest zawierana, a nic nie jest pobierane. Właściwy regulamin powstanie razem z prawnikiem przed prawdziwą sprzedażą.",
-              "This is a draft of the terms and a preview of how access to the patron zone would be sold. No contract is made and nothing is charged. The real terms will be written with a lawyer before any real sale.",
+              "To jest projekt regulaminu i pokaz sprzedaży dostępu do Strefy Premium. Żadna umowa nie jest zawierana, a nic nie jest pobierane. Właściwy regulamin powstanie razem z prawnikiem przed prawdziwą sprzedażą.",
+              "This is a draft of the terms and a preview of how access to the Premium Zone would be sold. No contract is made and nothing is charged. The real terms will be written with a lawyer before any real sale.",
             )
           : tx(
-              "To jest projekt regulaminu strefy patrona; ostateczny tekst zatwierdzi prawnik przed pierwszą prawdziwą sprzedażą. Obowiązują też zwykłe dokumenty serwisu.",
-              "This is a draft of the patron zone terms; a lawyer approves the final text before the first real sale. The site's usual documents apply as well.",
+              "To jest projekt regulaminu Strefy Premium; ostateczny tekst zatwierdzi prawnik przed pierwszą prawdziwą sprzedażą. Obowiązują też zwykłe dokumenty serwisu.",
+              "This is a draft of the Premium Zone terms; a lawyer approves the final text before the first real sale. The site's usual documents apply as well.",
             )}
       </p>
       <ul className="mt-4 list-disc space-y-2 pl-5 text-[15px] leading-relaxed">
-        <li>{tx("Strefa patrona to zamknięta część serwisu z filmami dla patronów projektu.", "The patron zone is a closed part of the site with videos for the project's patrons.")}</li>
+        <li>{tx("Strefa Premium to zamknięta część serwisu z filmami dla posiadaczy Premium.", "The Premium Zone is a closed part of the site with videos for Premium holders.")}</li>
         <li>{isVatExempt()
           ? tx("Dostęp na 30 dni kosztuje {0}, a dostęp na 3 miesiące {1} (ceny końcowe, sprzedawca jest zwolniony z VAT; w innych walutach ceny są pokazane w kasie). Każda kolejna wpłata przedłuża dostęp o 30 dni albo 3 miesiące; nic nie odnawia się samo.", "30-day access costs {0} and 3-month access {1} (final prices, the seller is exempt from VAT; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.", price(locale, PATRON_PRICES.ACCESS_30D.PLN), price(locale, PATRON_PRICES.ACCESS_LIFETIME.PLN))
           : tx("Dostęp na 30 dni kosztuje {0}, a dostęp na 3 miesiące {1} (ceny brutto; w innych walutach ceny są pokazane w kasie). Każda kolejna wpłata przedłuża dostęp o 30 dni albo 3 miesiące; nic nie odnawia się samo.", "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.", price(locale, PATRON_PRICES.ACCESS_30D.PLN), price(locale, PATRON_PRICES.ACCESS_LIFETIME.PLN))}</li>

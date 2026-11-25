@@ -56,6 +56,12 @@ płatności (zwykle 5 lat podatkowo), logów audytu i telemetrii; wartości musz
   subskrypcjami, preferencjami e-mail i płatnościami; bez haseł, tokenów, IP i danych innych osób); przycisk
   „Pobierz moje dane” w oknie konta. Zdanie w Polityce § 5 można zmienić na: „Dane pobierzesz sam w ustawieniach
   konta; w innych sprawach napisz na support@…”.
+  **Zdanie o limicie eksportu (decyzja właściciela, wdrożone w Polityce § 5 PL/EN 2026-11-25):** „Eksport obejmuje do
+  10 000 najnowszych pozycji każdej kategorii aktywności (m.in. historia odtwarzania, powiadomienia, zdarzenia e-mail);
+  jeśli masz więcej danych, plik zawiera informację o obcięciu — w takim przypadku napisz do nas, a przekażemy pełne
+  dane.” EN: „The export covers up to the 10,000 most recent items of each activity category (including playback
+  history, notifications and e-mail events); if you have more data, the file states that it was truncated — in that
+  case write to us and we will provide the full data.”
 - **Usunięcie:** w ustawieniach konta (nieodwracalne, z ponownym potwierdzeniem); komentarze zostają ukryte i
   wyczyszczone z treści, kontakt w Resend usuwany, historia e-maili zanonimizowana. Płatności i logi bezpieczeństwa
   zostają przez okres wynikający z przepisów (do potwierdzenia przez prawnika).

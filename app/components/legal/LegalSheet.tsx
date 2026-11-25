@@ -1,6 +1,6 @@
 "use client";
 // Legal sheet (docs/architecture/patron-zone.md, "Dokumenty prawne w kasie"): ONE component that shows a legal document
-// (Terms, Privacy Policy, Patron Zone Terms) as a second dialog on top of the checkout, so the buyer never leaves it:
+// (Terms, Privacy Policy, Premium Zone Terms) as a second dialog on top of the checkout, so the buyer never leaves it:
 // no new tab, no reload, nothing of the checkout is unmounted (chosen option, currency, method and the ticked boxes stay).
 //
 // Built on the same Base UI dialog as the checkout, mounted INSIDE it (React-wise), which gives the nested behaviour for
@@ -103,7 +103,7 @@ function LegalSheet({ open, doc, tx, language, demo, openerRef, onClose }: Legal
     }
   }, [open]);
 
-  // Switching document inside the open sheet (Patron Zone Terms -> Terms): start at the top and announce the new title.
+  // Switching document inside the open sheet (Premium Zone Terms -> Terms): start at the top and announce the new title.
   useEffect(() => {
     if (shownDoc.current === doc) return;
     shownDoc.current = doc;

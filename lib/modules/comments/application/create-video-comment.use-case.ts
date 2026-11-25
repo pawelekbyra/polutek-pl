@@ -66,7 +66,7 @@ export async function createVideoComment(
         return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
       }
       // patron zone (docs/architecture/patron-zone.md): the composer says "become a patron to comment".
-      if (accessResult.data.reason === 'PASS_REQUIRED') return fail({ type: "FORBIDDEN", code: "PASS_REQUIRED", message: "Zostań patronem, aby komentować ten film." });
+      if (accessResult.data.reason === 'PASS_REQUIRED') return fail({ type: "FORBIDDEN", code: "PASS_REQUIRED", message: "Kup Premium, aby komentować ten film." });
       return fail({ type: "FORBIDDEN", message: "Brak uprawnień do komentowania." });
     }
 

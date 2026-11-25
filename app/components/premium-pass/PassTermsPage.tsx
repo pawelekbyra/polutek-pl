@@ -1,4 +1,4 @@
-// patron zone (docs/architecture/patron-zone.md): the DRAFT "Patron Zone Terms" page.
+// patron zone (docs/architecture/patron-zone.md): the DRAFT "Premium Zone Terms" page.
 // A short list of what the patron zone is; the real terms come with a lawyer before the first real sale. 404 when the
 // patron zone is invisible to the viewer. The site's real legal documents (LegalDocs.tsx) do not change.
 import type { Metadata } from "next";

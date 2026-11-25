@@ -27,7 +27,7 @@ export function tipIntentDescription(language: string | null | undefined): strin
 
 /** Shown in the BLIK app and on statements for a patron-zone payment (patron zone); never from the client. */
 export function patronIntentDescription(language: string | null | undefined): string {
-  return !language || language === "pl" ? `Dostęp do strefy patrona: ${APP_NAME}` : `Patron zone access: ${APP_NAME}`;
+  return !language || language === "pl" ? `Dostęp Premium: ${APP_NAME}` : `Premium access: ${APP_NAME}`;
 }
 
 class PaymentInProgressError extends PaymentError {

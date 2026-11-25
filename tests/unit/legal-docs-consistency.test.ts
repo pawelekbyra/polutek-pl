@@ -14,6 +14,7 @@ import {
 import { SESSION_COOKIE_PREFIX, SESSION_EXPIRES_IN_SECONDS } from '@/lib/auth/config';
 import { UNVERIFIED_ACCOUNT_RETENTION_DAYS } from '@/lib/auth/prune-unverified';
 import { AUTHOR_DELETED_COMMENT_RETENTION_DAYS } from '@/lib/modules/comments/application/purge-deleted-comments.use-case';
+import { EXPORT_MAX_ITEMS_PER_CATEGORY } from '@/lib/modules/users/application/export-own-data.use-case';
 import { TECHNICAL_DATA_RETENTION_DAYS } from '@/lib/modules/privacy/domain/retention';
 import { TELEMETRY_AGGREGATE_RETENTION_MONTHS, TELEMETRY_RAW_RETENTION_DAYS } from '@/lib/telemetry/retention';
 
@@ -42,6 +43,14 @@ describe('legal documents consistency', () => {
       expect(rendered, name).toContain(LEGAL_CONTACT_EMAIL);
       expect(rendered, name).not.toMatch(/Kutashi|LLC ID|EIN\b/);
     }
+  });
+
+  it('the privacy policy states the real per-category export limit and the truncation notice', () => {
+    expect(EXPORT_MAX_ITEMS_PER_CATEGORY).toBe(10_000);
+    expect(text(PolitykaContent)).toContain('Eksport obejmuje do 10 000 najnowszych pozycji każdej kategorii aktywności');
+    expect(text(PolitykaContent)).toContain('plik zawiera informację o obcięciu');
+    expect(text(PrivacyContentEn)).toContain('up to the 10,000 most recent items of each activity category');
+    expect(text(PrivacyContentEn)).toContain('the file states that it was truncated');
   });
 
   it('the privacy policy does not name retired providers', () => {
