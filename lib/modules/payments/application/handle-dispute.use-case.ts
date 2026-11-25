@@ -6,6 +6,26 @@ import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
 import { recordAlert } from "@/lib/observability";
 import { restoreSupporterGrantRevokedFor, revokeSupporterGrantIfNoPaidTips } from "./supporter-grant";
+import { isPremiumPassPayment } from "../domain/payment.purpose";
+import { PaymentDto } from "../domain/payment.dto";
+import { WriteTx } from "@/lib/modules/shared/db";
+
+/**
+ * patron zone (DP01, owner decision 2026-11-25): takes a Premium payment's period out of the stored access for good
+ * (lost dispute, or a dispute won on a payment that was fully refunded meanwhile). An OPEN dispute writes nothing here:
+ * the access readers skip a DISPUTED/CHARGEBACK_LOST payment (readEffectivePass), so a won dispute restores it by itself.
+ */
+async function revokePremiumAccessOf(payment: PaymentDto, ctx: AppContext, tx: WriteTx): Promise<void> {
+  if (!isPremiumPassPayment(payment.metadata)) return;
+  const { revokePatronAccessForPayment, readPaymentProductId } = await import("@/lib/modules/patron-zone");
+  await revokePatronAccessForPayment(tx, {
+    userId: payment.userId,
+    paymentId: payment.id,
+    productId: readPaymentProductId(payment.metadata),
+    amountMinor: payment.amountMinor,
+    now: ctx.now(),
+  });
+}
 
 export interface HandleDisputeInput {
   stripeIntentId: string;
@@ -85,6 +105,8 @@ export async function handleDispute(
           paymentId: payment.id,
           revokeReason: `Payment dispute lost: stripeDisputeId=${input.disputeId}`,
         }, ctx, tx);
+        // A lost Premium payment gives no access any more (the readers already skipped it while DISPUTED).
+        await revokePremiumAccessOf(payment, ctx, tx);
         recordAlert('payment.dispute_lost', { paymentId: payment.id, currency: payment.currency });
         return true;
       }
@@ -94,11 +116,18 @@ export async function handleDispute(
         // disputed payment stays as it is.
         if (payment.status !== PaymentStatus.DISPUTED) return false;
 
-        const restoredStatus = (payment.refundedAmountMinor ?? 0) > 0
-          ? PaymentStatus.PARTIALLY_REFUNDED
-          : PaymentStatus.SUCCEEDED;
+        // A refund recorded while DISPUTED kept that status (handle-refund); a full one makes the payment REFUNDED
+        // now, so it neither counts again nor restores a Premium access (a full refund takes the access away).
+        const refundedMinor = payment.refundedAmountMinor ?? 0;
+        const restoredStatus = refundedMinor >= payment.amountMinor
+          ? PaymentStatus.REFUNDED
+          : refundedMinor > 0
+            ? PaymentStatus.PARTIALLY_REFUNDED
+            : PaymentStatus.SUCCEEDED;
         const count = await repo.updatePaymentStatusWithCAS(payment.id, PaymentStatus.DISPUTED, restoredStatus, tx);
         if (count === 0) return false;
+        // Premium access of a SUCCEEDED/PARTIALLY_REFUNDED payment needs no write: it counts again from this status.
+        if (restoredStatus === PaymentStatus.REFUNDED) await revokePremiumAccessOf(payment, ctx, tx);
 
         await restoreSupporterGrantRevokedFor({
           userId: payment.userId,
@@ -110,6 +139,7 @@ export async function handleDispute(
 
       if (!DISPUTABLE_STATUSES.includes(payment.status)) return false;
 
+      // Premium: the DISPUTED status alone suspends the access of this payment (readEffectivePass); nothing is written.
       const count = await repo.updatePaymentStatusWithCAS(payment.id, payment.status, PaymentStatus.DISPUTED, tx);
       if (count === 0) return false;
 

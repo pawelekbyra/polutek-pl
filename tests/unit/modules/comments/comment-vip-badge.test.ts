@@ -144,7 +144,7 @@ describe("comment list use cases: one batched lookup for the whole page (no N+1)
     ({
       actor,
       now: () => NOW,
-      prisma: { appSetting: { findMany }, video: { findUnique: vi.fn().mockResolvedValue({ commentsMode: "ON" }) } },
+      prisma: { appSetting: { findMany }, payment: { findMany: vi.fn(async () => []) }, video: { findUnique: vi.fn().mockResolvedValue({ commentsMode: "ON" }) } },
     }) as never;
 
   beforeEach(() => {

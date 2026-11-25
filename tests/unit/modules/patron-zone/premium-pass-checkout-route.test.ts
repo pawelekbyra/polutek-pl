@@ -33,6 +33,7 @@ const prisma = {
     }),
   },
   payment: {
+    findMany: vi.fn(async () => []),
     findFirst: vi.fn(async ({ where }: { where: { id: string; userId: string; status: string } }) => {
       const row = payments.get(where.id);
       return row && row.userId === where.userId && row.status === where.status ? { id: row.id, metadata: row.metadata } : null;

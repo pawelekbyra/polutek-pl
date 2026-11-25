@@ -37,7 +37,12 @@ SELECT id, type, status, error FROM "StripeEvent" ORDER BY "createdAt" DESC LIMI
 | 11 | Zwrot częściowy r, potem spór przegrany | `CHARGEBACK_LOST`; suma T (nie T−r) |
 | 12 | Poza kolejnością: wyłącz endpoint, zrób zwrot i spór, włącz, wyślij ponownie najpierw spór, potem zwrot | brak podwójnego odjęcia; suma jak w 11; ewentualne `PAYMENT_NOT_RECORDED_YET` znika po ponowieniu |
 | 13 | Równolegle: `stripe events resend` dla zwrotu i `charge.dispute.closed` w tej samej chwili (dwa terminale) | brak deadlocka i błędów 5xx w logach; status i suma jak w 11 |
+| 14 | Płatność Premium kartą 0259 (spór otwiera się od razu); konto bez innych wpłat Premium | `DISPUTED`; `xp.premium_pass` **bez zmian** (id płatności zostaje); film Premium: ekran zakupu (`PASS_REQUIRED`), `GET /api/user/premium-pass` = `expired`; brak plakietki VIP przy komentarzu i obwódki VIP awatara |
+| 15 | Spór z 14 wygrany (`winning_evidence`) | `SUCCEEDED`; bez ręcznej zmiany: film Premium znów się odtwarza, status `active` z tą samą datą końca co przed sporem, VIP wraca |
+| 16 | Nowa płatność 0259, spór przegrany (`losing_evidence`) | `CHARGEBACK_LOST`; id płatności znika z `xp.premium_pass`, `expiresAt` ≤ chwila zdarzenia; brak dostępu i VIP; ponowne wysłanie zdarzeń (`events resend`) nic nie zmienia |
+| 17 | Dwie płatności Premium (4242, potem 0259 ze sporem) | spór otwarty: dostęp i VIP zostają, data końca ok. 30 dni (z 4242); po przegranej: w `xp.premium_pass` zostaje tylko id płatności 4242, dostęp ok. 30 dni |
 
 ## Poza zakresem tej zmiany
-- Przegrany spór Premium **nie odbiera** dostępu `xp.premium_pass` (decyzja DP01, osobna zmiana); scenariusz 7 tego nie sprawdza.
+- Scenariusze 14–17 dotyczą gałęzi `feat/premium-dispute-access` (decyzja DP01): spór otwarty zawiesza dostęp Premium, wygrany przywraca, przegrany odbiera. Częściowy zwrot (scenariusz 2) dostępu nie zmienia.
+- Uwaga do 14: token odtwarzania wydany przed sporem działa do końca swojego TTL; sprawdzaj nowe otwarcie filmu (świeży plan), nie odtwarzanie już trwające.
 - Limity body i trasa webhooka (podpis, 1 MB) się tu nie zmieniają (paczka 1.3). Napiwki LIVE: po wdrożeniu tylko obejrzeć pierwszy żywy webhook (200).

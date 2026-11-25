@@ -26,9 +26,13 @@ function record(overrides: Partial<PassRecord> = {}): PassRecord {
   };
 }
 
-function fakeDb(rows: Array<{ key: string; value: string }>) {
+function fakeDb(rows: Array<{ key: string; value: string }>, paymentStatuses: Record<string, string> = {}) {
   const findMany = vi.fn(async ({ where }: { where: { key: { in: string[] } } }) => rows.filter((row) => where.key.in.includes(row.key)));
-  return { db: { appSetting: { findMany } } as never, findMany };
+  const paymentFindMany = vi.fn(async ({ where }: { where: { id: { in: string[] }; status: { in: string[] } } }) =>
+    where.id.in
+      .filter((id) => paymentStatuses[id] !== undefined && where.status.in.includes(paymentStatuses[id]))
+      .map((id) => ({ id, metadata: { purpose: "premium_pass", productId: "ACCESS_30D" } })));
+  return { db: { appSetting: { findMany }, payment: { findMany: paymentFindMany } } as never, findMany, paymentFindMany };
 }
 const row = (userId: string, value: unknown) => ({ key: passKey(userId), value: typeof value === "string" ? value : JSON.stringify(value) });
 
@@ -82,6 +86,31 @@ describe("listVipUserIds", () => {
     // the legacy unlimited row is no longer permanent: its badge ends 3 months after the grant (grantedAt = NOW - 5 days)
     expect([...(await listVipUserIds(db, ["life"], new Date("2027-01-01T00:00:00.000Z")))]).toEqual(["life"]);
     expect((await listVipUserIds(db, ["life"], new Date("2027-02-01T00:00:00.000Z"))).size).toBe(0);
+  });
+
+  it("a payment in an open or lost dispute gives no VIP; won (SUCCEEDED again) or partly refunded it does (DP01)", async () => {
+    for (const [status, vip] of [["DISPUTED", false], ["CHARGEBACK_LOST", false], ["SUCCEEDED", true], ["PARTIALLY_REFUNDED", true]] as const) {
+      const { db } = fakeDb([row("u", record())], { pay_1: status });
+      expect((await listVipUserIds(db, ["u"], NOW)).has("u"), status).toBe(vip);
+    }
+  });
+
+  it("another valid payment keeps the VIP marker while one is disputed", async () => {
+    const two = record({ paymentIds: ["pay_1", "pay_2"], expiresAt: new Date(NOW.getTime() + 55 * DAY).toISOString() });
+    const { db } = fakeDb([row("u", two)], { pay_1: "DISPUTED", pay_2: "SUCCEEDED" });
+    expect((await listVipUserIds(db, ["u"], NOW)).has("u")).toBe(true);
+  });
+
+  it("checks dispute holds with ONE payment query per chunk, and none when nobody holds an active paid access", async () => {
+    const { db, paymentFindMany } = fakeDb([row("a", record()), row("b", record({ paymentIds: ["pay_2"] })), row("demo", record({ provider: "DEMO" }))], { pay_1: "DISPUTED" });
+    const vip = await listVipUserIds(db, ["a", "b", "demo"], NOW);
+    expect([...vip]).toEqual(["b"]);
+    expect(paymentFindMany).toHaveBeenCalledTimes(1);
+    expect(paymentFindMany.mock.calls[0][0].where.id.in.sort()).toEqual(["pay_1", "pay_2"]);
+
+    const none = fakeDb([row("demo", record({ provider: "DEMO" })), row("old", record({ expiresAt: new Date(NOW.getTime() - DAY).toISOString() }))]);
+    await listVipUserIds(none.db, ["demo", "old"], NOW);
+    expect(none.paymentFindMany).not.toHaveBeenCalled();
   });
 
   it("asks for nothing when there are no authors", async () => {
