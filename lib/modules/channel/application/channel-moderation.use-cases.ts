@@ -159,16 +159,6 @@ export async function setChannelStatus(
   let decisionId: string | null = null;
   try {
     await ctx.db.writeTransaction(async (tx) => {
-      const { count } = await tx.creator.updateMany({
-        where: { id: channel.id, status: channel.status },
-        data: {
-          status: input.status,
-          statusReason: reason,
-          statusChangedAt: now,
-          statusChangedById: adminId,
-        },
-      });
-      if (count === 0) throw new AppError("Status kanału zmienił się w międzyczasie. Odśwież stronę.", 409, "STATUS_CONFLICT");
       const decision = await tx.moderationDecision.create({
         data: {
           targetType: "CHANNEL", targetId: channel.id, channelId: channel.id,
@@ -177,6 +167,17 @@ export async function setChannelStatus(
         },
         select: { id: true },
       });
+      const { count } = await tx.creator.updateMany({
+        where: { id: channel.id, status: channel.status },
+        data: {
+          status: input.status,
+          statusReason: reason,
+          statusChangedAt: now,
+          statusChangedById: adminId,
+          statusDecisionId: decision.id,
+        },
+      });
+      if (count === 0) throw new AppError("Status kanału zmienił się w międzyczasie. Odśwież stronę.", 409, "STATUS_CONFLICT");
       decisionId = decision?.id ?? null;
       await recordAuditEvent(ctx, {
         action: "CHANNEL_STATUS_CHANGED", targetType: "Creator", targetId: channel.id, channelId: channel.id,
@@ -354,7 +355,6 @@ export async function resolveContentReport(
         const before = await tx.video.findUnique({ where: { id: report.targetId }, select: { moderationStatus: true, title: true } });
         beforeModeration = before ? String(before.moderationStatus) : null;
         videoTitle = before?.title ?? null;
-        await tx.video.update({ where: { id: report.targetId }, data: { moderationStatus: "REMOVED" } });
       }
       const decision = await tx.moderationDecision.create({
         data: {
@@ -366,6 +366,13 @@ export async function resolveContentReport(
         select: { id: true },
       });
       decisionId = decision.id;
+      if (takedown) {
+        const { count } = await tx.video.updateMany({
+          where: { id: report.targetId, moderationStatus: beforeModeration as never },
+          data: { moderationStatus: "REMOVED", moderationDecisionId: decision.id, moderationChangedAt: now },
+        });
+        if (count === 0) throw new AppError("Moderacja filmu zmieniła się w międzyczasie. Odśwież stronę.", 409, "MODERATION_CONFLICT");
+      }
       tookDown = takedown;
       await tx.contentReport.update({ where: { id: report.id }, data: { decisionId: decision.id } });
       await recordAuditEvent(ctx, {
@@ -443,23 +450,33 @@ export async function setVideoModerationStatus(
   if (video.moderationStatus === input.status) return fail(new AppError("Film ma już ten status.", 409, "STATUS_UNCHANGED"));
   const adminId = ctx.actor.type === "admin" ? ctx.actor.userId : null;
   const statementPublic = input.reasonPublic?.trim().slice(0, 500) || reason;
-  const decisionId = await ctx.db.writeTransaction(async (tx) => {
-    await tx.video.update({ where: { id: video.id }, data: { moderationStatus: input.status } });
-    const decision = await tx.moderationDecision.create({
-      data: {
-        targetType: "VIDEO", targetId: video.id, channelId: video.creatorId,
-        action: `VIDEO_${input.status}`, reasonCode: "STAFF_DECISION",
-        reasonPublic: statementPublic, reasonInternal: reason, actorAdminId: adminId,
-      },
-      select: { id: true },
+  let decisionId: string;
+  try {
+    decisionId = await ctx.db.writeTransaction(async (tx) => {
+      const decision = await tx.moderationDecision.create({
+        data: {
+          targetType: "VIDEO", targetId: video.id, channelId: video.creatorId,
+          action: `VIDEO_${input.status}`, reasonCode: "STAFF_DECISION",
+          reasonPublic: statementPublic, reasonInternal: reason, actorAdminId: adminId,
+        },
+        select: { id: true },
+      });
+      const { count } = await tx.video.updateMany({
+        where: { id: video.id, moderationStatus: video.moderationStatus },
+        data: { moderationStatus: input.status, moderationDecisionId: decision.id, moderationChangedAt: ctx.now() },
+      });
+      if (count === 0) throw new AppError("Moderacja filmu zmieniła się w międzyczasie. Odśwież stronę.", 409, "MODERATION_CONFLICT");
+      const id = decision.id;
+      await recordAuditEvent(ctx, {
+        action: "VIDEO_MODERATION_CHANGED", targetType: "Video", targetId: video.id, channelId: video.creatorId,
+        metadata: { before: { moderationStatus: video.moderationStatus }, after: { moderationStatus: input.status }, reason, decisionId: id },
+      }, tx);
+      return id;
     });
-    const id: string | null = decision?.id ?? null;
-    await recordAuditEvent(ctx, {
-      action: "VIDEO_MODERATION_CHANGED", targetType: "Video", targetId: video.id, channelId: video.creatorId,
-      metadata: { before: { moderationStatus: video.moderationStatus }, after: { moderationStatus: input.status }, reason, decisionId: id },
-    }, tx);
-    return id;
-  });
+  } catch (error) {
+    if (error instanceof AppError) return fail(error);
+    throw error;
+  }
   if (decisionId) {
     await notifyChannelOwnerOfDecision(ctx, {
       decisionId, channelId: video.creatorId, videoId: video.id, action: `VIDEO_${input.status}`, reasonPublic: statementPublic, subjectLabel: video.title,

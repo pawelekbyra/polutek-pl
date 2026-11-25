@@ -455,6 +455,8 @@ model Creator {
   statusChangedAt         DateTime?
   /// AdminUser.id of the staff member who changed the status (null = the system or the owner).
   statusChangedById       String?
+  /// Stable identity of the latest moderation decision that set this status; prevents stale appeals from reversing a later decision.
+  statusDecisionId        String?
   /// Storage value of the channel avatar (same rule as Video.thumbnailUrl: never a derived address).
   avatarUrl               String?
   /// Set when the channel has a banner (ChannelBanner row); the public address carries it as the cache version.
@@ -831,6 +833,8 @@ model Video {
   commentsMode                      VideoCommentsMode @default(ON)
   /// Platform moderation state, separate from publication status: a REMOVED video is never public whatever `status` says.
   moderationStatus                  VideoModerationStatus @default(VISIBLE)
+  /// Stable identity of the latest moderation decision that set moderationStatus; prevents stale appeals from reversing a later decision.
+  moderationDecisionId              String?
   /// Declared by the creator: adult content, signed-in viewers only (same effect as moderationStatus AGE_RESTRICTED).
   isAdult                           Boolean     @default(false)
   moderationReason                  String?
