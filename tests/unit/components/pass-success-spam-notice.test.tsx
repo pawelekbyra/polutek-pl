@@ -4,6 +4,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import React from "react";
 import { PassSuccess } from "@/app/components/premium-pass/PassSuccess";
 import { createTx } from "@/lib/i18n/ui";
+import { loadCatalog } from "@/lib/i18n/catalog";
 
 afterEach(() => cleanup());
 
@@ -15,11 +16,11 @@ describe("PassSuccess spam-folder notice", () => {
     expect(screen.getByText("Can't find the email? Check your Spam folder too.")).toBeTruthy();
   });
 
-  it("is localised and absent from the demo flow (no real e-mail is sent)", () => {
+  it("is localised and absent from the demo flow (no real e-mail is sent)", async () => {
     render(<PassSuccess tx={createTx("pl")} language="pl" pass={{ ...base, provider: "STRIPE" } as never} onWatch={vi.fn()} />);
     expect(screen.getByText("Nie widzisz wiadomości? Sprawdź też folder Spam.")).toBeTruthy();
     cleanup();
-    render(<PassSuccess tx={createTx("de")} language="de" pass={{ ...base, provider: "STRIPE" } as never} onWatch={vi.fn()} />);
+    render(<PassSuccess tx={createTx("de", await loadCatalog("de"))} language="de" pass={{ ...base, provider: "STRIPE" } as never} onWatch={vi.fn()} />);
     expect(screen.getByText("Keine E-Mail gefunden? Prüfen Sie auch Ihren Spam-Ordner.")).toBeTruthy();
     cleanup();
     render(<PassSuccess tx={createTx("en")} language="en" pass={{ ...base, provider: "DEMO" } as never} onWatch={vi.fn()} />);
