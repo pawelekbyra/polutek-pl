@@ -101,6 +101,19 @@ describe("channel moderation use cases", () => {
     expect(tx.moderationDecision.create).toHaveBeenCalledTimes(1);
   });
 
+  it("reports a deleted video as not found (not as a moderation conflict) and changes nothing", async () => {
+    const { prisma, tx } = makePrisma();
+    tx.video.findUnique.mockResolvedValueOnce(null as never);
+    const res = await resolveContentReport(ctxFor(staff, prisma), { reportId: "r1", outcome: "ACTION_TAKEN", reasonPublic: "Usunięto film", removeVideo: true });
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect((res.error as { code?: string }).code).toBe("VIDEO_NOT_FOUND");
+      expect((res.error as { statusCode?: number }).statusCode).toBe(404);
+    }
+    expect(tx.moderationDecision.create).not.toHaveBeenCalled();
+    expect(tx.video.updateMany).not.toHaveBeenCalled();
+  });
+
   it("does not resolve an already resolved report", async () => {
     const { prisma } = makePrisma({ contentReport: { findUnique: vi.fn(async () => ({ id: "r1", status: "DISMISSED" })) } });
     const res = await resolveContentReport(ctxFor(staff, prisma), { reportId: "r1", outcome: "DISMISSED", reasonPublic: "juz zalatwione" });

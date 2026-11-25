@@ -353,7 +353,9 @@ export async function resolveContentReport(
       let beforeModeration: string | null = null;
       if (takedown) {
         const before = await tx.video.findUnique({ where: { id: report.targetId }, select: { moderationStatus: true, title: true } });
-        beforeModeration = before ? String(before.moderationStatus) : null;
+        // A deleted video cannot be taken down: say so instead of the misleading "changed in the meantime" conflict.
+        if (!before) throw new AppError("Zgłoszony film już nie istnieje. Rozstrzygnij zgłoszenie bez zdejmowania filmu.", 404, "VIDEO_NOT_FOUND");
+        beforeModeration = String(before.moderationStatus);
         videoTitle = before?.title ?? null;
       }
       const decision = await tx.moderationDecision.create({
