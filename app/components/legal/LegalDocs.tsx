@@ -219,6 +219,12 @@ export function PolitykaContent() {
           przetwarzanie. Dane konta zmienisz, a konto usuniesz w ustawieniach konta; w innych sprawach napisz na{' '}
           <ContactLink />. Możesz złożyć skargę do Prezesa UODO (uodo.gov.pl).
         </p>
+        <p>
+          Kopię swoich danych pobierzesz w ustawieniach konta („Pobierz moje dane (JSON)”). Eksport obejmuje do 10 000
+          najnowszych pozycji każdej kategorii aktywności (m.in. historia odtwarzania, powiadomienia, zdarzenia e-mail);
+          jeśli masz więcej danych, plik zawiera informację o obcięciu — w takim przypadku napisz do nas, a przekażemy
+          pełne dane.
+        </p>
       </LegalSection>
 
       <LegalSection nr="6" title="Cookies">
@@ -425,6 +431,12 @@ export function PrivacyContentEn() {
           processing. You can change account data and delete the account in the account settings; for anything else,
           write to <ContactLink />. You may lodge a complaint with the President of the Polish Data Protection Office
           (UODO, uodo.gov.pl).
+        </p>
+        <p>
+          You can download a copy of your data in the account settings (“Download my data (JSON)”). The export covers up
+          to the 10,000 most recent items of each activity category (including playback history, notifications and
+          e-mail events); if you have more data, the file states that it was truncated — in that case write to us and we
+          will provide the full data.
         </p>
       </LegalSection>
 

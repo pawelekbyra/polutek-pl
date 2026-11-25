@@ -205,7 +205,7 @@ describe('legal sheet in the patron checkout', () => {
     await within(checkout()).findByRole('heading', { name: 'Płatność' });
   }
 
-  it('each step has exactly one link to the Terms and none to the Patron Zone Terms draft; the seller card carries no link of its own', async () => {
+  it('each step has exactly one link to the Terms and none to the Premium Zone Terms draft; the seller card carries no link of its own', async () => {
     renderCheckout();
     await screen.findByRole('dialog', { name: 'Dostęp Premium' });
     for (const step of [1, 2, 3]) {
@@ -335,7 +335,7 @@ describe('legal documents inside the checkout: one mechanism, one source of text
     expect(source).not.toContain('DemoRibbon');
   });
 
-  it('the page and the sheet render the same Patron Zone Terms component, and the sheet shows the existing Terms/Privacy components', () => {
+  it('the page and the sheet render the same Premium Zone Terms component, and the sheet shows the existing Terms/Privacy components', () => {
     expect(read('app/components/premium-pass/PassTermsPage.tsx')).toContain('<PassTermsContent');
     const body = read('app/components/legal/LegalDocBody.tsx');
     expect(body).toContain('<PassTermsContent');

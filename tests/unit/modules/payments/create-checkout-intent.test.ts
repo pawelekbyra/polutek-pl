@@ -59,7 +59,7 @@ describe('createCheckoutIntent: patron-zone payments (patron zone)', () => {
     const params = stripe.paymentIntents.create.mock.calls[0]![0];
     expect(params.metadata).toMatchObject({ userId: 'user_1', purpose: 'premium_pass', productId: 'ACCESS_LIFETIME', paymentId: db.payment.rows[0].id });
     expect(params.amount).toBe(2999);
-    expect(params.description).toMatch(/^Dostęp do strefy patrona/);
+    expect(params.description).toMatch(/^Dostęp Premium/);
   });
 
   it('a tip leaves no purpose marker', async () => {

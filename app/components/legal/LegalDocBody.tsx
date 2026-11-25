@@ -1,7 +1,7 @@
 "use client";
 // Legal sheet: the body of a legal document, loaded lazily (React.lazy in LegalSheet) so the long texts stay out of the
 // checkout's own chunk. The texts are the existing components, unchanged: Terms and Privacy Policy from LegalDocs.tsx
-// (Polish and English, other languages read the English one), the Patron Zone Terms draft from PassTermsContent.
+// (Polish and English, other languages read the English one), the Premium Zone Terms draft from PassTermsContent.
 import React from "react";
 import type { Tx } from "@/lib/i18n/ui";
 import type { Locale } from "@/lib/i18n/routing";
