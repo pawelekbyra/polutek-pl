@@ -36,8 +36,12 @@ export function PassReceipt({ tx, language, pass }: { tx: Tx; language: Locale; 
   );
 }
 
-export const PassSuccess = forwardRef<HTMLHeadingElement, { tx: Tx; language: Locale; pass: ActivePass; onWatch: () => void; watchLabel?: string }>(
-  function PassSuccess({ tx, language, pass, onWatch, watchLabel }, headingRef) {
+/**
+ * The access is recorded on the server. `unlockedCount` (the offer's number of Premium Zone videos) says what was
+ * unlocked; by the time this shows, the rest of the page is already refreshing (pass-activation.ts).
+ */
+export const PassSuccess = forwardRef<HTMLHeadingElement, { tx: Tx; language: Locale; pass: ActivePass; onWatch: () => void; watchLabel?: string; unlockedCount?: number }>(
+  function PassSuccess({ tx, language, pass, onWatch, watchLabel, unlockedCount }, headingRef) {
     return (
       <div className={styles.result} role="status" aria-live="polite">
         <div className={cn(styles.check, styles.checkAnim)}><CheckIcon animated /></div>
@@ -45,6 +49,11 @@ export const PassSuccess = forwardRef<HTMLHeadingElement, { tx: Tx; language: Lo
         <p className={styles.resultText}>
           {pass.expiresAt ? tx("Strefa Premium jest otwarta do {0}.", "The Premium Zone is open until {0}.", passDate(language, pass.expiresAt, true)) : null}
         </p>
+        {typeof unlockedCount === "number" && unlockedCount > 0 && (
+          <p className={styles.resultText} data-pass-unlocked="">
+            {tx("Wszystkie filmy Strefy Premium ({0})", "All Premium Zone videos ({0})", unlockedCount)}
+          </p>
+        )}
         <button type="button" className={cn(styles.goldBtn, styles.wide)} onClick={onWatch} data-autofocus="">
           <PlayIcon />
           {watchLabel ?? tx("Wejdź do Strefy Premium", "Enter the Premium Zone")}

@@ -20,6 +20,7 @@ import { SearchIcon } from "./icons/MarkerUiIcons";
 import { cn } from "@/lib/utils";
 import { isRoleBadgeKind, type RoleBadgeKind } from "@/lib/role-badge";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
+import { usePassActivated } from "./premium-pass/pass-activation";
 
 type ServerAdminState = {
   userId: string;
@@ -81,6 +82,9 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
   const userId = user?.id;
   const [serverAdminState, setServerAdminState] =
     useState<ServerAdminState | null>(null);
+  // patron zone: a Premium purchase on this page asks for the profile again, so the avatar ring turns VIP at once.
+  const [profileVersion, setProfileVersion] = useState(0);
+  usePassActivated(() => setProfileVersion((version) => version + 1));
 
   useEffect(() => {
     if (!userId) return;
@@ -108,7 +112,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
       });
 
     return () => controller.abort();
-  }, [userId]);
+  }, [userId, profileVersion]);
 
   const serverIsAdmin =
     serverAdminState?.userId === userId && serverAdminState?.isAdmin === true;

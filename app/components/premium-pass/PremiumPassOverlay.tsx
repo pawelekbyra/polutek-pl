@@ -2,7 +2,7 @@
 // patron zone (docs/architecture/patron-zone.md): the locked stage in place of the player
 // for a PASS_REQUIRED plan (the patron zone). The player is never mounted here and nothing about the stream is
 // requested: the plan carries only offer data (amounts) and the public poster.
-import React, { useCallback, useEffect, useId, useState } from "react";
+import React, { useCallback, useContext, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
@@ -12,6 +12,8 @@ import { useAuthModal } from "../auth/AuthModalProvider";
 import { useLanguage } from "../LanguageContext";
 import { PlayerStateFrame } from "../PlayerStateFrame";
 import { PassCheckoutSheet } from "./PassCheckoutSheet";
+import { PatronCheckoutHostContext, openPatronCheckout } from "./PatronCheckoutHost";
+import { usePassActivated } from "./pass-activation";
 import { DemoControls } from "./DemoControls";
 import { LockIcon, TicketIcon } from "./PassIcons";
 import { passDate, price } from "./pass-copy";
@@ -57,7 +59,35 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
   const { open: openAuthModal } = useAuthModal();
   const titleId = useId();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  // In Hero the checkout belongs to PatronCheckoutHost (outside the wrapper), so it survives this gate being replaced.
+  const viaHost = useContext(PatronCheckoutHostContext);
   const signedIn = Boolean(userId) && offer.signedIn;
+  const onRefreshRef = useRef(onRefresh);
+  useEffect(() => {
+    onRefreshRef.current = onRefresh;
+  });
+  // A purchase anywhere on the page (Hero button, this gate) asks for the plan again: the gate gives way to the player
+  // without a reload. Our own local checkout (pages without the host) would be unmounted with the gate, so the
+  // re-check waits until it is closed.
+  const refreshAfterClose = useRef(false);
+  usePassActivated(() => {
+    if (!viaHost && checkoutOpen) {
+      refreshAfterClose.current = true;
+      return;
+    }
+    onRefreshRef.current();
+  });
+  const changeCheckoutOpen = useCallback((next: boolean) => {
+    setCheckoutOpen(next);
+    if (!next && refreshAfterClose.current) {
+      refreshAfterClose.current = false;
+      onRefreshRef.current();
+    }
+  }, []);
+  const openCheckout = useCallback(() => {
+    if (viaHost) openPatronCheckout();
+    else setCheckoutOpen(true);
+  }, [viaHost]);
   const currency = patronCurrencyForLanguage(language);
   const from = price(language, cheapestProduct(offer, currency).prices[currency], currency);
   const demo = offer.payments.mode === "demo";
@@ -65,17 +95,20 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
 
   // After sign-in the plan is requested again; the overlay of the new (signed-in) plan reopens the checkout.
   useEffect(() => {
-    if (isLoaded && signedIn && takeCheckoutIntent()) setCheckoutOpen(true);
-  }, [isLoaded, signedIn]);
+    if (!isLoaded || !signedIn || !takeCheckoutIntent()) return;
+    // A timer, not a direct call: the host's listener is registered in the same commit, after this effect. Not
+    // cleared on cleanup: the URL flag is already consumed, so a re-run could not schedule it again.
+    setTimeout(openCheckout, 0);
+  }, [isLoaded, signedIn, openCheckout]);
 
   const start = useCallback(() => {
     if (signedIn) {
-      setCheckoutOpen(true);
+      openCheckout();
       return;
     }
     markCheckoutIntent();
     openAuthModal("sign-in");
-  }, [openAuthModal, signedIn]);
+  }, [openAuthModal, openCheckout, signedIn]);
 
   if (variant !== "default") {
     return (
@@ -139,7 +172,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
       </section>
       {signedIn && (
         <>
-          <PassCheckoutSheet open={checkoutOpen} onOpenChange={setCheckoutOpen} offer={offer} onWatch={onRefresh} />
+          {!viaHost && <PassCheckoutSheet open={checkoutOpen} onOpenChange={changeCheckoutOpen} offer={offer} onWatch={() => undefined} />}
           {demo && <DemoControls onChanged={onRefresh} />}
         </>
       )}

@@ -11,6 +11,7 @@ import type { InitialPlaybackPlan } from "./initial-playback-plan";
 import { isUpcomingPremiere } from "@/lib/premiere";
 import { isPlayablePlaybackPlan } from "../playback-plan-state";
 import { MediaWarmup, isConstrainedConnection, type ConnectionLike, type WarmupInput } from "./media-warmup";
+import { usePassActivated } from "../premium-pass/pass-activation";
 
 export { resolvePlaybackViewerKey };
 
@@ -261,6 +262,15 @@ export function AppPreloadProvider({
       playbackRecords.current.delete(cacheKey);
     }
   }, [viewerKey]);
+
+  // patron zone: a Premium purchase changes the plan of every pass video (PASS_REQUIRED -> playable); plans warmed
+  // before it must not be handed to a player or a gate afterwards. Requests still in flight are left alone: the gate
+  // on the page (a child, so its listener runs first) has just started a fresh one for its video.
+  usePassActivated(() => {
+    for (const [cacheKey, record] of playbackRecords.current) {
+      if (record.status !== "loading") playbackRecords.current.delete(cacheKey);
+    }
+  });
 
   useEffect(() => () => {
     for (const record of playbackRecords.current.values()) {

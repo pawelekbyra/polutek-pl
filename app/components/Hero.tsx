@@ -28,6 +28,8 @@ import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { Heart, ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
 import { fetchPassStatus } from './premium-pass/usePremiumPass';
+import { usePassActivated } from './premium-pass/pass-activation';
+import { PatronCheckoutHostContext } from './premium-pass/PatronCheckoutHost';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -125,6 +127,14 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     });
     return () => { current = false; };
   }, [userId, initialPremiumPassUserId, initialHasActivePremiumPass]);
+
+  // patron zone: right after a Premium purchase the button turns into "Napiwkuj" without a reload.
+  usePassActivated(() => {
+    if (!userId) return;
+    void fetchPassStatus().then((status) => {
+      if (status) setPremiumPassViewer({ userId, active: status.pass.state === "active" });
+    });
+  });
 
   const hasActivePremiumPass = Boolean(userId && premiumPassViewer.userId === userId && premiumPassViewer.active);
   const supportLabel = hasActivePremiumPass ? tx("Napiwkuj", "Tip The Guy") : tx("Kup se Premium", "Get Premium");
@@ -295,6 +305,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       <div className="w-full lg:rounded-[26px] lg:border lg:border-[var(--cm-line-80)] lg:bg-[var(--cm-card-92-white)] lg:p-3 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_30px_60px_-26px_rgba(23,23,23,0.24)]">
         {/* FEATURED MEDIA — full-bleed edge-to-edge on phone/tablet (standard mobile video-platform layout), contained card on desktop */}
         <div data-player-slot="" className="relative -mx-4 mb-3 aspect-video overflow-hidden bg-black md:-mx-6 md:mb-4 lg:mx-0 lg:rounded-[22px]">
+          {/* patron zone: the video gate opens the checkout of PatronCheckoutHost (below, outside the wrapper), so the
+              success screen survives the gate being replaced by the player right after the purchase. */}
+          <PatronCheckoutHostContext.Provider value={true}>
           <PremiumWrapper
             videoId={video.id}
             requiredTier={video.tier}
@@ -311,6 +324,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
               onViewCounted={() => setLocalViewsCount((views) => views + 1)}
             />
           </PremiumWrapper>
+          </PatronCheckoutHostContext.Provider>
         </div>
 
         {/* INFO SECTION */}
