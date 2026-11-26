@@ -12,7 +12,8 @@
 # Needs admin.env (root, 600): DATABASE_URL, ADMIN_AUTH_SECRET, ADMIN_APP_URL, CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD ...
 # Sign-in: ADMIN_AUTH_MODE=access (default; Cloudflare Access e-mail code, no enrollment) or passkey (legacy, needs admin-enroll).
 # Lock: .deploy.lock (flock), shared with deploy.sh; a second deploy exits 75 at once (DEPLOY_LOCK_HELD=1: lock inherited on fd 9).
-# State: .current-admin-image / .previous-admin-image.
+# State: .current-admin-image / .previous-admin-image; after every change of the running panel image the ADMIN_IMAGE line
+# of .env follows (sync_env_admin_image), so a manual `docker compose --profile admin up -d` starts the same panel.
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 
@@ -59,11 +60,29 @@ wait_healthy() {
 }
 start_admin() { ADMIN_IMAGE="$1" compose up -d --no-deps admin; }
 
+# >>> sync_env_admin_image (keep this marker pair: deploy/serwerek/test/deploy-env-sync.test.mjs runs the function between them)
+# Only the ADMIN_IMAGE line of .env is rewritten from .current-admin-image (same line as deploy.sh sync_env_images and
+# release-deploy.sh --sync-env write); every other line (SRH_TOKEN ...) is kept, values are never printed, mode 600,
+# replaced atomically. Best effort: a failure is a warning, never a failed panel deploy.
+sync_env_admin_image() {
+  local tmp v
+  v="$(cat .current-admin-image 2>/dev/null || true)"
+  [[ -n "$v" || -f .env ]] || return 0
+  tmp="$(mktemp .env.XXXXXX)" || return 1
+  chmod 600 "$tmp"
+  if [[ -f .env ]]; then grep -vE '^ADMIN_IMAGE=' .env > "$tmp" || true; fi
+  [[ -z "$v" ]] || echo "ADMIN_IMAGE=$v" >> "$tmp" || { rm -f "$tmp"; return 1; }
+  mv -f "$tmp" .env || { rm -f "$tmp"; return 1; }
+  log ".env ADMIN_IMAGE updated from .current-admin-image"
+}
+# <<< sync_env_admin_image
+
 if [[ "$mode" == "--rollback" ]]; then
   prev="$(cat .previous-admin-image 2>/dev/null || true)"; [[ -n "$prev" ]] || die "no previous panel image recorded"
   log "rollback to $prev"
   { start_admin "$prev" && wait_healthy "$prev"; } || die "previous panel image is not healthy either"
   printf '%s' "$prev" > .current-admin-image
+  sync_env_admin_image || log "WARN: .env ADMIN_IMAGE not updated (run deploy/release/release-deploy.sh --sync-env)"
   exit 0
 fi
 
@@ -83,6 +102,7 @@ if start_admin "$new_image" && wait_healthy "$new_image"; then
     [[ -n "$prev_image" ]] && printf '%s' "$prev_image" > .previous-admin-image
     printf '%s' "$new_image" > .current-admin-image
   fi
+  sync_env_admin_image || log "WARN: .env ADMIN_IMAGE not updated (run deploy/release/release-deploy.sh --sync-env)"
   docker images polutek-admin --format '{{.Tag}}' | grep -v '^current$' | tail -n +$((KEEP_IMAGES + 1)) | while read -r t; do
     [[ "polutek-admin:$t" == "$new_image" || "polutek-admin:$t" == "$prev_image" ]] && continue
     docker rmi "polutek-admin:$t" >/dev/null 2>&1 || true

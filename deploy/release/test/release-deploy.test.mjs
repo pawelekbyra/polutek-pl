@@ -199,6 +199,163 @@ test('deploy that works writes .env from the state files (sync-env is automatic)
   } finally { done(sb); }
 });
 
+test('--sync-env writes ADMIN_IMAGE too; without a panel state file the line is left out', { skip }, () => {
+  const sb = sandbox({ state: { '.current-image': 'app:1', '.current-admin-image': 'polutek-admin:adm-1' } });
+  try {
+    writeFileSync(path.join(sb.app, '.env'), 'SRH_TOKEN=keep-me\nADMIN_IMAGE=polutek-admin:old\n');
+    let r = run(sb, ['--sync-env']);
+    assert.equal(r.status, 0, r.out);
+    let env = r.rd('.env');
+    assert.match(env, /^SRH_TOKEN=keep-me$/m);
+    assert.match(env, /^APP_IMAGE=app:1$/m);
+    assert.match(env, /^ADMIN_IMAGE=polutek-admin:adm-1$/m);
+    assert.equal((env.match(/^ADMIN_IMAGE=/gm) || []).length, 1);
+    assert.doesNotMatch(env, /:old/);
+    rmSync(path.join(sb.app, '.current-admin-image'));
+    r = run(sb, ['--sync-env']);
+    assert.equal(r.status, 0, r.out);
+    env = r.rd('.env');
+    assert.doesNotMatch(env, /ADMIN_IMAGE/, 'a stale panel line is not kept when nothing is recorded');
+    assert.match(env, /^SRH_TOKEN=keep-me$/m);
+  } finally { done(sb); }
+});
+
+test('rollback keeps the panel line of .env in step with .current-admin-image', { skip }, () => {
+  const sb = sandbox({ images: ['app:new', 'app:old'], healthy: ['app:new', 'app:old'], running: 'app:new',
+    state: { '.current-image': 'app:new', '.previous-image': 'app:old', '.current-admin-image': 'polutek-admin:adm-7' } });
+  try {
+    const r = run(sb, ['--rollback']);
+    assert.equal(r.status, 0, r.out);
+    assert.match(r.rd('.env'), /^ADMIN_IMAGE=polutek-admin:adm-7$/m);
+  } finally { done(sb); }
+});
+
+// A fake common.sh whose job_run appends "job status" to $FAKE_DIR/jobs (record_job sources $SERWEREK_COMMON).
+function withTelemetry(sb) {
+  const f = path.join(sb.dir, 'fake-common.sh');
+  writeFileSync(f, 'job_run() { printf "%s %s\\n" "$1" "$2" >> "$FAKE_DIR/jobs"; }\n');
+  return { SERWEREK_COMMON: f };
+}
+
+test('telemetry: --check is job "deploy-check", a rollback stays job "deploy"', { skip }, () => {
+  const sb = sandbox({ images: ['app:new', 'app:old', 'mig:1', 'wrk:1', 'col:1'], healthy: ['app:new', 'app:old'], running: 'app:old',
+    state: { '.current-image': 'app:old' } });
+  try {
+    const m = makeManifest(sb, 'rel3', 'app:new');
+    const env = withTelemetry(sb);
+    let r = run(sb, [m, '--check'], { env });
+    assert.equal(r.status, 0, r.out);
+    assert.match(r.out, /CHECK ONLY: nothing changed/);
+    assert.equal(r.fk('jobs'), 'deploy-check ok\n');
+    assert.equal(r.rd('.current-image'), 'app:old', '--check changed nothing');
+    rmSync(path.join(sb.fake, 'jobs'));
+    // A check that fails (manifest does not verify) is a failed CHECK, not a failed deploy.
+    writeFileSync(`${m}.sha256`, `${'0'.repeat(64)}  manifest.json\n`);
+    r = run(sb, [m, '--check'], { env });
+    assert.equal(r.status, 1, r.out);
+    assert.equal(r.fk('jobs'), 'deploy-check fail\n');
+    rmSync(path.join(sb.fake, 'jobs'));
+    r = run(sb, ['--rollback'], { env });
+    assert.equal(r.status, 1, r.out);
+    assert.equal(r.fk('jobs'), 'deploy fail\n', 'a rollback is a deploy row, as before');
+  } finally { done(sb); }
+});
+
+test('telemetry: a deploy that works is job "deploy"', { skip }, () => {
+  const sb = sandbox({ images: ['app:new', 'app:old', 'mig:1', 'wrk:1', 'col:1'], healthy: ['app:new', 'app:old'], running: 'app:old',
+    state: { '.current-image': 'app:old' } });
+  try {
+    const m = makeManifest(sb, 'rel4', 'app:new');
+    const r = run(sb, [m], { env: withTelemetry(sb) });
+    assert.equal(r.status, 0, r.out);
+    assert.equal(r.fk('jobs'), 'deploy ok\n');
+  } finally { done(sb); }
+});
+
+// --rollback and the release pointers (.current-release / .previous-release under RB_HOME).
+const ptr = (sb, f) => (existsSync(path.join(sb.rbhome, f)) ? readFileSync(path.join(sb.rbhome, f), 'utf8') : null);
+const setPtr = (sb, f, v) => writeFileSync(path.join(sb.rbhome, f), v);
+const twoReleases = (extra = {}) => sandbox({ images: ['app:new', 'app:old', 'mig:1', 'wrk:1', 'col:1'],
+  healthy: ['app:new', 'app:old'], running: 'app:new', state: { '.current-image': 'app:new', '.previous-image': 'app:old', ...extra } });
+
+test('rollback to a manifest moves .current-release to it and .previous-release to the release it left', { skip }, () => {
+  const sb = twoReleases();
+  try {
+    const mNew = makeManifest(sb, 'relnew', 'app:new');
+    const mOld = makeManifest(sb, 'relold', 'app:old');
+    setPtr(sb, '.current-release', mNew);
+    const r = run(sb, ['--rollback', mOld]);
+    assert.equal(r.status, 0, r.out);
+    assert.equal(r.rd('.current-image'), 'app:old');
+    assert.equal(ptr(sb, '.current-release'), mOld);
+    assert.equal(ptr(sb, '.previous-release'), mNew);
+  } finally { done(sb); }
+});
+
+test('rollback without an argument (target from .previous-release) swaps the pointers, a second one comes back', { skip }, () => {
+  const sb = twoReleases();
+  try {
+    const mNew = makeManifest(sb, 'relnew', 'app:new');
+    const mOld = makeManifest(sb, 'relold', 'app:old');
+    setPtr(sb, '.current-release', mNew); setPtr(sb, '.previous-release', mOld);
+    let r = run(sb, ['--rollback']);
+    assert.equal(r.status, 0, r.out);
+    assert.equal(ptr(sb, '.current-release'), mOld);
+    assert.equal(ptr(sb, '.previous-release'), mNew);
+    r = run(sb, ['--rollback']);
+    assert.equal(r.status, 0, r.out);
+    assert.equal(r.rd('.current-image'), 'app:new');
+    assert.equal(ptr(sb, '.current-release'), mNew);
+    assert.equal(ptr(sb, '.previous-release'), mOld);
+  } finally { done(sb); }
+});
+
+test('rollback to an image without a manifest (old deploy.sh) leaves no pointer on the release that no longer runs', { skip }, () => {
+  // The field case of 25.11.2026: running release 50a04594 (manifest), previous image from the old deploy.sh (no manifest).
+  const sb = twoReleases();
+  try {
+    const mNew = makeManifest(sb, 'relnew', 'app:new');
+    setPtr(sb, '.current-release', mNew);
+    let r = run(sb, ['--rollback']);
+    assert.equal(r.status, 0, r.out);
+    assert.equal(r.rd('.current-image'), 'app:old');
+    assert.equal(ptr(sb, '.current-release'), null, 'no manifest runs now, so no pointer (it used to keep naming the old release)');
+    assert.equal(ptr(sb, '.previous-release'), mNew);
+    // A plain second `--rollback` must go back to the release it came from (before: back to the same image).
+    r = run(sb, ['--rollback']);
+    assert.equal(r.status, 0, r.out);
+    assert.equal(r.rd('.current-image'), 'app:new');
+    assert.equal(ptr(sb, '.current-release'), mNew);
+  } finally { done(sb); }
+});
+
+test('rollback without an argument finds the manifest of the image by its app ref', { skip }, () => {
+  const sb = twoReleases();
+  try {
+    const mNew = makeManifest(sb, 'relnew', 'app:new');
+    const mOld = makeManifest(sb, 'relold', 'app:old');
+    setPtr(sb, '.current-release', mNew); // no .previous-release: the target comes from .previous-image
+    const r = run(sb, ['--rollback']);
+    assert.equal(r.status, 0, r.out);
+    assert.equal(ptr(sb, '.current-release'), mOld);
+    assert.equal(ptr(sb, '.previous-release'), mNew);
+  } finally { done(sb); }
+});
+
+test('failed rollback does not move the release pointers', { skip }, () => {
+  const sb = sandbox({ images: ['app:new', 'app:bad', 'mig:1', 'wrk:1', 'col:1'], healthy: ['app:new'], running: 'app:new',
+    state: { '.current-image': 'app:new', '.previous-image': 'app:bad' } });
+  try {
+    const mNew = makeManifest(sb, 'relnew', 'app:new');
+    const mBad = makeManifest(sb, 'relbad', 'app:bad');
+    setPtr(sb, '.current-release', mNew); setPtr(sb, '.previous-release', mBad);
+    const r = run(sb, ['--rollback']);
+    assert.equal(r.status, 1, r.out);
+    assert.equal(ptr(sb, '.current-release'), mNew);
+    assert.equal(ptr(sb, '.previous-release'), mBad);
+  } finally { done(sb); }
+});
+
 test('clean_stale_workdirs: removes dirs of dead builds, keeps running and fresh ones', { skip }, () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'rb-work-'));
   try {

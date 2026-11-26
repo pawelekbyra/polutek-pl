@@ -8,7 +8,8 @@
 #   release-deploy.sh <manifest.json> --stop-before-migrate checks + backup + pending migrations, then stop
 #   release-deploy.sh --rollback [<manifest.json>]          back to the previous release (or the given one); ALWAYS
 #                                                           allowed: no proof needed, only the local images
-#   release-deploy.sh --sync-env                            write .env image lines from the .current-* state files
+#   release-deploy.sh --sync-env                            write .env image lines (APP, MIGRATOR, ENCODER, COLLECTOR,
+#                                                           ADMIN) from the .current-* state files
 #                                                           (run after any deploy made with the old deploy.sh;
 #                                                           deploy and rollback below re-sync .env themselves, on
 #                                                           success AND on failure)
@@ -18,6 +19,11 @@
 # Options (env): RD_MIN_FREE_GB=5, RD_BACKUP=full|dump (full = /opt/serwerek/scripts/backup.sh + pre-deploy dump),
 #   RD_DRAIN_ENCODER=1 (stop the encoder before migrations: video-schema migrations), HEALTH_TIMEOUT=150, KEEP_RELEASES=3,
 #   RD_PUBLIC_URL=https://www.pawelperfect.com/api/health, RELEASE_FOREGROUND=1 (do not detach).
+# Release pointers: $RB_HOME/.current-release / .previous-release name the manifests of the running / previous release.
+#   --rollback moves them too: to the manifest it rolled back to, or, when no manifest is given and none matches the image
+#   (image from the old deploy.sh), .current-release is removed. A second `--rollback` then goes back where it came from.
+# Telemetry: a real deploy / rollback is the job "deploy"; `--check` (changes nothing) is the job "deploy-check", so the
+#   admin panel does not count it as a deployment.
 # Shares .deploy.lock with deploy.sh / deploy-admin.sh. State files (.current-image, .previous-image, ...) are the same
 # ones deploy.sh uses, so `./deploy.sh <tag> --rollback` keeps working after a release and vice versa.
 set -euo pipefail
@@ -25,6 +31,8 @@ set -euo pipefail
 LOG_TAG=release-deploy
 
 arg1="${1:-}"; arg2="${2:-}"
+job=deploy     # telemetry.job_run name of this run; a check-only run is not a deployment (see header)
+[[ "$arg1" != --* && "$arg2" == --check ]] && job=deploy-check
 [[ -n "$arg1" ]] || die "usage: $0 <manifest.json> [--check|--stop-before-migrate] | --rollback [<manifest.json>] | --sync-env"
 # Manifest paths are resolved HERE, before the script detaches and before `cd $APP_DIR`: a relative path used to be
 # resolved against $APP_DIR and the script ended with exit 1 and no message.
@@ -54,8 +62,8 @@ finish() {
   # Keep .env (APP_IMAGE=... lines for a manual `docker compose up -d`) in step with the state files, also after a
   # failure or an automatic rollback (sync-env is part of every deploy/rollback, not a separate step).
   if (( touched && !env_written )); then ( write_env ) || log "WARN: .env image lines not updated (run $0 --sync-env)"; fi
-  if (( rc == 0 )); then record_job deploy ok "$started" "release: $summary${warnings:+ WITH WARNINGS: ${warnings[*]}}"
-  else record_job deploy fail "$started" "release: $summary (exit $rc)"; fi
+  if (( rc == 0 )); then record_job "$job" ok "$started" "release: $summary${warnings:+ WITH WARNINGS: ${warnings[*]}}"
+  else record_job "$job" fail "$started" "release: $summary (exit $rc)"; fi
   write_rc "$rc"
   exit "$rc"
 }
@@ -118,7 +126,7 @@ readiness_check() {
 # .env holds SRH_TOKEN (secret): keep every other line, rewrite only our image lines. Values are never printed.
 write_env() { # from the state files, so .env always matches what runs
   local tmp; tmp="$(mktemp "$APP_DIR/.env.XXXXXX")"; chmod 600 "$tmp"
-  [[ -f .env ]] && grep -vE '^(APP_IMAGE|MIGRATOR_IMAGE|ENCODER_IMAGE|COLLECTOR_IMAGE|# release-deploy)' .env > "$tmp" || true
+  [[ -f .env ]] && grep -vE '^(APP_IMAGE|MIGRATOR_IMAGE|ENCODER_IMAGE|COLLECTOR_IMAGE|ADMIN_IMAGE|# release-deploy)' .env > "$tmp" || true
   {
     echo "# release-deploy: image lines below are written by deploy/release/release-deploy.sh (--sync-env)"
     local v
@@ -126,6 +134,7 @@ write_env() { # from the state files, so .env always matches what runs
     v="$(cat .current-migrator-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "MIGRATOR_IMAGE=$v"
     v="$(cat .current-worker-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "ENCODER_IMAGE=$v"
     v="$(cat .current-collector-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "COLLECTOR_IMAGE=$v"
+    v="$(cat .current-admin-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "ADMIN_IMAGE=$v"
   } >> "$tmp"
   mv -f "$tmp" .env
   env_written=1
@@ -146,6 +155,25 @@ recover_app() { # $1 failed image, $2 image that ran before
     log "recovery: $cand is not healthy either"
   done
   return 1
+}
+# Manifest (under $RB_HOME) of the release whose app image is $1; prints nothing when there is none (an image built
+# by the old deploy.sh has no manifest).
+manifest_for_image() {
+  local m
+  for m in "$RB_HOME"/*/manifest.json; do
+    [[ -f "$m" ]] || continue
+    [[ "$(node -e 'try{process.stdout.write(JSON.parse(require("fs").readFileSync(process.argv[1])).images?.app?.ref||"")}catch{}' "$m" 2>/dev/null)" == "$1" ]]       && { printf '%s' "$m"; return 0; }
+  done
+  return 0
+}
+# Point .current-release at manifest $1 ("" = the running image has no manifest: remove the pointer instead of leaving
+# it on a release that no longer runs). The release that ran before becomes .previous-release.
+point_release() {
+  local cur; cur="$(cat "$RB_HOME/.current-release" 2>/dev/null || true)"
+  [[ "$cur" == "$1" ]] && return 0
+  [[ -n "$cur" ]] && printf '%s' "$cur" > "$RB_HOME/.previous-release"
+  if [[ -n "$1" ]]; then printf '%s' "$1" > "$RB_HOME/.current-release"; else rm -f "$RB_HOME/.current-release"; fi
+  return 0
 }
 release_of() { node -e 'const m=JSON.parse(require("fs").readFileSync(process.argv[1]));process.stdout.write(m.tag)' "$1"; }
 
@@ -184,7 +212,7 @@ if [[ "$arg1" == --rollback ]]; then
   [[ -n "$COLLECTOR_IMAGE" ]] && { rc=0; start_optional collector COLLECTOR_IMAGE collector.env "$COLLECTOR_IMAGE" || rc=$?; (( rc == 1 )) && warnings+=("collector") || promote -collector "$COLLECTOR_IMAGE"; }
   [[ -n "${MIGRATOR_IMAGE:-}" ]] && printf '%s' "$MIGRATOR_IMAGE" > .current-migrator-image
   readiness_check; write_env
-  [[ -n "$target" && -f "$target" ]] && { cur="$(cat "$RB_HOME/.current-release" 2>/dev/null || true)"; printf '%s' "$target" > "$RB_HOME/.current-release"; [[ -n "$cur" ]] && printf '%s' "$cur" > "$RB_HOME/.previous-release"; }
+  if [[ -n "$target" && -f "$target" ]]; then point_release "$target"; else point_release "$(manifest_for_image "$APP_IMAGE")"; fi
   log "OK: rolled back to $APP_IMAGE${warnings:+ (warnings: ${warnings[*]})}"
   exit 0
 fi
@@ -253,9 +281,7 @@ rc=0; start_optional collector COLLECTOR_IMAGE collector.env "$COLLECTOR_IMAGE" 
 (( rc == 1 )) && warnings+=("collector not running") || promote -collector "$COLLECTOR_IMAGE"
 readiness_check
 write_env
-cur="$(cat "$RB_HOME/.current-release" 2>/dev/null || true)"
-[[ -n "$cur" && "$cur" != "$manifest" ]] && printf '%s' "$cur" > "$RB_HOME/.previous-release"
-printf '%s' "$manifest" > "$RB_HOME/.current-release"
+point_release "$manifest"
 
 # 7. Cleanup: keep the last KEEP_RELEASES releases; never touch an image a state file points at.
 protected=" "
