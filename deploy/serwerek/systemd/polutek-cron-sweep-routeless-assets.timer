@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron sweep-routeless-assets (READY own-HLS assets without a playback route, audit U5), daily 04:45 UTC
+
+[Timer]
+OnCalendar=*-*-* 04:45:00 UTC
+Persistent=true
+Unit=polutek-cron@sweep-routeless-assets.service
+
+[Install]
+WantedBy=timers.target

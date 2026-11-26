@@ -6,4 +6,5 @@ export * from "./domain/encode-job.state";
 export * from "./domain/keys";
 export * from "./domain/upload-policy";
 export * from "./application/output-cleanup.use-cases";
+export * from "./application/routeless-asset-sweep.use-case";
 export { getChannelLimitsView, type ChannelLimitsView } from "./application/channel-limits";
