@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const r2 = vi.hoisted(() => ({
   copyToPublic: vi.fn(),
   deletePublic: vi.fn(),
+  deletePublicMany: vi.fn(async (keys: string[]) => ({ deleted: keys.length, failed: [] })),
   deletePrivate: vi.fn(),
   listPublicObjects: vi.fn(),
 }));
@@ -18,6 +19,7 @@ vi.mock('@/lib/modules/media/infrastructure/r2-thumbnail-storage.client', () => 
     static isPublicServingConfigured = () => Boolean(process.env.CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC);
     copyToPublic = r2.copyToPublic;
     deletePublic = r2.deletePublic;
+    deletePublicMany = r2.deletePublicMany;
     deletePrivate = r2.deletePrivate;
     listPublicObjects = r2.listPublicObjects;
   }
@@ -155,7 +157,7 @@ describe('reconcilePublicThumbnails never deletes a still-referenced object', ()
     const { ctx } = setup();
     const result = await reconcilePublicThumbnails(ctx);
 
-    const deleted = r2.deletePublic.mock.calls.map((c) => c[0]);
+    const deleted = r2.deletePublicMany.mock.calls.flatMap((c) => c[0] as string[]);
     expect(deleted).not.toContain('videos/a/covers/1.webp');
     expect(deleted).not.toContain('videos/b/covers/2.webp');
     expect(deleted).toEqual(expect.arrayContaining(['videos/c/covers/3.webp', 'videos/gone/covers/4.webp']));
@@ -168,6 +170,7 @@ describe('reconcilePublicThumbnails never deletes a still-referenced object', ()
     const result = await reconcilePublicThumbnails(ctx, { dryRun: true });
 
     expect(result).toMatchObject({ dryRun: true, orphansDeleted: 2, orphansKeptReferenced: 2, publicUrlInThumbnailUrl: 1 });
+    expect(r2.deletePublicMany).not.toHaveBeenCalled();
     expect(r2.deletePublic).not.toHaveBeenCalled();
     expect(r2.copyToPublic).not.toHaveBeenCalled();
     expect(video.update).not.toHaveBeenCalled();

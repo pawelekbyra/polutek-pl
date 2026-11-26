@@ -26,6 +26,7 @@ musi przejść przez jeden z tych use case'ów albo wołać `syncPublicThumbnail
 Formularz edycji kiedyś zapisał z powrotem publiczny adres, synchronizacja nie znalazła klucza prywatnego, wyczyściła `thumbnailPublicUrl` i skasowała publiczny obiekt. Zabezpieczenia: `isDerivedThumbnailUrl()` (`r2-thumbnail.ts`)
 odrzuca takie wartości w `updateAdminVideo`, `VideoRepository.updateForMainChannel` i `createAdminVideo` (wraca `/logo.png`); `syncPublicThumbnail` pomija (loguje błąd, nic nie kasuje) wiersz z publicznym adresem w `thumbnailUrl`.
 Publiczne obiekty nie są kasowane, dopóki ktoś się do nich odwołuje (`deletePublicCopyIfUnreferenced`, `reconcilePublicThumbnails`); cron raportuje `orphansKeptReferenced` i `publicUrlInThumbnailUrl`, a `?dryRun=1` pokazuje plan bez zapisu.
+Osierocone obiekty są kasowane zbiorczo (`R2ThumbnailStorageClient.deletePublicMany`, jedno żądanie `DeleteObjects` na 1000 kluczy zamiast jednego żądania na obiekt); gdy część kluczy nie da się skasować, przebieg kasuje resztę i kończy się błędem (500, w logu liczba i kody).
 
 ## DTO i proxy
 
