@@ -21,6 +21,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 vi.mock('@/lib/modules/email', () => ({
   sendBecomePatronEmail: vi.fn().mockResolvedValue(undefined),
   sendDonationThankYouEmail: vi.fn().mockResolvedValue(undefined),
+  sendPurchaseConfirmationEmail: vi.fn().mockResolvedValue({ ok: true }),
 }));
 vi.mock('@/lib/modules/notifications', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/modules/notifications')>()),

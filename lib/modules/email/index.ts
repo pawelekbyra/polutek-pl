@@ -12,6 +12,8 @@ export {
   sendBecomePatronEmail,
 } from "./application/send-transactional-email.use-case";
 export type { EmailLanguage } from "./application/send-transactional-email.use-case";
+export { sendPurchaseConfirmationEmail, buildPurchaseConfirmationEmail } from "./application/send-purchase-confirmation-email";
+export type { PurchaseConfirmationEmailInput } from "./application/send-purchase-confirmation-email";
 export { sendOperatorEmail } from "./application/send-operator-email";
 export { notifyOwnerOfNewUser } from "./application/notify-new-user";
 export { handleResendWebhook } from "./application/handle-resend-webhook.use-case";
