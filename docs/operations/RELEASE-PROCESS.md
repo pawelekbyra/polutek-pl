@@ -34,14 +34,15 @@ Wszystko na serwerze, jako root, z katalogu z repo (np. `/opt/serwerek/releases/
    Skrypt sam przechodzi w tło: zerwane SSH niczego nie przerywa. Log: `/opt/serwerek/releases/logs/build-*.log`.
    Ostatnia linia: `DONE (full)` i ścieżka do manifestu.
 3. Podgląd bez zmian: `deploy/release/release-deploy.sh /opt/serwerek/releases/<tag>/manifest.json --check`.
-   Pokazuje, czy obrazy się zgadzają i jakie migracje czekają.
+   Pokazuje, czy obrazy się zgadzają i jakie migracje czekają. W telemetrii zostaje wiersz `deploy-check` (nie `deploy`),
+   więc panel administratora nie liczy podglądu jako wdrożenia.
 4. Wydanie: `deploy/release/release-deploy.sh /opt/serwerek/releases/<tag>/manifest.json`.
    - Migracje wideo (np. tabela `VideoEncodeJob`): dodaj `RD_DRAIN_ENCODER=1` (encoder zatrzymany przed migracją).
    - Chcesz najpierw zobaczyć listę migracji po zrobieniu kopii: `--stop-before-migrate`, potem uruchom bez tej opcji.
 5. Ostatnia linia logu: `OK: polutek-app:<tag> is live` (lub `OK (WITH WARNINGS)`).
 
 Blokada `.deploy.lock` jest wspólna z `deploy.sh` i `deploy-admin.sh`: dwa wdrożenia naraz się nie uruchomią.
-Panel admina (`deploy-admin.sh`) na razie wydaje się po staremu.
+Panel admina (`deploy-admin.sh`) na razie wydaje się po staremu (po wdrożeniu panelu `.env` dostaje aktualną linię `ADMIN_IMAGE`).
 
 ## Co kosztuje
 
@@ -64,6 +65,12 @@ Każde uruchomienie zapisuje koszt w logu i w `/opt/serwerek/releases/costs.log`
   `/opt/serwerek/releases/.previous-release`, a gdy go nie ma, do `.previous-image`. Rollback **jest zawsze dozwolony**:
   wystarczą obrazy na dysku, nie trzeba żadnego dowodu. Można też wskazać konkretny manifest:
   `--rollback /opt/serwerek/releases/<tag>/manifest.json` (ścieżka może być względna, liczona od bieżącego katalogu).
+- **Wskaźniki wydań** (`/opt/serwerek/releases/.current-release` i `.previous-release`, manifesty bieżącego i poprzedniego
+  wydania) przestawia także rollback: `.current-release` wskazuje manifest, na którym app działa po rollbacku (podany albo
+  znaleziony po obrazie app w manifestach), a `.previous-release` wydanie, z którego wracasz. Dzięki temu drugi
+  `--rollback` bez argumentu wraca tam, skąd przyszedł. Gdy obraz po rollbacku nie ma manifestu (zbudował go stary
+  `deploy.sh`), `.current-release` jest usuwany (nie wskazuje wydania, które już nie działa), a `.previous-release` to
+  wydanie, które właśnie zeszło. Nieudany rollback wskaźników nie rusza.
 - **Rollback nigdy nie zostawia strony na zepsutym obrazie.** Gdy obraz, do którego wracasz, nie przejdzie health,
   skrypt od razu uruchamia ostatni zdrowy obraz z plików stanu (to, co działało przed komendą, potem `.current-image`,
   `.previous-image`), znowu sprawdza health i kończy kodem 1 z opisem (`app is back on ... (healthy)`); pliki stanu się
@@ -73,8 +80,10 @@ Każde uruchomienie zapisuje koszt w logu i w `/opt/serwerek/releases/costs.log`
   (te same pliki stanu `.current-image` i `.previous-image`).
 - **Schemat bazy nie jest cofany automatycznie.** Po migracji niszczącej przywróć zrzut sprzed wdrożenia
   (`/opt/serwerek/backups/pre-deploy-<tag>-*.sql.gz`). O tym decyduje człowiek, bo traci się dane z okna wdrożenia.
-- **`.env` (linie `APP_IMAGE=...`, `MIGRATOR_IMAGE`, `ENCODER_IMAGE`, `COLLECTOR_IMAGE`)**: `release-deploy.sh` zapisuje je
-  sam na końcu każdego wydania i rollbacku (także nieudanego), z plików `.current-*`. **Po każdym wdrożeniu lub rollbacku
+- **`.env` (linie `APP_IMAGE=...`, `MIGRATOR_IMAGE`, `ENCODER_IMAGE`, `COLLECTOR_IMAGE`, `ADMIN_IMAGE`)**: `release-deploy.sh` zapisuje je
+  sam na końcu każdego wydania i rollbacku (także nieudanego) oraz przy `--sync-env`, z plików `.current-*`
+  (`ADMIN_IMAGE` z `.current-admin-image`; bez tego pliku linii nie ma). `deploy-admin.sh` po udanym wdrożeniu i rollbacku
+  panelu przepisuje w `.env` samą linię `ADMIN_IMAGE`; `deploy.sh` zapisuje wszystkie pięć. **Po każdym wdrożeniu lub rollbacku
   starym `deploy.sh` uruchom `deploy/release/release-deploy.sh --sync-env`.** (`deploy.sh` z repo od commita „deploy.sh: .env w zgodzie” robi to sam po udanym wdrożeniu i rollbacku; komenda przyda się po wersji na serwerze sprzed tej zmiany.) Inaczej ręczne `docker compose up -d`
   mogłoby wrócić do starszego obrazu (lub do nieistniejącego `:current`).
 
@@ -95,7 +104,7 @@ Każde uruchomienie zapisuje koszt w logu i w `/opt/serwerek/releases/costs.log`
 1. `docker ps`: app, encoder i collector mają nowy tag.
 2. `curl -s -o /dev/null -w "%{http_code}" https://www.pawelperfect.com/api/health` daje `200`
    (skrypt sprawdza to sam, a także readiness z tokenem, redis i srh).
-3. Na stronie widać zmianę. Telemetria: wiersz `deploy` w `telemetry.job_run` (opis `release: <tag>`).
+3. Na stronie widać zmianę. Telemetria: wiersz `deploy` w `telemetry.job_run` (opis `release: <tag>`; rollback to też `deploy`, sam `--check` to `deploy-check`).
 4. `release-gc.sh --list` pokazuje puste listy: żadna maszyna nie została.
 
 ## Ustawienia (zmienne środowiska)

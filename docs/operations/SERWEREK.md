@@ -225,7 +225,7 @@ Co robi `deploy.sh <tag>` (kolejność z kodu):
    lista w `REMOVED.txt`, sprawdzone `cmp`), dopiero potem usuwane z `docs`. Do 2026-11 ten krok kasował cały katalog i takie pliki ginęły.
    Test: `node --test deploy/serwerek/test/*.test.mjs`. Trwałe notatki i tak zapisuj w repo (`docs/`), kopia na serwerze jest do czytania;
 7. zapisuje wynik w `telemetry.job_run` jako zadanie `deploy`;
-8. po udanym wdrożeniu i po `--rollback` przepisuje w `.env` projektu linie `APP_IMAGE`, `MIGRATOR_IMAGE`, `ENCODER_IMAGE`, `COLLECTOR_IMAGE` z plików `.current-*` (reszta `.env`, np. `SRH_TOKEN`, zostaje), więc ręczne `docker compose up -d` uruchamia to, co działa; ten sam format co `deploy/release/release-deploy.sh --sync-env`.
+8. po udanym wdrożeniu i po `--rollback` przepisuje w `.env` projektu linie `APP_IMAGE`, `MIGRATOR_IMAGE`, `ENCODER_IMAGE`, `COLLECTOR_IMAGE` i `ADMIN_IMAGE` z plików `.current-*` (reszta `.env`, np. `SRH_TOKEN`, zostaje), więc ręczne `docker compose up -d` uruchamia to, co działa; ten sam format co `deploy/release/release-deploy.sh --sync-env`.
 
 Wynik skryptu przekieruj do pliku (`./deploy.sh <tag> 2>&1 | tee deploy-<tag>.log`) i uruchom w `tmux`, żeby przeżył zerwanie połączenia.
 Deploy restartuje `encoder` (trwające kodowanie wraca do kolejki i zaczyna od zera) oraz na kilka sekund `app` (jedna instancja, bez płynnej wymiany).
@@ -240,7 +240,7 @@ Skopiowanie repo-compose na serwer i `deploy.sh` odtworzy kontener `db` (restart
 
 `/opt/serwerek/apps/polutek/deploy-admin.sh <tag> [--rollback | --stop]` (kopia `deploy/serwerek/deploy-admin.sh`, identyczna z serwerem): buduje `polutek-admin:<tag>` z `Dockerfile.admin`
 (`nice -n 10`), startuje usługę `admin` (profil `admin`), czeka na `healthy` (120 s), przy porażce wraca do poprzedniego obrazu lub zatrzymuje panel (strona jest nietknięta).
-Skrypt NIE migruje bazy: najpierw `./deploy.sh <ten sam commit>`. Wymaga `admin.env` z uprawnieniami 600. `--stop` zatrzymuje i usuwa kontener panelu.
+Skrypt NIE migruje bazy: najpierw `./deploy.sh <ten sam commit>`. Wymaga `admin.env` z uprawnieniami 600. `--stop` zatrzymuje i usuwa kontener panelu. Po udanym wdrożeniu i po `--rollback` przepisuje w `.env` tylko linię `ADMIN_IMAGE` (z `.current-admin-image`; reszta `.env` zostaje), więc ręczne `docker compose --profile admin up -d` uruchamia ten sam panel, a nie nieistniejący `:current`.
 Reset i diagnostyka: `ADMIN-PANEL.md`. Stan 2026-10-05: fazy 1, 2, 3 i A wdrożone (obraz `d47e3861`, ok. 09:28), faza 5 (usunięcie starego `/admin` ze strony) także: `www` odpowiada na `/admin*` kodem 308 na `admin.pawelperfect.com` (sprawdzone `curl` na `/admin/videos`), a na `/api/admin*` kodem 404. Logowanie do panelu: Cloudflare Access (`ADMIN_AUTH_MODE=access`, kod z maila), bez rejestracji i bez kluczy; opis i zmienne (`ADMIN_AUTH_MODE`, `ADMIN_ACCESS_EMAILS`, `ADMIN_OWNER_EMAIL`, `ADMIN_TELEMETRY_DATABASE_URL`, `CLOUDFLARE_R2_*` w `admin.env`): `ADMIN-PANEL.md` rozdz. 1a i 1b.
 
 ### Obrazy z GHCR (nieużywane)

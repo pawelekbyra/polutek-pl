@@ -202,7 +202,7 @@ sync_docs() { # $1 = source tree (git archive of the deployed commit)
 # <<< sync_docs
 
 # >>> sync_env_images (keep this marker pair: deploy/serwerek/test/deploy-env-sync.test.mjs runs the function between them)
-# .env of this compose project gets APP_IMAGE / MIGRATOR_IMAGE / ENCODER_IMAGE / COLLECTOR_IMAGE from the .current-*
+# .env of this compose project gets APP_IMAGE / MIGRATOR_IMAGE / ENCODER_IMAGE / COLLECTOR_IMAGE / ADMIN_IMAGE from the .current-*
 # state files, so a manual `docker compose up -d` starts exactly what deploy.sh started (otherwise it falls back to
 # the non-existent ":current" or to stale lines). Same format as `deploy/release/release-deploy.sh --sync-env`.
 # Every other line (SRH_TOKEN ...) is kept as is; values are never printed; file mode 600, replaced atomically.
@@ -211,13 +211,14 @@ sync_env_images() {
   local tmp v
   tmp="$(mktemp .env.XXXXXX)" || return 1
   chmod 600 "$tmp"
-  if [[ -f .env ]]; then grep -vE '^(APP_IMAGE|MIGRATOR_IMAGE|ENCODER_IMAGE|COLLECTOR_IMAGE|# release-deploy)' .env > "$tmp" || true; fi
+  if [[ -f .env ]]; then grep -vE '^(APP_IMAGE|MIGRATOR_IMAGE|ENCODER_IMAGE|COLLECTOR_IMAGE|ADMIN_IMAGE|# release-deploy)' .env > "$tmp" || true; fi
   {
     echo "# release-deploy: image lines below are written by deploy/release/release-deploy.sh (--sync-env) and deploy.sh"
     v="$(cat .current-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "APP_IMAGE=$v"
     v="$(cat .current-migrator-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "MIGRATOR_IMAGE=$v"
     v="$(cat .current-worker-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "ENCODER_IMAGE=$v"
     v="$(cat .current-collector-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "COLLECTOR_IMAGE=$v"
+    v="$(cat .current-admin-image 2>/dev/null || true)"; [[ -n "$v" ]] && echo "ADMIN_IMAGE=$v"
     true
   } >> "$tmp" || { rm -f "$tmp"; return 1; }
   mv -f "$tmp" .env || { rm -f "$tmp"; return 1; }
