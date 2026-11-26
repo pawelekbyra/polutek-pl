@@ -34,7 +34,7 @@ export function PassTermsContent({ tx, locale, demo, termsLink }: { tx: Tx; loca
           : tx("Dostęp na 30 dni kosztuje {0}, a dostęp na 3 miesiące {1} (ceny brutto; w innych walutach ceny są pokazane w kasie). Każda kolejna wpłata przedłuża dostęp o 30 dni albo 3 miesiące; nic nie odnawia się samo.", "30-day access costs {0} and 3-month access {1} (gross prices; prices in other currencies are shown at checkout). Each further payment extends your access by 30 days or 3 months; nothing renews by itself.", price(locale, PATRON_PRICES.ACCESS_30D.PLN), price(locale, PATRON_PRICES.ACCESS_LIFETIME.PLN))}</li>
         <li>{tx("To nie jest subskrypcja: nic nie odnawia się samo i nie ma czego anulować.", "This is not a subscription: nothing renews by itself and there is nothing to cancel.")}</li>
         <li>{tx("Dostęp otwiera się od razu po potwierdzeniu płatności. Przed zapłatą prosimy o zgodę na to, że od rozpoczęcia oglądania tracisz prawo odstąpienia od umowy (treści cyfrowe).", "Access opens right after the payment is confirmed. Before you pay we ask for your consent that once you start watching you lose the right to withdraw from the contract (digital content).")}</li>
-        <li>{tx("Reklamacje i zwroty: support@polutek.com.", "Complaints and refunds: support@polutek.com.")}</li>
+        <li>{tx("Reklamacje i zwroty: {0}.", "Complaints and refunds: {0}.", PATRON_SUPPORT_EMAIL)}</li>
       </ul>
       <p className="mt-4 text-[14px] text-[var(--chan-muted)]">{sellerLine(tx)} · {vatTermsNote(tx)} · {PATRON_SUPPORT_EMAIL}</p>
       <p className="mt-8">{termsLink}</p>

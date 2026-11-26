@@ -96,8 +96,8 @@ Wniosek: dziś **nikt nie może zapłacić prawdziwie** (to jest bezpieczne), al
 
 ### P1-4. Apple Pay / Google Pay: domeny
 
-- **Ustalenie** (odczyt `payment_method_domains` i `apple_pay/domains`): zweryfikowane i aktywne dla `pawelperfect.com`, `www.pawelperfect.com`, `pawelperfect.pl`, `www.pawelperfect.pl` (Apple Pay, Google Pay, Link: `active`). **Brak** `polutek.com`/`www.polutek.com`, a adres pomocy w kasie to `support@polutek.com`.
-- **Zrobić.** Gdy produkt przejdzie na domenę `polutek.com`, dodać i zweryfikować domenę w Stripe (plik weryfikacyjny lub panel). Zweryfikować, że skrzynka `support@polutek.com` istnieje i ktoś ją czyta (stały adres w `PATRON_SUPPORT_EMAIL`). Konto Stripe ma adres wsparcia `hello@pawelperfect.pl`: ujednolicić. **Kto:** właściciel, dev.
+- **Ustalenie** (odczyt `payment_method_domains` i `apple_pay/domains`): zweryfikowane i aktywne dla `pawelperfect.com`, `www.pawelperfect.com`, `pawelperfect.pl`, `www.pawelperfect.pl` (Apple Pay, Google Pay, Link: `active`). **Brak** `polutek.com`/`www.polutek.com`, a adres pomocy w kasie to `support@pawelperfect.com`.
+- **Zrobić.** Gdy produkt przejdzie na domenę `polutek.com`, dodać i zweryfikować domenę w Stripe (plik weryfikacyjny lub panel). Zweryfikować, że skrzynka `support@pawelperfect.com` istnieje i ktoś ją czyta (stały adres w `PATRON_SUPPORT_EMAIL`). Konto Stripe ma adres wsparcia `hello@pawelperfect.pl`: ujednolicić. **Kto:** właściciel, dev.
 
 ### P1-5. Kto widzi płatności i patronów (panel admina, zwroty, spory, obsługa)
 
@@ -213,7 +213,7 @@ Zbiorczo, do sprawdzenia przy teście na kluczach testowych (P0-7):
 - działanie na prawdziwym iPhonie i Androidzie (Apple Pay, Google Pay, BLIK, 3DS);
 - audyt dostępności czytnikiem ekranu i narzędziem automatycznym;
 - test Postgres `tests/postgres/premium-pass-ledgers.pg.test.ts` (nie uruchomiony; wymaga bazy);
-- czy skrzynka `support@polutek.com` istnieje i dostarcza pocztę;
+- czy skrzynka `support@pawelperfect.com` istnieje i dostarcza pocztę;
 - ustawienia panelu Stripe poza API (wysyłka potwierdzeń do klientów, Radar, ustawienia VAT);
 - zachowanie crona uzgadniania wobec zwrotów;
 - interakcja dostępu z kontem usuniętym, zbanowanym lub zmienionym e-mailem.

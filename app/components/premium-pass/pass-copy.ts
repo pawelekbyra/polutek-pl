@@ -26,8 +26,8 @@ export const PATRON_SELLER: { name: string; nip: string | null } = {
   nip: null,
 };
 
-/** The one contact address of the patron zone (owner decision 2026-10-21). */
-export const PATRON_SUPPORT_EMAIL = "support@polutek.com";
+/** The one contact address of the patron zone (owner decision 2026-10-21; address unified with LEGAL_CONTACT_EMAIL, polutek.com is not our domain). */
+export const PATRON_SUPPORT_EMAIL = "support@pawelperfect.com";
 
 export function sellerLine(tx: Tx): string {
   return tx("Sprzedawca: {0}", "Seller: {0}", sellerName(tx));
