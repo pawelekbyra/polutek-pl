@@ -32,6 +32,12 @@ if (hasFfmpeg && !hasToneMapFilters) {
   console.warn('[encode-hls.ffmpeg] skipping the HLG tone-mapping test: this ffmpeg build has no zscale/tonemap filters');
 }
 
+// iPhone HDR clips are HEVC (10-bit, HLG). libx265 writes the HLG colour tags into the stream itself (x265-params), so this
+// fixture is HDR on every build that has the encoder, unlike libx264 (see the test above).
+const hasLibx265 =
+  hasFfmpeg &&
+  /\blibx265\b/.test(spawnSync('ffmpeg', ['-hide_banner', '-encoders'], { encoding: 'utf8' }).stdout ?? '');
+
 const work = hasFfmpeg ? mkdtempSync(path.join(tmpdir(), 'encode-hls-')) : '';
 afterAll(() => {
   if (work) rmSync(work, { recursive: true, force: true });
@@ -103,5 +109,29 @@ describe.skipIf(!hasFfmpeg)('encode-hls with real ffmpeg', () => {
     const top = probeStream(path.join(out, '720p', 'index.m3u8'));
     expect(top.color_transfer).toBe('bt709');
     expect(top.color_primaries).toBe('bt709');
+  }, 180_000);
+
+
+  it.skipIf(!hasToneMapFilters || !hasLibx265)('tone-maps a 10-bit HEVC HLG source (libx265, like an iPhone clip) to 8-bit BT.709 SDR', async () => {
+    const src = makeClip('hlg-hevc.mp4', [
+      '-f', 'lavfi', '-i', 'testsrc2=size=1280x720:rate=25:duration=3',
+      '-c:v', 'libx265', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p10le',
+      '-x265-params', 'log-level=error:colorprim=bt2020:transfer=arib-std-b67:colormatrix=bt2020nc',
+      '-tag:v', 'hvc1',
+    ]);
+    const input = probeStream(src);
+    expect(input.codec_name).toBe('hevc');
+    expect(input.color_transfer).toBe('arib-std-b67');
+    expect((await probeSource(src)).hdr).toBe(true);
+
+    const out = path.join(work, 'hlg-hevc');
+    const { issues } = await encodeHls({ input: src, out, opts: FAST });
+    expect(issues).toEqual([]);
+    const top = probeStream(path.join(out, '720p', 'index.m3u8'));
+    expect(top.codec_name).toBe('h264');
+    expect(top.pix_fmt).toBe('yuv420p');
+    expect(top.color_transfer).toBe('bt709');
+    expect(top.color_primaries).toBe('bt709');
+    expect(top.color_space).toBe('bt709');
   }, 180_000);
 });
