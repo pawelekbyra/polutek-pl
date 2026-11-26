@@ -10,6 +10,7 @@ import { sendBecomePatronEmail, sendDonationThankYouEmail } from "@/lib/modules/
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { ensureSupporterGrant } from "./supporter-grant";
 import { isPremiumPassPayment } from "../domain/payment.purpose";
+import { ensurePurchaseConfirmation } from "./send-purchase-confirmation.use-case";
 
 export interface FulfillPaymentInput {
   paymentId: string;
@@ -31,13 +32,17 @@ export interface FulfillPaymentInput {
  * (webhook, payment-status fast path, reconciliation cron). Validates the Stripe data against
  * the local row, moves it to SUCCEEDED with a CAS (also from FAILED/CANCELED, see
  * PaymentRepository.fulfillPaymentWithCAS), adds the supporter marker and, after the commit,
- * thanks the payer exactly once.
+ * thanks the payer exactly once. A Premium payment gets no thank-you but the "Potwierdzenie zakupu" mail (the
+ * consumer's confirmation of the contract and of the consent to immediate performance, send-purchase-confirmation
+ * .use-case.ts): at most once per payment, also on a replay of the event, whatever `notifyPayer` says.
  */
 export async function fulfillPayment(
   input: FulfillPaymentInput,
   ctx: AppContext
 ): Promise<UseCaseResult<{ isFirstFulfillment: boolean }, PaymentError>> {
   const repo = new PaymentRepository();
+  // Set when the payment turns out to be already recorded (a replay): a Premium one may still owe its confirmation mail.
+  let replayedPremium = false;
 
   try {
     const result = await ctx.db.writeTransaction(async (tx) => {
@@ -79,6 +84,7 @@ export async function fulfillPayment(
 
       if (count === 0) {
         logger.info(`[FulfillPayment] Payment ${payment.id} already recorded (status ${payment.status}); nothing to do.`);
+        replayedPremium = isPremiumPassPayment(payment.metadata);
         return null;
       }
 
@@ -122,10 +128,15 @@ export async function fulfillPayment(
     });
 
     if (!result) {
+      // Replay (webhook retry, fast path, cron): the confirmation is sent only if an earlier send failed or never ran.
+      if (replayedPremium) await confirmPurchase(input.paymentId, ctx);
       return ok({ isFirstFulfillment: false });
     }
 
-    if (input.notifyPayer !== false && !result.premium) {
+    if (result.premium) {
+      // After the commit, never inside it: the money and the access are recorded whatever happens to the mail.
+      await confirmPurchase(input.paymentId, ctx);
+    } else if (input.notifyPayer !== false) {
       await thankPayer(input, result, ctx);
     }
 
@@ -133,6 +144,15 @@ export async function fulfillPayment(
   } catch (error: any) {
     logger.error(`[FulfillPayment] Error fulfilling payment ${input.paymentId}:`, error);
     return fail(new PaymentError(error.message || 'Fulfillment failed'));
+  }
+}
+
+/** The purchase confirmation never throws by design; this is the belt and braces: a mail problem must not undo a recorded payment. */
+async function confirmPurchase(paymentId: string, ctx: AppContext) {
+  try {
+    await ensurePurchaseConfirmation({ paymentId }, ctx);
+  } catch (error) {
+    logger.error(`[FulfillPayment] Purchase confirmation for ${paymentId} threw`, error);
   }
 }
 
