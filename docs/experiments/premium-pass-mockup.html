@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="pl" data-theme="light" data-view="all">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Wejściówka Premium – makieta</title>
+<style>
+/* Static mockup of the premium-pass experiment (docs/experiments/premium-pass.md). No external assets. */
+:root {
+  --chan-card: #ffffff; --chan-nav: #f7f9fc; --chan-surface: #f0f3f8; --chan-surface-raised: #ffffff;
+  --chan-line: #e1e6ef; --chan-line-soft: #d5dce8; --chan-ink: #111827; --chan-muted: #5d6679; --chan-body: #344054;
+  --chan-blue: #2563eb; --chan-blue-soft: #eff3fe; --chan-amber: #f59e0b; --chan-amber-bright: #fbbf24;
+  --chan-amber-strong: #d97706; --chan-amber-soft: #fff3d6; --chan-amber-ink: #4a2a03;
+  --pass-stage: #0b0f1a; --pass-stage-2: color-mix(in srgb, var(--chan-blue) 14%, #0b0f1a);
+  --pass-gold: var(--chan-amber-bright); --pass-gold-strong: var(--chan-amber); --pass-gold-ink: var(--chan-amber-ink);
+  --pass-on-stage: #f8fafc; --pass-on-stage-muted: color-mix(in srgb, #f8fafc 70%, transparent);
+  --pass-line-stage: color-mix(in srgb, #f8fafc 14%, transparent);
+  --pass-ok: #16a34a; --pass-err: #dc2626;
+  --shadow: 0 24px 54px -28px rgba(15, 23, 42, .34);
+  --page-bg: #e9edf4; --doc-ink: #111827; --doc-muted: #5d6679;
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --chan-card: #121826; --chan-nav: #0d1220; --chan-surface: #0a0f1b; --chan-surface-raised: #151c2c;
+  --chan-line: #243049; --chan-line-soft: #2c3956; --chan-ink: #eef2f8; --chan-muted: #9aa6bd; --chan-body: #c7d0df;
+  --chan-blue: #6b9bff; --chan-blue-soft: #16213a; --chan-amber-soft: #2a2110; --chan-amber-ink: #2a1702;
+  --pass-stage: #05070d;
+  --page-bg: #070a12; --doc-ink: #eef2f8; --doc-muted: #9aa6bd;
+  --shadow: 0 24px 54px -28px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page-bg); color: var(--doc-ink); font: 15px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- document chrome ---------- */
+.doc-head { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between;
+  padding: 14px 24px; background: color-mix(in srgb, var(--page-bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--chan-line); }
+.doc-head h1 { font-size: 17px; margin: 0; letter-spacing: -.01em; }
+.doc-head p { margin: 0; color: var(--doc-muted); font-size: 13px; }
+.seg { display: inline-flex; border: 1px solid var(--chan-line-soft); border-radius: 12px; overflow: hidden; background: var(--chan-card); }
+.seg button { border: 0; background: transparent; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--chan-muted); }
+.seg button[aria-pressed="true"] { background: var(--chan-ink); color: var(--chan-card); }
+.toggles { display: flex; gap: 10px; flex-wrap: wrap; }
+main { max-width: 1480px; margin: 0 auto; padding: 24px 24px 80px; }
+.screen { margin: 0 0 56px; }
+.screen > h2 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.02em; }
+.screen > .note { margin: 0 0 18px; color: var(--doc-muted); max-width: 900px; }
+.row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+.frame-label { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--doc-muted); margin: 0 0 8px; }
+.desk { flex: 1 1 760px; min-width: 0; max-width: 1040px; }
+.phone-col { flex: 0 0 auto; }
+:root[data-view="phone"] .desk-wrap { display: none; }
+:root[data-view="desktop"] .phone-col { display: none; }
+.browser { border-radius: 14px; overflow: hidden; background: var(--chan-nav); box-shadow: var(--shadow); border: 1px solid var(--chan-line); }
+.browser-bar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--chan-surface); border-bottom: 1px solid var(--chan-line); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--chan-line-soft); }
+.url { flex: 1; margin-left: 8px; padding: 4px 10px; border-radius: 8px; background: var(--chan-card); color: var(--chan-muted); font: 12px var(--mono); }
+.phone { width: 375px; height: 780px; border-radius: 44px; padding: 12px; background: #0b0d12; box-shadow: var(--shadow), inset 0 0 0 2px #2a2f3a; position: relative; }
+.phone-screen { width: 100%; height: 100%; border-radius: 34px; overflow: hidden; background: var(--chan-nav); position: relative; display: flex; flex-direction: column; }
+.notch { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 110px; height: 28px; background: #0b0d12; border-radius: 0 0 16px 16px; z-index: 5; }
+.phone-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.status { height: 40px; flex: 0 0 auto; }
+
+/* ---------- site chrome (nav, layout) ---------- */
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px; background: var(--chan-nav); border-bottom: 1px solid var(--chan-line); }
+.brand { display: flex; align-items: center; gap: 8px; font: 700 13px var(--mono); letter-spacing: .02em; color: var(--chan-ink); }
+.brand i { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, #f59e0b 0%, #2563eb 72%); display: inline-block; }
+.nav-right { display: flex; gap: 8px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--chan-line); background: var(--chan-card); font-size: 12px; font-weight: 600; color: var(--chan-body); }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #94a3b8, #475569); }
+.watch { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; padding: 18px; }
+.under { padding: 14px 2px 0; }
+.under h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -.01em; color: var(--chan-ink); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--chan-muted); font-size: 13px; }
+.side { display: flex; flex-direction: column; gap: 10px; }
+.side h4 { margin: 0 0 2px; font-size: 13px; color: var(--chan-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.tile { display: grid; grid-template-columns: 124px 1fr; gap: 10px; align-items: start; }
+.tile .t-title { font-size: 13px; font-weight: 600; color: var(--chan-ink); line-height: 1.3; }
+.tile .t-meta { font-size: 12px; color: var(--chan-muted); }
+
+/* ---------- artwork (stands in for real thumbnails) ---------- */
+.art { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; background: #111; }
+.art::before { content: ""; position: absolute; inset: -10%; background:
+  radial-gradient(circle at 28% 34%, #f59e0b 0 9%, transparent 26%),
+  radial-gradient(circle at 70% 64%, #2563eb 0 12%, transparent 34%),
+  radial-gradient(circle at 52% 20%, #e11d48 0 5%, transparent 22%),
+  linear-gradient(160deg, #1f2937, #0b0f1a 70%); }
+.art.v2::before { background:
+  radial-gradient(circle at 66% 30%, #fbbf24 0 8%, transparent 24%),
+  radial-gradient(circle at 30% 70%, #14b8a6 0 10%, transparent 30%),
+  linear-gradient(200deg, #312e81, #0b0f1a 75%); }
+.art.v3::before { background: radial-gradient(circle at 50% 45%, #fef3c7 0 6%, transparent 24%), linear-gradient(140deg, #334155, #020617); }
+.art.blur::before { filter: blur(8px) saturate(.9); }
+.art.blur::after { content: ""; position: absolute; inset: 0; background: rgba(5, 7, 13, .45); }
+.dur { position: absolute; right: 6px; bottom: 6px; z-index: 2; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.72); color: #fff; font: 600 11px var(--mono); }
+.badge { position: absolute; left: 6px; top: 6px; z-index: 2; display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px 3px 6px; border-radius: 7px;
+  background: var(--pass-gold); color: var(--pass-gold-ink); font: 800 10px/1 var(--font); letter-spacing: .08em; box-shadow: 0 6px 14px -8px rgba(245,158,11,.9); }
+.badge svg { width: 11px; height: 11px; }
+
+/* ---------- premium stage (locked player) ---------- */
+.pp-pass { --r-card: 16px; --r-btn: 14px; }
+.stage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 0; background: var(--pass-stage); color: var(--pass-on-stage); isolation: isolate; container-type: inline-size; }
+.stage .poster { position: absolute; inset: -8%; z-index: -2; filter: blur(24px) saturate(1.1); transform: scale(1.05); background:
+  radial-gradient(circle at 28% 34%, #f59e0b 0 9%, transparent 26%), radial-gradient(circle at 70% 64%, #2563eb 0 12%, transparent 34%),
+  radial-gradient(circle at 52% 20%, #e11d48 0 5%, transparent 22%), linear-gradient(160deg, #1f2937, #0b0f1a 70%); }
+.stage::after { content: ""; position: absolute; inset: 0; z-index: -1; background:
+  radial-gradient(120% 90% at 50% 120%, rgba(251,191,36,.18), transparent 60%), linear-gradient(180deg, rgba(5,7,13,.55), rgba(5,7,13,.86)); }
+.stage-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: clamp(8px, 2cqi, 16px); padding: clamp(14px, 4cqi, 40px); }
+.stage .badge { position: absolute; left: clamp(10px, 2.2cqi, 20px); top: clamp(10px, 2.2cqi, 20px); font-size: clamp(10px, 1.4cqi, 12px); padding: 5px 9px 5px 8px; }
+.ribbon-mini { position: absolute; right: clamp(10px, 2.2cqi, 20px); top: clamp(10px, 2.2cqi, 20px); padding: 4px 9px; border-radius: 7px; border: 1px dashed color-mix(in srgb, var(--pass-gold) 70%, transparent);
+  color: var(--pass-gold); font: 700 clamp(9px, 1.2cqi, 11px)/1 var(--mono); letter-spacing: .1em; }
+.lock-ring { width: clamp(40px, 8cqi, 64px); height: clamp(40px, 8cqi, 64px); border-radius: 50%; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--pass-gold) 14%, transparent); border: 1px solid color-mix(in srgb, var(--pass-gold) 50%, transparent); color: var(--pass-gold);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--pass-gold) 6%, transparent), 0 18px 40px -16px rgba(251,191,36,.6); }
+.lock-ring svg { width: 46%; height: 46%; }
+.stage h3 { margin: 0; font-size: clamp(17px, 4cqi, 32px); letter-spacing: -.02em; line-height: 1.1; }
+.stage .sub { margin: 0; color: var(--pass-on-stage-muted); font-size: clamp(12px, 1.8cqi, 15px); }
+.offer { display: flex; align-items: center; gap: 18px; margin-top: 6px; padding: 14px 14px 14px 20px; border-radius: var(--r-card); text-align: left;
+  background: color-mix(in srgb, #0b0f1a 62%, transparent); border: 1px solid var(--pass-line-stage); backdrop-filter: blur(6px); box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
+.offer .o-name { font-weight: 700; font-size: 15px; }
+.offer .o-perks { display: flex; gap: 12px; font-size: 12px; color: var(--pass-on-stage-muted); margin-top: 3px; }
+.offer .o-perks span::before { content: "✓ "; color: var(--pass-gold); font-weight: 800; }
+.btn-gold { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px; border: 0; border-radius: var(--r-btn); cursor: pointer;
+  background: linear-gradient(180deg, #fcd34d, var(--pass-gold-strong)); color: var(--pass-gold-ink); font-weight: 800; font-size: 15px; letter-spacing: -.005em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 14px 30px -14px rgba(245,158,11,.9); white-space: nowrap; }
+.btn-gold small { font-weight: 700; opacity: .8; }
+.link-stage { color: var(--pass-on-stage); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--pass-gold) 70%, transparent); }
+.stage-phone .offer { display: none; }
+.stage-phone .btn-gold { min-height: 42px; font-size: 14px; }
+.tiny { font-size: 11px; color: var(--pass-on-stage-muted); }
+
+/* ---------- demo ribbon ---------- */
+.ribbon { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 28px; padding: 4px 12px; text-align: center;
+  background: repeating-linear-gradient(-45deg, var(--chan-amber-soft) 0 12px, color-mix(in srgb, var(--chan-amber) 22%, var(--chan-amber-soft)) 12px 24px);
+  color: var(--chan-ink); font: 700 11px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid color-mix(in srgb, var(--chan-amber) 40%, transparent); }
+:root[data-theme="dark"] .ribbon { color: var(--pass-gold); background: repeating-linear-gradient(-45deg, #1a1408 0 12px, #241b09 12px 24px); }
+
+/* ---------- light cards ---------- */
+.card { background: var(--chan-card); border: 1px solid var(--chan-line); border-radius: 16px; box-shadow: var(--shadow); }
+.pill-chip { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 8px; background: var(--chan-amber-soft); color: var(--chan-ink);
+  border: 1px solid color-mix(in srgb, var(--chan-amber) 45%, transparent); font-size: 11px; font-weight: 800; letter-spacing: .06em; }
+.pill-chip svg { width: 11px; height: 11px; }
+.pill-chip.ok { letter-spacing: 0; font-weight: 700; }
+
+/* ---------- offer page ---------- */
+.hero-band { position: relative; overflow: hidden; background: var(--pass-stage); color: var(--pass-on-stage); padding: 44px 40px 40px; isolation: isolate; }
+.hero-band::before { content: ""; position: absolute; inset: 0; z-index: -1; background:
+  radial-gradient(60% 120% at 85% -10%, rgba(37,99,235,.42), transparent 60%), radial-gradient(50% 90% at 10% 120%, rgba(251,191,36,.28), transparent 60%); }
+.eyebrow { font: 700 11px/1 var(--mono); letter-spacing: .14em; color: var(--pass-gold); text-transform: uppercase; }
+.hero-band h3 { margin: 10px 0 8px; font-size: 40px; line-height: 1.02; letter-spacing: -.035em; }
+.hero-band p { margin: 0; color: var(--pass-on-stage-muted); max-width: 520px; font-size: 16px; }
+.inside { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 14px; margin-top: 24px; }
+.inside .cap { font-size: 13px; margin-top: 6px; font-weight: 600; }
+.inside .cap span { display: block; font-weight: 400; color: var(--pass-on-stage-muted); font-size: 12px; }
+.offer-body { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; padding: 28px 40px 36px; align-items: start; }
+.price-card { margin-top: -64px; position: relative; padding: 24px; border: 2px solid var(--chan-ink); }
+.price-card .kicker { font: 700 11px/1 var(--mono); letter-spacing: .14em; color: var(--chan-muted); text-transform: uppercase; }
+.price { display: flex; align-items: baseline; gap: 8px; margin: 10px 0 2px; }
+.price b { font-size: 44px; letter-spacing: -.035em; color: var(--chan-ink); line-height: 1; }
+.price span { color: var(--chan-muted); font-size: 14px; }
+.vat { color: var(--chan-muted); font-size: 12px; }
+.perks { list-style: none; margin: 16px 0 18px; padding: 0; display: grid; gap: 9px; }
+.perks li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; color: var(--chan-body); font-size: 14px; }
+.perks li::before { content: "✓"; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--chan-amber-soft); color: var(--chan-amber-strong); font-weight: 900; font-size: 12px; }
+.btn-ink { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; border: 0; border-radius: 14px; cursor: pointer;
+  background: var(--chan-ink); color: var(--chan-card); font-weight: 800; font-size: 16px; box-shadow: 0 14px 30px -16px rgba(17,24,39,.7); }
+.methods { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 14px 0 0; }
+.mlogo { height: 24px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--chan-line); background: var(--chan-surface-raised); display: inline-flex; align-items: center; font: 800 10px var(--font); letter-spacing: .02em; color: var(--chan-body); }
+.secure { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 12px; color: var(--chan-muted); font-size: 12px; }
+.secure svg { width: 14px; height: 14px; }
+.faq { display: grid; gap: 8px; }
+.faq h4 { margin: 0 0 4px; font-size: 15px; color: var(--chan-ink); }
+.faq details { border: 1px solid var(--chan-line); border-radius: 12px; background: var(--chan-card); padding: 12px 14px; }
+.faq summary { cursor: pointer; font-weight: 600; color: var(--chan-ink); font-size: 14px; }
+.faq details p { margin: 8px 0 0; color: var(--chan-body); font-size: 13px; }
+
+/* ---------- checkout sheet ---------- */
+.dim { position: relative; background: rgba(5,7,13,.55); padding: 34px 20px; display: grid; place-items: center; }
+.dim::before { content: ""; position: absolute; inset: 0; z-index: -1; }
+.sheet { width: min(500px, 100%); background: var(--chan-card); border-radius: 20px; overflow: hidden; box-shadow: 0 40px 80px -30px rgba(0,0,0,.6); border: 1px solid var(--chan-line); color: var(--chan-ink); }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 12px; }
+.sheet-head h3 { margin: 0; font-size: 18px; letter-spacing: -.01em; }
+.x { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--chan-line); background: var(--chan-surface-raised); display: grid; place-items: center; color: var(--chan-muted); font-size: 16px; }
+.sheet-body { padding: 4px 18px 18px; display: grid; gap: 14px; }
+.order { border: 1px solid var(--chan-line); border-radius: 14px; overflow: hidden; }
+.order-line { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; }
+.ticket { width: 40px; height: 40px; border-radius: 10px; background: var(--pass-stage); display: grid; place-items: center; color: var(--pass-gold); }
+.ticket svg { width: 20px; height: 20px; }
+.order-line b { font-size: 14px; }
+.order-line .s { font-size: 12px; color: var(--chan-muted); }
+.order-total { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 14px; background: var(--chan-surface); border-top: 1px solid var(--chan-line); font-size: 14px; }
+.order-total b { font-size: 18px; letter-spacing: -.01em; }
+.acct { font-size: 12px; color: var(--chan-muted); }
+.lbl { font-size: 13px; font-weight: 700; color: var(--chan-ink); margin: 0 0 8px; }
+.pm { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pm label { position: relative; display: flex; flex-direction: column; gap: 5px; padding: 10px 10px 9px; border-radius: 12px; border: 1px solid var(--chan-line-soft); background: var(--chan-surface-raised); font-size: 12px; font-weight: 700; cursor: pointer; color: var(--chan-ink); }
+.pm label .mk { height: 20px; display: flex; align-items: center; font: 900 12px var(--font); }
+.pm label.on { border: 2px solid var(--chan-ink); padding: 9px 9px 8px; background: var(--chan-amber-soft); }
+.pm label.on::after { content: "✓"; position: absolute; top: 7px; right: 8px; width: 16px; height: 16px; border-radius: 50%; background: var(--chan-ink); color: var(--chan-card); font-size: 10px; display: grid; place-items: center; }
+.pm input { position: absolute; opacity: 0; }
+.pm-note { font-size: 11px; color: var(--chan-muted); margin-top: 6px; }
+.mk-blik { color: #111; } :root[data-theme="dark"] .mk-blik { color: #fff; }
+.consent { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: 13px; color: var(--chan-body); line-height: 1.4; }
+.box { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--chan-line-soft); background: var(--chan-card); margin-top: 1px; display: grid; place-items: center; font-size: 12px; font-weight: 900; color: var(--chan-card); }
+.box.on { background: var(--chan-ink); border-color: var(--chan-ink); }
+.consent a { color: var(--chan-blue); }
+.consent.err .box { border-color: var(--pass-err); }
+.errmsg { grid-column: 2; color: var(--pass-err); font-size: 12px; font-weight: 600; margin-top: -4px; }
+.pay { display: grid; gap: 6px; text-align: center; }
+.pay .btn-ink { min-height: 52px; }
+.pay small { color: var(--chan-muted); font-size: 12px; }
+.ghost { background: none; border: 0; color: var(--chan-muted); font-size: 12px; text-decoration: underline; cursor: pointer; }
+.seller { border-top: 1px solid var(--chan-line); padding: 10px 18px 14px; display: flex; gap: 8px; align-items: center; color: var(--chan-muted); font-size: 11px; }
+.seller svg { width: 14px; height: 14px; flex: 0 0 auto; }
+.progress { height: 52px; border-radius: 14px; background: var(--chan-surface); border: 1px solid var(--chan-line); position: relative; overflow: hidden; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--chan-body); }
+.progress::before { content: ""; position: absolute; inset: 0 40% 0 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--chan-amber) 35%, transparent)); animation: sweep 1.2s var(--ease, ease-in-out) infinite; }
+@keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(170%); } }
+@media (prefers-reduced-motion: reduce) { .progress::before { animation: none; opacity: .5; } .check-anim { animation: none !important; } }
+
+/* phone sheet */
+.p-sheet { position: absolute; inset: 0; background: rgba(5,7,13,.55); display: flex; flex-direction: column; justify-content: flex-end; }
+.p-sheet .sheet { width: 100%; border-radius: 22px 22px 0 0; max-height: 92%; display: flex; flex-direction: column; border-bottom: 0; }
+.p-sheet .sheet-body { overflow-y: auto; }
+.grab { width: 40px; height: 5px; border-radius: 3px; background: var(--chan-line-soft); margin: 8px auto 0; }
+.p-sheet .pm { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sticky-pay { position: sticky; bottom: 0; background: var(--chan-card); padding: 10px 18px calc(12px + 8px); border-top: 1px solid var(--chan-line); display: grid; gap: 4px; text-align: center; }
+.sticky-pay small { color: var(--chan-muted); font-size: 11px; }
+.collapsed-order { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; border: 1px solid var(--chan-line); border-radius: 14px; background: var(--chan-surface); font-size: 13px; }
+
+/* ---------- success ---------- */
+.success { text-align: center; display: grid; gap: 10px; justify-items: center; padding: 22px 20px 6px; }
+.check { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--pass-ok) 14%, transparent); color: var(--pass-ok);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--pass-ok) 6%, transparent); }
+.check svg { width: 30px; height: 30px; }
+.check-anim path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: draw .36s .1s cubic-bezier(.16,1,.3,1) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.success h3 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+.success p { margin: 0; color: var(--chan-muted); font-size: 14px; }
+.receipt { width: 100%; text-align: left; border: 1px dashed var(--chan-line-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; font-size: 13px; background: var(--chan-surface); }
+.receipt div { display: flex; justify-content: space-between; gap: 12px; }
+.receipt span { color: var(--chan-muted); }
+.receipt b { font-weight: 600; text-align: right; }
+.receipt .mono { font-family: var(--mono); font-size: 12px; }
+.fine { font-size: 11px; color: var(--chan-muted); text-align: center; }
+.btn-gold.wide { width: 100%; min-height: 50px; }
+
+/* ---------- states ---------- */
+.states { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.state-card { padding: 0; overflow: hidden; }
+.state-card .cap { padding: 10px 14px; font-size: 13px; color: var(--chan-muted); border-top: 1px solid var(--chan-line); }
+.expired-bar { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 10px; background: color-mix(in srgb, #ef4444 18%, transparent); color: #fecaca; font-size: 12px; font-weight: 600; border: 1px solid color-mix(in srgb, #ef4444 40%, transparent); }
+.declined .check { background: color-mix(in srgb, var(--pass-err) 14%, transparent); color: var(--pass-err); box-shadow: 0 0 0 10px color-mix(in srgb, var(--pass-err) 6%, transparent); }
+.btn-row { display: flex; gap: 8px; width: 100%; }
+.btn-line { flex: 1; min-height: 44px; border-radius: 12px; border: 1px solid var(--chan-line-soft); background: var(--chan-surface-raised); font-weight: 700; font-size: 14px; color: var(--chan-ink); }
+.btn-row .btn-ink { flex: 1; min-height: 44px; font-size: 14px; }
+.tiles-demo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 14px; }
+.tiles-demo .t-title { font-size: 12px; font-weight: 600; margin-top: 6px; color: var(--chan-ink); }
+.tiles-demo .t-meta { font-size: 11px; color: var(--chan-muted); }
+.demo-fab { position: absolute; right: 12px; bottom: 12px; padding: 7px 11px; border-radius: 999px; background: var(--chan-ink); color: var(--chan-card); font: 700 11px var(--mono); letter-spacing: .06em; box-shadow: var(--shadow); }
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 12px; }
+.legend div { font-size: 13px; color: var(--doc-muted); padding: 10px 12px; border-radius: 12px; border: 1px solid var(--chan-line); background: var(--chan-card); }
+.legend b { color: var(--doc-ink); }
+
+/* phone page bits */
+.p-under { padding: 12px 16px; }
+.p-under h3 { margin: 0 0 4px; font-size: 16px; color: var(--chan-ink); }
+.p-list { padding: 4px 16px 16px; display: grid; gap: 10px; }
+.p-list .tile { grid-template-columns: 140px 1fr; }
+.p-hero { padding: 26px 18px 70px; }
+.p-hero h3 { font-size: 30px; }
+.p-price { margin: -54px 16px 16px; padding: 18px; }
+.p-price .price b { font-size: 38px; }
+.p-sticky { position: sticky; bottom: 0; padding: 10px 16px 14px; background: color-mix(in srgb, var(--chan-nav) 92%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--chan-line); }
+
+@media (max-width: 900px) {
+  main { padding: 16px; }
+  .watch { grid-template-columns: 1fr; }
+  .offer-body { grid-template-columns: 1fr; padding: 20px; }
+  .states { grid-template-columns: 1fr; }
+  .phone { transform: scale(.92); transform-origin: top left; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-lock" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path stroke="currentColor" stroke-width="2" stroke-dasharray="2 2.5" d="M14 7v10"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" d="M7 7l10 10M17 7L7 17"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.5v13l11-6.5z"/></symbol>
+</svg>
+
+<header class="doc-head">
+  <div>
+    <h1>Wejściówka Premium · makieta eksperymentu</h1>
+    <p>Statyczny podgląd wyglądu (dane przykładowe). Plan: <code>docs/experiments/premium-pass.md</code>. W eksperymencie nic nie jest pobierane.</p>
+  </div>
+  <div class="toggles">
+    <div class="seg" role="group" aria-label="Motyw">
+      <button type="button" data-set-theme="light" aria-pressed="true">Jasny</button>
+      <button type="button" data-set-theme="dark" aria-pressed="false">Ciemny</button>
+    </div>
+    <div class="seg" role="group" aria-label="Widok">
+      <button type="button" data-set-view="all" aria-pressed="true">Oba</button>
+      <button type="button" data-set-view="desktop" aria-pressed="false">Komputer</button>
+      <button type="button" data-set-view="phone" aria-pressed="false">Telefon 375</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ===================================================== 1. LOCKED VIDEO ===================================================== -->
+<section class="screen" aria-labelledby="s1">
+  <h2 id="s1">1. Zablokowany film (zalogowany bez wejściówki)</h2>
+  <p class="note">Rozmyty poster w miejscu odtwarzacza, złota plakietka PREMIUM, jedna karta oferty i jedno CTA. Odtwarzacz nie jest montowany (plan <code>PASS_REQUIRED</code> bez źródła i tokenu). Gość widzi to samo, z przyciskiem „Zaloguj się i kup wejściówkę”.</p>
+  <div class="row">
+    <div class="desk desk-wrap">
+      <p class="frame-label">Komputer · 1280 px</p>
+      <div class="browser">
+        <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">www.pawelperfect.com/?v=jj</span></div>
+        <nav class="nav"><span class="brand"><i></i>www.pawelperfect.com</span><span class="nav-right"><span class="chip">Szukaj</span><span class="avatar"></span></span></nav>
+        <div class="watch">
+          <div>
+            <div class="pp-pass stage">
+              <div class="poster" aria-hidden="true"></div>
+              <span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span>
+              <span class="ribbon-mini">TRYB DEMO</span>
+              <div class="stage-inner">
+                <div class="lock-ring"><svg><use href="#i-lock"/></svg></div>
+                <h3>Materiał za kulisami</h3>
+                <p class="sub">Zbieram hajs na mój Tajny Projekt · <span class="num">0:45</span></p>
+                <div class="offer">
+                  <div>
+                    <div class="o-name">Wejściówka 30 dni · <span class="num">29,00 zł</span></div>
+                    <div class="o-perks"><span>2 filmy premium</span><span>bez subskrypcji</span><span>od razu</span></div>
+                  </div>
+                  <button class="btn-gold" type="button"><svg width="18" height="18"><use href="#i-ticket"/></svg>Kup wejściówkę <small>· 29 zł</small></button>
+                </div>
+                <a class="link-stage" href="#s2">Co jest w środku?</a>
+              </div>
+            </div>
+            <div class="under">
+              <h3>Zbieram hajs na mój Tajny Projekt</h3>
+              <div class="meta"><span class="pill-chip"><svg><use href="#i-lock"/></svg>PREMIUM</span><span>Pawel Perfect</span><span>·</span><span>w wejściówce Premium</span></div>
+            </div>
+          </div>
+          <aside class="side">
+            <h4>Filmy</h4>
+            <div class="tile"><div class="art v3"><span class="dur num">0:36</span></div><div><div class="t-title">Nie masz psychy się zalogować</div><div class="t-meta">Publiczny</div></div></div>
+            <div class="tile"><div class="art blur"><span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span><span class="dur num">0:45</span></div><div><div class="t-title">Zbieram hajs na mój Tajny Projekt</div><div class="t-meta">Premium · teraz oglądasz</div></div></div>
+            <div class="tile"><div class="art v2 blur"><span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span><span class="dur num">1:00</span></div><div><div class="t-title">Film testowy 4</div><div class="t-meta">Premium</div></div></div>
+            <div class="tile"><div class="art"><span class="dur num">0:23</span></div><div><div class="t-title">Tajny Projekt</div><div class="t-meta">Premiera 31.12.2026</div></div></div>
+          </aside>
+        </div>
+      </div>
+    </div>
+    <div class="phone-col">
+      <p class="frame-label">Telefon · 375 px</p>
+      <div class="phone"><div class="notch"></div><div class="phone-screen">
+        <div class="status"></div>
+        <div class="phone-scroll">
+          <nav class="nav"><span class="brand"><i></i>pawelperfect</span><span class="avatar"></span></nav>
+          <div class="pp-pass stage stage-phone">
+            <div class="poster" aria-hidden="true"></div>
+            <span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span>
+            <span class="ribbon-mini">DEMO</span>
+            <div class="stage-inner">
+              <h3>Materiał za kulisami</h3>
+              <p class="sub"><span class="num">0:45</span> · w wejściówce Premium</p>
+              <button class="btn-gold" type="button"><svg width="16" height="16"><use href="#i-ticket"/></svg>Kup wejściówkę · 29 zł</button>
+              <span class="tiny">Bez subskrypcji · <u>Co jest w środku?</u></span>
+            </div>
+          </div>
+          <div class="p-under">
+            <h3>Zbieram hajs na mój Tajny Projekt</h3>
+            <div class="meta"><span class="pill-chip"><svg><use href="#i-lock"/></svg>PREMIUM</span><span>Pawel Perfect</span></div>
+          </div>
+          <div class="p-list">
+            <div class="tile"><div class="art v2 blur"><span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span><span class="dur num">1:00</span></div><div><div class="t-title">Film testowy 4</div><div class="t-meta">Premium</div></div></div>
+            <div class="tile"><div class="art v3"><span class="dur num">0:36</span></div><div><div class="t-title">Nie masz psychy się zalogować</div><div class="t-meta">Publiczny</div></div></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== 2. OFFER PAGE ===================================================== -->
+<section class="screen" aria-labelledby="s2">
+  <h2 id="s2">2. Strona wejściówki <code>/wejsciowka</code> (oferta i cena)</h2>
+  <p class="note">Jedna uczciwa cena brutto, bez przekreśleń (brak obniżki = brak informacji Omnibus), wyraźne „nie odnawia się”, metody płatności i FAQ z prawem odstąpienia. Na telefonie przycisk przyklejony u dołu.</p>
+  <div class="row">
+    <div class="desk desk-wrap">
+      <p class="frame-label">Komputer · 1280 px</p>
+      <div class="browser">
+        <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">www.pawelperfect.com/wejsciowka</span></div>
+        <div class="ribbon">Tryb demo · płatność symulowana · nic nie zostanie pobrane</div>
+        <nav class="nav"><span class="brand"><i></i>www.pawelperfect.com</span><span class="nav-right"><span class="chip">Filmy</span><span class="avatar"></span></span></nav>
+        <div class="hero-band">
+          <div class="eyebrow">Wejściówka Premium</div>
+          <h3>Wejściówka za kulisy</h3>
+          <p>Materiały, których nie ma nigdzie indziej. Jedna opłata, 30 dni, bez subskrypcji.</p>
+          <div class="inside">
+            <div><div class="art blur"><span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span><span class="dur num">0:45</span></div><div class="cap">Zbieram hajs na mój Tajny Projekt<span>kulisy zbiórki</span></div></div>
+            <div><div class="art v2 blur"><span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span><span class="dur num">1:00</span></div><div class="cap">Film testowy 4<span>materiał testowy</span></div></div>
+          </div>
+        </div>
+        <div class="offer-body">
+          <div class="card price-card">
+            <div class="kicker">Wejściówka 30 dni</div>
+            <div class="price"><b class="num">29,00 zł</b><span>jednorazowo</span></div>
+            <div class="vat">cena brutto, zawiera VAT</div>
+            <ul class="perks">
+              <li>Wszystkie filmy Premium (2)</li>
+              <li>Dostęp od razu, przez 30 dni</li>
+              <li>Nie odnawia się, bez subskrypcji</li>
+              <li>Na każdym urządzeniu po zalogowaniu</li>
+            </ul>
+            <button class="btn-ink" type="button"><svg width="18" height="18"><use href="#i-ticket"/></svg>Kup wejściówkę</button>
+            <div class="methods"><span class="mlogo">BLIK</span><span class="mlogo">VISA</span><span class="mlogo">Mastercard</span><span class="mlogo"> Pay</span><span class="mlogo">G Pay</span><span class="mlogo">Przelewy24</span></div>
+            <div class="secure"><svg><use href="#i-shield"/></svg>Płatność obsługuje operator płatności (w demo: symulacja)</div>
+          </div>
+          <div class="faq">
+            <h4>Najczęstsze pytania</h4>
+            <details open><summary>Czy wejściówka się odnawia?</summary><p>Nie. To jednorazowa opłata za 30 dni dostępu. Nic nie pobierzemy ponownie i nie ma czego anulować.</p></details>
+            <details><summary>Od kiedy liczy się 30 dni?</summary><p>Od chwili zakupu. Datę końca widzisz w potwierdzeniu i w „Moje konto”.</p></details>
+            <details><summary>Na ilu urządzeniach mogę oglądać?</summary><p>Na każdym, na którym się zalogujesz.</p></details>
+            <details><summary>Czy mogę odstąpić od umowy?</summary><p>Prosisz o dostęp od razu, więc po rozpoczęciu oglądania tracisz prawo odstąpienia (treści cyfrowe). Zapytamy o zgodę w kasie.</p></details>
+            <details><summary>Kontakt</summary><p>support@pawelperfect.com</p></details>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-col">
+      <p class="frame-label">Telefon · 375 px</p>
+      <div class="phone"><div class="notch"></div><div class="phone-screen">
+        <div class="status"></div>
+        <div class="phone-scroll">
+          <div class="ribbon">Demo · nic nie zostanie pobrane</div>
+          <div class="hero-band p-hero">
+            <div class="eyebrow">Wejściówka Premium</div>
+            <h3>Wejściówka za kulisy</h3>
+            <p>Jedna opłata, 30 dni, bez subskrypcji.</p>
+          </div>
+          <div class="card price-card p-price">
+            <div class="kicker">Wejściówka 30 dni</div>
+            <div class="price"><b class="num">29,00 zł</b><span>jednorazowo</span></div>
+            <div class="vat">cena brutto, zawiera VAT</div>
+            <ul class="perks">
+              <li>Wszystkie filmy Premium (2)</li>
+              <li>Dostęp od razu, przez 30 dni</li>
+              <li>Nie odnawia się</li>
+            </ul>
+            <div class="methods"><span class="mlogo">BLIK</span><span class="mlogo">VISA</span><span class="mlogo"> Pay</span><span class="mlogo">G Pay</span><span class="mlogo">P24</span></div>
+          </div>
+          <div class="faq" style="padding: 0 16px 16px">
+            <details><summary>Czy wejściówka się odnawia?</summary><p>Nie. Jednorazowa opłata.</p></details>
+            <details><summary>Czy mogę odstąpić od umowy?</summary><p>Po rozpoczęciu oglądania nie (treści cyfrowe).</p></details>
+          </div>
+          <div class="p-sticky"><button class="btn-ink" type="button">Kup wejściówkę · <span class="num">29 zł</span></button></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== 3. CHECKOUT ===================================================== -->
+<section class="screen" aria-labelledby="s3">
+  <h2 id="s3">3. Kasa (jeden ekran, łączna kwota zawsze widoczna)</h2>
+  <p class="note">Podsumowanie, metoda (same kafelki wyboru: brak pól karty i kodu BLIK), dwie niezaznaczone zgody, przycisk „Zamawiam i płacę 29,00 zł” (art. 17 ust. 3 u.p.k.) z podpisem „Demo: bez obciążenia”. Na telefonie arkusz od dołu z przyklejonym przyciskiem. Wariant z błędem zgody pokazany na telefonie.</p>
+  <div class="row">
+    <div class="desk desk-wrap">
+      <p class="frame-label">Komputer · okno kasy</p>
+      <div class="browser">
+        <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">www.pawelperfect.com/?v=jj</span></div>
+        <div class="dim">
+          <div class="sheet pp-pass" role="dialog" aria-modal="true" aria-labelledby="co-t">
+            <div class="ribbon">Tryb demo · nic nie zostanie pobrane</div>
+            <div class="sheet-head"><h3 id="co-t">Kasa</h3><span class="x">✕</span></div>
+            <div class="sheet-body">
+              <div class="order">
+                <div class="order-line"><span class="ticket"><svg><use href="#i-ticket"/></svg></span><div><b>Wejściówka 30 dni · Premium</b><div class="s">ważna do 20.11.2026, nie odnawia się</div></div><b class="num">29,00 zł</b></div>
+                <div class="order-total"><span>Razem do zapłaty (brutto)</span><b class="num">29,00 zł</b></div>
+              </div>
+              <div class="acct">Potwierdzenie trafi na <b>pa•••@gmail.com</b></div>
+              <div>
+                <p class="lbl">Metoda płatności</p>
+                <div class="pm" role="radiogroup" aria-label="Metoda płatności">
+                  <label class="on"><input type="radio" name="pm1" checked><span class="mk mk-blik">BLIK</span>Kod z aplikacji</label>
+                  <label><input type="radio" name="pm1"><span class="mk">VISA ▪ MC</span>Karta</label>
+                  <label><input type="radio" name="pm1"><span class="mk"> Pay</span>Apple Pay</label>
+                  <label><input type="radio" name="pm1"><span class="mk">G Pay</span>Google Pay</label>
+                  <label><input type="radio" name="pm1"><span class="mk">P24</span>Przelewy24</label>
+                </div>
+                <div class="pm-note">Demo: bez pól do wpisania, wybór metody wystarczy.</div>
+              </div>
+              <div class="consent"><span class="box on">✓</span><span>Akceptuję <a href="#">Regulamin wejściówki</a> i <a href="#">Politykę prywatności</a>.</span></div>
+              <div class="consent"><span class="box on">✓</span><span>Chcę dostępu od razu. Wiem, że gdy zacznę oglądać, tracę prawo odstąpienia od umowy.</span></div>
+              <div class="pay">
+                <button class="btn-ink" type="button">Zamawiam i płacę <span class="num">29,00 zł</span></button>
+                <small>Demo: bez obciążenia</small>
+                <button class="ghost" type="button">Symuluj odrzuconą płatność</button>
+              </div>
+            </div>
+            <div class="seller"><svg><use href="#i-shield"/></svg>Bezpieczne połączenie · Sprzedawca: dane w przygotowaniu (demo) · support@pawelperfect.com</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-col">
+      <p class="frame-label">Telefon · arkusz kasy (błąd zgody)</p>
+      <div class="phone"><div class="notch"></div><div class="phone-screen">
+        <div class="status"></div>
+        <div class="phone-scroll" style="position:relative">
+          <div class="pp-pass stage stage-phone"><div class="poster"></div></div>
+          <div class="p-sheet">
+            <div class="sheet pp-pass">
+              <div class="grab"></div>
+              <div class="sheet-head"><h3>Kasa</h3><span class="x">✕</span></div>
+              <div class="ribbon">Demo · nic nie zostanie pobrane</div>
+              <div class="sheet-body">
+                <div class="collapsed-order"><span>Wejściówka 30 dni</span><b class="num">29,00 zł ▾</b></div>
+                <div>
+                  <p class="lbl">Metoda płatności</p>
+                  <div class="pm">
+                    <label class="on"><span class="mk mk-blik">BLIK</span>BLIK</label>
+                    <label><span class="mk">VISA ▪ MC</span>Karta</label>
+                    <label><span class="mk"> Pay</span>Apple Pay</label>
+                    <label><span class="mk">P24</span>Przelewy24</label>
+                  </div>
+                </div>
+                <div class="consent"><span class="box on">✓</span><span>Akceptuję <a href="#">Regulamin wejściówki</a> i <a href="#">Politykę prywatności</a>.</span></div>
+                <div class="consent err"><span class="box" aria-invalid="true"></span><span>Chcę dostępu od razu. Wiem, że gdy zacznę oglądać, tracę prawo odstąpienia od umowy.</span><span class="errmsg">Zaznacz to pole, aby kontynuować.</span></div>
+              </div>
+              <div class="sticky-pay">
+                <button class="btn-ink" type="button">Zamawiam i płacę <span class="num">29,00 zł</span></button>
+                <small>Demo: bez obciążenia</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== 4. PROCESSING + SUCCESS ===================================================== -->
+<section class="screen" aria-labelledby="s4">
+  <h2 id="s4">4. Przetwarzanie i sukces z potwierdzeniem</h2>
+  <p class="note">1,2 s „Łączę z operatorem płatności (demo)…”, potem znak sukcesu, data końca dostępu, „Oglądaj teraz” (odświeża plan na READY) i potwierdzenie z numerem <code>DEMO-…</code> i informacją o zgodzie (wzór art. 21 u.p.k.; w prawdziwej sprzedaży przyszłoby e-mailem).</p>
+  <div class="row">
+    <div class="desk desk-wrap">
+      <p class="frame-label">Komputer · przetwarzanie | sukces</p>
+      <div class="browser">
+        <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">www.pawelperfect.com/?v=jj</span></div>
+        <div class="dim" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start;">
+          <div class="sheet pp-pass" aria-busy="true">
+            <div class="ribbon">Tryb demo · nic nie zostanie pobrane</div>
+            <div class="sheet-head"><h3>Kasa</h3><span class="x" style="opacity:.4">✕</span></div>
+            <div class="sheet-body">
+              <div class="order"><div class="order-total" style="border-top:0"><span>Wejściówka 30 dni</span><b class="num">29,00 zł</b></div></div>
+              <div class="progress" aria-live="polite">Łączę z operatorem płatności (demo)…</div>
+              <div class="fine">Nie zamykaj okna. To potrwa chwilę.</div>
+            </div>
+          </div>
+          <div class="sheet pp-pass">
+            <div class="ribbon">Tryb demo · pobrano 0,00 zł</div>
+            <div class="success" aria-live="polite">
+              <div class="check check-anim"><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+              <h3>Wejściówka aktywna</h3>
+              <p>Masz dostęp do <b class="num">20.11.2026, 10:00</b></p>
+              <button class="btn-gold wide" type="button"><svg width="18" height="18"><use href="#i-play"/></svg>Oglądaj teraz</button>
+              <div class="receipt">
+                <div><span>Nr zamówienia</span><b class="mono">DEMO-7Q4K-2M9X</b></div>
+                <div><span>Produkt</span><b>Wejściówka 30 dni</b></div>
+                <div><span>Kwota</span><b class="num">29,00 zł <span>(demo: 0 zł)</span></b></div>
+                <div><span>Metoda</span><b>BLIK (symulacja)</b></div>
+                <div><span>Zgoda na dostęp od razu</span><b class="num">21.10.2026, 10:00</b></div>
+              </div>
+              <p class="fine">W prawdziwej sprzedaży to potwierdzenie przyszłoby e-mailem.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-col">
+      <p class="frame-label">Telefon · sukces</p>
+      <div class="phone"><div class="notch"></div><div class="phone-screen">
+        <div class="status"></div>
+        <div class="phone-scroll">
+          <div class="ribbon">Demo · pobrano 0,00 zł</div>
+          <div class="success pp-pass" style="padding-top:34px">
+            <div class="check check-anim"><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+            <h3>Wejściówka aktywna</h3>
+            <p>Masz dostęp do <b class="num">20.11.2026</b></p>
+            <button class="btn-gold wide" type="button"><svg width="18" height="18"><use href="#i-play"/></svg>Oglądaj teraz</button>
+            <div class="receipt">
+              <div><span>Nr</span><b class="mono">DEMO-7Q4K-2M9X</b></div>
+              <div><span>Produkt</span><b>Wejściówka 30 dni</b></div>
+              <div><span>Kwota</span><b class="num">29,00 zł (demo: 0 zł)</b></div>
+              <div><span>Metoda</span><b>BLIK (symulacja)</b></div>
+              <div><span>Zgoda</span><b class="num">21.10.2026, 10:00</b></div>
+            </div>
+            <p class="fine">Potwierdzenie znajdziesz też w „Moje konto → Wejściówka”.</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== 5. STATES ===================================================== -->
+<section class="screen" aria-labelledby="s5">
+  <h2 id="s5">5. Pozostałe stany</h2>
+  <p class="note">Wejściówka wygasła, płatność odrzucona (symulacja), film z aktywną wejściówką i kafelki na liście. Przycisk „Demo” w rogu to panel testera (wygaś / usuń moją wejściówkę), widoczny tylko w trybie <code>testers</code>.</p>
+  <div class="states">
+    <div class="card state-card">
+      <div class="pp-pass stage">
+        <div class="poster"></div>
+        <span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span>
+        <div class="stage-inner">
+          <span class="expired-bar">Twoja wejściówka wygasła 20.11.2026</span>
+          <h3>Materiał za kulisami</h3>
+          <button class="btn-gold" type="button">Kup nową wejściówkę · 29 zł</button>
+        </div>
+      </div>
+      <div class="cap"><b>Wygasła:</b> ta sama kasa, inny nagłówek.</div>
+    </div>
+    <div class="card state-card">
+      <div class="success declined pp-pass" style="padding:22px 18px">
+        <div class="check"><svg><use href="#i-x"/></svg></div>
+        <h3>Płatność nie przeszła</h3>
+        <p>Nic nie zostało pobrane.</p>
+        <div class="btn-row"><button class="btn-line" type="button">Zmień metodę</button><button class="btn-ink" type="button">Spróbuj ponownie</button></div>
+      </div>
+      <div class="cap"><b>Odmowa (symulacja):</b> nic się nie zapisuje.</div>
+    </div>
+    <div class="card state-card" style="position:relative">
+      <div class="art v3" style="border-radius:0; aspect-ratio:16/9; display:grid; place-items:center">
+        <span style="position:relative; z-index:2; width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.92); color:#111; display:grid; place-items:center"><svg width="22" height="22"><use href="#i-play"/></svg></span>
+      </div>
+      <div style="padding:12px 14px">
+        <div style="font-weight:700; color:var(--chan-ink)">Zbieram hajs na mój Tajny Projekt</div>
+        <div class="meta" style="margin-top:6px"><span class="pill-chip ok"><svg><use href="#i-check"/></svg>Premium · ważna do 20.11</span></div>
+      </div>
+      <span class="demo-fab">DEMO</span>
+      <div class="cap"><b>Z wejściówką:</b> zwykły odtwarzacz + chip ważności.</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div class="tiles-demo">
+      <div><div class="art blur"><span class="badge"><svg><use href="#i-lock"/></svg>PREMIUM</span><span class="dur num">0:45</span></div><div class="t-title">Zbieram hajs na mój Tajny Projekt</div><div class="t-meta">bez wejściówki: rozmycie + kłódka</div></div>
+      <div><div class="art v2"><span class="badge" style="padding:3px 7px">PREMIUM</span><span class="dur num">1:00</span></div><div class="t-title">Film testowy 4</div><div class="t-meta">z wejściówką: ostra miniatura</div></div>
+      <div><div class="art v3"><span class="dur num">0:36</span></div><div class="t-title">Nie masz psychy się zalogować</div><div class="t-meta">film darmowy bez zmian</div></div>
+    </div>
+  </div>
+  <div class="legend">
+    <div><b>Kolory:</b> ciemna scena <code>--pass-stage</code>, złoto z <code>--chan-amber(-bright)</code>, atrament <code>--chan-ink</code> jak w oknie napiwku.</div>
+    <div><b>Bez pieniędzy:</b> zero pól karty, zero Stripe, pas DEMO na każdym ekranie zakupu, numer <code>DEMO-…</code>.</div>
+    <div><b>Dostępność:</b> prawdziwe przyciski i radio, błędy tekstem przy polu, kontrast złota na scenie ok. 11:1, ruch wyłączany przy reduced motion.</div>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  function bind(attr, key) {
+    document.querySelectorAll("[" + attr + "]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        root.setAttribute(key, b.getAttribute(attr));
+        document.querySelectorAll("[" + attr + "]").forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); });
+      });
+    });
+  }
+  bind("data-set-theme", "data-theme");
+  bind("data-set-view", "data-view");
+  if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    var d = document.querySelector('[data-set-theme="dark"]'); if (d) d.click();
+  }
+  document.querySelectorAll(".pm").forEach(function (g) {
+    g.addEventListener("click", function (e) {
+      var l = e.target.closest("label"); if (!l) return;
+      g.querySelectorAll("label").forEach(function (o) { o.classList.toggle("on", o === l); });
+    });
+  });
+})();
+</script>
+</body>
+</html>
