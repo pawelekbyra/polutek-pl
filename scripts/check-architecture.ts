@@ -432,6 +432,7 @@ const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/video-pipeline/application/finalize-self-hls.ts': 'encode worker acting as system',
   'lib/modules/video-pipeline/application/process-encode-job.ts': 'encode worker acting as system',
   'lib/modules/video-pipeline/application/worker-loop.ts': 'encode worker acting as system',
+  'lib/modules/video-pipeline/application/routeless-asset-sweep.use-case.ts': 'daily cron; refuses any actor other than system, reserves cleanup only through the same locked path as deleteSelfHlsAsset',
   'lib/modules/video-pipeline/application/output-cleanup.use-cases.ts': 'system cleanup invoked after an authorized delete',
   'lib/modules/video-pipeline/application/channel-limits.ts': 'pure limit evaluation called from the authorized startOriginalUpload',
   'lib/modules/channel/application/content-report.use-case.ts': 'any signed-in viewer may report; the target must be publicly visible, duplicates and a daily cap apply',

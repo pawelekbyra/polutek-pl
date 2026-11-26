@@ -11,7 +11,7 @@ export const FACTS_AS_OF = "2026-10-04";
 
 export type ScheduledJob = { name: string; kind: "timer" | "cron"; schedule: string; purpose: string };
 
-/** 10 timers from deploy/serwerek/systemd + backup.sh and health.sh from the server crontab (SERWEREK.md chapter 8). */
+/** 11 timers from deploy/serwerek/systemd + backup.sh and health.sh from the server crontab (SERWEREK.md chapter 8). */
 export const SCHEDULED_JOBS: ScheduledJob[] = [
   { name: "send-broadcasts", kind: "timer", schedule: "co minutę", purpose: "wysyła kolejkę rozsyłek e-mail" },
   { name: "stripe-reconciliation", kind: "timer", schedule: "co 15 min", purpose: "dopina wpłaty potwierdzone w Stripe, zamyka porzucone" },
@@ -19,6 +19,7 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
   { name: "prune-expired-auth", kind: "timer", schedule: "codziennie 03:45 UTC", purpose: "usuwa wygasłe sesje i tokeny z linków" },
   { name: "retention", kind: "timer", schedule: "codziennie 04:15 UTC", purpose: "czyści IP i dane przeglądarki starsze niż 90 dni" },
   { name: "abandon-stale-originals", kind: "timer", schedule: "codziennie 04:30 UTC", purpose: "porzuca niedokończone wgrywania oryginałów" },
+  { name: "sweep-routeless-assets", kind: "timer", schedule: "codziennie 04:45 UTC", purpose: "oddaje do sprzątania wyniki kodowania HLS bez trasy odtwarzania (starsze niż 7 dni)" },
   { name: "prune-playback-sessions", kind: "timer", schedule: "codziennie 05:00 UTC", purpose: "usuwa sesje odtwarzania bez obejrzenia (30 dni)" },
   { name: "purge-deleted-comments", kind: "timer", schedule: "codziennie 05:15 UTC", purpose: "kasuje treść komentarzy usuniętych przez autorów" },
   { name: "sync-public-thumbnails", kind: "timer", schedule: "codziennie 06:00 UTC", purpose: "synchronizuje publiczne miniatury w R2" },

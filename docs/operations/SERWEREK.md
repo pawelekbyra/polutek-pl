@@ -269,6 +269,7 @@ dopóki następny przebieg się nie powiedzie. Szablon: `polutek-cron@.service`.
 | `polutek-cron-prune-expired-auth` | `prune-expired-auth` | 03:45 | usuwa wygasłe `Session` i `Verification` |
 | `polutek-cron-retention` | `retention` | 04:15 | czyści IP/UA starsze niż 90 dni, ponawia usuwanie kontaktów w Resend |
 | `polutek-cron-abandon-stale-originals` | `abandon-stale-originals` | 04:30 | porzuca niedokończone uploady oryginałów wideo |
+| `polutek-cron-sweep-routeless-assets` | `sweep-routeless-assets` | 04:45 | wyniki kodowania HLS (READY) bez żadnej trasy odtwarzania, starsze niż 7 dni i bez kodowania w toku, oddaje do zwykłego sprzątania (`VIDEO_ASSET_CLEANUP`); `?dryRun=1` tylko wypisuje (audyt U5) |
 | `polutek-cron-prune-playback-sessions` | `prune-playback-sessions` | 05:00 | kasuje sesje odtwarzania starsze niż 30 dni, niezaliczone jako wyświetlenie |
 | `polutek-cron-purge-deleted-comments` | `purge-deleted-comments` | 05:15 | kasuje treść komentarzy usuniętych przez autorów ponad 30 dni temu |
 | `polutek-cron-sync-public-thumbnails` | `sync-public-thumbnails` | 06:00 | uzgadnia publiczny bucket miniatur z opublikowanymi filmami |

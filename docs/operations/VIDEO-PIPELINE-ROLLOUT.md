@@ -53,7 +53,7 @@ SELECT count(*) FILTER (WHERE "objectKey" LIKE '%/attempts/%') AS proby,
        count(*) FILTER (WHERE "cleanupPendingAt" IS NOT NULL) AS w_sprzataniu FROM "VideoAsset";
 SELECT status, count(*) FROM "VideoPlaybackRoute" GROUP BY 1;
 SELECT status, attempts, "lastError" FROM "DurableJob" WHERE kind = 'VIDEO_ASSET_CLEANUP' ORDER BY "createdAt" DESC LIMIT 10;
--- asset READY bez trasy (wyciek po nieznanym wyniku aktywacji, U5; do ręcznej oceny):
+-- asset READY bez trasy (wyciek po nieznanym wyniku aktywacji, U5; od tej zmiany sprząta je cron `sweep-routeless-assets` po 7 dniach, ten SELECT służy do podglądu):
 SELECT a.id, a."objectKey", a."createdAt" FROM "VideoAsset" a
  WHERE a.provider='SELF_HLS' AND a."processingState"='READY'
    AND NOT EXISTS (SELECT 1 FROM "VideoPlaybackRoute" r WHERE r."assetId"=a.id);
