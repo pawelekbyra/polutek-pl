@@ -225,6 +225,7 @@ export async function reconcilePublicThumbnails(
   // write hasn't landed yet: leave them for the next run.
   const cutoff = Date.now() - ORPHAN_GRACE_PERIOD_MS;
   const client = new R2ThumbnailStorageClient();
+  const orphanKeys: string[] = [];
   for (const { key, lastModified } of await client.listPublicObjects()) {
     if (advertisedKeys.has(key)) continue;
     // Subtitle files (videos/<id>/subtitles/*.vtt, admin panel) share the public bucket; their lifecycle is
@@ -236,8 +237,20 @@ export async function reconcilePublicThumbnails(
       logger.warn("Kept unadvertised public thumbnail still referenced by a video", { key });
       continue;
     }
-    if (!dryRun) await client.deletePublic(key);
-    result.orphansDeleted++;
+    orphanKeys.push(key);
+  }
+
+  // One DeleteObjects request per 1000 keys (was one request per key: minutes of sequential round trips at thousands of files).
+  if (dryRun) {
+    result.orphansDeleted = orphanKeys.length;
+  } else if (orphanKeys.length > 0) {
+    const removal = await client.deletePublicMany(orphanKeys);
+    result.orphansDeleted = removal.deleted;
+    if (removal.failed.length > 0) {
+      const codes = [...new Set(removal.failed.map((f) => f.code))].join(",");
+      logger.error("Could not delete some orphaned public thumbnails", { failed: removal.failed.length, deleted: removal.deleted, codes, sample: removal.failed[0]?.key });
+      throw new Error(`Orphan thumbnail sweep incomplete: ${removal.failed.length} of ${orphanKeys.length} objects not deleted (${codes})`);
+    }
   }
 
   if (result.publicUrlInThumbnailUrl > 0) {

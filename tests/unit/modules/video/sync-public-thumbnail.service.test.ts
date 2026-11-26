@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const r2 = vi.hoisted(() => ({
   copyToPublic: vi.fn(),
   deletePublic: vi.fn(),
+  deletePublicMany: vi.fn(),
   listPublicObjects: vi.fn(),
 }));
 
@@ -12,6 +13,7 @@ vi.mock('@/lib/modules/media/infrastructure/r2-thumbnail-storage.client', () => 
     static isPublicServingConfigured = () => Boolean(process.env.CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC);
     copyToPublic = r2.copyToPublic;
     deletePublic = r2.deletePublic;
+    deletePublicMany = r2.deletePublicMany;
     listPublicObjects = r2.listPublicObjects;
   }
   return { R2ThumbnailStorageClient };
@@ -42,6 +44,7 @@ function makeCtx(overrides: Partial<Record<string, any>> = {}) {
     ...overrides,
   };
   r2.deletePublic.mockImplementation(async (key: string) => { calls.push(`r2.delete:${key}`); });
+  r2.deletePublicMany.mockImplementation(async (keys: string[]) => { for (const key of keys) calls.push(`r2.delete:${key}`); return { deleted: keys.length, failed: [] }; });
   return { ctx: { prisma: { video } } as any, video, calls };
 }
 
@@ -159,7 +162,46 @@ describe('syncPublicThumbnail', () => {
     const result = await reconcilePublicThumbnails(ctx);
 
     expect(result).toMatchObject({ configured: true, scanned: 1, orphansDeleted: 1 });
-    expect(r2.deletePublic).toHaveBeenCalledTimes(1);
-    expect(r2.deletePublic).toHaveBeenCalledWith('videos/gone/covers/x.webp');
+    expect(r2.deletePublicMany).toHaveBeenCalledTimes(1);
+    expect(r2.deletePublicMany).toHaveBeenCalledWith(['videos/gone/covers/x.webp']);
+    expect(r2.deletePublic).not.toHaveBeenCalled();
+  });
+
+  it('reconcile removes thousands of orphans through batch calls, not one request per object', async () => {
+    const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const orphans = Array.from({ length: 3500 }, (_, i) => `videos/gone${i}/covers/x.webp`);
+    r2.listPublicObjects.mockResolvedValue(orphans.map((key) => ({ key, lastModified: old })));
+    const { ctx } = makeCtx({ findMany: vi.fn().mockResolvedValue([]) });
+
+    const result = await reconcilePublicThumbnails(ctx);
+
+    expect(result).toMatchObject({ orphansDeleted: 3500 });
+    expect(r2.deletePublicMany).toHaveBeenCalledTimes(1);
+    expect(r2.deletePublicMany.mock.calls[0][0]).toHaveLength(3500);
+    expect(r2.deletePublic).not.toHaveBeenCalled();
+  });
+
+  it('reconcile dry run counts orphans and deletes nothing', async () => {
+    const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    r2.listPublicObjects.mockResolvedValue([{ key: 'videos/gone/covers/x.webp', lastModified: old }]);
+    const { ctx } = makeCtx({ findMany: vi.fn().mockResolvedValue([]) });
+
+    const result = await reconcilePublicThumbnails(ctx, { dryRun: true });
+
+    expect(result).toMatchObject({ dryRun: true, orphansDeleted: 1 });
+    expect(r2.deletePublicMany).not.toHaveBeenCalled();
+    expect(r2.deletePublic).not.toHaveBeenCalled();
+  });
+
+  it('reconcile fails loudly (after deleting what it could) when some orphans could not be deleted', async () => {
+    const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    r2.listPublicObjects.mockResolvedValue([
+      { key: 'videos/gone/covers/a.webp', lastModified: old },
+      { key: 'videos/gone/covers/b.webp', lastModified: old },
+    ]);
+    const { ctx } = makeCtx({ findMany: vi.fn().mockResolvedValue([]) });
+    r2.deletePublicMany.mockResolvedValue({ deleted: 1, failed: [{ key: 'videos/gone/covers/b.webp', code: 'AccessDenied' }] });
+
+    await expect(reconcilePublicThumbnails(ctx)).rejects.toThrow(/1 of 2 objects not deleted \(AccessDenied\)/);
   });
 });

@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { createHash } from "crypto";
@@ -16,6 +17,16 @@ import {
 } from "../domain/r2-thumbnail";
 
 const logger = createScopedLogger("R2ThumbnailStorageClient");
+
+/** S3 DeleteObjects accepts at most 1000 keys per request. */
+export const DELETE_OBJECTS_BATCH_SIZE = 1000;
+
+export interface DeleteManyResult {
+  /** Keys the store confirmed as removed (an already-absent key counts as removed: the goal is "gone"). */
+  deleted: number;
+  /** Keys that could not be removed, with the store's error code. */
+  failed: Array<{ key: string; code: string }>;
+}
 
 export interface R2ThumbnailObject {
   body: ReadableStream<Uint8Array>;
@@ -150,6 +161,34 @@ export class R2ThumbnailStorageClient {
     const bucket = requireEnv("CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC");
     await makeClient().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
     logger.info("Deleted public thumbnail copy", { key, bucket });
+  }
+
+  /**
+   * Removes many public objects with one DeleteObjects request per 1000 keys instead of one request per key
+   * (the orphan sweep removes thousands). Never throws for a per-key failure: those come back in `failed`, so one
+   * bad key does not stop the others. A failed whole request (network, auth) still throws.
+   */
+  async deletePublicMany(keys: string[]): Promise<DeleteManyResult> {
+    const bucket = requireEnv("CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC");
+    const result: DeleteManyResult = { deleted: 0, failed: [] };
+    if (keys.length === 0) return result;
+    const client = makeClient();
+    for (let i = 0; i < keys.length; i += DELETE_OBJECTS_BATCH_SIZE) {
+      const batch = keys.slice(i, i + DELETE_OBJECTS_BATCH_SIZE);
+      const response = await client.send(new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: false },
+      }));
+      const errors = new Map<string, string>();
+      for (const item of response.Errors ?? []) if (item.Key) errors.set(item.Key, item.Code || "Unknown");
+      for (const key of batch) {
+        const code = errors.get(key);
+        if (!code || code === "NoSuchKey" || code === "NotFound") result.deleted += 1;
+        else result.failed.push({ key, code });
+      }
+    }
+    logger.info("Deleted public thumbnail copies", { bucket, deleted: result.deleted, failed: result.failed.length });
+    return result;
   }
 
   async deletePrivate(key: string): Promise<void> {
